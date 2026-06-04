@@ -1,0 +1,1538 @@
+☀  SolarCRM
+Solar Sales CRM — Complete Developer Build Specification
+DOCUMENT PURPOSE
+This document is a complete, self-contained specification for building the SolarCRM application from scratch. It covers every screen, every feature, every user role, every database table, every API endpoint, all business logic, and all edge cases. A developer (or AI) should be able to read this document and build the entire system without asking any clarifying questions.
+Version
+Date
+Status
+v2.0 — Full Spec
+June 2025
+Ready for Development
+1. PROJECT OVERVIEW
+1.1 What Is SolarCRM?
+SolarCRM is a custom web-based Customer Relationship Management (CRM) application built specifically for a Solar Energy company's sales operations. It manages the complete end-to-end journey of a customer lead — from the moment a phone number is received, through multiple calling attempts, follow-ups, meeting booking, physical site visits, sales closure, order documentation, and final handoff to the operations team for installation.
+The system replaces manual processes (WhatsApp groups, Excel sheets, verbal handoffs) with a structured, role-based digital pipeline. Every action is logged, every status is tracked, and every team member sees only what they are authorized to see.
+1.2 Core Problem Statement
+Problem (Before CRM)
+Solution (With CRM)
+Leads get lost in WhatsApp groups
+Every lead saved centrally, never lost
+No record of who called whom or when
+Full timestamped call history per lead
+Manager cannot track team in real-time
+Live dashboard with real-time pipeline view
+Documents shared insecurely on WhatsApp
+Secure file upload per lead (PDF/image)
+No structured meeting records
+Mandatory structured meeting booking form
+Finance receives incomplete order info
+Locked order form with mandatory documents
+No visibility into team performance
+Analytics dashboard with conversion reports
+1.3 Technology Stack Recommendation
+The following stack is recommended. The developer may substitute equivalents but the architecture should follow these patterns:
+Layer
+Technology
+Notes
+Frontend
+React.js + Tailwind CSS
+SPA (Single Page App). Mobile-responsive.
+Backend
+Node.js + Express.js (or Laravel/PHP)
+RESTful API architecture.
+Database
+MySQL or PostgreSQL
+Relational DB. See schema in Section 8.
+File Storage
+AWS S3 or local disk + CDN
+For Aadhaar, PAN, bill, passbook uploads.
+Real-Time
+Socket.io (WebSocket)
+For Live Link feature (Admin only).
+Auth
+JWT (JSON Web Tokens)
+Role embedded in token payload.
+Notifications
+Firebase Cloud Messaging (optional)
+For "Call Later" reminders.
+1.4 Deployment Requirements
+The app must be accessible from both desktop browsers and mobile browsers (responsive design).
+Recommended deployment: VPS (DigitalOcean / AWS EC2) with Nginx reverse proxy.
+SSL (HTTPS) is mandatory — file uploads and user credentials must be encrypted.
+All uploaded documents must be stored in a private bucket (not publicly accessible by URL guessing).
+Minimum server spec: 2 vCPU, 4 GB RAM, 50 GB SSD.
+2. USER ROLES & PERMISSIONS
+2.1 Complete Role Definitions
+The system has 8 distinct roles. Each role has a specific dashboard view, specific permissions, and specific data visibility rules. The role is assigned at user creation time by the Admin and is stored in the users table.
+Role 1 — Admin (Deepak Sir)
+The supreme controller of the entire system.
+Can create, edit, deactivate any user account across all roles.
+Can view ALL leads regardless of assignment.
+Can add, edit, delete, reassign any lead at any stage.
+Can view all reports: company-wide, per team, per consultant, per stage.
+Has access to the Live Link (real-time war-room view).
+Can configure system settings: lead import, bulk upload, notification settings.
+Only role with access to the Finance section in full.
+Only one Admin account exists (Deepak Sir). This role should not be assignable to multiple people unless explicitly requested.
+Role 2 — Sales Head
+Second-in-command. Oversight across all managers and teams.
+Can view all leads across all managers (same as Admin for visibility).
+Can add new leads and assign them to any Manager.
+Can edit any lead. Cannot delete leads.
+Has access to company-wide performance reports.
+Has access to the Live Link view.
+Cannot access Finance section (order punching financials).
+Cannot manage user accounts (add/edit/delete users).
+Role 3 — Manager
+Responsible for a specific group of leads assigned to them.
+Can add new leads (these get assigned to their pool by default).
+Can edit any lead within their own assigned pool.
+Can assign Team Leaders (TL) and Consultants to leads within their pool.
+Can view reports for their own team only (not other managers' teams).
+Can add/edit/remove Team Leaders and Consultants within their team.
+Cannot delete leads. Cannot access Finance. Cannot see other managers' leads.
+Role 4 — Team Leader (TL)
+Senior consultant who supervises a small group of Consultants.
+Can add new leads (assigned to their team pool).
+Can edit any lead assigned to their team.
+Can assign Consultants within their team to leads (cannot assign TLs).
+Can view performance reports for their own team members only.
+Cannot manage user accounts. Cannot access Finance.
+Cannot see leads outside their assigned team pool.
+Role 5 — Consultant
+Front-line salesperson. Handles lead nurturing through calling and meeting stages.
+Can ONLY see leads explicitly assigned to them.
+Can edit lead status, add remarks, update call logs on their assigned leads.
+Can fill in the Meeting Booking Form (Stage 8) for their assigned leads.
+Can view their own performance metrics only.
+Cannot add new leads to the system. Cannot assign leads to others. Cannot delete leads.
+Role 6 — PSA (Pre-Sales Agent)
+Specialised calling team. Handles only the initial calling stages.
+Can only update call-related statuses: DNP (Stage 2), Follow Up (Stage 3), Not Interested (Stage 4), Call Later (Stage 5), Call Disconnected (Stage 10), Switch Off (Stage 11).
+Can add call remarks to their assigned leads.
+CANNOT change a lead to Stage 8 (Meeting Booked) — that is the Consultant's job.
+CANNOT view lead addresses, financial info, or meeting details.
+Has their own supervisor: PSA TL → PSM (within PSA hierarchy).
+Role 7 — Finance Team
+Activated only after a lead reaches Stage 13 (Sale Done).
+Can view and fill the Order Punching Form for Stage 13 leads.
+Can upload and verify documents (Aadhaar, PAN, Electricity Bill, Bank Passbook).
+Can view order status and payment information.
+CANNOT see leads below Stage 13. CANNOT edit lead status or add call remarks.
+CANNOT manage users or view sales pipeline.
+Role 8 — Operations Team
+Handles installation and post-sale work.
+Sees only leads/orders that have been fully processed by Finance (after Stage 13, post order-punching).
+Can update installation status on their assigned orders.
+CANNOT see leads below Stage 13. CANNOT access financial or payment information.
+2.2 Permission Matrix
+Permission
+Admin
+Sales Head
+Manager
+TL
+Consultant
+PSA
+Finance
+Ops
+Add Lead
+✔
+✔
+✔
+✔
+✗
+✗
+✗
+✗
+Edit Any Lead
+✔
+✔
+Own pool
+Own team
+Assigned
+Status only
+✗
+✗
+Delete Lead
+✔
+✗
+✗
+✗
+✗
+✗
+✗
+✗
+Assign TL/Consultant
+✔
+✔
+✔
+Cons only
+✗
+✗
+✗
+✗
+View All Reports
+✔
+✔
+Own team
+Own team
+Own only
+Calls only
+Orders
+Installs
+Order Punching
+✔
+✗
+✗
+✗
+Trigger only
+✗
+✔
+✗
+Manage Users
+✔
+✗
+Own team
+✗
+✗
+✗
+✗
+✗
+Live Link Access
+✔
+✔
+✗
+✗
+✗
+✗
+✗
+✗
+Finance Data
+✔
+✗
+✗
+✗
+✗
+✗
+✔
+✗
+Export Reports
+✔
+✔
+✔
+✗
+✗
+✗
+✔
+✗
+3. LEAD PIPELINE & ALL 14 STAGES
+3.1 Pipeline Overview
+Every lead in the system has a "status" field that represents its current stage in the sales pipeline. The status can only be updated by authorized roles. When a status changes, the system must: (1) log the change with timestamp and user ID, (2) trigger any associated form (Meeting Booked, Order Punching), (3) send notifications to relevant team members, and (4) update dashboard counters.
+3.2 All 14 Lead Statuses — Detailed Specification
+Stage 1 — Fresh Lead (New Lead)
+Trigger: Lead is created in the system by Manager or Admin.
+Default status when any lead is added to the system.
+No calls have been made yet.
+Assigned Consultant can see this lead in their pipeline.
+No additional form required. All fields from Lead Creation Form (Form A) are already filled.
+System should show "Not Yet Called" badge in the UI.
+Stage 2 — DNP (Did Not Pick Up)
+Trigger: Consultant/PSA calls the customer and gets no answer.
+Consultant changes status to DNP.
+A mandatory Remark field must be filled: e.g., "Called at 11 AM, no answer."
+System automatically logs: who changed it, when, and from which previous status.
+No sub-form required.
+The lead remains in active pipeline for follow-up.
+UI badge: Orange/grey "DNP" label.
+Stage 3 — Follow Up (Warm/Hot Lead)
+Trigger: Customer was reached and showed some interest.
+Consultant MUST specify sub-type in dropdown: "Warm" (mild interest) or "Hot" (strong interest, nearly ready to buy).
+Consultant MUST fill a remark describing the conversation.
+Consultant MUST set a "Follow Up Date & Time" — a scheduled callback. This creates a reminder.
+The system must send a reminder notification to the Consultant 30 minutes before the follow-up time.
+"Hot" leads should visually appear highlighted (e.g., yellow/gold border) in the lead list.
+Stage 4 — Not Interested
+Trigger: Customer explicitly says they do not want solar.
+Lead is moved to an "inactive" or "dismissed" state.
+Lead still appears in the system (not deleted) but does NOT appear in the active pipeline by default.
+Consultant must add a remark: reason for disinterest.
+Manager/Admin can reactivate a "Not Interested" lead if they choose.
+Counts toward conversion rate denominator in reports.
+Stage 5 — Call Later
+Trigger: Customer asked to be called at a specific later time.
+Consultant MUST set a "Call Back Date & Time" (date/time picker — required field).
+System creates a scheduled reminder for the assigned Consultant.
+Reminder fires at the scheduled time via in-app notification (and optionally push notification).
+Remains in active pipeline.
+Stage 6 — Already Installed
+Trigger: Customer already has solar panels installed.
+Lead is moved to "disqualified" state.
+Does not appear in active pipeline. Appears in a separate "Disqualified" filter.
+Consultant adds a remark confirming.
+No further action required from sales team.
+Stage 7 — Decision Pending for Meeting
+Trigger: Customer is considering agreeing to a meeting but has not yet confirmed.
+Consultant has pitched a meeting but customer is unsure.
+Lead stays in active pipeline. A "Pending Meeting Decision" badge is shown.
+Manager or TL should be able to see these leads filtered separately (high-value leads needing attention).
+No sub-form required. Remark is mandatory.
+Stage 8 — Meeting Booked
+Trigger: Customer agrees to a physical site visit/meeting.
+When Consultant changes status to Meeting Booked, a MANDATORY form (Form B) pops up immediately.
+The status CANNOT be saved unless the Meeting Booking Form is completed in full.
+Form B fields (all required unless noted):
+Full Address (text)
+Pin Code (6-digit number)
+Mobile Number (pre-filled from lead, editable)
+Alternate Mobile Number (optional)
+Date of Meeting (date picker — must be today or future)
+Time of Meeting (time picker — 10:00 AM to 6:00 PM)
+Average Monthly Electricity Bill Amount in ₹ (number)
+Connection Type (dropdown: Residential / Commercial)
+After form submission: system sends notification to the Sales Executive / Meeting Team assigned to visit.
+Lead appears in a "Meetings Booked" section on Manager dashboard.
+Stage 9 — Meeting Already Done
+Trigger: The physical site visit/meeting has taken place.
+Status is changed by the Sales Executive (Consultant doing the meeting) after the visit.
+Remark is mandatory: brief summary of meeting outcome.
+This is a transitional stage — the lead should quickly move to Stage 14 (Meeting Ended) where the actual outcome is captured.
+Stage 10 — Call Disconnected
+Trigger: Customer answered but immediately hung up.
+Remark is mandatory.
+Remains in active pipeline for retry.
+Functionally similar to DNP (Stage 2) but distinguishes deliberate hang-up from no-answer.
+Stage 11 — Switch Off / Incoming Off
+Trigger: Phone is switched off or incoming calls are blocked.
+Remark is mandatory.
+Remains in active pipeline.
+After 5 consecutive Switch Off/DNP logs, system should flag the lead as "Unreachable" for Manager review.
+Stage 12 — Can't Fit Solar (Infeasible)
+Trigger: Physical inspection or discussion reveals the location is not suitable for solar installation.
+Reasons include: too much shading, roof angle, structural issues, tenant property (not owned), etc.
+Consultant must select a reason from dropdown: Shading Issue / Roof Structure / Rented Property / Landlord Refusal / Too Small / Other.
+If "Other" is selected, a text field appears for the specific reason.
+Lead is moved to "Disqualified" state.
+Stage 13 — Sale Done ⭐ (Most Critical Stage)
+Trigger: Customer confirms the purchase of solar panels.
+This is the most important stage in the entire pipeline.
+When status is changed to Sale Done, the ORDER PUNCHING FORM (Form D) is immediately unlocked and must be completed.
+The Form D is accessible to the Consultant (who triggers it) and the Finance Team.
+Order Punching Form D fields (see Section 4.4 for full detail).
+All four documents must be uploaded before order can be submitted.
+After Finance submits the order, the Operations Team is notified and the order appears in their queue.
+Admin dashboard shows live count of "Sales Done Today" and "Sales Done This Month."
+A congratulations notification is sent to the Consultant and their Manager.
+Stage 14 — Meeting Ended (Post-Meeting Sub-Status)
+Trigger: After Stage 9 (Meeting Done), the Sales Executive updates the outcome.
+When Stage 14 is selected, a sub-dropdown (Form C) appears with three options:
+a) Sale Done → Lead immediately moves to Stage 13. Order Punching Form is unlocked.
+b) Follow Up → Lead moves back to Stage 3. Consultant must set a follow-up date/time.
+c) Not Interested → Lead moves to Stage 4. Remark is mandatory.
+This stage ensures every meeting has a documented outcome — no lead can be left in "Meeting Done" indefinitely.
+3.3 Status Transition Rules
+The following transitions are ALLOWED. Any transition not listed here must be blocked by the system:
+From Stage
+Allowed Transitions To
+Authorized Roles
+1 — Fresh Lead
+2, 3, 4, 5, 10, 11
+Consultant, PSA, TL, Manager
+2 — DNP
+2, 3, 4, 5, 10, 11
+Consultant, PSA
+3 — Follow Up
+3, 4, 5, 7, 8, 10, 11
+Consultant, PSA
+4 — Not Interested
+3 (reactivate only — Manager/Admin)
+Manager, Admin only
+5 — Call Later
+2, 3, 4, 8, 10, 11
+Consultant, PSA
+6 — Already Installed
+No transitions (terminal)
+N/A
+7 — Decision Pending
+3, 4, 5, 8
+Consultant, TL, Manager
+8 — Meeting Booked
+9 only (after meeting happens)
+Consultant, TL
+9 — Meeting Done
+14 only
+Consultant, TL, Manager
+10 — Call Disconnected
+2, 3, 4, 5
+Consultant, PSA
+11 — Switch Off
+2, 3, 4, 5
+Consultant, PSA
+12 — Can't Fit Solar
+No transitions (terminal)
+N/A
+13 — Sale Done
+No transitions (terminal)
+N/A (locked)
+14 — Meeting Ended
+3, 4, or 13 (via sub-form)
+Consultant, TL, Manager
+4. FORMS & DATA COLLECTION
+4.1 Form A — Add New Lead (Stage 1 Creation)
+This form appears when any authorized user (Manager, TL, Admin, Sales Head) clicks "Add New Lead." All fields are required unless marked optional.
+Field Name
+Input Type
+Required?
+Validation / Notes
+Customer Name
+Text
+✔ Yes
+Min 2 chars, max 100 chars. Trim whitespace.
+Mobile Number
+Phone
+✔ Yes
+Exactly 10 digits. Must be unique (no duplicate leads). Show error if duplicate exists.
+Alternate Mobile
+Phone
+Optional
+10 digits if provided. Cannot be same as primary.
+Connection Type
+Dropdown
+✔ Yes
+Options: Residential, Commercial, Industrial
+Sanctioned Load (kW)
+Number
+✔ Yes
+From electricity bill. Decimal allowed (e.g. 3.5). Min: 0.5, Max: 500.
+Full Address
+Textarea
+✔ Yes
+House no, street, area. Min 10 chars.
+Pin Code
+Number
+✔ Yes
+Exactly 6 digits. On entry, auto-fetch City & State via Pin Code API.
+City
+Text (auto-fill)
+✔ Yes
+Auto-populated from Pin Code. Editable if auto-fill fails.
+State
+Text (auto-fill)
+✔ Yes
+Auto-populated from Pin Code. Editable if auto-fill fails.
+Lead Source
+Dropdown
+Optional
+Options: WhatsApp, Cold Call, Referral, Walk-In, Google Ad, Other
+Assigned To (TL)
+Dropdown (user list)
+Optional at creation
+Manager selects a TL from their team. Can be left blank and assigned later.
+Assigned To (Consultant)
+Dropdown (user list)
+Optional at creation
+TL or Manager selects a Consultant. Auto-filtered based on selected TL.
+Notes / Remarks
+Textarea
+Optional
+Initial notes about the lead at creation time.
+DUPLICATE CHECK
+When a new lead's mobile number is entered, the system must immediately check for duplicates via an API call. If a lead with that number already exists, show an inline error: "A lead with this number already exists. Lead ID: #XXXX — assigned to [Consultant Name]." Do not allow creation of duplicate leads.
+4.2 Form B — Meeting Booking Form (Stage 8)
+This form appears as a modal/popup when a Consultant or TL changes a lead's status to "Meeting Booked." The form MUST be fully completed before the status change is saved. Closing the modal without submitting cancels the status change.
+Field Name
+Input Type
+Required?
+Validation / Notes
+Full Address
+Textarea
+✔ Yes
+Pre-filled from lead data. Consultant can edit if customer gives different meeting address.
+Pin Code
+Number
+✔ Yes
+Pre-filled. Editable.
+Mobile Number
+Phone
+✔ Yes
+Pre-filled from lead. Editable.
+Alternate Mobile
+Phone
+Optional
+Not pre-filled. Customer may give a second number.
+Date of Meeting
+Date Picker
+✔ Yes
+Must be today or a future date. Cannot be in the past.
+Time of Meeting
+Time Picker
+✔ Yes
+Allowed range: 09:00 AM to 06:00 PM. 30-minute slots.
+Avg Monthly Bill (₹)
+Number
+✔ Yes
+Indian Rupees. Min: 100. This helps size the solar proposal.
+Connection Type
+Dropdown
+✔ Yes
+Pre-filled from lead. Options: Residential, Commercial, Industrial.
+Meeting Assigned To
+Dropdown (user list)
+✔ Yes
+Which Sales Executive will conduct the visit. Defaults to current Consultant.
+Meeting Notes
+Textarea
+Optional
+Any special instructions for the visiting executive.
+NOTIFICATION
+Upon successful submission of Form B, the system sends an in-app notification to: (1) The Consultant's Manager, (2) The Sales Executive assigned to the meeting, (3) Admin. Notification text: "New meeting booked for [Customer Name] on [Date] at [Time]. Lead #[ID] assigned to [Executive Name]."
+4.3 Form C — Meeting Ended Sub-Status (Stage 14)
+When a lead is moved to Stage 14 (Meeting Ended), a sub-form appears with three outcome options. Based on the selection, the lead moves to the appropriate next stage automatically.
+Selection
+Next Stage
+Required Additional Fields
+a) Sale Done
+→ Stage 13
+Remark (mandatory). Then Order Punching Form (Form D) unlocks.
+b) Follow Up
+→ Stage 3
+Remark (mandatory). Follow-Up Date & Time (mandatory). Sub-type: Warm/Hot (mandatory).
+c) Not Interested
+→ Stage 4
+Remark (mandatory). Reason dropdown: Price / Not Convinced / Competitor / Other.
+4.4 Form D — Order Punching Form (Stage 13 — Sale Done)
+This is the most critical form in the system. It is ONLY accessible when a lead has reached Stage 13. It can be filled by the Consultant (to initiate) and completed/verified by the Finance Team. The order CANNOT be submitted until all four mandatory documents are uploaded.
+Field Name
+Input Type
+Required?
+Validation / Notes
+Connection Number
+Text
+✔ Yes
+Customer's electricity connection/meter number.
+System Size (kW)
+Number
+✔ Yes
+Size of solar system being sold. Decimal allowed.
+Total Order Value (₹)
+Number
+✔ Yes
+Total cost of the system. Auto-calculate from system size × rate if rate is configured.
+Down Payment Amount (₹)
+Number
+✔ Yes
+Cash collected upfront. Cannot exceed Total Order Value.
+Transaction Method
+Dropdown
+✔ Yes
+Options: Cash, UPI, Cheque, NEFT/RTGS, Bank Transfer
+Transaction Reference
+Text
+Conditional
+Required if method is UPI/Cheque/NEFT. UPI transaction ID / Cheque number.
+Remaining Amount (₹)
+Number (auto)
+Auto
+Auto-calculated: Total - Down Payment. Display only.
+Remaining Payment Method
+Dropdown
+✔ Yes
+Options: Finance (loan), Cash, EMI
+Finance Provider
+Text
+Conditional
+Required if Remaining = Finance. Name of bank/NBFC.
+Client Type
+Dropdown
+✔ Yes
+Options: On-Grid, Off-Grid, Hybrid
+Subsidy Applicable?
+Toggle (Yes/No)
+✔ Yes
+Government subsidy eligibility.
+Subsidy Amount (₹)
+Number
+Conditional
+Required if Subsidy = Yes.
+Upload: Aadhaar Card
+File Upload
+✔ MANDATORY
+PDF or JPG/PNG. Max 5MB. Shows upload status in checklist.
+Upload: PAN Card
+File Upload
+✔ MANDATORY
+PDF or JPG/PNG. Max 5MB.
+Upload: Electricity Bill
+File Upload
+✔ MANDATORY
+PDF or JPG/PNG. Max 5MB. Most recent bill.
+Upload: Bank Passbook
+File Upload
+✔ MANDATORY
+PDF or JPG/PNG. Max 5MB. First page showing name + account.
+Additional Requirements
+Textarea
+Optional
+Special notes: name change, structure requirements, etc.
+Sales Executive Name
+Text (auto)
+Auto
+Auto-filled: current logged-in user name.
+Order Date
+Date (auto)
+Auto
+Auto-filled: today's date at time of submission.
+DOCUMENT CHECKLIST
+The form must show a 4-item visual checklist at the top: [ ] Aadhaar Card  [ ] PAN Card  [ ] Electricity Bill  [ ] Bank Passbook. Each item gets a green checkmark (✔) when the file is successfully uploaded. The "Submit Order" button remains DISABLED (greyed out) until all 4 checkmarks are green. This is a hard system constraint, not just a UI hint.
+5. SCREEN-BY-SCREEN APPLICATION SPECIFICATION
+5.1 Login Screen
+URL: /login (public, no auth required)
+Username field (text input).
+Password field (password input with show/hide toggle).
+Login button.
+On successful login: JWT token issued, stored in httpOnly cookie or localStorage. User redirected to their role-specific dashboard.
+On failed login: "Invalid credentials" error shown after 3 failed attempts. After 5 failures: account locked for 15 minutes. Admin can manually unlock accounts.
+Forgot password link: sends reset email (if email is configured for the user).
+No "Register" link — all accounts are created by Admin.
+5.2 Dashboard (Home Screen)
+Each role sees a different dashboard. Layout: sidebar navigation (left) + main content area (right). Sidebar collapses to icons on mobile.
+Admin / Sales Head Dashboard
+Summary Cards (top row):
+Total Leads (all-time)
+Active Leads (not in terminal stages)
+Meetings Booked (current month)
+Sales Done (current month)
+Today's Follow-Ups (due today)
+Conversion Rate % (Sales Done / Total Leads × 100)
+Pipeline Stage Bar Chart: horizontal bar showing lead count in each of the 14 stages.
+Team Performance Table: each Manager's name, lead count, meetings booked, sales done this month.
+Recent Activity Feed: last 20 lead status changes across all teams, with timestamp, user, lead name.
+Quick-Add Lead button (floating action button, top-right).
+Live Link button: opens the real-time war-room view (Section 6).
+Manager Dashboard
+Same summary cards but filtered to their own team's leads only.
+Team Performance Table: their TLs and Consultants with individual stats.
+Leads requiring attention: flagged leads (unreachable, decision pending, hot leads without follow-up).
+Recent Activity Feed: only their team's activity.
+Team Leader Dashboard
+Cards: My Leads, Meetings Booked, Follow-Ups Due Today (all filtered to their assigned leads + team).
+Team Performance: only their assigned Consultants.
+Lead List (filtered to their team).
+Consultant Dashboard
+Cards: My Active Leads, Meetings Booked, Follow-Ups Due Today (only their own leads).
+Today's Follow-Up List: leads scheduled for follow-up today, sorted by time.
+Call Later Reminders: upcoming call-back reminders in next 24 hours.
+Quick-view lead list with status badges.
+PSA Dashboard
+Cards: Assigned Leads, Calls Today, DNP Count, Follow-Up Count.
+Lead queue: list of fresh/follow-up leads to call, in assigned order.
+Finance Dashboard
+Cards: Pending Orders (submitted but not processed), Completed Orders, Total Value Processed.
+Order Queue: list of Stage 13 leads waiting for finance processing.
+Document Checklist Status: which orders have all 4 docs, which are missing.
+Operations Dashboard
+Cards: Pending Installations, In-Progress, Completed.
+Installation Queue: orders fully processed by finance, ready for installation.
+Status update for each job: Scheduled / In-Progress / Completed.
+5.3 Lead List Screen (CRM Pipeline View)
+URL: /leads (role-filtered — each role sees only their authorized leads)
+Display Columns:
+Lead ID (auto-generated, e.g. #SL-00042)
+Customer Name
+Mobile Number (partially masked for PSA role: e.g., 98765XXXXX)
+City
+Connection Type badge
+Status badge (colour-coded — see colour map below)
+Assigned Consultant name
+Last Remark (first 40 chars, truncated with "...")
+Last Updated (relative time: "2 hours ago")
+Action buttons: View, Edit (role-dependent)
+Status Badge Colour Map:
+Stage
+Badge Colour
+Label Text
+1 — Fresh Lead
+Blue (#3B82F6)
+Fresh Lead
+2 — DNP
+Grey (#9CA3AF)
+DNP
+3 — Follow Up (Warm)
+Orange (#F59E0B)
+Follow Up — Warm
+3 — Follow Up (Hot)
+Red-Orange (#EF4444)
+Follow Up — HOT 🔥
+4 — Not Interested
+Dark Red (#991B1B)
+Not Interested
+5 — Call Later
+Purple (#8B5CF6)
+Call Later
+7 — Decision Pending
+Yellow (#EAB308)
+Decision Pending
+8 — Meeting Booked
+Teal (#0D9488)
+Meeting Booked 📅
+9 — Meeting Done
+Cyan (#0EA5E9)
+Meeting Done
+13 — Sale Done
+Green (#16A34A)
+✅ SALE DONE
+6, 12 — Disqualified
+Dark Grey (#374151)
+Disqualified
+Filter Options (always visible above the list):
+Filter by Status (multi-select dropdown of all 14 stages)
+Filter by Assigned Consultant (dropdown)
+Filter by City (text search)
+Filter by Connection Type (Residential / Commercial / Industrial)
+Filter by Date Range (leads created between X and Y)
+Filter by Lead Source
+Show Active Only / Show All (including disqualified) toggle
+Search bar: live search by Name or Phone Number (searches as user types, no submit needed)
+Pagination & Sorting:
+Default: 25 leads per page. Options: 25, 50, 100.
+Sort by: Lead ID, Date Created, Last Updated, Status (default: Last Updated DESC).
+URL should reflect current filters and page for deep-linking: /leads?status=3&city=Lucknow&page=2
+5.4 Lead Detail Page
+URL: /leads/:id — Opens when any lead row is clicked.
+Header Section:
+Customer name (large), Lead ID, status badge, assigned consultant, assigned TL, assigned Manager.
+Quick action buttons: Change Status, Add Remark, Book Meeting, View History.
+Information Tabs (tab navigation):
+Tab 1 — Lead Info: All Form A data (customer name, phone, address, connection type, sanctioned load, etc.)
+Tab 2 — Activity Log: Complete chronological history of all status changes, remarks, and form submissions. Each entry shows: Timestamp, User who made the change, Previous Status → New Status, Remark text.
+Tab 3 — Meeting Details: Visible only if lead has reached Stage 8+. Shows all Form B data. Shows meeting outcome if Stage 14 was reached.
+Tab 4 — Order / Documents: Visible only at Stage 13+. Shows Form D data. Shows document upload status and download links for each document.
+Tab 5 — Remarks: All remarks entered across all status changes, in reverse-chronological order.
+Status Change Widget (right sidebar or bottom panel):
+Current status shown prominently.
+Dropdown to select new status (shows only valid transitions for current stage and user role).
+Remark text area (required before status change can be saved).
+"Save Status Change" button.
+If new status = Meeting Booked → Form B modal opens automatically.
+If new status = Sale Done (or Stage 14 → Sale Done) → Form D modal opens automatically.
+5.5 Add New Lead Form Screen
+URL: /leads/new — Contains Form A (see Section 4.1). Accessible to Manager, TL, Admin, Sales Head.
+On submit: Lead created with Status = Fresh Lead (Stage 1). Timestamp recorded.
+If "Assign Immediately" toggle is ON: shows TL and Consultant dropdowns.
+If "Assign Later" toggle is ON: lead created unassigned and appears in Manager's unassigned queue.
+Success: redirect to Lead Detail Page of newly created lead.
+5.6 Team Management Screen
+URL: /team — Accessible to Admin (all teams) and Manager (their team only).
+User list table: Name, Role, Email, Phone, Leads Assigned, Active Status.
+Add User button: form with fields: Full Name, Email, Phone, Role (dropdown), Password (auto-generated + sent via email), Reports To (Manager assignment).
+Edit User: change name, email, role, assignment. Cannot edit own role.
+Deactivate User: soft-delete. User cannot log in. Their leads are reassigned to Manager.
+Reactivate User button.
+View Performance: link to filtered report for that specific user.
+5.7 Reports & Analytics Screen
+URL: /reports — Role-filtered data visibility applies here too.
+Date Range Picker at top (default: current month). Applies to all charts and tables below.
+Report Sections:
+Overview Cards: Total Leads, Active, Sales Done, Meetings Booked, Conversion Rate, Avg Time-to-Sale.
+Lead Stage Distribution Chart: Pie or donut chart showing percentage in each stage.
+Team Performance Table: Consultant name | Leads Assigned | Calls Made | Meetings Booked | Sales Done | Conversion %.
+Daily/Weekly/Monthly Trend Chart: Line graph of leads created and sales closed over time.
+City-wise Distribution: Bar chart of leads by city.
+Lead Source Analysis: Where leads came from (WhatsApp vs Referral vs Cold Call, etc.).
+Stage Funnel: Visual funnel showing drop-off at each stage.
+Export to Excel button: exports current filtered view as .xlsx file.
+Export to PDF button: exports current report as PDF.
+6. LIVE LINK FEATURE (ADMIN WAR-ROOM VIEW)
+6.1 Overview
+The Live Link is a real-time monitoring dashboard exclusively for Admin (Deepak Sir) and Sales Head. It requires no page refresh — data updates automatically using WebSocket (Socket.io) or polling every 5-10 seconds. It is designed to give a "war room" view of the entire sales operation at any moment.
+6.2 URL & Access
+URL: /live (protected route — redirects to login if user is not Admin or Sales Head)
+Can also be shared as a secure URL with a time-limited token for read-only viewing on a TV/monitor.
+6.3 Sections of the Live Link Screen
+Section A — Live Activity Feed (Left Column)
+A real-time scrolling feed of the last 30 lead status changes across all teams.
+Each entry shows: Time (HH:MM:SS), Consultant Name, Customer Name, Stage Changed From → To, Remark snippet.
+New entries appear at the top with a brief highlight animation (yellow flash).
+Colour-coded by stage (using same badge colours as main pipeline).
+Section B — Stage Distribution (Center)
+Live count of how many leads are in each of the 14 stages right now.
+Displayed as a horizontal stacked bar or a numbered grid with counts.
+Updates in real-time as statuses change.
+Section C — Online Users (Right Column)
+List of all consultants and team members currently logged into the system.
+Green dot = online/active (has made an action in last 5 minutes).
+Yellow dot = idle (logged in but no activity in last 5-30 minutes).
+Grey dot = offline (not logged in or session expired).
+Shows which lead each online consultant is currently viewing or editing.
+Section D — Today's KPI Bar (Top)
+Sales Done Today | Meetings Booked Today | New Leads Today | Active Consultants Online
+Each counter increments in real-time as events happen.
+6.4 Technical Implementation Notes
+Use Socket.io on the server. Emit events on every lead status change: socket.emit("statusChange", payload).
+Live Link page subscribes to the "statusChange" channel.
+User presence: emit "heartbeat" every 60 seconds from each active session. Server tracks last-seen timestamp per user.
+For sessions without Socket.io, fall back to polling: GET /api/live/feed every 10 seconds.
+Performance: limit live feed to last 30 events. Archive older events to database only.
+7. NOTIFICATIONS & REMINDERS SYSTEM
+7.1 In-App Notifications
+All notifications appear in a bell icon dropdown in the top navigation bar. Unread count badge shown on the bell icon. Clicking a notification navigates to the relevant lead.
+Event
+Who Receives Notification
+Notification Text Template
+Meeting Booked (Stage 8)
+Manager, Meeting Executive, Admin
+"Meeting booked: [Name] on [Date] at [Time]. Lead #[ID]"
+Sale Done (Stage 13)
+Consultant, TL, Manager, Admin
+"🎉 Sale closed! [Name] — Lead #[ID] by [Consultant]"
+Follow-Up Due (Stage 3)
+Assigned Consultant
+"Follow-up due: [Name] — scheduled for [Time]"
+Call Later Due (Stage 5)
+Assigned Consultant
+"Call back reminder: [Name] at [Time]"
+New Lead Assigned
+Assigned Consultant / TL
+"New lead assigned to you: [Name] — Lead #[ID]"
+Lead Reassigned
+Old Consultant, New Consultant
+"Lead #[ID] has been reassigned from you to [Name]"
+Document Uploaded (Order)
+Finance Team
+"Order #[ID] has new document: [Doc Type]"
+Order Submitted to Finance
+Finance Team, Admin
+"New order submitted for processing: Order #[ID]"
+Unreachable Lead Flag
+Manager, TL
+"Lead #[ID] flagged unreachable after 5 failed attempts"
+7.2 Scheduled Reminders
+Follow-Up Reminder: fires 30 minutes before the scheduled follow-up time. Only fires if lead is still in Stage 3 or 5.
+Call Later Reminder: fires at the exact scheduled time. Consultant sees a popup modal with lead details and a "Call Now" button.
+Meeting Reminder: fires 2 hours before the meeting time and again 30 minutes before. Sent to Meeting Executive.
+Daily Summary Email (optional): each morning at 8 AM, send email to Admin with: leads added yesterday, meetings booked, sales closed.
+8. DATABASE SCHEMA
+8.1 Table: users
+Column
+Type
+Nullable
+Description
+id
+INT PK AUTO
+No
+Primary key
+name
+VARCHAR(100)
+No
+Full name
+email
+VARCHAR(150) UNIQUE
+No
+Login username / email
+phone
+VARCHAR(15)
+Yes
+Contact number
+password_hash
+VARCHAR(255)
+No
+bcrypt hashed password
+role
+ENUM
+No
+admin | sales_head | manager | tl | consultant | psa | finance | operations
+reports_to
+INT FK → users.id
+Yes
+Direct supervisor's user ID
+is_active
+BOOLEAN
+No
+Default TRUE. FALSE = deactivated account
+last_seen_at
+TIMESTAMP
+Yes
+For Live Link presence tracking
+created_at
+TIMESTAMP
+No
+Account creation time
+updated_at
+TIMESTAMP
+No
+Last profile update
+8.2 Table: leads
+Column
+Type
+Nullable
+Description
+id
+INT PK AUTO
+No
+Primary key
+lead_code
+VARCHAR(20) UNIQUE
+No
+Human-readable ID e.g. SL-00042
+customer_name
+VARCHAR(100)
+No
+Customer full name
+mobile
+VARCHAR(15) UNIQUE
+No
+Primary mobile number
+mobile_alt
+VARCHAR(15)
+Yes
+Alternate number
+connection_type
+ENUM
+No
+residential | commercial | industrial
+sanctioned_load_kw
+DECIMAL(6,2)
+Yes
+From electricity bill
+address
+TEXT
+No
+Full address
+pin_code
+CHAR(6)
+No
+6-digit pin code
+city
+VARCHAR(100)
+No
+Auto-filled or manually entered
+state
+VARCHAR(100)
+No
+Auto-filled or manually entered
+lead_source
+VARCHAR(50)
+Yes
+whatsapp | cold_call | referral | walk_in | google_ad | other
+status
+INT (1-14)
+No
+Current stage number. Default: 1
+status_sub
+VARCHAR(20)
+Yes
+For Stage 3: warm | hot. For Stage 12: reason.
+assigned_manager_id
+INT FK → users.id
+Yes
+Assigned Manager
+assigned_tl_id
+INT FK → users.id
+Yes
+Assigned Team Leader
+assigned_consultant_id
+INT FK → users.id
+Yes
+Assigned Consultant
+followup_at
+DATETIME
+Yes
+Scheduled follow-up/callback time
+is_active
+BOOLEAN
+No
+FALSE for Not Interested / Disqualified leads
+created_by
+INT FK → users.id
+No
+Who created this lead
+created_at
+TIMESTAMP
+No
+Creation timestamp
+updated_at
+TIMESTAMP
+No
+Last update timestamp
+8.3 Table: lead_activity_log
+Column
+Type
+Nullable
+Description
+id
+INT PK AUTO
+No
+Primary key
+lead_id
+INT FK → leads.id
+No
+Which lead this log belongs to
+user_id
+INT FK → users.id
+No
+Who made the change
+from_status
+INT
+Yes
+Previous stage number (null for creation)
+to_status
+INT
+No
+New stage number
+remark
+TEXT
+Yes
+Notes entered at this stage change
+created_at
+TIMESTAMP
+No
+When this log entry was created
+8.4 Table: meeting_bookings
+Created when a lead reaches Stage 8. One row per meeting booking per lead.
+Column
+Type
+Nullable
+Description
+id
+INT PK AUTO
+No
+Primary key
+lead_id
+INT FK → leads.id
+No
+Linked lead
+address
+TEXT
+No
+Meeting address
+pin_code
+CHAR(6)
+No
+Meeting pin code
+mobile
+VARCHAR(15)
+No
+Contact for meeting day
+mobile_alt
+VARCHAR(15)
+Yes
+Alternate contact
+meeting_date
+DATE
+No
+Scheduled meeting date
+meeting_time
+TIME
+No
+Scheduled time
+avg_monthly_bill
+DECIMAL(10,2)
+No
+Average electricity bill ₹
+connection_type
+ENUM
+No
+residential | commercial | industrial
+assigned_executive_id
+INT FK → users.id
+No
+Sales executive conducting the visit
+notes
+TEXT
+Yes
+Special instructions
+created_at
+TIMESTAMP
+No
+Booking creation time
+8.5 Table: orders (Order Punching — Stage 13)
+Column
+Type
+Nullable
+Description
+id
+INT PK AUTO
+No
+Primary key
+lead_id
+INT FK → leads.id
+No
+Linked lead (1:1)
+order_code
+VARCHAR(20) UNIQUE
+No
+e.g. ORD-00018
+connection_number
+VARCHAR(100)
+No
+Electricity connection/meter number
+system_size_kw
+DECIMAL(6,2)
+No
+Solar system size in kW
+total_value
+DECIMAL(12,2)
+No
+Total order value ₹
+down_payment
+DECIMAL(12,2)
+No
+Upfront payment ₹
+payment_method
+ENUM
+No
+cash | upi | cheque | neft | bank_transfer
+transaction_ref
+VARCHAR(100)
+Yes
+UPI ID / Cheque no / NEFT ref
+remaining_amount
+DECIMAL(12,2) COMPUTED
+Auto
+total_value - down_payment
+remaining_method
+ENUM
+No
+finance | cash | emi
+finance_provider
+VARCHAR(100)
+Yes
+Bank/NBFC name if finance
+client_type
+ENUM
+No
+on_grid | off_grid | hybrid
+subsidy_applicable
+BOOLEAN
+No
+Government subsidy flag
+subsidy_amount
+DECIMAL(12,2)
+Yes
+Subsidy ₹ if applicable
+additional_notes
+TEXT
+Yes
+Special requirements
+submitted_by
+INT FK → users.id
+No
+Consultant who submitted
+finance_processed_by
+INT FK → users.id
+Yes
+Finance member who verified
+status
+ENUM
+No
+draft | submitted | finance_verified | ops_assigned | completed
+created_at
+TIMESTAMP
+No
+Order creation time
+updated_at
+TIMESTAMP
+No
+Last update
+8.6 Table: order_documents
+Column
+Type
+Nullable
+Description
+id
+INT PK AUTO
+No
+Primary key
+order_id
+INT FK → orders.id
+No
+Linked order
+doc_type
+ENUM
+No
+aadhaar | pan | electricity_bill | bank_passbook
+file_path
+VARCHAR(500)
+No
+S3/storage path. Never expose direct URL.
+file_name
+VARCHAR(255)
+No
+Original filename
+file_size_bytes
+INT
+No
+For display
+mime_type
+VARCHAR(100)
+No
+image/jpeg | image/png | application/pdf
+uploaded_by
+INT FK → users.id
+No
+Who uploaded this document
+uploaded_at
+TIMESTAMP
+No
+Upload timestamp
+8.7 Table: notifications
+Column
+Type
+Nullable
+Description
+id
+INT PK AUTO
+No
+Primary key
+user_id
+INT FK → users.id
+No
+Who receives this notification
+type
+VARCHAR(50)
+No
+meeting_booked | sale_done | follow_up | etc.
+title
+VARCHAR(200)
+No
+Short notification title
+body
+TEXT
+No
+Full notification message
+lead_id
+INT FK → leads.id
+Yes
+Related lead (for deep-link)
+is_read
+BOOLEAN
+No
+Default FALSE
+created_at
+TIMESTAMP
+No
+When sent
+9. API ENDPOINTS SPECIFICATION
+All endpoints use the prefix /api/v1/. All protected endpoints require Authorization: Bearer <JWT> header. All responses return JSON with structure: { success: true|false, data: {}, message: "", errors: {} }.
+9.1 Authentication
+Method
+Endpoint
+Auth Required
+Description
+POST
+/auth/login
+No
+Login. Returns JWT token + user role + profile.
+POST
+/auth/logout
+Yes
+Invalidate session / token.
+POST
+/auth/forgot-password
+No
+Send password reset email.
+POST
+/auth/reset-password
+Token in body
+Reset password with token.
+GET
+/auth/me
+Yes
+Get current user profile and permissions.
+9.2 Leads
+Method
+Endpoint
+Auth
+Description
+GET
+/leads
+All roles
+List leads (role-filtered). Supports query params: status, city, consultant_id, page, limit, sort.
+POST
+/leads
+Manager, TL, Sales Head, Admin
+Create new lead (Form A data).
+GET
+/leads/:id
+All roles (own leads)
+Get full lead detail including activity log, meeting, order.
+PATCH
+/leads/:id
+Role-dependent
+Update lead info (Form A fields only).
+DELETE
+/leads/:id
+Admin only
+Soft-delete a lead.
+POST
+/leads/:id/status
+Role + transition rules
+Change lead status. Body: { to_status, remark, sub_status? }. Validates transition rules.
+POST
+/leads/:id/assign
+Manager, TL, Admin
+Assign/reassign TL or Consultant.
+GET
+/leads/:id/activity
+All roles (own leads)
+Get full activity log for a lead.
+POST
+/leads/bulk-import
+Admin only
+Import leads from CSV/Excel. Returns import result summary.
+9.3 Meetings
+Method
+Endpoint
+Auth
+Description
+POST
+/leads/:id/meeting
+Consultant, TL
+Create meeting booking (Form B). Fires when Stage 8 is set.
+GET
+/leads/:id/meeting
+Authorized roles
+Get meeting details for a lead.
+PATCH
+/leads/:id/meeting
+Consultant, TL, Manager
+Update meeting details (reschedule, etc.).
+GET
+/meetings
+Manager, Admin, Sales Head
+List all meetings with filters: date range, executive, status.
+9.4 Orders
+Method
+Endpoint
+Auth
+Description
+POST
+/leads/:id/order
+Consultant (at Stage 13)
+Create order record (Form D). Status = draft.
+GET
+/leads/:id/order
+Consultant, Finance, Admin
+Get order for a lead.
+PATCH
+/orders/:id
+Finance Team, Admin
+Update order (finance details, verification).
+POST
+/orders/:id/submit
+Consultant
+Submit order to Finance (after all 4 docs uploaded). Changes status: draft → submitted.
+POST
+/orders/:id/verify
+Finance Team
+Finance marks order as verified. Status: submitted → finance_verified.
+POST
+/orders/:id/documents
+Consultant, Finance
+Upload document. Multipart/form-data. Field: doc_type, file.
+GET
+/orders/:id/documents/:doc_id
+Authorized roles
+Get signed download URL for document (time-limited).
+GET
+/orders
+Finance, Operations, Admin
+List all orders with filters.
+9.5 Users & Team Management
+Method
+Endpoint
+Auth
+Description
+GET
+/users
+Admin, Manager (own team)
+List users. Manager sees only their team members.
+POST
+/users
+Admin only
+Create new user. Auto-generates password, sends invite email.
+GET
+/users/:id
+Admin, Manager (own team)
+Get user profile + performance stats.
+PATCH
+/users/:id
+Admin
+Update user info or role.
+POST
+/users/:id/deactivate
+Admin
+Soft-deactivate. Leads reassigned to manager.
+POST
+/users/:id/reactivate
+Admin
+Reactivate deactivated user.
+9.6 Reports & Analytics
+Method
+Endpoint
+Auth
+Description
+GET
+/reports/overview
+All mgmt roles
+Summary KPIs: total leads, sales, conversion rate, etc.
+GET
+/reports/pipeline
+All mgmt roles
+Lead count per stage.
+GET
+/reports/team-performance
+Manager, Admin, Sales Head
+Per-consultant stats.
+GET
+/reports/trend
+Admin, Sales Head
+Daily/weekly/monthly trend. Params: period=daily|weekly|monthly, from, to.
+GET
+/reports/export
+Admin, Manager, Finance
+Export filtered report as .xlsx. Returns file download.
+GET
+/live/feed
+Admin, Sales Head
+Latest 30 status changes for Live Link polling fallback.
+GET
+/live/presence
+Admin, Sales Head
+Online status of all users.
+10. BUSINESS LOGIC & EDGE CASES
+10.1 Duplicate Lead Prevention
+Mobile number is the unique identifier for a lead. The system must check for duplicates on every new lead creation.
+Check is case-insensitive and strips spaces/dashes from the number before comparison.
+If duplicate found: show warning with existing lead ID, assigned consultant, and current status. Block creation.
+Admin can override this by clicking "Create Anyway" — this creates a new lead and adds a system note linking to the duplicate.
+10.2 Lead Reassignment Rules
+When a Consultant is deactivated, all their active leads (not in terminal stages) must be automatically reassigned to their TL.
+If the TL is also deactivated, leads go to the Manager.
+Both the old and new assignee receive a notification.
+The reassignment is logged in the lead activity log with reason "User Deactivated."
+Admin can manually reassign any lead at any time without restriction.
+10.3 Unreachable Lead Auto-Flagging
+If a lead has 5 consecutive log entries where status = DNP (Stage 2) or Switch Off (Stage 11) or Call Disconnected (Stage 10), the system automatically sets a flag: is_unreachable = true.
+The Manager and TL receive a notification.
+The lead appears in a special "Unreachable" filter on the Manager dashboard.
+A Manager can dismiss the flag with a remark (e.g., "Will try again next week").
+10.4 Order Submission Guard
+The Order Punching Form (Form D) Submit button is HARD-DISABLED in the backend, not just the frontend.
+The API endpoint POST /orders/:id/submit must check: count of uploaded documents with doc_types aadhaar, pan, electricity_bill, bank_passbook must all be present. If any is missing, return HTTP 422 with error.
+Frontend validation is also required, but backend is the source of truth.
+10.5 Status Change with Forms
+Changing to Stage 8 (Meeting Booked): The API call to PATCH status must include all Form B fields in the same request body, or Form B must be submitted first (creating a meeting_bookings record) before the status change is accepted.
+Recommended: combined endpoint POST /leads/:id/status that handles both in a single DB transaction.
+If Form B data is missing when trying to set status = 8, return HTTP 422.
+10.6 Data Visibility Enforcement (Backend)
+ALL API responses must filter data based on role. Never rely on frontend filtering alone.
+Consultant GET /leads must return ONLY leads where assigned_consultant_id = current user ID.
+PSA GET /leads must return ONLY leads assigned to them, with mobile numbers masked (last 5 digits replaced with XXXXX).
+Manager GET /leads must return ONLY leads where assigned_manager_id = current user ID.
+Finance GET /orders must return ONLY orders in status: submitted | finance_verified | ops_assigned | completed.
+Any attempt to access a lead/order outside the user's visibility scope must return HTTP 403 Forbidden.
+10.7 Bulk Lead Import
+Admin can upload an Excel (.xlsx) or CSV file to import leads in bulk.
+Required columns in the file: customer_name, mobile, connection_type, sanctioned_load_kw, address, pin_code.
+System validates each row: check for duplicates, validate phone format, validate required fields.
+Import result: show a summary table — X leads imported successfully, Y leads skipped (with reasons: duplicate, invalid phone, missing required field).
+Failed rows are available to download as a separate error report.
+Maximum import size: 1,000 leads per file.
+11. DEVELOPMENT ROADMAP
+The application should be built in 4 phases over approximately 8-10 weeks. Each phase produces a testable, deployable build.
+Phase
+Duration
+Deliverables
+Phase 1
+Foundation
+2–3 Weeks
+User login system (JWT + roles). DB schema (users, leads, activity_log). Add/Edit lead (Form A). 14 lead statuses working. Basic lead list with filters. Remark system at each status change. Role-based data visibility (backend). Basic dashboard with summary cards.
+Phase 2
+Pipeline & Forms
+2–3 Weeks
+Meeting Booking Form (Stage 8 — Form B). Order Punching Form (Stage 13 — Form D). Document upload (4 mandatory docs). Meeting Ended sub-status form (Stage 14). Team assignment by Manager/TL. Notification system (in-app only). Follow-Up and Call Later reminders.
+Phase 3
+Teams & Access
+2–3 Weeks
+Team Management screen (add/edit/deactivate users). Full access control matrix enforcement (all 8 roles). PSA Team separate view + mobile masking. Finance & Operations dashboards. Consultant-only lead visibility enforcement. Duplicate lead detection. Lead reassignment on deactivation. Unreachable lead auto-flagging. Bulk lead import.
+Phase 4
+Reports & Live
+2 Weeks
+Dashboard analytics and charts (Chart.js or Recharts). Reports screen with date filters. Export to Excel / PDF. Live Link (real-time war-room view using Socket.io). Push notifications (optional). Stage funnel visualization. Performance trend charts. Daily summary email (optional).
+12. SECURITY & NON-FUNCTIONAL REQUIREMENTS
+12.1 Security Requirements
+All passwords must be hashed using bcrypt (minimum 10 rounds). Plain-text passwords must never be stored.
+JWT tokens must have an expiry of 24 hours. Refresh token mechanism recommended for mobile sessions.
+All API endpoints must validate and sanitize input to prevent SQL injection and XSS.
+File uploads must be validated: check MIME type server-side (not just extension). Only allow: image/jpeg, image/png, application/pdf.
+Uploaded files must NOT be accessible via direct URL. All access must go through a signed URL endpoint with expiry.
+Implement rate limiting: max 10 failed login attempts per IP per hour. Max 100 API requests per minute per user.
+CORS must be configured to allow only the app's domain. No wildcard (*) in production.
+Sensitive data (Aadhaar, PAN numbers) must not be logged in application logs.
+12.2 Performance Requirements
+Lead list page must load in under 2 seconds for up to 10,000 leads.
+API response time must be under 500ms for 95th percentile requests.
+Database indexes required on: leads.mobile, leads.status, leads.assigned_consultant_id, leads.assigned_manager_id, lead_activity_log.lead_id, notifications.user_id.
+File uploads should be handled asynchronously — the API returns immediately with a job ID, and the client polls for upload status.
+12.3 UI/UX Requirements
+The application must be fully responsive and usable on mobile browsers (375px+ width).
+Consultants will primarily use the app on mobile phones — the Lead Detail page and status change workflow must be mobile-first.
+All tables must be horizontally scrollable on mobile.
+Loading states must be shown for all async operations (spinners, skeleton loaders).
+All destructive actions (delete lead, deactivate user) must have a confirmation dialog.
+Form validation errors must be shown inline, next to the relevant field — not in a generic alert.
+The application must work offline in read-only mode (service worker caching recent leads). Status changes must fail gracefully when offline.
+12.4 Audit & Compliance
+Every status change is permanently logged in lead_activity_log. Logs must never be deletable by any role including Admin.
+Every document upload is logged with uploader, timestamp, and file hash (SHA-256).
+Admin can export a full audit trail for any lead as PDF.
+Data retention: leads and logs must be retained for minimum 7 years.
+13. SUMMARY CHECKLIST FOR DEVELOPERS
+Use this checklist to verify completeness before each phase release:
+Authentication & Roles
+8 roles implemented with distinct dashboards
+JWT login/logout working
+Role-based API middleware on every protected route
+Data visibility rules enforced server-side
+Lead Management
+Form A — Add Lead with duplicate check
+All 14 stages working with valid transition enforcement
+Remark mandatory on every status change
+Stage 3 — Follow-Up sub-type (Warm/Hot) + scheduled reminder
+Stage 5 — Call Later + scheduled callback notification
+Stage 8 — Meeting Booking Form (Form B) blocks status save until complete
+Stage 12 — Can't Fit Solar with reason dropdown
+Stage 13 — Order Punching Form (Form D) unlocked
+Stage 14 — Meeting Ended sub-form (Form C) with 3 outcomes
+Unreachable lead auto-flagging after 5 failed attempts
+Bulk lead import with error report
+Forms & Documents
+Form B fields validated, meeting saved to meeting_bookings table
+Form D with 4 mandatory file uploads (Aadhaar, PAN, Bill, Passbook)
+Document checklist UI blocks submit until all 4 uploaded
+Backend also enforces document check — not just frontend
+Signed document download URLs (not direct links)
+Notifications
+In-app notification bell with unread count
+Notifications for: meeting booked, sale done, lead assigned, follow-up due
+Follow-up + call-later reminder fires at scheduled time
+Meeting reminder 2 hours and 30 minutes before
+Live Link
+WebSocket (Socket.io) real-time activity feed
+Online/idle/offline user presence
+Today's KPI counters (live)
+Admin + Sales Head access only
+Reports
+Pipeline stage distribution
+Team performance per consultant
+Trend chart (daily/weekly/monthly)
+Export to Excel and PDF
+Infrastructure
+HTTPS enabled
+File storage in private bucket with signed URLs
+Rate limiting on auth and API
+Audit log non-deletable
+Database indexes on high-query columns
+SolarCRM — Build Specification v2.0
+Prepared for Deepak Sir & Development Team | June 2025
+This document is complete. A developer should be able to build the full system from this specification alone.

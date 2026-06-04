@@ -1,0 +1,183 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                   Int                 @id @default(autoincrement())
+  name                 String
+  email                String              @unique
+  phone                String?
+  passwordHash         String
+  role                 String              // admin | sales_head | manager | tl | consultant | psa | finance | operations
+  reportsTo            Int?
+  isActive             Boolean             @default(true)
+  lastSeenAt           DateTime?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  // Supervisor relation
+  supervisor           User?               @relation("UserSupervisor", fields: [reportsTo], references: [id])
+  subordinates         User[]              @relation("UserSupervisor")
+
+  // Assigned Leads relations
+  managedLeads         Lead[]              @relation("ManagerLeads")
+  tlLeads              Lead[]              @relation("TlLeads")
+  consultantLeads      Lead[]              @relation("ConsultantLeads")
+  createdLeads         Lead[]              @relation("LeadCreator")
+
+  // Other relationships
+  logs                 LeadActivityLog[]
+  assignedMeetings     MeetingBooking[]    @relation("MeetingExecutive")
+  submittedOrders      Order[]             @relation("SubmittedOrders")
+  verifiedOrders       Order[]             @relation("VerifiedOrders")
+  uploadedDocuments    OrderDocument[]
+  notifications        Notification[]
+}
+
+model Lead {
+  id                   Int                 @id @default(autoincrement())
+  leadCode             String              @unique
+  customerName         String
+  mobile               String              @unique
+  mobileAlt            String?
+  connectionType       String              // residential | commercial | industrial
+  sanctionedLoadKw     Float?
+  address              String
+  pinCode              String
+  city                 String
+  state                String
+  leadSource           String?             // whatsapp | cold_call | referral | walk_in | google_ad | other
+  status               Int                 @default(1) // 1 to 14
+  statusSub            String?             // For Stage 3: warm | hot. For Stage 12: reason, etc.
+  assignedManagerId    Int?
+  assignedTlId         Int?
+  assignedConsultantId Int?
+  followupAt           DateTime?
+  isUnreachable        Boolean             @default(false)
+  isActive             Boolean             @default(true)
+  createdById          Int
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  // Relations
+  manager              User?               @relation("ManagerLeads", fields: [assignedManagerId], references: [id])
+  tl                   User?               @relation("TlLeads", fields: [assignedTlId], references: [id])
+  consultant           User?               @relation("ConsultantLeads", fields: [assignedConsultantId], references: [id])
+  creator              User                @relation("LeadCreator", fields: [createdById], references: [id])
+
+  activityLogs         LeadActivityLog[]
+  meetings             MeetingBooking[]
+  order                Order?
+  notifications        Notification[]
+
+  @@index([mobile])
+  @@index([status])
+  @@index([assignedConsultantId])
+  @@index([assignedManagerId])
+}
+
+model LeadActivityLog {
+  id                   Int                 @id @default(autoincrement())
+  leadId               Int
+  userId               Int
+  fromStatus           Int?
+  toStatus             Int
+  remark               String?
+  createdAt            DateTime            @default(now())
+
+  // Relations
+  lead                 Lead                @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user                 User                @relation(fields: [userId], references: [id])
+
+  @@index([leadId])
+}
+
+model MeetingBooking {
+  id                   Int                 @id @default(autoincrement())
+  leadId               Int
+  address              String
+  pinCode              String
+  mobile               String
+  mobileAlt            String?
+  meetingDate          String              // YYYY-MM-DD
+  meetingTime          String              // HH:MM
+  avgMonthlyBill       Float
+  connectionType       String              // residential | commercial | industrial
+  assignedExecutiveId  Int
+  notes                String?
+  createdAt            DateTime            @default(now())
+
+  // Relations
+  lead                 Lead                @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  executive            User                @relation("MeetingExecutive", fields: [assignedExecutiveId], references: [id])
+}
+
+model Order {
+  id                   Int                 @id @default(autoincrement())
+  leadId               Int                 @unique
+  orderCode            String              @unique
+  connectionNumber     String
+  systemSizeKw         Float
+  totalValue           Float
+  downPayment          Float
+  paymentMethod        String              // cash | upi | cheque | neft | bank_transfer
+  transactionRef       String?
+  remainingMethod      String              // finance | cash | emi
+  financeProvider      String?
+  clientType           String              // on_grid | off_grid | hybrid
+  subsidyApplicable    Boolean
+  subsidyAmount        Float?
+  additionalNotes      String?
+  submittedById        Int
+  financeProcessedById Int?
+  status               String              @default("draft") // draft | submitted | finance_verified | ops_assigned | completed
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  // Relations
+  lead                 Lead                @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  submittedBy          User                @relation("SubmittedOrders", fields: [submittedById], references: [id])
+  financeProcessedBy   User?               @relation("VerifiedOrders", fields: [financeProcessedById], references: [id])
+  documents            OrderDocument[]
+}
+
+model OrderDocument {
+  id                   Int                 @id @default(autoincrement())
+  orderId              Int
+  docType              String              // aadhaar | pan | electricity_bill | bank_passbook
+  filePath             String
+  fileName             String
+  fileSizeOctets       Int
+  mimeType             String
+  uploadedById         Int
+  uploadedAt           DateTime            @default(now())
+
+  // Relations
+  order                Order               @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  uploader             User                @relation(fields: [uploadedById], references: [id])
+}
+
+model Notification {
+  id                   Int                 @id @default(autoincrement())
+  userId               Int
+  type                 String              // meeting_booked | sale_done | follow_up | etc.
+  title                String
+  body                 String
+  leadId               Int?
+  isRead               Boolean             @default(false)
+  createdAt            DateTime            @default(now())
+
+  // Relations
+  user                 User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lead                 Lead?               @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+}
