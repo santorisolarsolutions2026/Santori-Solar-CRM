@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
-import { Sun, Eye, EyeOff, Lock, Mail, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -46,31 +47,38 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-[#090b11] overflow-hidden px-4">
+    <div className="relative min-h-screen flex items-center justify-center bg-zinc-950 overflow-hidden px-4 font-sans selection:bg-yellow-400 selection:text-black">
       {/* Dynamic Background Glows */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-amber-500/10 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-600/10 blur-[120px] pointer-events-none" />
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-yellow-500/5 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-yellow-500/5 blur-[120px] pointer-events-none" />
 
       {/* Grid Pattern Background */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f29370a_1px,transparent_1px),linear-gradient(to_bottom,#1f29370a_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none opacity-20" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f293706_1px,transparent_1px),linear-gradient(to_bottom,#1f293706_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none opacity-20" />
 
       <div className="relative w-full max-w-md">
         {/* Decorative Ring */}
-        <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-blue-500 opacity-20 blur-md pointer-events-none" />
+        <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-yellow-500 via-amber-400 to-yellow-600 opacity-20 blur-md pointer-events-none" />
 
         {/* Card */}
-        <div className="relative bg-[#111625]/90 border border-slate-800 rounded-2xl p-8 backdrop-blur-xl shadow-2xl">
+        <div className="relative bg-zinc-900/90 border border-zinc-800 rounded-2xl p-8 backdrop-blur-xl shadow-2xl">
           {/* Logo / Header */}
           <div className="flex flex-col items-center mb-8 text-center">
-            <div className="w-14 h-14 bg-gradient-to-tr from-amber-500 to-yellow-400 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/20 mb-4 animate-pulse">
-              <Sun className="w-8 h-8 text-slate-950 font-bold" />
+            <div className="relative w-14 h-14 bg-zinc-900 border border-yellow-500/20 p-2 rounded-xl flex items-center justify-center shadow-lg shadow-black mb-4">
+              <Image 
+                src="/logo.png" 
+                alt="Santori Solar Solutions Logo" 
+                width={40} 
+                height={40} 
+                className="object-contain"
+                priority
+              />
             </div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-white">
-              Solar<span className="bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent">CRM</span>
+            <h1 className="text-3xl font-extrabold tracking-tight text-white leading-none">
+              Santori <span className="text-yellow-400">Solar</span>
             </h1>
-            <p className="mt-2 text-sm text-slate-400">
-              Sales Pipeline & Lead Management Portal
-            </p>
+            <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold mt-1">
+              CRM Portal
+            </span>
           </div>
 
           {/* Error Message */}

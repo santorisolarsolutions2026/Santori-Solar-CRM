@@ -205,7 +205,289 @@ async function main() {
 
   console.log('Users seeded.');
 
-  console.log('System user accounts seeded successfully.');
+  console.log('Seeding mock leads...');
+
+  // Helper for generating lead codes
+  const makeLeadCode = (num: number) => `SL-${String(num).padStart(5, '0')}`;
+
+  // Lead 1: Fresh Lead
+  const lead1 = await prisma.lead.create({
+    data: {
+      leadCode: makeLeadCode(1),
+      customerName: 'Aarav Mehta',
+      mobile: '9812345670',
+      connectionType: 'residential',
+      sanctionedLoadKw: 5.0,
+      address: 'Flat 402, Sunshine Heights, Sector 15',
+      pinCode: '400703',
+      city: 'Navi Mumbai',
+      state: 'Maharashtra',
+      leadSource: 'google_ad',
+      status: 1, // Fresh Lead
+      assignedManagerId: manager1.id,
+      assignedTlId: tl1.id,
+      assignedConsultantId: consultant1.id,
+      createdById: admin.id,
+    }
+  });
+
+  // Lead 2: DNP
+  const lead2 = await prisma.lead.create({
+    data: {
+      leadCode: makeLeadCode(2),
+      customerName: 'Ishaan Malhotra',
+      mobile: '9812345671',
+      connectionType: 'residential',
+      sanctionedLoadKw: 3.5,
+      address: 'House No. 12, Lane 4, Golf Links',
+      pinCode: '110003',
+      city: 'New Delhi',
+      state: 'Delhi',
+      leadSource: 'whatsapp',
+      status: 2, // DNP
+      assignedManagerId: manager1.id,
+      assignedTlId: tl1.id,
+      assignedConsultantId: consultant1.id,
+      createdById: manager1.id,
+    }
+  });
+
+  await prisma.leadActivityLog.create({
+    data: {
+      leadId: lead2.id,
+      userId: consultant1.id,
+      fromStatus: 1,
+      toStatus: 2,
+      remark: 'Called at 11:30 AM, phone rang but no answer.',
+    }
+  });
+
+  // Lead 3: Follow Up - Hot
+  const lead3 = await prisma.lead.create({
+    data: {
+      leadCode: makeLeadCode(3),
+      customerName: 'Sneha Reddy',
+      mobile: '9812345672',
+      connectionType: 'commercial',
+      sanctionedLoadKw: 15.0,
+      address: 'Reddy Diagnostics, MG Road',
+      pinCode: '500003',
+      city: 'Hyderabad',
+      state: 'Telangana',
+      leadSource: 'referral',
+      status: 3, // Follow Up
+      statusSub: 'hot',
+      followupAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
+      assignedManagerId: manager1.id,
+      assignedTlId: tl1.id,
+      assignedConsultantId: consultant2.id,
+      createdById: tl1.id,
+    }
+  });
+
+  await prisma.leadActivityLog.create({
+    data: {
+      leadId: lead3.id,
+      userId: consultant2.id,
+      fromStatus: 1,
+      toStatus: 3,
+      remark: 'Spoke with the owner. Highly interested in commercial solar transition for their clinic.',
+    }
+  });
+
+  // Lead 4: Meeting Booked
+  const lead4 = await prisma.lead.create({
+    data: {
+      leadCode: makeLeadCode(4),
+      customerName: 'Rajesh Nair',
+      mobile: '9812345673',
+      connectionType: 'residential',
+      sanctionedLoadKw: 7.0,
+      address: 'Villa 104, Palm Meadows, Whitefield',
+      pinCode: '560066',
+      city: 'Bengaluru',
+      state: 'Karnataka',
+      leadSource: 'google_ad',
+      status: 8, // Meeting Booked
+      assignedManagerId: manager2.id,
+      assignedTlId: tl2.id,
+      assignedConsultantId: consultant3.id,
+      createdById: manager2.id,
+    }
+  });
+
+  await prisma.leadActivityLog.create({
+    data: {
+      leadId: lead4.id,
+      userId: consultant3.id,
+      fromStatus: 1,
+      toStatus: 3,
+      remark: 'Discussed monthly electricity bill (approx 8000). Wants site feasibility survey.',
+    }
+  });
+
+  await prisma.leadActivityLog.create({
+    data: {
+      leadId: lead4.id,
+      userId: consultant3.id,
+      fromStatus: 3,
+      toStatus: 8,
+      remark: 'Meeting confirmed for site inspection.',
+    }
+  });
+
+  await prisma.meetingBooking.create({
+    data: {
+      leadId: lead4.id,
+      address: 'Villa 104, Palm Meadows, Whitefield',
+      pinCode: '560066',
+      mobile: '9812345673',
+      meetingDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 2 days from now
+      meetingTime: '11:00 AM',
+      avgMonthlyBill: 8200.0,
+      connectionType: 'residential',
+      assignedExecutiveId: consultant3.id,
+      notes: 'Customer wants to understand net metering policy and payback period.',
+    }
+  });
+
+  // Lead 5: Sale Done
+  const lead5 = await prisma.lead.create({
+    data: {
+      leadCode: makeLeadCode(5),
+      customerName: 'Vijay Singhal',
+      mobile: '9812345674',
+      connectionType: 'industrial',
+      sanctionedLoadKw: 50.0,
+      address: 'Singhal Steel Works, Phase 2, Industrial Area',
+      pinCode: '302012',
+      city: 'Jaipur',
+      state: 'Rajasthan',
+      leadSource: 'cold_call',
+      status: 13, // Sale Done
+      assignedManagerId: manager2.id,
+      assignedTlId: tl2.id,
+      assignedConsultantId: consultant4.id,
+      createdById: admin.id,
+    }
+  });
+
+  await prisma.leadActivityLog.create({
+    data: {
+      leadId: lead5.id,
+      userId: consultant4.id,
+      fromStatus: 1,
+      toStatus: 8,
+      remark: 'Meeting booked for commercial pitch.',
+    }
+  });
+
+  await prisma.leadActivityLog.create({
+    data: {
+      leadId: lead5.id,
+      userId: consultant4.id,
+      fromStatus: 8,
+      toStatus: 9,
+      remark: 'Meeting done. Proposal submitted for 40 kW system size.',
+    }
+  });
+
+  await prisma.leadActivityLog.create({
+    data: {
+      leadId: lead5.id,
+      userId: consultant4.id,
+      fromStatus: 9,
+      toStatus: 13,
+      remark: 'Sale Closed! Advance payment collected, documents punched.',
+    }
+  });
+
+  // Create order for Sale Done
+  const orderCode = `ORD-${String(lead5.id).padStart(5, '0')}`;
+  await prisma.order.create({
+    data: {
+      leadId: lead5.id,
+      orderCode,
+      connectionNumber: 'CON-98745231',
+      systemSizeKw: 40.0,
+      totalValue: 1450000.0,
+      downPayment: 300000.0,
+      paymentMethod: 'bank_transfer',
+      transactionRef: 'TXN-84729103',
+      remainingMethod: 'finance',
+      financeProvider: 'SBI Solar Loan',
+      clientType: 'on_grid',
+      subsidyApplicable: false,
+      submittedById: consultant4.id,
+      status: 'submitted',
+    }
+  });
+
+  // Lead 6: Call Later
+  const lead6 = await prisma.lead.create({
+    data: {
+      leadCode: makeLeadCode(6),
+      customerName: 'Pooja Bhatia',
+      mobile: '9812345675',
+      connectionType: 'residential',
+      sanctionedLoadKw: 4.0,
+      address: 'Flat 12B, Ocean View, Marine Drive',
+      pinCode: '400021',
+      city: 'Mumbai',
+      state: 'Maharashtra',
+      leadSource: 'referral',
+      status: 5, // Call Later
+      followupAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
+      assignedManagerId: manager1.id,
+      assignedTlId: tl1.id,
+      assignedConsultantId: consultant1.id,
+      createdById: consultant1.id,
+    }
+  });
+
+  await prisma.leadActivityLog.create({
+    data: {
+      leadId: lead6.id,
+      userId: consultant1.id,
+      fromStatus: 1,
+      toStatus: 5,
+      remark: 'Customer busy, travelling. Asked to call back next week.',
+    }
+  });
+
+  // Lead 7: Not Interested
+  const lead7 = await prisma.lead.create({
+    data: {
+      leadCode: makeLeadCode(7),
+      customerName: 'Anil Deshmukh',
+      mobile: '9812345676',
+      connectionType: 'residential',
+      sanctionedLoadKw: 2.0,
+      address: 'Row House 4, Green Fields Colony',
+      pinCode: '411001',
+      city: 'Pune',
+      state: 'Maharashtra',
+      leadSource: 'cold_call',
+      status: 4, // Not Interested
+      assignedManagerId: manager1.id,
+      assignedTlId: tl1.id,
+      assignedConsultantId: consultant2.id,
+      createdById: manager1.id,
+    }
+  });
+
+  await prisma.leadActivityLog.create({
+    data: {
+      leadId: lead7.id,
+      userId: consultant2.id,
+      fromStatus: 1,
+      toStatus: 4,
+      remark: 'Says the budget is too low right now. Will consider solar next year.',
+    }
+  });
+
+  console.log('Mock leads, meeting bookings, and orders seeded successfully!');
+  console.log('System user accounts and sales pipeline mock data seeded successfully.');
 }
 
 main()

@@ -9,7 +9,7 @@ export function middleware(request: NextRequest) {
 
   // Paths requiring authentication
   const protectedPaths = ['/dashboard', '/leads', '/live', '/team', '/reports', '/orders'];
-  const isPathProtected = protectedPaths.some((path) => pathname.startsWith(path) || pathname === '/');
+  const isPathProtected = protectedPaths.some((path) => pathname.startsWith(path));
 
   // Paths for guests only
   const isGuestPath = pathname.startsWith('/login');
@@ -20,11 +20,6 @@ export function middleware(request: NextRequest) {
   }
 
   if (isGuestPath && token) {
-    url.pathname = '/dashboard';
-    return NextResponse.redirect(url);
-  }
-
-  if (pathname === '/') {
     url.pathname = '/dashboard';
     return NextResponse.redirect(url);
   }
