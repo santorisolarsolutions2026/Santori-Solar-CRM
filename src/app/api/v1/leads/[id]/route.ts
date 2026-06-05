@@ -5,6 +5,11 @@ import { getAuthenticatedUser } from '@/lib/auth';
 // Helper to check lead access based on user role
 function canAccessLead(user: { id: number; role: string }, lead: any): boolean {
   if (user.role === 'admin' || user.role === 'sales_head') return true;
+  
+  // Allow Manager and TL to access unassigned leads so they can assign them
+  const isUnassigned = !lead.assignedTlId && !lead.assignedConsultantId;
+  if (isUnassigned && ['manager', 'tl'].includes(user.role)) return true;
+
   if (user.role === 'manager' && lead.assignedManagerId === user.id) return true;
   if (user.role === 'tl' && lead.assignedTlId === user.id) return true;
   if (user.role === 'consultant' || user.role === 'psa') {
@@ -139,7 +144,64 @@ export async function PATCH(
       leadSource,
       assignedTlId,
       assignedConsultantId,
+      discomName,
+      connectionNumber,
     } = body;
+
+    // Enforce specific assignment change rules
+    if (userPayload.role === 'tl') {
+      // TL can only assign to themselves if unassigned, or keep it as themselves
+      if (assignedTlId !== undefined && assignedTlId) {
+        const targetTlId = parseInt(assignedTlId, 10);
+        if (targetTlId !== userPayload.id) {
+          return NextResponse.json({ success: false, message: 'Forbidden. TL can only assign leads to themselves.' }, { status: 403 });
+        }
+      }
+      
+      // TL can change consultant, but only to a consultant reporting to them
+      if (assignedConsultantId !== undefined && assignedConsultantId) {
+        const consId = parseInt(assignedConsultantId, 10);
+        const consUser = await prisma.user.findUnique({
+          where: { id: consId },
+          select: { reportsTo: true, role: true },
+        });
+        if (!consUser || consUser.role !== 'consultant' || consUser.reportsTo !== userPayload.id) {
+          return NextResponse.json({ success: false, message: 'Forbidden. Selected consultant must report to you.' }, { status: 403 });
+        }
+      }
+    } else if (userPayload.role === 'manager') {
+      // Manager can assign TL and Consultant, but they must be under this manager
+      if (assignedTlId !== undefined && assignedTlId) {
+        const targetTlId = parseInt(assignedTlId, 10);
+        const tlUser = await prisma.user.findUnique({
+          where: { id: targetTlId },
+          select: { reportsTo: true, role: true },
+        });
+        if (!tlUser || tlUser.role !== 'tl' || tlUser.reportsTo !== userPayload.id) {
+          return NextResponse.json({ success: false, message: 'Forbidden. Selected TL must report to you.' }, { status: 403 });
+        }
+      }
+      
+      if (assignedConsultantId !== undefined && assignedConsultantId) {
+        const consId = parseInt(assignedConsultantId, 10);
+        const consUser = await prisma.user.findUnique({
+          where: { id: consId },
+          select: { reportsTo: true, role: true },
+        });
+        if (!consUser || consUser.role !== 'consultant') {
+          return NextResponse.json({ success: false, message: 'Forbidden. Invalid consultant selected.' }, { status: 403 });
+        }
+        
+        // Ensure the consultant's TL reports to this manager
+        const tlOfConsultant = await prisma.user.findUnique({
+          where: { id: consUser.reportsTo || 0 },
+          select: { reportsTo: true },
+        });
+        if (!tlOfConsultant || tlOfConsultant.reportsTo !== userPayload.id) {
+          return NextResponse.json({ success: false, message: 'Forbidden. Selected consultant must report to your team.' }, { status: 403 });
+        }
+      }
+    }
 
     // Build update object
     const updateData: any = {};
@@ -152,28 +214,50 @@ export async function PATCH(
     if (city) updateData.city = city;
     if (state) updateData.state = state;
     if (leadSource) updateData.leadSource = leadSource;
+    if (discomName !== undefined) updateData.discomName = discomName || null;
+    if (connectionNumber !== undefined) updateData.connectionNumber = connectionNumber || null;
 
-    // Handle assignments updates
-    if (assignedTlId !== undefined) {
-      updateData.assignedTlId = assignedTlId ? parseInt(assignedTlId, 10) : null;
-    }
-    if (assignedConsultantId !== undefined) {
-      updateData.assignedConsultantId = assignedConsultantId ? parseInt(assignedConsultantId, 10) : null;
-      
-      // Auto assign manager and TL hierarchy if consultant is reassigned
-      if (assignedConsultantId) {
+    // Handle assignments updates and auto-resolve hierarchy
+    let shouldPromoteToFresh = false;
+    if (assignedTlId !== undefined || assignedConsultantId !== undefined) {
+      let finalTlId = assignedTlId !== undefined ? (assignedTlId ? parseInt(assignedTlId, 10) : null) : lead.assignedTlId;
+      let finalConsId = assignedConsultantId !== undefined ? (assignedConsultantId ? parseInt(assignedConsultantId, 10) : null) : lead.assignedConsultantId;
+      let finalManagerId = lead.assignedManagerId;
+
+      if (finalConsId) {
         const consUser = await prisma.user.findUnique({
-          where: { id: parseInt(assignedConsultantId, 10) },
+          where: { id: finalConsId },
           select: { reportsTo: true },
         });
         if (consUser?.reportsTo) {
-          updateData.assignedTlId = consUser.reportsTo;
+          finalTlId = consUser.reportsTo;
           const tlUser = await prisma.user.findUnique({
-            where: { id: consUser.reportsTo },
+            where: { id: finalTlId },
             select: { reportsTo: true },
           });
-          updateData.assignedManagerId = tlUser?.reportsTo || null;
+          finalManagerId = tlUser?.reportsTo || null;
         }
+      } else if (finalTlId) {
+        finalConsId = null;
+        const tlUser = await prisma.user.findUnique({
+          where: { id: finalTlId },
+          select: { reportsTo: true },
+        });
+        finalManagerId = tlUser?.reportsTo || null;
+      } else {
+        finalTlId = null;
+        finalConsId = null;
+        finalManagerId = null;
+      }
+
+      updateData.assignedTlId = finalTlId;
+      updateData.assignedConsultantId = finalConsId;
+      updateData.assignedManagerId = finalManagerId;
+
+      // Auto-promote from Simple Lead (0) to Fresh Lead (1) when any coordinator gets assigned
+      if (lead.status === 0 && (finalTlId !== null || finalConsId !== null)) {
+        updateData.status = 1;
+        shouldPromoteToFresh = true;
       }
     }
 
@@ -192,8 +276,10 @@ export async function PATCH(
           leadId,
           userId: userPayload.id,
           fromStatus: lead.status,
-          toStatus: lead.status,
-          remark: 'Lead details updated by management.',
+          toStatus: shouldPromoteToFresh ? 1 : lead.status,
+          remark: shouldPromoteToFresh
+            ? 'Lead assigned and promoted to Fresh Lead (Stage 1).'
+            : 'Lead details updated by management.',
         },
       });
 
@@ -248,32 +334,15 @@ export async function DELETE(
       return NextResponse.json({ success: false, message: 'Invalid Lead ID.' }, { status: 400 });
     }
 
-    // Soft delete lead by setting isActive = false and status to disqualified (or just soft deactivating)
-    const softDeletedLead = await prisma.$transaction(async (tx) => {
-      const res = await tx.lead.update({
-        where: { id: leadId },
-        data: {
-          isActive: false,
-        },
-      });
-
-      await tx.leadActivityLog.create({
-        data: {
-          leadId,
-          userId: userPayload.id,
-          fromStatus: res.status,
-          toStatus: res.status,
-          remark: 'Lead soft-deleted (deactivated) by Admin.',
-        },
-      });
-
-      return res;
+    // Hard delete lead from PostgreSQL (cascade deletes activity logs, meetings, orders)
+    const deletedLead = await prisma.lead.delete({
+      where: { id: leadId },
     });
 
     return NextResponse.json({
       success: true,
-      data: softDeletedLead,
-      message: 'Lead deactivated successfully.',
+      data: deletedLead,
+      message: 'Lead deleted permanently from database.',
     });
   } catch (error: any) {
     console.error('Delete lead error:', error);

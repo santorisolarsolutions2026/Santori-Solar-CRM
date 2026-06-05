@@ -132,6 +132,7 @@ export default function AuthenticatedLayout({
       icon: Layers,
       roles: ['admin', 'sales_head', 'manager', 'tl', 'consultant', 'psa'],
     },
+    /*
     {
       name: 'Orders Queue',
       path: '/orders',
@@ -156,6 +157,8 @@ export default function AuthenticatedLayout({
       icon: LineChart,
       roles: ['admin', 'sales_head', 'manager', 'tl', 'finance'],
     },
+    */
+    
   ];
 
   const filteredMenuItems = menuItems.filter((item) => item.roles.includes(user.role));

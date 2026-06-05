@@ -24,6 +24,8 @@ export default function NewLeadPage() {
     assignedTlId: '',
     assignedConsultantId: '',
     notes: '',
+    discomName: '',
+    connectionNumber: '',
   });
 
   const [loading, setLoading] = useState(false);
@@ -287,11 +289,38 @@ export default function NewLeadPage() {
               <input
                 type="number"
                 step="0.1"
-                required
                 value={form.sanctionedLoadKw}
                 onChange={(e) => setForm({ ...form, sanctionedLoadKw: e.target.value })}
                 placeholder="kW from electricity bill"
                 className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500"
+              />
+            </div>
+          </div>
+
+          {/* DisCom Name and Connection Number */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                DisCom Name (optional)
+              </label>
+              <input
+                type="text"
+                value={form.discomName}
+                onChange={(e) => setForm({ ...form, discomName: e.target.value })}
+                placeholder="e.g. UPPCL"
+                className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                Connection Number (optional)
+              </label>
+              <input
+                type="text"
+                value={form.connectionNumber}
+                onChange={(e) => setForm({ ...form, connectionNumber: e.target.value })}
+                placeholder="Consumer/Connection Number"
+                className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 font-mono"
               />
             </div>
           </div>
@@ -305,7 +334,6 @@ export default function NewLeadPage() {
                   Full Street Address
                 </label>
                 <textarea
-                  required
                   value={form.address}
                   onChange={(e) => setForm({ ...form, address: e.target.value })}
                   placeholder="House number, flat, apartment, street address details..."
@@ -318,7 +346,6 @@ export default function NewLeadPage() {
                 </label>
                 <input
                   type="text"
-                  required
                   value={form.pinCode}
                   onChange={handlePincodeChange}
                   placeholder="6-digit pincode"
@@ -327,11 +354,10 @@ export default function NewLeadPage() {
               </div>
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                  City (auto-filled)
+                  City (optional)
                 </label>
                 <input
                   type="text"
-                  required
                   value={form.city}
                   onChange={(e) => setForm({ ...form, city: e.target.value })}
                   className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500"
@@ -339,14 +365,13 @@ export default function NewLeadPage() {
               </div>
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                  State (auto-filled)
+                  State (optional)
                 </label>
                 <input
                   type="text"
-                  required
                   value={form.state}
                   onChange={(e) => setForm({ ...form, state: e.target.value })}
-                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500"
+                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-850 rounded-lg text-white text-xs focus:ring-amber-500"
                 />
               </div>
             </div>

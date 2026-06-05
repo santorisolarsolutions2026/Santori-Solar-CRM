@@ -33,60 +33,90 @@ export async function GET(req: Request) {
 
     const skip = (page - 1) * limit;
 
-    // Define the base query filters
-    const where: Prisma.LeadWhereInput = {};
+    // Define base query conditions (enforce isActive: true to support soft delete / deactivation)
+    const andConditions: Prisma.LeadWhereInput[] = [
+      { isActive: true }
+    ];
 
     // 1. Role-based visibility enforcement
     if (userPayload.role === 'manager') {
-      where.assignedManagerId = userPayload.id;
+      andConditions.push({
+        OR: [
+          { assignedManagerId: userPayload.id },
+          { assignedTlId: null, assignedConsultantId: null }
+        ]
+      });
     } else if (userPayload.role === 'tl') {
-      where.assignedTlId = userPayload.id;
+      andConditions.push({
+        OR: [
+          { assignedTlId: userPayload.id },
+          { assignedTlId: null, assignedConsultantId: null }
+        ]
+      });
     } else if (userPayload.role === 'consultant' || userPayload.role === 'psa') {
-      where.assignedConsultantId = userPayload.id;
+      andConditions.push({ assignedConsultantId: userPayload.id });
     } else if (userPayload.role === 'finance') {
       // Finance sees only leads at Stage 13+ (Sale Done)
-      where.status = { in: [13] };
+      andConditions.push({ status: { in: [13] } });
     } else if (userPayload.role === 'operations') {
       // Operations sees only leads with orders processed by finance
-      where.status = 13;
-      where.order = {
-        status: { in: ['finance_verified', 'ops_assigned', 'completed'] },
-      };
+      andConditions.push({
+        status: 13,
+        order: {
+          status: { in: ['finance_verified', 'ops_assigned', 'completed'] },
+        }
+      });
     }
 
     // 2. Extra Filters
     if (search) {
-      where.OR = [
-        { customerName: { contains: search } },
-        { mobile: { contains: search } },
-        { leadCode: { contains: search } },
-      ];
+      andConditions.push({
+        OR: [
+          { customerName: { contains: search, mode: 'insensitive' } },
+          { mobile: { contains: search } },
+          { leadCode: { contains: search, mode: 'insensitive' } },
+        ]
+      });
     }
 
     if (statusParam) {
       const statuses = statusParam.split(',').map((s) => parseInt(s, 10)).filter((n) => !isNaN(n));
       if (statuses.length > 0) {
-        where.status = { in: statuses };
+        andConditions.push({ status: { in: statuses } });
       }
     }
 
     if (city) {
-      where.city = { contains: city };
+      andConditions.push({ city: { contains: city, mode: 'insensitive' } });
     }
 
     if (consultantIdStr) {
       const consultantId = parseInt(consultantIdStr, 10);
       if (!isNaN(consultantId)) {
-        where.assignedConsultantId = consultantId;
+        andConditions.push({ assignedConsultantId: consultantId });
       }
     }
 
     if (connectionType) {
-      where.connectionType = connectionType;
+      andConditions.push({ connectionType });
     }
 
     if (leadSource) {
-      where.leadSource = leadSource;
+      andConditions.push({ leadSource });
+    }
+
+    const where: Prisma.LeadWhereInput = { AND: andConditions };
+
+    const idsOnly = searchParams.get('ids_only') === 'true';
+    if (idsOnly) {
+      const matchingLeads = await prisma.lead.findMany({
+        where,
+        select: { id: true }
+      });
+      return NextResponse.json({
+        success: true,
+        data: matchingLeads.map(l => l.id)
+      });
     }
 
     // Sorting
@@ -178,17 +208,28 @@ export async function POST(req: Request) {
       assignedConsultantId,
       notes,
       overrideDuplicate,
+      discomName,
+      connectionNumber,
     } = body;
 
-    // Validation
-    if (!customerName || !mobile || !connectionType || !address || !pinCode || !city || !state) {
-      return NextResponse.json({ success: false, message: 'Missing required fields.' }, { status: 400 });
+    // Validation - only Customer Name and Mobile Number are strictly required
+    if (!customerName || !mobile) {
+      return NextResponse.json({ success: false, message: 'Missing required Customer Name or Mobile Number.' }, { status: 400 });
     }
 
-    // Clean phone number (strip spaces/dashes)
-    const cleanMobile = mobile.replace(/[\s-]/g, '');
+    // Clean phone number (strip spaces/dashes and float decimals)
+    let cleanMobile = String(mobile).trim().replace(/[\s-]/g, '');
+    if (cleanMobile.includes('.')) {
+      cleanMobile = cleanMobile.split('.')[0];
+    }
     if (cleanMobile.length !== 10) {
       return NextResponse.json({ success: false, message: 'Mobile number must be exactly 10 digits.' }, { status: 400 });
+    }
+
+    // Clean mobileAlt if present
+    let cleanMobileAlt = mobileAlt ? String(mobileAlt).trim().replace(/[\s-]/g, '') : null;
+    if (cleanMobileAlt && cleanMobileAlt.includes('.')) {
+      cleanMobileAlt = cleanMobileAlt.split('.')[0];
     }
 
     const isUserAdmin = userPayload.role === 'admin';
@@ -249,6 +290,7 @@ export async function POST(req: Request) {
     }
 
     const leadCode = await generateLeadCode();
+    const statusToSet = (finalTlId || finalConsultantId) ? 1 : 0;
 
     // Create lead inside a database transaction
     const lead = await prisma.$transaction(async (tx) => {
@@ -257,20 +299,22 @@ export async function POST(req: Request) {
           leadCode,
           customerName,
           mobile: cleanMobile,
-          mobileAlt: mobileAlt ? mobileAlt.replace(/[\s-]/g, '') : null,
-          connectionType,
+          mobileAlt: cleanMobileAlt,
+          connectionType: connectionType || 'residential',
           sanctionedLoadKw: sanctionedLoadKw ? parseFloat(sanctionedLoadKw) : null,
-          address,
-          pinCode,
-          city,
-          state,
-          leadSource,
-          status: 1, // Fresh Lead
+          address: address || '',
+          pinCode: pinCode || '',
+          city: city || '',
+          state: state || '',
+          leadSource: leadSource || 'other',
+          status: statusToSet,
           assignedManagerId: finalManagerId,
           assignedTlId: finalTlId,
           assignedConsultantId: finalConsultantId,
           createdById: userPayload.id,
           isActive: true,
+          discomName: discomName || null,
+          connectionNumber: connectionNumber || null,
         },
       });
 
@@ -280,8 +324,8 @@ export async function POST(req: Request) {
           leadId: newLead.id,
           userId: userPayload.id,
           fromStatus: null,
-          toStatus: 1,
-          remark: notes || 'Lead added to the system.',
+          toStatus: statusToSet,
+          remark: notes || (statusToSet === 1 ? 'Lead added to the system as Fresh Lead.' : 'Lead added to the system as unassigned Simple Lead.'),
         },
       });
 
@@ -304,8 +348,8 @@ export async function POST(req: Request) {
           data: {
             leadId: newLead.id,
             userId: userPayload.id,
-            fromStatus: 1,
-            toStatus: 1,
+            fromStatus: statusToSet,
+            toStatus: statusToSet,
             remark: `[SYSTEM NOTE] Duplicate override. Linked to existing Lead #${existingLead.leadCode}.`,
           },
         });
@@ -321,6 +365,46 @@ export async function POST(req: Request) {
     });
   } catch (error: any) {
     console.error('Create lead error:', error);
+    return NextResponse.json(
+      { success: false, message: 'Internal server error', errors: { details: error.message } },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const userPayload = getAuthenticatedUser(req);
+    if (!userPayload) {
+      return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
+    }
+
+    if (userPayload.role !== 'admin') {
+      return NextResponse.json({ success: false, message: 'Forbidden. Only Admin can delete leads.' }, { status: 403 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const idsStr = searchParams.get('ids') || '';
+    if (!idsStr) {
+      return NextResponse.json({ success: false, message: 'No Lead IDs provided.' }, { status: 400 });
+    }
+
+    const leadIds = idsStr.split(',').map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+    if (leadIds.length === 0) {
+      return NextResponse.json({ success: false, message: 'Invalid Lead IDs.' }, { status: 400 });
+    }
+
+    // Hard delete leads from PostgreSQL (cascade deletes activity logs, meetings, orders)
+    const deleteResult = await prisma.lead.deleteMany({
+      where: { id: { in: leadIds } },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: `${deleteResult.count} leads deleted permanently from database.`,
+    });
+  } catch (error: any) {
+    console.error('Bulk delete leads error:', error);
     return NextResponse.json(
       { success: false, message: 'Internal server error', errors: { details: error.message } },
       { status: 500 }

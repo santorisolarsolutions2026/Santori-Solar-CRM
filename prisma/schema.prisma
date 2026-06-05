@@ -66,6 +66,9 @@ model Lead {
   createdById          Int
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
+  otherData            String?
+  discomName           String?
+  connectionNumber     String?
 
   // Relations
   manager              User?               @relation("ManagerLeads", fields: [assignedManagerId], references: [id])

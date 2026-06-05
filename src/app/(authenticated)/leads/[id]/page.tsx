@@ -46,6 +46,9 @@ interface Lead {
   consultant: { id: number; name: string; phone: string | null } | null;
   tl: { id: number; name: string } | null;
   manager: { id: number; name: string } | null;
+  otherData?: string | null;
+  discomName?: string | null;
+  connectionNumber?: string | null;
   activityLogs: {
     id: number;
     remark: string | null;
@@ -93,6 +96,7 @@ interface Lead {
 }
 
 const STAGE_BADGES: Record<number, { name: string; class: string }> = {
+  0: { name: 'Uninitiated', class: 'bg-[#3b3a37] text-[#c9c5ba] border-[#4f4d45] font-bold' },
   1: { name: 'Fresh Lead', class: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
   2: { name: 'DNP (No Answer)', class: 'bg-slate-500/10 text-slate-400 border-slate-500/20' },
   3: { name: 'Follow Up', class: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
@@ -111,6 +115,7 @@ const STAGE_BADGES: Record<number, { name: string; class: string }> = {
 
 // Transition matrix for select dropdown option filters
 const ALLOWED_TRANSITIONS: Record<number, number[]> = {
+  0: [1], // Uninitiated leads can only transition to Fresh Lead (automatically via assignment)
   1: [2, 3, 4, 5, 10, 11],
   2: [2, 3, 4, 5, 10, 11],
   3: [3, 4, 5, 7, 8, 10, 11],
@@ -153,7 +158,35 @@ export default function LeadDetailPage({
     city: '',
     state: '',
     leadSource: '',
+    assignedTlId: '',
+    assignedConsultantId: '',
+    discomName: '',
+    connectionNumber: '',
   });
+
+  const [tls, setTls] = useState<{ id: number; name: string }[]>([]);
+  const [consultants, setConsultants] = useState<{ id: number; name: string; reportsTo: number | null }[]>([]);
+
+  // Fetch users for assignments selectors
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const [tlsRes, consRes] = await Promise.all([
+          fetch('/api/v1/users?role=tl'),
+          fetch('/api/v1/users?role=consultant'),
+        ]);
+
+        const tlsData = await tlsRes.json();
+        const consData = await consRes.json();
+
+        if (tlsData.success) setTls(tlsData.data);
+        if (consData.success) setConsultants(consData.data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    if (user && isEditing) fetchUsers();
+  }, [user, isEditing]);
 
   // Status widget state
   const [newStatus, setNewStatus] = useState('');
@@ -223,6 +256,10 @@ export default function LeadDetailPage({
           city: data.data.city,
           state: data.data.state,
           leadSource: data.data.leadSource || 'whatsapp',
+          assignedTlId: data.data.assignedTlId?.toString() || '',
+          assignedConsultantId: data.data.assignedConsultantId?.toString() || '',
+          discomName: data.data.discomName || '',
+          connectionNumber: data.data.connectionNumber || '',
         });
 
         // Prepopulate Form B default values from lead
@@ -495,12 +532,12 @@ export default function LeadDetailPage({
   };
 
   const handleDeleteLead = async (leadId: number) => {
-    if (!window.confirm('Are you sure you want to deactivate (soft-delete) this lead?')) return;
+    if (!window.confirm('Are you sure you want to permanently delete this lead from the database? This action cannot be undone.')) return;
     try {
       const res = await fetch(`/api/v1/leads/${leadId}`, { method: 'DELETE' });
       const data = await res.json();
       if (data.success) {
-        alert(data.message || 'Lead deactivated successfully.');
+        alert(data.message || 'Lead deleted successfully.');
         router.push('/leads');
       } else {
         alert(data.message || 'Failed to delete lead.');
@@ -593,6 +630,16 @@ export default function LeadDetailPage({
         )}
       </div>
 
+      {lead.status === 0 && (
+        <div className="bg-amber-500/10 border border-amber-500/20 text-amber-400 p-4 rounded-xl text-xs flex items-start gap-3 shadow-md">
+          <AlertTriangle className="w-5 h-5 shrink-0" />
+          <div>
+            <strong className="text-white font-bold block mb-0.5">Uninitiated Lead Pool</strong>
+            This lead is currently in the unassigned pool (Uninitiated). Assign a coordinator to move it to the active Sales Pipeline.
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main tabs container */}
         <div className="lg:col-span-2 space-y-6">
@@ -634,7 +681,8 @@ export default function LeadDetailPage({
                   <span>Meeting Details</span>
                 </button>
               )}
-              {lead.status >= 13 && (
+              
+              {/*lead.status >= 13 && (
                 <button
                   onClick={() => setActiveTab('order')}
                   className={`flex-1 py-4 text-center border-b-2 transition-all flex items-center justify-center gap-2 ${
@@ -646,7 +694,8 @@ export default function LeadDetailPage({
                   <FileCheck className="w-4 h-4" />
                   <span>Order Punching & Documents</span>
                 </button>
-              )}
+              )*/}
+              
             </div>
 
             {/* Tab content panels */}
@@ -680,6 +729,14 @@ export default function LeadDetailPage({
                         <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Lead Source</p>
                         <p className="text-sm capitalize text-white mt-1.5">{lead.leadSource || '-'}</p>
                       </div>
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">DisCom Name</p>
+                        <p className="text-sm text-white mt-1.5">{lead.discomName || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Connection Number</p>
+                        <p className="text-sm font-mono text-white mt-1.5">{lead.connectionNumber || '-'}</p>
+                      </div>
                       <div className="md:col-span-2">
                         <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Full Address</p>
                         <p className="text-sm text-white mt-1.5 leading-relaxed">{lead.address}</p>
@@ -696,6 +753,27 @@ export default function LeadDetailPage({
                           <div>Consultant: <strong>{lead.consultant?.name || 'Unassigned'}</strong></div>
                         </div>
                       </div>
+
+                      {lead.otherData && (() => {
+                        try {
+                          const parsed = JSON.parse(lead.otherData);
+                          return (
+                            <div className="md:col-span-2 pt-4 border-t border-slate-800/80">
+                              <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-2">CSV Metadata / Extra Fields</p>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-950/40 p-4 rounded-xl border border-slate-800/40">
+                                {Object.entries(parsed).map(([key, val]: [string, any]) => (
+                                  <div key={key}>
+                                    <span className="text-[10px] text-slate-450 font-bold block uppercase tracking-wide">{key}</span>
+                                    <span className="text-xs text-white mt-1 block leading-normal">{val ? String(val) : '-'}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        } catch (e) {
+                          return null;
+                        }
+                      })()}
 
                       {/* Edit Trigger */}
                       {['admin', 'sales_head', 'manager', 'tl'].includes(user?.role || '') && (
@@ -754,10 +832,27 @@ export default function LeadDetailPage({
                             className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500"
                           />
                         </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-400 mb-1">DisCom Name</label>
+                          <input
+                            type="text"
+                            value={editForm.discomName}
+                            onChange={(e) => setEditForm({ ...editForm, discomName: e.target.value })}
+                            className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-400 mb-1">Connection Number</label>
+                          <input
+                            type="text"
+                            value={editForm.connectionNumber}
+                            onChange={(e) => setEditForm({ ...editForm, connectionNumber: e.target.value })}
+                            className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 font-mono"
+                          />
+                        </div>
                         <div className="md:col-span-2">
                           <label className="block text-xs font-semibold text-slate-400 mb-1">Full Address</label>
                           <textarea
-                            required
                             value={editForm.address}
                             onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
                             className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs h-20 focus:ring-amber-500"
@@ -767,7 +862,6 @@ export default function LeadDetailPage({
                           <label className="block text-xs font-semibold text-slate-400 mb-1">Pincode</label>
                           <input
                             type="text"
-                            required
                             value={editForm.pinCode}
                             onChange={(e) => setEditForm({ ...editForm, pinCode: e.target.value })}
                             className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500"
@@ -777,7 +871,6 @@ export default function LeadDetailPage({
                           <label className="block text-xs font-semibold text-slate-400 mb-1">City</label>
                           <input
                             type="text"
-                            required
                             value={editForm.city}
                             onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
                             className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500"
@@ -787,7 +880,6 @@ export default function LeadDetailPage({
                           <label className="block text-xs font-semibold text-slate-400 mb-1">State</label>
                           <input
                             type="text"
-                            required
                             value={editForm.state}
                             onChange={(e) => setEditForm({ ...editForm, state: e.target.value })}
                             className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500"
@@ -808,6 +900,46 @@ export default function LeadDetailPage({
                             <option value="other">Other</option>
                           </select>
                         </div>
+
+                        {/* Assignment Controls */}
+                        {(['admin', 'sales_head', 'manager'].includes(user?.role || '') || (user?.role === 'tl' && !lead.tl)) && (
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-400 mb-1">Assign to Team Leader</label>
+                            <select
+                              value={editForm.assignedTlId}
+                              onChange={(e) => {
+                                const newTlId = e.target.value;
+                                setEditForm({ ...editForm, assignedTlId: newTlId, assignedConsultantId: '' });
+                              }}
+                              className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500"
+                            >
+                              <option value="">Unassigned</option>
+                              {tls.map((tl) => (
+                                <option key={tl.id} value={tl.id}>
+                                  {tl.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+
+                        {['admin', 'sales_head', 'manager', 'tl'].includes(user?.role || '') && (
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-400 mb-1">Assign to Consultant</label>
+                            <select
+                              value={editForm.assignedConsultantId}
+                              onChange={(e) => setEditForm({ ...editForm, assignedConsultantId: e.target.value })}
+                              className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500"
+                            >
+                              <option value="">Unassigned</option>
+                              {(user?.role === 'tl' ? consultants.filter(c => c.reportsTo === user.id) : consultants).map((con) => (
+                                <option key={con.id} value={con.id}>
+                                  {con.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex gap-3 border-t border-slate-800/80 pt-4">
@@ -932,6 +1064,7 @@ export default function LeadDetailPage({
                   ))}
                 </div>
               )}
+              
 
               {/* 4. ORDER PUNCHING TAB */}
               {activeTab === 'order' && lead.order && (
@@ -1240,6 +1373,7 @@ export default function LeadDetailPage({
             </div>
           </div>
         </div>
+        
 
         {/* Dynamic transition widget panel in right sidebar */}
         <div className="space-y-6">

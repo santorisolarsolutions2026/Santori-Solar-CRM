@@ -33,8 +33,8 @@ export async function GET(req: Request) {
     // 1. Total Leads
     const totalLeads = await prisma.lead.count({ where: leadWhere });
 
-    // 2. Active Leads (not in terminal: 6 Already Installed, 12 Can't Fit, 13 Sale Done)
-    const activeWhere = { ...leadWhere, status: { notIn: [6, 12, 13] }, isActive: true };
+    // 2. Active Leads (not in terminal: 0 Uninitiated, 6 Already Installed, 12 Can't Fit, 13 Sale Done)
+    const activeWhere = { ...leadWhere, status: { notIn: [0, 6, 12, 13] }, isActive: true };
     const activeLeads = await prisma.lead.count({ where: activeWhere });
 
     // 3. Meetings Booked (This month)
