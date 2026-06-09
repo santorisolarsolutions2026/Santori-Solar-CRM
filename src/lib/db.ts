@@ -13,8 +13,8 @@ function createPrismaClient() {
   const dbPort = process.env.DB_PORT || "5432";
   const dbName = process.env.DB_NAME || "solarcrm";
 
-  const connectionString = `postgresql://${dbUser}:${encodeURIComponent(dbPassword)}@${dbHost}:${dbPort}/${dbName}?sslmode=require&schema=public`;
-  //const connectionString = `postgresql://${encodeURIComponent(dbUser)}:${encodeURIComponent(dbPassword)}@${dbHost}:${dbPort}/${dbName}?schema=public`;
+  //const connectionString = `postgresql://${dbUser}:${encodeURIComponent(dbPassword)}@${dbHost}:${dbPort}/${dbName}?sslmode=require&schema=public`;
+  const connectionString = `postgresql://${encodeURIComponent(dbUser)}:${encodeURIComponent(dbPassword)}@${dbHost}:${dbPort}/${dbName}?schema=public`;
 
   const pool = new pg.Pool({ connectionString });
   const adapter = new PrismaPg(pool);
