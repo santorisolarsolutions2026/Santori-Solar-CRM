@@ -3,6 +3,9 @@ import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET(req: Request) {
   try {
     const userPayload = getAuthenticatedUser(req);
@@ -56,6 +59,10 @@ export async function GET(req: Request) {
         isActive: true,
         lastSeenAt: true,
         createdAt: true,
+        lastLoginAt: true,
+        loginLocation: true,
+        lastLogoutAt: true,
+        logoutLocation: true,
         supervisor: { select: { id: true, name: true } },
       },
       orderBy: { name: 'asc' },
@@ -64,6 +71,10 @@ export async function GET(req: Request) {
     return NextResponse.json({
       success: true,
       data: users,
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, max-age=0, must-revalidate',
+      }
     });
   } catch (error: any) {
     console.error('Fetch users error:', error);

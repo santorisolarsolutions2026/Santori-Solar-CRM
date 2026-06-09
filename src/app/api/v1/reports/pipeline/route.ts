@@ -27,8 +27,8 @@ export async function GET(req: Request) {
       },
     });
 
-    // Format output as array of 14 stages with counts (ensuring stages with 0 are filled)
-    const formatted = Array.from({ length: 14 }, (_, i) => {
+    // Format output as array of 13 stages with counts (ensuring stages with 0 are filled)
+    const formatted = Array.from({ length: 13 }, (_, i) => {
       const stageNum = i + 1;
       const match = stagesCounts.find((s) => s.status === stageNum);
       return {

@@ -68,7 +68,6 @@ const STAGE_NAMES: Record<number, string> = {
   11: 'Switch Off',
   12: 'Can\'t Fit Solar',
   13: 'Sale Done',
-  14: 'Meeting Ended',
 };
 
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#0EA5E9', '#14B8A6'];

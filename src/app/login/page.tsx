@@ -5,6 +5,56 @@ import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import { Eye, EyeOff, Lock, Mail, Loader2 } from 'lucide-react';
 
+function getBrowserLocation(timeoutMs = 5000): Promise<string> {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined' || !navigator.geolocation) {
+      resolve('HTML5 Geolocation not supported');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
+            {
+              headers: {
+                'Accept-Language': 'en',
+              },
+            }
+          );
+          if (res.ok) {
+            const data = await res.json();
+            const address = data.address || {};
+            const city = address.city || address.town || address.village || address.suburb || '';
+            const state = address.state || '';
+            const country = address.country || '';
+            const locParts = [city, state, country].filter(Boolean);
+            if (locParts.length > 0) {
+              resolve(locParts.join(', '));
+              return;
+            }
+          }
+          resolve(`${lat.toFixed(4)}, ${lon.toFixed(4)}`);
+        } catch (err) {
+          resolve(`${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`);
+        }
+      },
+      (error) => {
+        resolve(`error_${error.code}`);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: timeoutMs,
+        maximumAge: 0,
+      }
+    );
+  });
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,13 +73,43 @@ export default function LoginPage() {
     setSubmitting(true);
     setError('');
 
+    let locationStr = 'Unknown Location';
+    
+    // 1. Try browser Geolocation first (triggers the browser permission popup)
+    const geoResult = await getBrowserLocation(5000);
+    if (geoResult && !geoResult.startsWith('error_') && geoResult !== 'HTML5 Geolocation not supported') {
+      locationStr = geoResult;
+    } else {
+      // 2. Fall back to IP Geolocation if HTML5 fails, is blocked, or is not supported
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 1500);
+        const geoRes = await fetch('https://ipapi.co/json/', { signal: controller.signal });
+        clearTimeout(timeoutId);
+        const contentType = geoRes.headers.get('content-type');
+        if (geoRes.ok && contentType && contentType.includes('application/json')) {
+          const geoData = await geoRes.json();
+          const city = geoData.city || '';
+          const region = geoData.region || '';
+          const country = geoData.country_name || '';
+          const locParts = [city, region, country].filter(Boolean);
+          if (locParts.length > 0) {
+            locationStr = locParts.join(', ');
+          }
+        }
+      } catch (err) {
+        console.warn('IP Geolocation fallback timed out or failed:', err);
+      }
+    }
+
+
     try {
       const res = await fetch('/api/v1/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, location: locationStr }),
       });
 
       const data = await res.json();

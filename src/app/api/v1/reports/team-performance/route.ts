@@ -50,7 +50,7 @@ export async function GET(req: Request) {
         prisma.lead.count({
           where: {
             assignedConsultantId: consultant.id,
-            status: { in: [8, 9, 13, 14] },
+            status: { in: [8, 9, 13] },
             createdAt: { gte: startOfMonth },
           },
         }),

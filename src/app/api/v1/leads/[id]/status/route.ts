@@ -12,12 +12,11 @@ const TRANSITIONS: Record<number, { to: number[]; roles: string[] }> = {
   6: { to: [], roles: [] }, // terminal
   7: { to: [3, 4, 5, 8], roles: ['consultant', 'tl', 'manager'] },
   8: { to: [9], roles: ['consultant', 'tl'] },
-  9: { to: [14], roles: ['consultant', 'tl', 'manager'] },
+  9: { to: [3, 4, 13], roles: ['consultant', 'tl', 'manager'] },
   10: { to: [2, 3, 4, 5], roles: ['consultant', 'psa'] },
   11: { to: [2, 3, 4, 5], roles: ['consultant', 'psa'] },
   12: { to: [], roles: [] }, // terminal
   13: { to: [], roles: [] }, // terminal
-  14: { to: [3, 4, 13], roles: ['consultant', 'tl', 'manager'] }, // moves via sub-form
 };
 
 // Helper to generate order code
@@ -58,7 +57,7 @@ export async function POST(
     const { to_status, remark, sub_status, followup_at, formB, formC } = body;
 
     const toStatusNum = parseInt(to_status, 10);
-    if (isNaN(toStatusNum) || toStatusNum < 1 || toStatusNum > 14) {
+    if (isNaN(toStatusNum) || toStatusNum < 1 || toStatusNum > 13) {
       return NextResponse.json({ success: false, message: 'Invalid target status.' }, { status: 400 });
     }
 
@@ -176,8 +175,8 @@ export async function POST(
       updateData.assignedConsultantId = parseInt(assignedExecutiveId, 10);
     }
 
-    // Stage 14 - Meeting Ended (Form C validation)
-    if (toStatusNum === 14) {
+    // Stage 9 - Meeting Done (Form C validation)
+    if (toStatusNum === 9) {
       if (!formC || !formC.outcome) {
         return NextResponse.json({ success: false, message: 'Form C (Meeting Outcome) is required.' }, { status: 422 });
       }

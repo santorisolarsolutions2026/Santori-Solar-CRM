@@ -40,7 +40,7 @@ export async function GET(req: Request) {
     // 3. Meetings Booked (This month)
     const meetingWhere = {
       ...leadWhere,
-      status: { in: [8, 9, 13, 14] },
+      status: { in: [8, 9, 13] },
       createdAt: { gte: startOfMonth },
     };
     const meetingsBookedThisMonth = await prisma.lead.count({ where: meetingWhere });

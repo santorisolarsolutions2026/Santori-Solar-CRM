@@ -56,7 +56,6 @@ const STAGE_BADGES: Record<number, { name: string; color: string }> = {
   11: { name: 'Switch Off', color: 'bg-slate-700/20 text-slate-400 border-slate-700/30' },
   12: { name: 'Can\'t Fit Solar', color: 'bg-stone-900 text-stone-400 border-stone-800/40' },
   13: { name: '✅ SALE DONE', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-bold' },
-  14: { name: 'Meeting Ended', color: 'bg-pink-500/10 text-pink-400 border-pink-500/20' },
 };
 
 export default function LiveLinkPage() {

@@ -110,7 +110,6 @@ const STAGE_BADGES: Record<number, { name: string; class: string }> = {
   11: { name: 'Switch Off', class: 'bg-slate-700/20 text-slate-400 border-slate-700/30' },
   12: { name: 'Can\'t Fit Solar', class: 'bg-stone-900 text-stone-400 border-stone-800/40' },
   13: { name: '✅ SALE DONE', class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-bold' },
-  14: { name: 'Meeting Ended', class: 'bg-pink-500/10 text-pink-400 border-pink-500/20' },
 };
 
 // Transition matrix for select dropdown option filters
@@ -124,12 +123,11 @@ const ALLOWED_TRANSITIONS: Record<number, number[]> = {
   6: [],
   7: [3, 4, 5, 8],
   8: [9],
-  9: [14],
+  9: [3, 4, 13],
   10: [2, 3, 4, 5],
   11: [2, 3, 4, 5],
   12: [],
   13: [],
-  14: [3, 4, 13],
 };
 
 export default function LeadDetailPage({
@@ -171,16 +169,24 @@ export default function LeadDetailPage({
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const [tlsRes, consRes] = await Promise.all([
+        const [tlsRes, consRes, adminRes] = await Promise.all([
           fetch('/api/v1/users?role=tl'),
           fetch('/api/v1/users?role=consultant'),
+          fetch('/api/v1/users?role=admin'),
         ]);
 
         const tlsData = await tlsRes.json();
         const consData = await consRes.json();
+        const adminData = await adminRes.json();
 
-        if (tlsData.success) setTls(tlsData.data);
-        if (consData.success) setConsultants(consData.data);
+        const admins = adminData.success ? adminData.data : [];
+
+        if (tlsData.success) {
+          setTls([...tlsData.data, ...admins]);
+        }
+        if (consData.success) {
+          setConsultants([...consData.data, ...admins]);
+        }
       } catch (err) {
         console.error(err);
       }
@@ -353,7 +359,7 @@ export default function LeadDetailPage({
       return;
     }
 
-    if (statusNum === 14) {
+    if (statusNum === 9) {
       setShowFormC(true);
       return;
     }
@@ -432,8 +438,8 @@ export default function LeadDetailPage({
 
     try {
       const payload: any = {
-        to_status: 14,
-        remark: `Meeting Ended. Outcome: ${formCOutcome}. Notes: ${formCRemark}`,
+        to_status: 9,
+        remark: `Meeting Done. Outcome: ${formCOutcome}. Notes: ${formCRemark}`,
         formC: {
           outcome: formCOutcome,
           remark: formCRemark,
@@ -566,7 +572,7 @@ export default function LeadDetailPage({
     if (statusNum === 4 && ['consultant', 'psa', 'tl', 'manager'].includes(user?.role || '')) return true;
     if (statusNum === 8 && ['consultant', 'tl'].includes(user?.role || '')) return true;
     if (statusNum === 13 && ['consultant'].includes(user?.role || '')) return true;
-    if (statusNum === 14 && ['consultant', 'tl', 'manager'].includes(user?.role || '')) return true;
+    if (statusNum === 9 && ['consultant', 'tl'].includes(user?.role || '')) return true;
     // Standard sales rules
     return ['consultant', 'psa'].includes(user?.role || '');
   });
@@ -859,7 +865,7 @@ export default function LeadDetailPage({
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold text-slate-400 mb-1">Pincode</label>
+                          <label className="block text-xs font-semibold text-slate-400 mb-1">Pincode (optional)</label>
                           <input
                             type="text"
                             value={editForm.pinCode}
@@ -1612,7 +1618,7 @@ export default function LeadDetailPage({
       )}
 
       {/* ============================================================== */}
-      {/* Form C Modal: Meeting Ended Outcomes */}
+      {/* Form C Modal: Meeting Done Outcomes */}
       {showFormC && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
           <div className="w-full max-w-lg bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">

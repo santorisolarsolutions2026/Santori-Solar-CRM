@@ -78,7 +78,6 @@ const STAGE_NAMES: Record<number, { name: string; color: string }> = {
   11: { name: 'Switch Off', color: '#4B5563' },
   12: { name: 'Can\'t Fit Solar', color: '#111827' },
   13: { name: 'Sale Done ✅', color: '#16A34A' },
-  14: { name: 'Meeting Ended', color: '#EC4899' },
 };
 
 export default function DashboardPage() {
@@ -88,6 +87,7 @@ export default function DashboardPage() {
   const [performance, setPerformance] = useState<ConsultantPerformance[]>([]);
   const [trend, setTrend] = useState<any[]>([]);
   const [activities, setActivities] = useState<ActivityLog[]>([]);
+  const [reminders, setReminders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
@@ -120,6 +120,11 @@ export default function DashboardPage() {
       if (feedData.success) {
         setActivities(feedData.data.logs.slice(0, 10)); // take latest 10
       }
+
+      // 6. Fetch reminders
+      const remindersRes = await fetch('/api/v1/reports/reminders');
+      const remindersData = await remindersRes.json();
+      if (remindersData.success) setReminders(remindersData.data);
     } catch (err) {
       console.error('Fetch dashboard data error:', err);
     } finally {
@@ -224,6 +229,7 @@ export default function DashboardPage() {
                 <span>Launch Live Link</span>
                 <Compass className="w-3.5 h-3.5 text-amber-500 animate-spin-slow" />
               </Link>
+              
             )}
           </div>
         </div>
@@ -333,25 +339,103 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Leaderboard and Activity Feed */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        {/* Team Performance Table */}
-        {['admin', 'sales_head', 'manager', 'tl'].includes(user?.role || '') && (
-          <div className="bg-[#111625] border border-slate-800 rounded-xl p-6 shadow-md">
+      {/* Reminders, Leaderboard and Activity Feed */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Column 1: Upcoming Task Reminders */}
+        <div className="bg-[#111625] border border-slate-800 rounded-xl p-6 shadow-md flex flex-col h-[28rem]">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 mb-6 flex items-center gap-2">
+            <Clock className="w-5 h-5 text-amber-500" />
+            <span>Upcoming Task Reminders</span>
+          </h3>
+          <div className="space-y-3 overflow-y-auto pr-1 flex-1">
+            {reminders.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-slate-500 text-xs italic py-12">
+                <span>No upcoming tasks scheduled.</span>
+              </div>
+            ) : (
+              reminders.map((rem) => {
+                const isMeeting = rem.type === 'meeting';
+                return (
+                  <div
+                    key={rem.id}
+                    className={`p-3 border rounded-xl flex items-start gap-3 transition-colors ${
+                      isMeeting
+                        ? 'bg-cyan-950/10 border-cyan-800/30 hover:border-cyan-700/50'
+                        : 'bg-amber-950/10 border-amber-800/30 hover:border-amber-700/50'
+                    }`}
+                  >
+                    <div className="mt-0.5 shrink-0">
+                      {isMeeting ? (
+                        <Calendar className="w-4 h-4 text-cyan-400" />
+                      ) : (
+                        <Clock className="w-4 h-4 text-amber-400" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start gap-2">
+                        <Link
+                          href={`/leads/${rem.leadId}`}
+                          className="text-xs font-bold text-white hover:text-amber-400 hover:underline truncate"
+                        >
+                          {rem.customerName}
+                          <span className="text-[10px] text-slate-400 font-semibold ml-1.5">
+                            ({rem.leadCode})
+                          </span>
+                        </Link>
+                        <span className="text-[9px] font-bold text-slate-500 shrink-0 font-mono">
+                          {new Date(rem.datetime).toLocaleTimeString('en-IN', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false,
+                          })}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center mt-1">
+                        <span className={`text-[9.5px] font-extrabold uppercase px-1.5 py-0.25 rounded-md border ${
+                          isMeeting 
+                            ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' 
+                            : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                        }`}>
+                          {rem.title}
+                        </span>
+                        
+                        <span className="text-[9px] text-slate-400 font-bold font-mono">
+                          {new Date(rem.datetime).toLocaleDateString('en-IN', {
+                            day: 'numeric',
+                            month: 'short',
+                          })}
+                        </span>
+                      </div>
+                      
+                      <p className="text-[10px] text-slate-500 mt-1.5 leading-normal truncate">
+                        {rem.subtitle}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        {/* Column 2: Team Leaderboard (Conditional) */}
+        {['admin', 'sales_head', 'manager', 'tl'].includes(user?.role || '') ? (
+          <div className="bg-[#111625] border border-slate-800 rounded-xl p-6 shadow-md h-[28rem] flex flex-col">
             <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 mb-6 flex items-center gap-2">
               <UserCheck className="w-5 h-5 text-amber-500" />
               <span>Consultant Leaderboard</span>
             </h3>
-            <div className="overflow-x-auto">
+            <div className="overflow-y-auto pr-1 flex-1">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                  <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider sticky top-0 bg-[#111625] pb-3">
                     <th className="pb-3">Consultant</th>
                     <th className="pb-3 text-center">Assigned</th>
-                    <th className="pb-3 text-center">Calls Logged</th>
+                    <th className="pb-3 text-center">Calls</th>
                     <th className="pb-3 text-center">Meetings</th>
                     <th className="pb-3 text-center">Sales</th>
-                    <th className="pb-3 text-right">Conversion</th>
+                    <th className="pb-3 text-right">Conv.</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60 text-sm">
@@ -364,7 +448,7 @@ export default function DashboardPage() {
                   ) : (
                     performance.map((member) => (
                       <tr key={member.id} className="hover:bg-slate-900/20 transition-colors">
-                        <td className="py-3 font-semibold text-white">{member.name}</td>
+                        <td className="py-3 font-semibold text-white truncate max-w-[90px]">{member.name}</td>
                         <td className="py-3 text-center text-slate-300">{member.leadsAssigned}</td>
                         <td className="py-3 text-center text-slate-300">{member.callsMade}</td>
                         <td className="py-3 text-center text-slate-300">{member.meetingsBooked}</td>
@@ -377,15 +461,19 @@ export default function DashboardPage() {
               </table>
             </div>
           </div>
-        )}
+        ) : null}
 
-        {/* Recent Activity Log */}
-        <div className="bg-[#111625] border border-slate-800 rounded-xl p-6 shadow-md">
+        {/* Column 3: Recent Activity Stream (Always visible, spans remaining columns if leaderboard is hidden) */}
+        <div className={`${
+          ['admin', 'sales_head', 'manager', 'tl'].includes(user?.role || '') 
+            ? 'lg:col-span-1' 
+            : 'lg:col-span-2'
+        } bg-[#111625] border border-slate-800 rounded-xl p-6 shadow-md h-[28rem] flex flex-col`}>
           <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 mb-6 flex items-center gap-2">
             <Clock className="w-5 h-5 text-amber-500" />
             <span>Recent Activity Stream</span>
           </h3>
-          <div className="space-y-4 max-h-96 overflow-y-auto pr-1">
+          <div className="space-y-4 overflow-y-auto pr-1 flex-1">
             {activities.length === 0 ? (
               <div className="py-8 text-center text-slate-500 text-xs">
                 No activity records found.

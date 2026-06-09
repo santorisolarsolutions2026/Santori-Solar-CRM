@@ -26,6 +26,10 @@ interface TeamMember {
   reportsTo: number | null;
   isActive: boolean;
   lastSeenAt: string | null;
+  lastLoginAt: string | null;
+  loginLocation: string | null;
+  lastLogoutAt: string | null;
+  logoutLocation: string | null;
   supervisor?: { id: number; name: string } | null;
 }
 
@@ -47,6 +51,7 @@ export default function TeamManagementPage() {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [managersAndTls, setManagersAndTls] = useState<{ id: number; name: string; role: string }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   
   // Add User Form Modal
   const [showAddModal, setShowAddModal] = useState(false);
@@ -64,7 +69,7 @@ export default function TeamManagementPage() {
   // Fetch team members
   const fetchTeam = async () => {
     try {
-      const res = await fetch('/api/v1/users');
+      const res = await fetch('/api/v1/users', { cache: 'no-store' });
       const data = await res.json();
       if (data.success && data.data) {
         setMembers(data.data);
@@ -79,7 +84,7 @@ export default function TeamManagementPage() {
   // Fetch managers & TLs to populate reportsTo dropdown
   const fetchSupervisors = async () => {
     try {
-      const res = await fetch('/api/v1/users');
+      const res = await fetch('/api/v1/users', { cache: 'no-store' });
       const data = await res.json();
       if (data.success && data.data) {
         // Supervisors must be admin, sales_head, manager, or tl
@@ -236,7 +241,12 @@ export default function TeamManagementPage() {
                       }`}
                     >
                       <td className="py-4 px-6 font-bold text-white flex items-center gap-2">
-                        <span>{member.name}</span>
+                        <button
+                          onClick={() => setSelectedMember(member)}
+                          className="hover:text-amber-400 text-left font-bold text-white transition-colors"
+                        >
+                          {member.name}
+                        </button>
                         {member.id === user?.id && (
                           <span className="text-[8px] bg-amber-500/20 text-amber-400 border border-amber-500/20 rounded px-1.5 font-extrabold uppercase">
                             You
@@ -416,6 +426,119 @@ export default function TeamManagementPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* View User Modal Dialog */}
+      {selectedMember && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="w-full max-w-lg bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-white">Team Member Profile</h3>
+              <button onClick={() => setSelectedMember(null)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Profile Card Header */}
+              <div className="flex items-center gap-4 p-4 bg-slate-900/20 border border-slate-850 rounded-xl">
+                <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 font-extrabold text-lg uppercase">
+                  {selectedMember.name.substring(0, 2)}
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-white leading-none">{selectedMember.name}</h4>
+                  <span className={`inline-block text-[9px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider mt-2 ${
+                    ROLE_LABELS[selectedMember.role]?.class || 'bg-slate-500/15'
+                  }`}>
+                    {ROLE_LABELS[selectedMember.role]?.label || selectedMember.role}
+                  </span>
+                </div>
+              </div>
+
+              {/* Core Information Grid */}
+              <div className="grid grid-cols-2 gap-4 text-xs">
+                <div>
+                  <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Email Address</span>
+                  <span className="text-white font-mono">{selectedMember.email}</span>
+                </div>
+                <div>
+                  <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Contact Phone</span>
+                  <span className="text-white font-mono">{selectedMember.phone || '-'}</span>
+                </div>
+                <div>
+                  <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Direct Supervisor</span>
+                  <span className="text-white">{selectedMember.supervisor?.name || <span className="text-slate-600 italic">None</span>}</span>
+                </div>
+                <div>
+                  <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Status</span>
+                  <span className={`inline-block text-[9px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${
+                    selectedMember.isActive
+                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                      : 'bg-red-500/10 text-red-400 border-red-500/20'
+                  }`}>
+                    {selectedMember.isActive ? 'Active' : 'Deactivated'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Activity Timing & Geolocation Logs */}
+              <div className="border-t border-slate-800 pt-4 space-y-4">
+                <h5 className="text-[10px] font-bold uppercase tracking-wider text-amber-500">Access Logs</h5>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Last Login Info */}
+                  <div className="p-3 bg-slate-950/40 border border-slate-900 rounded-lg">
+                    <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1.5">Last Login Session</span>
+                    {selectedMember.lastLoginAt ? (
+                      <div className="space-y-1">
+                        <span className="block text-white text-xs font-mono">
+                          {new Date(selectedMember.lastLoginAt).toLocaleString('en-IN', {
+                            dateStyle: 'medium',
+                            timeStyle: 'short',
+                          })}
+                        </span>
+                        <span className="block text-[10px] text-slate-400 italic font-semibold leading-normal">
+                          📍 {selectedMember.loginLocation || 'Unknown location'}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-slate-600 text-xs italic">No login recorded</span>
+                    )}
+                  </div>
+
+                  {/* Last Logout Info */}
+                  <div className="p-3 bg-slate-950/40 border border-slate-900 rounded-lg">
+                    <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1.5">Last Logout Session</span>
+                    {selectedMember.lastLogoutAt ? (
+                      <div className="space-y-1">
+                        <span className="block text-white text-xs font-mono">
+                          {new Date(selectedMember.lastLogoutAt).toLocaleString('en-IN', {
+                            dateStyle: 'medium',
+                            timeStyle: 'short',
+                          })}
+                        </span>
+                        <span className="block text-[10px] text-slate-400 italic font-semibold leading-normal">
+                          📍 {selectedMember.logoutLocation || 'Unknown location'}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-slate-600 text-xs italic">No logout recorded</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-slate-800 bg-slate-900/10 flex justify-end">
+              <button
+                onClick={() => setSelectedMember(null)}
+                className="py-2 px-5 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 rounded-lg font-bold text-xs shadow-md"
+              >
+                Close Profile
+              </button>
+            </div>
           </div>
         </div>
       )}

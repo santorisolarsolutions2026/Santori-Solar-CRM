@@ -1,4 +1,4 @@
 1. UI -> Dashboard se hatane k liye src app authenticated layout.tsx se comment out kro
 
 
-2. 
+2. app src authenticated dashboard page.tsx 219-227

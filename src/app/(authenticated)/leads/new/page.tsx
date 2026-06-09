@@ -38,20 +38,27 @@ export default function NewLeadPage() {
   const [tls, setTls] = useState<{ id: number; name: string }[]>([]);
   const [consultants, setConsultants] = useState<{ id: number; name: string }[]>([]);
 
-  // Fetch users for assignments selectors
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const [tlsRes, consRes] = await Promise.all([
+        const [tlsRes, consRes, adminRes] = await Promise.all([
           fetch('/api/v1/users?role=tl'),
           fetch('/api/v1/users?role=consultant'),
+          fetch('/api/v1/users?role=admin'),
         ]);
 
         const tlsData = await tlsRes.json();
         const consData = await consRes.json();
+        const adminData = await adminRes.json();
 
-        if (tlsData.success) setTls(tlsData.data);
-        if (consData.success) setConsultants(consData.data);
+        const admins = adminData.success ? adminData.data : [];
+
+        if (tlsData.success) {
+          setTls([...tlsData.data, ...admins]);
+        }
+        if (consData.success) {
+          setConsultants([...consData.data, ...admins]);
+        }
       } catch (err) {
         console.error(err);
       }
@@ -342,7 +349,7 @@ export default function NewLeadPage() {
               </div>
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                  Pincode
+                  Pincode (optional)
                 </label>
                 <input
                   type="text"

@@ -5,7 +5,7 @@ import { signToken } from '@/lib/auth';
 
 export async function POST(req: Request) {
   try {
-    const { email, password } = await req.json();
+    const { email, password, location } = await req.json();
 
     if (!email || !password) {
       return NextResponse.json(
@@ -42,10 +42,14 @@ export async function POST(req: Request) {
       );
     }
 
-    // Update last seen presence
+    // Update last seen presence & login tracking
     await prisma.user.update({
       where: { id: user.id },
-      data: { lastSeenAt: new Date() },
+      data: {
+        lastSeenAt: new Date(),
+        lastLoginAt: new Date(),
+        loginLocation: location || null,
+      },
     });
 
     const token = signToken({
