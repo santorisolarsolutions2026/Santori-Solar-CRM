@@ -688,7 +688,7 @@ export default function LeadDetailPage({
                 </button>
               )}
               
-              {/*lead.status >= 13 && (
+              {lead.status >= 13 && (
                 <button
                   onClick={() => setActiveTab('order')}
                   className={`flex-1 py-4 text-center border-b-2 transition-all flex items-center justify-center gap-2 ${
@@ -700,7 +700,7 @@ export default function LeadDetailPage({
                   <FileCheck className="w-4 h-4" />
                   <span>Order Punching & Documents</span>
                 </button>
-              )*/}
+              )}
               
             </div>
 
