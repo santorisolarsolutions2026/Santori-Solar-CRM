@@ -16,7 +16,11 @@ function createPrismaClient() {
   const connectionString = `postgresql://${dbUser}:${encodeURIComponent(dbPassword)}@${dbHost}:${dbPort}/${dbName}?sslmode=require&schema=public`;
   //const connectionString = `postgresql://${encodeURIComponent(dbUser)}:${encodeURIComponent(dbPassword)}@${dbHost}:${dbPort}/${dbName}?schema=public`;
 
-  const pool = new pg.Pool({ connectionString });
+  const ssl = dbHost !== 'localhost' && dbHost !== '127.0.5.1' && dbHost !== '127.0.0.1'
+    ? { rejectUnauthorized: false }
+    : undefined;
+
+  const pool = new pg.Pool({ connectionString, ssl });
   const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });
 }
