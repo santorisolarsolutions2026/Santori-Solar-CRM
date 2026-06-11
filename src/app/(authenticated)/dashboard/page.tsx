@@ -10,7 +10,6 @@ import {
   Clock,
   Sparkles,
   Users,
-  Compass,
   ArrowUpRight,
   UserCheck,
   ChevronRight,
@@ -114,11 +113,11 @@ export default function DashboardPage() {
         if (perfData.success) setPerformance(perfData.data);
       }
 
-      // 5. Fetch recent activity (via live feed fallback)
-      const feedRes = await fetch('/api/v1/live/feed');
+      // 5. Fetch recent activity
+      const feedRes = await fetch('/api/v1/reports/recent-activity');
       const feedData = await feedRes.json();
       if (feedData.success) {
-        setActivities(feedData.data.logs.slice(0, 10)); // take latest 10
+        setActivities(feedData.data.logs || feedData.data || []);
       }
 
       // 6. Fetch reminders
@@ -221,16 +220,7 @@ export default function DashboardPage() {
                 <ArrowUpRight className="w-3.5 h-3.5" />
               </Link>
             )}
-            {['admin', 'sales_head'].includes(user?.role || '') && (
-              <Link
-                href="/live"
-                className="py-2.5 px-4 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 rounded-lg font-bold text-xs transition-all flex items-center gap-1.5"
-              >
-                <span>Launch Live Link</span>
-                <Compass className="w-3.5 h-3.5 text-amber-500 animate-spin-slow" />
-              </Link>
-              
-            )}
+
           </div>
         </div>
       </div>
@@ -293,6 +283,7 @@ export default function DashboardPage() {
                   contentStyle={{ backgroundColor: '#111625', border: '1px solid #1f2937', borderRadius: '8px' }}
                   labelStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}
                   itemStyle={{ fontSize: '12px' }}
+                  cursor={false}
                 />
                 <Area type="monotone" dataKey="created" stroke="#3B82F6" strokeWidth={2} fillOpacity={1} fill="url(#colorLeads)" />
                 <Area type="monotone" dataKey="closed" stroke="#10B981" strokeWidth={2} fillOpacity={1} fill="url(#colorSales)" />

@@ -10,7 +10,6 @@ import {
   Briefcase,
   Layers,
   LineChart,
-  Tv,
   LogOut,
   Bell,
   Menu,
@@ -138,12 +137,7 @@ export default function AuthenticatedLayout({
       icon: FileCheck,
       roles: ['admin', 'sales_head', 'finance', 'operations'],
     },
-    {
-      name: 'Live War-Room',
-      path: '/live',
-      icon: Tv,
-      roles: ['admin', 'sales_head'],
-    },
+
     {
       name: 'Team Management',
       path: '/team',
@@ -394,7 +388,7 @@ export default function AuthenticatedLayout({
         </header>
 
         {/* Page Content Workspace Area */}
-        <main className="flex-1 overflow-y-auto p-6 bg-[#090b11]">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-[#090b11]">
           {children}
         </main>
       </div>

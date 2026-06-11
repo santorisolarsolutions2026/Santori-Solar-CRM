@@ -21,8 +21,12 @@ import {
   Loader2,
   Lock,
   Plus,
+  Mic,
+  Square,
 } from 'lucide-react';
 import Link from 'next/link';
+import { BeautifulAudioPlayer } from '@/components/BeautifulAudioPlayer';
+import { MeetingLocationDisplay } from '@/components/MeetingLocationDisplay';
 
 interface Lead {
   id: number;
@@ -67,6 +71,15 @@ interface Lead {
     avgMonthlyBill: number;
     connectionType: string;
     notes: string | null;
+    meetingLatitude: number | null;
+    meetingLongitude: number | null;
+    meetingCity: string | null;
+    meetingLocality: string | null;
+    meetingPinCode: string | null;
+    audioRecordingPath: string | null;
+    meetingDurationSec: number | null;
+    meetingStartedAt: string | null;
+    meetingEndedAt: string | null;
   }[];
   order: {
     id: number;
@@ -241,6 +254,17 @@ export default function LeadDetailPage({
     additionalNotes: '',
   });
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
+
+  // Meeting recording & tracking states
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingElapsed, setRecordingElapsed] = useState(0);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
+  const [isUploadingAudio, setIsUploadingAudio] = useState(false);
+  const [audioUploaded, setAudioUploaded] = useState(false);
+  const [isStartingMeeting, setIsStartingMeeting] = useState(false);
+  const [isEndingMeeting, setIsEndingMeeting] = useState(false);
+  const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load Lead details
   const fetchLeadDetails = async () => {
@@ -553,6 +577,195 @@ export default function LeadDetailPage({
     }
   };
 
+  // Recording timer
+  useEffect(() => {
+    if (isRecording) {
+      timerIntervalRef.current = setInterval(() => {
+        setRecordingElapsed((prev) => prev + 1);
+      }, 1000);
+    } else {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+    }
+    return () => {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+      }
+    };
+  }, [isRecording]);
+
+  const handleStartMeeting = async (meetingId: number) => {
+    setIsStartingMeeting(true);
+    let lat: number | null = null;
+    let lng: number | null = null;
+
+    // 1. Get location coordinates
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 8000,
+        });
+      });
+      lat = position.coords.latitude;
+      lng = position.coords.longitude;
+    } catch (err) {
+      console.warn('Geolocation failed or permission denied:', err);
+      alert('Location access is required to verify the meeting location. Proceeding with location payload marked as null.');
+    }
+
+    // 2. Start audio media stream
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (err) {
+      console.error('Microphone access denied:', err);
+      alert('Microphone access is required to start the meeting recording.');
+      setIsStartingMeeting(false);
+      return;
+    }
+
+    // 3. Initialize MediaRecorder
+    try {
+      const recorderInstance = new MediaRecorder(stream);
+      const chunks: Blob[] = [];
+
+      recorderInstance.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) {
+          chunks.push(e.data);
+        }
+      };
+
+      recorderInstance.onstop = async () => {
+        const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+        await uploadAudioBlob(meetingId, audioBlob);
+        stream.getTracks().forEach((track) => track.stop());
+      };
+
+      // 4. Call start API
+      const res = await fetch(`/api/v1/meetings/${meetingId}/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ latitude: lat, longitude: lng }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        recorderInstance.start(1000); // collect chunks every second
+        setMediaRecorder(recorderInstance);
+        setIsRecording(true);
+        setRecordingElapsed(0);
+        setAudioChunks([]);
+        setAudioUploaded(false);
+        fetchLeadDetails();
+      } else {
+        alert(data.message || 'Failed to start meeting.');
+        stream.getTracks().forEach((track) => track.stop());
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert('Error initializing recorder: ' + err.message);
+    } finally {
+      setIsStartingMeeting(false);
+    }
+  };
+
+  const handleStartRecordingOnly = async (meetingId: number) => {
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (err) {
+      console.error('Microphone access denied:', err);
+      alert('Microphone access is required to start recording.');
+      return;
+    }
+
+    try {
+      const recorderInstance = new MediaRecorder(stream);
+      const chunks: Blob[] = [];
+
+      recorderInstance.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) {
+          chunks.push(e.data);
+        }
+      };
+
+      recorderInstance.onstop = async () => {
+        const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+        await uploadAudioBlob(meetingId, audioBlob);
+        stream.getTracks().forEach((track) => track.stop());
+      };
+
+      recorderInstance.start(1000);
+      setMediaRecorder(recorderInstance);
+      setIsRecording(true);
+      setRecordingElapsed(0);
+      setAudioChunks([]);
+      setAudioUploaded(false);
+    } catch (err: any) {
+      console.error(err);
+      alert('Error starting recorder: ' + err.message);
+    }
+  };
+
+  const handleStopRecording = () => {
+    if (mediaRecorder && isRecording) {
+      mediaRecorder.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const uploadAudioBlob = async (meetingId: number, blob: Blob) => {
+    setIsUploadingAudio(true);
+    const formData = new FormData();
+    formData.append('file', blob, 'meeting_recording.webm');
+
+    try {
+      const res = await fetch(`/api/v1/meetings/${meetingId}/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAudioUploaded(true);
+        alert('Audio recording saved successfully!');
+        fetchLeadDetails();
+      } else {
+        alert(data.message || 'Failed to upload audio recording.');
+      }
+    } catch (err) {
+      console.error('Audio upload error:', err);
+      alert('Error uploading audio file.');
+    } finally {
+      setIsUploadingAudio(false);
+    }
+  };
+
+  const handleStopMeeting = async (meetingId: number) => {
+    setIsEndingMeeting(true);
+    try {
+      const res = await fetch(`/api/v1/meetings/${meetingId}/end`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ remark: 'Meeting ended. Waiting for outcome logging.' }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMediaRecorder(null);
+        setShowFormC(true);
+      } else {
+        alert(data.message || 'Failed to stop meeting.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error stopping meeting.');
+    } finally {
+      setIsEndingMeeting(false);
+    }
+  };
+
   if (loading || !lead) {
     return (
       <div className="min-h-screen bg-[#090b11] flex items-center justify-center">
@@ -651,10 +864,10 @@ export default function LeadDetailPage({
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-[#111625] border border-slate-800 rounded-xl overflow-hidden shadow-lg">
             {/* Tabs selector */}
-            <div className="flex border-b border-slate-800 bg-slate-900/10 text-xs font-semibold">
+            <div className="flex border-b border-slate-800 bg-slate-900/10 text-xs font-semibold overflow-x-auto whitespace-nowrap scrollbar-none">
               <button
                 onClick={() => setActiveTab('info')}
-                className={`flex-1 py-4 text-center border-b-2 transition-all flex items-center justify-center gap-2 ${
+                className={`px-5 py-4 border-b-2 transition-all flex items-center justify-center gap-2 shrink-0 ${
                   activeTab === 'info'
                     ? 'border-amber-500 text-amber-400 bg-amber-500/[0.02]'
                     : 'border-transparent text-slate-400 hover:text-white'
@@ -665,7 +878,7 @@ export default function LeadDetailPage({
               </button>
               <button
                 onClick={() => setActiveTab('logs')}
-                className={`flex-1 py-4 text-center border-b-2 transition-all flex items-center justify-center gap-2 ${
+                className={`px-5 py-4 border-b-2 transition-all flex items-center justify-center gap-2 shrink-0 ${
                   activeTab === 'logs'
                     ? 'border-amber-500 text-amber-400 bg-amber-500/[0.02]'
                     : 'border-transparent text-slate-400 hover:text-white'
@@ -677,7 +890,7 @@ export default function LeadDetailPage({
               {lead.status >= 8 && (
                 <button
                   onClick={() => setActiveTab('meeting')}
-                  className={`flex-1 py-4 text-center border-b-2 transition-all flex items-center justify-center gap-2 ${
+                  className={`px-5 py-4 border-b-2 transition-all flex items-center justify-center gap-2 shrink-0 ${
                     activeTab === 'meeting'
                       ? 'border-amber-500 text-amber-400 bg-amber-500/[0.02]'
                       : 'border-transparent text-slate-400 hover:text-white'
@@ -691,7 +904,7 @@ export default function LeadDetailPage({
               {lead.status >= 13 && (
                 <button
                   onClick={() => setActiveTab('order')}
-                  className={`flex-1 py-4 text-center border-b-2 transition-all flex items-center justify-center gap-2 ${
+                  className={`px-5 py-4 border-b-2 transition-all flex items-center justify-center gap-2 shrink-0 ${
                     activeTab === 'order'
                       ? 'border-amber-500 text-amber-400 bg-amber-500/[0.02]'
                       : 'border-transparent text-slate-400 hover:text-white'
@@ -1021,53 +1234,235 @@ export default function LeadDetailPage({
               {/* 3. MEETING TAB */}
               {activeTab === 'meeting' && (
                 <div className="space-y-6">
-                  {lead.meetings.map((meet, index) => (
-                    <div
-                      key={meet.id}
-                      className="p-5 bg-slate-900/30 border border-slate-800 rounded-xl space-y-4 shadow-sm"
-                    >
-                      <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider">
-                        Meeting Booking #{index + 1}
-                      </h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                        <div>
-                          <span className="text-slate-500 uppercase tracking-wider font-semibold">Scheduled Date / Time</span>
-                          <p className="text-sm font-semibold text-white mt-1">
-                            {new Date(meet.meetingDate).toLocaleDateString('en-IN', {
-                              day: '2-digit',
-                              month: 'short',
-                              year: 'numeric',
-                            })}{' '}
-                            at {meet.meetingTime}
-                          </p>
+                  {lead.meetings.length === 0 ? (
+                    <div className="p-6 text-center text-slate-500 text-xs italic bg-slate-900/10 border border-slate-800 rounded-xl">
+                      No meetings booked for this lead.
+                    </div>
+                  ) : (
+                    lead.meetings.map((meet, index) => (
+                      <div
+                        key={meet.id}
+                        className="p-5 bg-slate-900/30 border border-slate-800 rounded-xl space-y-4 shadow-sm"
+                      >
+                        <div className="flex justify-between items-center border-b border-slate-800 pb-2.5">
+                          <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider">
+                            Meeting Booking #{lead.meetings.length - index}
+                          </h4>
+                          {meet.meetingStartedAt && meet.meetingEndedAt && (
+                            <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full px-2 py-0.5 font-bold uppercase tracking-wider">
+                              Completed ✅
+                            </span>
+                          )}
+                          {meet.meetingStartedAt && !meet.meetingEndedAt && (
+                            <span className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full px-2 py-0.5 font-bold uppercase tracking-wider flex items-center gap-1.5 animate-pulse">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                              <span>Active Session</span>
+                            </span>
+                          )}
                         </div>
-                        <div>
-                          <span className="text-slate-500 uppercase tracking-wider font-semibold">Monthly Electricity Bill</span>
-                          <p className="text-sm font-bold text-white mt-1">₹ {meet.avgMonthlyBill.toLocaleString('en-IN')}</p>
-                        </div>
-                        <div>
-                          <span className="text-slate-500 uppercase tracking-wider font-semibold">Meeting Contact</span>
-                          <p className="text-sm text-white mt-1 font-mono">{meet.mobile}</p>
-                        </div>
-                        <div>
-                          <span className="text-slate-500 uppercase tracking-wider font-semibold">Connection Class</span>
-                          <p className="text-sm text-white mt-1 capitalize">{meet.connectionType}</p>
-                        </div>
-                        <div className="sm:col-span-2">
-                          <span className="text-slate-500 uppercase tracking-wider font-semibold">Visit Address</span>
-                          <p className="text-sm text-white mt-1 leading-relaxed">{meet.address} ({meet.pinCode})</p>
-                        </div>
-                        {meet.notes && (
-                          <div className="sm:col-span-2">
-                            <span className="text-slate-500 uppercase tracking-wider font-semibold">Special Instructions</span>
-                            <p className="text-sm text-slate-400 mt-1 leading-normal italic bg-slate-950/20 p-2.5 rounded-lg border border-slate-850">
-                              "{meet.notes}"
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                          <div>
+                            <span className="text-slate-500 uppercase tracking-wider font-semibold">Scheduled Date / Time</span>
+                            <p className="text-sm font-semibold text-white mt-1">
+                              {new Date(meet.meetingDate).toLocaleDateString('en-IN', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric',
+                              })}{' '}
+                              at {meet.meetingTime}
                             </p>
                           </div>
+                          <div>
+                            <span className="text-slate-500 uppercase tracking-wider font-semibold">Monthly Electricity Bill</span>
+                            <p className="text-sm font-bold text-white mt-1">₹ {meet.avgMonthlyBill.toLocaleString('en-IN')}</p>
+                          </div>
+                          <div>
+                            <span className="text-slate-500 uppercase tracking-wider font-semibold">Meeting Contact</span>
+                            <p className="text-sm text-white mt-1 font-mono">{meet.mobile}</p>
+                          </div>
+                          <div>
+                            <span className="text-slate-500 uppercase tracking-wider font-semibold">Connection Class</span>
+                            <p className="text-sm text-white mt-1 capitalize">{meet.connectionType}</p>
+                          </div>
+                          <div className="sm:col-span-2">
+                            <span className="text-slate-500 uppercase tracking-wider font-semibold">Visit Address</span>
+                            <p className="text-sm text-white mt-1 leading-relaxed">{meet.address} ({meet.pinCode})</p>
+                          </div>
+                          {meet.notes && (
+                            <div className="sm:col-span-2">
+                              <span className="text-slate-500 uppercase tracking-wider font-semibold">Special Instructions</span>
+                              <p className="text-sm text-slate-400 mt-1 leading-normal italic bg-slate-950/20 p-2.5 rounded-lg border border-slate-850">
+                                "{meet.notes}"
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Interactive Meeting Controls for Active Lead Meeting */}
+                        {lead.status === 8 && index === 0 && (
+                          <div className="border-t border-slate-800/80 pt-4 space-y-4">
+                            <h5 className="text-[11px] font-bold text-amber-500 uppercase tracking-wide">
+                              Live Meeting Tracker
+                            </h5>
+                            
+                            {!meet.meetingStartedAt ? (
+                              <div className="p-4 bg-slate-950/45 border border-slate-850 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <div className="text-left">
+                                  <span className="text-xs font-bold text-white block">Ready to start the site visit?</span>
+                                  <p className="text-[10px] text-slate-400 mt-0.5">
+                                    This will request microphone and location permissions to log coordinates and record meeting audio.
+                                  </p>
+                                </div>
+                                <button
+                                  type="button"
+                                  disabled={isStartingMeeting}
+                                  onClick={() => handleStartMeeting(meet.id)}
+                                  className="w-full sm:w-auto py-2.5 px-5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/10 disabled:opacity-50 transition-all cursor-pointer"
+                                >
+                                  {isStartingMeeting ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  ) : (
+                                    <Mic className="w-3.5 h-3.5" />
+                                  )}
+                                  <span>Start Meeting</span>
+                                </button>
+                              </div>
+                            ) : !meet.meetingEndedAt ? (
+                              <div className="p-4 bg-slate-950/45 border border-slate-850 rounded-xl space-y-4">
+                                <div className="flex items-center justify-between flex-wrap gap-3">
+                                  <div className="flex items-center gap-2">
+                                    <span className="relative flex h-2 w-2">
+                                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                      <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                                    </span>
+                                    <span className="text-xs font-bold text-white uppercase tracking-wider">
+                                      Meeting Session In Progress
+                                    </span>
+                                  </div>
+                                  <div className="text-sm font-mono font-bold text-amber-400">
+                                    {Math.floor(recordingElapsed / 60).toString().padStart(2, '0')}:
+                                    {(recordingElapsed % 60).toString().padStart(2, '0')}
+                                  </div>
+                                                          <div className="flex flex-col sm:flex-row flex-wrap gap-3 items-center w-full">
+                                  {isRecording ? (
+                                    <button
+                                      type="button"
+                                      onClick={handleStopRecording}
+                                      className="w-full sm:w-auto py-2.5 px-4 bg-red-600 hover:bg-red-500 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                                    >
+                                      <Square className="w-3.5 h-3.5" />
+                                      <span>Stop Recording</span>
+                                    </button>
+                                  ) : !audioUploaded && !meet.audioRecordingPath ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleStartRecordingOnly(meet.id)}
+                                      className="w-full sm:w-auto py-2.5 px-4 bg-slate-900 border border-slate-800 hover:border-slate-700 text-amber-400 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                                    >
+                                      <Mic className="w-3.5 h-3.5" />
+                                      <span>Start Audio Recording</span>
+                                    </button>
+                                  ) : null}
+
+                                  {(audioUploaded || meet.audioRecordingPath || (!isRecording && !mediaRecorder)) && (
+                                    <button
+                                      type="button"
+                                      disabled={isEndingMeeting || isUploadingAudio}
+                                      onClick={() => handleStopMeeting(meet.id)}
+                                      className="w-full sm:w-auto py-2.5 px-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 rounded-lg font-bold text-xs shadow-md disabled:opacity-50 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                                    >
+                                      {isEndingMeeting ? (
+                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                      ) : (
+                                        <Square className="w-3.5 h-3.5" />
+                                      )}
+                                      <span>Stop Meeting & Log Outcome</span>
+                                    </button>
+                                  )}
+
+                                  {isUploadingAudio && (
+                                    <div className="text-[10px] text-slate-400 flex items-center justify-center gap-1.5 w-full sm:w-auto mt-1 sm:mt-0">
+                                      <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-500" />
+                                      <span>Uploading audio file to server...</span>
+                                    </div>
+                                  )}
+                                </div>         </div>
+                              </div>
+                            ) : null}
+                          </div>
                         )}
+
+                        {/* Completed Meeting Review & Playback */}
+                        {meet.meetingStartedAt && (
+                          <div className="border-t border-slate-800/80 pt-4 space-y-3">
+                            <h5 className="text-[10px] font-bold text-amber-500 uppercase tracking-wider flex items-center gap-1">
+                              <span>Meeting Session Details & Playback</span>
+                            </h5>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs bg-slate-950/20 p-4 border border-slate-850 rounded-xl">
+                              <div>
+                                <span className="text-slate-500 uppercase tracking-wider font-semibold">Location Tracked</span>
+                                {meet.meetingLatitude && meet.meetingLongitude ? (
+                                  <div className="mt-1">
+                                    <a
+                                      href={`https://www.google.com/maps/search/?api=1&query=${meet.meetingLatitude},${meet.meetingLongitude}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-amber-400 hover:underline inline-flex items-start gap-1.5 font-semibold transition-colors duration-150"
+                                      title="Open in Google Maps"
+                                    >
+                                      <MapPin className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                                      <span className="text-slate-200 hover:text-amber-400 leading-tight">
+                                        <MeetingLocationDisplay
+                                          latitude={meet.meetingLatitude}
+                                          longitude={meet.meetingLongitude}
+                                          dbLocality={meet.meetingLocality}
+                                          dbCity={meet.meetingCity}
+                                          dbPinCode={meet.meetingPinCode}
+                                        />
+                                      </span>
+                                    </a>
+                                    <span className="block text-[9px] text-slate-500 mt-1">({meet.meetingLatitude.toFixed(6)}, {meet.meetingLongitude.toFixed(6)})</span>
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-slate-500 mt-1 italic">Location permission was denied.</p>
+                                )}
+                              </div>
+                              <div>
+                                <span className="text-slate-500 uppercase tracking-wider font-semibold">Duration & Timing</span>
+                                <p className="text-sm text-white mt-1">
+                                  <span className="font-bold text-amber-400">
+                                    {meet.meetingDurationSec
+                                      ? `${Math.floor(meet.meetingDurationSec / 60)}m ${meet.meetingDurationSec % 60}s`
+                                      : 'Under 1 minute'}
+                                  </span>
+                                  <span className="block text-[9px] text-slate-500 mt-1">
+                                    Started: {new Date(meet.meetingStartedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                                    {meet.meetingEndedAt && (
+                                      <>
+                                        {' | '}
+                                        Ended: {new Date(meet.meetingEndedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                                      </>
+                                    )}
+                                  </span>
+                                </p>
+                              </div>
+                              {meet.audioRecordingPath && (
+                                <div className="md:col-span-2">
+                                  <span className="text-slate-500 uppercase tracking-wider font-semibold block mb-2">Recorded Audio</span>
+                                  <BeautifulAudioPlayer
+                                    src={`/api/v1/meetings/${meet.id}/audio`}
+                                    defaultDuration={meet.meetingDurationSec}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               )}
               
@@ -1200,14 +1595,14 @@ export default function LeadDetailPage({
                             <option value="hybrid">Hybrid (Both)</option>
                           </select>
                         </div>
-                        <div>
-                          <label className="flex items-center gap-2 mt-6 cursor-pointer select-none text-xs font-semibold text-slate-300">
+                        <div className="flex items-center md:h-full md:mt-5 mt-2">
+                          <label className="flex items-center gap-2.5 cursor-pointer select-none text-xs font-semibold text-slate-350">
                             <input
                               type="checkbox"
                               disabled={lead.order.status !== 'draft' && user?.role === 'consultant'}
                               checked={orderForm.subsidyApplicable}
                               onChange={(e) => setOrderForm({ ...orderForm, subsidyApplicable: e.target.checked })}
-                              className="w-4 h-4 bg-slate-950 border border-slate-800 rounded text-amber-500 focus:ring-0 focus:ring-offset-0"
+                              className="w-4 h-4 bg-slate-950 border border-slate-800 rounded text-amber-500 focus:ring-0 focus:ring-offset-0 cursor-pointer"
                             />
                             <span>Government Subsidy Eligible?</span>
                           </label>
@@ -1260,7 +1655,7 @@ export default function LeadDetailPage({
                         <div className="border-t border-slate-800/80 pt-4">
                           <button
                             type="submit"
-                            className="py-2.5 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs"
+                            className="w-full sm:w-auto py-2.5 px-6 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md flex items-center justify-center transition-all"
                           >
                             Save Punching Details
                           </button>
@@ -1287,7 +1682,7 @@ export default function LeadDetailPage({
                         return (
                           <div
                             key={item.type}
-                            className={`p-4 rounded-xl border flex flex-col justify-between h-32 transition-all ${
+                            className={`p-4 rounded-xl border flex flex-col justify-between min-h-[8.5rem] h-auto transition-all ${
                               uploaded
                                 ? 'bg-emerald-500/[0.02] border-emerald-500/20'
                                 : 'bg-slate-950/20 border-slate-850'

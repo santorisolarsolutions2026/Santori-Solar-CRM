@@ -258,7 +258,12 @@ export default function ReportsPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
                 <XAxis dataKey="date" stroke="#6b7280" fontSize={10} tickLine={false} />
                 <YAxis stroke="#6b7280" fontSize={10} tickLine={false} />
-                <Tooltip />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#111625', border: '1px solid #1f2937', borderRadius: '8px' }}
+                  labelStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}
+                  itemStyle={{ fontSize: '12px' }}
+                  cursor={false}
+                />
                 <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
                 <Line type="monotone" name="Leads Created" dataKey="created" stroke="#3B82F6" strokeWidth={2.5} activeDot={{ r: 6 }} dot={false} />
                 <Line type="monotone" name="Sales Completed" dataKey="closed" stroke="#10B981" strokeWidth={2.5} dot={false} />
@@ -288,7 +293,11 @@ export default function ReportsPage() {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#111625', border: '1px solid #1f2937', borderRadius: '8px' }}
+                  labelStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}
+                  itemStyle={{ fontSize: '12px' }}
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -303,7 +312,12 @@ export default function ReportsPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
                 <XAxis dataKey="name" stroke="#6b7280" fontSize={8} tickLine={false} />
                 <YAxis stroke="#6b7280" fontSize={10} tickLine={false} />
-                <Tooltip />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#111625', border: '1px solid #1f2937', borderRadius: '8px' }}
+                  labelStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}
+                  itemStyle={{ fontSize: '12px' }}
+                  cursor={false}
+                />
                 <Bar dataKey="Leads" fill="#f59e0b" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>

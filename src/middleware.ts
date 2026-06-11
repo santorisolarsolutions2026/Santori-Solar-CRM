@@ -8,7 +8,7 @@ export function middleware(request: NextRequest) {
   const { pathname } = url;
 
   // Paths requiring authentication
-  const protectedPaths = ['/dashboard', '/leads', '/live', '/team', '/reports', '/orders'];
+  const protectedPaths = ['/dashboard', '/leads', '/team', '/reports', '/orders'];
   const isPathProtected = protectedPaths.some((path) => pathname.startsWith(path));
 
   // Paths for guests only

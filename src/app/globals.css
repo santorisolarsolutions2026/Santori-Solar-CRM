@@ -114,4 +114,18 @@ body {
   animation: text-shimmer 6s linear infinite;
 }
 
+/* Hide scrollbars globally across the entire application */
+::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+* {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+
+
 

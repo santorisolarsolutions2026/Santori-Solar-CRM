@@ -200,3 +200,80 @@ export async function PATCH(
     );
   }
 }
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const userPayload = getAuthenticatedUser(req);
+    if (!userPayload) {
+      return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
+    }
+
+    // Only Admin can delete users
+    if (userPayload.role !== 'admin') {
+      return NextResponse.json({ success: false, message: 'Forbidden. Only Admin can delete users.' }, { status: 403 });
+    }
+
+    const { id } = await params;
+    const userId = parseInt(id, 10);
+    if (isNaN(userId)) {
+      return NextResponse.json({ success: false, message: 'Invalid User ID.' }, { status: 400 });
+    }
+
+    // Cannot delete yourself
+    if (userId === userPayload.id) {
+      return NextResponse.json({ success: false, message: 'Cannot delete your own user account.' }, { status: 400 });
+    }
+
+    // Find target user
+    const targetUser = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!targetUser) {
+      return NextResponse.json({ success: false, message: 'User not found.' }, { status: 404 });
+    }
+
+    // Enforce that user must be deactivated before deletion
+    if (targetUser.isActive) {
+      return NextResponse.json({ success: false, message: 'Cannot delete user. Please deactivate the user first.' }, { status: 400 });
+    }
+
+    // Check if user has any associated leads
+    const associatedLeadCount = await prisma.lead.count({
+      where: {
+        OR: [
+          { assignedManagerId: userId },
+          { assignedTlId: userId },
+          { assignedConsultantId: userId },
+          { createdById: userId },
+        ],
+      },
+    });
+
+    if (associatedLeadCount > 0) {
+      return NextResponse.json({
+        success: false,
+        message: `Cannot delete user. This user has ${associatedLeadCount} associated lead(s) in the system. Reassign or delete their leads first.`,
+      }, { status: 400 });
+    }
+
+    // Delete user from database
+    await prisma.user.delete({
+      where: { id: userId },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: `User '${targetUser.name}' has been successfully deleted.`,
+    });
+  } catch (error: any) {
+    console.error('Delete user error:', error);
+    return NextResponse.json(
+      { success: false, message: 'Internal server error', errors: { details: error.message } },
+      { status: 500 }
+    );
+  }
+}

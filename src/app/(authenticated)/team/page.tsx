@@ -15,6 +15,7 @@ import {
   Loader2,
   Lock,
   Sun,
+  Trash2,
 } from 'lucide-react';
 
 interface TeamMember {
@@ -138,6 +139,35 @@ export default function TeamManagementPage() {
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  // Completely delete a user after deactivation
+  const handleDeleteUser = async (member: TeamMember) => {
+    if (member.isActive) {
+      alert(`Cannot delete user "${member.name}". The user must be deactivated first.`);
+      return;
+    }
+
+    const confirmMsg = `Are you sure you want to completely and permanently delete the user account for "${member.name}"? This will fail if they have any associated leads in the system. This action cannot be undone.`;
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      const res = await fetch(`/api/v1/users/${member.id}`, {
+        method: 'DELETE',
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert(data.message || `User account successfully deleted.`);
+        setSelectedMember(null); // Close the detail profile modal/view if it's open
+        fetchTeam();
+      } else {
+        alert(data.message || 'Failed to delete user.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('An error occurred while trying to delete the user.');
     }
   };
 
@@ -277,17 +307,30 @@ export default function TeamManagementPage() {
                       {user?.role === 'admin' && (
                         <td className="py-4 px-6 text-center">
                           {member.id !== user.id ? (
-                            <button
-                              onClick={() => handleToggleActive(member)}
-                              className={`p-1.5 rounded-lg border transition-all ${
-                                member.isActive
-                                  ? 'bg-red-950/20 text-red-400 border-red-900/30 hover:bg-red-950/40'
-                                  : 'bg-emerald-950/20 text-emerald-400 border-emerald-900/30 hover:bg-emerald-950/40'
-                              }`}
-                              title={member.isActive ? 'Deactivate Account' : 'Reactivate Account'}
-                            >
-                              {member.isActive ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
-                            </button>
+                            <div className="flex items-center justify-center gap-2">
+                              <button
+                                onClick={() => handleToggleActive(member)}
+                                className={`p-1.5 rounded-lg border transition-all ${
+                                  member.isActive
+                                    ? 'bg-red-950/20 text-red-400 border-red-900/30 hover:bg-red-950/40'
+                                    : 'bg-emerald-950/20 text-emerald-400 border-emerald-900/30 hover:bg-emerald-950/40'
+                                }`}
+                                title={member.isActive ? 'Deactivate Account' : 'Reactivate Account'}
+                              >
+                                {member.isActive ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
+                              </button>
+                              
+                              {!member.isActive && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteUser(member)}
+                                  className="p-1.5 rounded-lg border bg-rose-950/20 text-rose-450 border-rose-900/30 hover:bg-rose-950/40 transition-all cursor-pointer"
+                                  title="Permanently Delete User"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
                           ) : (
                             <span className="text-slate-600 text-xs italic">-</span>
                           )}
@@ -531,7 +574,16 @@ export default function TeamManagementPage() {
               </div>
             </div>
 
-            <div className="p-6 border-t border-slate-800 bg-slate-900/10 flex justify-end">
+            <div className="p-6 border-t border-slate-800 bg-slate-900/10 flex justify-end gap-3">
+              {user?.role === 'admin' && selectedMember.id !== user.id && !selectedMember.isActive && (
+                <button
+                  type="button"
+                  onClick={() => handleDeleteUser(selectedMember)}
+                  className="py-2 px-4 bg-rose-950/20 text-rose-400 border border-rose-900/30 hover:bg-rose-950/40 rounded-lg font-bold text-xs shadow-md transition-all cursor-pointer"
+                >
+                  Delete Account
+                </button>
+              )}
               <button
                 onClick={() => setSelectedMember(null)}
                 className="py-2 px-5 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 rounded-lg font-bold text-xs shadow-md"

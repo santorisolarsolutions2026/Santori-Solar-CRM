@@ -122,6 +122,17 @@ model MeetingBooking {
   notes                String?
   createdAt            DateTime            @default(now())
 
+  // New fields for Start/End Meeting, Location & Audio Recording
+  meetingLatitude      Float?
+  meetingLongitude     Float?
+  meetingCity          String?
+  meetingLocality      String?
+  meetingPinCode       String?
+  audioRecordingPath   String?
+  meetingDurationSec   Int?
+  meetingStartedAt     DateTime?
+  meetingEndedAt       DateTime?
+
   // Relations
   lead                 Lead                @relation(fields: [leadId], references: [id], onDelete: Cascade)
   executive            User                @relation("MeetingExecutive", fields: [assignedExecutiveId], references: [id])
