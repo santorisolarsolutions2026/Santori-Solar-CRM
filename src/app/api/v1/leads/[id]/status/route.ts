@@ -7,7 +7,7 @@ const TRANSITIONS: Record<number, { to: number[]; roles: string[] }> = {
   1: { to: [2, 3, 4, 5, 10, 11], roles: ['consultant', 'psa', 'tl', 'manager'] },
   2: { to: [2, 3, 4, 5, 10, 11], roles: ['consultant', 'psa'] },
   3: { to: [3, 4, 5, 7, 8, 10, 11], roles: ['consultant', 'psa'] },
-  4: { to: [3], roles: ['manager', 'admin', 'sales_head'] }, // reactivate only
+  4: { to: [3], roles: ['manager', 'admin', 'director', 'sales_head'] }, // reactivate only
   5: { to: [2, 3, 4, 8, 10, 11], roles: ['consultant', 'psa'] },
   6: { to: [], roles: [] }, // terminal
   7: { to: [3, 4, 5, 8], roles: ['consultant', 'tl', 'manager'] },
@@ -65,8 +65,8 @@ export async function POST(
       return NextResponse.json({ success: false, message: 'Remark is mandatory for status change.' }, { status: 400 });
     }
 
-    // 1. Transition Checks (Admin and Sales Head can bypass standard matrix, but must follow terminal constraints)
-    const isAdminOrSalesHead = ['admin', 'sales_head'].includes(userPayload.role);
+    // 1. Transition Checks (Admin, Director, and Sales Head can bypass standard matrix, but must follow terminal constraints)
+    const isAdminOrSalesHead = ['admin', 'director', 'sales_head'].includes(userPayload.role);
     const rule = TRANSITIONS[lead.status];
 
     if (!isAdminOrSalesHead) {

@@ -33,8 +33,8 @@ export async function GET(
       return NextResponse.json({ success: false, message: 'Document not found.' }, { status: 404 });
     }
 
-    // Role visibility check: Admin, Sales Head, Finance, Operations, or the Consultant who submitted the order
-    const allowedRoles = ['admin', 'sales_head', 'finance', 'operations'];
+    // Role visibility check: Admin, Director, Sales Head, Finance, Operations, or the Consultant who submitted the order
+    const allowedRoles = ['admin', 'director', 'sales_head', 'finance', 'operations'];
     const isOwner = doc.order.submittedById === userPayload.id;
 
     if (!allowedRoles.includes(userPayload.role) && !isOwner) {

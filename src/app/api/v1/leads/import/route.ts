@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     }
 
     // Roles permitted to import leads
-    const allowedRoles = ['admin', 'sales_head', 'manager', 'tl'];
+    const allowedRoles = ['admin', 'director', 'sales_head', 'manager', 'tl'];
     if (!allowedRoles.includes(userPayload.role)) {
       return NextResponse.json({ success: false, message: 'Forbidden. Role cannot import leads.' }, { status: 403 });
     }

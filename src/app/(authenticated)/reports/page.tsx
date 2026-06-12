@@ -97,7 +97,7 @@ export default function ReportsPage() {
       if (pipelineData.success) setPipeline(pipelineData.data);
       if (trendData.success) setTrend(trendData.data);
 
-      if (['admin', 'sales_head', 'manager', 'tl'].includes(user?.role || '')) {
+      if (['admin', 'director', 'sales_head', 'manager', 'tl'].includes(user?.role || '')) {
         const perfRes = await fetch('/api/v1/reports/team-performance');
         const perfData = await perfRes.json();
         if (perfData.success) setPerformance(perfData.data);
@@ -325,7 +325,7 @@ export default function ReportsPage() {
         </div>
 
         {/* Leaders Table */}
-        {['admin', 'sales_head', 'manager', 'tl'].includes(user?.role || '') && (
+        {['admin', 'director', 'sales_head', 'manager', 'tl'].includes(user?.role || '') && (
           <div className="bg-[#111625] border border-slate-800 rounded-xl p-6 shadow-lg lg:col-span-2 print:border-black">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-6 print:text-black">Consultant Sales Standings</h3>
             <div className="overflow-x-auto">

@@ -37,6 +37,11 @@ interface Lead {
   consultant: { id: number; name: string } | null;
   tl: { id: number; name: string } | null;
   manager: { id: number; name: string } | null;
+  order?: {
+    id: number;
+    status: string;
+    installationImages?: { id: number; status: string }[];
+  } | null;
 }
 
 const STAGE_BADGES: Record<number, { name: string; class: string }> = {
@@ -541,7 +546,7 @@ export default function LeadsPage() {
             Nurture, track, and close solar customer deals.
           </p>
         </div>
-        {['admin', 'sales_head', 'manager', 'tl'].includes(user?.role || '') && (
+        {['admin', 'director', 'sales_head', 'manager', 'tl'].includes(user?.role || '') && (
           <div className="flex items-center gap-3">
             <button
               onClick={() => setShowImportModal(true)}
@@ -752,9 +757,16 @@ export default function LeadsPage() {
                         </span>
                       </td>
                       <td className="py-3.5 px-6">
-                        <span className={`inline-block text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${stage.class}`}>
-                          {stage.name}
-                        </span>
+                        <div className="flex flex-col gap-1">
+                          <span className={`inline-block text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${stage.class}`}>
+                            {stage.name}
+                          </span>
+                          {lead.status === 13 && lead.order?.status === 'completed' && (!lead.order?.installationImages || lead.order.installationImages.filter((img) => img.status === 'completed').length === 0) && (
+                            <span className="text-[9px] font-semibold text-rose-400 bg-rose-950/20 border border-rose-900/30 rounded px-1.5 py-0.5 w-fit uppercase tracking-wider">
+                              ⚠️ Photo Not Uploaded
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-3.5 px-6 font-medium text-slate-300">
                         {lead.tl?.name ? (
@@ -774,7 +786,7 @@ export default function LeadsPage() {
                           >
                             <Eye className="w-4 h-4" />
                           </Link>
-                          {['admin', 'sales_head', 'manager', 'tl'].includes(user?.role || '') && (
+                          {['admin', 'director', 'sales_head', 'manager', 'tl'].includes(user?.role || '') && (
                             <>
                               <Link
                                 href={`/leads/${lead.id}?edit=true`}

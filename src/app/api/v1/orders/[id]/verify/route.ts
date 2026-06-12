@@ -12,8 +12,8 @@ export async function POST(
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
-    // Only Finance or Admin can verify an order
-    const allowedRoles = ['finance', 'admin'];
+    // Only Finance, Admin, Director, or Sales Head can verify an order
+    const allowedRoles = ['finance', 'admin', 'director', 'sales_head'];
     if (!allowedRoles.includes(userPayload.role)) {
       return NextResponse.json({ success: false, message: 'Forbidden. Only Finance or Admin can verify orders.' }, { status: 403 });
     }

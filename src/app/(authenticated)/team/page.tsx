@@ -16,6 +16,9 @@ import {
   Lock,
   Sun,
   Trash2,
+  Upload,
+  Calendar,
+  User,
 } from 'lucide-react';
 
 interface TeamMember {
@@ -31,11 +34,15 @@ interface TeamMember {
   loginLocation: string | null;
   lastLogoutAt: string | null;
   logoutLocation: string | null;
+  joiningDate: string | null;
+  photograph: string | null;
   supervisor?: { id: number; name: string } | null;
+  leadsClosed?: number;
 }
 
 const ROLE_LABELS: Record<string, { label: string; class: string }> = {
   admin: { label: 'Admin (Deepak Sir)', class: 'bg-red-500/10 text-red-400 border-red-500/20' },
+  director: { label: 'Director', class: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' },
   sales_head: { label: 'Sales Head', class: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
   manager: { label: 'Manager', class: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
   tl: { label: 'Team Leader', class: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
@@ -45,8 +52,25 @@ const ROLE_LABELS: Record<string, { label: string; class: string }> = {
   operations: { label: 'Operations Team', class: 'bg-pink-500/10 text-pink-400 border-pink-500/20' },
 };
 
+function calculateYearsInCompany(joiningDateStr: string | null): string {
+  if (!joiningDateStr) return '-';
+  const joiningDate = new Date(joiningDateStr);
+  const now = new Date();
+  const diffTime = Math.abs(now.getTime() - joiningDate.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const years = diffDays / 365.25;
+  if (years < 0.1) {
+    const months = Math.floor(diffDays / 30);
+    if (months === 0) {
+      return `${diffDays} Day${diffDays > 1 ? 's' : ''}`;
+    }
+    return `${months} Month${months > 1 ? 's' : ''}`;
+  }
+  return `${years.toFixed(1)} Year${years.toFixed(1) !== '1.0' ? 's' : ''}`;
+}
+
 export default function TeamManagementPage() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const router = useRouter();
 
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -63,9 +87,68 @@ export default function TeamManagementPage() {
     role: 'consultant',
     password: '',
     reportsTo: '',
+    joiningDate: '',
+    photograph: '',
   });
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
+  const [uploadingAddPhoto, setUploadingAddPhoto] = useState(false);
+  const [addPhotoPreviewUrl, setAddPhotoPreviewUrl] = useState('');
+
+  // Edit Own Profile state
+  const [editPhone, setEditPhone] = useState('');
+  const [editPhotoPath, setEditPhotoPath] = useState('');
+  const [uploadingEditPhoto, setUploadingEditPhoto] = useState(false);
+  const [updatingProfile, setUpdatingProfile] = useState(false);
+  const [updateError, setUpdateError] = useState('');
+  const [editPhotoPreviewUrl, setEditPhotoPreviewUrl] = useState('');
+
+  // Edit Other Member states (for admin/director/sales_head)
+  const [editMemberForm, setEditMemberForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    role: 'consultant',
+    reportsTo: '',
+    joiningDate: '',
+    photograph: '',
+    isActive: true,
+  });
+  const [editMemberPhotoPreviewUrl, setEditMemberPhotoPreviewUrl] = useState('');
+  const [uploadingEditMemberPhoto, setUploadingEditMemberPhoto] = useState(false);
+  const [updatingMember, setUpdatingMember] = useState(false);
+  const [updateMemberError, setUpdateMemberError] = useState('');
+
+  const closeAddModal = () => {
+    setShowAddModal(false);
+    if (addPhotoPreviewUrl) {
+      URL.revokeObjectURL(addPhotoPreviewUrl);
+      setAddPhotoPreviewUrl('');
+    }
+    setForm({
+      name: '',
+      email: '',
+      phone: '',
+      role: 'consultant',
+      password: '',
+      reportsTo: '',
+      joiningDate: '',
+      photograph: '',
+    });
+    setFormError('');
+  };
+
+  const closeProfileModal = () => {
+    setSelectedMember(null);
+    if (editPhotoPreviewUrl) {
+      URL.revokeObjectURL(editPhotoPreviewUrl);
+      setEditPhotoPreviewUrl('');
+    }
+    if (editMemberPhotoPreviewUrl) {
+      URL.revokeObjectURL(editMemberPhotoPreviewUrl);
+      setEditMemberPhotoPreviewUrl('');
+    }
+  };
 
   // Fetch team members
   const fetchTeam = async () => {
@@ -88,9 +171,9 @@ export default function TeamManagementPage() {
       const res = await fetch('/api/v1/users', { cache: 'no-store' });
       const data = await res.json();
       if (data.success && data.data) {
-        // Supervisors must be admin, sales_head, manager, or tl
+        // Supervisors must be admin, director, sales_head, manager, or tl
         const filtered = data.data.filter((u: any) =>
-          ['admin', 'sales_head', 'manager', 'tl'].includes(u.role)
+          ['admin', 'director', 'sales_head', 'manager', 'tl'].includes(u.role)
         );
         setManagersAndTls(filtered);
       }
@@ -101,16 +184,178 @@ export default function TeamManagementPage() {
 
   useEffect(() => {
     if (user) {
-      // Access Control: Only admin or manager
-      if (!['admin', 'manager'].includes(user.role)) {
-        router.push('/dashboard');
-        return;
-      }
-
       fetchTeam();
-      fetchSupervisors();
+      if (['admin', 'director', 'sales_head'].includes(user.role)) {
+        fetchSupervisors();
+      }
     }
   }, [user]);
+
+  // Handle opening profile view
+  const handleOpenProfile = (member: TeamMember) => {
+    setSelectedMember(member);
+    if (member.id === user?.id) {
+      setEditPhone(member.phone || '');
+      setEditPhotoPath(member.photograph || '');
+      setUpdateError('');
+    } else if (isAdminOrDirectorOrSalesHead) {
+      setEditMemberForm({
+        name: member.name,
+        email: member.email,
+        phone: member.phone || '',
+        role: member.role,
+        reportsTo: member.reportsTo ? String(member.reportsTo) : '',
+        joiningDate: member.joiningDate ? member.joiningDate.split('T')[0] : '',
+        photograph: member.photograph || '',
+        isActive: member.isActive,
+      });
+      setEditMemberPhotoPreviewUrl('');
+      setUpdateMemberError('');
+    }
+  };
+
+  // Handle photo upload inside Add User modal
+  const handleAddPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Create a local blob URL for preview
+    const objectUrl = URL.createObjectURL(file);
+    if (addPhotoPreviewUrl) {
+      URL.revokeObjectURL(addPhotoPreviewUrl);
+    }
+    setAddPhotoPreviewUrl(objectUrl);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      setUploadingAddPhoto(true);
+      const res = await fetch('/api/v1/users/upload-photograph', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success) {
+        setForm(prev => ({ ...prev, photograph: data.filePath }));
+      } else {
+        alert(data.message || 'Failed to upload photo.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error uploading photo.');
+    } finally {
+      setUploadingAddPhoto(false);
+    }
+  };
+
+  // Handle photo upload inside Edit Own Profile modal
+  const handleEditPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Create a local blob URL for preview
+    const objectUrl = URL.createObjectURL(file);
+    if (editPhotoPreviewUrl) {
+      URL.revokeObjectURL(editPhotoPreviewUrl);
+    }
+    setEditPhotoPreviewUrl(objectUrl);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      setUploadingEditPhoto(true);
+      const res = await fetch('/api/v1/users/upload-photograph', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success) {
+        setEditPhotoPath(data.filePath);
+      } else {
+        alert(data.message || 'Failed to upload photo.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error uploading photo.');
+    } finally {
+      setUploadingEditPhoto(false);
+    }
+  };
+
+  // Handle photo upload inside Edit Other Member modal (admins/directors/sales heads)
+  const handleEditMemberPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const objectUrl = URL.createObjectURL(file);
+    if (editMemberPhotoPreviewUrl) {
+      URL.revokeObjectURL(editMemberPhotoPreviewUrl);
+    }
+    setEditMemberPhotoPreviewUrl(objectUrl);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      setUploadingEditMemberPhoto(true);
+      const res = await fetch('/api/v1/users/upload-photograph', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success) {
+        setEditMemberForm(prev => ({ ...prev, photograph: data.filePath }));
+      } else {
+        alert(data.message || 'Failed to upload photo.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error uploading photo.');
+    } finally {
+      setUploadingEditMemberPhoto(false);
+    }
+  };
+
+  // Save changes to another member's profile (admins/directors/sales heads)
+  const handleSaveMemberDetails = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedMember) return;
+    setUpdatingMember(true);
+    setUpdateMemberError('');
+
+    try {
+      const res = await fetch(`/api/v1/users/${selectedMember.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editMemberForm.name,
+          email: editMemberForm.email,
+          phone: editMemberForm.phone,
+          role: editMemberForm.role,
+          reportsTo: editMemberForm.reportsTo ? parseInt(editMemberForm.reportsTo, 10) : null,
+          joiningDate: editMemberForm.joiningDate ? new Date(editMemberForm.joiningDate) : null,
+          photograph: editMemberForm.photograph || null,
+          isActive: editMemberForm.isActive,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert('Member profile updated successfully!');
+        closeProfileModal();
+        fetchTeam();
+      } else {
+        setUpdateMemberError(data.message || 'Failed to update member profile.');
+      }
+    } catch (err) {
+      console.error(err);
+      setUpdateMemberError('An error occurred while saving profile.');
+    } finally {
+      setUpdatingMember(false);
+    }
+  };
 
   // Toggle user activation status (deactivate soft-delete with reassignments)
   const handleToggleActive = async (member: TeamMember) => {
@@ -134,6 +379,9 @@ export default function TeamManagementPage() {
       if (data.success) {
         alert(data.message || `User status changed successfully.`);
         fetchTeam();
+        if (selectedMember && selectedMember.id === member.id) {
+          setSelectedMember(prev => prev ? { ...prev, isActive: !prev.isActive } : null);
+        }
       } else {
         alert(data.message || 'Failed to update user status.');
       }
@@ -160,7 +408,7 @@ export default function TeamManagementPage() {
       const data = await res.json();
       if (data.success) {
         alert(data.message || `User account successfully deleted.`);
-        setSelectedMember(null); // Close the detail profile modal/view if it's open
+        closeProfileModal(); // Close the detail profile modal/view if it's open
         fetchTeam();
       } else {
         alert(data.message || 'Failed to delete user.');
@@ -186,15 +434,7 @@ export default function TeamManagementPage() {
 
       const data = await res.json();
       if (data.success) {
-        setShowAddModal(false);
-        setForm({
-          name: '',
-          email: '',
-          phone: '',
-          role: 'consultant',
-          password: '',
-          reportsTo: '',
-        });
+        closeAddModal();
         fetchTeam();
         alert('Team member registered successfully!');
       } else {
@@ -208,6 +448,40 @@ export default function TeamManagementPage() {
     }
   };
 
+  // Save changes to own profile
+  const handleSaveOwnProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    setUpdatingProfile(true);
+    setUpdateError('');
+
+    try {
+      const res = await fetch(`/api/v1/users/${user.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: editPhone,
+          photograph: editPhotoPath,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert('Profile updated successfully!');
+        closeProfileModal();
+        fetchTeam();
+        refreshUser(); // update current user context (e.g. for header)
+      } else {
+        setUpdateError(data.message || 'Failed to update profile.');
+      }
+    } catch (err) {
+      console.error(err);
+      setUpdateError('An error occurred while saving profile.');
+    } finally {
+      setUpdatingProfile(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#090b11] flex items-center justify-center">
@@ -216,20 +490,25 @@ export default function TeamManagementPage() {
     );
   }
 
+  const isAdminOrDirectorOrSalesHead = ['admin', 'director', 'sales_head'].includes(user?.role || '');
+  const titleText = 'Santori Team';
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* Title Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-white tracking-wide">Team & Access Control</h1>
+          <h1 className="text-xl font-bold text-white tracking-wide">{titleText}</h1>
           <p className="text-xs text-slate-400 mt-1">
-            Manage user profiles, assign roles, and handle account deactivations.
+            {isAdminOrDirectorOrSalesHead
+              ? 'Manage user profiles, assign roles, and handle account status.'
+              : 'Browse company directory and see colleagues.'}
           </p>
         </div>
-        {user?.role === 'admin' && (
+        {isAdminOrDirectorOrSalesHead && (
           <button
             onClick={() => setShowAddModal(true)}
-            className="py-2.5 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-lg shadow-amber-500/10 flex items-center gap-1.5 transition-all w-fit"
+            className="py-2.5 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-lg shadow-amber-500/10 flex items-center gap-1.5 transition-all w-fit cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Add Team Member</span>
@@ -243,19 +522,29 @@ export default function TeamManagementPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-800 bg-slate-900/10 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                <th className="py-4 px-6 w-16 text-center">Photo</th>
                 <th className="py-4 px-6">Full Name</th>
-                <th className="py-4 px-6">Email Address</th>
-                <th className="py-4 px-6">Contact Number</th>
-                <th className="py-4 px-6">Assigned System Role</th>
-                <th className="py-4 px-6">Direct Supervisor</th>
-                <th className="py-4 px-6 text-center">Status</th>
-                {user?.role === 'admin' && <th className="py-4 px-6 text-center">Control</th>}
+                <th className="py-4 px-6">Designation</th>
+                {isAdminOrDirectorOrSalesHead ? (
+                  <>
+                    <th className="py-4 px-6">Direct Supervisor</th>
+                    <th className="py-4 px-6">Years in the Company</th>
+                    <th className="py-4 px-6 text-center">Leads Closed</th>
+                    <th className="py-4 px-6 text-center">Status</th>
+                    <th className="py-4 px-6 text-center">Control</th>
+                  </>
+                ) : (
+                  <>
+                    <th className="py-4 px-6">Years in the Company</th>
+                    <th className="py-4 px-6 text-center">Leads Closed</th>
+                  </>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-sm">
               {members.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-500 text-xs">
+                  <td colSpan={isAdminOrDirectorOrSalesHead ? 8 : 5} className="py-12 text-center text-slate-500 text-xs">
                     No team members found.
                   </td>
                 </tr>
@@ -270,71 +559,110 @@ export default function TeamManagementPage() {
                         !member.isActive ? 'opacity-50' : ''
                       }`}
                     >
-                      <td className="py-4 px-6 font-bold text-white flex items-center gap-2">
-                        <button
-                          onClick={() => setSelectedMember(member)}
-                          className="hover:text-amber-400 text-left font-bold text-white transition-colors"
-                        >
-                          {member.name}
-                        </button>
-                        {member.id === user?.id && (
-                          <span className="text-[8px] bg-amber-500/20 text-amber-400 border border-amber-500/20 rounded px-1.5 font-extrabold uppercase">
-                            You
-                          </span>
+                      {/* Photograph Column */}
+                      <td className="py-4 px-6 text-center">
+                        {member.photograph ? (
+                          <img
+                            src={`/api/v1/users/${member.id}/photograph?t=${Date.now()}`}
+                            alt={member.name}
+                            className="w-8 h-8 rounded-full object-cover border border-slate-800 mx-auto"
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-xs text-amber-500 mx-auto">
+                            {member.name.substring(0, 2).toUpperCase()}
+                          </div>
                         )}
                       </td>
-                      <td className="py-4 px-6 text-slate-300 font-mono text-xs">{member.email}</td>
-                      <td className="py-4 px-6 text-slate-300 font-mono text-xs">{member.phone || '-'}</td>
+
+                      {/* Full Name Column */}
+                      <td className="py-4 px-6 font-bold text-white">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleOpenProfile(member)}
+                            className="hover:text-amber-400 text-left font-bold text-white transition-colors cursor-pointer"
+                          >
+                            {member.name}
+                          </button>
+                          {member.id === user?.id && (
+                            <span className="text-[8px] bg-amber-500/20 text-amber-400 border border-amber-500/20 rounded px-1.5 font-extrabold uppercase">
+                              You
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Designation/Role Column */}
                       <td className="py-4 px-6">
                         <span className={`inline-block text-[9px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${roleConfig.class}`}>
                           {roleConfig.label}
                         </span>
                       </td>
-                      <td className="py-4 px-6 text-slate-400">
-                        {member.supervisor?.name || <span className="text-slate-600 text-xs italic">None</span>}
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <span
-                          className={`inline-block text-[9px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${
-                            member.isActive
-                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                              : 'bg-red-500/10 text-red-400 border-red-500/20'
-                          }`}
-                        >
-                          {member.isActive ? 'Active' : 'Deactivated'}
-                        </span>
-                      </td>
-                      {user?.role === 'admin' && (
-                        <td className="py-4 px-6 text-center">
-                          {member.id !== user.id ? (
-                            <div className="flex items-center justify-center gap-2">
-                              <button
-                                onClick={() => handleToggleActive(member)}
-                                className={`p-1.5 rounded-lg border transition-all ${
-                                  member.isActive
-                                    ? 'bg-red-950/20 text-red-400 border-red-900/30 hover:bg-red-950/40'
-                                    : 'bg-emerald-950/20 text-emerald-400 border-emerald-900/30 hover:bg-emerald-950/40'
-                                }`}
-                                title={member.isActive ? 'Deactivate Account' : 'Reactivate Account'}
-                              >
-                                {member.isActive ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
-                              </button>
-                              
-                              {!member.isActive && (
+
+                      {isAdminOrDirectorOrSalesHead ? (
+                        <>
+                          <td className="py-4 px-6 text-slate-400">
+                            {member.supervisor?.name || <span className="text-slate-600 text-xs italic">None</span>}
+                          </td>
+                          <td className="py-4 px-6 text-slate-300">
+                            {calculateYearsInCompany(member.joiningDate)}
+                          </td>
+                          <td className="py-4 px-6 text-center text-emerald-400 font-bold font-mono">
+                            {member.leadsClosed || 0}
+                          </td>
+                          <td className="py-4 px-6 text-center">
+                            <span
+                              className={`inline-block text-[9px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${
+                                member.isActive
+                                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                  : 'bg-red-500/10 text-red-400 border-red-500/20'
+                              }`}
+                            >
+                                {member.isActive ? 'Active' : 'Deactivated'}
+                            </span>
+                          </td>
+                          <td className="py-4 px-6 text-center">
+                            {member.id !== user?.id ? (
+                              <div className="flex items-center justify-center gap-2">
                                 <button
-                                  type="button"
-                                  onClick={() => handleDeleteUser(member)}
-                                  className="p-1.5 rounded-lg border bg-rose-950/20 text-rose-450 border-rose-900/30 hover:bg-rose-950/40 transition-all cursor-pointer"
-                                  title="Permanently Delete User"
+                                  onClick={() => handleToggleActive(member)}
+                                  className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                                    member.isActive
+                                      ? 'bg-red-950/20 text-red-400 border-red-900/30 hover:bg-red-950/40'
+                                      : 'bg-emerald-950/20 text-emerald-400 border-emerald-900/30 hover:bg-emerald-950/40'
+                                  }`}
+                                  title={member.isActive ? 'Deactivate Account' : 'Reactivate Account'}
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  {member.isActive ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
                                 </button>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-slate-600 text-xs italic">-</span>
-                          )}
-                        </td>
+                                
+                                {!member.isActive && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteUser(member)}
+                                    className="p-1.5 rounded-lg border bg-rose-950/20 text-rose-450 border-rose-900/30 hover:bg-rose-950/40 transition-all cursor-pointer"
+                                    title="Permanently Delete User"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-slate-600 text-xs italic">-</span>
+                            )}
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="py-4 px-6 text-slate-355 font-mono text-xs">
+                            {calculateYearsInCompany(member.joiningDate)}
+                          </td>
+                          <td className="py-4 px-6 text-center text-emerald-400 font-bold font-mono">
+                            {member.leadsClosed || 0}
+                          </td>
+                        </>
                       )}
                     </tr>
                   );
@@ -352,7 +680,7 @@ export default function TeamManagementPage() {
           <div className="w-full max-w-lg bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
             <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
               <h3 className="text-sm font-bold uppercase tracking-wider text-white">Register New Team Member</h3>
-              <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-white">
+              <button onClick={closeAddModal} className="text-slate-400 hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -364,6 +692,41 @@ export default function TeamManagementPage() {
             )}
 
             <form onSubmit={handleAddSubmit} className="p-6 space-y-4">
+              {/* Photo Upload Area */}
+              <div className="flex items-center gap-4 p-4 bg-slate-900/20 border border-slate-800/80 rounded-xl">
+                <div className="relative w-16 h-16 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center overflow-hidden">
+                  {addPhotoPreviewUrl || form.photograph ? (
+                    <img src={addPhotoPreviewUrl || form.photograph} alt="Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-8 h-8 text-slate-500" />
+                  )}
+                  {uploadingAddPhoto && (
+                    <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
+                      <Loader2 className="w-4 h-4 text-amber-500 animate-spin" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 space-y-1">
+                  <label className="block text-[10px] font-bold uppercase text-slate-400">Profile Photograph</label>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      id="add-photo-input"
+                      onChange={handleAddPhotoUpload}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="add-photo-input"
+                      className="py-1.5 px-3 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 rounded-lg text-xs font-semibold flex items-center gap-1.5 w-fit cursor-pointer transition-all"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>{form.photograph ? 'Change Photo' : 'Upload Photograph'}</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Full Name</label>
@@ -405,6 +768,7 @@ export default function TeamManagementPage() {
                     className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500"
                   >
                     <option value="admin">Admin</option>
+                    <option value="director">Director</option>
                     <option value="sales_head">Sales Head</option>
                     <option value="manager">Manager</option>
                     <option value="tl">Team Leader (TL)</option>
@@ -440,20 +804,30 @@ export default function TeamManagementPage() {
                     ))}
                   </select>
                 </div>
+                <div>
+                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Date of Joining</label>
+                  <input
+                    type="date"
+                    required
+                    value={form.joiningDate}
+                    onChange={(e) => setForm({ ...form, joiningDate: e.target.value })}
+                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500"
+                  />
+                </div>
               </div>
 
               <div className="flex gap-3 border-t border-slate-800/80 pt-4 justify-end">
                 <button
                   type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="py-2 px-4 bg-slate-900 border border-slate-800 text-slate-400 rounded-lg font-bold text-xs"
+                  onClick={closeAddModal}
+                  className="py-2 px-4 bg-slate-900 border border-slate-800 text-slate-400 rounded-lg font-bold text-xs cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="py-2 px-5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md flex items-center gap-1.5"
+                  className="py-2 px-5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer"
                 >
                   {submitting ? (
                     <>
@@ -474,123 +848,496 @@ export default function TeamManagementPage() {
       )}
 
       {/* ============================================================== */}
-      {/* View User Modal Dialog */}
+      {/* View User Modal Dialog / Edit Own Profile Modal */}
       {selectedMember && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
           <div className="w-full max-w-lg bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
             <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-white">Team Member Profile</h3>
-              <button onClick={() => setSelectedMember(null)} className="text-slate-400 hover:text-white">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-white">
+                {selectedMember.id === user?.id ? 'My profile settings' : 'Team Member Profile'}
+              </h3>
+              <button onClick={closeProfileModal} className="text-slate-400 hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-6 space-y-6">
-              {/* Profile Card Header */}
-              <div className="flex items-center gap-4 p-4 bg-slate-900/20 border border-slate-850 rounded-xl">
-                <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 font-extrabold text-lg uppercase">
-                  {selectedMember.name.substring(0, 2)}
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-white leading-none">{selectedMember.name}</h4>
-                  <span className={`inline-block text-[9px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider mt-2 ${
-                    ROLE_LABELS[selectedMember.role]?.class || 'bg-slate-500/15'
-                  }`}>
-                    {ROLE_LABELS[selectedMember.role]?.label || selectedMember.role}
-                  </span>
-                </div>
-              </div>
+            {selectedMember.id === user?.id ? (
+              /* OWN PROFILE EDITING VIEW */
+              <form onSubmit={handleSaveOwnProfile}>
+                <div className="p-6 space-y-6">
+                  {updateError && (
+                    <div className="p-4 rounded-lg bg-red-950/50 border border-red-800 text-red-200 text-xs font-semibold">
+                      {updateError}
+                    </div>
+                  )}
 
-              {/* Core Information Grid */}
-              <div className="grid grid-cols-2 gap-4 text-xs">
-                <div>
-                  <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Email Address</span>
-                  <span className="text-white font-mono">{selectedMember.email}</span>
-                </div>
-                <div>
-                  <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Contact Phone</span>
-                  <span className="text-white font-mono">{selectedMember.phone || '-'}</span>
-                </div>
-                <div>
-                  <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Direct Supervisor</span>
-                  <span className="text-white">{selectedMember.supervisor?.name || <span className="text-slate-600 italic">None</span>}</span>
-                </div>
-                <div>
-                  <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Status</span>
-                  <span className={`inline-block text-[9px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${
-                    selectedMember.isActive
-                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                      : 'bg-red-500/10 text-red-400 border-red-500/20'
-                  }`}>
-                    {selectedMember.isActive ? 'Active' : 'Deactivated'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Activity Timing & Geolocation Logs */}
-              <div className="border-t border-slate-800 pt-4 space-y-4">
-                <h5 className="text-[10px] font-bold uppercase tracking-wider text-amber-500">Access Logs</h5>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Last Login Info */}
-                  <div className="p-3 bg-slate-950/40 border border-slate-900 rounded-lg">
-                    <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1.5">Last Login Session</span>
-                    {selectedMember.lastLoginAt ? (
-                      <div className="space-y-1">
-                        <span className="block text-white text-xs font-mono">
-                          {new Date(selectedMember.lastLoginAt).toLocaleString('en-IN', {
-                            dateStyle: 'medium',
-                            timeStyle: 'short',
-                          })}
-                        </span>
-                        <span className="block text-[10px] text-slate-400 italic font-semibold leading-normal">
-                          📍 {selectedMember.loginLocation || 'Unknown location'}
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-slate-600 text-xs italic">No login recorded</span>
-                    )}
+                  {/* Profile Picture Upload Section */}
+                  <div className="flex items-center gap-4 p-4 bg-slate-900/20 border border-slate-850 rounded-xl">
+                    <div className="relative w-16 h-16 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center overflow-hidden">
+                      {editPhotoPreviewUrl || editPhotoPath ? (
+                        <img
+                          src={editPhotoPreviewUrl || `/api/v1/users/${user?.id}/photograph?t=${Date.now()}`}
+                          alt={selectedMember.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-slate-900 flex items-center justify-center font-bold text-lg text-amber-500">
+                          {selectedMember.name.substring(0, 2).toUpperCase()}
+                        </div>
+                      )}
+                      {uploadingEditPhoto && (
+                        <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
+                          <Loader2 className="w-4 h-4 text-amber-500 animate-spin" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px]">Profile Photograph</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        id="edit-photo-input"
+                        onChange={handleEditPhotoUpload}
+                        className="hidden"
+                      />
+                      <label
+                        htmlFor="edit-photo-input"
+                        className="py-1.5 px-3 bg-slate-900 border border-slate-850 hover:border-slate-800 text-slate-300 rounded-lg text-xs font-semibold flex items-center gap-1.5 w-fit cursor-pointer transition-all"
+                      >
+                        <Upload className="w-3.5 h-3.5 text-slate-400" />
+                        <span>Change photo</span>
+                      </label>
+                    </div>
                   </div>
 
-                  {/* Last Logout Info */}
-                  <div className="p-3 bg-slate-950/40 border border-slate-900 rounded-lg">
-                    <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1.5">Last Logout Session</span>
-                    {selectedMember.lastLogoutAt ? (
-                      <div className="space-y-1">
-                        <span className="block text-white text-xs font-mono">
-                          {new Date(selectedMember.lastLogoutAt).toLocaleString('en-IN', {
-                            dateStyle: 'medium',
-                            timeStyle: 'short',
-                          })}
-                        </span>
-                        <span className="block text-[10px] text-slate-400 italic font-semibold leading-normal">
-                          📍 {selectedMember.logoutLocation || 'Unknown location'}
+                  {/* Own Information Form Fields */}
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4 text-xs">
+                      <div>
+                        <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Full Name</span>
+                        <span className="text-white text-xs font-semibold block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg opacity-70">
+                          {selectedMember.name}
                         </span>
                       </div>
-                    ) : (
-                      <span className="text-slate-600 text-xs italic">No logout recorded</span>
-                    )}
+                      <div>
+                        <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Email Address</span>
+                        <span className="text-slate-300 text-xs font-mono block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg opacity-70">
+                          {selectedMember.email}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">System Role</span>
+                        <span className="text-slate-355 text-xs block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg capitalize opacity-70">
+                          {ROLE_LABELS[selectedMember.role]?.label || selectedMember.role}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Years in Company</span>
+                        <span className="text-slate-355 text-xs block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg opacity-70">
+                          {calculateYearsInCompany(selectedMember.joiningDate)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Contact Phone</label>
+                      <input
+                        type="text"
+                        required
+                        value={editPhone}
+                        onChange={(e) => setEditPhone(e.target.value)}
+                        placeholder="Update mobile number"
+                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="p-6 border-t border-slate-800 bg-slate-900/10 flex justify-end gap-3">
-              {user?.role === 'admin' && selectedMember.id !== user.id && !selectedMember.isActive && (
-                <button
-                  type="button"
-                  onClick={() => handleDeleteUser(selectedMember)}
-                  className="py-2 px-4 bg-rose-950/20 text-rose-400 border border-rose-900/30 hover:bg-rose-950/40 rounded-lg font-bold text-xs shadow-md transition-all cursor-pointer"
-                >
-                  Delete Account
-                </button>
-              )}
-              <button
-                onClick={() => setSelectedMember(null)}
-                className="py-2 px-5 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 rounded-lg font-bold text-xs shadow-md"
-              >
-                Close Profile
-              </button>
-            </div>
+                <div className="p-6 border-t border-slate-800 bg-slate-900/10 flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={closeProfileModal}
+                    className="py-2 px-4 bg-slate-900 border border-slate-800 text-slate-400 rounded-lg font-bold text-xs cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={updatingProfile}
+                    className="py-2 px-5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer"
+                  >
+                    {updatingProfile ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>Saving...</span>
+                      </>
+                    ) : (
+                      <span>Save Changes</span>
+                    )}
+                  </button>
+                </div>
+              </form>
+            ) : isAdminOrDirectorOrSalesHead ? (
+              /* EDIT OTHER MEMBER'S PROFILE VIEW (Admins, Directors, Sales Heads only) */
+              <form onSubmit={handleSaveMemberDetails}>
+                <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                  {updateMemberError && (
+                    <div className="p-4 rounded-lg bg-red-950/50 border border-red-800 text-red-200 text-xs font-semibold">
+                      {updateMemberError}
+                    </div>
+                  )}
+
+                  {/* Profile Picture Upload Section */}
+                  <div className="flex items-center gap-4 p-4 bg-slate-900/20 border border-slate-800/80 rounded-xl">
+                    <div className="relative w-16 h-16 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center overflow-hidden">
+                      {editMemberPhotoPreviewUrl || editMemberForm.photograph ? (
+                        <img
+                          src={editMemberPhotoPreviewUrl || `/api/v1/users/${selectedMember.id}/photograph?t=${Date.now()}`}
+                          alt={editMemberForm.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-slate-900 flex items-center justify-center font-bold text-lg text-amber-500">
+                          {editMemberForm.name.substring(0, 2).toUpperCase()}
+                        </div>
+                      )}
+                      {uploadingEditMemberPhoto && (
+                        <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
+                          <Loader2 className="w-4 h-4 text-amber-500 animate-spin" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px]">Profile Photograph</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        id="edit-member-photo-input"
+                        onChange={handleEditMemberPhotoUpload}
+                        className="hidden"
+                      />
+                      <label
+                        htmlFor="edit-member-photo-input"
+                        className="py-1.5 px-3 bg-slate-900 border border-slate-850 hover:border-slate-800 text-slate-300 rounded-lg text-xs font-semibold flex items-center gap-1.5 w-fit cursor-pointer transition-all"
+                      >
+                        <Upload className="w-3.5 h-3.5 text-slate-400" />
+                        <span>Change photo</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Member Form Fields */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Full Name</label>
+                      <input
+                        type="text"
+                        required
+                        value={editMemberForm.name}
+                        onChange={(e) => setEditMemberForm({ ...editMemberForm, name: e.target.value })}
+                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Email Address</label>
+                      <input
+                        type="email"
+                        required
+                        value={editMemberForm.email}
+                        onChange={(e) => setEditMemberForm({ ...editMemberForm, email: e.target.value })}
+                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Contact Phone</label>
+                      <input
+                        type="text"
+                        value={editMemberForm.phone}
+                        onChange={(e) => setEditMemberForm({ ...editMemberForm, phone: e.target.value })}
+                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">System Role</label>
+                      <select
+                        value={editMemberForm.role}
+                        onChange={(e) => setEditMemberForm({ ...editMemberForm, role: e.target.value })}
+                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500 focus:outline-none"
+                      >
+                        <option value="admin">Admin</option>
+                        <option value="director">Director</option>
+                        <option value="sales_head">Sales Head</option>
+                        <option value="manager">Manager</option>
+                        <option value="tl">Team Leader (TL)</option>
+                        <option value="consultant">Consultant</option>
+                        <option value="psa">PSA Caller</option>
+                        <option value="finance">Finance Team</option>
+                        <option value="operations">Operations Team</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Direct Supervisor</label>
+                      <select
+                        value={editMemberForm.reportsTo}
+                        onChange={(e) => setEditMemberForm({ ...editMemberForm, reportsTo: e.target.value })}
+                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-350 text-xs focus:ring-amber-500 focus:outline-none"
+                      >
+                        <option value="">No Supervisor (Reports to Admin)</option>
+                        {managersAndTls
+                          .filter((sup) => sup.id !== selectedMember.id)
+                          .map((sup) => (
+                            <option key={sup.id} value={sup.id}>
+                              {sup.name} ({sup.role.toUpperCase()})
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Date of Joining</label>
+                      <input
+                        type="date"
+                        required
+                        value={editMemberForm.joiningDate}
+                        onChange={(e) => setEditMemberForm({ ...editMemberForm, joiningDate: e.target.value })}
+                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500 focus:outline-none"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 mt-4 sm:col-span-2">
+                      <input
+                        type="checkbox"
+                        id="edit-member-active"
+                        checked={editMemberForm.isActive}
+                        onChange={(e) => setEditMemberForm({ ...editMemberForm, isActive: e.target.checked })}
+                        className="w-4 h-4 text-amber-500 bg-slate-950 border-slate-800 rounded focus:ring-amber-500"
+                      />
+                      <label htmlFor="edit-member-active" className="text-xs font-bold uppercase text-slate-400 cursor-pointer select-none">
+                        Account Active Status
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Access Logs */}
+                  <div className="border-t border-slate-800 pt-4 space-y-4">
+                    <h5 className="text-[10px] font-bold uppercase tracking-wider text-amber-500">Access Logs</h5>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="p-3 bg-slate-950/40 border border-slate-900 rounded-lg">
+                        <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1.5">Last Login Session</span>
+                        {selectedMember.lastLoginAt ? (
+                          <div className="space-y-1">
+                            <span className="block text-white text-xs font-mono">
+                              {new Date(selectedMember.lastLoginAt).toLocaleString('en-IN', {
+                                dateStyle: 'medium',
+                                timeStyle: 'short',
+                              })}
+                            </span>
+                            <span className="block text-[10px] text-slate-400 italic font-semibold leading-normal">
+                              📍 {selectedMember.loginLocation || 'Unknown location'}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-slate-600 text-xs italic">No login recorded</span>
+                        )}
+                      </div>
+
+                      <div className="p-3 bg-slate-950/40 border border-slate-900 rounded-lg">
+                        <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1.5">Last Logout Session</span>
+                        {selectedMember.lastLogoutAt ? (
+                          <div className="space-y-1">
+                            <span className="block text-white text-xs font-mono">
+                              {new Date(selectedMember.lastLogoutAt).toLocaleString('en-IN', {
+                                dateStyle: 'medium',
+                                timeStyle: 'short',
+                              })}
+                            </span>
+                            <span className="block text-[10px] text-slate-400 italic font-semibold leading-normal">
+                              📍 {selectedMember.logoutLocation || 'Unknown location'}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-slate-600 text-xs italic">No logout recorded</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-6 border-t border-slate-800 bg-slate-900/10 flex justify-between gap-3">
+                  <div>
+                    {selectedMember.id !== user?.id && !selectedMember.isActive && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteUser(selectedMember)}
+                        className="py-2 px-4 bg-rose-950/20 text-rose-400 border border-rose-900/30 hover:bg-rose-950/40 rounded-lg font-bold text-xs shadow-md transition-all cursor-pointer"
+                      >
+                        Delete Account
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={closeProfileModal}
+                      className="py-2 px-4 bg-slate-900 border border-slate-800 text-slate-400 rounded-lg font-bold text-xs cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={updatingMember}
+                      className="py-2 px-5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer"
+                    >
+                      {updatingMember ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Saving...</span>
+                        </>
+                      ) : (
+                        <span>Save Changes</span>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            ) : (
+              /* VIEW PROFILE VIEW */
+              <div className="p-6 space-y-6">
+                {/* Profile Card Header */}
+                <div className="flex items-center gap-4 p-4 bg-slate-900/20 border border-slate-850 rounded-xl">
+                  <div className="w-16 h-16 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center overflow-hidden">
+                    {selectedMember.photograph ? (
+                      <img
+                        src={`/api/v1/users/${selectedMember.id}/photograph?t=${Date.now()}`}
+                        alt={selectedMember.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-slate-850 flex items-center justify-center font-bold text-lg text-amber-500">
+                        {selectedMember.name.substring(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white leading-none">{selectedMember.name}</h4>
+                    <span className={`inline-block text-[9px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider mt-2 ${
+                      ROLE_LABELS[selectedMember.role]?.class || 'bg-slate-500/15'
+                    }`}>
+                      {ROLE_LABELS[selectedMember.role]?.label || selectedMember.role}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Core Information Grid */}
+                <div className="grid grid-cols-2 gap-4 text-xs">
+                  {isAdminOrDirectorOrSalesHead ? (
+                    <>
+                      <div>
+                        <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Email Address</span>
+                        <span className="text-white font-mono">{selectedMember.email}</span>
+                      </div>
+                      <div>
+                        <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Contact Phone</span>
+                        <span className="text-white font-mono">{selectedMember.phone || '-'}</span>
+                      </div>
+                      <div>
+                        <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Direct Supervisor</span>
+                        <span className="text-white">{selectedMember.supervisor?.name || <span className="text-slate-600 italic">None</span>}</span>
+                      </div>
+                      <div>
+                        <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Status</span>
+                        <span className={`inline-block text-[9px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${
+                          selectedMember.isActive
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                            : 'bg-red-500/10 text-red-400 border-red-500/20'
+                        }`}>
+                          {selectedMember.isActive ? 'Active' : 'Deactivated'}
+                        </span>
+                      </div>
+                      <div className="col-span-2">
+                        <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Years in Company</span>
+                        <span className="text-white">{calculateYearsInCompany(selectedMember.joiningDate)}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div>
+                        <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Designation</span>
+                        <span className="text-white capitalize">{ROLE_LABELS[selectedMember.role]?.label || selectedMember.role}</span>
+                      </div>
+                      <div>
+                        <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Years in Company</span>
+                        <span className="text-white">{calculateYearsInCompany(selectedMember.joiningDate)}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Activity Timing & Geolocation Logs (Admin, Director, Sales Head only) */}
+                {isAdminOrDirectorOrSalesHead && (
+                  <div className="border-t border-slate-800 pt-4 space-y-4">
+                    <h5 className="text-[10px] font-bold uppercase tracking-wider text-amber-500">Access Logs</h5>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Last Login Info */}
+                      <div className="p-3 bg-slate-950/40 border border-slate-900 rounded-lg">
+                        <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1.5">Last Login Session</span>
+                        {selectedMember.lastLoginAt ? (
+                          <div className="space-y-1">
+                            <span className="block text-white text-xs font-mono">
+                              {new Date(selectedMember.lastLoginAt).toLocaleString('en-IN', {
+                                dateStyle: 'medium',
+                                timeStyle: 'short',
+                              })}
+                            </span>
+                            <span className="block text-[10px] text-slate-400 italic font-semibold leading-normal">
+                              📍 {selectedMember.loginLocation || 'Unknown location'}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-slate-600 text-xs italic">No login recorded</span>
+                        )}
+                      </div>
+
+                      {/* Last Logout Info */}
+                      <div className="p-3 bg-slate-950/40 border border-slate-900 rounded-lg">
+                        <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1.5">Last Logout Session</span>
+                        {selectedMember.lastLogoutAt ? (
+                          <div className="space-y-1">
+                            <span className="block text-white text-xs font-mono">
+                              {new Date(selectedMember.lastLogoutAt).toLocaleString('en-IN', {
+                                dateStyle: 'medium',
+                                timeStyle: 'short',
+                              })}
+                            </span>
+                            <span className="block text-[10px] text-slate-400 italic font-semibold leading-normal">
+                              📍 {selectedMember.logoutLocation || 'Unknown location'}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-slate-600 text-xs italic">No logout recorded</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="p-6 border-t border-slate-800 bg-slate-900/10 flex justify-end gap-3">
+                  {isAdminOrDirectorOrSalesHead && selectedMember.id !== user?.id && !selectedMember.isActive && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteUser(selectedMember)}
+                      className="py-2 px-4 bg-rose-950/20 text-rose-400 border border-rose-900/30 hover:bg-rose-950/40 rounded-lg font-bold text-xs shadow-md transition-all cursor-pointer"
+                    >
+                      Delete Account
+                    </button>
+                  )}
+                  <button
+                    onClick={closeProfileModal}
+                    className="py-2 px-5 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 rounded-lg font-bold text-xs shadow-md cursor-pointer"
+                  >
+                    Close Profile
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

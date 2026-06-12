@@ -15,6 +15,9 @@ import {
   AlertTriangle,
   Download,
   X,
+  Camera,
+  Upload,
+  Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -87,6 +90,11 @@ export default function OrdersQueuePage() {
   const [opsNotes, setOpsNotes] = useState('');
   const [opsActionLoading, setOpsActionLoading] = useState(false);
 
+  // Operations installation images state
+  const [installationImages, setInstallationImages] = useState<any[]>([]);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [loadingImages, setLoadingImages] = useState(false);
+
   const fetchOrders = async () => {
     setLoading(true);
     try {
@@ -111,6 +119,14 @@ export default function OrdersQueuePage() {
       fetchOrders();
     }
   }, [user, statusFilter]);
+
+  useEffect(() => {
+    if (selectedOrder) {
+      fetchInstallationImages(selectedOrder.id);
+    } else {
+      setInstallationImages([]);
+    }
+  }, [selectedOrder]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -194,6 +210,76 @@ export default function OrdersQueuePage() {
       console.error(err);
     } finally {
       setOpsActionLoading(false);
+    }
+  };
+
+  const fetchInstallationImages = async (orderId: number) => {
+    try {
+      setLoadingImages(true);
+      const res = await fetch(`/api/v1/orders/${orderId}/installation-images`);
+      const data = await res.json();
+      if (data.success) {
+        setInstallationImages(data.data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingImages(false);
+    }
+  };
+
+  const handleInstallationImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, status: string) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedOrder) return;
+
+    if (installationImages.length >= 7) {
+      alert('Maximum limit of 7 installation images has been reached.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('status', status);
+
+    try {
+      setUploadingImage(true);
+      const res = await fetch(`/api/v1/orders/${selectedOrder.id}/installation-images`, {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchInstallationImages(selectedOrder.id);
+        fetchOrders();
+      } else {
+        alert(data.message || 'Failed to upload image.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('An error occurred during file upload.');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleDeleteInstallationImage = async (imageId: number) => {
+    if (!selectedOrder) return;
+    if (!confirm('Are you sure you want to delete this installation photo?')) return;
+
+    try {
+      const res = await fetch(`/api/v1/orders/${selectedOrder.id}/installation-images/${imageId}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchInstallationImages(selectedOrder.id);
+        fetchOrders();
+      } else {
+        alert(data.message || 'Failed to delete image.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('An error occurred during file deletion.');
     }
   };
 
@@ -295,31 +381,31 @@ export default function OrdersQueuePage() {
                         <div className="flex items-center justify-center gap-2">
                           <button
                             onClick={() => { setSelectedOrder(order); setModalMode('view'); }}
-                            className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white transition-all"
+                            className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white transition-all cursor-pointer"
                             title="View Order Sheets"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
-                          {user?.role === 'finance' && order.status === 'submitted' && (
+                          {(user?.role === 'finance' || ['admin', 'director', 'sales_head'].includes(user?.role || '')) && order.status === 'submitted' && (
                             <button
                               onClick={() => { setSelectedOrder(order); setModalMode('finance_verify'); }}
-                              className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-400 font-semibold text-xs flex items-center gap-1"
+                              className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-400 font-semibold text-xs flex items-center gap-1 cursor-pointer"
                             >
                               Verify
                             </button>
                           )}
-                          {user?.role === 'operations' && order.status === 'finance_verified' && (
+                          {(user?.role === 'operations' || ['admin', 'director', 'sales_head'].includes(user?.role || '')) && order.status === 'finance_verified' && (
                             <button
                               onClick={() => { setSelectedOrder(order); setModalMode('ops_update'); setInstallationStatus('ops_assigned'); }}
-                              className="p-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-blue-400 font-semibold text-xs flex items-center gap-1"
+                              className="p-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-blue-400 font-semibold text-xs flex items-center gap-1 cursor-pointer"
                             >
                               Schedule
                             </button>
                           )}
-                          {user?.role === 'operations' && order.status === 'ops_assigned' && (
+                          {(user?.role === 'operations' || ['admin', 'director', 'sales_head'].includes(user?.role || '')) && order.status === 'ops_assigned' && (
                             <button
                               onClick={() => { setSelectedOrder(order); setModalMode('ops_update'); setInstallationStatus('completed'); }}
-                              className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 font-semibold text-xs flex items-center gap-1"
+                              className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 font-semibold text-xs flex items-center gap-1 cursor-pointer"
                             >
                               Complete
                             </button>
@@ -422,6 +508,33 @@ export default function OrdersQueuePage() {
                 </div>
               </div>
 
+              {/* Installation Photos (View only) */}
+              {installationImages.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-3">Installation Gallery</h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-900/10 p-4 border border-slate-800/80 rounded-xl">
+                    {installationImages.map((img) => (
+                      <div key={img.id} className="relative rounded-lg overflow-hidden border border-slate-850 aspect-video">
+                        <a href={`/api/v1/orders/${selectedOrder.id}/installation-images/${img.id}`} target="_blank" rel="noopener noreferrer">
+                          <img
+                            src={`/api/v1/orders/${selectedOrder.id}/installation-images/${img.id}`}
+                            alt={img.fileName}
+                            className="w-full h-full object-cover hover:scale-105 transition-all duration-300"
+                          />
+                        </a>
+                        <span className={`absolute bottom-1 left-1 text-[8px] font-bold px-1.5 py-0.5 border rounded-full uppercase tracking-wider ${
+                          img.status === 'completed'
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                            : 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                        }`}>
+                          {img.status === 'completed' ? 'Installed' : 'In-Progress'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Modal Modes: Actions panels */}
               {modalMode === 'finance_verify' && (
                 <div className="border-t border-slate-800/80 pt-6 space-y-4">
@@ -481,6 +594,109 @@ export default function OrdersQueuePage() {
                       className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs h-20"
                     />
                   </div>
+
+                  {/* Installation Photos Section */}
+                  <div className="space-y-3 border-t border-slate-800/60 pt-4">
+                    <div className="flex items-center justify-between">
+                      <h5 className="text-[11px] font-bold text-white uppercase tracking-wider">
+                        Installation Photos ({installationImages.length}/7)
+                      </h5>
+                      {uploadingImage && (
+                        <span className="text-[10px] text-amber-500 font-semibold flex items-center gap-1.5">
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          Uploading...
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Photo Grid */}
+                    {installationImages.length > 0 && (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        {installationImages.map((img) => (
+                          <div key={img.id} className="relative group rounded-xl border border-slate-800 bg-slate-950 overflow-hidden aspect-video">
+                            <img
+                              src={`/api/v1/orders/${selectedOrder.id}/installation-images/${img.id}`}
+                              alt={img.fileName}
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteInstallationImage(img.id)}
+                                className="p-1.5 rounded-lg bg-red-650 hover:bg-red-505 text-white transition-all cursor-pointer flex items-center justify-center"
+                                title="Delete Photo"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                            <span className={`absolute bottom-1 left-1 text-[8px] font-bold px-1.5 py-0.5 border rounded-full uppercase tracking-wider ${
+                              img.status === 'completed'
+                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                : 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                            }`}>
+                              {img.status === 'completed' ? 'Installed' : 'In-Progress'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {installationImages.length < 7 && (
+                      <div className="flex flex-col sm:flex-row gap-3 p-4 bg-slate-900/20 border border-slate-850 rounded-xl">
+                        <div className="flex-1 space-y-1">
+                          <span className="block text-slate-400 font-semibold text-xs">
+                            {installationStatus === 'ops_assigned'
+                              ? 'Add In-Progress Installation Photo'
+                              : 'Add Installed Solar Panel Photo'}
+                          </span>
+                          <span className="block text-[10px] text-slate-500">
+                            Open camera directly on mobile devices or upload image file. (Limit: 7 photos max)
+                          </span>
+                        </div>
+                        <div className="flex gap-2 items-center">
+                          {/* Camera Capture Input */}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            id="camera-capture-input"
+                            onChange={(e) => handleInstallationImageUpload(e, installationStatus === 'completed' ? 'completed' : 'in_progress')}
+                            className="hidden"
+                            disabled={uploadingImage}
+                          />
+                          <label
+                            htmlFor="camera-capture-input"
+                            className={`py-1.5 px-3 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all ${
+                              uploadingImage ? 'opacity-50 pointer-events-none' : ''
+                            }`}
+                          >
+                            <Camera className="w-4 h-4 text-slate-400" />
+                            <span>Open Camera</span>
+                          </label>
+
+                          {/* File Upload Input */}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            id="file-upload-input"
+                            onChange={(e) => handleInstallationImageUpload(e, installationStatus === 'completed' ? 'completed' : 'in_progress')}
+                            className="hidden"
+                            disabled={uploadingImage}
+                          />
+                          <label
+                            htmlFor="file-upload-input"
+                            className={`py-1.5 px-3 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all ${
+                              uploadingImage ? 'opacity-50 pointer-events-none' : ''
+                            }`}
+                          >
+                            <Upload className="w-4 h-4 text-slate-400" />
+                            <span>Upload Image</span>
+                          </label>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="flex gap-3 justify-end">
                     <button
                       type="button"

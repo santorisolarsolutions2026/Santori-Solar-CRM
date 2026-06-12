@@ -24,6 +24,8 @@ export async function GET(req: Request) {
         isActive: true,
         lastSeenAt: true,
         createdAt: true,
+        joiningDate: true,
+        photograph: true,
       },
     });
 

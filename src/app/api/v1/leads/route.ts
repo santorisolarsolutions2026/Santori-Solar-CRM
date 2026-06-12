@@ -139,7 +139,15 @@ export async function GET(req: Request) {
           consultant: { select: { id: true, name: true } },
           tl: { select: { id: true, name: true } },
           manager: { select: { id: true, name: true } },
-          order: { select: { id: true, status: true } },
+          order: {
+            select: {
+              id: true,
+              status: true,
+              installationImages: {
+                select: { id: true, status: true }
+              }
+            }
+          },
         },
       }),
     ]);
@@ -186,8 +194,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
-    // Check permissions (Admin, Sales Head, Manager, TL can add leads)
-    const allowedRoles = ['admin', 'sales_head', 'manager', 'tl'];
+    // Check permissions (Admin, Director, Sales Head, Manager, TL can add leads)
+    const allowedRoles = ['admin', 'director', 'sales_head', 'manager', 'tl'];
     if (!allowedRoles.includes(userPayload.role)) {
       return NextResponse.json({ success: false, message: 'Forbidden. Role cannot add leads.' }, { status: 403 });
     }
@@ -232,7 +240,7 @@ export async function POST(req: Request) {
       cleanMobileAlt = cleanMobileAlt.split('.')[0];
     }
 
-    const isUserAdmin = userPayload.role === 'admin';
+    const isUserAdmin = ['admin', 'director'].includes(userPayload.role);
 
     // Duplicate check
     const existingLead = await prisma.lead.findUnique({
@@ -379,8 +387,9 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
-    if (userPayload.role !== 'admin') {
-      return NextResponse.json({ success: false, message: 'Forbidden. Only Admin can delete leads.' }, { status: 403 });
+    // Only Admin or Director can delete leads
+    if (!['admin', 'director'].includes(userPayload.role)) {
+      return NextResponse.json({ success: false, message: 'Forbidden. Only Admin and Director can delete leads.' }, { status: 403 });
     }
 
     const { searchParams } = new URL(req.url);

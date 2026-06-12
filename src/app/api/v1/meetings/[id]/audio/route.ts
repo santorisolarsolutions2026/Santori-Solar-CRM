@@ -33,7 +33,7 @@ export async function GET(
     }
 
     // Resolve local path
-    const localPath = path.join(process.cwd(), meeting.audioRecordingPath);
+    const localPath = path.join(/*turbopackIgnore: true*/ process.cwd(), meeting.audioRecordingPath);
 
     if (!fs.existsSync(localPath)) {
       return NextResponse.json({ success: false, message: 'Audio recording file not found on disk.' }, { status: 404 });

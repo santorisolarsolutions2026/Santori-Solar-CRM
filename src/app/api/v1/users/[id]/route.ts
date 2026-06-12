@@ -30,12 +30,34 @@ export async function GET(
         isActive: true,
         lastSeenAt: true,
         createdAt: true,
+        lastLoginAt: true,
+        loginLocation: true,
+        lastLogoutAt: true,
+        logoutLocation: true,
+        joiningDate: true,
+        photograph: true,
         supervisor: { select: { id: true, name: true } },
       },
     });
 
     if (!user) {
       return NextResponse.json({ success: false, message: 'User not found.' }, { status: 404 });
+    }
+
+    const isAdminOrDirectorOrSalesHead = ['admin', 'director', 'sales_head'].includes(userPayload.role);
+    if (!isAdminOrDirectorOrSalesHead && userId !== userPayload.id) {
+      // Basic users can only fetch basic details of others
+      return NextResponse.json({
+        success: true,
+        data: {
+          id: user.id,
+          name: user.name,
+          role: user.role,
+          joiningDate: user.joiningDate,
+          photograph: user.photograph,
+          isActive: user.isActive,
+        },
+      });
     }
 
     return NextResponse.json({
@@ -61,20 +83,18 @@ export async function PATCH(
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
-    // Only Admin can modify users (Section 2.1)
-    if (userPayload.role !== 'admin') {
-      return NextResponse.json({ success: false, message: 'Forbidden. Only Admin can update users.' }, { status: 403 });
-    }
-
     const { id } = await params;
     const userId = parseInt(id, 10);
     if (isNaN(userId)) {
       return NextResponse.json({ success: false, message: 'Invalid User ID.' }, { status: 400 });
     }
 
-    // Cannot change own role/status
-    if (userId === userPayload.id) {
-      return NextResponse.json({ success: false, message: 'Cannot modify your own user profile status or role.' }, { status: 400 });
+    const isSelf = userId === userPayload.id;
+    const isAdminOrDirectorOrSalesHead = ['admin', 'director', 'sales_head'].includes(userPayload.role);
+
+    // Only Admin, Director, Sales Head, or Self can modify details
+    if (!isAdminOrDirectorOrSalesHead && !isSelf) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to update this user.' }, { status: 403 });
     }
 
     const user = await prisma.user.findUnique({
@@ -86,7 +106,24 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { name, email, phone, role, reportsTo, isActive } = body;
+    const { name, email, phone, role, reportsTo, isActive, joiningDate, photograph } = body;
+
+    // Self-update validation (can only update phone and photograph)
+    if (isSelf && !isAdminOrDirectorOrSalesHead) {
+      const keys = Object.keys(body);
+      const allowedKeys = ['phone', 'photograph'];
+      const invalidKeys = keys.filter(k => !allowedKeys.includes(k));
+      if (invalidKeys.length > 0) {
+        return NextResponse.json({ success: false, message: 'Forbidden. You can only update your photograph and phone number.' }, { status: 403 });
+      }
+    }
+
+    // Cannot change own role/status even if admin/director/sales_head
+    if (userId === userPayload.id) {
+      if (role !== undefined || isActive !== undefined) {
+        return NextResponse.json({ success: false, message: 'Cannot modify your own user profile status or role.' }, { status: 400 });
+      }
+    }
 
     const updateData: any = {};
     if (name !== undefined) updateData.name = name;
@@ -94,6 +131,8 @@ export async function PATCH(
     if (phone !== undefined) updateData.phone = phone;
     if (role !== undefined) updateData.role = role;
     if (reportsTo !== undefined) updateData.reportsTo = reportsTo ? parseInt(reportsTo, 10) : null;
+    if (joiningDate !== undefined) updateData.joiningDate = joiningDate ? new Date(joiningDate) : null;
+    if (photograph !== undefined) updateData.photograph = photograph;
     
     let isDeactivating = false;
     if (isActive !== undefined) {
@@ -112,7 +151,6 @@ export async function PATCH(
 
       if (isDeactivating) {
         // Reassignment logic: Find all active leads assigned to this consultant/user
-        // Terminal stages in our specification: 6 (Already Installed), 12 (Can't Fit Solar), 13 (Sale Done)
         const activeLeads = await tx.lead.findMany({
           where: {
             assignedConsultantId: userId,
@@ -187,6 +225,8 @@ export async function PATCH(
         email: updatedUser.email,
         role: updatedUser.role,
         isActive: updatedUser.isActive,
+        joiningDate: updatedUser.joiningDate,
+        photograph: updatedUser.photograph,
       },
       message: isDeactivating
         ? 'User deactivated and active leads successfully reassigned.'
@@ -211,9 +251,9 @@ export async function DELETE(
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
-    // Only Admin can delete users
-    if (userPayload.role !== 'admin') {
-      return NextResponse.json({ success: false, message: 'Forbidden. Only Admin can delete users.' }, { status: 403 });
+    // Allow Admin, Director, and Sales Head to delete users
+    if (!['admin', 'director', 'sales_head'].includes(userPayload.role)) {
+      return NextResponse.json({ success: false, message: 'Forbidden. Only Admin, Director, and Sales Head can delete users.' }, { status: 403 });
     }
 
     const { id } = await params;

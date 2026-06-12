@@ -9,8 +9,8 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
-    // Allowed roles: Admin, Sales Head, Finance, Operations
-    const allowedRoles = ['admin', 'sales_head', 'finance', 'operations'];
+    // Allowed roles: Admin, Director, Sales Head, Finance, Operations
+    const allowedRoles = ['admin', 'director', 'sales_head', 'finance', 'operations'];
     if (!allowedRoles.includes(userPayload.role)) {
       return NextResponse.json({ success: false, message: 'Forbidden.' }, { status: 403 });
     }

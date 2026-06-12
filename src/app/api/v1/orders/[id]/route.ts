@@ -52,7 +52,7 @@ export async function GET(
     }
 
     // Role visibility check
-    const allowedRoles = ['admin', 'sales_head', 'finance', 'operations', 'consultant'];
+    const allowedRoles = ['admin', 'director', 'sales_head', 'finance', 'operations', 'consultant'];
     if (!allowedRoles.includes(userPayload.role)) {
       return NextResponse.json({ success: false, message: 'Forbidden.' }, { status: 403 });
     }
@@ -106,7 +106,7 @@ export async function PATCH(
       if (order.status !== 'draft') {
         return NextResponse.json({ success: false, message: 'Forbidden. Cannot edit a submitted order.' }, { status: 403 });
       }
-    } else if (!['admin', 'finance', 'operations'].includes(userPayload.role)) {
+    } else if (!['admin', 'director', 'sales_head', 'finance', 'operations'].includes(userPayload.role)) {
       return NextResponse.json({ success: false, message: 'Forbidden. Role cannot edit orders.' }, { status: 403 });
     }
 
@@ -143,7 +143,7 @@ export async function PATCH(
 
     // Direct status updates (e.g. for installation tracking by Operations / Admin)
     if (status !== undefined) {
-      const allowedStatusUpdates = ['admin', 'operations', 'finance'];
+      const allowedStatusUpdates = ['admin', 'director', 'sales_head', 'operations', 'finance'];
       if (!allowedStatusUpdates.includes(userPayload.role)) {
         return NextResponse.json({ success: false, message: 'Forbidden. You cannot change order status directly.' }, { status: 403 });
       }

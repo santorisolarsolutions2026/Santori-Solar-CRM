@@ -780,7 +780,7 @@ export default function LeadDetailPage({
   const nextStageIds = ALLOWED_TRANSITIONS[lead.status] || [];
   // Filter by user role permissions (Admin bypassed)
   const roleFilteredNextStages = nextStageIds.filter((statusNum) => {
-    if (user?.role === 'admin' || user?.role === 'sales_head') return true;
+    if (['admin', 'director', 'sales_head'].includes(user?.role || '')) return true;
     if (statusNum === 3 && ['consultant', 'psa', 'tl', 'manager'].includes(user?.role || '')) return true;
     if (statusNum === 4 && ['consultant', 'psa', 'tl', 'manager'].includes(user?.role || '')) return true;
     if (statusNum === 8 && ['consultant', 'tl'].includes(user?.role || '')) return true;
@@ -995,7 +995,7 @@ export default function LeadDetailPage({
                       })()}
 
                       {/* Edit Trigger */}
-                      {['admin', 'sales_head', 'manager', 'tl'].includes(user?.role || '') && (
+                      {['admin', 'director', 'sales_head', 'manager', 'tl'].includes(user?.role || '') && (
                         <div className="md:col-span-2 pt-4 border-t border-slate-800/80">
                           <button
                             onClick={() => setIsEditing(true)}
@@ -1121,7 +1121,7 @@ export default function LeadDetailPage({
                         </div>
 
                         {/* Assignment Controls */}
-                        {(['admin', 'sales_head', 'manager'].includes(user?.role || '') || (user?.role === 'tl' && !lead.tl)) && (
+                        {(['admin', 'director', 'sales_head', 'manager'].includes(user?.role || '') || (user?.role === 'tl' && !lead.tl)) && (
                           <div>
                             <label className="block text-xs font-semibold text-slate-400 mb-1">Assign to Team Leader</label>
                             <select
@@ -1142,7 +1142,7 @@ export default function LeadDetailPage({
                           </div>
                         )}
 
-                        {['admin', 'sales_head', 'manager', 'tl'].includes(user?.role || '') && (
+                        {['admin', 'director', 'sales_head', 'manager', 'tl'].includes(user?.role || '') && (
                           <div>
                             <label className="block text-xs font-semibold text-slate-400 mb-1">Assign to Consultant</label>
                             <select

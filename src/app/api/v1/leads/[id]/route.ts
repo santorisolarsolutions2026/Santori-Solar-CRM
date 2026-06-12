@@ -4,7 +4,7 @@ import { getAuthenticatedUser } from '@/lib/auth';
 
 // Helper to check lead access based on user role
 function canAccessLead(user: { id: number; role: string }, lead: any): boolean {
-  if (user.role === 'admin' || user.role === 'sales_head') return true;
+  if (['admin', 'director', 'sales_head'].includes(user.role)) return true;
   
   // Allow Manager and TL to access unassigned leads so they can assign them
   const isUnassigned = !lead.assignedTlId && !lead.assignedConsultantId;
@@ -121,8 +121,8 @@ export async function PATCH(
     }
 
     // Enforce update permissions
-    // Consultant can edit only status (handled in /status route). Form A updates are for TL, Manager, Admin
-    const allowedEditRoles = ['admin', 'sales_head', 'manager', 'tl'];
+    // Consultant can edit only status (handled in /status route). Form A updates are for TL, Manager, Admin/Director/Sales Head
+    const allowedEditRoles = ['admin', 'director', 'sales_head', 'manager', 'tl'];
     if (!allowedEditRoles.includes(userPayload.role)) {
       return NextResponse.json({ success: false, message: 'Forbidden. Role cannot edit lead details.' }, { status: 403 });
     }
@@ -323,8 +323,8 @@ export async function DELETE(
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
-    // Only Admin can delete a lead
-    if (userPayload.role !== 'admin') {
+    // Only Admin or Director can delete a lead
+    if (!['admin', 'director'].includes(userPayload.role)) {
       return NextResponse.json({ success: false, message: 'Forbidden. Only Admin can delete leads.' }, { status: 403 });
     }
 

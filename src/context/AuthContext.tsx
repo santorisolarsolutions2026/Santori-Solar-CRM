@@ -61,6 +61,8 @@ interface User {
   phone: string | null;
   role: string;
   isActive: boolean;
+  joiningDate?: string | null;
+  photograph?: string | null;
 }
 
 interface AuthContextType {

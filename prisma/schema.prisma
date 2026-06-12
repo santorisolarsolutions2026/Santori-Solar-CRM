@@ -24,6 +24,8 @@ model User {
   loginLocation        String?
   lastLogoutAt         DateTime?
   logoutLocation       String?
+  joiningDate          DateTime?
+  photograph           String?
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
 
@@ -165,6 +167,18 @@ model Order {
   submittedBy          User                @relation("SubmittedOrders", fields: [submittedById], references: [id])
   financeProcessedBy   User?               @relation("VerifiedOrders", fields: [financeProcessedById], references: [id])
   documents            OrderDocument[]
+  installationImages   InstallationImage[]
+}
+
+model InstallationImage {
+  id         Int      @id @default(autoincrement())
+  orderId    Int
+  status     String   // in_progress | completed
+  filePath   String
+  fileName   String
+  uploadedAt DateTime @default(now())
+
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }
 
 model OrderDocument {
