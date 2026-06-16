@@ -32,6 +32,7 @@ export async function GET(req: Request) {
         name: true,
         email: true,
         phone: true,
+        employeeId: true,
         role: true,
         reportsTo: true,
         isActive: true,
@@ -62,6 +63,7 @@ export async function GET(req: Request) {
         id: u.id,
         name: u.name,
         role: u.role,
+        employeeId: u.employeeId,
         joiningDate: u.joiningDate,
         photograph: u.photograph,
         isActive: u.isActive,
@@ -109,9 +111,9 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { name, email, phone, role, password, reportsTo, joiningDate, photograph } = body;
+    const { name, email, phone, employeeId, role, password, reportsTo, joiningDate, photograph } = body;
 
-    if (!name || !email || !role || !password) {
+    if (!name || !email || !employeeId || !role || !password) {
       return NextResponse.json({ success: false, message: 'Missing required user fields.' }, { status: 400 });
     }
 
@@ -124,6 +126,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'User with this email already exists.' }, { status: 409 });
     }
 
+    // Check duplicate employeeId
+    const existingEmpId = await prisma.user.findUnique({
+      where: { employeeId },
+    });
+
+    if (existingEmpId) {
+      return NextResponse.json({ success: false, message: 'User with this Employee ID already exists.' }, { status: 409 });
+    }
+
     const passwordHash = await bcrypt.hash(password, 10);
 
     const newUser = await prisma.user.create({
@@ -131,6 +142,7 @@ export async function POST(req: Request) {
         name,
         email,
         phone,
+        employeeId,
         role,
         passwordHash,
         reportsTo: reportsTo ? parseInt(reportsTo, 10) : null,
@@ -147,6 +159,7 @@ export async function POST(req: Request) {
         name: newUser.name,
         email: newUser.email,
         role: newUser.role,
+        employeeId: newUser.employeeId,
       },
       message: 'User created successfully',
     });

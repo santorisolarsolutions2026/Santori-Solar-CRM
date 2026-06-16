@@ -418,38 +418,40 @@ export default function DashboardPage() {
               <span>Consultant Leaderboard</span>
             </h3>
             <div className="overflow-y-auto pr-1 flex-1">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider sticky top-0 bg-[#111625] pb-3">
-                    <th className="pb-3">Consultant</th>
-                    <th className="pb-3 text-center">Assigned</th>
-                    <th className="pb-3 text-center">Calls</th>
-                    <th className="pb-3 text-center">Meetings</th>
-                    <th className="pb-3 text-center">Sales</th>
-                    <th className="pb-3 text-right">Conv.</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/60 text-sm">
-                  {performance.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="py-6 text-center text-slate-500 text-xs">
-                        No team member statistics found.
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse min-w-[500px]">
+                  <thead>
+                    <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider sticky top-0 bg-[#111625] pb-3">
+                      <th className="pb-3">Consultant</th>
+                      <th className="pb-3 text-center">Assigned</th>
+                      <th className="pb-3 text-center">Calls</th>
+                      <th className="pb-3 text-center">Meetings</th>
+                      <th className="pb-3 text-center">Sales</th>
+                      <th className="pb-3 text-right">Conv.</th>
                     </tr>
-                  ) : (
-                    performance.map((member) => (
-                      <tr key={member.id} className="hover:bg-slate-900/20 transition-colors">
-                        <td className="py-3 font-semibold text-white truncate max-w-[90px]">{member.name}</td>
-                        <td className="py-3 text-center text-slate-300">{member.leadsAssigned}</td>
-                        <td className="py-3 text-center text-slate-300">{member.callsMade}</td>
-                        <td className="py-3 text-center text-slate-300">{member.meetingsBooked}</td>
-                        <td className="py-3 text-center text-emerald-400 font-bold">{member.salesClosed}</td>
-                        <td className="py-3 text-right text-amber-400 font-extrabold">{member.conversionRate}%</td>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60 text-sm">
+                    {performance.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="py-6 text-center text-slate-500 text-xs">
+                          No team member statistics found.
+                        </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : (
+                      performance.map((member) => (
+                        <tr key={member.id} className="hover:bg-slate-900/20 transition-colors">
+                          <td className="py-3 font-semibold text-white truncate max-w-[90px]">{member.name}</td>
+                          <td className="py-3 text-center text-slate-300">{member.leadsAssigned}</td>
+                          <td className="py-3 text-center text-slate-300">{member.callsMade}</td>
+                          <td className="py-3 text-center text-slate-300">{member.meetingsBooked}</td>
+                          <td className="py-3 text-center text-emerald-400 font-bold">{member.salesClosed}</td>
+                          <td className="py-3 text-right text-amber-400 font-extrabold">{member.conversionRate}%</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         ) : null}

@@ -19,6 +19,7 @@ export async function GET(req: Request) {
         name: true,
         email: true,
         phone: true,
+        employeeId: true,
         role: true,
         reportsTo: true,
         isActive: true,

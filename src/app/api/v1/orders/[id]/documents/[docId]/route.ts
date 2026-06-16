@@ -70,3 +70,75 @@ export async function GET(
     );
   }
 }
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string; docId: string }> }
+) {
+  try {
+    const userPayload = getAuthenticatedUser(req);
+    if (!userPayload) {
+      return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
+    }
+
+    const { id, docId } = await params;
+    const orderId = parseInt(id, 10);
+    const documentId = parseInt(docId, 10);
+
+    if (isNaN(orderId) || isNaN(documentId)) {
+      return NextResponse.json({ success: false, message: 'Invalid ID parameters.' }, { status: 400 });
+    }
+
+    const doc = await prisma.orderDocument.findUnique({
+      where: { id: documentId },
+      include: {
+        order: true,
+      },
+    });
+
+    if (!doc || doc.orderId !== orderId) {
+      return NextResponse.json({ success: false, message: 'Document not found.' }, { status: 404 });
+    }
+
+    // Role visibility check for delete:
+    // Admin, Director, Sales Head, Finance, Operations can delete
+    // OR the submitting Consultant if the order is still in draft state.
+    const allowedRoles = ['admin', 'director', 'sales_head', 'finance', 'operations'];
+    const isOwner = doc.order.submittedById === userPayload.id;
+
+    if (!allowedRoles.includes(userPayload.role)) {
+      if (!isOwner || doc.order.status !== 'draft') {
+        return NextResponse.json({ success: false, message: 'Forbidden. No permission to delete this document.' }, { status: 403 });
+      }
+    }
+
+    // Delete local file
+    const uploadsDir = path.join(process.cwd(), 'uploads');
+    const localFileName = path.basename(doc.filePath);
+    const localPath = path.join(uploadsDir, localFileName);
+
+    if (fs.existsSync(localPath)) {
+      try {
+        fs.unlinkSync(localPath);
+      } catch (err) {
+        console.error('Failed to delete physical file:', err);
+      }
+    }
+
+    // Delete DB record
+    await prisma.orderDocument.delete({
+      where: { id: documentId },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Document deleted successfully.',
+    });
+  } catch (error: any) {
+    console.error('Delete document error:', error);
+    return NextResponse.json(
+      { success: false, message: 'Internal server error', errors: { details: error.message } },
+      { status: 500 }
+    );
+  }
+}

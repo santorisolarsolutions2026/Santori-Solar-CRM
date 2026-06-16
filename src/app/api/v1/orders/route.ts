@@ -33,6 +33,17 @@ export async function GET(req: Request) {
 
     if (status) {
       where.status = status;
+    } else {
+      // By default (when status filter is not explicitly set), exclude completed orders
+      // UNLESS they have no completed installation images.
+      where.NOT = {
+        status: 'completed',
+        installationImages: {
+          some: {
+            status: 'completed'
+          }
+        }
+      };
     }
 
     if (clientType) {
@@ -67,6 +78,14 @@ export async function GET(req: Request) {
             fileName: true,
             fileSizeOctets: true,
             mimeType: true,
+          },
+        },
+        installationImages: {
+          select: {
+            id: true,
+            status: true,
+            fileName: true,
+            uploadedAt: true,
           },
         },
       },

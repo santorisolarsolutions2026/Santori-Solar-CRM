@@ -23,6 +23,7 @@ import {
   Plus,
   Mic,
   Square,
+  Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
 import { BeautifulAudioPlayer } from '@/components/BeautifulAudioPlayer';
@@ -534,6 +535,29 @@ export default function LeadDetailPage({
         fetchLeadDetails();
       } else {
         alert(data.message || 'File upload failed.');
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setUploadingDoc(null);
+    }
+  };
+
+  // Handle Document removal
+  const handleDeleteDocument = async (docType: string, docId: number) => {
+    if (!lead?.order) return;
+    if (!window.confirm(`Are you sure you want to remove this document?`)) return;
+
+    setUploadingDoc(docType); // reuse uploadingDoc to show loading state
+    try {
+      const res = await fetch(`/api/v1/orders/${lead.order.id}/documents/${docId}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchLeadDetails();
+      } else {
+        alert(data.message || 'Failed to remove document.');
       }
     } catch (err) {
       console.error(err);
@@ -1717,7 +1741,7 @@ export default function LeadDetailPage({
 
                             {/* Upload trigger */}
                             {(lead.order?.status === 'draft' || user?.role !== 'consultant') && (
-                              <div className="mt-2">
+                              <div className="mt-2 flex items-center gap-3">
                                 <label className="cursor-pointer text-[10px] font-bold text-amber-500 hover:text-amber-400 transition-all flex items-center gap-1.5 w-fit">
                                   {uploadingDoc === item.type ? (
                                     <>
@@ -1727,7 +1751,7 @@ export default function LeadDetailPage({
                                   ) : (
                                     <>
                                       <Upload className="w-3 h-3" />
-                                      <span>{uploaded ? 'Replace File' : 'Upload File'}</span>
+                                      <span>{uploaded ? 'Replace' : 'Upload'}</span>
                                     </>
                                   )}
                                   <input
@@ -1737,6 +1761,15 @@ export default function LeadDetailPage({
                                     onChange={(e) => handleFileChange(item.type, e)}
                                   />
                                 </label>
+                                {uploaded && id !== null && (
+                                  <button
+                                    onClick={() => handleDeleteDocument(item.type, id)}
+                                    className="text-[10px] font-bold text-red-400 hover:text-red-300 transition-all flex items-center gap-1.5 focus:outline-none"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                    <span>Remove</span>
+                                  </button>
+                                )}
                               </div>
                             )}
                           </div>
@@ -1750,18 +1783,13 @@ export default function LeadDetailPage({
                         <div>
                           <h4 className="text-xs font-bold text-white uppercase tracking-wide">Submit to Finance</h4>
                           <p className="text-[11px] text-slate-400 mt-1">
-                            Verify all documents have green checks and punching details are saved before submitting.
+                            Verify order details are saved before submitting. Document upload is optional.
                           </p>
                         </div>
                         <div>
                           <button
                             onClick={handleSubmitOrderToFinance}
-                            disabled={!allDocsUploaded}
-                            className={`py-2.5 px-5 rounded-lg font-bold text-xs shadow-lg transition-all ${
-                              allDocsUploaded
-                                ? 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 cursor-pointer shadow-emerald-500/10'
-                                : 'bg-slate-900 border border-slate-800 text-slate-500 cursor-not-allowed opacity-50'
-                            }`}
+                            className="py-2.5 px-5 rounded-lg font-bold text-xs shadow-lg transition-all bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 cursor-pointer shadow-emerald-500/10 focus:outline-none"
                           >
                             Submit Order for Approval
                           </button>

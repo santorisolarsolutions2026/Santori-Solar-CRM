@@ -14,21 +14,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Auto-provision first Admin user if database has 0 users
-    const userCount = await prisma.user.count();
-    if (userCount === 0) {
-      const defaultPasswordHash = await bcrypt.hash('Password123', 10);
-      await prisma.user.create({
-        data: {
-          name: 'Admin',
-          email: 'admin@solarcrm.com',
-          phone: '9876543210',
-          passwordHash: defaultPasswordHash,
-          role: 'admin',
-          isActive: true,
-        },
-      });
-    }
+
 
     const user = await prisma.user.findUnique({
       where: { email },
@@ -84,6 +70,7 @@ export async function POST(req: Request) {
           name: user.name,
           email: user.email,
           role: user.role,
+          employeeId: user.employeeId,
         },
       },
       message: 'Login successful',

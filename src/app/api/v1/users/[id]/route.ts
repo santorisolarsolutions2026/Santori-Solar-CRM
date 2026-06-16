@@ -25,6 +25,7 @@ export async function GET(
         name: true,
         email: true,
         phone: true,
+        employeeId: true,
         role: true,
         reportsTo: true,
         isActive: true,
@@ -106,8 +107,8 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { name, email, phone, role, reportsTo, isActive, joiningDate, photograph } = body;
-
+    const { name, email, phone, employeeId, role, reportsTo, isActive, joiningDate, photograph } = body;
+    
     // Self-update validation (can only update phone and photograph)
     if (isSelf && !isAdminOrDirectorOrSalesHead) {
       const keys = Object.keys(body);
@@ -133,6 +134,21 @@ export async function PATCH(
     if (reportsTo !== undefined) updateData.reportsTo = reportsTo ? parseInt(reportsTo, 10) : null;
     if (joiningDate !== undefined) updateData.joiningDate = joiningDate ? new Date(joiningDate) : null;
     if (photograph !== undefined) updateData.photograph = photograph;
+
+    if (employeeId !== undefined) {
+      if (employeeId) {
+        const existingEmp = await prisma.user.findFirst({
+          where: {
+            employeeId,
+            id: { not: userId }
+          }
+        });
+        if (existingEmp) {
+          return NextResponse.json({ success: false, message: 'User with this Employee ID already exists.' }, { status: 409 });
+        }
+      }
+      updateData.employeeId = employeeId || null;
+    }
     
     let isDeactivating = false;
     if (isActive !== undefined) {
@@ -224,6 +240,7 @@ export async function PATCH(
         name: updatedUser.name,
         email: updatedUser.email,
         role: updatedUser.role,
+        employeeId: updatedUser.employeeId,
         isActive: updatedUser.isActive,
         joiningDate: updatedUser.joiningDate,
         photograph: updatedUser.photograph,

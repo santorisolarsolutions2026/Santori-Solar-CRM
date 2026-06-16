@@ -52,6 +52,12 @@ interface Order {
     fileSizeOctets: number;
     mimeType: string;
   }[];
+  installationImages?: {
+    id: number;
+    status: string;
+    fileName: string;
+    uploadedAt: string;
+  }[];
 }
 
 const STATUS_BADGES: Record<string, { name: string; class: string }> = {
@@ -307,11 +313,11 @@ export default function OrdersQueuePage() {
             <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex flex-row gap-3 w-full sm:w-auto">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="block px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-350 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-xs"
+              className="block flex-1 sm:flex-initial px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-350 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-xs"
             >
               <option value="">All Order Statuses</option>
               <option value="submitted">Awaiting Finance Approval</option>
@@ -321,7 +327,7 @@ export default function OrdersQueuePage() {
             </select>
             <button
               type="submit"
-              className="py-2 px-4 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-200 rounded-lg font-bold text-xs"
+              className="py-2 px-4 bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 text-slate-200 rounded-lg font-bold text-xs shrink-0 cursor-pointer"
             >
               Search
             </button>
@@ -332,17 +338,17 @@ export default function OrdersQueuePage() {
       {/* Orders List Table */}
       <div className="bg-[#111625] border border-slate-800 rounded-xl overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse min-w-[1100px]">
             <thead>
               <tr className="border-b border-slate-800 bg-slate-900/10 text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                <th className="py-4 px-6">Order Code</th>
-                <th className="py-4 px-6">Client Name</th>
-                <th className="py-4 px-6">Meter Number</th>
-                <th className="py-4 px-6">System Size</th>
-                <th className="py-4 px-6">Total Value</th>
-                <th className="py-4 px-6">Down Payment</th>
-                <th className="py-4 px-6">Order Status</th>
-                <th className="py-4 px-6 text-center">Process</th>
+                <th className="py-4 px-4 w-28">Order Code</th>
+                <th className="py-4 px-4 w-48">Client Name</th>
+                <th className="py-4 px-4 w-36">Meter Number</th>
+                <th className="py-4 px-4 w-28">System Size</th>
+                <th className="py-4 px-4 w-32">Total Value</th>
+                <th className="py-4 px-4 w-32">Down Payment</th>
+                <th className="py-4 px-4 w-44">Order Status</th>
+                <th className="py-4 px-4 w-36 text-center">Process</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-sm">
@@ -363,25 +369,32 @@ export default function OrdersQueuePage() {
                   const badge = STATUS_BADGES[order.status] || { name: order.status, class: 'bg-slate-500' };
                   return (
                     <tr key={order.id} className="hover:bg-slate-900/20 transition-colors">
-                      <td className="py-3.5 px-6 font-mono font-bold text-xs text-slate-350">{order.orderCode}</td>
-                      <td className="py-3.5 px-6 font-bold text-white">
+                      <td className="py-3.5 px-4 font-mono font-bold text-xs text-slate-350 w-28">{order.orderCode}</td>
+                      <td className="py-3.5 px-4 font-bold text-white w-48">
                         <span>{order.lead.customerName}</span>
                         <span className="text-[9px] text-slate-500 font-semibold block mt-0.5">{order.lead.city}</span>
                       </td>
-                      <td className="py-3.5 px-6 font-mono text-xs text-slate-300">{order.connectionNumber || '-'}</td>
-                      <td className="py-3.5 px-6 text-slate-300 font-semibold">{order.systemSizeKw} kW</td>
-                      <td className="py-3.5 px-6 text-white font-bold">₹ {order.totalValue.toLocaleString('en-IN')}</td>
-                      <td className="py-3.5 px-6 text-slate-400">₹ {order.downPayment.toLocaleString('en-IN')}</td>
-                      <td className="py-3.5 px-6">
-                        <span className={`inline-block text-[10px] font-bold px-2.5 py-0.5 border rounded-full uppercase tracking-wider ${badge.class}`}>
-                          {badge.name}
-                        </span>
+                      <td className="py-3.5 px-4 font-mono text-xs text-slate-300 w-36">{order.connectionNumber || '-'}</td>
+                      <td className="py-3.5 px-4 text-slate-300 font-semibold w-28">{order.systemSizeKw} kW</td>
+                      <td className="py-3.5 px-4 text-white font-bold w-32">₹ {order.totalValue.toLocaleString('en-IN')}</td>
+                      <td className="py-3.5 px-4 text-slate-400 w-32">₹ {order.downPayment.toLocaleString('en-IN')}</td>
+                      <td className="py-3.5 px-4 w-44">
+                        <div className="flex flex-col gap-1">
+                          <span className={`inline-block text-[10px] font-bold px-2.5 py-0.5 border rounded-full uppercase tracking-wider ${badge.class}`}>
+                            {badge.name}
+                          </span>
+                          {order.status === 'completed' && (!order.installationImages || order.installationImages.filter((img) => img.status === 'completed').length === 0) && (
+                            <span className="text-[9px] font-semibold text-rose-400 bg-rose-950/20 border border-rose-900/30 rounded px-1.5 py-0.5 w-fit uppercase tracking-wider">
+                              ⚠️ Photo Not Uploaded
+                            </span>
+                          )}
+                        </div>
                       </td>
-                      <td className="py-3.5 px-6 text-center">
+                      <td className="py-3.5 px-4 text-center w-36">
                         <div className="flex items-center justify-center gap-2">
                           <button
                             onClick={() => { setSelectedOrder(order); setModalMode('view'); }}
-                            className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white transition-all cursor-pointer"
+                            className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white transition-all cursor-pointer"
                             title="View Order Sheets"
                           >
                             <Eye className="w-4 h-4" />
@@ -408,6 +421,15 @@ export default function OrdersQueuePage() {
                               className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 font-semibold text-xs flex items-center gap-1 cursor-pointer"
                             >
                               Complete
+                            </button>
+                          )}
+                          {['admin', 'director', 'sales_head', 'operations'].includes(user?.role || '') && order.status === 'completed' && (
+                            <button
+                              onClick={() => { setSelectedOrder(order); setModalMode('view'); }}
+                              className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 font-semibold text-xs flex items-center gap-1 cursor-pointer"
+                              title="Upload/View Completed Photos"
+                            >
+                              Photos
                             </button>
                           )}
                         </div>
@@ -508,31 +530,129 @@ export default function OrdersQueuePage() {
                 </div>
               </div>
 
-              {/* Installation Photos (View only) */}
-              {installationImages.length > 0 && (
-                <div>
-                  <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-3">Installation Gallery</h4>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-900/10 p-4 border border-slate-800/80 rounded-xl">
-                    {installationImages.map((img) => (
-                      <div key={img.id} className="relative rounded-lg overflow-hidden border border-slate-850 aspect-video">
-                        <a href={`/api/v1/orders/${selectedOrder.id}/installation-images/${img.id}`} target="_blank" rel="noopener noreferrer">
+              {/* Installation Photos & Upload for Completed Orders */}
+              {selectedOrder.status === 'completed' && ['admin', 'director', 'sales_head', 'operations'].includes(user?.role || '') ? (
+                <div className="space-y-3 border-t border-slate-800/60 pt-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider">
+                      Installation Photos ({installationImages.length}/7)
+                    </h4>
+                    {uploadingImage && (
+                      <span className="text-[10px] text-amber-500 font-semibold flex items-center gap-1.5">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        Uploading...
+                      </span>
+                    )}
+                  </div>
+
+                  {installationImages.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-900/10 p-4 border border-slate-800/80 rounded-xl">
+                      {installationImages.map((img) => (
+                        <div key={img.id} className="relative group rounded-xl border border-slate-800 bg-slate-950 overflow-hidden aspect-video">
                           <img
                             src={`/api/v1/orders/${selectedOrder.id}/installation-images/${img.id}`}
                             alt={img.fileName}
-                            className="w-full h-full object-cover hover:scale-105 transition-all duration-300"
+                            className="w-full h-full object-cover"
                           />
-                        </a>
-                        <span className={`absolute bottom-1 left-1 text-[8px] font-bold px-1.5 py-0.5 border rounded-full uppercase tracking-wider ${
-                          img.status === 'completed'
-                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                            : 'bg-purple-500/10 text-purple-400 border-purple-500/20'
-                        }`}>
-                          {img.status === 'completed' ? 'Installed' : 'In-Progress'}
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteInstallationImage(img.id)}
+                              className="p-1.5 rounded-lg bg-red-650 hover:bg-red-505 text-white transition-all cursor-pointer flex items-center justify-center"
+                              title="Delete Photo"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                          <span className={`absolute bottom-1 left-1 text-[8px] font-bold px-1.5 py-0.5 border rounded-full uppercase tracking-wider ${
+                            img.status === 'completed'
+                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                              : 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                          }`}>
+                            {img.status === 'completed' ? 'Installed' : 'In-Progress'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {installationImages.length < 7 && (
+                    <div className="flex flex-col sm:flex-row gap-3 p-4 bg-slate-900/20 border border-slate-850 rounded-xl">
+                      <div className="flex-1 space-y-1">
+                        <span className="block text-slate-400 font-semibold text-xs">
+                          Add Installed Solar Panel Photo
+                        </span>
+                        <span className="block text-[10px] text-slate-500">
+                          Open camera directly on mobile devices or upload image file. (Limit: 7 photos max)
                         </span>
                       </div>
-                    ))}
-                  </div>
+                      <div className="flex gap-2 items-center">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          id="completed-camera-capture-input"
+                          onChange={(e) => handleInstallationImageUpload(e, 'completed')}
+                          className="hidden"
+                          disabled={uploadingImage}
+                        />
+                        <label
+                          htmlFor="completed-camera-capture-input"
+                          className={`py-1.5 px-3 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all ${
+                            uploadingImage ? 'opacity-50 pointer-events-none' : ''
+                          }`}
+                        >
+                          <Camera className="w-4 h-4 text-slate-400" />
+                          <span>Open Camera</span>
+                        </label>
+
+                        <input
+                          type="file"
+                          accept="image/*"
+                          id="completed-file-upload-input"
+                          onChange={(e) => handleInstallationImageUpload(e, 'completed')}
+                          className="hidden"
+                          disabled={uploadingImage}
+                        />
+                        <label
+                          htmlFor="completed-file-upload-input"
+                          className={`py-1.5 px-3 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all ${
+                            uploadingImage ? 'opacity-50 pointer-events-none' : ''
+                          }`}
+                        >
+                          <Upload className="w-4 h-4 text-slate-400" />
+                          <span>Upload Image</span>
+                        </label>
+                      </div>
+                    </div>
+                  )}
                 </div>
+              ) : (
+                installationImages.length > 0 && (
+                  <div>
+                    <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-3">Installation Gallery</h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-900/10 p-4 border border-slate-800/80 rounded-xl">
+                      {installationImages.map((img) => (
+                        <div key={img.id} className="relative rounded-lg overflow-hidden border border-slate-850 aspect-video">
+                          <a href={`/api/v1/orders/${selectedOrder.id}/installation-images/${img.id}`} target="_blank" rel="noopener noreferrer">
+                            <img
+                              src={`/api/v1/orders/${selectedOrder.id}/installation-images/${img.id}`}
+                              alt={img.fileName}
+                              className="w-full h-full object-cover hover:scale-105 transition-all duration-300"
+                            />
+                          </a>
+                          <span className={`absolute bottom-1 left-1 text-[8px] font-bold px-1.5 py-0.5 border rounded-full uppercase tracking-wider ${
+                            img.status === 'completed'
+                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                              : 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                          }`}>
+                            {img.status === 'completed' ? 'Installed' : 'In-Progress'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
               )}
 
               {/* Modal Modes: Actions panels */}

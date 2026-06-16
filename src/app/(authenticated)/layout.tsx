@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import {
@@ -66,6 +66,21 @@ export default function AuthenticatedLayout({
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+        setNotifDropdownOpen(false);
+      }
+    }
+    if (notifDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [notifDropdownOpen]);
 
   // Profile modal states
   const [profileModalOpen, setProfileModalOpen] = useState(false);
@@ -234,13 +249,13 @@ export default function AuthenticatedLayout({
       name: 'Dashboard',
       path: '/dashboard',
       icon: LayoutDashboard,
-      roles: ['admin', 'director', 'sales_head', 'manager', 'tl', 'consultant', 'psa', 'finance', 'operations'],
+      roles: ['admin', 'director', 'sales_head', 'manager', 'tl', 'psa_tl', 'consultant', 'psa', 'finance', 'operations'],
     },
     {
       name: 'Leads Pipeline',
       path: '/leads',
       icon: Layers,
-      roles: ['admin', 'director', 'sales_head', 'manager', 'tl', 'consultant', 'psa'],
+      roles: ['admin', 'director', 'sales_head', 'manager', 'tl', 'psa_tl', 'consultant', 'psa'],
     },
     {
       name: 'Orders Queue',
@@ -253,30 +268,28 @@ export default function AuthenticatedLayout({
       name: 'Santori Team',
       path: '/team',
       icon: Users,
-      roles: ['admin', 'director', 'sales_head', 'manager', 'tl', 'consultant', 'psa', 'finance', 'operations'],
+      roles: ['admin', 'director', 'sales_head', 'manager', 'tl', 'psa_tl', 'consultant', 'psa', 'finance', 'operations'],
     },
     {
       name: 'Reports & Analytics',
       path: '/reports',
       icon: LineChart,
-      roles: ['admin', 'director', 'sales_head', 'manager', 'tl', 'finance'],
+      roles: ['admin', 'director', 'sales_head', 'manager', 'tl', 'psa_tl', 'finance'],
     },
-    
-    
   ];
 
   const filteredMenuItems = menuItems.filter((item) => item.roles.includes(user.role));
 
   const roleLabels: Record<string, { label: string; color: string }> = {
-    admin: { label: 'Admin (Deepak Sir)', color: 'bg-red-500/10 text-red-400 border-red-500/20' },
+    admin: { label: 'Admin', color: 'bg-red-500/10 text-red-400 border-red-500/20' },
     director: { label: 'Director', color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' },
     sales_head: { label: 'Sales Head', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
-    manager: { label: 'Manager', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-    tl: { label: 'Team Leader', color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
-    consultant: { label: 'Consultant', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
-    psa: { label: 'PSA Caller', color: 'bg-orange-500/10 text-orange-400 border-orange-500/20' },
-    finance: { label: 'Finance Team', color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
-    operations: { label: 'Operations Team', color: 'bg-pink-500/10 text-pink-400 border-pink-500/20' },
+    finance: { label: 'Finance Manager', color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+    operations: { label: 'Operations Manager', color: 'bg-pink-500/10 text-pink-400 border-pink-500/20' },
+    psa_tl: { label: 'PSA Team Leader', color: 'bg-sky-500/10 text-sky-400 border-sky-500/20' },
+    psa: { label: 'PSA Consultant', color: 'bg-orange-500/10 text-orange-400 border-orange-500/20' },
+    tl: { label: 'Sales Team Leader', color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
+    consultant: { label: 'Sales Consultant', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
   };
 
   const userRoleConfig = roleLabels[user.role] || { label: user.role, color: 'bg-slate-500/10 text-slate-400' };
@@ -458,7 +471,7 @@ export default function AuthenticatedLayout({
 
           <div className="flex items-center gap-4 relative">
             {/* Notification Bell Dropdown */}
-            <div className="relative">
+            <div className="relative" ref={notifRef}>
               <button
                 onClick={() => setNotifDropdownOpen(!notifDropdownOpen)}
                 className="p-2 rounded-lg bg-slate-900/80 border border-slate-800 text-slate-400 hover:text-white transition-all relative focus:outline-none"
@@ -629,6 +642,12 @@ export default function AuthenticatedLayout({
                       <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Full Name</span>
                       <span className="text-white text-xs font-semibold block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg opacity-70">
                         {user.name}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Employee ID</span>
+                      <span className="text-white text-xs font-mono block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg opacity-70">
+                        {user.employeeId || 'Not Set'}
                       </span>
                     </div>
                     <div>

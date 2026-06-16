@@ -59,6 +59,7 @@ interface User {
   name: string;
   email: string;
   phone: string | null;
+  employeeId?: string | null;
   role: string;
   isActive: boolean;
   joiningDate?: string | null;

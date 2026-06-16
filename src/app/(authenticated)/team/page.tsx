@@ -19,6 +19,7 @@ import {
   Upload,
   Calendar,
   User,
+  History,
 } from 'lucide-react';
 
 interface TeamMember {
@@ -26,6 +27,7 @@ interface TeamMember {
   name: string;
   email: string;
   phone: string | null;
+  employeeId: string | null;
   role: string;
   reportsTo: number | null;
   isActive: boolean;
@@ -41,15 +43,32 @@ interface TeamMember {
 }
 
 const ROLE_LABELS: Record<string, { label: string; class: string }> = {
-  admin: { label: 'Admin (Deepak Sir)', class: 'bg-red-500/10 text-red-400 border-red-500/20' },
+  admin: { label: 'Admin', class: 'bg-red-500/10 text-red-400 border-red-500/20' },
   director: { label: 'Director', class: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' },
   sales_head: { label: 'Sales Head', class: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
-  manager: { label: 'Manager', class: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-  tl: { label: 'Team Leader', class: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
-  consultant: { label: 'Consultant', class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
-  psa: { label: 'PSA Caller', class: 'bg-orange-500/10 text-orange-400 border-orange-500/20' },
-  finance: { label: 'Finance Team', class: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
-  operations: { label: 'Operations Team', class: 'bg-pink-500/10 text-pink-400 border-pink-500/20' },
+  finance: { label: 'Finance Manager', class: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+  operations: { label: 'Operations Manager', class: 'bg-pink-500/10 text-pink-400 border-pink-500/20' },
+  psa_tl: { label: 'PSA Team Leader', class: 'bg-sky-500/10 text-sky-400 border-sky-500/20' },
+  psa: { label: 'PSA Consultant', class: 'bg-orange-500/10 text-orange-400 border-orange-500/20' },
+  tl: { label: 'Sales Team Leader', class: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
+  consultant: { label: 'Sales Consultant', class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+};
+
+const STAGE_BADGES: Record<number, { name: string; class: string }> = {
+  0: { name: 'Uninitiated', class: 'bg-stone-550/15 text-stone-400 border-stone-500/20 font-bold' },
+  1: { name: 'Fresh Lead', class: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+  2: { name: 'DNP', class: 'bg-slate-500/10 text-slate-400 border-slate-500/20' },
+  3: { name: 'Follow Up', class: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+  4: { name: 'Not Interested', class: 'bg-red-800/10 text-red-400 border-red-800/20' },
+  5: { name: 'Call Later', class: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
+  6: { name: 'Already Installed', class: 'bg-slate-800/20 text-slate-500 border-slate-800/30' },
+  7: { name: 'Decision Pending', class: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
+  8: { name: 'Meeting Booked 📅', class: 'bg-teal-500/10 text-teal-400 border-teal-500/20' },
+  9: { name: 'Meeting Done', class: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
+  10: { name: 'Disconnected', class: 'bg-slate-600/15 text-slate-400 border-slate-600/20' },
+  11: { name: 'Switch Off', class: 'bg-slate-700/20 text-slate-400 border-slate-700/30' },
+  12: { name: 'Can\'t Fit Solar', class: 'bg-stone-900 text-stone-400 border-stone-800/40' },
+  13: { name: '✅ SALE DONE', class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-bold' },
 };
 
 function calculateYearsInCompany(joiningDateStr: string | null): string {
@@ -84,6 +103,7 @@ export default function TeamManagementPage() {
     name: '',
     email: '',
     phone: '',
+    employeeId: '',
     role: 'consultant',
     password: '',
     reportsTo: '',
@@ -103,11 +123,19 @@ export default function TeamManagementPage() {
   const [updateError, setUpdateError] = useState('');
   const [editPhotoPreviewUrl, setEditPhotoPreviewUrl] = useState('');
 
+  // Activity Logs Modal States
+  const [showLogsModal, setShowLogsModal] = useState(false);
+  const [logsMember, setLogsMember] = useState<TeamMember | null>(null);
+  const [logsDate, setLogsDate] = useState('');
+  const [logsList, setLogsList] = useState<any[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+
   // Edit Other Member states (for admin/director/sales_head)
   const [editMemberForm, setEditMemberForm] = useState({
     name: '',
     email: '',
     phone: '',
+    employeeId: '',
     role: 'consultant',
     reportsTo: '',
     joiningDate: '',
@@ -129,6 +157,7 @@ export default function TeamManagementPage() {
       name: '',
       email: '',
       phone: '',
+      employeeId: '',
       role: 'consultant',
       password: '',
       reportsTo: '',
@@ -171,9 +200,9 @@ export default function TeamManagementPage() {
       const res = await fetch('/api/v1/users', { cache: 'no-store' });
       const data = await res.json();
       if (data.success && data.data) {
-        // Supervisors must be admin, director, sales_head, manager, or tl
+        // Supervisors must be admin, director, sales_head, manager, tl, or psa_tl
         const filtered = data.data.filter((u: any) =>
-          ['admin', 'director', 'sales_head', 'manager', 'tl'].includes(u.role)
+          ['admin', 'director', 'sales_head', 'manager', 'tl', 'psa_tl'].includes(u.role)
         );
         setManagersAndTls(filtered);
       }
@@ -203,6 +232,7 @@ export default function TeamManagementPage() {
         name: member.name,
         email: member.email,
         phone: member.phone || '',
+        employeeId: member.employeeId || '',
         role: member.role,
         reportsTo: member.reportsTo ? String(member.reportsTo) : '',
         joiningDate: member.joiningDate ? member.joiningDate.split('T')[0] : '',
@@ -211,6 +241,48 @@ export default function TeamManagementPage() {
       });
       setEditMemberPhotoPreviewUrl('');
       setUpdateMemberError('');
+    }
+  };
+
+  const getTodayLocalDateStr = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const handleOpenActivityLogs = (member: TeamMember) => {
+    setLogsMember(member);
+    setShowLogsModal(true);
+    const today = getTodayLocalDateStr();
+    setLogsDate(today);
+    fetchActivityLogs(member.id, today);
+  };
+
+  const fetchActivityLogs = async (userId: number, dateStr: string) => {
+    if (!userId) return;
+    try {
+      setLogsLoading(true);
+      const res = await fetch(`/api/v1/users/${userId}/activity?startDate=${dateStr}&endDate=${dateStr}`);
+      const data = await res.json();
+      if (data.success) {
+        setLogsList(data.data || []);
+      } else {
+        alert(data.message || 'Failed to fetch activity logs.');
+      }
+    } catch (err) {
+      console.error('Error fetching logs:', err);
+    } finally {
+      setLogsLoading(false);
+    }
+  };
+
+  const handleLogsDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newDate = e.target.value;
+    setLogsDate(newDate);
+    if (logsMember) {
+      fetchActivityLogs(logsMember.id, newDate);
     }
   };
 
@@ -333,6 +405,7 @@ export default function TeamManagementPage() {
           name: editMemberForm.name,
           email: editMemberForm.email,
           phone: editMemberForm.phone,
+          employeeId: editMemberForm.employeeId,
           role: editMemberForm.role,
           reportsTo: editMemberForm.reportsTo ? parseInt(editMemberForm.reportsTo, 10) : null,
           joiningDate: editMemberForm.joiningDate ? new Date(editMemberForm.joiningDate) : null,
@@ -519,24 +592,25 @@ export default function TeamManagementPage() {
       {/* Users table card */}
       <div className="bg-[#111625] border border-slate-800 rounded-xl overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead>
               <tr className="border-b border-slate-800 bg-slate-900/10 text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                <th className="py-4 px-6 w-16 text-center">Photo</th>
-                <th className="py-4 px-6">Full Name</th>
-                <th className="py-4 px-6">Designation</th>
+                <th className="py-4 px-4 w-20 text-center">Photo</th>
+                <th className="py-4 px-4 w-48">Full Name</th>
+                <th className="py-4 px-4 w-32">Employee ID</th>
+                <th className="py-4 px-4 w-40">Designation</th>
                 {isAdminOrDirectorOrSalesHead ? (
                   <>
-                    <th className="py-4 px-6">Direct Supervisor</th>
-                    <th className="py-4 px-6">Years in the Company</th>
-                    <th className="py-4 px-6 text-center">Leads Closed</th>
-                    <th className="py-4 px-6 text-center">Status</th>
-                    <th className="py-4 px-6 text-center">Control</th>
+                    <th className="py-4 px-4 w-40">Direct Supervisor</th>
+                    <th className="py-4 px-4 w-36">Years in the Company</th>
+                    <th className="py-4 px-4 w-28 text-center">Leads Closed</th>
+                    <th className="py-4 px-4 w-28 text-center">Status</th>
+                    <th className="py-4 px-4 w-36 text-center">Control</th>
                   </>
                 ) : (
                   <>
-                    <th className="py-4 px-6">Years in the Company</th>
-                    <th className="py-4 px-6 text-center">Leads Closed</th>
+                    <th className="py-4 px-4 w-36">Years in the Company</th>
+                    <th className="py-4 px-4 w-28 text-center">Leads Closed</th>
                   </>
                 )}
               </tr>
@@ -544,7 +618,7 @@ export default function TeamManagementPage() {
             <tbody className="divide-y divide-slate-800/60 text-sm">
               {members.length === 0 ? (
                 <tr>
-                  <td colSpan={isAdminOrDirectorOrSalesHead ? 8 : 5} className="py-12 text-center text-slate-500 text-xs">
+                  <td colSpan={isAdminOrDirectorOrSalesHead ? 9 : 6} className="py-12 text-center text-slate-500 text-xs">
                     No team members found.
                   </td>
                 </tr>
@@ -560,7 +634,7 @@ export default function TeamManagementPage() {
                       }`}
                     >
                       {/* Photograph Column */}
-                      <td className="py-4 px-6 text-center">
+                      <td className="py-4 px-4 text-center w-20">
                         {member.photograph ? (
                           <img
                             src={`/api/v1/users/${member.id}/photograph?t=${Date.now()}`}
@@ -578,7 +652,7 @@ export default function TeamManagementPage() {
                       </td>
 
                       {/* Full Name Column */}
-                      <td className="py-4 px-6 font-bold text-white">
+                      <td className="py-4 px-4 font-bold text-white w-48">
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleOpenProfile(member)}
@@ -594,8 +668,13 @@ export default function TeamManagementPage() {
                         </div>
                       </td>
 
+                      {/* Employee ID Column */}
+                      <td className="py-4 px-4 font-mono text-xs text-slate-300 w-32">
+                        {member.employeeId || <span className="text-slate-600 italic">Not Set</span>}
+                      </td>
+
                       {/* Designation/Role Column */}
-                      <td className="py-4 px-6">
+                      <td className="py-4 px-4 w-40">
                         <span className={`inline-block text-[9px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${roleConfig.class}`}>
                           {roleConfig.label}
                         </span>
@@ -603,16 +682,16 @@ export default function TeamManagementPage() {
 
                       {isAdminOrDirectorOrSalesHead ? (
                         <>
-                          <td className="py-4 px-6 text-slate-400">
+                          <td className="py-4 px-4 text-slate-400 w-40">
                             {member.supervisor?.name || <span className="text-slate-600 text-xs italic">None</span>}
                           </td>
-                          <td className="py-4 px-6 text-slate-300">
+                          <td className="py-4 px-4 text-slate-300 w-36">
                             {calculateYearsInCompany(member.joiningDate)}
                           </td>
-                          <td className="py-4 px-6 text-center text-emerald-400 font-bold font-mono">
+                          <td className="py-4 px-4 text-center text-emerald-400 font-bold font-mono w-28">
                             {member.leadsClosed || 0}
                           </td>
-                          <td className="py-4 px-6 text-center">
+                          <td className="py-4 px-4 text-center w-28">
                             <span
                               className={`inline-block text-[9px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${
                                 member.isActive
@@ -623,43 +702,51 @@ export default function TeamManagementPage() {
                                 {member.isActive ? 'Active' : 'Deactivated'}
                             </span>
                           </td>
-                          <td className="py-4 px-6 text-center">
-                            {member.id !== user?.id ? (
-                              <div className="flex items-center justify-center gap-2">
-                                <button
-                                  onClick={() => handleToggleActive(member)}
-                                  className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
-                                    member.isActive
-                                      ? 'bg-red-950/20 text-red-400 border-red-900/30 hover:bg-red-950/40'
-                                      : 'bg-emerald-950/20 text-emerald-400 border-emerald-900/30 hover:bg-emerald-950/40'
-                                  }`}
-                                  title={member.isActive ? 'Deactivate Account' : 'Reactivate Account'}
-                                >
-                                  {member.isActive ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
-                                </button>
-                                
-                                {!member.isActive && (
+                          <td className="py-4 px-4 text-center w-36">
+                            <div className="flex items-center justify-center gap-2">
+                              <button
+                                onClick={() => handleOpenActivityLogs(member)}
+                                className="p-1.5 rounded-lg border bg-slate-900 hover:bg-slate-850 text-slate-400 hover:text-white border-slate-800 hover:border-slate-700 transition-all cursor-pointer flex items-center justify-center"
+                                title="View Activity Logs"
+                              >
+                                <History className="w-4 h-4" />
+                              </button>
+
+                              {member.id !== user?.id && (
+                                <>
                                   <button
-                                    type="button"
-                                    onClick={() => handleDeleteUser(member)}
-                                    className="p-1.5 rounded-lg border bg-rose-950/20 text-rose-450 border-rose-900/30 hover:bg-rose-950/40 transition-all cursor-pointer"
-                                    title="Permanently Delete User"
+                                    onClick={() => handleToggleActive(member)}
+                                    className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                                      member.isActive
+                                        ? 'bg-red-950/20 text-red-400 border-red-900/30 hover:bg-red-950/40'
+                                        : 'bg-emerald-950/20 text-emerald-400 border-emerald-900/30 hover:bg-emerald-950/40'
+                                    }`}
+                                    title={member.isActive ? 'Deactivate Account' : 'Reactivate Account'}
                                   >
-                                    <Trash2 className="w-4 h-4" />
+                                    {member.isActive ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
                                   </button>
-                                )}
-                              </div>
-                            ) : (
-                              <span className="text-slate-600 text-xs italic">-</span>
-                            )}
+                                  
+                                  {!member.isActive && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteUser(member)}
+                                      className="p-1.5 rounded-lg border bg-rose-950/20 text-rose-450 border-rose-900/30 hover:bg-rose-950/40 transition-all cursor-pointer"
+                                      title="Permanently Delete User"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  )}
+                                </>
+                              )}
+                            </div>
                           </td>
                         </>
                       ) : (
                         <>
-                          <td className="py-4 px-6 text-slate-355 font-mono text-xs">
+                          <td className="py-4 px-4 text-slate-300 w-36">
                             {calculateYearsInCompany(member.joiningDate)}
                           </td>
-                          <td className="py-4 px-6 text-center text-emerald-400 font-bold font-mono">
+                          <td className="py-4 px-4 text-center text-emerald-400 font-bold font-mono w-28">
                             {member.leadsClosed || 0}
                           </td>
                         </>
@@ -740,6 +827,17 @@ export default function TeamManagementPage() {
                   />
                 </div>
                 <div>
+                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Employee ID</label>
+                  <input
+                    type="text"
+                    required
+                    value={form.employeeId}
+                    onChange={(e) => setForm({ ...form, employeeId: e.target.value })}
+                    placeholder="e.g. EMP-1002"
+                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                  />
+                </div>
+                <div>
                   <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Email Address</label>
                   <input
                     type="email"
@@ -770,12 +868,12 @@ export default function TeamManagementPage() {
                     <option value="admin">Admin</option>
                     <option value="director">Director</option>
                     <option value="sales_head">Sales Head</option>
-                    <option value="manager">Manager</option>
-                    <option value="tl">Team Leader (TL)</option>
-                    <option value="consultant">Consultant</option>
-                    <option value="psa">PSA Caller</option>
-                    <option value="finance">Finance Team</option>
-                    <option value="operations">Operations Team</option>
+                    <option value="finance">Finance Manager</option>
+                    <option value="operations">Operations Manager</option>
+                    <option value="psa_tl">PSA Team Leader</option>
+                    <option value="psa">PSA Consultant</option>
+                    <option value="tl">Sales Team Leader</option>
+                    <option value="consultant">Sales Consultant</option>
                   </select>
                 </div>
                 <div>
@@ -1039,6 +1137,16 @@ export default function TeamManagementPage() {
                       />
                     </div>
                     <div>
+                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Employee ID</label>
+                      <input
+                        type="text"
+                        required
+                        value={editMemberForm.employeeId}
+                        onChange={(e) => setEditMemberForm({ ...editMemberForm, employeeId: e.target.value })}
+                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
                       <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Email Address</label>
                       <input
                         type="email"
@@ -1067,12 +1175,12 @@ export default function TeamManagementPage() {
                         <option value="admin">Admin</option>
                         <option value="director">Director</option>
                         <option value="sales_head">Sales Head</option>
-                        <option value="manager">Manager</option>
-                        <option value="tl">Team Leader (TL)</option>
-                        <option value="consultant">Consultant</option>
-                        <option value="psa">PSA Caller</option>
-                        <option value="finance">Finance Team</option>
-                        <option value="operations">Operations Team</option>
+                        <option value="finance">Finance Manager</option>
+                        <option value="operations">Operations Manager</option>
+                        <option value="psa_tl">PSA Team Leader</option>
+                        <option value="psa">PSA Consultant</option>
+                        <option value="tl">Sales Team Leader</option>
+                        <option value="consultant">Sales Consultant</option>
                       </select>
                     </div>
                     <div>
@@ -1338,6 +1446,138 @@ export default function TeamManagementPage() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+      {/* ============================================================== */}
+      {/* Activity Logs Modal Dialog */}
+      {showLogsModal && logsMember && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="w-full max-w-2xl bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-white">
+                  Activity Audit Logs
+                </h3>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Viewing daily transitions for <span className="text-amber-400 font-bold">{logsMember.name}</span> ({ROLE_LABELS[logsMember.role]?.label || logsMember.role})
+                </p>
+              </div>
+              <button onClick={() => setShowLogsModal(false)} className="text-slate-400 hover:text-white cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+              {/* Date Filter Panel */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-slate-900/20 border border-slate-850 rounded-xl">
+                <div>
+                  <span className="block text-slate-400 font-semibold text-xs">Select Log Date</span>
+                  <span className="block text-[10px] text-slate-500 mt-0.5">Audit actions for specific days</span>
+                </div>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <input
+                    type="date"
+                    value={logsDate}
+                    max={getTodayLocalDateStr()}
+                    onChange={handleLogsDateChange}
+                    className="block w-full sm:w-auto px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
+                  />
+                  <button
+                    onClick={() => {
+                      const today = getTodayLocalDateStr();
+                      setLogsDate(today);
+                      fetchActivityLogs(logsMember.id, today);
+                    }}
+                    className="px-3 py-1.5 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 rounded-lg text-xs font-semibold shrink-0 cursor-pointer"
+                  >
+                    Today
+                  </button>
+                </div>
+              </div>
+
+              {/* Logs Timeline Display */}
+              {logsLoading ? (
+                <div className="py-12 flex flex-col items-center gap-3">
+                  <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+                  <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Loading activities...</p>
+                </div>
+              ) : logsList.length === 0 ? (
+                <div className="py-16 text-center border border-dashed border-slate-850 rounded-xl">
+                  <p className="text-slate-500 text-xs italic">
+                    No status transitions or audit logs found for this date.
+                  </p>
+                </div>
+              ) : (
+                <div className="relative border-l-2 border-slate-800 pl-6 space-y-6 ml-3">
+                  {logsList.map((log) => {
+                    const timeStr = new Date(log.createdAt).toLocaleTimeString('en-IN', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    });
+                    const fromStage = log.fromStatus !== null && STAGE_BADGES ? STAGE_BADGES[log.fromStatus] : null;
+                    const toStage = STAGE_BADGES ? STAGE_BADGES[log.toStatus] : null;
+
+                    return (
+                      <div key={log.id} className="relative group">
+                        {/* Timeline Node Point */}
+                        <div className="absolute -left-[31px] top-1.5 w-3 h-3 rounded-full bg-amber-500 border-2 border-[#111625]" />
+                        
+                        <div className="bg-slate-950/30 border border-slate-900 rounded-xl p-4 space-y-2 hover:border-slate-800 transition-all">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <span className="text-[10px] text-slate-500 font-mono font-bold tracking-wider">{timeStr}</span>
+                            <div className="text-[11px] text-slate-400">
+                              Lead:{' '}
+                              <a
+                                href={`/leads/${log.lead.id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-amber-400 hover:underline font-bold"
+                              >
+                                {log.lead.customerName} (#{log.lead.leadCode})
+                              </a>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-300">
+                            {fromStage ? (
+                              <>
+                                <span className={`inline-block text-[8px] font-bold px-1.5 py-0.5 border rounded uppercase tracking-wider ${fromStage.class}`}>
+                                  {fromStage.name}
+                                </span>
+                                <span className="text-slate-500 text-[10px]">➔</span>
+                              </>
+                            ) : (
+                              <span className="text-slate-500 italic text-[10px]">New Lead Created</span>
+                            )}
+                            {toStage && (
+                              <span className={`inline-block text-[8px] font-bold px-1.5 py-0.5 border rounded uppercase tracking-wider ${toStage.class}`}>
+                                  {toStage.name}
+                              </span>
+                            )}
+                          </div>
+
+                          {log.remark && (
+                            <div className="text-[11px] bg-slate-950/60 border border-slate-900 px-3 py-2 rounded-lg text-slate-400 leading-relaxed font-mono">
+                              "{log.remark}"
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 border-t border-slate-800 bg-slate-900/10 flex justify-end">
+              <button
+                onClick={() => setShowLogsModal(false)}
+                className="py-2 px-5 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 rounded-lg font-bold text-xs shadow-md cursor-pointer"
+              >
+                Close Audit Logs
+              </button>
+            </div>
           </div>
         </div>
       )}

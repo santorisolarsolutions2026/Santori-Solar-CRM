@@ -35,22 +35,6 @@ export async function POST(
       return NextResponse.json({ success: false, message: 'Forbidden. Not your order.' }, { status: 403 });
     }
 
-    // Backend checklist validation (Section 10.4)
-    const requiredTypes = ['aadhaar', 'pan', 'electricity_bill', 'bank_passbook'];
-    const uploadedTypes = order.documents.map((d) => d.docType);
-    const missingTypes = requiredTypes.filter((type) => !uploadedTypes.includes(type));
-
-    if (missingTypes.length > 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Order submission rejected. Missing mandatory documents.',
-          errors: { missingDocuments: missingTypes },
-        },
-        { status: 422 }
-      );
-    }
-
     // Validate that order fields are complete
     if (!order.connectionNumber || order.systemSizeKw <= 0 || order.totalValue <= 0) {
       return NextResponse.json(

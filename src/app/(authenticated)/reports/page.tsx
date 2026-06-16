@@ -329,26 +329,26 @@ export default function ReportsPage() {
           <div className="bg-[#111625] border border-slate-800 rounded-xl p-6 shadow-lg lg:col-span-2 print:border-black">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-6 print:text-black">Consultant Sales Standings</h3>
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse min-w-[850px]">
                 <thead>
                   <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                    <th className="pb-3">Consultant Name</th>
-                    <th className="pb-3 text-center">Leads Allocated</th>
-                    <th className="pb-3 text-center">Nurture Actions Logged</th>
-                    <th className="pb-3 text-center">Site Meetings</th>
-                    <th className="pb-3 text-center">Sales Closed</th>
-                    <th className="pb-3 text-right">Conversion Rate</th>
+                    <th className="pb-3 px-4 w-48 text-left">Consultant Name</th>
+                    <th className="pb-3 px-4 w-32 text-center">Leads Allocated</th>
+                    <th className="pb-3 px-4 w-44 text-center">Nurture Actions Logged</th>
+                    <th className="pb-3 px-4 w-32 text-center">Site Meetings</th>
+                    <th className="pb-3 px-4 w-32 text-center">Sales Closed</th>
+                    <th className="pb-3 px-4 w-32 text-right">Conversion Rate</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60 text-sm">
                   {performance.map((member) => (
                     <tr key={member.id} className="hover:bg-slate-900/10 transition-colors">
-                      <td className="py-3.5 font-bold text-white print:text-black">{member.name}</td>
-                      <td className="py-3.5 text-center text-slate-300 print:text-black">{member.leadsAssigned}</td>
-                      <td className="py-3.5 text-center text-slate-300 print:text-black">{member.callsMade}</td>
-                      <td className="py-3.5 text-center text-slate-300 print:text-black">{member.meetingsBooked}</td>
-                      <td className="py-3.5 text-center text-emerald-400 font-bold print:text-black">{member.salesClosed}</td>
-                      <td className="py-3.5 text-right text-amber-400 font-extrabold print:text-black">{member.conversionRate}%</td>
+                      <td className="py-3.5 px-4 font-bold text-white print:text-black w-48 text-left">{member.name}</td>
+                      <td className="py-3.5 px-4 text-center text-slate-300 print:text-black w-32">{member.leadsAssigned}</td>
+                      <td className="py-3.5 px-4 text-center text-slate-300 print:text-black w-44">{member.callsMade}</td>
+                      <td className="py-3.5 px-4 text-center text-slate-300 print:text-black w-32">{member.meetingsBooked}</td>
+                      <td className="py-3.5 px-4 text-center text-emerald-400 font-bold print:text-black w-32">{member.salesClosed}</td>
+                      <td className="py-3.5 px-4 text-right text-amber-400 font-extrabold print:text-black w-32">{member.conversionRate}%</td>
                     </tr>
                   ))}
                 </tbody>

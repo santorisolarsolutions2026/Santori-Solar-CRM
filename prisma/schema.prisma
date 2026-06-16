@@ -15,6 +15,7 @@ model User {
   name                 String
   email                String              @unique
   phone                String?
+  employeeId           String?             @unique
   passwordHash         String
   role                 String              // admin | sales_head | manager | tl | consultant | psa | finance | operations
   reportsTo            Int?

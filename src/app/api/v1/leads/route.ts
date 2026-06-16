@@ -84,6 +84,21 @@ export async function GET(req: Request) {
       if (statuses.length > 0) {
         andConditions.push({ status: { in: statuses } });
       }
+    } else {
+      // Exclude Stage 13 (SALE DONE) leads where order status is completed and has completed installation photos
+      andConditions.push({
+        NOT: {
+          status: 13,
+          order: {
+            status: 'completed',
+            installationImages: {
+              some: {
+                status: 'completed'
+              }
+            }
+          }
+        }
+      });
     }
 
     if (city) {

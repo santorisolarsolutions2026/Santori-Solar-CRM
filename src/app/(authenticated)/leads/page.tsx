@@ -683,10 +683,10 @@ export default function LeadsPage() {
       {/* Leads Table Card */}
       <div className="bg-[#111625] border border-slate-800 rounded-xl overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse min-w-[1100px]">
             <thead>
               <tr className="border-b border-slate-800 bg-slate-900/10 text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                <th className="py-4 px-6 w-12 text-center">
+                <th className="py-4 px-4 w-12 text-center">
                   <input
                     type="checkbox"
                     checked={leads.length > 0 && leads.map(l => l.id).every((id) => selectedIds.includes(id))}
@@ -694,14 +694,14 @@ export default function LeadsPage() {
                     className="w-4 h-4 rounded border-slate-800 bg-slate-950 text-amber-500 focus:ring-0 focus:ring-offset-0 cursor-pointer"
                   />
                 </th>
-                <th className="py-4 px-6">Lead ID</th>
-                <th className="py-4 px-6">Customer</th>
-                <th className="py-4 px-6">Mobile</th>
-                <th className="py-4 px-6">City</th>
-                <th className="py-4 px-6">Connection</th>
-                <th className="py-4 px-6">Pipeline Stage</th>
-                <th className="py-4 px-6">Assigned to</th>
-                <th className="py-4 px-6 text-center">Actions</th>
+                <th className="py-4 px-4 w-28">Lead ID</th>
+                <th className="py-4 px-4 w-48">Customer</th>
+                <th className="py-4 px-4 w-32">Mobile</th>
+                <th className="py-4 px-4 w-28">City</th>
+                <th className="py-4 px-4 w-32">Connection</th>
+                <th className="py-4 px-4 w-44">Pipeline Stage</th>
+                <th className="py-4 px-4 w-40">Assigned to</th>
+                <th className="py-4 px-4 w-32 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-sm">
@@ -729,7 +729,7 @@ export default function LeadsPage() {
                         lead.isUnreachable ? 'bg-red-500/[0.01] border-l-2 border-l-red-500' : ''
                       } ${selectedIds.includes(lead.id) ? 'bg-amber-500/[0.02]' : ''}`}
                     >
-                      <td className="py-3.5 px-6 text-center w-12">
+                      <td className="py-3.5 px-4 text-center w-12">
                         <input
                           type="checkbox"
                           checked={selectedIds.includes(lead.id)}
@@ -737,26 +737,28 @@ export default function LeadsPage() {
                           className="w-4 h-4 rounded border-slate-800 bg-slate-950 text-amber-500 focus:ring-0 focus:ring-offset-0 cursor-pointer"
                         />
                       </td>
-                      <td className="py-3.5 px-6 font-mono font-bold text-xs text-slate-300">
+                      <td className="py-3.5 px-4 font-mono font-bold text-xs text-slate-300 w-28">
                         {lead.leadCode}
                       </td>
-                      <td className="py-3.5 px-6 font-bold text-white flex items-center gap-2">
-                        <span>{lead.customerName}</span>
-                        {lead.isUnreachable && (
-                          <span className="text-[9px] bg-red-500/10 text-red-400 border border-red-500/20 rounded-full px-2 py-0.25 font-bold uppercase tracking-wider flex items-center gap-0.5">
-                            <AlertCircle className="w-2.5 h-2.5" />
-                            <span>Unreachable</span>
-                          </span>
-                        )}
+                      <td className="py-3.5 px-4 font-bold text-white w-48">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span>{lead.customerName}</span>
+                          {lead.isUnreachable && (
+                            <span className="text-[9px] bg-red-500/10 text-red-400 border border-red-500/20 rounded-full px-2 py-0.25 font-bold uppercase tracking-wider flex items-center gap-0.5 shrink-0">
+                              <AlertCircle className="w-2.5 h-2.5" />
+                              <span>Unreachable</span>
+                            </span>
+                          )}
+                        </div>
                       </td>
-                      <td className="py-3.5 px-6 text-slate-300 font-mono text-xs">{lead.mobile}</td>
-                      <td className="py-3.5 px-6 text-slate-300">{lead.city}</td>
-                      <td className="py-3.5 px-6">
+                      <td className="py-3.5 px-4 text-slate-300 font-mono text-xs w-32">{lead.mobile}</td>
+                      <td className="py-3.5 px-4 text-slate-300 w-28">{lead.city}</td>
+                      <td className="py-3.5 px-4 w-32">
                         <span className={`inline-block text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${connectionClass}`}>
                           {lead.connectionType}
                         </span>
                       </td>
-                      <td className="py-3.5 px-6">
+                      <td className="py-3.5 px-4 w-44">
                         <div className="flex flex-col gap-1">
                           <span className={`inline-block text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${stage.class}`}>
                             {stage.name}
@@ -768,7 +770,7 @@ export default function LeadsPage() {
                           )}
                         </div>
                       </td>
-                      <td className="py-3.5 px-6 font-medium text-slate-300">
+                      <td className="py-3.5 px-4 font-medium text-slate-300 w-40">
                         {lead.tl?.name ? (
                           <span>{lead.tl.name} <span className="text-[10px] text-slate-500 font-semibold">(TL)</span></span>
                         ) : lead.consultant?.name ? (
@@ -777,31 +779,31 @@ export default function LeadsPage() {
                           <span className="text-slate-500 text-xs italic">Unassigned</span>
                         )}
                       </td>
-                      <td className="py-3.5 px-6 text-center">
+                      <td className="py-3.5 px-4 text-center w-32">
                         <div className="flex items-center justify-center gap-2">
                           <Link
                             href={`/leads/${lead.id}`}
-                            className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white transition-all"
+                            className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white transition-all"
                             title="View Lead Details"
                           >
-                            <Eye className="w-4 h-4" />
+                            <Eye className="w-4.5 h-4.5" />
                           </Link>
                           {['admin', 'director', 'sales_head', 'manager', 'tl'].includes(user?.role || '') && (
                             <>
                               <Link
                                 href={`/leads/${lead.id}?edit=true`}
-                                className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white transition-all"
+                                className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white transition-all"
                                 title="Edit Lead Info"
                               >
-                                <Edit2 className="w-4 h-4" />
+                                <Edit2 className="w-4.5 h-4.5" />
                               </Link>
                               {user?.role === 'admin' && (
                                 <button
                                   onClick={() => handleDeleteLead(lead.id)}
-                                  className="p-1.5 rounded-lg bg-slate-900 hover:bg-red-950/20 text-slate-400 hover:text-red-400 transition-all"
+                                  className="p-1.5 rounded-lg bg-slate-900 hover:bg-red-950/20 border border-slate-800 hover:border-red-900/30 text-slate-400 hover:text-red-400 transition-all cursor-pointer"
                                   title="Deactivate Opportunity"
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  <Trash2 className="w-4.5 h-4.5" />
                                 </button>
                               )}
                             </>
@@ -818,7 +820,7 @@ export default function LeadsPage() {
 
         {/* Pagination Panel */}
         {totalPages > 1 && (
-          <div className="p-4 border-t border-slate-800 bg-slate-900/10 flex items-center justify-between text-xs">
+          <div className="p-4 border-t border-slate-800 bg-slate-900/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-center sm:text-left">
             <span className="text-slate-400">
               Showing page <strong>{page}</strong> of <strong>{totalPages}</strong> (<strong>{total}</strong> leads total)
             </span>
@@ -950,7 +952,7 @@ export default function LeadsPage() {
                         Mapped Field Preview (First 5 Rows)
                       </h4>
                       <div className="overflow-x-auto border border-slate-800/80 rounded-xl">
-                        <table className="w-full text-left text-xs border-collapse">
+                        <table className="w-full text-left text-xs border-collapse min-w-[800px]">
                           <thead>
                             <tr className="bg-slate-900/40 text-slate-400 border-b border-slate-800">
                               <th className="py-2.5 px-4 font-bold">Customer Name</th>
