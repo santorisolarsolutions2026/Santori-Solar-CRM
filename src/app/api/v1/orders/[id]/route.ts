@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getAuthenticatedUser } from '@/lib/auth';
+import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
 
 export async function GET(
   req: Request,
@@ -51,14 +51,23 @@ export async function GET(
       return NextResponse.json({ success: false, message: 'Order not found.' }, { status: 404 });
     }
 
-    // Role visibility check
-    const allowedRoles = ['admin', 'director', 'sales_head', 'finance', 'operations', 'consultant'];
-    if (!allowedRoles.includes(userPayload.role)) {
-      return NextResponse.json({ success: false, message: 'Forbidden.' }, { status: 403 });
+    // Check permission to view orders
+    const userPermissions = await getUserPermissions(userPayload.id);
+    if (!userPermissions.includes('orders:view')) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view orders.' }, { status: 403 });
     }
 
-    if (userPayload.role === 'consultant' && order.submittedById !== userPayload.id) {
-      return NextResponse.json({ success: false, message: 'Forbidden. Not your order.' }, { status: 403 });
+    const hasViewAll = userPermissions.includes('orders:view_all');
+    if (!hasViewAll && order.submittedById !== userPayload.id) {
+      // Check supervisor status
+      const lead = await prisma.lead.findUnique({
+        where: { id: order.leadId },
+        select: { assignedTlId: true, assignedManagerId: true }
+      });
+      const isLeadSupervisor = lead && (lead.assignedTlId === userPayload.id || lead.assignedManagerId === userPayload.id);
+      if (!isLeadSupervisor) {
+        return NextResponse.json({ success: false, message: 'Forbidden. You do not have access to this order.' }, { status: 403 });
+      }
     }
 
     return NextResponse.json({
@@ -99,15 +108,23 @@ export async function PATCH(
     }
 
     // Validate update rights
-    if (userPayload.role === 'consultant') {
-      if (order.submittedById !== userPayload.id) {
-        return NextResponse.json({ success: false, message: 'Forbidden. Not your order.' }, { status: 403 });
+    const userPermissions = await getUserPermissions(userPayload.id);
+    const canCreateOrders = userPermissions.includes('orders:create');
+    const hasViewAll = userPermissions.includes('orders:view_all');
+    
+    if (!canCreateOrders) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to edit orders.' }, { status: 403 });
+    }
+
+    if (!hasViewAll && order.submittedById !== userPayload.id) {
+      const lead = await prisma.lead.findUnique({
+        where: { id: order.leadId },
+        select: { assignedTlId: true, assignedManagerId: true }
+      });
+      const isLeadSupervisor = lead && (lead.assignedTlId === userPayload.id || lead.assignedManagerId === userPayload.id);
+      if (!isLeadSupervisor) {
+        return NextResponse.json({ success: false, message: 'Forbidden. You do not have access to edit this order.' }, { status: 403 });
       }
-      if (order.status !== 'draft') {
-        return NextResponse.json({ success: false, message: 'Forbidden. Cannot edit a submitted order.' }, { status: 403 });
-      }
-    } else if (!['admin', 'director', 'sales_head', 'finance', 'operations'].includes(userPayload.role)) {
-      return NextResponse.json({ success: false, message: 'Forbidden. Role cannot edit orders.' }, { status: 403 });
     }
 
     const body = await req.json();
@@ -143,8 +160,9 @@ export async function PATCH(
 
     // Direct status updates (e.g. for installation tracking by Operations / Admin)
     if (status !== undefined) {
-      const allowedStatusUpdates = ['admin', 'director', 'sales_head', 'operations', 'finance'];
-      if (!allowedStatusUpdates.includes(userPayload.role)) {
+      const canVerify = userPermissions.includes('orders:verify');
+      const canInstall = userPermissions.includes('orders:submit_installation');
+      if (!canVerify && !canInstall) {
         return NextResponse.json({ success: false, message: 'Forbidden. You cannot change order status directly.' }, { status: 403 });
       }
       updateData.status = status;

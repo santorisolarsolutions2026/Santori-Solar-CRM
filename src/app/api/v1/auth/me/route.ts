@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getAuthenticatedUser } from '@/lib/auth';
+import { getAuthenticatedUser, getDefaultPermissionsForRole } from '@/lib/auth';
 
 export async function GET(req: Request) {
   try {
@@ -21,6 +21,7 @@ export async function GET(req: Request) {
         phone: true,
         employeeId: true,
         role: true,
+        permissions: true,
         reportsTo: true,
         isActive: true,
         lastSeenAt: true,
@@ -37,9 +38,18 @@ export async function GET(req: Request) {
       );
     }
 
+    const permissionsList = user.permissions && user.permissions.trim()
+      ? user.permissions.split(',').map((p: string) => p.trim())
+      : getDefaultPermissionsForRole(user.role);
+
     return NextResponse.json({
       success: true,
-      data: { user },
+      data: {
+        user: {
+          ...user,
+          permissions: permissionsList
+        }
+      },
     });
   } catch (error: any) {
     console.error('Auth me error:', error);

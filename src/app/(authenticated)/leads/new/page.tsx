@@ -7,7 +7,7 @@ import { Sun, ArrowLeft, Loader2, Sparkles, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 
 export default function NewLeadPage() {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   const router = useRouter();
 
   const [form, setForm] = useState({
@@ -89,7 +89,7 @@ export default function NewLeadPage() {
         setDuplicateWarning(
           `A lead with this number already exists. Lead ID: #${existing.leadCode} — assigned to ${assignedName}.`
         );
-        if (user?.role === 'admin') {
+        if (hasPermission('leads:edit') || user?.role === 'admin') {
           setShowOverride(true);
         }
       }

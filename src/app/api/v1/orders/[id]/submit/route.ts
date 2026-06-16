@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getAuthenticatedUser } from '@/lib/auth';
+import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
 
 export async function POST(
   req: Request,
@@ -30,8 +30,13 @@ export async function POST(
       return NextResponse.json({ success: false, message: 'Order not found.' }, { status: 404 });
     }
 
-    // Only the submitting consultant or Admin can submit
-    if (userPayload.role === 'consultant' && order.submittedById !== userPayload.id) {
+    const userPermissions = await getUserPermissions(userPayload.id);
+    if (!userPermissions.includes('orders:create')) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to submit orders.' }, { status: 403 });
+    }
+
+    const hasViewAll = userPermissions.includes('orders:view_all');
+    if (!hasViewAll && order.submittedById !== userPayload.id) {
       return NextResponse.json({ success: false, message: 'Forbidden. Not your order.' }, { status: 403 });
     }
 

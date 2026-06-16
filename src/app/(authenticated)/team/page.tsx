@@ -29,6 +29,7 @@ interface TeamMember {
   phone: string | null;
   employeeId: string | null;
   role: string;
+  permissions?: string | null;
   reportsTo: number | null;
   isActive: boolean;
   lastSeenAt: string | null;
@@ -53,6 +54,80 @@ const ROLE_LABELS: Record<string, { label: string; class: string }> = {
   tl: { label: 'Sales Team Leader', class: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
   consultant: { label: 'Sales Consultant', class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
 };
+
+export function getRoleLabel(role: string): string {
+  if (!role) return '';
+  if (role.includes(':')) {
+    return role.split(':')[1];
+  }
+  return ROLE_LABELS[role]?.label || role;
+}
+
+export function getRoleClass(role: string): string {
+  if (!role) return 'bg-slate-500/15';
+  const baseRole = role.includes(':') ? role.split(':')[0] : role;
+  return ROLE_LABELS[baseRole]?.class || 'bg-slate-500/15 text-slate-400 border-slate-500/20';
+}
+
+const ALL_PERMISSIONS = [
+  { key: 'leads:view', label: 'View Leads Pipeline', category: 'Leads' },
+  { key: 'leads:view_all', label: 'View All Leads (Bypass scope)', category: 'Leads' },
+  { key: 'leads:create', label: 'Add New Lead', category: 'Leads' },
+  { key: 'leads:edit', label: 'Edit Lead Details', category: 'Leads' },
+  { key: 'leads:change_status', label: 'Change Lead Pipeline Stage', category: 'Leads' },
+  { key: 'orders:view', label: 'View Orders Queue', category: 'Orders' },
+  { key: 'orders:view_all', label: 'View All Orders (Bypass scope)', category: 'Orders' },
+  { key: 'orders:create', label: 'Convert Lead to Order', category: 'Orders' },
+  { key: 'orders:verify', label: 'Verify Orders (Finance/Ops)', category: 'Orders' },
+  { key: 'orders:submit_installation', label: 'Submit Orders for Installation', category: 'Orders' },
+  { key: 'reports:view', label: 'View Reports & Analytics', category: 'Reports' },
+  { key: 'team:view', label: 'View Team Directory', category: 'Team' },
+  { key: 'team:manage', label: 'Manage Team Members & Access Checklist', category: 'Team' },
+  { key: 'logs:view', label: 'View Team Activity logs', category: 'Team' },
+];
+
+function getLocalDefaultPermissionsForRole(role: string): string[] {
+  const baseRole = role.includes(':') ? role.split(':')[0] : role;
+  switch (baseRole) {
+    case 'admin':
+    case 'director':
+      return [
+        'leads:view', 'leads:view_all', 'leads:create', 'leads:edit', 'leads:change_status',
+        'orders:view', 'orders:view_all', 'orders:create', 'orders:verify', 'orders:submit_installation',
+        'reports:view', 'team:view', 'team:manage', 'logs:view'
+      ];
+    case 'sales_head':
+      return [
+        'leads:view', 'leads:view_all', 'leads:create', 'leads:edit', 'leads:change_status',
+        'orders:view', 'orders:view_all', 'orders:create', 'reports:view', 'team:view', 'logs:view'
+      ];
+    case 'manager':
+      return [
+        'leads:view', 'leads:view_all', 'leads:create', 'leads:edit', 'leads:change_status',
+        'orders:view', 'orders:view_all', 'orders:create', 'orders:verify', 'orders:submit_installation',
+        'reports:view', 'team:view', 'logs:view'
+      ];
+    case 'finance':
+      return [
+        'leads:view', 'leads:view_all', 'orders:view', 'orders:view_all', 'orders:verify', 'reports:view', 'team:view'
+      ];
+    case 'operations':
+      return [
+        'leads:view', 'leads:view_all', 'orders:view', 'orders:view_all', 'orders:verify', 'orders:submit_installation', 'team:view'
+      ];
+    case 'tl':
+    case 'psa_tl':
+      return [
+        'leads:view', 'leads:create', 'leads:edit', 'leads:change_status', 'orders:view', 'orders:create', 'reports:view', 'team:view'
+      ];
+    case 'consultant':
+    case 'psa':
+    default:
+      return [
+        'leads:view', 'leads:create', 'leads:edit', 'leads:change_status', 'orders:view', 'orders:create', 'team:view'
+      ];
+  }
+}
 
 const STAGE_BADGES: Record<number, { name: string; class: string }> = {
   0: { name: 'Uninitiated', class: 'bg-stone-550/15 text-stone-400 border-stone-500/20 font-bold' },
@@ -89,7 +164,7 @@ function calculateYearsInCompany(joiningDateStr: string | null): string {
 }
 
 export default function TeamManagementPage() {
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, hasPermission } = useAuth();
   const router = useRouter();
 
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -147,6 +222,13 @@ export default function TeamManagementPage() {
   const [updatingMember, setUpdatingMember] = useState(false);
   const [updateMemberError, setUpdateMemberError] = useState('');
 
+  // States for handling custom roles in Add/Edit user forms
+  const [addCustomRoleText, setAddCustomRoleText] = useState('');
+  const [addBaseRole, setAddBaseRole] = useState('consultant');
+  const [editCustomRoleText, setEditCustomRoleText] = useState('');
+  const [editBaseRole, setEditBaseRole] = useState('consultant');
+  const [editMemberPermissions, setEditMemberPermissions] = useState<string[]>([]);
+
   const closeAddModal = () => {
     setShowAddModal(false);
     if (addPhotoPreviewUrl) {
@@ -164,6 +246,8 @@ export default function TeamManagementPage() {
       joiningDate: '',
       photograph: '',
     });
+    setAddCustomRoleText('');
+    setAddBaseRole('consultant');
     setFormError('');
   };
 
@@ -177,6 +261,9 @@ export default function TeamManagementPage() {
       URL.revokeObjectURL(editMemberPhotoPreviewUrl);
       setEditMemberPhotoPreviewUrl('');
     }
+    setEditCustomRoleText('');
+    setEditBaseRole('consultant');
+    setEditMemberPermissions([]);
   };
 
   // Fetch team members
@@ -201,9 +288,10 @@ export default function TeamManagementPage() {
       const data = await res.json();
       if (data.success && data.data) {
         // Supervisors must be admin, director, sales_head, manager, tl, or psa_tl
-        const filtered = data.data.filter((u: any) =>
-          ['admin', 'director', 'sales_head', 'manager', 'tl', 'psa_tl'].includes(u.role)
-        );
+        const filtered = data.data.filter((u: any) => {
+          const baseRole = u.role.includes(':') ? u.role.split(':')[0] : u.role;
+          return ['admin', 'director', 'sales_head', 'manager', 'tl', 'psa_tl'].includes(baseRole);
+        });
         setManagersAndTls(filtered);
       }
     } catch (err) {
@@ -214,7 +302,8 @@ export default function TeamManagementPage() {
   useEffect(() => {
     if (user) {
       fetchTeam();
-      if (['admin', 'director', 'sales_head'].includes(user.role)) {
+      const userBaseRole = user.role.includes(':') ? user.role.split(':')[0] : user.role;
+      if (['admin', 'director', 'sales_head'].includes(userBaseRole)) {
         fetchSupervisors();
       }
     }
@@ -228,6 +317,19 @@ export default function TeamManagementPage() {
       setEditPhotoPath(member.photograph || '');
       setUpdateError('');
     } else if (isAdminOrDirectorOrSalesHead) {
+      if (member.role.includes(':')) {
+        const [base, custom] = member.role.split(':');
+        setEditCustomRoleText(custom);
+        setEditBaseRole(base);
+      } else {
+        setEditCustomRoleText('');
+        setEditBaseRole(member.role);
+      }
+      if (member.permissions && member.permissions.trim()) {
+        setEditMemberPermissions(member.permissions.split(',').map((p: string) => p.trim()));
+      } else {
+        setEditMemberPermissions(getLocalDefaultPermissionsForRole(member.role));
+      }
       setEditMemberForm({
         name: member.name,
         email: member.email,
@@ -397,6 +499,16 @@ export default function TeamManagementPage() {
     setUpdatingMember(true);
     setUpdateMemberError('');
 
+    let finalRole = editMemberForm.role;
+    if (editMemberForm.role === 'other') {
+      if (!editCustomRoleText.trim()) {
+        alert('Please enter a custom designation name.');
+        setUpdatingMember(false);
+        return;
+      }
+      finalRole = `${editBaseRole}:${editCustomRoleText.trim()}`;
+    }
+
     try {
       const res = await fetch(`/api/v1/users/${selectedMember.id}`, {
         method: 'PATCH',
@@ -406,7 +518,11 @@ export default function TeamManagementPage() {
           email: editMemberForm.email,
           phone: editMemberForm.phone,
           employeeId: editMemberForm.employeeId,
-          role: editMemberForm.role,
+          role: finalRole,
+          permissions: (() => {
+            const cleanPerms = editMemberPermissions.filter((p) => p !== 'none');
+            return cleanPerms.length === 0 ? 'none' : cleanPerms.join(',');
+          })(),
           reportsTo: editMemberForm.reportsTo ? parseInt(editMemberForm.reportsTo, 10) : null,
           joiningDate: editMemberForm.joiningDate ? new Date(editMemberForm.joiningDate) : null,
           photograph: editMemberForm.photograph || null,
@@ -498,11 +614,21 @@ export default function TeamManagementPage() {
     setSubmitting(true);
     setFormError('');
 
+    let finalRole = form.role;
+    if (form.role === 'other') {
+      if (!addCustomRoleText.trim()) {
+        alert('Please enter a custom designation name.');
+        setSubmitting(false);
+        return;
+      }
+      finalRole = `${addBaseRole}:${addCustomRoleText.trim()}`;
+    }
+
     try {
       const res = await fetch('/api/v1/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, role: finalRole }),
       });
 
       const data = await res.json();
@@ -563,8 +689,18 @@ export default function TeamManagementPage() {
     );
   }
 
-  const isAdminOrDirectorOrSalesHead = ['admin', 'director', 'sales_head'].includes(user?.role || '');
+  const userBaseRole = user?.role ? (user.role.includes(':') ? user.role.split(':')[0] : user.role) : '';
+  const isAdminOrDirectorOrSalesHead = hasPermission('team:manage');
   const titleText = 'Santori Team';
+
+  // Extract custom designations currently defined in the database
+  const customDesignations = Array.from(
+    new Set(
+      members
+        .map((m) => m.role)
+        .filter((role) => role && role.includes(':'))
+    )
+  );
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -624,7 +760,7 @@ export default function TeamManagementPage() {
                 </tr>
               ) : (
                 members.map((member) => {
-                  const roleConfig = ROLE_LABELS[member.role] || { label: member.role, class: 'bg-slate-500/15' };
+                  const roleConfig = { label: getRoleLabel(member.role), class: getRoleClass(member.role) };
                   
                   return (
                     <tr
@@ -859,7 +995,7 @@ export default function TeamManagementPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">System Role</label>
+                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">System Designation / Role</label>
                   <select
                     value={form.role}
                     onChange={(e) => setForm({ ...form, role: e.target.value })}
@@ -874,8 +1010,49 @@ export default function TeamManagementPage() {
                     <option value="psa">PSA Consultant</option>
                     <option value="tl">Sales Team Leader</option>
                     <option value="consultant">Sales Consultant</option>
+                    {customDesignations.map((cd) => (
+                      <option key={cd} value={cd}>
+                        {getRoleLabel(cd)} ({getRoleLabel(cd.split(':')[0]).toUpperCase()} access)
+                      </option>
+                    ))}
+                    <option value="other">Other / Custom Designation...</option>
                   </select>
                 </div>
+
+                {form.role === 'other' && (
+                  <div className="col-span-1 sm:col-span-2 p-4 bg-slate-950/40 border border-slate-800/80 rounded-xl space-y-3">
+                    <div>
+                      <label className="block text-[9px] font-bold uppercase text-slate-400 mb-1">Custom Designation Name</label>
+                      <input
+                        type="text"
+                        required
+                        value={addCustomRoleText}
+                        onChange={(e) => setAddCustomRoleText(e.target.value)}
+                        placeholder="e.g. Senior Consultant"
+                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-900 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-bold uppercase text-slate-400 mb-1">Base Permissions Access Level</label>
+                      <select
+                        value={addBaseRole}
+                        onChange={(e) => setAddBaseRole(e.target.value)}
+                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-900 rounded-lg text-slate-300 text-xs focus:ring-amber-500"
+                      >
+                        <option value="consultant">Sales Consultant</option>
+                        <option value="tl">Sales Team Leader</option>
+                        <option value="psa">PSA Consultant</option>
+                        <option value="psa_tl">PSA Team Leader</option>
+                        <option value="manager">Operations Manager</option>
+                        <option value="finance">Finance Manager</option>
+                        <option value="sales_head">Sales Head</option>
+                        <option value="director">Director</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Initial Password</label>
                   <input
@@ -897,7 +1074,7 @@ export default function TeamManagementPage() {
                     <option value="">No Supervisor (Reports to Admin)</option>
                     {managersAndTls.map((sup) => (
                       <option key={sup.id} value={sup.id}>
-                        {sup.name} ({sup.role.toUpperCase()})
+                        {sup.name} ({getRoleLabel(sup.role).toUpperCase()})
                       </option>
                     ))}
                   </select>
@@ -1026,7 +1203,7 @@ export default function TeamManagementPage() {
                       <div>
                         <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">System Role</span>
                         <span className="text-slate-355 text-xs block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg capitalize opacity-70">
-                          {ROLE_LABELS[selectedMember.role]?.label || selectedMember.role}
+                          {getRoleLabel(selectedMember.role)}
                         </span>
                       </div>
                       <div>
@@ -1181,21 +1358,60 @@ export default function TeamManagementPage() {
                         <option value="psa">PSA Consultant</option>
                         <option value="tl">Sales Team Leader</option>
                         <option value="consultant">Sales Consultant</option>
+                        {customDesignations.map((cd) => (
+                          <option key={cd} value={cd}>
+                            {getRoleLabel(cd)} ({getRoleLabel(cd.split(':')[0]).toUpperCase()} access)
+                          </option>
+                        ))}
+                        <option value="other">Other / Custom Designation...</option>
                       </select>
                     </div>
+                    {editMemberForm.role === 'other' && (
+                      <div className="col-span-1 sm:col-span-2 p-4 bg-slate-950/40 border border-slate-800/80 rounded-xl space-y-3">
+                        <div>
+                          <label className="block text-[9px] font-bold uppercase text-slate-400 mb-1">Custom Designation Name</label>
+                          <input
+                            type="text"
+                            required
+                            value={editCustomRoleText}
+                            onChange={(e) => setEditCustomRoleText(e.target.value)}
+                            placeholder="e.g. Senior Consultant"
+                            className="block w-full px-3 py-2 bg-slate-950 border border-slate-900 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] font-bold uppercase text-slate-400 mb-1">Base Permissions Access Level</label>
+                          <select
+                            value={editBaseRole}
+                            onChange={(e) => setEditBaseRole(e.target.value)}
+                            className="block w-full px-3 py-2 bg-slate-950 border border-slate-900 rounded-lg text-slate-300 text-xs focus:ring-amber-500"
+                          >
+                            <option value="consultant">Sales Consultant</option>
+                            <option value="tl">Sales Team Leader</option>
+                            <option value="psa">PSA Consultant</option>
+                            <option value="psa_tl">PSA Team Leader</option>
+                            <option value="manager">Operations Manager</option>
+                            <option value="finance">Finance Manager</option>
+                            <option value="sales_head">Sales Head</option>
+                            <option value="director">Director</option>
+                            <option value="admin">Admin</option>
+                          </select>
+                        </div>
+                      </div>
+                    )}
                     <div>
                       <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Direct Supervisor</label>
                       <select
                         value={editMemberForm.reportsTo}
                         onChange={(e) => setEditMemberForm({ ...editMemberForm, reportsTo: e.target.value })}
-                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-350 text-xs focus:ring-amber-500 focus:outline-none"
+                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-355 text-xs focus:ring-amber-500 focus:outline-none"
                       >
                         <option value="">No Supervisor (Reports to Admin)</option>
                         {managersAndTls
                           .filter((sup) => sup.id !== selectedMember.id)
                           .map((sup) => (
                             <option key={sup.id} value={sup.id}>
-                              {sup.name} ({sup.role.toUpperCase()})
+                              {sup.name} ({getRoleLabel(sup.role).toUpperCase()})
                             </option>
                           ))}
                       </select>
@@ -1221,6 +1437,53 @@ export default function TeamManagementPage() {
                       <label htmlFor="edit-member-active" className="text-xs font-bold uppercase text-slate-400 cursor-pointer select-none">
                         Account Active Status
                       </label>
+                    </div>
+                  </div>
+
+                  {/* Custom Access Permissions Checklist */}
+                  <div className="border-t border-slate-800 pt-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h5 className="text-[10px] font-bold uppercase tracking-wider text-amber-500">Custom Access Permissions</h5>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const base = editMemberForm.role === 'other' ? editBaseRole : editMemberForm.role;
+                          setEditMemberPermissions(getLocalDefaultPermissionsForRole(base));
+                        }}
+                        className="text-[9px] font-bold uppercase tracking-wider text-amber-400 hover:text-amber-300 transition-colors bg-slate-900 border border-slate-800/80 px-2 py-1 rounded cursor-pointer"
+                      >
+                        Reset to designation defaults
+                      </button>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {['Leads', 'Orders', 'Reports', 'Team'].map((cat) => (
+                        <div key={cat} className="p-3 bg-slate-950/40 border border-slate-900 rounded-lg space-y-2">
+                          <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">{cat} Permissions</span>
+                          <div className="space-y-1.5">
+                            {ALL_PERMISSIONS.filter(p => p.category === cat).map((perm) => {
+                              const isChecked = editMemberPermissions.includes(perm.key);
+                              return (
+                                <label key={perm.key} className="flex items-start gap-2 text-[11px] text-slate-300 hover:text-white cursor-pointer select-none transition-colors">
+                                  <input
+                                    type="checkbox"
+                                    checked={isChecked}
+                                    onChange={() => {
+                                      if (isChecked) {
+                                        setEditMemberPermissions(editMemberPermissions.filter(k => k !== perm.key));
+                                      } else {
+                                        setEditMemberPermissions([...editMemberPermissions, perm.key]);
+                                      }
+                                    }}
+                                    className="w-3.5 h-3.5 text-amber-500 bg-slate-950 border-slate-800 rounded focus:ring-amber-500 mt-0.5"
+                                  />
+                                  <span>{perm.label}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
@@ -1327,9 +1590,9 @@ export default function TeamManagementPage() {
                   <div>
                     <h4 className="text-sm font-bold text-white leading-none">{selectedMember.name}</h4>
                     <span className={`inline-block text-[9px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider mt-2 ${
-                      ROLE_LABELS[selectedMember.role]?.class || 'bg-slate-500/15'
+                      getRoleClass(selectedMember.role)
                     }`}>
-                      {ROLE_LABELS[selectedMember.role]?.label || selectedMember.role}
+                      {getRoleLabel(selectedMember.role)}
                     </span>
                   </div>
                 </div>
@@ -1369,7 +1632,7 @@ export default function TeamManagementPage() {
                     <>
                       <div>
                         <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Designation</span>
-                        <span className="text-white capitalize">{ROLE_LABELS[selectedMember.role]?.label || selectedMember.role}</span>
+                        <span className="text-white capitalize">{getRoleLabel(selectedMember.role)}</span>
                       </div>
                       <div>
                         <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Years in Company</span>
@@ -1460,7 +1723,7 @@ export default function TeamManagementPage() {
                   Activity Audit Logs
                 </h3>
                 <p className="text-[11px] text-slate-500 mt-1">
-                  Viewing daily transitions for <span className="text-amber-400 font-bold">{logsMember.name}</span> ({ROLE_LABELS[logsMember.role]?.label || logsMember.role})
+                  Viewing daily transitions for <span className="text-amber-400 font-bold">{logsMember.name}</span> ({getRoleLabel(logsMember.role)})
                 </p>
               </div>
               <button onClick={() => setShowLogsModal(false)} className="text-slate-400 hover:text-white cursor-pointer">

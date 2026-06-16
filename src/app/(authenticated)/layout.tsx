@@ -58,7 +58,7 @@ export default function AuthenticatedLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading, logout, refreshUser } = useAuth();
+  const { user, loading, logout, refreshUser, hasPermission } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   
@@ -243,42 +243,45 @@ export default function AuthenticatedLayout({
     return null;
   }
 
-  // Sidebar navigation configuration based on role
+  // Sidebar navigation configuration based on permission keys
   const menuItems = [
     {
       name: 'Dashboard',
       path: '/dashboard',
       icon: LayoutDashboard,
-      roles: ['admin', 'director', 'sales_head', 'manager', 'tl', 'psa_tl', 'consultant', 'psa', 'finance', 'operations'],
+      permission: null, // always visible
     },
     {
       name: 'Leads Pipeline',
       path: '/leads',
       icon: Layers,
-      roles: ['admin', 'director', 'sales_head', 'manager', 'tl', 'psa_tl', 'consultant', 'psa'],
+      permission: 'leads:view',
     },
     {
       name: 'Orders Queue',
       path: '/orders',
       icon: FileCheck,
-      roles: ['admin', 'director', 'sales_head', 'finance', 'operations'],
+      permission: 'orders:view',
     },
 
     {
       name: 'Santori Team',
       path: '/team',
       icon: Users,
-      roles: ['admin', 'director', 'sales_head', 'manager', 'tl', 'psa_tl', 'consultant', 'psa', 'finance', 'operations'],
+      permission: 'team:view',
     },
     {
       name: 'Reports & Analytics',
       path: '/reports',
       icon: LineChart,
-      roles: ['admin', 'director', 'sales_head', 'manager', 'tl', 'psa_tl', 'finance'],
+      permission: 'reports:view',
     },
   ];
 
-  const filteredMenuItems = menuItems.filter((item) => item.roles.includes(user.role));
+  const filteredMenuItems = menuItems.filter((item) => {
+    if (!item.permission) return true;
+    return hasPermission(item.permission);
+  });
 
   const roleLabels: Record<string, { label: string; color: string }> = {
     admin: { label: 'Admin', color: 'bg-red-500/10 text-red-400 border-red-500/20' },
@@ -292,7 +295,9 @@ export default function AuthenticatedLayout({
     consultant: { label: 'Sales Consultant', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
   };
 
-  const userRoleConfig = roleLabels[user.role] || { label: user.role, color: 'bg-slate-500/10 text-slate-400' };
+  const userRoleConfig = user.role.includes(':')
+    ? { label: user.role.split(':')[1], color: roleLabels[user.role.split(':')[0]]?.color || 'bg-slate-500/10 text-slate-400' }
+    : roleLabels[user.role] || { label: user.role, color: 'bg-slate-500/10 text-slate-400' };
 
   return (
     <div className="flex h-screen bg-[#090b11] text-slate-100 overflow-hidden">
@@ -565,7 +570,7 @@ export default function AuthenticatedLayout({
               )}
               <div className="text-left">
                 <p className="text-xs font-bold text-white leading-none">{user.name}</p>
-                <p className="text-[9px] text-slate-400 mt-1 leading-none capitalize">{user.role}</p>
+                <p className="text-[9px] text-slate-400 mt-1 leading-none capitalize">{user.role.includes(':') ? user.role.split(':')[1] : user.role}</p>
               </div>
             </button>
           </div>
@@ -659,7 +664,7 @@ export default function AuthenticatedLayout({
                     <div>
                       <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">System Role</span>
                       <span className="text-slate-355 text-xs block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg capitalize opacity-70">
-                        {roleLabels[user.role]?.label || user.role}
+                        {user.role.includes(':') ? user.role.split(':')[1] : (roleLabels[user.role]?.label || user.role)}
                       </span>
                     </div>
                     <div>

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getAuthenticatedUser } from '@/lib/auth';
+import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
 
 export async function POST(req: Request) {
   try {
@@ -9,10 +9,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
-    // Roles permitted to import leads
-    const allowedRoles = ['admin', 'director', 'sales_head', 'manager', 'tl'];
-    if (!allowedRoles.includes(userPayload.role)) {
-      return NextResponse.json({ success: false, message: 'Forbidden. Role cannot import leads.' }, { status: 403 });
+    const userPermissions = await getUserPermissions(userPayload.id);
+    if (!userPermissions.includes('leads:create')) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to import leads.' }, { status: 403 });
     }
 
     const body = await req.json();

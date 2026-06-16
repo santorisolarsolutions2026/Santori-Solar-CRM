@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma, Prisma } from '@/lib/db';
-import { getAuthenticatedUser } from '@/lib/auth';
+import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
 
 export async function GET(req: Request) {
   try {
@@ -9,10 +9,9 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
-    // Allowed roles: Admin, Director, Sales Head, Finance, Operations
-    const allowedRoles = ['admin', 'director', 'sales_head', 'finance', 'operations'];
-    if (!allowedRoles.includes(userPayload.role)) {
-      return NextResponse.json({ success: false, message: 'Forbidden.' }, { status: 403 });
+    const userPermissions = await getUserPermissions(userPayload.id);
+    if (!userPermissions.includes('orders:view')) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view orders.' }, { status: 403 });
     }
 
     const { searchParams } = new URL(req.url);
@@ -21,14 +20,26 @@ export async function GET(req: Request) {
     const search = searchParams.get('search') || '';
 
     const where: Prisma.OrderWhereInput = {};
+    const hasViewAll = userPermissions.includes('orders:view_all');
 
     // Role-specific filtering
-    if (userPayload.role === 'finance') {
-      // Finance sees orders in submitted, verified, ops_assigned, completed
-      where.status = { in: ['submitted', 'finance_verified', 'ops_assigned', 'completed'] };
-    } else if (userPayload.role === 'operations') {
-      // Operations sees only orders that are verified/assigned/completed
-      where.status = { in: ['finance_verified', 'ops_assigned', 'completed'] };
+    if (!hasViewAll) {
+      if (userPayload.role === 'finance') {
+        // Finance sees orders in submitted, verified, ops_assigned, completed
+        where.status = { in: ['submitted', 'finance_verified', 'ops_assigned', 'completed'] };
+      } else if (userPayload.role === 'operations') {
+        // Operations sees only orders that are verified/assigned/completed
+        where.status = { in: ['finance_verified', 'ops_assigned', 'completed'] };
+      } else {
+        // Filter orders by lead assignments for normal team members
+        if (userPayload.role === 'tl') {
+          where.lead = { assignedTlId: userPayload.id };
+        } else if (userPayload.role === 'manager') {
+          where.lead = { assignedManagerId: userPayload.id };
+        } else {
+          where.lead = { assignedConsultantId: userPayload.id };
+        }
+      }
     }
 
     if (status) {

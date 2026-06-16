@@ -149,7 +149,7 @@ export default function LeadDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -804,6 +804,7 @@ export default function LeadDetailPage({
   const nextStageIds = ALLOWED_TRANSITIONS[lead.status] || [];
   // Filter by user role permissions (Admin bypassed)
   const roleFilteredNextStages = nextStageIds.filter((statusNum) => {
+    if (!hasPermission('leads:change_status')) return false;
     if (['admin', 'director', 'sales_head'].includes(user?.role || '')) return true;
     if (statusNum === 3 && ['consultant', 'psa', 'tl', 'manager'].includes(user?.role || '')) return true;
     if (statusNum === 4 && ['consultant', 'psa', 'tl', 'manager'].includes(user?.role || '')) return true;
@@ -863,7 +864,7 @@ export default function LeadDetailPage({
         </div>
 
         {/* Action controls */}
-        {user?.role === 'admin' && (
+        {hasPermission('leads:edit') && (
           <button
             onClick={() => handleDeleteLead(lead.id)}
             className="py-2 px-4 rounded-lg bg-red-950/20 text-red-400 hover:text-red-300 border border-red-900/30 transition-all font-semibold text-xs flex items-center gap-1.5"
@@ -925,7 +926,7 @@ export default function LeadDetailPage({
                 </button>
               )}
               
-              {lead.status >= 13 && (
+              {lead.status >= 13 && hasPermission('orders:view') && (
                 <button
                   onClick={() => setActiveTab('order')}
                   className={`px-5 py-4 border-b-2 transition-all flex items-center justify-center gap-2 shrink-0 ${
@@ -1019,7 +1020,7 @@ export default function LeadDetailPage({
                       })()}
 
                       {/* Edit Trigger */}
-                      {['admin', 'director', 'sales_head', 'manager', 'tl'].includes(user?.role || '') && (
+                      {hasPermission('leads:edit') && (
                         <div className="md:col-span-2 pt-4 border-t border-slate-800/80">
                           <button
                             onClick={() => setIsEditing(true)}
@@ -1145,7 +1146,7 @@ export default function LeadDetailPage({
                         </div>
 
                         {/* Assignment Controls */}
-                        {(['admin', 'director', 'sales_head', 'manager'].includes(user?.role || '') || (user?.role === 'tl' && !lead.tl)) && (
+                        {hasPermission('leads:edit') && (['admin', 'director', 'sales_head', 'manager'].includes(user?.role || '') || (user?.role === 'tl' && !lead.tl)) && (
                           <div>
                             <label className="block text-xs font-semibold text-slate-400 mb-1">Assign to Team Leader</label>
                             <select
@@ -1166,7 +1167,7 @@ export default function LeadDetailPage({
                           </div>
                         )}
 
-                        {['admin', 'director', 'sales_head', 'manager', 'tl'].includes(user?.role || '') && (
+                        {hasPermission('leads:edit') && (['admin', 'director', 'sales_head', 'manager', 'tl'].includes(user?.role || '')) && (
                           <div>
                             <label className="block text-xs font-semibold text-slate-400 mb-1">Assign to Consultant</label>
                             <select
@@ -1675,7 +1676,7 @@ export default function LeadDetailPage({
                       )}
 
                       {/* Button */}
-                      {(lead.order.status === 'draft' || user?.role !== 'consultant') && (
+                      {hasPermission('orders:create') && (lead.order.status === 'draft' || user?.role !== 'consultant') && (
                         <div className="border-t border-slate-800/80 pt-4">
                           <button
                             type="submit"
@@ -1740,7 +1741,7 @@ export default function LeadDetailPage({
                             </div>
 
                             {/* Upload trigger */}
-                            {(lead.order?.status === 'draft' || user?.role !== 'consultant') && (
+                            {hasPermission('orders:create') && (lead.order?.status === 'draft' || user?.role !== 'consultant') && (
                               <div className="mt-2 flex items-center gap-3">
                                 <label className="cursor-pointer text-[10px] font-bold text-amber-500 hover:text-amber-400 transition-all flex items-center gap-1.5 w-fit">
                                   {uploadingDoc === item.type ? (

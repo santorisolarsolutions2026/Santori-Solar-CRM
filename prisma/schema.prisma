@@ -18,6 +18,7 @@ model User {
   employeeId           String?             @unique
   passwordHash         String
   role                 String              // admin | sales_head | manager | tl | consultant | psa | finance | operations
+  permissions          String              @default("")
   reportsTo            Int?
   isActive             Boolean             @default(true)
   lastSeenAt           DateTime?

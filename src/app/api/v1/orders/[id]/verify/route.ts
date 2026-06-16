@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getAuthenticatedUser } from '@/lib/auth';
+import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
 
 export async function POST(
   req: Request,
@@ -12,10 +12,9 @@ export async function POST(
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
-    // Only Finance, Admin, Director, or Sales Head can verify an order
-    const allowedRoles = ['finance', 'admin', 'director', 'sales_head'];
-    if (!allowedRoles.includes(userPayload.role)) {
-      return NextResponse.json({ success: false, message: 'Forbidden. Only Finance or Admin can verify orders.' }, { status: 403 });
+    const userPermissions = await getUserPermissions(userPayload.id);
+    if (!userPermissions.includes('orders:verify')) {
+      return NextResponse.json({ success: false, message: 'Forbidden. Only users with verify permissions can process orders.' }, { status: 403 });
     }
 
     const { id } = await params;

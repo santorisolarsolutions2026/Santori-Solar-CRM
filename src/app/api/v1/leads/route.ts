@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma, Prisma } from '@/lib/db';
-import { getAuthenticatedUser } from '@/lib/auth';
+import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
 
 // Helper to generate lead code
 async function generateLeadCode() {
@@ -17,6 +17,11 @@ export async function GET(req: Request) {
     const userPayload = getAuthenticatedUser(req);
     if (!userPayload) {
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
+    }
+
+    const userPermissions = await getUserPermissions(userPayload.id);
+    if (!userPermissions.includes('leads:view')) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view leads.' }, { status: 403 });
     }
 
     const { searchParams } = new URL(req.url);
@@ -38,34 +43,41 @@ export async function GET(req: Request) {
       { isActive: true }
     ];
 
+    const hasViewAll = userPermissions.includes('leads:view_all');
+
     // 1. Role-based visibility enforcement
-    if (userPayload.role === 'manager') {
-      andConditions.push({
-        OR: [
-          { assignedManagerId: userPayload.id },
-          { assignedTlId: null, assignedConsultantId: null }
-        ]
-      });
-    } else if (userPayload.role === 'tl') {
-      andConditions.push({
-        OR: [
-          { assignedTlId: userPayload.id },
-          { assignedTlId: null, assignedConsultantId: null }
-        ]
-      });
-    } else if (userPayload.role === 'consultant' || userPayload.role === 'psa') {
-      andConditions.push({ assignedConsultantId: userPayload.id });
-    } else if (userPayload.role === 'finance') {
-      // Finance sees only leads at Stage 13+ (Sale Done)
-      andConditions.push({ status: { in: [13] } });
-    } else if (userPayload.role === 'operations') {
-      // Operations sees only leads with orders processed by finance
-      andConditions.push({
-        status: 13,
-        order: {
-          status: { in: ['finance_verified', 'ops_assigned', 'completed'] },
-        }
-      });
+    if (!hasViewAll) {
+      if (userPayload.role === 'manager') {
+        andConditions.push({
+          OR: [
+            { assignedManagerId: userPayload.id },
+            { assignedTlId: null, assignedConsultantId: null }
+          ]
+        });
+      } else if (userPayload.role === 'tl') {
+        andConditions.push({
+          OR: [
+            { assignedTlId: userPayload.id },
+            { assignedTlId: null, assignedConsultantId: null }
+          ]
+        });
+      } else if (userPayload.role === 'consultant' || userPayload.role === 'psa') {
+        andConditions.push({ assignedConsultantId: userPayload.id });
+      } else if (userPayload.role === 'finance') {
+        // Finance sees only leads at Stage 13+ (Sale Done)
+        andConditions.push({ status: { in: [13] } });
+      } else if (userPayload.role === 'operations') {
+        // Operations sees only leads with orders processed by finance
+        andConditions.push({
+          status: 13,
+          order: {
+            status: { in: ['finance_verified', 'ops_assigned', 'completed'] },
+          }
+        });
+      } else {
+        // Fallback for role without view_all permission
+        andConditions.push({ assignedConsultantId: userPayload.id });
+      }
     }
 
     // 2. Extra Filters
@@ -209,10 +221,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
-    // Check permissions (Admin, Director, Sales Head, Manager, TL can add leads)
-    const allowedRoles = ['admin', 'director', 'sales_head', 'manager', 'tl'];
-    if (!allowedRoles.includes(userPayload.role)) {
-      return NextResponse.json({ success: false, message: 'Forbidden. Role cannot add leads.' }, { status: 403 });
+    const userPermissions = await getUserPermissions(userPayload.id);
+    if (!userPermissions.includes('leads:create')) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to add leads.' }, { status: 403 });
     }
 
     const body = await req.json();
@@ -402,9 +413,9 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
-    // Only Admin or Director can delete leads
-    if (!['admin', 'director'].includes(userPayload.role)) {
-      return NextResponse.json({ success: false, message: 'Forbidden. Only Admin and Director can delete leads.' }, { status: 403 });
+    const userPermissions = await getUserPermissions(userPayload.id);
+    if (!userPermissions.includes('leads:edit')) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to delete leads.' }, { status: 403 });
     }
 
     const { searchParams } = new URL(req.url);

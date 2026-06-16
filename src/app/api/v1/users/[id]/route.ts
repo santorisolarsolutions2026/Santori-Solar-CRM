@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getAuthenticatedUser } from '@/lib/auth';
+import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
 
 export async function GET(
   req: Request,
@@ -10,6 +10,11 @@ export async function GET(
     const userPayload = getAuthenticatedUser(req);
     if (!userPayload) {
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
+    }
+
+    const userPermissions = await getUserPermissions(userPayload.id);
+    if (!userPermissions.includes('team:view')) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view team profiles.' }, { status: 403 });
     }
 
     const { id } = await params;
@@ -27,6 +32,7 @@ export async function GET(
         phone: true,
         employeeId: true,
         role: true,
+        permissions: true,
         reportsTo: true,
         isActive: true,
         lastSeenAt: true,
@@ -45,7 +51,7 @@ export async function GET(
       return NextResponse.json({ success: false, message: 'User not found.' }, { status: 404 });
     }
 
-    const isAdminOrDirectorOrSalesHead = ['admin', 'director', 'sales_head'].includes(userPayload.role);
+    const isAdminOrDirectorOrSalesHead = userPermissions.includes('team:manage');
     if (!isAdminOrDirectorOrSalesHead && userId !== userPayload.id) {
       // Basic users can only fetch basic details of others
       return NextResponse.json({
@@ -90,8 +96,9 @@ export async function PATCH(
       return NextResponse.json({ success: false, message: 'Invalid User ID.' }, { status: 400 });
     }
 
+    const userPermissions = await getUserPermissions(userPayload.id);
     const isSelf = userId === userPayload.id;
-    const isAdminOrDirectorOrSalesHead = ['admin', 'director', 'sales_head'].includes(userPayload.role);
+    const isAdminOrDirectorOrSalesHead = userPermissions.includes('team:manage');
 
     // Only Admin, Director, Sales Head, or Self can modify details
     if (!isAdminOrDirectorOrSalesHead && !isSelf) {
@@ -107,7 +114,7 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { name, email, phone, employeeId, role, reportsTo, isActive, joiningDate, photograph } = body;
+    const { name, email, phone, employeeId, role, reportsTo, isActive, joiningDate, photograph, permissions } = body;
     
     // Self-update validation (can only update phone and photograph)
     if (isSelf && !isAdminOrDirectorOrSalesHead) {
@@ -131,6 +138,7 @@ export async function PATCH(
     if (email !== undefined) updateData.email = email;
     if (phone !== undefined) updateData.phone = phone;
     if (role !== undefined) updateData.role = role;
+    if (permissions !== undefined) updateData.permissions = permissions;
     if (reportsTo !== undefined) updateData.reportsTo = reportsTo ? parseInt(reportsTo, 10) : null;
     if (joiningDate !== undefined) updateData.joiningDate = joiningDate ? new Date(joiningDate) : null;
     if (photograph !== undefined) updateData.photograph = photograph;
@@ -244,6 +252,7 @@ export async function PATCH(
         isActive: updatedUser.isActive,
         joiningDate: updatedUser.joiningDate,
         photograph: updatedUser.photograph,
+        permissions: updatedUser.permissions,
       },
       message: isDeactivating
         ? 'User deactivated and active leads successfully reassigned.'
@@ -268,9 +277,10 @@ export async function DELETE(
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
-    // Allow Admin, Director, and Sales Head to delete users
-    if (!['admin', 'director', 'sales_head'].includes(userPayload.role)) {
-      return NextResponse.json({ success: false, message: 'Forbidden. Only Admin, Director, and Sales Head can delete users.' }, { status: 403 });
+    // Allow users with team management permissions to delete users
+    const userPermissions = await getUserPermissions(userPayload.id);
+    if (!userPermissions.includes('team:manage')) {
+      return NextResponse.json({ success: false, message: 'Forbidden. Only users with team management permissions can delete users.' }, { status: 403 });
     }
 
     const { id } = await params;

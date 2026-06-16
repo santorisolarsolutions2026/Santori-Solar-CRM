@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { prisma } from './db';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'solarcrm-super-secret-key-2026';
 
@@ -27,7 +28,13 @@ export function getAuthenticatedUser(req: Request): UserJWTPayload | null {
     const authHeader = req.headers.get('authorization');
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
-      return verifyToken(token);
+      const payload = verifyToken(token);
+      if (payload) {
+        if (payload.role && payload.role.includes(':')) {
+          payload.role = payload.role.split(':')[0];
+        }
+        return payload;
+      }
     }
 
     // 2. Check Cookie header (token cookie)
@@ -42,7 +49,13 @@ export function getAuthenticatedUser(req: Request): UserJWTPayload | null {
       }, {} as Record<string, string>);
 
       if (cookies['token']) {
-        return verifyToken(cookies['token']);
+        const payload = verifyToken(cookies['token']);
+        if (payload) {
+          if (payload.role && payload.role.includes(':')) {
+            payload.role = payload.role.split(':')[0];
+          }
+          return payload;
+        }
       }
     }
   } catch (error) {
@@ -54,4 +67,59 @@ export function getAuthenticatedUser(req: Request): UserJWTPayload | null {
 // Check permission helper
 export function hasPermission(userRole: string, allowedRoles: string[]): boolean {
   return allowedRoles.includes(userRole);
+}
+
+export function getDefaultPermissionsForRole(role: string): string[] {
+  const baseRole = role.includes(':') ? role.split(':')[0] : role;
+  switch (baseRole) {
+    case 'admin':
+    case 'director':
+      return [
+        'leads:view', 'leads:view_all', 'leads:create', 'leads:edit', 'leads:change_status',
+        'orders:view', 'orders:view_all', 'orders:create', 'orders:verify', 'orders:submit_installation',
+        'reports:view', 'team:view', 'team:manage', 'logs:view'
+      ];
+    case 'sales_head':
+      return [
+        'leads:view', 'leads:view_all', 'leads:create', 'leads:edit', 'leads:change_status',
+        'orders:view', 'orders:view_all', 'orders:create', 'reports:view', 'team:view', 'logs:view'
+      ];
+    case 'manager':
+      return [
+        'leads:view', 'leads:view_all', 'leads:create', 'leads:edit', 'leads:change_status',
+        'orders:view', 'orders:view_all', 'orders:create', 'orders:verify', 'orders:submit_installation',
+        'reports:view', 'team:view', 'logs:view'
+      ];
+    case 'finance':
+      return [
+        'leads:view', 'leads:view_all', 'orders:view', 'orders:view_all', 'orders:verify', 'reports:view', 'team:view'
+      ];
+    case 'operations':
+      return [
+        'leads:view', 'leads:view_all', 'orders:view', 'orders:view_all', 'orders:verify', 'orders:submit_installation', 'team:view'
+      ];
+    case 'tl':
+    case 'psa_tl':
+      return [
+        'leads:view', 'leads:create', 'leads:edit', 'leads:change_status', 'orders:view', 'orders:create', 'reports:view', 'team:view'
+      ];
+    case 'consultant':
+    case 'psa':
+    default:
+      return [
+        'leads:view', 'leads:create', 'leads:edit', 'leads:change_status', 'orders:view', 'orders:create', 'team:view'
+      ];
+  }
+}
+
+export async function getUserPermissions(userId: number): Promise<string[]> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true, permissions: true }
+  });
+  if (!user) return [];
+  
+  return user.permissions && user.permissions.trim()
+    ? user.permissions.split(',').map(p => p.trim())
+    : getDefaultPermissionsForRole(user.role);
 }

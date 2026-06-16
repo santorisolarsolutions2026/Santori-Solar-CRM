@@ -73,7 +73,7 @@ const STAGE_NAMES: Record<number, string> = {
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#0EA5E9', '#14B8A6'];
 
 export default function ReportsPage() {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   
   const [stats, setStats] = useState<OverviewStats | null>(null);
   const [pipeline, setPipeline] = useState<PipelineStage[]>([]);
@@ -97,7 +97,7 @@ export default function ReportsPage() {
       if (pipelineData.success) setPipeline(pipelineData.data);
       if (trendData.success) setTrend(trendData.data);
 
-      if (['admin', 'director', 'sales_head', 'manager', 'tl'].includes(user?.role || '')) {
+      if (hasPermission('reports:view')) {
         const perfRes = await fetch('/api/v1/reports/team-performance');
         const perfData = await perfRes.json();
         if (perfData.success) setPerformance(perfData.data);
@@ -325,7 +325,7 @@ export default function ReportsPage() {
         </div>
 
         {/* Leaders Table */}
-        {['admin', 'director', 'sales_head', 'manager', 'tl'].includes(user?.role || '') && (
+        {hasPermission('reports:view') && (
           <div className="bg-[#111625] border border-slate-800 rounded-xl p-6 shadow-lg lg:col-span-2 print:border-black">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-6 print:text-black">Consultant Sales Standings</h3>
             <div className="overflow-x-auto">

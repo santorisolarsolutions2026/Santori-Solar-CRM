@@ -80,7 +80,7 @@ const STAGE_NAMES: Record<number, { name: string; color: string }> = {
 };
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   const [stats, setStats] = useState<OverviewStats | null>(null);
   const [pipeline, setPipeline] = useState<PipelineStage[]>([]);
   const [performance, setPerformance] = useState<ConsultantPerformance[]>([]);
@@ -106,8 +106,8 @@ export default function DashboardPage() {
       const trendData = await trendRes.json();
       if (trendData.success) setTrend(trendData.data);
 
-      // 4. Fetch team performance (if manager/admin/director/sales_head/tl)
-      if (['admin', 'director', 'sales_head', 'manager', 'tl'].includes(user?.role || '')) {
+      // 4. Fetch team performance (if has reports:view permission)
+      if (hasPermission('reports:view')) {
         const perfRes = await fetch('/api/v1/reports/team-performance');
         const perfData = await perfRes.json();
         if (perfData.success) setPerformance(perfData.data);
@@ -211,7 +211,7 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="flex gap-3">
-            {['admin', 'director', 'sales_head', 'manager', 'tl'].includes(user?.role || '') && (
+            {hasPermission('leads:create') && (
               <Link
                 href="/leads/new"
                 className="py-2.5 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs transition-all shadow-md shadow-amber-500/10 flex items-center gap-1.5"
@@ -411,7 +411,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Column 2: Team Leaderboard (Conditional) */}
-        {['admin', 'director', 'sales_head', 'manager', 'tl'].includes(user?.role || '') ? (
+        {hasPermission('reports:view') ? (
           <div className="bg-[#111625] border border-slate-800 rounded-xl p-6 shadow-md h-[28rem] flex flex-col">
             <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 mb-6 flex items-center gap-2">
               <UserCheck className="w-5 h-5 text-amber-500" />
@@ -458,7 +458,7 @@ export default function DashboardPage() {
 
         {/* Column 3: Recent Activity Stream (Always visible, spans remaining columns if leaderboard is hidden) */}
         <div className={`${
-          ['admin', 'director', 'sales_head', 'manager', 'tl'].includes(user?.role || '') 
+          hasPermission('reports:view') 
             ? 'lg:col-span-1' 
             : 'lg:col-span-2'
         } bg-[#111625] border border-slate-800 rounded-xl p-6 shadow-md h-[28rem] flex flex-col`}>

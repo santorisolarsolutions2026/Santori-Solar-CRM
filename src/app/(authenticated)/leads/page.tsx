@@ -112,7 +112,7 @@ function parseCSV(text: string): string[][] {
 }
 
 export default function LeadsPage() {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   
   // State for leads list
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -546,7 +546,7 @@ export default function LeadsPage() {
             Nurture, track, and close solar customer deals.
           </p>
         </div>
-        {['admin', 'director', 'sales_head', 'manager', 'tl'].includes(user?.role || '') && (
+        {hasPermission('leads:create') && (
           <div className="flex items-center gap-3">
             <button
               onClick={() => setShowImportModal(true)}
@@ -668,7 +668,7 @@ export default function LeadsPage() {
               <strong>{selectedIds.length}</strong> leads selected {selectedIds.length === total ? "(all matching leads across pages)" : ""}
             </span>
           </div>
-          {user?.role === 'admin' && (
+          {hasPermission('leads:edit') && (
             <button
               onClick={handleBulkDelete}
               className="py-2 px-4 bg-red-650 hover:bg-red-500 text-white rounded-lg font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
@@ -788,7 +788,7 @@ export default function LeadsPage() {
                           >
                             <Eye className="w-4.5 h-4.5" />
                           </Link>
-                          {['admin', 'director', 'sales_head', 'manager', 'tl'].includes(user?.role || '') && (
+                          {hasPermission('leads:edit') && (
                             <>
                               <Link
                                 href={`/leads/${lead.id}?edit=true`}
@@ -797,7 +797,7 @@ export default function LeadsPage() {
                               >
                                 <Edit2 className="w-4.5 h-4.5" />
                               </Link>
-                              {user?.role === 'admin' && (
+                              {hasPermission('leads:edit') && (
                                 <button
                                   onClick={() => handleDeleteLead(lead.id)}
                                   className="p-1.5 rounded-lg bg-slate-900 hover:bg-red-950/20 border border-slate-800 hover:border-red-900/30 text-slate-400 hover:text-red-400 transition-all cursor-pointer"

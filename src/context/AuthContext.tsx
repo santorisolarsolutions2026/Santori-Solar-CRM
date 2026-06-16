@@ -64,6 +64,7 @@ interface User {
   isActive: boolean;
   joiningDate?: string | null;
   photograph?: string | null;
+  permissions?: string[];
 }
 
 interface AuthContextType {
@@ -72,6 +73,7 @@ interface AuthContextType {
   login: (token: string, user: User) => void;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  hasPermission: (permission: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -171,8 +173,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const hasPermission = (permission: string) => {
+    return user?.permissions?.includes(permission) || false;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser: fetchUser }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser: fetchUser, hasPermission }}>
       {children}
     </AuthContext.Provider>
   );

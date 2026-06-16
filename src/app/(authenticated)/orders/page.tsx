@@ -75,8 +75,8 @@ const DOC_TYPES: Record<string, string> = {
   bank_passbook: 'Bank Passbook',
 };
 
-export default function OrdersQueuePage() {
-  const { user } = useAuth();
+export default function OrdersPage() {
+  const { user, hasPermission } = useAuth();
   
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -399,7 +399,7 @@ export default function OrdersQueuePage() {
                           >
                             <Eye className="w-4 h-4" />
                           </button>
-                          {(user?.role === 'finance' || ['admin', 'director', 'sales_head'].includes(user?.role || '')) && order.status === 'submitted' && (
+                          {hasPermission('orders:verify') && order.status === 'submitted' && (
                             <button
                               onClick={() => { setSelectedOrder(order); setModalMode('finance_verify'); }}
                               className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-400 font-semibold text-xs flex items-center gap-1 cursor-pointer"
@@ -407,7 +407,7 @@ export default function OrdersQueuePage() {
                               Verify
                             </button>
                           )}
-                          {(user?.role === 'operations' || ['admin', 'director', 'sales_head'].includes(user?.role || '')) && order.status === 'finance_verified' && (
+                          {hasPermission('orders:verify') && order.status === 'finance_verified' && (
                             <button
                               onClick={() => { setSelectedOrder(order); setModalMode('ops_update'); setInstallationStatus('ops_assigned'); }}
                               className="p-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-blue-400 font-semibold text-xs flex items-center gap-1 cursor-pointer"
@@ -415,7 +415,7 @@ export default function OrdersQueuePage() {
                               Schedule
                             </button>
                           )}
-                          {(user?.role === 'operations' || ['admin', 'director', 'sales_head'].includes(user?.role || '')) && order.status === 'ops_assigned' && (
+                          {hasPermission('orders:submit_installation') && order.status === 'ops_assigned' && (
                             <button
                               onClick={() => { setSelectedOrder(order); setModalMode('ops_update'); setInstallationStatus('completed'); }}
                               className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 font-semibold text-xs flex items-center gap-1 cursor-pointer"
@@ -423,7 +423,7 @@ export default function OrdersQueuePage() {
                               Complete
                             </button>
                           )}
-                          {['admin', 'director', 'sales_head', 'operations'].includes(user?.role || '') && order.status === 'completed' && (
+                          {hasPermission('orders:submit_installation') && order.status === 'completed' && (
                             <button
                               onClick={() => { setSelectedOrder(order); setModalMode('view'); }}
                               className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 font-semibold text-xs flex items-center gap-1 cursor-pointer"
@@ -531,7 +531,7 @@ export default function OrdersQueuePage() {
               </div>
 
               {/* Installation Photos & Upload for Completed Orders */}
-              {selectedOrder.status === 'completed' && ['admin', 'director', 'sales_head', 'operations'].includes(user?.role || '') ? (
+              {selectedOrder.status === 'completed' && hasPermission('orders:submit_installation') ? (
                 <div className="space-y-3 border-t border-slate-800/60 pt-4">
                   <div className="flex items-center justify-between">
                     <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider">

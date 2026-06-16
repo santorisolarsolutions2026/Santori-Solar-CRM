@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getAuthenticatedUser } from '@/lib/auth';
+import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
 
 export async function GET(req: Request) {
   try {
@@ -9,14 +9,22 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
+    const userPermissions = await getUserPermissions(userPayload.id);
+    if (!userPermissions.includes('reports:view')) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view reports.' }, { status: 403 });
+    }
+
     // Role filtration criteria (matching reports/overview criteria)
     const leadWhere: any = {};
-    if (userPayload.role === 'manager') {
-      leadWhere.assignedManagerId = userPayload.id;
-    } else if (userPayload.role === 'tl') {
-      leadWhere.assignedTlId = userPayload.id;
-    } else if (userPayload.role === 'consultant' || userPayload.role === 'psa') {
-      leadWhere.assignedConsultantId = userPayload.id;
+    const hasViewAll = userPermissions.includes('leads:view_all');
+    if (!hasViewAll) {
+      if (userPayload.role === 'manager') {
+        leadWhere.assignedManagerId = userPayload.id;
+      } else if (userPayload.role === 'tl') {
+        leadWhere.assignedTlId = userPayload.id;
+      } else if (userPayload.role === 'consultant' || userPayload.role === 'psa') {
+        leadWhere.assignedConsultantId = userPayload.id;
+      }
     }
 
     // Fetch latest 10 activity logs for leads the user is authorized to see

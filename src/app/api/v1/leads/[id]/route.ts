@@ -1,25 +1,26 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getAuthenticatedUser } from '@/lib/auth';
+import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
 
 // Helper to check lead access based on user role
-function canAccessLead(user: { id: number; role: string }, lead: any): boolean {
-  if (['admin', 'director', 'sales_head'].includes(user.role)) return true;
+async function canAccessLead(userId: number, userRole: string, lead: any): Promise<boolean> {
+  const permissions = await getUserPermissions(userId);
+  if (permissions.includes('leads:view_all')) return true;
   
   // Allow Manager and TL to access unassigned leads so they can assign them
   const isUnassigned = !lead.assignedTlId && !lead.assignedConsultantId;
-  if (isUnassigned && ['manager', 'tl'].includes(user.role)) return true;
+  if (isUnassigned && ['manager', 'tl'].includes(userRole)) return true;
 
-  if (user.role === 'manager' && lead.assignedManagerId === user.id) return true;
-  if (user.role === 'tl' && lead.assignedTlId === user.id) return true;
-  if (user.role === 'consultant' || user.role === 'psa') {
-    return lead.assignedConsultantId === user.id;
+  if (userRole === 'manager' && lead.assignedManagerId === userId) return true;
+  if (userRole === 'tl' && lead.assignedTlId === userId) return true;
+  if (userRole === 'consultant' || userRole === 'psa') {
+    return lead.assignedConsultantId === userId;
   }
-  if (user.role === 'finance') {
+  if (userRole === 'finance') {
     // Finance sees only leads at Stage 13 (Sale Done)
     return lead.status === 13;
   }
-  if (user.role === 'operations') {
+  if (userRole === 'operations') {
     // Operations sees leads at Stage 13 that are processed by finance
     return lead.status === 13 && ['finance_verified', 'ops_assigned', 'completed'].includes(lead.order?.status || '');
   }
@@ -69,7 +70,12 @@ export async function GET(
       return NextResponse.json({ success: false, message: 'Lead not found.' }, { status: 404 });
     }
 
-    if (!canAccessLead(userPayload, lead)) {
+    const userPermissions = await getUserPermissions(userPayload.id);
+    if (!userPermissions.includes('leads:view')) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view leads.' }, { status: 403 });
+    }
+
+    if (!await canAccessLead(userPayload.id, userPayload.role, lead)) {
       return NextResponse.json({ success: false, message: 'Forbidden. No access to this lead.' }, { status: 403 });
     }
 
@@ -121,13 +127,12 @@ export async function PATCH(
     }
 
     // Enforce update permissions
-    // Consultant can edit only status (handled in /status route). Form A updates are for TL, Manager, Admin/Director/Sales Head
-    const allowedEditRoles = ['admin', 'director', 'sales_head', 'manager', 'tl'];
-    if (!allowedEditRoles.includes(userPayload.role)) {
-      return NextResponse.json({ success: false, message: 'Forbidden. Role cannot edit lead details.' }, { status: 403 });
+    const userPermissions = await getUserPermissions(userPayload.id);
+    if (!userPermissions.includes('leads:edit')) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to edit lead details.' }, { status: 403 });
     }
 
-    if (!canAccessLead(userPayload, lead)) {
+    if (!await canAccessLead(userPayload.id, userPayload.role, lead)) {
       return NextResponse.json({ success: false, message: 'Forbidden. No access to this lead pool.' }, { status: 403 });
     }
 
@@ -323,9 +328,10 @@ export async function DELETE(
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
-    // Only Admin or Director can delete a lead
-    if (!['admin', 'director'].includes(userPayload.role)) {
-      return NextResponse.json({ success: false, message: 'Forbidden. Only Admin can delete leads.' }, { status: 403 });
+    // Check permission to edit/delete leads
+    const userPermissions = await getUserPermissions(userPayload.id);
+    if (!userPermissions.includes('leads:edit')) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to delete leads.' }, { status: 403 });
     }
 
     const { id } = await params;

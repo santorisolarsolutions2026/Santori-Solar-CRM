@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getAuthenticatedUser } from '@/lib/auth';
+import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
 
 export const dynamic = 'force-dynamic';
@@ -13,6 +13,11 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
+    const userPermissions = await getUserPermissions(userPayload.id);
+    if (!userPermissions.includes('team:view')) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view the team directory.' }, { status: 403 });
+    }
+
     const { searchParams } = new URL(req.url);
     const roleParam = searchParams.get('role') || '';
 
@@ -21,7 +26,7 @@ export async function GET(req: Request) {
       where.role = roleParam;
     }
 
-    const isAdminOrDirectorOrSalesHead = ['admin', 'director', 'sales_head'].includes(userPayload.role);
+    const isAdminOrDirectorOrSalesHead = userPermissions.includes('team:manage');
 
     // If it's a basic user fetching the team, we don't apply the hierarchy filter since everyone is visible.
     // However, if we do a role filter, we can keep it.
@@ -44,6 +49,7 @@ export async function GET(req: Request) {
         logoutLocation: true,
         joiningDate: true,
         photograph: true,
+        permissions: true,
         supervisor: { select: { id: true, name: true } },
         _count: {
           select: {
@@ -105,13 +111,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
-    // Allow Admin, Director, and Sales Head to create users
-    if (!['admin', 'director', 'sales_head'].includes(userPayload.role)) {
-      return NextResponse.json({ success: false, message: 'Forbidden. Only Admin, Director, and Sales Head can create users.' }, { status: 403 });
+    const userPermissions = await getUserPermissions(userPayload.id);
+    if (!userPermissions.includes('team:manage')) {
+      return NextResponse.json({ success: false, message: 'Forbidden. Only users with team management permissions can create users.' }, { status: 403 });
     }
 
     const body = await req.json();
-    const { name, email, phone, employeeId, role, password, reportsTo, joiningDate, photograph } = body;
+    const { name, email, phone, employeeId, role, password, reportsTo, joiningDate, photograph, permissions } = body;
 
     if (!name || !email || !employeeId || !role || !password) {
       return NextResponse.json({ success: false, message: 'Missing required user fields.' }, { status: 400 });
@@ -148,6 +154,7 @@ export async function POST(req: Request) {
         reportsTo: reportsTo ? parseInt(reportsTo, 10) : null,
         joiningDate: joiningDate ? new Date(joiningDate) : null,
         photograph: photograph || null,
+        permissions: permissions || "",
         isActive: true,
       },
     });

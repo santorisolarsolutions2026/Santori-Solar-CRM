@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getAuthenticatedUser } from '@/lib/auth';
+import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
 
 export async function GET(req: Request) {
   try {
@@ -9,23 +9,28 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
-    // Managers/TLs/Admins/Directors/Sales Heads see team reports
-    const allowedRoles = ['admin', 'director', 'sales_head', 'manager', 'tl'];
-    if (!allowedRoles.includes(userPayload.role)) {
-      return NextResponse.json({ success: false, message: 'Forbidden.' }, { status: 403 });
+    const userPermissions = await getUserPermissions(userPayload.id);
+    if (!userPermissions.includes('reports:view')) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view reports.' }, { status: 403 });
     }
 
-    // 1. Find all consultants in the team
+    // Find all consultants in the team
     const consultantWhere: any = { role: 'consultant' };
-    if (userPayload.role === 'manager') {
-      const subordinates = await prisma.user.findMany({
-        where: { reportsTo: userPayload.id },
-        select: { id: true },
-      });
-      const subordinateIds = subordinates.map((s) => s.id);
-      consultantWhere.reportsTo = { in: subordinateIds }; // reporting to manager's TLs
-    } else if (userPayload.role === 'tl') {
-      consultantWhere.reportsTo = userPayload.id; // reporting to TL
+    const hasViewAll = userPermissions.includes('leads:view_all');
+    if (!hasViewAll) {
+      if (userPayload.role === 'manager') {
+        const subordinates = await prisma.user.findMany({
+          where: { reportsTo: userPayload.id },
+          select: { id: true },
+        });
+        const subordinateIds = subordinates.map((s) => s.id);
+        consultantWhere.reportsTo = { in: subordinateIds }; // reporting to manager's TLs
+      } else if (userPayload.role === 'tl') {
+        consultantWhere.reportsTo = userPayload.id; // reporting to TL
+      } else {
+        // Consultants or other roles can only see their own performance if they have permission
+        consultantWhere.id = userPayload.id;
+      }
     }
 
     const consultants = await prisma.user.findMany({

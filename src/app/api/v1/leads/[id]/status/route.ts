@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getAuthenticatedUser } from '@/lib/auth';
+import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
 
 // Transition validation matrix
 const TRANSITIONS: Record<number, { to: number[]; roles: string[] }> = {
@@ -39,6 +39,11 @@ export async function POST(
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
+    const userPermissions = await getUserPermissions(userPayload.id);
+    if (!userPermissions.includes('leads:change_status')) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to change lead status.' }, { status: 403 });
+    }
+
     const { id } = await params;
     const leadId = parseInt(id, 10);
     if (isNaN(leadId)) {
@@ -66,7 +71,7 @@ export async function POST(
     }
 
     // 1. Transition Checks (Admin, Director, and Sales Head can bypass standard matrix, but must follow terminal constraints)
-    const isAdminOrSalesHead = ['admin', 'director', 'sales_head'].includes(userPayload.role);
+    const isAdminOrSalesHead = ['admin', 'director', 'sales_head'].includes(userPayload.role) || userPermissions.includes('leads:view_all');
     const rule = TRANSITIONS[lead.status];
 
     if (!isAdminOrSalesHead) {
