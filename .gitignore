@@ -38,6 +38,7 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
-
 /src/generated/prisma
+
+# uploads (customer documents, avatars, installation photos, audio recordings)
+/uploads

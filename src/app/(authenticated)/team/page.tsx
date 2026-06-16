@@ -218,6 +218,7 @@ export default function TeamManagementPage() {
     isActive: true,
   });
   const [editMemberPhotoPreviewUrl, setEditMemberPhotoPreviewUrl] = useState('');
+  const [editMemberPassword, setEditMemberPassword] = useState('');
   const [uploadingEditMemberPhoto, setUploadingEditMemberPhoto] = useState(false);
   const [updatingMember, setUpdatingMember] = useState(false);
   const [updateMemberError, setUpdateMemberError] = useState('');
@@ -264,6 +265,7 @@ export default function TeamManagementPage() {
     setEditCustomRoleText('');
     setEditBaseRole('consultant');
     setEditMemberPermissions([]);
+    setEditMemberPassword('');
   };
 
   // Fetch team members
@@ -510,24 +512,35 @@ export default function TeamManagementPage() {
     }
 
     try {
+      const payload: any = {
+        name: editMemberForm.name,
+        email: editMemberForm.email,
+        phone: editMemberForm.phone,
+        employeeId: editMemberForm.employeeId,
+        role: finalRole,
+        permissions: (() => {
+          const cleanPerms = editMemberPermissions.filter((p) => p !== 'none');
+          return cleanPerms.length === 0 ? 'none' : cleanPerms.join(',');
+        })(),
+        reportsTo: editMemberForm.reportsTo ? parseInt(editMemberForm.reportsTo, 10) : null,
+        joiningDate: editMemberForm.joiningDate ? new Date(editMemberForm.joiningDate) : null,
+        photograph: editMemberForm.photograph || null,
+        isActive: editMemberForm.isActive,
+      };
+
+      if (editMemberPassword.trim()) {
+        if (editMemberPassword.trim().length < 6) {
+          alert('Password must be at least 6 characters long.');
+          setUpdatingMember(false);
+          return;
+        }
+        payload.password = editMemberPassword.trim();
+      }
+
       const res = await fetch(`/api/v1/users/${selectedMember.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: editMemberForm.name,
-          email: editMemberForm.email,
-          phone: editMemberForm.phone,
-          employeeId: editMemberForm.employeeId,
-          role: finalRole,
-          permissions: (() => {
-            const cleanPerms = editMemberPermissions.filter((p) => p !== 'none');
-            return cleanPerms.length === 0 ? 'none' : cleanPerms.join(',');
-          })(),
-          reportsTo: editMemberForm.reportsTo ? parseInt(editMemberForm.reportsTo, 10) : null,
-          joiningDate: editMemberForm.joiningDate ? new Date(editMemberForm.joiningDate) : null,
-          photograph: editMemberForm.photograph || null,
-          isActive: editMemberForm.isActive,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -1339,6 +1352,16 @@ export default function TeamManagementPage() {
                         type="text"
                         value={editMemberForm.phone}
                         onChange={(e) => setEditMemberForm({ ...editMemberForm, phone: e.target.value })}
+                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Reset Password</label>
+                      <input
+                        type="password"
+                        placeholder="Leave blank to keep current"
+                        value={editMemberPassword}
+                        onChange={(e) => setEditMemberPassword(e.target.value)}
                         className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
                       />
                     </div>

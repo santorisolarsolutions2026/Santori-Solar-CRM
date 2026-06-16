@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
+import bcrypt from 'bcryptjs';
 
 export async function GET(
   req: Request,
@@ -114,7 +115,7 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { name, email, phone, employeeId, role, reportsTo, isActive, joiningDate, photograph, permissions } = body;
+    const { name, email, phone, employeeId, role, reportsTo, isActive, joiningDate, photograph, permissions, password } = body;
     
     // Self-update validation (can only update phone and photograph)
     if (isSelf && !isAdminOrDirectorOrSalesHead) {
@@ -142,6 +143,17 @@ export async function PATCH(
     if (reportsTo !== undefined) updateData.reportsTo = reportsTo ? parseInt(reportsTo, 10) : null;
     if (joiningDate !== undefined) updateData.joiningDate = joiningDate ? new Date(joiningDate) : null;
     if (photograph !== undefined) updateData.photograph = photograph;
+
+    if (password !== undefined && password !== null) {
+      if (!isAdminOrDirectorOrSalesHead) {
+        return NextResponse.json({ success: false, message: 'Forbidden. Only users with team management privileges can reset passwords.' }, { status: 403 });
+      }
+      const pwdTrim = String(password).trim();
+      if (pwdTrim.length < 6) {
+        return NextResponse.json({ success: false, message: 'Password must be at least 6 characters long.' }, { status: 400 });
+      }
+      updateData.passwordHash = await bcrypt.hash(pwdTrim, 10);
+    }
 
     if (employeeId !== undefined) {
       if (employeeId) {
