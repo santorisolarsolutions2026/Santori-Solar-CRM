@@ -9,10 +9,10 @@ async function canAccessLead(userId: number, userRole: string, lead: any): Promi
   
   // Allow Manager and TL to access unassigned leads so they can assign them
   const isUnassigned = !lead.assignedTlId && !lead.assignedConsultantId;
-  if (isUnassigned && ['manager', 'tl'].includes(userRole)) return true;
+  if (isUnassigned && ['manager', 'tl', 'psa_tl'].includes(userRole)) return true;
 
   if (userRole === 'manager' && lead.assignedManagerId === userId) return true;
-  if (userRole === 'tl' && lead.assignedTlId === userId) return true;
+  if (['tl', 'psa_tl'].includes(userRole) && lead.assignedTlId === userId) return true;
   if (userRole === 'consultant' || userRole === 'psa') {
     return lead.assignedConsultantId === userId;
   }
@@ -79,18 +79,7 @@ export async function GET(
       return NextResponse.json({ success: false, message: 'Forbidden. No access to this lead.' }, { status: 403 });
     }
 
-    // Process data masking for PSA
-    if (userPayload.role === 'psa') {
-      const maskedLead = {
-        ...lead,
-        mobile: lead.mobile.substring(0, 5) + 'XXXXX',
-        mobileAlt: lead.mobileAlt ? lead.mobileAlt.substring(0, 5) + 'XXXXX' : null,
-        address: '[Masked for PSA]',
-        meetings: [], // Hide meetings for PSA
-        order: null,   // Hide orders for PSA
-      };
-      return NextResponse.json({ success: true, data: maskedLead });
-    }
+
 
     return NextResponse.json({ success: true, data: lead });
   } catch (error: any) {
@@ -149,12 +138,13 @@ export async function PATCH(
       leadSource,
       assignedTlId,
       assignedConsultantId,
+      assignedManagerId,
       discomName,
       connectionNumber,
     } = body;
 
     // Enforce specific assignment change rules
-    if (userPayload.role === 'tl') {
+    if (['tl', 'psa_tl'].includes(userPayload.role)) {
       // TL can only assign to themselves if unassigned, or keep it as themselves
       if (assignedTlId !== undefined && assignedTlId) {
         const targetTlId = parseInt(assignedTlId, 10);
@@ -170,7 +160,7 @@ export async function PATCH(
           where: { id: consId },
           select: { reportsTo: true, role: true },
         });
-        if (!consUser || consUser.role !== 'consultant' || consUser.reportsTo !== userPayload.id) {
+        if (!consUser || !['consultant', 'psa'].includes(consUser.role) || consUser.reportsTo !== userPayload.id) {
           return NextResponse.json({ success: false, message: 'Forbidden. Selected consultant must report to you.' }, { status: 403 });
         }
       }
@@ -182,7 +172,7 @@ export async function PATCH(
           where: { id: targetTlId },
           select: { reportsTo: true, role: true },
         });
-        if (!tlUser || tlUser.role !== 'tl' || tlUser.reportsTo !== userPayload.id) {
+        if (!tlUser || !['tl', 'psa_tl'].includes(tlUser.role) || tlUser.reportsTo !== userPayload.id) {
           return NextResponse.json({ success: false, message: 'Forbidden. Selected TL must report to you.' }, { status: 403 });
         }
       }
@@ -193,7 +183,7 @@ export async function PATCH(
           where: { id: consId },
           select: { reportsTo: true, role: true },
         });
-        if (!consUser || consUser.role !== 'consultant') {
+        if (!consUser || !['consultant', 'psa'].includes(consUser.role)) {
           return NextResponse.json({ success: false, message: 'Forbidden. Invalid consultant selected.' }, { status: 403 });
         }
         
@@ -224,12 +214,12 @@ export async function PATCH(
 
     // Handle assignments updates and auto-resolve hierarchy
     let shouldPromoteToFresh = false;
-    if (assignedTlId !== undefined || assignedConsultantId !== undefined) {
+    if (assignedTlId !== undefined || assignedConsultantId !== undefined || assignedManagerId !== undefined) {
       let finalTlId = assignedTlId !== undefined ? (assignedTlId ? parseInt(assignedTlId, 10) : null) : lead.assignedTlId;
       let finalConsId = assignedConsultantId !== undefined ? (assignedConsultantId ? parseInt(assignedConsultantId, 10) : null) : lead.assignedConsultantId;
-      let finalManagerId = lead.assignedManagerId;
+      let finalManagerId = assignedManagerId !== undefined ? (assignedManagerId ? parseInt(assignedManagerId, 10) : null) : lead.assignedManagerId;
 
-      if (finalConsId) {
+      if (finalConsId && assignedTlId === undefined && assignedManagerId === undefined) {
         const consUser = await prisma.user.findUnique({
           where: { id: finalConsId },
           select: { reportsTo: true },
@@ -242,17 +232,12 @@ export async function PATCH(
           });
           finalManagerId = tlUser?.reportsTo || null;
         }
-      } else if (finalTlId) {
-        finalConsId = null;
+      } else if (finalTlId && assignedManagerId === undefined) {
         const tlUser = await prisma.user.findUnique({
           where: { id: finalTlId },
           select: { reportsTo: true },
         });
         finalManagerId = tlUser?.reportsTo || null;
-      } else {
-        finalTlId = null;
-        finalConsId = null;
-        finalManagerId = null;
       }
 
       updateData.assignedTlId = finalTlId;
@@ -260,7 +245,7 @@ export async function PATCH(
       updateData.assignedManagerId = finalManagerId;
 
       // Auto-promote from Simple Lead (0) to Fresh Lead (1) when any coordinator gets assigned
-      if (lead.status === 0 && (finalTlId !== null || finalConsId !== null)) {
+      if (lead.status === 0 && (finalTlId !== null || finalConsId !== null || finalManagerId !== null)) {
         updateData.status = 1;
         shouldPromoteToFresh = true;
       }

@@ -19,7 +19,7 @@ export async function GET(req: Request) {
     if (!hasViewAll) {
       if (userPayload.role === 'manager') {
         leadWhere.assignedManagerId = userPayload.id;
-      } else if (userPayload.role === 'tl') {
+      } else if (['tl', 'psa_tl'].includes(userPayload.role)) {
         leadWhere.assignedTlId = userPayload.id;
       } else if (userPayload.role === 'consultant' || userPayload.role === 'psa') {
         leadWhere.assignedConsultantId = userPayload.id;

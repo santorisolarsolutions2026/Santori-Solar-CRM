@@ -107,25 +107,11 @@ export async function PATCH(
       return NextResponse.json({ success: false, message: 'Order not found.' }, { status: 404 });
     }
 
-    // Validate update rights
     const userPermissions = await getUserPermissions(userPayload.id);
     const canCreateOrders = userPermissions.includes('orders:create');
+    const canVerify = userPermissions.includes('orders:verify');
+    const canInstall = userPermissions.includes('orders:submit_installation');
     const hasViewAll = userPermissions.includes('orders:view_all');
-    
-    if (!canCreateOrders) {
-      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to edit orders.' }, { status: 403 });
-    }
-
-    if (!hasViewAll && order.submittedById !== userPayload.id) {
-      const lead = await prisma.lead.findUnique({
-        where: { id: order.leadId },
-        select: { assignedTlId: true, assignedManagerId: true }
-      });
-      const isLeadSupervisor = lead && (lead.assignedTlId === userPayload.id || lead.assignedManagerId === userPayload.id);
-      if (!isLeadSupervisor) {
-        return NextResponse.json({ success: false, message: 'Forbidden. You do not have access to edit this order.' }, { status: 403 });
-      }
-    }
 
     const body = await req.json();
     const {
@@ -144,6 +130,41 @@ export async function PATCH(
       status, // Ops / Admin can update installation statuses
     } = body;
 
+    // Check what is being updated
+    const isPunchingUpdate = [
+      connectionNumber, systemSizeKw, totalValue, downPayment, paymentMethod,
+      transactionRef, remainingMethod, financeProvider, clientType,
+      subsidyApplicable, subsidyAmount
+    ].some(v => v !== undefined);
+
+    const isStatusUpdate = status !== undefined;
+
+    // 1. Check permissions for updating punching fields
+    if (isPunchingUpdate && !canCreateOrders) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to edit sales punching details.' }, { status: 403 });
+    }
+
+    // 2. Check permissions for status updates
+    if (isStatusUpdate && !canVerify && !canInstall) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to change order status.' }, { status: 403 });
+    }
+
+    // 3. Scope validation:
+    // Non-view-all users must own the order or be the lead's TL/Manager,
+    // EXCEPT when a Finance/Operations user with correct permissions is updating the status/notes of a non-draft order.
+    const isFinanceOrOpsUpdate = (canVerify || canInstall) && order.status !== 'draft' && !isPunchingUpdate;
+
+    if (!hasViewAll && !isFinanceOrOpsUpdate && order.submittedById !== userPayload.id) {
+      const lead = await prisma.lead.findUnique({
+        where: { id: order.leadId },
+        select: { assignedTlId: true, assignedManagerId: true }
+      });
+      const isLeadSupervisor = lead && (lead.assignedTlId === userPayload.id || lead.assignedManagerId === userPayload.id);
+      if (!isLeadSupervisor) {
+        return NextResponse.json({ success: false, message: 'Forbidden. You do not have access to edit this order.' }, { status: 403 });
+      }
+    }
+
     const updateData: any = {};
     if (connectionNumber !== undefined) updateData.connectionNumber = connectionNumber;
     if (systemSizeKw !== undefined) updateData.systemSizeKw = parseFloat(systemSizeKw);
@@ -157,16 +178,7 @@ export async function PATCH(
     if (subsidyApplicable !== undefined) updateData.subsidyApplicable = !!subsidyApplicable;
     if (subsidyAmount !== undefined) updateData.subsidyAmount = subsidyAmount ? parseFloat(subsidyAmount) : null;
     if (additionalNotes !== undefined) updateData.additionalNotes = additionalNotes;
-
-    // Direct status updates (e.g. for installation tracking by Operations / Admin)
-    if (status !== undefined) {
-      const canVerify = userPermissions.includes('orders:verify');
-      const canInstall = userPermissions.includes('orders:submit_installation');
-      if (!canVerify && !canInstall) {
-        return NextResponse.json({ success: false, message: 'Forbidden. You cannot change order status directly.' }, { status: 403 });
-      }
-      updateData.status = status;
-    }
+    if (status !== undefined) updateData.status = status;
 
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },

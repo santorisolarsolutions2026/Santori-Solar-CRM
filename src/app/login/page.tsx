@@ -440,24 +440,7 @@ export default function LoginPage() {
             </form>
           )}
 
-          {/* Quick Login Info for testing */}
-          {!isSetupRequired && (
-            <div className="mt-8 border-t border-slate-800 pt-6">
-              <p className="text-xs text-slate-400 font-semibold mb-3 text-center uppercase tracking-wide">
-                Quick Testing Logins (Password: Password123)
-              </p>
-              <div className="grid grid-cols-2 gap-2 text-[10px] text-slate-400 bg-slate-950/40 p-3 rounded-lg border border-slate-800/50">
-                <div><strong className="text-amber-400">Admin:</strong> admin@solarcrm.com</div>
-                <div><strong className="text-amber-400">Sales Head:</strong> saleshead@solarcrm.com</div>
-                <div><strong className="text-amber-400">Manager:</strong> manager1@solarcrm.com</div>
-                <div><strong className="text-amber-400">TL:</strong> tl1@solarcrm.com</div>
-                <div><strong className="text-amber-400">Consultant:</strong> consultant1@solarcrm.com</div>
-                <div><strong className="text-amber-400">PSA:</strong> psa1@solarcrm.com</div>
-                <div><strong className="text-amber-400">Finance:</strong> finance@solarcrm.com</div>
-                <div><strong className="text-amber-400">Operations:</strong> ops@solarcrm.com</div>
-              </div>
-            </div>
-          )}
+
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getAuthenticatedUser } from '@/lib/auth';
+import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,16 +14,16 @@ export async function GET(
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
-    // Role verification (Admin, Director, Sales Head only)
-    const allowedRoles = ['admin', 'director', 'sales_head'];
-    if (!allowedRoles.includes(userPayload.role)) {
-      return NextResponse.json({ success: false, message: 'Forbidden. Unauthorized to view activity logs.' }, { status: 403 });
-    }
-
     const { id } = await params;
     const targetUserId = parseInt(id, 10);
     if (isNaN(targetUserId)) {
       return NextResponse.json({ success: false, message: 'Invalid User ID.' }, { status: 400 });
+    }
+
+    // Role verification (Admin, Director, Sales Head or logs:view permission, or self)
+    const userPermissions = await getUserPermissions(userPayload.id);
+    if (!userPermissions.includes('logs:view') && userPayload.id !== targetUserId) {
+      return NextResponse.json({ success: false, message: 'Forbidden. Unauthorized to view activity logs.' }, { status: 403 });
     }
 
     const { searchParams } = new URL(req.url);

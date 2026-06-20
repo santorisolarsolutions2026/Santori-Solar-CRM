@@ -12,11 +12,11 @@ const TRANSITIONS: Record<number, { to: number[]; roles: string[] }> = {
   6: { to: [], roles: [] }, // terminal
   7: { to: [3, 4, 5, 8], roles: ['consultant', 'tl', 'manager'] },
   8: { to: [9], roles: ['consultant', 'tl'] },
-  9: { to: [3, 4, 13], roles: ['consultant', 'tl', 'manager'] },
+  9: { to: [3, 4, 9, 13], roles: ['consultant', 'tl', 'manager'] },
   10: { to: [2, 3, 4, 5], roles: ['consultant', 'psa'] },
   11: { to: [2, 3, 4, 5], roles: ['consultant', 'psa'] },
   12: { to: [], roles: [] }, // terminal
-  13: { to: [], roles: [] }, // terminal
+  13: { to: [13, 6], roles: ['operations', 'manager', 'admin', 'director', 'sales_head'] }, // terminal but allows installation status self-transition and completed installation transition
 };
 
 // Helper to generate order code
@@ -37,11 +37,6 @@ export async function POST(
     const userPayload = getAuthenticatedUser(req);
     if (!userPayload) {
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
-    }
-
-    const userPermissions = await getUserPermissions(userPayload.id);
-    if (!userPermissions.includes('leads:change_status')) {
-      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to change lead status.' }, { status: 403 });
     }
 
     const { id } = await params;
@@ -66,6 +61,14 @@ export async function POST(
       return NextResponse.json({ success: false, message: 'Invalid target status.' }, { status: 400 });
     }
 
+    const userPermissions = await getUserPermissions(userPayload.id);
+    const hasChangeStatus = userPermissions.includes('leads:change_status');
+    const isInstallationUpdate = toStatusNum === 13 && lead.status === 13 && userPermissions.includes('orders:submit_installation');
+
+    if (!hasChangeStatus && !isInstallationUpdate) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to change lead status.' }, { status: 403 });
+    }
+
     if (!remark) {
       return NextResponse.json({ success: false, message: 'Remark is mandatory for status change.' }, { status: 400 });
     }
@@ -74,17 +77,17 @@ export async function POST(
     const isAdminOrSalesHead = ['admin', 'director', 'sales_head'].includes(userPayload.role) || userPermissions.includes('leads:view_all');
     const rule = TRANSITIONS[lead.status];
 
+    // Enforce permission checks for converting leads to orders (Stage 13)
+    if (toStatusNum === 13 && !userPermissions.includes('orders:create')) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to convert leads to orders.' }, { status: 403 });
+    }
+
     if (!isAdminOrSalesHead) {
       if (!rule) {
         return NextResponse.json({ success: false, message: `Invalid source status: ${lead.status}` }, { status: 400 });
       }
 
-      // Check if role is authorized
-      if (!rule.roles.includes(userPayload.role)) {
-        return NextResponse.json({ success: false, message: `Role '${userPayload.role}' is not authorized to transition from stage ${lead.status}.` }, { status: 403 });
-      }
-
-      // Check if target status is allowed
+      // Check if target status is allowed in pipeline flow
       if (!rule.to.includes(toStatusNum)) {
         return NextResponse.json({ success: false, message: `Transition from stage ${lead.status} to ${toStatusNum} is not allowed.` }, { status: 400 });
       }
@@ -143,7 +146,7 @@ export async function POST(
       if (!formB) {
         return NextResponse.json({ success: false, message: 'Form B (Meeting Booking Details) is required.' }, { status: 422 });
       }
-      const {
+      let {
         address,
         pinCode,
         mobile,
@@ -156,15 +159,38 @@ export async function POST(
         notes,
       } = formB;
 
+      // Fallback/Resolve connectionType if empty or missing
+      if (!connectionType) {
+        connectionType = lead.connectionType || 'residential';
+      }
+
+      // Fallback/Resolve assignedExecutiveId if empty or missing
+      if (!assignedExecutiveId) {
+        assignedExecutiveId = lead.assignedConsultantId?.toString() || userPayload.id?.toString() || '';
+      }
+
       if (!address || !pinCode || !mobile || !meetingDate || !meetingTime || !avgMonthlyBill || !connectionType || !assignedExecutiveId) {
         return NextResponse.json({ success: false, message: 'Missing required Form B fields.' }, { status: 422 });
       }
 
+      // Resolve masked fields if they were submitted by a PSA user
+      const resolvedAddress = address === '[Masked for PSA]' ? lead.address : address;
+      
+      let resolvedMobile = mobile;
+      if (mobile.includes('X') || mobile.includes('x')) {
+        resolvedMobile = lead.mobile;
+      }
+      
+      let resolvedMobileAlt = mobileAlt;
+      if (mobileAlt && (mobileAlt.includes('X') || mobileAlt.includes('x'))) {
+        resolvedMobileAlt = lead.mobileAlt;
+      }
+
       meetingBookingData = {
-        address,
+        address: resolvedAddress,
         pinCode,
-        mobile,
-        mobileAlt,
+        mobile: resolvedMobile,
+        mobileAlt: resolvedMobileAlt,
         meetingDate,
         meetingTime,
         avgMonthlyBill: parseFloat(avgMonthlyBill),
@@ -174,7 +200,7 @@ export async function POST(
       };
 
       // Sync lead details with Form B address if updated
-      updateData.address = address;
+      updateData.address = resolvedAddress;
       updateData.pinCode = pinCode;
       updateData.connectionType = connectionType;
       updateData.assignedConsultantId = parseInt(assignedExecutiveId, 10);

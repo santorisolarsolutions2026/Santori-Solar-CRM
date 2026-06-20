@@ -33,10 +33,20 @@ export async function POST(
     const startedAt = meeting.meetingStartedAt || meeting.createdAt;
     const endedAt = new Date();
     const durationMs = endedAt.getTime() - startedAt.getTime();
-    const meetingDurationSec = Math.max(0, Math.floor(durationMs / 1000));
+    const calculatedDurationSec = Math.max(0, Math.floor(durationMs / 1000));
 
     // Update meeting details and advance lead status to 9 (Meeting Done) inside a transaction
     const result = await prisma.$transaction(async (tx) => {
+      // Re-fetch inside the transaction to avoid race conditions with concurrent audio upload
+      const currentMeeting = await tx.meetingBooking.findUnique({
+        where: { id: meetingId },
+      });
+
+      const meetingDurationSec =
+        currentMeeting?.meetingDurationSec !== null && currentMeeting?.meetingDurationSec !== undefined
+          ? currentMeeting.meetingDurationSec
+          : calculatedDurationSec;
+
       const updatedMeeting = await tx.meetingBooking.update({
         where: { id: meetingId },
         data: {

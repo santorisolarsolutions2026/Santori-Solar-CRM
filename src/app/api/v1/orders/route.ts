@@ -26,35 +26,40 @@ export async function GET(req: Request) {
     if (!hasViewAll) {
       if (userPayload.role === 'finance') {
         // Finance sees orders in submitted, verified, ops_assigned, completed
-        where.status = { in: ['submitted', 'finance_verified', 'ops_assigned', 'completed'] };
+        const financeStatuses = ['submitted', 'finance_verified', 'ops_assigned', 'completed'];
+        if (status) {
+          where.status = financeStatuses.includes(status) ? status : { in: financeStatuses };
+        } else {
+          where.status = { in: financeStatuses };
+        }
       } else if (userPayload.role === 'operations') {
         // Operations sees only orders that are verified/assigned/completed
-        where.status = { in: ['finance_verified', 'ops_assigned', 'completed'] };
+        const opsStatuses = ['finance_verified', 'ops_assigned', 'completed'];
+        if (status) {
+          where.status = opsStatuses.includes(status) ? status : { in: opsStatuses };
+        } else {
+          where.status = { in: opsStatuses };
+        }
       } else {
         // Filter orders by lead assignments for normal team members
-        if (userPayload.role === 'tl') {
+        if (['tl', 'psa_tl'].includes(userPayload.role)) {
           where.lead = { assignedTlId: userPayload.id };
         } else if (userPayload.role === 'manager') {
           where.lead = { assignedManagerId: userPayload.id };
+        } else if (['admin', 'director', 'sales_head'].includes(userPayload.role)) {
+          // Administrative roles can view all orders even without view_all permission
         } else {
           where.lead = { assignedConsultantId: userPayload.id };
         }
-      }
-    }
 
-    if (status) {
-      where.status = status;
-    } else {
-      // By default (when status filter is not explicitly set), exclude completed orders
-      // UNLESS they have no completed installation images.
-      where.NOT = {
-        status: 'completed',
-        installationImages: {
-          some: {
-            status: 'completed'
-          }
+        if (status) {
+          where.status = status;
         }
-      };
+      }
+    } else {
+      if (status) {
+        where.status = status;
+      }
     }
 
     if (clientType) {

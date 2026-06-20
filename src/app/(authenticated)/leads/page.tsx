@@ -255,7 +255,7 @@ export default function LeadsPage() {
   // Fetch consultants list for filter
   const fetchConsultants = async () => {
     try {
-      const res = await fetch('/api/v1/users?role=consultant');
+      const res = await fetch('/api/v1/users?role=consultant,psa');
       const data = await res.json();
       if (data.success) {
         setConsultants(data.data);

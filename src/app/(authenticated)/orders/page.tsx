@@ -23,6 +23,7 @@ import Link from 'next/link';
 
 interface Order {
   id: number;
+  leadId: number;
   orderCode: string;
   connectionNumber: string;
   systemSizeKw: number;
@@ -100,6 +101,20 @@ export default function OrdersPage() {
   const [installationImages, setInstallationImages] = useState<any[]>([]);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [loadingImages, setLoadingImages] = useState(false);
+
+  // Lightbox preview state
+  const [previewImage, setPreviewImage] = useState<{ src: string; title: string } | null>(null);
+
+  // Close lightbox on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setPreviewImage(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -193,14 +208,12 @@ export default function OrdersPage() {
 
       const data = await res.json();
       if (data.success) {
-        // Log status change on lead level to sync pipeline stages (Stage 13 terminal status)
-        // If installation status is completed, the lead remains in Stage 13 but order status is completed.
-        // We log the details in activity log.
-        await fetch(`/api/v1/leads/${selectedOrder.id}/status`, {
+        const isCompleted = installationStatus === 'completed';
+        await fetch(`/api/v1/leads/${selectedOrder.leadId}/status`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            to_status: 13, // Stay in Stage 13 but write installation updates
+            to_status: isCompleted ? 6 : 13,
             remark: `[INSTALLATION UPDATE] Status: ${installationStatus}. Notes: ${opsNotes || 'none'}`,
           }),
         });
@@ -552,9 +565,24 @@ export default function OrdersPage() {
                           <img
                             src={`/api/v1/orders/${selectedOrder.id}/installation-images/${img.id}`}
                             alt={img.fileName}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover cursor-pointer"
+                            onClick={() => setPreviewImage({
+                              src: `/api/v1/orders/${selectedOrder.id}/installation-images/${img.id}`,
+                              title: `Installation Photo: ${img.fileName}`
+                            })}
                           />
                           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setPreviewImage({
+                                src: `/api/v1/orders/${selectedOrder.id}/installation-images/${img.id}`,
+                                title: `Installation Photo: ${img.fileName}`
+                              })}
+                              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-white transition-all cursor-pointer flex items-center justify-center"
+                              title="View Photo"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                            </button>
                             <button
                               type="button"
                               onClick={() => handleDeleteInstallationImage(img.id)}
@@ -634,13 +662,21 @@ export default function OrdersPage() {
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-900/10 p-4 border border-slate-800/80 rounded-xl">
                       {installationImages.map((img) => (
                         <div key={img.id} className="relative rounded-lg overflow-hidden border border-slate-850 aspect-video">
-                          <a href={`/api/v1/orders/${selectedOrder.id}/installation-images/${img.id}`} target="_blank" rel="noopener noreferrer">
+                          <button
+                            type="button"
+                            onClick={() => setPreviewImage({
+                              src: `/api/v1/orders/${selectedOrder.id}/installation-images/${img.id}`,
+                              title: `Installation Photo: ${img.fileName}`
+                            })}
+                            className="w-full h-full text-left focus:outline-none"
+                            title="Click to view large"
+                          >
                             <img
                               src={`/api/v1/orders/${selectedOrder.id}/installation-images/${img.id}`}
                               alt={img.fileName}
-                              className="w-full h-full object-cover hover:scale-105 transition-all duration-300"
+                              className="w-full h-full object-cover hover:scale-105 transition-all duration-300 cursor-pointer"
                             />
-                          </a>
+                          </button>
                           <span className={`absolute bottom-1 left-1 text-[8px] font-bold px-1.5 py-0.5 border rounded-full uppercase tracking-wider ${
                             img.status === 'completed'
                               ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
@@ -737,9 +773,24 @@ export default function OrdersPage() {
                             <img
                               src={`/api/v1/orders/${selectedOrder.id}/installation-images/${img.id}`}
                               alt={img.fileName}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full object-cover cursor-pointer"
+                              onClick={() => setPreviewImage({
+                                src: `/api/v1/orders/${selectedOrder.id}/installation-images/${img.id}`,
+                                title: `Installation Photo: ${img.fileName}`
+                              })}
                             />
                             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setPreviewImage({
+                                  src: `/api/v1/orders/${selectedOrder.id}/installation-images/${img.id}`,
+                                  title: `Installation Photo: ${img.fileName}`
+                                })}
+                                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-white transition-all cursor-pointer flex items-center justify-center"
+                                title="View Photo"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                              </button>
                               <button
                                 type="button"
                                 onClick={() => handleDeleteInstallationImage(img.id)}
@@ -837,6 +888,39 @@ export default function OrdersPage() {
                 </form>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Lightbox image preview overlay */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-[100] flex flex-col items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md transition-all duration-300"
+          onClick={() => setPreviewImage(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setPreviewImage(null)}
+            className="absolute top-4 right-4 p-2 rounded-full bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800/80 transition-all cursor-pointer shadow-lg z-[110]"
+            title="Close Preview"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          
+          <div
+            className="relative max-w-4xl max-h-[85vh] overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl flex flex-col items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={previewImage.src}
+              alt={previewImage.title}
+              className="max-w-full max-h-[80vh] object-contain rounded-t-2xl"
+            />
+            {previewImage.title && (
+              <div className="w-full bg-slate-900/80 backdrop-blur-sm border-t border-slate-800/60 p-3 text-xs font-semibold text-slate-300 text-center tracking-wide rounded-b-2xl">
+                {previewImage.title}
+              </div>
+            )}
           </div>
         </div>
       )}

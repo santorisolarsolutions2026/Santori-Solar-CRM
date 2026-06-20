@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getAuthenticatedUser } from '@/lib/auth';
+import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -33,11 +33,12 @@ export async function GET(
       return NextResponse.json({ success: false, message: 'Document not found.' }, { status: 404 });
     }
 
-    // Role visibility check: Admin, Director, Sales Head, Finance, Operations, or the Consultant who submitted the order
-    const allowedRoles = ['admin', 'director', 'sales_head', 'finance', 'operations'];
+    // Role/Permission visibility check
+    const userPermissions = await getUserPermissions(userPayload.id);
     const isOwner = doc.order.submittedById === userPayload.id;
+    const hasViewAccess = userPermissions.includes('orders:view') || isOwner;
 
-    if (!allowedRoles.includes(userPayload.role) && !isOwner) {
+    if (!hasViewAccess) {
       return NextResponse.json({ success: false, message: 'Forbidden. No access to this document.' }, { status: 403 });
     }
 
@@ -100,16 +101,18 @@ export async function DELETE(
       return NextResponse.json({ success: false, message: 'Document not found.' }, { status: 404 });
     }
 
-    // Role visibility check for delete:
-    // Admin, Director, Sales Head, Finance, Operations can delete
+    // Permission visibility check for delete:
+    // User must have orders:verify or orders:submit_installation or orders:view_all permission,
     // OR the submitting Consultant if the order is still in draft state.
-    const allowedRoles = ['admin', 'director', 'sales_head', 'finance', 'operations'];
+    const userPermissions = await getUserPermissions(userPayload.id);
     const isOwner = doc.order.submittedById === userPayload.id;
+    const canDelete = userPermissions.includes('orders:verify') || 
+                      userPermissions.includes('orders:submit_installation') || 
+                      userPermissions.includes('orders:view_all') ||
+                      (isOwner && doc.order.status === 'draft');
 
-    if (!allowedRoles.includes(userPayload.role)) {
-      if (!isOwner || doc.order.status !== 'draft') {
-        return NextResponse.json({ success: false, message: 'Forbidden. No permission to delete this document.' }, { status: 403 });
-      }
+    if (!canDelete) {
+      return NextResponse.json({ success: false, message: 'Forbidden. No permission to delete this document.' }, { status: 403 });
     }
 
     // Delete local file

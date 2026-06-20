@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getAuthenticatedUser } from '@/lib/auth';
+import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -32,12 +32,19 @@ export async function POST(
       return NextResponse.json({ success: false, message: 'Order not found.' }, { status: 404 });
     }
 
-    // Role verification
-    if (userPayload.role === 'consultant' && order.submittedById !== userPayload.id) {
+    // Permission verification:
+    // Order creators (users with orders:create but without verification/installation privileges)
+    // can only upload documents to their own orders, and only when the order is still in draft state.
+    const userPermissions = await getUserPermissions(userPayload.id);
+    const isOrderCreator = userPermissions.includes('orders:create') && 
+                           !userPermissions.includes('orders:verify') && 
+                           !userPermissions.includes('orders:submit_installation');
+
+    if (isOrderCreator && order.submittedById !== userPayload.id) {
       return NextResponse.json({ success: false, message: 'Forbidden. Not your order.' }, { status: 403 });
     }
     
-    if (userPayload.role === 'consultant' && order.status !== 'draft') {
+    if (isOrderCreator && order.status !== 'draft') {
       return NextResponse.json({ success: false, message: 'Forbidden. Cannot upload to a submitted order.' }, { status: 403 });
     }
 

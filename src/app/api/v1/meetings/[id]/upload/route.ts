@@ -30,6 +30,11 @@ export async function POST(
 
     const formData = await req.formData();
     const file = formData.get('file') as File;
+    const durationStr = formData.get('duration') as string | null;
+    let durationSec = durationStr ? parseInt(durationStr, 10) : null;
+    if (durationSec !== null && (isNaN(durationSec) || durationSec < 0)) {
+      durationSec = null;
+    }
 
     if (!file) {
       return NextResponse.json({ success: false, message: 'Audio recording file is required.' }, { status: 400 });
@@ -58,6 +63,7 @@ export async function POST(
       where: { id: meetingId },
       data: {
         audioRecordingPath: relativePath,
+        ...(durationSec !== null && { meetingDurationSec: durationSec }),
       },
     });
 

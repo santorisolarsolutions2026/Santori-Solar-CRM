@@ -15,7 +15,7 @@ export async function GET(req: Request) {
     }
 
     // Find all consultants in the team
-    const consultantWhere: any = { role: 'consultant' };
+    const consultantWhere: any = { role: { in: ['consultant', 'psa'] } };
     const hasViewAll = userPermissions.includes('leads:view_all');
     if (!hasViewAll) {
       if (userPayload.role === 'manager') {
@@ -25,7 +25,7 @@ export async function GET(req: Request) {
         });
         const subordinateIds = subordinates.map((s) => s.id);
         consultantWhere.reportsTo = { in: subordinateIds }; // reporting to manager's TLs
-      } else if (userPayload.role === 'tl') {
+      } else if (['tl', 'psa_tl'].includes(userPayload.role)) {
         consultantWhere.reportsTo = userPayload.id; // reporting to TL
       } else {
         // Consultants or other roles can only see their own performance if they have permission

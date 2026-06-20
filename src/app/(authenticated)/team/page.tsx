@@ -20,6 +20,7 @@ import {
   Calendar,
   User,
   History,
+  Eye,
 } from 'lucide-react';
 
 interface TeamMember {
@@ -70,20 +71,90 @@ export function getRoleClass(role: string): string {
 }
 
 const ALL_PERMISSIONS = [
-  { key: 'leads:view', label: 'View Leads Pipeline', category: 'Leads' },
-  { key: 'leads:view_all', label: 'View All Leads (Bypass scope)', category: 'Leads' },
-  { key: 'leads:create', label: 'Add New Lead', category: 'Leads' },
-  { key: 'leads:edit', label: 'Edit Lead Details', category: 'Leads' },
-  { key: 'leads:change_status', label: 'Change Lead Pipeline Stage', category: 'Leads' },
-  { key: 'orders:view', label: 'View Orders Queue', category: 'Orders' },
-  { key: 'orders:view_all', label: 'View All Orders (Bypass scope)', category: 'Orders' },
-  { key: 'orders:create', label: 'Convert Lead to Order', category: 'Orders' },
-  { key: 'orders:verify', label: 'Verify Orders (Finance/Ops)', category: 'Orders' },
-  { key: 'orders:submit_installation', label: 'Submit Orders for Installation', category: 'Orders' },
-  { key: 'reports:view', label: 'View Reports & Analytics', category: 'Reports' },
-  { key: 'team:view', label: 'View Team Directory', category: 'Team' },
-  { key: 'team:manage', label: 'Manage Team Members & Access Checklist', category: 'Team' },
-  { key: 'logs:view', label: 'View Team Activity logs', category: 'Team' },
+  {
+    key: 'leads:view',
+    label: 'View Leads Pipeline',
+    description: 'Allows viewing lead list and details assigned to the user or their team.',
+    category: 'Leads'
+  },
+  {
+    key: 'leads:view_all',
+    label: 'View All Leads (Bypass scope)',
+    description: 'Allows viewing all leads in the system, bypassing team hierarchy/boundaries.',
+    category: 'Leads'
+  },
+  {
+    key: 'leads:create',
+    label: 'Add New Lead',
+    description: 'Allows registering new customer leads in the system.',
+    category: 'Leads'
+  },
+  {
+    key: 'leads:edit',
+    label: 'Edit Lead Details',
+    description: 'Allows editing lead contact, connection, and assignment details.',
+    category: 'Leads'
+  },
+  {
+    key: 'leads:change_status',
+    label: 'Change Lead Pipeline Stage',
+    description: 'Allows changing lead statuses and advancing them through pipeline stages.',
+    category: 'Leads'
+  },
+  {
+    key: 'orders:view',
+    label: 'View Orders Queue',
+    description: 'Allows accessing the orders and installations queue.',
+    category: 'Orders'
+  },
+  {
+    key: 'orders:view_all',
+    label: 'View All Orders (Bypass scope)',
+    description: 'Allows viewing all orders across all teams and departments.',
+    category: 'Orders'
+  },
+  {
+    key: 'orders:create',
+    label: 'Convert Lead to Order',
+    description: 'Allows converting a lead to a sale order and punching order details.',
+    category: 'Orders'
+  },
+  {
+    key: 'orders:verify',
+    label: 'Verify Orders (Finance/Ops)',
+    description: 'Allows finance verification of down payments and approving orders for operations.',
+    category: 'Orders'
+  },
+  {
+    key: 'orders:submit_installation',
+    label: 'Submit Orders for Installation',
+    description: 'Allows scheduling installations, completing them, and uploading panel photos.',
+    category: 'Orders'
+  },
+  {
+    key: 'reports:view',
+    label: 'View Reports & Analytics',
+    description: 'Allows viewing performance reports, lead trends, and conversions.',
+    category: 'Reports'
+  },
+  {
+    key: 'team:view',
+    label: 'View Team Directory',
+    description: 'Allows viewing other team members profiles and supervisors.',
+    category: 'Team'
+  },
+  {
+    key: 'team:manage',
+    label: 'Manage Team Members & Access Checklist',
+    description: 'Allows creating/editing users, deactivating accounts, and customizing access permissions.',
+    category: 'Team'
+  },
+  {
+    key: 'logs:view',
+    label: 'View Team Activity logs',
+    description: 'Allows viewing status change audits and employee logins.',
+    category: 'Team'
+  },
 ];
 
 function getLocalDefaultPermissionsForRole(role: string): string[] {
@@ -861,7 +932,7 @@ export default function TeamManagementPage() {
                                 <History className="w-4 h-4" />
                               </button>
 
-                              {member.id !== user?.id && (
+                              {member.id !== user?.id && member.role !== 'admin' && !member.role.startsWith('admin:') && (
                                 <>
                                   <button
                                     onClick={() => handleToggleActive(member)}
@@ -879,7 +950,7 @@ export default function TeamManagementPage() {
                                     <button
                                       type="button"
                                       onClick={() => handleDeleteUser(member)}
-                                      className="p-1.5 rounded-lg border bg-rose-950/20 text-rose-450 border-rose-900/30 hover:bg-rose-950/40 transition-all cursor-pointer"
+                                      className="p-1.5 rounded-lg border bg-rose-950/20 text-rose-455 border-rose-900/30 hover:bg-rose-950/40 transition-all cursor-pointer"
                                       title="Permanently Delete User"
                                     >
                                       <Trash2 className="w-4 h-4" />
@@ -965,7 +1036,7 @@ export default function TeamManagementPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Full Name</label>
+                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Full Name *</label>
                   <input
                     type="text"
                     required
@@ -976,7 +1047,7 @@ export default function TeamManagementPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Employee ID</label>
+                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Employee ID *</label>
                   <input
                     type="text"
                     required
@@ -987,7 +1058,7 @@ export default function TeamManagementPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Email Address</label>
+                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Email Address *</label>
                   <input
                     type="email"
                     required
@@ -1035,7 +1106,7 @@ export default function TeamManagementPage() {
                 {form.role === 'other' && (
                   <div className="col-span-1 sm:col-span-2 p-4 bg-slate-950/40 border border-slate-800/80 rounded-xl space-y-3">
                     <div>
-                      <label className="block text-[9px] font-bold uppercase text-slate-400 mb-1">Custom Designation Name</label>
+                      <label className="block text-[9px] font-bold uppercase text-slate-400 mb-1">Custom Designation Name *</label>
                       <input
                         type="text"
                         required
@@ -1067,7 +1138,7 @@ export default function TeamManagementPage() {
                 )}
 
                 <div>
-                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Initial Password</label>
+                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Initial Password *</label>
                   <input
                     type="password"
                     required
@@ -1093,7 +1164,7 @@ export default function TeamManagementPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Date of Joining</label>
+                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Date of Joining *</label>
                   <input
                     type="date"
                     required
@@ -1317,7 +1388,7 @@ export default function TeamManagementPage() {
                   {/* Member Form Fields */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Full Name</label>
+                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Full Name *</label>
                       <input
                         type="text"
                         required
@@ -1327,7 +1398,7 @@ export default function TeamManagementPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Employee ID</label>
+                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Employee ID *</label>
                       <input
                         type="text"
                         required
@@ -1337,7 +1408,7 @@ export default function TeamManagementPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Email Address</label>
+                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Email Address *</label>
                       <input
                         type="email"
                         required
@@ -1369,10 +1440,13 @@ export default function TeamManagementPage() {
                       <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">System Role</label>
                       <select
                         value={editMemberForm.role}
+                        disabled={selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:')}
                         onChange={(e) => setEditMemberForm({ ...editMemberForm, role: e.target.value })}
-                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500 focus:outline-none"
+                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500 focus:outline-none disabled:opacity-50"
                       >
-                        <option value="admin">Admin</option>
+                        {(selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:')) && (
+                          <option value="admin">Admin</option>
+                        )}
                         <option value="director">Director</option>
                         <option value="sales_head">Sales Head</option>
                         <option value="finance">Finance Manager</option>
@@ -1392,22 +1466,23 @@ export default function TeamManagementPage() {
                     {editMemberForm.role === 'other' && (
                       <div className="col-span-1 sm:col-span-2 p-4 bg-slate-950/40 border border-slate-800/80 rounded-xl space-y-3">
                         <div>
-                          <label className="block text-[9px] font-bold uppercase text-slate-400 mb-1">Custom Designation Name</label>
+                          <label className="block text-[9px] font-bold uppercase text-slate-400 mb-1">Custom Designation Name *</label>
                           <input
                             type="text"
                             required
                             value={editCustomRoleText}
                             onChange={(e) => setEditCustomRoleText(e.target.value)}
                             placeholder="e.g. Senior Consultant"
-                            className="block w-full px-3 py-2 bg-slate-950 border border-slate-900 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                            className="block w-full px-3 py-2 bg-slate-950 border border-slate-905 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
                           />
                         </div>
                         <div>
                           <label className="block text-[9px] font-bold uppercase text-slate-400 mb-1">Base Permissions Access Level</label>
                           <select
                             value={editBaseRole}
+                            disabled={selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:')}
                             onChange={(e) => setEditBaseRole(e.target.value)}
-                            className="block w-full px-3 py-2 bg-slate-950 border border-slate-900 rounded-lg text-slate-300 text-xs focus:ring-amber-500"
+                            className="block w-full px-3 py-2 bg-slate-950 border border-slate-900 rounded-lg text-slate-300 text-xs focus:ring-amber-500 disabled:opacity-50"
                           >
                             <option value="consultant">Sales Consultant</option>
                             <option value="tl">Sales Team Leader</option>
@@ -1417,7 +1492,9 @@ export default function TeamManagementPage() {
                             <option value="finance">Finance Manager</option>
                             <option value="sales_head">Sales Head</option>
                             <option value="director">Director</option>
-                            <option value="admin">Admin</option>
+                            {(selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:')) && (
+                              <option value="admin">Admin</option>
+                            )}
                           </select>
                         </div>
                       </div>
@@ -1440,7 +1517,7 @@ export default function TeamManagementPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Date of Joining</label>
+                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Date of Joining *</label>
                       <input
                         type="date"
                         required
@@ -1453,12 +1530,16 @@ export default function TeamManagementPage() {
                       <input
                         type="checkbox"
                         id="edit-member-active"
+                        disabled={selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:')}
                         checked={editMemberForm.isActive}
                         onChange={(e) => setEditMemberForm({ ...editMemberForm, isActive: e.target.checked })}
-                        className="w-4 h-4 text-amber-500 bg-slate-950 border-slate-800 rounded focus:ring-amber-500"
+                        className="w-4 h-4 text-amber-500 bg-slate-950 border-slate-800 rounded focus:ring-amber-500 disabled:opacity-50 disabled:cursor-not-allowed"
                       />
-                      <label htmlFor="edit-member-active" className="text-xs font-bold uppercase text-slate-400 cursor-pointer select-none">
-                        Account Active Status
+                      <label htmlFor="edit-member-active" className="text-xs font-bold uppercase text-slate-400 cursor-pointer select-none flex items-center gap-1.5">
+                        <span>Account Active Status</span>
+                        {(selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:')) && (
+                          <span className="text-[10px] text-red-500 font-normal lowercase tracking-normal italic">(Admin cannot be deactivated)</span>
+                        )}
                       </label>
                     </div>
                   </div>
@@ -1480,33 +1561,78 @@ export default function TeamManagementPage() {
                     </div>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {['Leads', 'Orders', 'Reports', 'Team'].map((cat) => (
-                        <div key={cat} className="p-3 bg-slate-950/40 border border-slate-900 rounded-lg space-y-2">
-                          <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">{cat} Permissions</span>
-                          <div className="space-y-1.5">
-                            {ALL_PERMISSIONS.filter(p => p.category === cat).map((perm) => {
-                              const isChecked = editMemberPermissions.includes(perm.key);
-                              return (
-                                <label key={perm.key} className="flex items-start gap-2 text-[11px] text-slate-300 hover:text-white cursor-pointer select-none transition-colors">
-                                  <input
-                                    type="checkbox"
-                                    checked={isChecked}
-                                    onChange={() => {
-                                      if (isChecked) {
-                                        setEditMemberPermissions(editMemberPermissions.filter(k => k !== perm.key));
-                                      } else {
-                                        setEditMemberPermissions([...editMemberPermissions, perm.key]);
-                                      }
-                                    }}
-                                    className="w-3.5 h-3.5 text-amber-500 bg-slate-950 border-slate-800 rounded focus:ring-amber-500 mt-0.5"
-                                  />
-                                  <span>{perm.label}</span>
-                                </label>
-                              );
-                            })}
+                      {['Leads', 'Orders', 'Reports', 'Team'].map((cat) => {
+                        let IconComponent = Users;
+                        if (cat === 'Leads') IconComponent = Sun;
+                        else if (cat === 'Orders') IconComponent = Lock;
+                        else if (cat === 'Reports') IconComponent = History;
+
+                        return (
+                          <div key={cat} className="p-4 bg-slate-900/40 border border-slate-800/80 rounded-xl space-y-3 hover:border-slate-700/50 transition-all duration-200 shadow-md">
+                            <div className="flex items-center gap-2 border-b border-slate-850 pb-2 mb-1">
+                              <IconComponent className="w-4 h-4 text-amber-500 shrink-0" />
+                              <span className="block text-slate-200 font-bold uppercase tracking-wider text-[10px]">{cat} Permissions</span>
+                            </div>
+                            <div className="space-y-2">
+                              {ALL_PERMISSIONS.filter(p => p.category === cat).map((perm) => {
+                                const isChecked = editMemberPermissions.includes(perm.key);
+                                const isDangerous = perm.key.includes('all') || perm.key.includes('manage') || perm.key.includes('verify') || perm.key.includes('delete');
+                                
+                                return (
+                                  <label 
+                                    key={perm.key} 
+                                    className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer select-none transition-all duration-200 hover:-translate-y-[1px] ${
+                                      isChecked 
+                                        ? isDangerous
+                                          ? 'bg-rose-500/[0.02] border-rose-500/25 hover:bg-rose-500/[0.04]'
+                                          : 'bg-amber-500/[0.02] border-amber-500/20 hover:bg-amber-500/[0.04]'
+                                        : 'bg-slate-950/20 border-slate-900 hover:border-slate-800 hover:bg-slate-900/40'
+                                    }`}
+                                  >
+                                    {/* Beautiful Custom Toggle Switch */}
+                                    <div className="relative shrink-0 mt-1 cursor-pointer select-none">
+                                      <input
+                                        type="checkbox"
+                                        checked={isChecked}
+                                        onChange={() => {
+                                          if (isChecked) {
+                                            setEditMemberPermissions(editMemberPermissions.filter(k => k !== perm.key));
+                                          } else {
+                                            setEditMemberPermissions([...editMemberPermissions, perm.key]);
+                                          }
+                                        }}
+                                        className="sr-only"
+                                      />
+                                      <div className={`w-8 h-4.5 rounded-full transition-colors duration-200 ease-in-out ${
+                                        isChecked 
+                                          ? isDangerous ? 'bg-rose-500' : 'bg-amber-500' 
+                                          : 'bg-slate-800 border border-slate-700'
+                                      }`} />
+                                      <div className={`absolute top-0.75 left-0.75 w-3 h-3 rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${
+                                        isChecked ? 'translate-x-3.5' : 'translate-x-0'
+                                      }`} />
+                                    </div>
+                                    <div className="flex flex-col min-w-0">
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <span className={`text-[11px] font-bold transition-colors ${isChecked ? 'text-white' : 'text-slate-300'}`}>
+                                          {perm.label}
+                                        </span>
+                                        {isDangerous && (
+                                          <span className="text-[8px] bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-full px-1.5 py-0.25 font-bold uppercase tracking-wider">
+                                            Admin
+                                          </span>
+                                        )}
+                                      </div>
+                                      <span className="text-[9px] text-slate-500 font-mono mt-0.5 tracking-wider uppercase">{perm.key}</span>
+                                      <span className="text-[10px] text-slate-400 mt-1 leading-relaxed font-normal">{perm.description}</span>
+                                    </div>
+                                  </label>
+                                );
+                              })}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -1557,7 +1683,7 @@ export default function TeamManagementPage() {
 
                 <div className="p-6 border-t border-slate-800 bg-slate-900/10 flex justify-between gap-3">
                   <div>
-                    {selectedMember.id !== user?.id && !selectedMember.isActive && (
+                    {selectedMember.id !== user?.id && selectedMember.role !== 'admin' && !selectedMember.role.startsWith('admin:') && !selectedMember.isActive && (
                       <button
                         type="button"
                         onClick={() => handleDeleteUser(selectedMember)}
@@ -1714,11 +1840,11 @@ export default function TeamManagementPage() {
                 )}
 
                 <div className="p-6 border-t border-slate-800 bg-slate-900/10 flex justify-end gap-3">
-                  {isAdminOrDirectorOrSalesHead && selectedMember.id !== user?.id && !selectedMember.isActive && (
+                  {isAdminOrDirectorOrSalesHead && selectedMember.id !== user?.id && selectedMember.role !== 'admin' && !selectedMember.role.startsWith('admin:') && !selectedMember.isActive && (
                     <button
                       type="button"
                       onClick={() => handleDeleteUser(selectedMember)}
-                      className="py-2 px-4 bg-rose-950/20 text-rose-400 border border-rose-900/30 hover:bg-rose-950/40 rounded-lg font-bold text-xs shadow-md transition-all cursor-pointer"
+                      className="py-2 px-4 bg-rose-950/20 text-rose-455 border border-rose-900/30 hover:bg-rose-950/40 rounded-lg font-bold text-xs shadow-md transition-all cursor-pointer"
                     >
                       Delete Account
                     </button>

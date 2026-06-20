@@ -24,6 +24,7 @@ import {
   Mic,
   Square,
   Trash2,
+  Eye,
 } from 'lucide-react';
 import Link from 'next/link';
 import { BeautifulAudioPlayer } from '@/components/BeautifulAudioPlayer';
@@ -141,7 +142,7 @@ const ALLOWED_TRANSITIONS: Record<number, number[]> = {
   10: [2, 3, 4, 5],
   11: [2, 3, 4, 5],
   12: [],
-  13: [],
+  13: [6],
 };
 
 export default function LeadDetailPage({
@@ -156,6 +157,7 @@ export default function LeadDetailPage({
   const [leadId, setLeadId] = useState<number | null>(null);
   const [lead, setLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState<'info' | 'logs' | 'meeting' | 'order'>('info');
 
   // Inline edit state (Form A)
@@ -170,36 +172,24 @@ export default function LeadDetailPage({
     city: '',
     state: '',
     leadSource: '',
+    assignedManagerId: '',
     assignedTlId: '',
     assignedConsultantId: '',
     discomName: '',
     connectionNumber: '',
   });
 
-  const [tls, setTls] = useState<{ id: number; name: string }[]>([]);
-  const [consultants, setConsultants] = useState<{ id: number; name: string; reportsTo: number | null }[]>([]);
+  const [employees, setEmployees] = useState<{ id: number; name: string; role: string }[]>([]);
 
   // Fetch users for assignments selectors
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const [tlsRes, consRes, adminRes] = await Promise.all([
-          fetch('/api/v1/users?role=tl'),
-          fetch('/api/v1/users?role=consultant'),
-          fetch('/api/v1/users?role=admin'),
-        ]);
-
-        const tlsData = await tlsRes.json();
-        const consData = await consRes.json();
-        const adminData = await adminRes.json();
-
-        const admins = adminData.success ? adminData.data : [];
-
-        if (tlsData.success) {
-          setTls([...tlsData.data, ...admins]);
-        }
-        if (consData.success) {
-          setConsultants([...consData.data, ...admins]);
+        const res = await fetch('/api/v1/users');
+        const data = await res.json();
+        if (data.success) {
+          const activeEmployees = data.data.filter((u: any) => u.isActive);
+          setEmployees(activeEmployees);
         }
       } catch (err) {
         console.error(err);
@@ -239,6 +229,14 @@ export default function LeadDetailPage({
   const [formCFollowUpAt, setFormCFollowUpAt] = useState('');
   const [formCRemark, setFormCRemark] = useState('');
 
+  // Image Lightbox State & Helper
+  const [previewImage, setPreviewImage] = useState<{ src: string; title: string } | null>(null);
+  const isImageFile = (fileName: string) => {
+    if (!fileName) return false;
+    const ext = fileName.split('.').pop()?.toLowerCase();
+    return ext ? ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) : false;
+  };
+
   // Form D (Order Punching) Form state
   const [orderForm, setOrderForm] = useState({
     connectionNumber: '',
@@ -266,10 +264,12 @@ export default function LeadDetailPage({
   const [isStartingMeeting, setIsStartingMeeting] = useState(false);
   const [isEndingMeeting, setIsEndingMeeting] = useState(false);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const recordingStartTimeRef = useRef<number | null>(null);
 
   // Load Lead details
   const fetchLeadDetails = async () => {
     if (!leadId) return;
+    setIsDataLoaded(false);
     try {
       const res = await fetch(`/api/v1/leads/${leadId}`);
       const data = await res.json();
@@ -277,53 +277,69 @@ export default function LeadDetailPage({
         setLead(data.data);
         
         // Setup Form A edit values
-        setEditForm({
-          customerName: data.data.customerName,
-          mobileAlt: data.data.mobileAlt || '',
-          connectionType: data.data.connectionType,
-          sanctionedLoadKw: data.data.sanctionedLoadKw?.toString() || '',
-          address: data.data.address,
-          pinCode: data.data.pinCode,
-          city: data.data.city,
-          state: data.data.state,
-          leadSource: data.data.leadSource || 'whatsapp',
-          assignedTlId: data.data.assignedTlId?.toString() || '',
-          assignedConsultantId: data.data.assignedConsultantId?.toString() || '',
-          discomName: data.data.discomName || '',
-          connectionNumber: data.data.connectionNumber || '',
-        });
-
-        // Prepopulate Form B default values from lead
-        setFormBData({
-          address: data.data.address,
-          pinCode: data.data.pinCode,
-          mobile: data.data.mobile,
-          alternateMobile: data.data.mobileAlt || '',
-          meetingDate: '',
-          meetingTime: '11:00',
-          avgMonthlyBill: '2000',
-          connectionType: data.data.connectionType,
-          assignedExecutiveId: data.data.assignedConsultantId?.toString() || user?.id.toString() || '',
-          notes: '',
-        });
-
-        // Setup Form D order values if order exists
-        if (data.data.order) {
-          setOrderForm({
-            connectionNumber: data.data.order.connectionNumber || '',
-            systemSizeKw: data.data.order.systemSizeKw?.toString() || '',
-            totalValue: data.data.order.totalValue?.toString() || '',
-            downPayment: data.data.order.downPayment?.toString() || '',
-            paymentMethod: data.data.order.paymentMethod || 'cash',
-            transactionRef: data.data.order.transactionRef || '',
-            remainingMethod: data.data.order.remainingMethod || 'cash',
-            financeProvider: data.data.order.financeProvider || '',
-            clientType: data.data.order.clientType || 'on_grid',
-            subsidyApplicable: data.data.order.subsidyApplicable,
-            subsidyAmount: data.data.order.subsidyAmount?.toString() || '',
-            additionalNotes: data.data.order.additionalNotes || '',
+        const savedEditForm = typeof window !== 'undefined' ? localStorage.getItem(`solar_crm_lead_edit_form_${data.data.id}`) : null;
+        if (!savedEditForm) {
+          setEditForm({
+            customerName: data.data.customerName,
+            mobileAlt: data.data.mobileAlt || '',
+            connectionType: data.data.connectionType,
+            sanctionedLoadKw: data.data.sanctionedLoadKw?.toString() || '',
+            address: data.data.address,
+            pinCode: data.data.pinCode,
+            city: data.data.city,
+            state: data.data.state,
+            leadSource: data.data.leadSource || 'whatsapp',
+            assignedManagerId: data.data.assignedManagerId?.toString() || '',
+            assignedTlId: data.data.assignedTlId?.toString() || '',
+            assignedConsultantId: data.data.assignedConsultantId?.toString() || '',
+            discomName: data.data.discomName || '',
+            connectionNumber: data.data.connectionNumber || '',
           });
         }
+
+        // Prepopulate Form B default values from lead
+        const savedFormBData = typeof window !== 'undefined' ? localStorage.getItem(`solar_crm_lead_form_b_data_${data.data.id}`) : null;
+        if (!savedFormBData) {
+          setFormBData({
+            address: data.data.address,
+            pinCode: data.data.pinCode,
+            mobile: data.data.mobile,
+            alternateMobile: data.data.mobileAlt || '',
+            meetingDate: '',
+            meetingTime: '11:00',
+            avgMonthlyBill: '2000',
+            connectionType: data.data.connectionType,
+            assignedExecutiveId: data.data.assignedConsultantId?.toString() || user?.id.toString() || '',
+            notes: '',
+          });
+        }
+
+        // Setup Form D order values if order exists
+        const savedOrderForm = typeof window !== 'undefined' ? localStorage.getItem(`solar_crm_lead_order_form_${data.data.id}`) : null;
+        if (!savedOrderForm) {
+          if (data.data.order) {
+            setOrderForm({
+              connectionNumber: data.data.order.connectionNumber || data.data.connectionNumber || '',
+              systemSizeKw: data.data.order.systemSizeKw?.toString() || '',
+              totalValue: data.data.order.totalValue?.toString() || '',
+              downPayment: data.data.order.downPayment?.toString() || '',
+              paymentMethod: data.data.order.paymentMethod || 'cash',
+              transactionRef: data.data.order.transactionRef || '',
+              remainingMethod: data.data.order.remainingMethod || 'cash',
+              financeProvider: data.data.order.financeProvider || '',
+              clientType: data.data.order.clientType || 'on_grid',
+              subsidyApplicable: data.data.order.subsidyApplicable,
+              subsidyAmount: data.data.order.subsidyAmount?.toString() || '',
+              additionalNotes: data.data.order.additionalNotes || '',
+            });
+          } else {
+            setOrderForm((prev) => ({
+              ...prev,
+              connectionNumber: data.data.connectionNumber || '',
+            }));
+          }
+        }
+        setIsDataLoaded(true);
       }
     } catch (err) {
       console.error(err);
@@ -349,6 +365,134 @@ export default function LeadDetailPage({
     }
   }, [leadId]);
 
+  // ----------------- DRAFT PERSISTENCE EFFECTS -----------------
+  // Load drafts on mount when leadId is available
+  useEffect(() => {
+    if (!leadId || typeof window === 'undefined') return;
+
+    const savedTab = localStorage.getItem(`solar_crm_lead_active_tab_${leadId}`);
+    if (savedTab && ['info', 'logs', 'meeting', 'order'].includes(savedTab)) {
+      setActiveTab(savedTab as 'info' | 'logs' | 'meeting' | 'order');
+    }
+
+    const savedIsEditing = localStorage.getItem(`solar_crm_lead_is_editing_${leadId}`);
+    if (savedIsEditing === 'true') setIsEditing(true);
+
+    const savedEditForm = localStorage.getItem(`solar_crm_lead_edit_form_${leadId}`);
+    if (savedEditForm) {
+      try {
+        setEditForm((prev) => ({ ...prev, ...JSON.parse(savedEditForm) }));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    const savedShowFormB = localStorage.getItem(`solar_crm_lead_show_form_b_${leadId}`);
+    if (savedShowFormB === 'true') setShowFormB(true);
+
+    const savedFormBData = localStorage.getItem(`solar_crm_lead_form_b_data_${leadId}`);
+    if (savedFormBData) {
+      try {
+        setFormBData((prev) => ({ ...prev, ...JSON.parse(savedFormBData) }));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    const savedShowFormC = localStorage.getItem(`solar_crm_lead_show_form_c_${leadId}`);
+    if (savedShowFormC === 'true') setShowFormC(true);
+
+    const savedOutcome = localStorage.getItem(`solar_crm_lead_form_c_outcome_${leadId}`);
+    if (savedOutcome) setFormCOutcome(savedOutcome);
+
+    const savedSubStatus = localStorage.getItem(`solar_crm_lead_form_c_sub_status_${leadId}`);
+    if (savedSubStatus) setFormCSubStatus(savedSubStatus);
+
+    const savedFollowUpAt = localStorage.getItem(`solar_crm_lead_form_c_follow_up_at_${leadId}`);
+    if (savedFollowUpAt) setFormCFollowUpAt(savedFollowUpAt);
+
+    const savedRemark = localStorage.getItem(`solar_crm_lead_form_c_remark_${leadId}`);
+    if (savedRemark) setFormCRemark(savedRemark);
+
+    const savedOrderForm = localStorage.getItem(`solar_crm_lead_order_form_${leadId}`);
+    if (savedOrderForm) {
+      try {
+        setOrderForm((prev) => ({ ...prev, ...JSON.parse(savedOrderForm) }));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, [leadId]);
+
+  // Save active tab draft
+  useEffect(() => {
+    if (isDataLoaded && leadId && typeof window !== 'undefined') {
+      localStorage.setItem(`solar_crm_lead_active_tab_${leadId}`, activeTab);
+    }
+  }, [activeTab, leadId, isDataLoaded]);
+
+  // Save editForm draft
+  useEffect(() => {
+    if (isDataLoaded && leadId && typeof window !== 'undefined') {
+      localStorage.setItem(`solar_crm_lead_is_editing_${leadId}`, isEditing.toString());
+      localStorage.setItem(`solar_crm_lead_edit_form_${leadId}`, JSON.stringify(editForm));
+    }
+  }, [isEditing, editForm, leadId, isDataLoaded]);
+
+  // Save formBData draft
+  useEffect(() => {
+    if (isDataLoaded && leadId && typeof window !== 'undefined') {
+      localStorage.setItem(`solar_crm_lead_show_form_b_${leadId}`, showFormB.toString());
+      localStorage.setItem(`solar_crm_lead_form_b_data_${leadId}`, JSON.stringify(formBData));
+    }
+  }, [showFormB, formBData, leadId, isDataLoaded]);
+
+  // Save formC drafts
+  useEffect(() => {
+    if (isDataLoaded && leadId && typeof window !== 'undefined') {
+      localStorage.setItem(`solar_crm_lead_show_form_c_${leadId}`, showFormC.toString());
+      localStorage.setItem(`solar_crm_lead_form_c_outcome_${leadId}`, formCOutcome);
+      localStorage.setItem(`solar_crm_lead_form_c_sub_status_${leadId}`, formCSubStatus);
+      localStorage.setItem(`solar_crm_lead_form_c_follow_up_at_${leadId}`, formCFollowUpAt);
+      localStorage.setItem(`solar_crm_lead_form_c_remark_${leadId}`, formCRemark);
+    }
+  }, [showFormC, formCOutcome, formCSubStatus, formCFollowUpAt, formCRemark, leadId, isDataLoaded]);
+
+  // Save orderForm draft
+  useEffect(() => {
+    if (isDataLoaded && leadId && typeof window !== 'undefined') {
+      localStorage.setItem(`solar_crm_lead_order_form_${leadId}`, JSON.stringify(orderForm));
+    }
+  }, [orderForm, leadId, isDataLoaded]);
+
+  // Cancel handlers to wipe drafts
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    if (leadId && typeof window !== 'undefined') {
+      localStorage.removeItem(`solar_crm_lead_is_editing_${leadId}`);
+      localStorage.removeItem(`solar_crm_lead_edit_form_${leadId}`);
+    }
+  };
+
+  const handleCancelFormB = () => {
+    setShowFormB(false);
+    if (leadId && typeof window !== 'undefined') {
+      localStorage.removeItem(`solar_crm_lead_show_form_b_${leadId}`);
+      localStorage.removeItem(`solar_crm_lead_form_b_data_${leadId}`);
+    }
+  };
+
+  const handleCancelFormC = () => {
+    setShowFormC(false);
+    if (leadId && typeof window !== 'undefined') {
+      localStorage.removeItem(`solar_crm_lead_show_form_c_${leadId}`);
+      localStorage.removeItem(`solar_crm_lead_form_c_outcome_${leadId}`);
+      localStorage.removeItem(`solar_crm_lead_form_c_sub_status_${leadId}`);
+      localStorage.removeItem(`solar_crm_lead_form_c_follow_up_at_${leadId}`);
+      localStorage.removeItem(`solar_crm_lead_form_c_remark_${leadId}`);
+    }
+  };
+
   // Handle Form A Edit Details submit
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -361,6 +505,10 @@ export default function LeadDetailPage({
       const data = await res.json();
       if (data.success) {
         setIsEditing(false);
+        if (leadId && typeof window !== 'undefined') {
+          localStorage.removeItem(`solar_crm_lead_is_editing_${leadId}`);
+          localStorage.removeItem(`solar_crm_lead_edit_form_${leadId}`);
+        }
         fetchLeadDetails();
         alert('Lead details updated successfully.');
       } else {
@@ -428,13 +576,27 @@ export default function LeadDetailPage({
   const handleFormBSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const finalExecutiveId = formBData.assignedExecutiveId || lead?.consultant?.id?.toString() || user?.id?.toString() || '';
+      const finalConnectionType = formBData.connectionType || lead?.connectionType || 'residential';
+
+      if (!finalExecutiveId) {
+        alert('No executive could be assigned. Please ensure a consultant is assigned to the lead or you are logged in.');
+        return;
+      }
+
+      const payload = {
+        ...formBData,
+        assignedExecutiveId: finalExecutiveId,
+        connectionType: finalConnectionType,
+      };
+
       const res = await fetch(`/api/v1/leads/${leadId}/status`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           to_status: 8,
           remark: `Meeting Booked: ${formBData.notes || 'scheduled site visit'}`,
-          formB: formBData,
+          formB: payload,
         }),
       });
       const data = await res.json();
@@ -442,6 +604,10 @@ export default function LeadDetailPage({
         setShowFormB(false);
         setNewStatus('');
         setStatusRemark('');
+        if (leadId && typeof window !== 'undefined') {
+          localStorage.removeItem(`solar_crm_lead_show_form_b_${leadId}`);
+          localStorage.removeItem(`solar_crm_lead_form_b_data_${leadId}`);
+        }
         fetchLeadDetails();
         setActiveTab('meeting');
         alert('Meeting booked successfully.');
@@ -483,6 +649,13 @@ export default function LeadDetailPage({
         setShowFormC(false);
         setNewStatus('');
         setStatusRemark('');
+        if (leadId && typeof window !== 'undefined') {
+          localStorage.removeItem(`solar_crm_lead_show_form_c_${leadId}`);
+          localStorage.removeItem(`solar_crm_lead_form_c_outcome_${leadId}`);
+          localStorage.removeItem(`solar_crm_lead_form_c_sub_status_${leadId}`);
+          localStorage.removeItem(`solar_crm_lead_form_c_follow_up_at_${leadId}`);
+          localStorage.removeItem(`solar_crm_lead_form_c_remark_${leadId}`);
+        }
         fetchLeadDetails();
         alert('Meeting outcome logged successfully.');
       } else {
@@ -505,6 +678,9 @@ export default function LeadDetailPage({
       });
       const data = await res.json();
       if (data.success) {
+        if (leadId && typeof window !== 'undefined') {
+          localStorage.removeItem(`solar_crm_lead_order_form_${leadId}`);
+        }
         fetchLeadDetails();
         alert('Order punched details saved successfully.');
       } else {
@@ -663,8 +839,11 @@ export default function LeadDetailPage({
       };
 
       recorderInstance.onstop = async () => {
+        const durationSec = recordingStartTimeRef.current
+          ? Math.round((Date.now() - recordingStartTimeRef.current) / 1000)
+          : 0;
         const audioBlob = new Blob(chunks, { type: 'audio/webm' });
-        await uploadAudioBlob(meetingId, audioBlob);
+        await uploadAudioBlob(meetingId, audioBlob, durationSec);
         stream.getTracks().forEach((track) => track.stop());
       };
 
@@ -677,6 +856,7 @@ export default function LeadDetailPage({
       const data = await res.json();
 
       if (data.success) {
+        recordingStartTimeRef.current = Date.now();
         recorderInstance.start(1000); // collect chunks every second
         setMediaRecorder(recorderInstance);
         setIsRecording(true);
@@ -717,11 +897,15 @@ export default function LeadDetailPage({
       };
 
       recorderInstance.onstop = async () => {
+        const durationSec = recordingStartTimeRef.current
+          ? Math.round((Date.now() - recordingStartTimeRef.current) / 1000)
+          : 0;
         const audioBlob = new Blob(chunks, { type: 'audio/webm' });
-        await uploadAudioBlob(meetingId, audioBlob);
+        await uploadAudioBlob(meetingId, audioBlob, durationSec);
         stream.getTracks().forEach((track) => track.stop());
       };
 
+      recordingStartTimeRef.current = Date.now();
       recorderInstance.start(1000);
       setMediaRecorder(recorderInstance);
       setIsRecording(true);
@@ -741,10 +925,13 @@ export default function LeadDetailPage({
     }
   };
 
-  const uploadAudioBlob = async (meetingId: number, blob: Blob) => {
+  const uploadAudioBlob = async (meetingId: number, blob: Blob, durationSec?: number) => {
     setIsUploadingAudio(true);
     const formData = new FormData();
     formData.append('file', blob, 'meeting_recording.webm');
+    if (durationSec !== undefined) {
+      formData.append('duration', durationSec.toString());
+    }
 
     try {
       const res = await fetch(`/api/v1/meetings/${meetingId}/upload`, {
@@ -800,19 +987,20 @@ export default function LeadDetailPage({
 
   const stageBadge = STAGE_BADGES[lead.status] || { name: `Stage ${lead.status}`, class: 'bg-slate-500' };
 
+  // Helper variables to govern order form disable state
+  const isOrderFormLocked = lead.order?.status !== 'draft' && !hasPermission('orders:verify') && !hasPermission('orders:submit_installation');
+  const isOrderFormDisabled = !hasPermission('orders:create') || isOrderFormLocked;
+
   // Calculate dynamic allowed transitions for select input
   const nextStageIds = ALLOWED_TRANSITIONS[lead.status] || [];
   // Filter by user role permissions (Admin bypassed)
   const roleFilteredNextStages = nextStageIds.filter((statusNum) => {
     if (!hasPermission('leads:change_status')) return false;
-    if (['admin', 'director', 'sales_head'].includes(user?.role || '')) return true;
-    if (statusNum === 3 && ['consultant', 'psa', 'tl', 'manager'].includes(user?.role || '')) return true;
-    if (statusNum === 4 && ['consultant', 'psa', 'tl', 'manager'].includes(user?.role || '')) return true;
-    if (statusNum === 8 && ['consultant', 'tl'].includes(user?.role || '')) return true;
-    if (statusNum === 13 && ['consultant'].includes(user?.role || '')) return true;
-    if (statusNum === 9 && ['consultant', 'tl'].includes(user?.role || '')) return true;
-    // Standard sales rules
-    return ['consultant', 'psa'].includes(user?.role || '');
+    // Transitioning to stage 13 requires orders:create permission
+    if (statusNum === 13) {
+      return hasPermission('orders:create');
+    }
+    return true;
   });
 
   // Calculate Order Document uploads checkboxes checks
@@ -926,7 +1114,7 @@ export default function LeadDetailPage({
                 </button>
               )}
               
-              {lead.status >= 13 && hasPermission('orders:view') && (
+              {lead.order && (hasPermission('orders:view') || hasPermission('orders:create')) && (
                 <button
                   onClick={() => setActiveTab('order')}
                   className={`px-5 py-4 border-b-2 transition-all flex items-center justify-center gap-2 shrink-0 ${
@@ -1036,7 +1224,7 @@ export default function LeadDetailPage({
                     <form onSubmit={handleEditSubmit} className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs font-semibold text-slate-400 mb-1">Customer Name</label>
+                          <label className="block text-xs font-semibold text-slate-400 mb-1">Customer Name *</label>
                           <input
                             type="text"
                             required
@@ -1103,7 +1291,7 @@ export default function LeadDetailPage({
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold text-slate-400 mb-1">Pincode (optional)</label>
+                          <label className="block text-xs font-semibold text-slate-400 mb-1">Pincode</label>
                           <input
                             type="text"
                             value={editForm.pinCode}
@@ -1146,43 +1334,54 @@ export default function LeadDetailPage({
                         </div>
 
                         {/* Assignment Controls */}
-                        {hasPermission('leads:edit') && (['admin', 'director', 'sales_head', 'manager'].includes(user?.role || '') || (user?.role === 'tl' && !lead.tl)) && (
-                          <div>
-                            <label className="block text-xs font-semibold text-slate-400 mb-1">Assign to Team Leader</label>
-                            <select
-                              value={editForm.assignedTlId}
-                              onChange={(e) => {
-                                const newTlId = e.target.value;
-                                setEditForm({ ...editForm, assignedTlId: newTlId, assignedConsultantId: '' });
-                              }}
-                              className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500"
-                            >
-                              <option value="">Unassigned</option>
-                              {tls.map((tl) => (
-                                <option key={tl.id} value={tl.id}>
-                                  {tl.name}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        )}
-
-                        {hasPermission('leads:edit') && (['admin', 'director', 'sales_head', 'manager', 'tl'].includes(user?.role || '')) && (
-                          <div>
-                            <label className="block text-xs font-semibold text-slate-400 mb-1">Assign to Consultant</label>
-                            <select
-                              value={editForm.assignedConsultantId}
-                              onChange={(e) => setEditForm({ ...editForm, assignedConsultantId: e.target.value })}
-                              className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500"
-                            >
-                              <option value="">Unassigned</option>
-                              {(user?.role === 'tl' ? consultants.filter(c => c.reportsTo === user.id) : consultants).map((con) => (
-                                <option key={con.id} value={con.id}>
-                                  {con.name}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
+                        {hasPermission('leads:edit') && (
+                          <>
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-400 mb-1">Assign to Manager</label>
+                              <select
+                                value={editForm.assignedManagerId}
+                                onChange={(e) => setEditForm({ ...editForm, assignedManagerId: e.target.value })}
+                                className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500"
+                              >
+                                <option value="">Unassigned</option>
+                                {employees.map((emp) => (
+                                  <option key={emp.id} value={emp.id}>
+                                    {emp.name} ({emp.role.toUpperCase()})
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-400 mb-1">Assign to Team Leader</label>
+                              <select
+                                value={editForm.assignedTlId}
+                                onChange={(e) => setEditForm({ ...editForm, assignedTlId: e.target.value })}
+                                className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500"
+                              >
+                                <option value="">Unassigned</option>
+                                {employees.map((emp) => (
+                                  <option key={emp.id} value={emp.id}>
+                                    {emp.name} ({emp.role.toUpperCase()})
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-400 mb-1">Assign to Consultant</label>
+                              <select
+                                value={editForm.assignedConsultantId}
+                                onChange={(e) => setEditForm({ ...editForm, assignedConsultantId: e.target.value })}
+                                className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500"
+                              >
+                                <option value="">Unassigned</option>
+                                {employees.map((emp) => (
+                                  <option key={emp.id} value={emp.id}>
+                                    {emp.name} ({emp.role.toUpperCase()})
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </>
                         )}
                       </div>
 
@@ -1195,7 +1394,7 @@ export default function LeadDetailPage({
                         </button>
                         <button
                           type="button"
-                          onClick={() => setIsEditing(false)}
+                          onClick={handleCancelEdit}
                           className="py-2 px-4 bg-slate-900 border border-slate-800 text-slate-400 rounded-lg font-bold text-xs hover:text-white"
                         >
                           Cancel
@@ -1369,7 +1568,8 @@ export default function LeadDetailPage({
                                     {Math.floor(recordingElapsed / 60).toString().padStart(2, '0')}:
                                     {(recordingElapsed % 60).toString().padStart(2, '0')}
                                   </div>
-                                                          <div className="flex flex-col sm:flex-row flex-wrap gap-3 items-center w-full">
+                                </div>
+                                <div className="flex flex-col sm:flex-row flex-wrap gap-3 items-center w-full">
                                   {isRecording ? (
                                     <button
                                       type="button"
@@ -1412,7 +1612,7 @@ export default function LeadDetailPage({
                                       <span>Uploading audio file to server...</span>
                                     </div>
                                   )}
-                                </div>         </div>
+                                </div>
                               </div>
                             ) : null}
                           </div>
@@ -1457,16 +1657,18 @@ export default function LeadDetailPage({
                                 <span className="text-slate-500 uppercase tracking-wider font-semibold">Duration & Timing</span>
                                 <p className="text-sm text-white mt-1">
                                   <span className="font-bold text-amber-400">
-                                    {meet.meetingDurationSec
-                                      ? `${Math.floor(meet.meetingDurationSec / 60)}m ${meet.meetingDurationSec % 60}s`
+                                    {meet.meetingDurationSec !== null && meet.meetingDurationSec !== undefined
+                                      ? meet.meetingDurationSec >= 60
+                                        ? `${Math.floor(meet.meetingDurationSec / 60)}m ${meet.meetingDurationSec % 60}s`
+                                        : `${meet.meetingDurationSec}s`
                                       : 'Under 1 minute'}
                                   </span>
                                   <span className="block text-[9px] text-slate-500 mt-1">
-                                    Started: {new Date(meet.meetingStartedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                                    Started: {new Date(meet.meetingStartedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                                     {meet.meetingEndedAt && (
                                       <>
                                         {' | '}
-                                        Ended: {new Date(meet.meetingEndedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                                        Ended: {new Date(meet.meetingEndedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                                       </>
                                     )}
                                   </span>
@@ -1501,7 +1703,7 @@ export default function LeadDetailPage({
                       Order Punching details (Order Code: {lead.order.orderCode})
                     </h3>
                     
-                    {lead.order.status !== 'draft' && user?.role === 'consultant' ? (
+                    {isOrderFormLocked ? (
                       <div className="mb-6 p-4 rounded-xl bg-slate-950/40 border border-slate-850/80 text-slate-400 text-xs leading-normal flex items-start gap-2.5">
                         <Lock className="w-5 h-5 text-amber-500 shrink-0" />
                         <div>
@@ -1513,45 +1715,45 @@ export default function LeadDetailPage({
                     <form onSubmit={handleOrderDetailsSave} className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs font-semibold text-slate-400 mb-1">Electricity Connection Number</label>
+                          <label className="block text-xs font-semibold text-slate-400 mb-1">Electricity Connection Number *</label>
                           <input
                             type="text"
                             required
-                            disabled={lead.order.status !== 'draft' && user?.role === 'consultant'}
+                            disabled={isOrderFormDisabled}
                             value={orderForm.connectionNumber}
                             onChange={(e) => setOrderForm({ ...orderForm, connectionNumber: e.target.value })}
                             className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs disabled:opacity-50"
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold text-slate-400 mb-1">Proposed System Size (kW)</label>
+                          <label className="block text-xs font-semibold text-slate-400 mb-1">Proposed System Size (kW) *</label>
                           <input
                             type="number"
                             step="0.1"
                             required
-                            disabled={lead.order.status !== 'draft' && user?.role === 'consultant'}
+                            disabled={isOrderFormDisabled}
                             value={orderForm.systemSizeKw}
                             onChange={(e) => setOrderForm({ ...orderForm, systemSizeKw: e.target.value })}
                             className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs disabled:opacity-50"
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold text-slate-400 mb-1">Total System Value (₹)</label>
+                          <label className="block text-xs font-semibold text-slate-400 mb-1">Total System Value (₹) *</label>
                           <input
                             type="number"
                             required
-                            disabled={lead.order.status !== 'draft' && user?.role === 'consultant'}
+                            disabled={isOrderFormDisabled}
                             value={orderForm.totalValue}
                             onChange={(e) => setOrderForm({ ...orderForm, totalValue: e.target.value })}
                             className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs disabled:opacity-50"
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold text-slate-400 mb-1">Collected Down Payment (₹)</label>
+                          <label className="block text-xs font-semibold text-slate-400 mb-1">Collected Down Payment (₹) *</label>
                           <input
                             type="number"
                             required
-                            disabled={lead.order.status !== 'draft' && user?.role === 'consultant'}
+                            disabled={isOrderFormDisabled}
                             value={orderForm.downPayment}
                             onChange={(e) => setOrderForm({ ...orderForm, downPayment: e.target.value })}
                             className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs disabled:opacity-50"
@@ -1561,7 +1763,7 @@ export default function LeadDetailPage({
                           <label className="block text-xs font-semibold text-slate-400 mb-1">Transaction Method</label>
                           <select
                             value={orderForm.paymentMethod}
-                            disabled={lead.order.status !== 'draft' && user?.role === 'consultant'}
+                            disabled={isOrderFormDisabled}
                             onChange={(e) => setOrderForm({ ...orderForm, paymentMethod: e.target.value })}
                             className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs disabled:opacity-50"
                           >
@@ -1576,7 +1778,7 @@ export default function LeadDetailPage({
                           <label className="block text-xs font-semibold text-slate-400 mb-1">Transaction Reference</label>
                           <input
                             type="text"
-                            disabled={lead.order.status !== 'draft' && user?.role === 'consultant'}
+                            disabled={isOrderFormDisabled}
                             value={orderForm.transactionRef}
                             onChange={(e) => setOrderForm({ ...orderForm, transactionRef: e.target.value })}
                             placeholder="UPI Reference / Cheque ID / NEFT number"
@@ -1587,7 +1789,7 @@ export default function LeadDetailPage({
                           <label className="block text-xs font-semibold text-slate-400 mb-1">Remaining Payment Scheme</label>
                           <select
                             value={orderForm.remainingMethod}
-                            disabled={lead.order.status !== 'draft' && user?.role === 'consultant'}
+                            disabled={isOrderFormDisabled}
                             onChange={(e) => setOrderForm({ ...orderForm, remainingMethod: e.target.value })}
                             className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs disabled:opacity-50"
                           >
@@ -1600,7 +1802,7 @@ export default function LeadDetailPage({
                           <label className="block text-xs font-semibold text-slate-400 mb-1">Finance Provider (if applicable)</label>
                           <input
                             type="text"
-                            disabled={lead.order.status !== 'draft' && user?.role === 'consultant'}
+                            disabled={isOrderFormDisabled}
                             value={orderForm.financeProvider}
                             onChange={(e) => setOrderForm({ ...orderForm, financeProvider: e.target.value })}
                             placeholder="Bank / NBFC Name"
@@ -1611,7 +1813,7 @@ export default function LeadDetailPage({
                           <label className="block text-xs font-semibold text-slate-400 mb-1">Client Setup Type</label>
                           <select
                             value={orderForm.clientType}
-                            disabled={lead.order.status !== 'draft' && user?.role === 'consultant'}
+                            disabled={isOrderFormDisabled}
                             onChange={(e) => setOrderForm({ ...orderForm, clientType: e.target.value })}
                             className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs disabled:opacity-50"
                           >
@@ -1620,35 +1822,11 @@ export default function LeadDetailPage({
                             <option value="hybrid">Hybrid (Both)</option>
                           </select>
                         </div>
-                        <div className="flex items-center md:h-full md:mt-5 mt-2">
-                          <label className="flex items-center gap-2.5 cursor-pointer select-none text-xs font-semibold text-slate-350">
-                            <input
-                              type="checkbox"
-                              disabled={lead.order.status !== 'draft' && user?.role === 'consultant'}
-                              checked={orderForm.subsidyApplicable}
-                              onChange={(e) => setOrderForm({ ...orderForm, subsidyApplicable: e.target.checked })}
-                              className="w-4 h-4 bg-slate-950 border border-slate-800 rounded text-amber-500 focus:ring-0 focus:ring-offset-0 cursor-pointer"
-                            />
-                            <span>Government Subsidy Eligible?</span>
-                          </label>
-                        </div>
-                        {orderForm.subsidyApplicable && (
-                          <div>
-                            <label className="block text-xs font-semibold text-slate-400 mb-1">Subsidy Amount Claimable (₹)</label>
-                            <input
-                              type="number"
-                              disabled={lead.order.status !== 'draft' && user?.role === 'consultant'}
-                              value={orderForm.subsidyAmount}
-                              onChange={(e) => setOrderForm({ ...orderForm, subsidyAmount: e.target.value })}
-                              className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs disabled:opacity-50"
-                            />
-                          </div>
-                        )}
                         <div className="md:col-span-2">
                           <label className="block text-xs font-semibold text-slate-400 mb-1">Terrestrial/Structural Notes</label>
                           <textarea
                             value={orderForm.additionalNotes}
-                            disabled={lead.order.status !== 'draft' && user?.role === 'consultant'}
+                            disabled={isOrderFormDisabled}
                             onChange={(e) => setOrderForm({ ...orderForm, additionalNotes: e.target.value })}
                             className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs h-20 disabled:opacity-50"
                           />
@@ -1664,19 +1842,11 @@ export default function LeadDetailPage({
                               ₹ {(parseFloat(orderForm.totalValue) - parseFloat(orderForm.downPayment)).toLocaleString('en-IN')}
                             </span>
                           </div>
-                          {orderForm.subsidyApplicable && orderForm.subsidyAmount && (
-                            <div>
-                              <span className="text-slate-500">Net Cost to Client:</span>
-                              <span className="text-sm font-extrabold text-amber-400 ml-2">
-                                ₹ {(parseFloat(orderForm.totalValue) - parseFloat(orderForm.subsidyAmount)).toLocaleString('en-IN')}
-                              </span>
-                            </div>
-                          )}
                         </div>
                       )}
 
                       {/* Button */}
-                      {hasPermission('orders:create') && (lead.order.status === 'draft' || user?.role !== 'consultant') && (
+                      {!isOrderFormDisabled && (
                         <div className="border-t border-slate-800/80 pt-4">
                           <button
                             type="submit"
@@ -1724,15 +1894,30 @@ export default function LeadDetailPage({
 
                             <div className="mt-4">
                               {uploaded ? (
-                                <div className="flex flex-col gap-1 min-w-0">
-                                  <a
-                                    href={`/api/v1/orders/${lead.order?.id}/documents/${id}`}
-                                    target="_blank"
-                                    className="text-[10px] text-amber-400 hover:underline truncate font-semibold flex items-center gap-1"
-                                  >
-                                    <File className="w-3.5 h-3.5" />
-                                    <span>Download</span>
-                                  </a>
+                                <div className="flex flex-col gap-1.5 min-w-0">
+                                  <div className="flex items-center gap-3">
+                                    <a
+                                      href={`/api/v1/orders/${lead.order?.id}/documents/${id}`}
+                                      target="_blank"
+                                      className="text-[10px] text-amber-400 hover:underline truncate font-semibold flex items-center gap-1"
+                                    >
+                                      <File className="w-3.5 h-3.5" />
+                                      <span>Download</span>
+                                    </a>
+                                    {isImageFile(fileName) && (
+                                      <button
+                                        type="button"
+                                        onClick={() => setPreviewImage({
+                                          src: `/api/v1/orders/${lead.order?.id}/documents/${id}`,
+                                          title: `${item.label}: ${fileName}`
+                                        })}
+                                        className="text-[10px] text-amber-500 hover:underline font-semibold flex items-center gap-1 cursor-pointer bg-transparent border-none p-0 focus:outline-none"
+                                      >
+                                        <Eye className="w-3.5 h-3.5" />
+                                        <span>Preview</span>
+                                      </button>
+                                    )}
+                                  </div>
                                   <span className="text-[9px] text-slate-500 truncate">{fileName}</span>
                                 </div>
                               ) : (
@@ -1741,7 +1926,7 @@ export default function LeadDetailPage({
                             </div>
 
                             {/* Upload trigger */}
-                            {hasPermission('orders:create') && (lead.order?.status === 'draft' || user?.role !== 'consultant') && (
+                            {!isOrderFormDisabled && (
                               <div className="mt-2 flex items-center gap-3">
                                 <label className="cursor-pointer text-[10px] font-bold text-amber-500 hover:text-amber-400 transition-all flex items-center gap-1.5 w-fit">
                                   {uploadingDoc === item.type ? (
@@ -1814,7 +1999,21 @@ export default function LeadDetailPage({
             </h3>
 
             {/* Allowed stage dropdown or locked notification */}
-            {roleFilteredNextStages.length === 0 ? (
+            {lead.status === 9 ? (
+              <div className="space-y-3">
+                <p className="text-xs text-slate-400 leading-normal">
+                  The site meeting has been completed. Please document the client's final outcome to advance the lead.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowFormC(true)}
+                  className="w-full py-2.5 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 rounded-lg font-bold text-xs shadow-md shadow-emerald-500/10 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <Sun className="w-4 h-4" />
+                  <span>Document Meeting Outcome</span>
+                </button>
+              </div>
+            ) : roleFilteredNextStages.length === 0 ? (
               <div className="p-4 bg-slate-950/40 border border-slate-850/80 rounded-xl text-slate-500 text-xs italic text-center">
                 This lead has reached a terminal stage ({stageBadge.name}) or you do not have permissions to trigger transitions.
               </div>
@@ -1856,7 +2055,7 @@ export default function LeadDetailPage({
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-semibold text-slate-400 mb-1">Follow-Up Date & Time</label>
+                      <label className="block text-[10px] font-semibold text-slate-400 mb-1">Follow-Up Date & Time *</label>
                       <input
                         type="datetime-local"
                         required
@@ -1871,7 +2070,7 @@ export default function LeadDetailPage({
                 {/* Conditional Fields: Stage 5 (Call Later) details */}
                 {parseInt(newStatus, 10) === 5 && (
                   <div className="p-3 bg-slate-950/40 border border-slate-850 rounded-lg animate-fade-in">
-                    <label className="block text-[10px] font-semibold text-slate-400 mb-1">Call Back Date & Time</label>
+                    <label className="block text-[10px] font-semibold text-slate-400 mb-1">Call Back Date & Time *</label>
                     <input
                       type="datetime-local"
                       required
@@ -1903,7 +2102,7 @@ export default function LeadDetailPage({
 
                 {/* Mandatory Remark */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-2">Remarks / Summary of Interaction</label>
+                  <label className="block text-xs font-semibold text-slate-400 mb-2">Remarks / Summary of Interaction *</label>
                   <textarea
                     required
                     value={statusRemark}
@@ -1932,7 +2131,7 @@ export default function LeadDetailPage({
           <div className="w-full max-w-xl bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
             <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
               <h3 className="text-sm font-bold uppercase tracking-wider text-white">Form B: Schedule Meeting / Site Visit</h3>
-              <button onClick={() => setShowFormB(false)} className="text-slate-400 hover:text-white">
+              <button onClick={handleCancelFormB} className="text-slate-400 hover:text-white">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1940,7 +2139,7 @@ export default function LeadDetailPage({
             <form onSubmit={handleFormBSubmit} className="p-6 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Meeting Date</label>
+                  <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Meeting Date *</label>
                   <input
                     type="date"
                     required
@@ -1950,7 +2149,7 @@ export default function LeadDetailPage({
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Meeting Time</label>
+                  <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Meeting Time *</label>
                   <input
                     type="time"
                     required
@@ -1960,7 +2159,7 @@ export default function LeadDetailPage({
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Average Monthly Bill (₹)</label>
+                  <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Average Monthly Bill (₹) *</label>
                   <input
                     type="number"
                     required
@@ -1982,7 +2181,7 @@ export default function LeadDetailPage({
                   </select>
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Visit Full Address</label>
+                  <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Visit Full Address *</label>
                   <textarea
                     required
                     value={formBData.address}
@@ -1991,7 +2190,7 @@ export default function LeadDetailPage({
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">City Pincode</label>
+                  <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">City Pincode *</label>
                   <input
                     type="text"
                     required
@@ -2001,7 +2200,7 @@ export default function LeadDetailPage({
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Contact Mobile</label>
+                  <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Contact Mobile *</label>
                   <input
                     type="text"
                     required
@@ -2024,7 +2223,7 @@ export default function LeadDetailPage({
               <div className="flex gap-3 border-t border-slate-800/80 pt-4 justify-end">
                 <button
                   type="button"
-                  onClick={() => setShowFormB(false)}
+                  onClick={handleCancelFormB}
                   className="py-2 px-4 bg-slate-900 border border-slate-800 text-slate-400 rounded-lg font-bold text-xs"
                 >
                   Cancel
@@ -2048,7 +2247,7 @@ export default function LeadDetailPage({
           <div className="w-full max-w-lg bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
             <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
               <h3 className="text-sm font-bold uppercase tracking-wider text-white">Form C: Document Meeting Outcome</h3>
-              <button onClick={() => setShowFormC(false)} className="text-slate-400 hover:text-white">
+              <button onClick={handleCancelFormC} className="text-slate-400 hover:text-white">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -2083,7 +2282,7 @@ export default function LeadDetailPage({
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-semibold text-slate-450 mb-1">Follow-Up Date & Time</label>
+                    <label className="block text-[10px] font-semibold text-slate-455 mb-1">Follow-Up Date & Time *</label>
                     <input
                       type="datetime-local"
                       required
@@ -2113,7 +2312,7 @@ export default function LeadDetailPage({
 
               {/* Remarks */}
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-2">Remarks / Meeting Summary</label>
+                <label className="block text-xs font-semibold text-slate-400 mb-2">Remarks / Meeting Summary *</label>
                 <textarea
                   required
                   value={formCRemark}
@@ -2126,7 +2325,7 @@ export default function LeadDetailPage({
               <div className="flex gap-3 border-t border-slate-800/80 pt-4 justify-end">
                 <button
                   type="button"
-                  onClick={() => setShowFormC(false)}
+                  onClick={handleCancelFormC}
                   className="py-2 px-4 bg-slate-900 border border-slate-800 text-slate-400 rounded-lg font-bold text-xs"
                 >
                   Cancel
@@ -2139,6 +2338,39 @@ export default function LeadDetailPage({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Photo Lightbox Modal */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[999] animate-fade-in"
+          onClick={() => setPreviewImage(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setPreviewImage(null)}
+            className="absolute top-4 right-4 p-2 rounded-full bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800/80 transition-all cursor-pointer shadow-lg z-[1000]"
+            title="Close Preview"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          
+          <div
+            className="relative max-w-4xl max-h-[85vh] overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl flex flex-col items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={previewImage.src}
+              alt={previewImage.title}
+              className="max-w-full max-h-[80vh] object-contain rounded-t-2xl"
+            />
+            {previewImage.title && (
+              <div className="w-full bg-slate-900/80 backdrop-blur-sm border-t border-slate-800/60 p-3 text-xs font-semibold text-slate-300 text-center tracking-wide rounded-b-2xl">
+                {previewImage.title}
+              </div>
+            )}
           </div>
         </div>
       )}

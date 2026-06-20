@@ -23,7 +23,11 @@ export async function GET(req: Request) {
 
     const where: any = {};
     if (roleParam) {
-      where.role = roleParam;
+      if (roleParam.includes(',')) {
+        where.role = { in: roleParam.split(',') };
+      } else {
+        where.role = roleParam;
+      }
     }
 
     const isAdminOrDirectorOrSalesHead = userPermissions.includes('team:manage');
@@ -121,6 +125,22 @@ export async function POST(req: Request) {
 
     if (!name || !email || !employeeId || !role || !password) {
       return NextResponse.json({ success: false, message: 'Missing required user fields.' }, { status: 400 });
+    }
+
+    // Check single admin constraint
+    const targetRoleLower = role.toLowerCase();
+    if (targetRoleLower === 'admin' || targetRoleLower.startsWith('admin:')) {
+      const existingAdmin = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { role: 'admin' },
+            { role: { startsWith: 'admin:' } }
+          ]
+        }
+      });
+      if (existingAdmin) {
+        return NextResponse.json({ success: false, message: 'An Admin user already exists. There can only be one Admin in the system.' }, { status: 400 });
+      }
     }
 
     // Check duplicate email

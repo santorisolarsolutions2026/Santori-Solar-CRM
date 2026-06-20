@@ -21,6 +21,7 @@ export default function NewLeadPage() {
     city: '',
     state: '',
     leadSource: 'whatsapp',
+    assignedManagerId: '',
     assignedTlId: '',
     assignedConsultantId: '',
     notes: '',
@@ -33,31 +34,45 @@ export default function NewLeadPage() {
   const [duplicateWarning, setDuplicateWarning] = useState('');
   const [showOverride, setShowOverride] = useState(false);
   const [overrideDuplicate, setOverrideDuplicate] = useState(false);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
-  // List of Team Leaders and Consultants for selectors
-  const [tls, setTls] = useState<{ id: number; name: string }[]>([]);
-  const [consultants, setConsultants] = useState<{ id: number; name: string }[]>([]);
+  // List of active employees for allocation selectors
+  const [employees, setEmployees] = useState<{ id: number; name: string; role: string }[]>([]);
+
+  // Load draft from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedDraft = localStorage.getItem('solar_crm_new_lead_draft');
+      if (savedDraft) {
+        try {
+          const parsed = JSON.parse(savedDraft);
+          setForm((prev) => ({
+            ...prev,
+            ...parsed,
+          }));
+        } catch (e) {
+          console.error('Error parsing lead draft:', e);
+        }
+      }
+      setIsDataLoaded(true);
+    }
+  }, []);
+
+  // Save form changes to localStorage
+  useEffect(() => {
+    if (isDataLoaded && typeof window !== 'undefined') {
+      localStorage.setItem('solar_crm_new_lead_draft', JSON.stringify(form));
+    }
+  }, [form, isDataLoaded]);
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const [tlsRes, consRes, adminRes] = await Promise.all([
-          fetch('/api/v1/users?role=tl'),
-          fetch('/api/v1/users?role=consultant'),
-          fetch('/api/v1/users?role=admin'),
-        ]);
-
-        const tlsData = await tlsRes.json();
-        const consData = await consRes.json();
-        const adminData = await adminRes.json();
-
-        const admins = adminData.success ? adminData.data : [];
-
-        if (tlsData.success) {
-          setTls([...tlsData.data, ...admins]);
-        }
-        if (consData.success) {
-          setConsultants([...consData.data, ...admins]);
+        const res = await fetch('/api/v1/users');
+        const data = await res.json();
+        if (data.success) {
+          const activeEmployees = data.data.filter((u: any) => u.isActive);
+          setEmployees(activeEmployees);
         }
       } catch (err) {
         console.error(err);
@@ -145,6 +160,9 @@ export default function NewLeadPage() {
 
       const data = await res.json();
       if (data.success && data.data) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('solar_crm_new_lead_draft');
+        }
         alert('Lead added successfully!');
         router.push(`/leads/${data.data.id}`);
       } else {
@@ -183,7 +201,7 @@ export default function NewLeadPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                Customer Full Name
+                Customer Full Name *
               </label>
               <input
                 type="text"
@@ -196,7 +214,7 @@ export default function NewLeadPage() {
             </div>
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                Mobile Number
+                Mobile Number *
               </label>
               <div className="relative">
                 <input
@@ -244,7 +262,7 @@ export default function NewLeadPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                Alternate Mobile (optional)
+                Alternate Mobile
               </label>
               <input
                 type="text"
@@ -308,7 +326,7 @@ export default function NewLeadPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                DisCom Name (optional)
+                DisCom Name
               </label>
               <input
                 type="text"
@@ -320,7 +338,7 @@ export default function NewLeadPage() {
             </div>
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                Connection Number (optional)
+                Connection Number
               </label>
               <input
                 type="text"
@@ -349,7 +367,7 @@ export default function NewLeadPage() {
               </div>
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                  Pincode (optional)
+                  Pincode
                 </label>
                 <input
                   type="text"
@@ -361,7 +379,7 @@ export default function NewLeadPage() {
               </div>
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                  City (optional)
+                  City
                 </label>
                 <input
                   type="text"
@@ -372,7 +390,7 @@ export default function NewLeadPage() {
               </div>
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                  State (optional)
+                  State
                 </label>
                 <input
                   type="text"
@@ -387,10 +405,27 @@ export default function NewLeadPage() {
           {/* Optional Initial Assignments (Manager / TL roles can assign) */}
           <div className="space-y-4 border-t border-slate-800/80 pt-6">
             <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400">Team Allocation</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                  Assign to TL (optional)
+                  Assign to Manager
+                </label>
+                <select
+                  value={form.assignedManagerId}
+                  onChange={(e) => setForm({ ...form, assignedManagerId: e.target.value })}
+                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-350 text-xs focus:ring-amber-500"
+                >
+                  <option value="">Select Manager</option>
+                  {employees.map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.name} ({emp.role.toUpperCase()})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                  Assign to TL
                 </label>
                 <select
                   value={form.assignedTlId}
@@ -398,16 +433,16 @@ export default function NewLeadPage() {
                   className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-350 text-xs focus:ring-amber-500"
                 >
                   <option value="">Select Team Leader</option>
-                  {tls.map((tl) => (
-                    <option key={tl.id} value={tl.id}>
-                      {tl.name}
+                  {employees.map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.name} ({emp.role.toUpperCase()})
                     </option>
                   ))}
                 </select>
               </div>
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                  Assign to Consultant (optional)
+                  Assign to Consultant
                 </label>
                 <select
                   value={form.assignedConsultantId}
@@ -415,9 +450,9 @@ export default function NewLeadPage() {
                   className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-350 text-xs focus:ring-amber-500"
                 >
                   <option value="">Select Consultant</option>
-                  {consultants.map((con) => (
-                    <option key={con.id} value={con.id}>
-                      {con.name}
+                  {employees.map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.name} ({emp.role.toUpperCase()})
                     </option>
                   ))}
                 </select>

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getAuthenticatedUser } from '@/lib/auth';
+import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -15,9 +15,9 @@ export async function GET(
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
-    const allowedRoles = ['admin', 'director', 'sales_head', 'finance', 'operations', 'consultant'];
-    if (!allowedRoles.includes(userPayload.role)) {
-      return NextResponse.json({ success: false, message: 'Forbidden.' }, { status: 403 });
+    const userPermissions = await getUserPermissions(userPayload.id);
+    if (!userPermissions.includes('orders:view')) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view orders.' }, { status: 403 });
     }
 
     const { id } = await params;
@@ -61,9 +61,9 @@ export async function POST(
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
-    const allowedRoles = ['admin', 'director', 'sales_head', 'operations'];
-    if (!allowedRoles.includes(userPayload.role)) {
-      return NextResponse.json({ success: false, message: 'Forbidden.' }, { status: 403 });
+    const userPermissions = await getUserPermissions(userPayload.id);
+    if (!userPermissions.includes('orders:submit_installation')) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to submit installations.' }, { status: 403 });
     }
 
     const { id } = await params;

@@ -1,0 +1,98 @@
+========================================= 
+  CHRONOLOGICAL LIST OF USER PROMPTS 
+========================================= 
+
+Prompt #1 (Date: 2026-06-20T04:46:26Z):
+-----------------------------------------
+I feel that when the access levels is made to be flexible by admin, it is feeling some issues:
+1. Names of access levels (in the checkbox) is not clear enough. 
+2. I am getting forbidden as localhost:3000 says forbidden when I am trying to u[pload installation process. At some place I was getting that there cannot be transition from stage 9 to stage 9. 
+3. I am getting many issues like that. Can you please make it user friendly
+
+Prompt #2 (Date: 2026-06-20T04:50:16Z):
+-----------------------------------------
+okk go on
+
+Prompt #3 (Date: 2026-06-20T05:00:06Z):
+-----------------------------------------
+Once a new lead is added and all of its process is done like till the end of installed panel photo, it gets invisible from the leads pipeline and orders queue.
+
+Prompt #4 (Date: 2026-06-20T05:01:54Z):
+-----------------------------------------
+In the all order statuses I should see all the orders na?
+
+Prompt #5 (Date: 2026-06-20T05:03:30Z):
+-----------------------------------------
+Is there any way, you can define the access level in a more simple nd beautiful UI for making it much user friendly please?
+
+Prompt #6 (Date: 2026-06-20T05:07:09Z):
+-----------------------------------------
+1. Remove the quick testing login credentials from login page now. 
+2. In the recording button, it is not taking the complete line for recording - UI Issue
+3.In order punching form, it is given the tick box of subsidy to be applied - remove that. And subsidy part would be added later on by the once all the remaining payment is done. And then subsidy is applied and then the consumer will get the subsidy amount. For now just remove it.
+
+Prompt #7 (Date: 2026-06-20T05:27:09Z):
+-----------------------------------------
+Even after booking a meeting for a new lead, it is showing no meeting booked and in the meeting book form, the 5 digits of the mobile number in the last is XXXXX
+
+Prompt #8 (Date: 2026-06-20T07:08:31Z):
+-----------------------------------------
+Now see what I want, if I give access to someone for something, he should get exactly the same thing irrespective of what his designation is. Even if he is a psa consultant, he should not get masked information at all. 
+Further, if he is allowed to convert leads to orders, why I am not seeing the order punching form from his portal. 
+
+Rectify all issues like this
+
+Prompt #9 (Date: 2026-06-20T07:17:40Z):
+-----------------------------------------
+1. In the new lead addition, the options to chose consultants and tl should not depend on the designation. It should give all employess options. But before that, let me  know is it a good thing to do?
+
+2. I want even if the page is reloaded the form should not lose its filled data. 
+
+3. In new lead or edit lead option, there should be an option to assign manager too.
+
+4. I want that if I click on any uploaded photo on the portal, it should open large for eample the installed solar photo
+
+Prompt #10 (Date: 2026-06-20T07:29:13Z):
+-----------------------------------------
+1. Admin cannot be deactivated even if another persn with the access to deactivate other people tries to, admin cannot be deactivated at any cost. 
+
+2. There will always be 1 admin only. 
+
+3. Instead of writing optional in forms, add an asterick in front of those compulsory and no asterick which is optional
+
+Prompt #11 (Date: 2026-06-20T07:31:34Z):
+-----------------------------------------
+yess go on
+
+Prompt #12 (Date: 2026-06-20T07:52:47Z):
+-----------------------------------------
+Duration & Timing
+Under 1 minute
+Started: 01:20 pm
+
+What is the need?
+I want exact timeline of tht audio line and the time to be noted too.
+
+Prompt #13 (Date: 2026-06-20T07:57:47Z):
+-----------------------------------------
+You see that the audio is just of 6 seconds, still it showds 50 seconds and in the audio line it shows that 50secondd and it stops at 6 seconds only. Rectify it
+
+Prompt #14 (Date: 2026-06-20T08:03:04Z):
+-----------------------------------------
+1. If there is the connection number entered in the new lead form, it should automatically reflect in the order punching form. 
+
+2. If I reload the page, the details entered inthe opened form should not be all cleared.
+
+Prompt #15 (Date: 2026-06-20T08:13:06Z):
+-----------------------------------------
+Missing required Form B fields.
+This is what I am getting even if the form is completely filled
+
+Prompt #16 (Date: 2026-06-20T10:29:04Z):
+-----------------------------------------
+The changes you did in this chat seems to be missing out. Idk why. Can you look for all the changes you did in this chat and look into the original directory and do the changes there
+
+Prompt #17 (Date: 2026-06-20T10:45:43Z):
+-----------------------------------------
+Can you give me a text document with all the prompts in this chat?
+

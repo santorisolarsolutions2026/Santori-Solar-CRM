@@ -38,10 +38,20 @@ export async function GET(req: Request) {
 
     const skip = (page - 1) * limit;
 
-    // Define base query conditions (enforce isActive: true to support soft delete / deactivation)
-    const andConditions: Prisma.LeadWhereInput[] = [
-      { isActive: true }
-    ];
+    let hasInactiveStatusFilter = false;
+    let filteredStatuses: number[] = [];
+    if (statusParam) {
+      filteredStatuses = statusParam.split(',').map((s) => parseInt(s, 10)).filter((n) => !isNaN(n));
+      if (filteredStatuses.some(s => [4, 6, 12].includes(s))) {
+        hasInactiveStatusFilter = true;
+      }
+    }
+
+    // Define base query conditions (enforce isActive: true to support soft delete / deactivation unless filtering by inactive stage)
+    const andConditions: Prisma.LeadWhereInput[] = [];
+    if (!hasInactiveStatusFilter) {
+      andConditions.push({ isActive: true });
+    }
 
     const hasViewAll = userPermissions.includes('leads:view_all');
 
@@ -54,7 +64,7 @@ export async function GET(req: Request) {
             { assignedTlId: null, assignedConsultantId: null }
           ]
         });
-      } else if (userPayload.role === 'tl') {
+      } else if (['tl', 'psa_tl'].includes(userPayload.role)) {
         andConditions.push({
           OR: [
             { assignedTlId: userPayload.id },
@@ -64,19 +74,32 @@ export async function GET(req: Request) {
       } else if (userPayload.role === 'consultant' || userPayload.role === 'psa') {
         andConditions.push({ assignedConsultantId: userPayload.id });
       } else if (userPayload.role === 'finance') {
-        // Finance sees only leads at Stage 13+ (Sale Done)
-        andConditions.push({ status: { in: [13] } });
+        // Finance sees only leads at Stage 13+ (Sale Done) by default
+        if (filteredStatuses.length === 0) {
+          andConditions.push({ status: { in: [13] } });
+        }
       } else if (userPayload.role === 'operations') {
-        // Operations sees only leads with orders processed by finance
-        andConditions.push({
-          status: 13,
-          order: {
-            status: { in: ['finance_verified', 'ops_assigned', 'completed'] },
-          }
-        });
+        // Operations sees only leads with orders processed by finance by default
+        if (filteredStatuses.length === 0) {
+          andConditions.push({
+            status: 13,
+            order: {
+              status: { in: ['finance_verified', 'ops_assigned', 'completed'] },
+            }
+          });
+        } else {
+          // If they filtered by status, they still only see leads with orders
+          andConditions.push({
+            order: { isNot: null }
+          });
+        }
       } else {
         // Fallback for role without view_all permission
-        andConditions.push({ assignedConsultantId: userPayload.id });
+        if (['admin', 'director', 'sales_head'].includes(userPayload.role)) {
+          // Administrative roles can view all leads even without view_all permission
+        } else {
+          andConditions.push({ assignedConsultantId: userPayload.id });
+        }
       }
     }
 
@@ -91,26 +114,8 @@ export async function GET(req: Request) {
       });
     }
 
-    if (statusParam) {
-      const statuses = statusParam.split(',').map((s) => parseInt(s, 10)).filter((n) => !isNaN(n));
-      if (statuses.length > 0) {
-        andConditions.push({ status: { in: statuses } });
-      }
-    } else {
-      // Exclude Stage 13 (SALE DONE) leads where order status is completed and has completed installation photos
-      andConditions.push({
-        NOT: {
-          status: 13,
-          order: {
-            status: 'completed',
-            installationImages: {
-              some: {
-                status: 'completed'
-              }
-            }
-          }
-        }
-      });
+    if (filteredStatuses.length > 0) {
+      andConditions.push({ status: { in: filteredStatuses } });
     }
 
     if (city) {
@@ -179,24 +184,10 @@ export async function GET(req: Request) {
       }),
     ]);
 
-    // Enforce data masking for PSA
-    const isPSA = userPayload.role === 'psa';
-    const processedLeads = leads.map((lead) => {
-      if (isPSA && lead.mobile) {
-        return {
-          ...lead,
-          mobile: lead.mobile.substring(0, 5) + 'XXXXX',
-          mobileAlt: lead.mobileAlt ? lead.mobileAlt.substring(0, 5) + 'XXXXX' : null,
-          address: '[Masked for PSA]',
-        };
-      }
-      return lead;
-    });
-
     return NextResponse.json({
       success: true,
       data: {
-        leads: processedLeads,
+        leads: leads,
         pagination: {
           total,
           page,
@@ -240,6 +231,7 @@ export async function POST(req: Request) {
       leadSource,
       assignedTlId,
       assignedConsultantId,
+      assignedManagerId,
       notes,
       overrideDuplicate,
       discomName,
@@ -292,7 +284,7 @@ export async function POST(req: Request) {
 
     if (userPayload.role === 'manager') {
       managerId = userPayload.id;
-    } else if (userPayload.role === 'tl') {
+    } else if (['tl', 'psa_tl'].includes(userPayload.role)) {
       tlId = userPayload.id;
       // Get manager who supervises this TL
       const tlUser = await prisma.user.findUnique({
@@ -302,17 +294,17 @@ export async function POST(req: Request) {
       managerId = tlUser?.reportsTo || null;
     }
 
-    // If consultant is assigned, ensure we set TL and manager hierarchy correctly
+    // Resolve assignments hierarchy
     let finalConsultantId = assignedConsultantId ? parseInt(assignedConsultantId, 10) : null;
     let finalTlId = assignedTlId ? parseInt(assignedTlId, 10) : tlId;
-    let finalManagerId = managerId;
+    let finalManagerId = assignedManagerId ? parseInt(assignedManagerId, 10) : managerId;
 
-    if (finalConsultantId) {
+    if (finalConsultantId && !assignedTlId && !assignedManagerId) {
+      // Auto-resolve if consultant is assigned and TL/Manager are not explicitly chosen
       const consUser = await prisma.user.findUnique({
         where: { id: finalConsultantId },
         select: { reportsTo: true },
       });
-      // Reports to TL
       if (consUser?.reportsTo) {
         finalTlId = consUser.reportsTo;
         const tlUser = await prisma.user.findUnique({
@@ -321,10 +313,17 @@ export async function POST(req: Request) {
         });
         finalManagerId = tlUser?.reportsTo || null;
       }
+    } else if (finalTlId && !assignedManagerId) {
+      // Auto-resolve if TL is assigned and Manager is not explicitly chosen
+      const tlUser = await prisma.user.findUnique({
+        where: { id: finalTlId },
+        select: { reportsTo: true },
+      });
+      finalManagerId = tlUser?.reportsTo || null;
     }
 
     const leadCode = await generateLeadCode();
-    const statusToSet = (finalTlId || finalConsultantId) ? 1 : 0;
+    const statusToSet = (finalTlId || finalConsultantId || finalManagerId) ? 1 : 0;
 
     // Create lead inside a database transaction
     const lead = await prisma.$transaction(async (tx) => {

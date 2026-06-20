@@ -116,7 +116,42 @@ export async function PATCH(
 
     const body = await req.json();
     const { name, email, phone, employeeId, role, reportsTo, isActive, joiningDate, photograph, permissions, password } = body;
-    
+
+    const isTargetAdmin = user.role.toLowerCase() === 'admin' || user.role.toLowerCase().startsWith('admin:');
+
+    // 1. Safeguard existing admin user
+    if (isTargetAdmin) {
+      // Cannot deactivate the admin
+      if (isActive !== undefined && !isActive) {
+        return NextResponse.json({ success: false, message: 'The Admin user cannot be deactivated.' }, { status: 400 });
+      }
+      // Cannot change admin's role to something else
+      if (role !== undefined) {
+        const targetRoleLower = role.toLowerCase();
+        if (targetRoleLower !== 'admin' && !targetRoleLower.startsWith('admin:')) {
+          return NextResponse.json({ success: false, message: 'Cannot modify the role of the Admin user. There must always be exactly one Admin.' }, { status: 400 });
+        }
+      }
+    }
+
+    // 2. Safeguard against promoting another user to admin
+    if (!isTargetAdmin && role !== undefined) {
+      const targetRoleLower = role.toLowerCase();
+      if (targetRoleLower === 'admin' || targetRoleLower.startsWith('admin:')) {
+        const existingAdmin = await prisma.user.findFirst({
+          where: {
+            OR: [
+              { role: 'admin' },
+              { role: { startsWith: 'admin:' } }
+            ]
+          }
+        });
+        if (existingAdmin) {
+          return NextResponse.json({ success: false, message: 'An Admin user already exists. There can only be one Admin in the system.' }, { status: 400 });
+        }
+      }
+    }
+
     // Self-update validation (can only update phone and photograph)
     if (isSelf && !isAdminOrDirectorOrSalesHead) {
       const keys = Object.keys(body);
@@ -313,6 +348,11 @@ export async function DELETE(
 
     if (!targetUser) {
       return NextResponse.json({ success: false, message: 'User not found.' }, { status: 404 });
+    }
+
+    const isTargetAdmin = targetUser.role.toLowerCase() === 'admin' || targetUser.role.toLowerCase().startsWith('admin:');
+    if (isTargetAdmin) {
+      return NextResponse.json({ success: false, message: 'The Admin user cannot be deleted.' }, { status: 400 });
     }
 
     // Enforce that user must be deactivated before deletion
