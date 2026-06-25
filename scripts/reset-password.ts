@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../src/lib/db';
 import bcrypt from 'bcryptjs';
 
 async function main() {
@@ -18,7 +18,6 @@ async function main() {
     process.exit(1);
   }
 
-  const prisma = new PrismaClient();
 
   try {
     const user = await prisma.user.findUnique({
