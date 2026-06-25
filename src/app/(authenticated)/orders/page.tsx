@@ -442,7 +442,7 @@ export default function OrdersPage() {
                               className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 font-semibold text-xs flex items-center gap-1 cursor-pointer"
                               title="Upload/View Completed Photos"
                             >
-                              Photos
+                              {(!order.installationImages || order.installationImages.filter((img) => img.status === 'completed').length === 0) ? 'Add Photos' : 'Photos'}
                             </button>
                           )}
                         </div>

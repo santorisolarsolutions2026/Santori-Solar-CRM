@@ -984,7 +984,7 @@ export default function TeamManagementPage() {
       {/* Add User Modal Dialog */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="w-full max-w-lg bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+          <div className="w-full max-w-3xl bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
             <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
               <h3 className="text-sm font-bold uppercase tracking-wider text-white">Register New Team Member</h3>
               <button onClick={closeAddModal} className="text-slate-400 hover:text-white cursor-pointer">
@@ -1210,7 +1210,7 @@ export default function TeamManagementPage() {
       {/* View User Modal Dialog / Edit Own Profile Modal */}
       {selectedMember && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="w-full max-w-lg bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+          <div className="w-full max-w-4xl bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
             <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
               <h3 className="text-sm font-bold uppercase tracking-wider text-white">
                 {selectedMember.id === user?.id ? 'My profile settings' : 'Team Member Profile'}
@@ -1581,12 +1581,10 @@ export default function TeamManagementPage() {
                                 return (
                                   <label 
                                     key={perm.key} 
-                                    className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer select-none transition-all duration-200 hover:-translate-y-[1px] ${
+                                    className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer select-none transition-all duration-200 hover:-translate-y-[0.5px] ${
                                       isChecked 
-                                        ? isDangerous
-                                          ? 'bg-rose-500/[0.02] border-rose-500/25 hover:bg-rose-500/[0.04]'
-                                          : 'bg-amber-500/[0.02] border-amber-500/20 hover:bg-amber-500/[0.04]'
-                                        : 'bg-slate-950/20 border-slate-900 hover:border-slate-800 hover:bg-slate-900/40'
+                                        ? 'bg-amber-500/[0.03] border-amber-500/30 shadow-sm shadow-amber-500/5'
+                                        : 'bg-slate-950/40 border-slate-850 hover:border-slate-800 hover:bg-slate-900/10'
                                     }`}
                                   >
                                     {/* Beautiful Custom Toggle Switch */}
@@ -1605,8 +1603,8 @@ export default function TeamManagementPage() {
                                       />
                                       <div className={`w-8 h-4.5 rounded-full transition-colors duration-200 ease-in-out ${
                                         isChecked 
-                                          ? isDangerous ? 'bg-rose-500' : 'bg-amber-500' 
-                                          : 'bg-slate-800 border border-slate-700'
+                                          ? 'bg-amber-500' 
+                                          : 'bg-slate-800 border border-slate-750'
                                       }`} />
                                       <div className={`absolute top-0.75 left-0.75 w-3 h-3 rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${
                                         isChecked ? 'translate-x-3.5' : 'translate-x-0'
@@ -1614,11 +1612,11 @@ export default function TeamManagementPage() {
                                     </div>
                                     <div className="flex flex-col min-w-0">
                                       <div className="flex items-center gap-2 flex-wrap">
-                                        <span className={`text-[11px] font-bold transition-colors ${isChecked ? 'text-white' : 'text-slate-300'}`}>
+                                        <span className={`text-[11px] font-bold transition-colors ${isChecked ? 'text-white' : 'text-slate-350'}`}>
                                           {perm.label}
                                         </span>
                                         {isDangerous && (
-                                          <span className="text-[8px] bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-full px-1.5 py-0.25 font-bold uppercase tracking-wider">
+                                          <span className="text-[8px] bg-slate-800 text-slate-400 border border-slate-700/60 rounded-full px-1.5 py-0.25 font-bold uppercase tracking-wider">
                                             Admin
                                           </span>
                                         )}
@@ -1751,6 +1749,10 @@ export default function TeamManagementPage() {
                   {isAdminOrDirectorOrSalesHead ? (
                     <>
                       <div>
+                        <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Employee ID</span>
+                        <span className="text-white font-mono">{selectedMember.employeeId || <span className="text-slate-650 italic">None</span>}</span>
+                      </div>
+                      <div>
                         <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Email Address</span>
                         <span className="text-white font-mono">{selectedMember.email}</span>
                       </div>
@@ -1772,7 +1774,7 @@ export default function TeamManagementPage() {
                           {selectedMember.isActive ? 'Active' : 'Deactivated'}
                         </span>
                       </div>
-                      <div className="col-span-2">
+                      <div>
                         <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Years in Company</span>
                         <span className="text-white">{calculateYearsInCompany(selectedMember.joiningDate)}</span>
                       </div>
@@ -1780,10 +1782,14 @@ export default function TeamManagementPage() {
                   ) : (
                     <>
                       <div>
+                        <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Employee ID</span>
+                        <span className="text-white font-mono">{selectedMember.employeeId || <span className="text-slate-650 italic">None</span>}</span>
+                      </div>
+                      <div>
                         <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Designation</span>
                         <span className="text-white capitalize">{getRoleLabel(selectedMember.role)}</span>
                       </div>
-                      <div>
+                      <div className="col-span-2">
                         <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Years in Company</span>
                         <span className="text-white">{calculateYearsInCompany(selectedMember.joiningDate)}</span>
                       </div>

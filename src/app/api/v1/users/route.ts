@@ -14,8 +14,15 @@ export async function GET(req: Request) {
     }
 
     const userPermissions = await getUserPermissions(userPayload.id);
-    if (!userPermissions.includes('team:view')) {
-      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view the team directory.' }, { status: 403 });
+    const hasAccess = userPermissions.includes('team:view') ||
+                      userPermissions.includes('leads:view') ||
+                      userPermissions.includes('leads:create') ||
+                      userPermissions.includes('leads:edit') ||
+                      userPermissions.includes('orders:view') ||
+                      userPermissions.includes('orders:create');
+
+    if (!hasAccess) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view users.' }, { status: 403 });
     }
 
     const { searchParams } = new URL(req.url);
@@ -123,9 +130,11 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { name, email, phone, employeeId, role, password, reportsTo, joiningDate, photograph, permissions } = body;
 
-    if (!name || !email || !employeeId || !role || !password) {
-      return NextResponse.json({ success: false, message: 'Missing required user fields.' }, { status: 400 });
+    if (!name || !email || !employeeId || !role || !password || !String(employeeId).trim()) {
+      return NextResponse.json({ success: false, message: 'Missing required user fields (Employee ID is required).' }, { status: 400 });
     }
+
+    const empIdTrim = String(employeeId).trim();
 
     // Check single admin constraint
     const targetRoleLower = role.toLowerCase();
@@ -154,7 +163,7 @@ export async function POST(req: Request) {
 
     // Check duplicate employeeId
     const existingEmpId = await prisma.user.findUnique({
-      where: { employeeId },
+      where: { employeeId: empIdTrim },
     });
 
     if (existingEmpId) {
@@ -168,7 +177,7 @@ export async function POST(req: Request) {
         name,
         email,
         phone,
-        employeeId,
+        employeeId: empIdTrim,
         role,
         passwordHash,
         reportsTo: reportsTo ? parseInt(reportsTo, 10) : null,

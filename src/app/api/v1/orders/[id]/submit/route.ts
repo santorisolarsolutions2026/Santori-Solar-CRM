@@ -37,7 +37,15 @@ export async function POST(
 
     const hasViewAll = userPermissions.includes('orders:view_all');
     if (!hasViewAll && order.submittedById !== userPayload.id) {
-      return NextResponse.json({ success: false, message: 'Forbidden. Not your order.' }, { status: 403 });
+      // Check supervisor status
+      const lead = await prisma.lead.findUnique({
+        where: { id: order.leadId },
+        select: { assignedTlId: true, assignedManagerId: true }
+      });
+      const isLeadSupervisor = lead && (lead.assignedTlId === userPayload.id || lead.assignedManagerId === userPayload.id);
+      if (!isLeadSupervisor) {
+        return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to submit this order.' }, { status: 403 });
+      }
     }
 
     // Validate that order fields are complete
@@ -55,7 +63,11 @@ export async function POST(
     const updatedOrder = await prisma.$transaction(async (tx) => {
       const res = await tx.order.update({
         where: { id: orderId },
-        data: { status: 'submitted' },
+        data: {
+          status: 'submitted',
+          rejectionReason: null,
+          submittedById: userPayload.id,
+        },
       });
 
       // Log activity

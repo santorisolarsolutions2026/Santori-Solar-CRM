@@ -141,6 +141,7 @@ export async function PATCH(
       assignedManagerId,
       discomName,
       connectionNumber,
+      isActive,
     } = body;
 
     // Enforce specific assignment change rules
@@ -211,6 +212,7 @@ export async function PATCH(
     if (leadSource) updateData.leadSource = leadSource;
     if (discomName !== undefined) updateData.discomName = discomName || null;
     if (connectionNumber !== undefined) updateData.connectionNumber = connectionNumber || null;
+    if (isActive !== undefined) updateData.isActive = isActive;
 
     // Handle assignments updates and auto-resolve hierarchy
     let shouldPromoteToFresh = false;
@@ -252,6 +254,23 @@ export async function PATCH(
     }
 
     const updatedLead = await prisma.$transaction(async (tx) => {
+      // Revert status to the stage before Already Installed if reactivating
+      if (isActive && lead.status === 6) {
+        const lastLog = await tx.leadActivityLog.findFirst({
+          where: {
+            leadId,
+            toStatus: 6,
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+          select: {
+            fromStatus: true,
+          },
+        });
+        updateData.status = lastLog ? lastLog.fromStatus : 1;
+      }
+
       const res = await tx.lead.update({
         where: { id: leadId },
         data: updateData,
@@ -266,10 +285,12 @@ export async function PATCH(
           leadId,
           userId: userPayload.id,
           fromStatus: lead.status,
-          toStatus: shouldPromoteToFresh ? 1 : lead.status,
+          toStatus: shouldPromoteToFresh ? 1 : (updateData.status !== undefined ? updateData.status : lead.status),
           remark: shouldPromoteToFresh
             ? 'Lead assigned and promoted to Fresh Lead (Stage 1).'
-            : 'Lead details updated by management.',
+            : (isActive !== undefined && isActive)
+              ? (lead.status === 6 ? `Lead reactivated. Status reverted from Already Installed to Stage ${updateData.status || 1}.` : 'Lead reactivated / marked active.')
+              : 'Lead details updated by management.',
         },
       });
 

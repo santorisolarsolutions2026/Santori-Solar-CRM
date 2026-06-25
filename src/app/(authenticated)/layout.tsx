@@ -69,16 +69,18 @@ export default function AuthenticatedLayout({
   const notifRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
+    function handleClickOutside(event: MouseEvent | TouchEvent) {
       if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
         setNotifDropdownOpen(false);
       }
     }
     if (notifDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
     };
   }, [notifDropdownOpen]);
 

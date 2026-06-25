@@ -34,12 +34,14 @@ interface Lead {
   createdAt: string;
   updatedAt: string;
   isUnreachable: boolean;
+  isActive: boolean;
   consultant: { id: number; name: string } | null;
   tl: { id: number; name: string } | null;
   manager: { id: number; name: string } | null;
   order?: {
     id: number;
     status: string;
+    rejectionReason?: string | null;
     installationImages?: { id: number; status: string }[];
   } | null;
 }
@@ -112,7 +114,29 @@ function parseCSV(text: string): string[][] {
 }
 
 export default function LeadsPage() {
-  const { user, hasPermission } = useAuth();
+  const { user, loading: authLoading, hasPermission } = useAuth();
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+      </div>
+    );
+  }
+
+  if (!hasPermission('leads:view')) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center bg-[#111625] border border-slate-800 rounded-xl shadow-lg mt-6">
+        <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 text-red-500 rounded-full flex items-center justify-center mb-4 animate-pulse">
+          <AlertCircle className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl font-bold text-white mb-2">Access Denied</h2>
+        <p className="text-sm text-slate-400 max-w-md">
+          You do not have the required permissions to view the Sales Leads Pipeline. Please contact your administrator if you believe this is in error.
+        </p>
+      </div>
+    );
+  }
   
   // State for leads list
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -134,6 +158,45 @@ export default function LeadsPage() {
 
   // Multiple selection and bulk actions states
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [customSelectVal, setCustomSelectVal] = useState('');
+
+  const handleBulkSelectCount = async (count: number | 'all') => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        ids_only: 'true',
+        search,
+        status: statusFilter,
+        consultant_id: consultantFilter,
+        connection_type: connectionFilter,
+        lead_source: sourceFilter,
+        city: cityFilter,
+      });
+      const res = await fetch(`/api/v1/leads?${params.toString()}`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.data)) {
+        if (count === 'all') {
+          setSelectedIds(data.data);
+        } else {
+          setSelectedIds(data.data.slice(0, count));
+        }
+      }
+    } catch (err) {
+      console.error('Failed to select leads:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCustomSelectSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const count = parseInt(customSelectVal, 10);
+    if (isNaN(count) || count <= 0) {
+      alert('Please enter a valid positive number.');
+      return;
+    }
+    handleBulkSelectCount(count);
+  };
 
   // Keep track of the last active filters to clear selected IDs only when filters change
   const lastFiltersRef = useRef({
@@ -324,15 +387,35 @@ export default function LeadsPage() {
   };
 
   const handleDeleteLead = async (leadId: number) => {
-    if (!window.confirm('Are you sure you want to deactivate (soft-delete) this lead?')) return;
+    if (!window.confirm('Are you sure you want to delete this lead permanently? This action cannot be undone.')) return;
     try {
       const res = await fetch(`/api/v1/leads/${leadId}`, { method: 'DELETE' });
       const data = await res.json();
       if (data.success) {
-        alert(data.message || 'Lead deactivated successfully.');
+        alert(data.message || 'Lead deleted successfully.');
         fetchLeads();
       } else {
         alert(data.message || 'Failed to delete lead.');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleActivateLead = async (leadId: number) => {
+    if (!window.confirm('Are you sure you want to reactivate this lead?')) return;
+    try {
+      const res = await fetch(`/api/v1/leads/${leadId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: true }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Lead reactivated successfully.');
+        fetchLeads();
+      } else {
+        alert(data.message || 'Failed to reactivate lead.');
       }
     } catch (err) {
       console.error(err);
@@ -682,6 +765,65 @@ export default function LeadsPage() {
 
       {/* Leads Table Card */}
       <div className="bg-[#111625] border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+        {/* Table Header Control Bar */}
+        <div className="p-4 border-b border-slate-800 bg-slate-900/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold text-slate-400">Select:</span>
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => handleBulkSelectCount(50)}
+                className="py-1 px-3 bg-slate-950 border border-slate-800 hover:border-slate-700 hover:bg-slate-900 text-slate-300 hover:text-white rounded-lg text-xs font-medium transition-all cursor-pointer"
+              >
+                Top 50
+              </button>
+              <button
+                type="button"
+                onClick={() => handleBulkSelectCount(100)}
+                className="py-1 px-3 bg-slate-950 border border-slate-800 hover:border-slate-700 hover:bg-slate-900 text-slate-300 hover:text-white rounded-lg text-xs font-medium transition-all cursor-pointer"
+              >
+                Top 100
+              </button>
+              <button
+                type="button"
+                onClick={() => handleBulkSelectCount('all')}
+                className="py-1 px-3 bg-slate-950 border border-slate-800 hover:border-slate-700 hover:bg-slate-900 text-slate-300 hover:text-white rounded-lg text-xs font-medium transition-all cursor-pointer"
+              >
+                All Matching
+              </button>
+              {selectedIds.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedIds([])}
+                  className="py-1 px-3 bg-red-950/20 border border-red-900/30 hover:bg-red-950/40 text-red-400 hover:text-red-300 rounded-lg text-xs font-medium transition-all cursor-pointer"
+                >
+                  Clear Selection ({selectedIds.length})
+                </button>
+              )}
+            </div>
+          </div>
+          
+          <form onSubmit={handleCustomSelectSubmit} className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-slate-400">Custom Select:</span>
+            <div className="flex items-center">
+              <input
+                type="number"
+                min="1"
+                placeholder="Enter count..."
+                value={customSelectVal}
+                onChange={(e) => setCustomSelectVal(e.target.value)}
+                className="w-24 px-3 py-1 bg-slate-950 border border-slate-800 rounded-l-lg text-slate-200 focus:outline-none focus:ring-1 focus:ring-amber-500 text-xs"
+              />
+              <button
+                type="submit"
+                className="py-1 px-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-r-lg text-xs font-bold transition-all cursor-pointer"
+              >
+                Select
+              </button>
+            </div>
+          </form>
+        </div>
+
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[1100px]">
             <thead>
@@ -727,6 +869,8 @@ export default function LeadsPage() {
                       key={lead.id}
                       className={`hover:bg-slate-900/20 transition-all ${
                         lead.isUnreachable ? 'bg-red-500/[0.01] border-l-2 border-l-red-500' : ''
+                      } ${
+                        !lead.isActive ? 'opacity-70 border-l-2 border-l-slate-650 bg-slate-900/[0.08]' : ''
                       } ${selectedIds.includes(lead.id) ? 'bg-amber-500/[0.02]' : ''}`}
                     >
                       <td className="py-3.5 px-4 text-center w-12">
@@ -749,6 +893,11 @@ export default function LeadsPage() {
                               <span>Unreachable</span>
                             </span>
                           )}
+                          {!lead.isActive && (
+                            <span className="text-[9px] bg-slate-500/15 text-slate-400 border border-slate-550/20 rounded-full px-2 py-0.25 font-bold uppercase tracking-wider shrink-0">
+                              Inactive
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="py-3.5 px-4 text-slate-300 font-mono text-xs w-32">{lead.mobile}</td>
@@ -760,9 +909,15 @@ export default function LeadsPage() {
                       </td>
                       <td className="py-3.5 px-4 w-44">
                         <div className="flex flex-col gap-1">
-                          <span className={`inline-block text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${stage.class}`}>
-                            {stage.name}
-                          </span>
+                          {lead.status === 13 && lead.order?.status === 'draft' && lead.order?.rejectionReason ? (
+                            <span className="inline-block text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider bg-rose-500/10 text-rose-450 border-rose-500/20">
+                              Rejected ⚠️
+                            </span>
+                          ) : (
+                            <span className={`inline-block text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${stage.class}`}>
+                              {stage.name}
+                            </span>
+                          )}
                           {lead.status === 13 && lead.order?.status === 'completed' && (!lead.order?.installationImages || lead.order.installationImages.filter((img) => img.status === 'completed').length === 0) && (
                             <span className="text-[9px] font-semibold text-rose-400 bg-rose-950/20 border border-rose-900/30 rounded px-1.5 py-0.5 w-fit uppercase tracking-wider">
                               ⚠️ Photo Not Uploaded
@@ -788,16 +943,16 @@ export default function LeadsPage() {
                           >
                             <Eye className="w-4.5 h-4.5" />
                           </Link>
-                          {hasPermission('leads:edit') && (
-                            <>
-                              <Link
-                                href={`/leads/${lead.id}?edit=true`}
-                                className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white transition-all"
-                                title="Edit Lead Info"
-                              >
-                                <Edit2 className="w-4.5 h-4.5" />
-                              </Link>
-                              {hasPermission('leads:edit') && (
+                          {lead.isActive ? (
+                            hasPermission('leads:edit') && (
+                              <>
+                                <Link
+                                  href={`/leads/${lead.id}?edit=true`}
+                                  className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white transition-all"
+                                  title="Edit Lead Info"
+                                >
+                                  <Edit2 className="w-4.5 h-4.5" />
+                                </Link>
                                 <button
                                   onClick={() => handleDeleteLead(lead.id)}
                                   className="p-1.5 rounded-lg bg-slate-900 hover:bg-red-950/20 border border-slate-800 hover:border-red-900/30 text-slate-400 hover:text-red-400 transition-all cursor-pointer"
@@ -805,8 +960,27 @@ export default function LeadsPage() {
                                 >
                                   <Trash2 className="w-4.5 h-4.5" />
                                 </button>
-                              )}
-                            </>
+                              </>
+                            )
+                          ) : (
+                            hasPermission('leads:edit') && (
+                              <>
+                                <button
+                                  onClick={() => handleActivateLead(lead.id)}
+                                  className="p-1.5 rounded-lg bg-slate-900 hover:bg-emerald-950/20 border border-slate-800 hover:border-emerald-900/30 text-slate-400 hover:text-emerald-400 transition-all cursor-pointer"
+                                  title="Activate Lead"
+                                >
+                                  <Check className="w-4.5 h-4.5" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteLead(lead.id)}
+                                  className="p-1.5 rounded-lg bg-slate-900 hover:bg-red-950/20 border border-slate-800 hover:border-red-900/30 text-slate-400 hover:text-red-400 transition-all cursor-pointer"
+                                  title="Delete Lead permanently"
+                                >
+                                  <Trash2 className="w-4.5 h-4.5" />
+                                </button>
+                              </>
+                            )
                           )}
                         </div>
                       </td>

@@ -4,19 +4,19 @@ import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
 
 // Transition validation matrix
 const TRANSITIONS: Record<number, { to: number[]; roles: string[] }> = {
-  1: { to: [2, 3, 4, 5, 10, 11], roles: ['consultant', 'psa', 'tl', 'manager'] },
-  2: { to: [2, 3, 4, 5, 10, 11], roles: ['consultant', 'psa'] },
-  3: { to: [3, 4, 5, 7, 8, 10, 11], roles: ['consultant', 'psa'] },
+  1: { to: [2, 3, 4, 5, 6, 10, 11], roles: ['consultant', 'psa', 'tl', 'manager'] },
+  2: { to: [2, 3, 4, 5, 6, 10, 11], roles: ['consultant', 'psa'] },
+  3: { to: [3, 4, 5, 6, 7, 8, 10, 11], roles: ['consultant', 'psa'] },
   4: { to: [3], roles: ['manager', 'admin', 'director', 'sales_head'] }, // reactivate only
-  5: { to: [2, 3, 4, 8, 10, 11], roles: ['consultant', 'psa'] },
+  5: { to: [2, 3, 4, 6, 8, 10, 11], roles: ['consultant', 'psa'] },
   6: { to: [], roles: [] }, // terminal
-  7: { to: [3, 4, 5, 8], roles: ['consultant', 'tl', 'manager'] },
+  7: { to: [3, 4, 5, 6, 8], roles: ['consultant', 'tl', 'manager'] },
   8: { to: [9], roles: ['consultant', 'tl'] },
   9: { to: [3, 4, 9, 13], roles: ['consultant', 'tl', 'manager'] },
-  10: { to: [2, 3, 4, 5], roles: ['consultant', 'psa'] },
-  11: { to: [2, 3, 4, 5], roles: ['consultant', 'psa'] },
+  10: { to: [2, 3, 4, 5, 6], roles: ['consultant', 'psa'] },
+  11: { to: [2, 3, 4, 5, 6], roles: ['consultant', 'psa'] },
   12: { to: [], roles: [] }, // terminal
-  13: { to: [13, 6], roles: ['operations', 'manager', 'admin', 'director', 'sales_head'] }, // terminal but allows installation status self-transition and completed installation transition
+  13: { to: [13], roles: ['operations', 'manager', 'admin', 'director', 'sales_head'] }, // terminal but allows installation status self-transition
 };
 
 // Helper to generate order code
@@ -82,6 +82,19 @@ export async function POST(
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to convert leads to orders.' }, { status: 403 });
     }
 
+    // Block transition to Stage 6 (Already Installed) if a meeting has been booked or completed, or if lead is in Stage 13
+    if (toStatusNum === 6) {
+      if (lead.status === 13) {
+        return NextResponse.json({ success: false, message: 'Cannot mark as Already Installed once the lead is sent to the orders queue.' }, { status: 400 });
+      }
+      const meetingCount = await prisma.meetingBooking.count({
+        where: { leadId },
+      });
+      if (meetingCount > 0 || lead.status === 8 || lead.status === 9) {
+        return NextResponse.json({ success: false, message: 'Cannot mark as Already Installed once a meeting has been booked or completed.' }, { status: 400 });
+      }
+    }
+
     if (!isAdminOrSalesHead) {
       if (!rule) {
         return NextResponse.json({ success: false, message: `Invalid source status: ${lead.status}` }, { status: 400 });
@@ -137,8 +150,21 @@ export async function POST(
     }
 
     // Stage 4 - Not Interested / Stage 6 - Already Installed
-    if (toStatusNum === 4 || toStatusNum === 6) {
+    if (toStatusNum === 4) {
       updateData.isActive = false; // Inactive
+    }
+    if (toStatusNum === 6) {
+      // Check if there are already completed installation images for this order
+      const order = await prisma.order.findUnique({
+        where: { leadId },
+        include: {
+          installationImages: {
+            where: { status: 'completed' }
+          }
+        }
+      });
+      const hasCompletedImages = order && order.installationImages.length > 0;
+      updateData.isActive = !hasCompletedImages; // Remains active if no completed images exist yet
     }
 
     // Stage 8 - Meeting Booked (Form B validation)
@@ -169,8 +195,18 @@ export async function POST(
         assignedExecutiveId = lead.assignedConsultantId?.toString() || userPayload.id?.toString() || '';
       }
 
-      if (!address || !pinCode || !mobile || !meetingDate || !meetingTime || !avgMonthlyBill || !connectionType || !assignedExecutiveId) {
-        return NextResponse.json({ success: false, message: 'Missing required Form B fields.' }, { status: 422 });
+      const missingFields = [];
+      if (!address) missingFields.push('address');
+      if (!pinCode) missingFields.push('pinCode');
+      if (!mobile) missingFields.push('mobile');
+      if (!meetingDate) missingFields.push('meetingDate');
+      if (!meetingTime) missingFields.push('meetingTime');
+      if (!avgMonthlyBill) missingFields.push('avgMonthlyBill');
+      if (!connectionType) missingFields.push('connectionType');
+      if (!assignedExecutiveId) missingFields.push('assignedExecutiveId');
+
+      if (missingFields.length > 0) {
+        return NextResponse.json({ success: false, message: `Missing required Form B fields: ${missingFields.join(', ')}.` }, { status: 422 });
       }
 
       // Resolve masked fields if they were submitted by a PSA user
@@ -221,7 +257,7 @@ export async function POST(
         const orderCode = await generateOrderCode();
         orderCreationData = {
           orderCode,
-          connectionNumber: '',
+          connectionNumber: lead.connectionNumber || '',
           systemSizeKw: 0.0,
           totalValue: 0.0,
           downPayment: 0.0,
@@ -263,7 +299,7 @@ export async function POST(
         const orderCode = await generateOrderCode();
         orderCreationData = {
           orderCode,
-          connectionNumber: '',
+          connectionNumber: lead.connectionNumber || '',
           systemSizeKw: 0.0,
           totalValue: 0.0,
           downPayment: 0.0,

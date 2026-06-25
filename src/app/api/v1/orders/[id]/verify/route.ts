@@ -53,6 +53,7 @@ export async function POST(
         data: {
           status: newStatus,
           financeProcessedById: userPayload.id,
+          rejectionReason: approve ? null : (remark || 'Documents/payment issue'),
         },
       });
 

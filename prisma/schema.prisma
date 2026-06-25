@@ -158,6 +158,7 @@ model Order {
   subsidyApplicable    Boolean
   subsidyAmount        Float?
   additionalNotes      String?
+  rejectionReason      String?
   submittedById        Int
   financeProcessedById Int?
   status               String              @default("draft") // draft | submitted | finance_verified | ops_assigned | completed

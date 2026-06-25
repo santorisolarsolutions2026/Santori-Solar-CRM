@@ -25,6 +25,14 @@ import {
   Square,
   Trash2,
   Eye,
+  Check,
+  Sparkles,
+  PhoneOff,
+  Clock,
+  ThumbsDown,
+  Hourglass,
+  XCircle,
+  CheckCircle2,
 } from 'lucide-react';
 import Link from 'next/link';
 import { BeautifulAudioPlayer } from '@/components/BeautifulAudioPlayer';
@@ -99,6 +107,7 @@ interface Lead {
     subsidyAmount: number | null;
     additionalNotes: string | null;
     status: string;
+    rejectionReason: string | null;
     documents: {
       id: number;
       docType: string;
@@ -130,19 +139,58 @@ const STAGE_BADGES: Record<number, { name: string; class: string }> = {
 // Transition matrix for select dropdown option filters
 const ALLOWED_TRANSITIONS: Record<number, number[]> = {
   0: [1], // Uninitiated leads can only transition to Fresh Lead (automatically via assignment)
-  1: [2, 3, 4, 5, 10, 11],
-  2: [2, 3, 4, 5, 10, 11],
-  3: [3, 4, 5, 7, 8, 10, 11],
+  1: [2, 3, 4, 5, 6, 10, 11],
+  2: [2, 3, 4, 5, 6, 10, 11],
+  3: [3, 4, 5, 6, 7, 8, 10, 11],
   4: [3], // reactivate
-  5: [2, 3, 4, 8, 10, 11],
+  5: [2, 3, 4, 6, 8, 10, 11],
   6: [],
-  7: [3, 4, 5, 8],
+  7: [3, 4, 5, 6, 8],
   8: [9],
   9: [3, 4, 13],
-  10: [2, 3, 4, 5],
-  11: [2, 3, 4, 5],
+  10: [2, 3, 4, 5, 6],
+  11: [2, 3, 4, 5, 6],
   12: [],
-  13: [6],
+  13: [],
+};
+
+const getStageConfig = (statusNum: number) => {
+  const configs: Record<number, { name: string; desc: string; icon: string; bg: string; text: string }> = {
+    0: { name: 'Uninitiated', desc: 'Unassigned, fresh lead', icon: 'AlertTriangle', bg: 'bg-[#3b3a37]/10', text: 'text-[#c9c5ba]' },
+    1: { name: 'Fresh Lead', desc: 'Coordinator assigned', icon: 'Sparkles', bg: 'bg-blue-500/5', text: 'text-blue-400' },
+    2: { name: 'DNP (No Answer)', desc: 'Did Not Pick up', icon: 'PhoneOff', bg: 'bg-slate-500/5', text: 'text-slate-405' },
+    3: { name: 'Follow Up', desc: 'Follow-up call scheduled', icon: 'Calendar', bg: 'bg-amber-500/5', text: 'text-amber-400' },
+    4: { name: 'Not Interested', desc: 'Lead declined offer', icon: 'ThumbsDown', bg: 'bg-red-800/5', text: 'text-red-400' },
+    5: { name: 'Call Later', desc: 'Callback requested later', icon: 'Clock', bg: 'bg-purple-500/5', text: 'text-purple-400' },
+    6: { name: 'Already Installed', desc: 'Solar already exists', icon: 'CheckCircle', bg: 'bg-slate-800/10', text: 'text-slate-500' },
+    7: { name: 'Decision Pending', desc: 'Pending lead decision', icon: 'Hourglass', bg: 'bg-yellow-500/5', text: 'text-yellow-400' },
+    8: { name: 'Book Meeting', desc: 'Schedule visit / Form B', icon: 'Calendar', bg: 'bg-teal-500/5', text: 'text-teal-400' },
+    9: { name: 'Meeting Done', desc: 'Site visit completed', icon: 'FileCheck', bg: 'bg-cyan-500/5', text: 'text-cyan-400' },
+    10: { name: 'Disconnected', desc: 'Call could not connect', icon: 'PhoneOff', bg: 'bg-slate-600/5', text: 'text-slate-400' },
+    11: { name: 'Switch Off', desc: 'Phone is switched off', icon: 'PowerOff', bg: 'bg-slate-700/5', text: 'text-slate-400' },
+    12: { name: "Can't Fit Solar", desc: 'Site is infeasible', icon: 'XCircle', bg: 'bg-stone-900/10', text: 'text-stone-400' },
+    13: { name: 'Sale Done', desc: 'Convert to order / Form D', icon: 'CheckCircle2', bg: 'bg-emerald-500/5', text: 'text-emerald-400' },
+  };
+
+  return configs[statusNum] || { name: `Stage ${statusNum}`, desc: 'Pipeline Status', icon: 'Layers', bg: 'bg-slate-900/10', text: 'text-slate-400' };
+};
+
+const renderStageIcon = (iconName: string, className: string = "w-4 h-4") => {
+  switch (iconName) {
+    case 'AlertTriangle': return <AlertTriangle className={className} />;
+    case 'Sparkles': return <Sparkles className={className} />;
+    case 'PhoneOff': return <PhoneOff className={className} />;
+    case 'Calendar': return <Calendar className={className} />;
+    case 'ThumbsDown': return <ThumbsDown className={className} />;
+    case 'Clock': return <Clock className={className} />;
+    case 'CheckCircle': return <CheckCircle className={className} />;
+    case 'Hourglass': return <Hourglass className={className} />;
+    case 'FileCheck': return <FileCheck className={className} />;
+    case 'PowerOff': return <CheckCircle className={className} />; // Fallback to CheckCircle or add custom if needed
+    case 'XCircle': return <XCircle className={className} />;
+    case 'CheckCircle2': return <CheckCircle2 className={className} />;
+    default: return <Layers className={className} />;
+  }
 };
 
 export default function LeadDetailPage({
@@ -777,6 +825,26 @@ export default function LeadDetailPage({
     }
   };
 
+  const handleActivateLead = async (leadId: number) => {
+    if (!window.confirm('Are you sure you want to reactivate this lead?')) return;
+    try {
+      const res = await fetch(`/api/v1/leads/${leadId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: true }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Lead reactivated successfully.');
+        fetchLeadDetails();
+      } else {
+        alert(data.message || 'Failed to reactivate lead.');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   // Recording timer
   useEffect(() => {
     if (isRecording) {
@@ -994,7 +1062,7 @@ export default function LeadDetailPage({
   // Calculate dynamic allowed transitions for select input
   const nextStageIds = ALLOWED_TRANSITIONS[lead.status] || [];
   // Filter by user role permissions (Admin bypassed)
-  const roleFilteredNextStages = nextStageIds.filter((statusNum) => {
+  let roleFilteredNextStages = nextStageIds.filter((statusNum) => {
     if (!hasPermission('leads:change_status')) return false;
     // Transitioning to stage 13 requires orders:create permission
     if (statusNum === 13) {
@@ -1002,6 +1070,12 @@ export default function LeadDetailPage({
     }
     return true;
   });
+
+  // Block transition to Stage 6 (Already Installed) if a meeting has been booked or completed, or if lead is in Stage 13
+  const hasMeetings = lead.meetings && lead.meetings.length > 0;
+  if (hasMeetings || lead.status === 8 || lead.status === 9 || lead.status === 13) {
+    roleFilteredNextStages = roleFilteredNextStages.filter((statusNum) => statusNum !== 6);
+  }
 
   // Calculate Order Document uploads checkboxes checks
   const getDocStatus = (docType: string) => {
@@ -1053,12 +1127,32 @@ export default function LeadDetailPage({
 
         {/* Action controls */}
         {hasPermission('leads:edit') && (
-          <button
-            onClick={() => handleDeleteLead(lead.id)}
-            className="py-2 px-4 rounded-lg bg-red-950/20 text-red-400 hover:text-red-300 border border-red-900/30 transition-all font-semibold text-xs flex items-center gap-1.5"
-          >
-            Deactivate Lead
-          </button>
+          <div className="flex gap-2">
+            {lead.isActive ? (
+              <button
+                onClick={() => handleDeleteLead(lead.id)}
+                className="py-2 px-4 rounded-lg bg-red-950/20 text-red-400 hover:text-red-300 border border-red-900/30 transition-all font-semibold text-xs flex items-center gap-1.5"
+              >
+                Delete Lead
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={() => handleActivateLead(lead.id)}
+                  className="py-2 px-4 rounded-lg bg-emerald-950/20 text-emerald-400 hover:text-emerald-300 border border-emerald-900/30 transition-all font-semibold text-xs flex items-center gap-1.5"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>Activate Lead</span>
+                </button>
+                <button
+                  onClick={() => handleDeleteLead(lead.id)}
+                  className="py-2 px-4 rounded-lg bg-red-950/20 text-red-400 hover:text-red-300 border border-red-900/30 transition-all font-semibold text-xs flex items-center gap-1.5"
+                >
+                  Delete Lead
+                </button>
+              </>
+            )}
+          </div>
         )}
       </div>
 
@@ -1697,6 +1791,19 @@ export default function LeadDetailPage({
               {/* 4. ORDER PUNCHING TAB */}
               {activeTab === 'order' && lead.order && (
                 <div className="space-y-8">
+                  {lead.order.status === 'draft' && lead.order.rejectionReason && (
+                    <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-450 text-xs leading-normal flex items-start gap-2.5">
+                      <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0 animate-pulse" />
+                      <div>
+                        <strong className="text-white block mb-1">⚠️ Order Rejected by Finance:</strong> 
+                        <span className="text-slate-200">{lead.order.rejectionReason}</span>
+                        <p className="mt-2 text-slate-400">
+                          Please rectify the details or documents below and click the **Submit Order for Approval** button at the bottom to send it back to the Finance team.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Order Details form */}
                   <div>
                     <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 mb-4">
@@ -1953,7 +2060,7 @@ export default function LeadDetailPage({
                                     className="text-[10px] font-bold text-red-400 hover:text-red-300 transition-all flex items-center gap-1.5 focus:outline-none"
                                   >
                                     <Trash2 className="w-3 h-3" />
-                                    <span>Remove</span>
+                                    <span>Remove File</span>
                                   </button>
                                 )}
                               </div>
@@ -2019,25 +2126,44 @@ export default function LeadDetailPage({
               </div>
             ) : (
               <form onSubmit={handleStatusSubmit} className="space-y-4">
-                {/* Status Dropdown */}
+                {/* Visual Custom Status Selector */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-2">Change Status To</label>
-                  <select
-                    value={newStatus}
-                    required
-                    onChange={(e) => setNewStatus(e.target.value)}
-                    className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-xs"
-                  >
-                    <option value="">Select Next Status</option>
+                  <label className="block text-xs font-semibold text-slate-400 mb-2.5">Select Next Status</label>
+                  <div className="grid grid-cols-1 gap-2 max-h-[300px] overflow-y-auto pr-1">
                     {roleFilteredNextStages.map((statusNum) => {
-                      const badge = STAGE_BADGES[statusNum] || { name: `Stage ${statusNum}` };
+                      const config = getStageConfig(statusNum);
+                      const isSelected = newStatus === statusNum.toString();
                       return (
-                        <option key={statusNum} value={statusNum}>
-                          {badge.name}
-                        </option>
+                        <button
+                          key={statusNum}
+                          type="button"
+                          onClick={() => setNewStatus(statusNum.toString())}
+                          className={`flex items-start gap-3 p-2.5 rounded-xl border text-left transition-all duration-200 cursor-pointer outline-none relative overflow-hidden ${
+                            isSelected
+                              ? `${config.text} ${config.bg} border-amber-500 bg-amber-500/[0.03] ring-1 ring-amber-500/20 translate-x-[2px]`
+                              : `border-slate-800/80 bg-slate-950/20 text-slate-400 hover:border-slate-700/80 hover:bg-slate-900/10 hover:text-slate-300`
+                          }`}
+                        >
+                          <div className={`p-1.5 rounded-lg border ${
+                            isSelected
+                              ? `bg-amber-500/15 border-amber-500/30 text-amber-400`
+                              : `bg-slate-900/40 border-slate-800 text-slate-400`
+                          } transition-all`}>
+                            {renderStageIcon(config.icon, "w-4 h-4")}
+                          </div>
+                          <div className="flex-1 min-w-0 pr-4">
+                            <p className="text-xs font-bold uppercase tracking-wider">{config.name}</p>
+                            <p className="text-[10px] text-slate-500 font-medium truncate mt-0.5">{config.desc}</p>
+                          </div>
+                          {isSelected && (
+                            <div className="absolute right-3 top-3.5 w-4 h-4 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center">
+                              <Check className="w-3 h-3 stroke-[3]" />
+                            </div>
+                          )}
+                        </button>
                       );
                     })}
-                  </select>
+                  </div>
                 </div>
 
                 {/* Conditional Fields: Stage 3 (Follow Up) details */}
@@ -2114,7 +2240,8 @@ export default function LeadDetailPage({
 
                 <button
                   type="submit"
-                  className="w-full py-2.5 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md"
+                  disabled={!newStatus}
+                  className="w-full py-2.5 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
                 >
                   Save Status Change
                 </button>

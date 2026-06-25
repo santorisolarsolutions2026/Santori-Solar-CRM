@@ -126,13 +126,36 @@ export async function POST(
     const relativePath = `uploads/installations/${cleanFileName}`;
 
     // Create DB record
-    const newImage = await prisma.installationImage.create({
-      data: {
-        orderId,
-        status,
-        filePath: relativePath,
-        fileName: file.name,
-      },
+    const newImage = await prisma.$transaction(async (tx) => {
+      const img = await tx.installationImage.create({
+        data: {
+          orderId,
+          status,
+          filePath: relativePath,
+          fileName: file.name,
+        },
+      });
+
+      if (status === 'completed') {
+        const o = await tx.order.findUnique({
+          where: { id: orderId },
+          select: { leadId: true, status: true }
+        });
+        if (o) {
+          const l = await tx.lead.findUnique({
+            where: { id: o.leadId },
+            select: { status: true }
+          });
+          if (l?.status === 6 || o.status === 'completed') {
+            await tx.lead.update({
+              where: { id: o.leadId },
+              data: { isActive: false }
+            });
+          }
+        }
+      }
+
+      return img;
     });
 
     return NextResponse.json({

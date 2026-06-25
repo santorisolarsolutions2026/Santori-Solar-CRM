@@ -191,18 +191,20 @@ export async function PATCH(
     }
 
     if (employeeId !== undefined) {
-      if (employeeId) {
-        const existingEmp = await prisma.user.findFirst({
-          where: {
-            employeeId,
-            id: { not: userId }
-          }
-        });
-        if (existingEmp) {
-          return NextResponse.json({ success: false, message: 'User with this Employee ID already exists.' }, { status: 409 });
-        }
+      const empIdTrim = String(employeeId).trim();
+      if (!empIdTrim) {
+        return NextResponse.json({ success: false, message: 'Employee ID is required and cannot be empty.' }, { status: 400 });
       }
-      updateData.employeeId = employeeId || null;
+      const existingEmp = await prisma.user.findFirst({
+        where: {
+          employeeId: empIdTrim,
+          id: { not: userId }
+        }
+      });
+      if (existingEmp) {
+        return NextResponse.json({ success: false, message: 'User with this Employee ID already exists.' }, { status: 409 });
+      }
+      updateData.employeeId = empIdTrim;
     }
     
     let isDeactivating = false;

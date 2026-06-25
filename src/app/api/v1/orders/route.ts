@@ -19,7 +19,11 @@ export async function GET(req: Request) {
     const clientType = searchParams.get('client_type') || '';
     const search = searchParams.get('search') || '';
 
-    const where: Prisma.OrderWhereInput = {};
+    const where: Prisma.OrderWhereInput = {
+      lead: {
+        isActive: true
+      }
+    };
     const hasViewAll = userPermissions.includes('orders:view_all');
 
     // Role-specific filtering
@@ -43,13 +47,13 @@ export async function GET(req: Request) {
       } else {
         // Filter orders by lead assignments for normal team members
         if (['tl', 'psa_tl'].includes(userPayload.role)) {
-          where.lead = { assignedTlId: userPayload.id };
+          where.lead = { ...(where.lead as Prisma.LeadWhereInput), assignedTlId: userPayload.id };
         } else if (userPayload.role === 'manager') {
-          where.lead = { assignedManagerId: userPayload.id };
+          where.lead = { ...(where.lead as Prisma.LeadWhereInput), assignedManagerId: userPayload.id };
         } else if (['admin', 'director', 'sales_head'].includes(userPayload.role)) {
           // Administrative roles can view all orders even without view_all permission
         } else {
-          where.lead = { assignedConsultantId: userPayload.id };
+          where.lead = { ...(where.lead as Prisma.LeadWhereInput), assignedConsultantId: userPayload.id };
         }
 
         if (status) {

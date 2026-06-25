@@ -33,9 +33,9 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { name, email, phone, employeeId, password } = body;
 
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !employeeId) {
       return NextResponse.json(
-        { success: false, message: 'Name, email, and password are required.' },
+        { success: false, message: 'Name, email, password, and Employee ID are required.' },
         { status: 400 }
       );
     }
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
         name,
         email,
         phone: phone || null,
-        employeeId: employeeId || null,
+        employeeId: employeeId,
         passwordHash,
         role: 'admin',
         isActive: true,

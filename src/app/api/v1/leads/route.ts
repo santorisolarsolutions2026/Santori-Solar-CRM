@@ -47,10 +47,12 @@ export async function GET(req: Request) {
       }
     }
 
-    // Define base query conditions (enforce isActive: true to support soft delete / deactivation unless filtering by inactive stage)
+    // Define base query conditions (enforce isActive: true to support soft delete / deactivation unless filtering by inactive stage or selecting All pipeline stages)
     const andConditions: Prisma.LeadWhereInput[] = [];
     if (!hasInactiveStatusFilter) {
-      andConditions.push({ isActive: true });
+      andConditions.push({
+        isActive: true
+      });
     }
 
     const hasViewAll = userPermissions.includes('leads:view_all');
@@ -61,18 +63,43 @@ export async function GET(req: Request) {
         andConditions.push({
           OR: [
             { assignedManagerId: userPayload.id },
-            { assignedTlId: null, assignedConsultantId: null }
+            { assignedTlId: null, assignedConsultantId: null },
+            {
+              order: {
+                status: 'draft',
+                rejectionReason: { not: null },
+                submittedById: userPayload.id,
+              }
+            }
           ]
         });
       } else if (['tl', 'psa_tl'].includes(userPayload.role)) {
         andConditions.push({
           OR: [
             { assignedTlId: userPayload.id },
-            { assignedTlId: null, assignedConsultantId: null }
+            { assignedTlId: null, assignedConsultantId: null },
+            {
+              order: {
+                status: 'draft',
+                rejectionReason: { not: null },
+                submittedById: userPayload.id,
+              }
+            }
           ]
         });
       } else if (userPayload.role === 'consultant' || userPayload.role === 'psa') {
-        andConditions.push({ assignedConsultantId: userPayload.id });
+        andConditions.push({
+          OR: [
+            { assignedConsultantId: userPayload.id },
+            {
+              order: {
+                status: 'draft',
+                rejectionReason: { not: null },
+                submittedById: userPayload.id,
+              }
+            }
+          ]
+        });
       } else if (userPayload.role === 'finance') {
         // Finance sees only leads at Stage 13+ (Sale Done) by default
         if (filteredStatuses.length === 0) {
@@ -98,7 +125,18 @@ export async function GET(req: Request) {
         if (['admin', 'director', 'sales_head'].includes(userPayload.role)) {
           // Administrative roles can view all leads even without view_all permission
         } else {
-          andConditions.push({ assignedConsultantId: userPayload.id });
+          andConditions.push({
+            OR: [
+              { assignedConsultantId: userPayload.id },
+              {
+                order: {
+                  status: 'draft',
+                  rejectionReason: { not: null },
+                  submittedById: userPayload.id,
+                }
+              }
+            ]
+          });
         }
       }
     }
@@ -139,24 +177,25 @@ export async function GET(req: Request) {
 
     const where: Prisma.LeadWhereInput = { AND: andConditions };
 
-    const idsOnly = searchParams.get('ids_only') === 'true';
-    if (idsOnly) {
-      const matchingLeads = await prisma.lead.findMany({
-        where,
-        select: { id: true }
-      });
-      return NextResponse.json({
-        success: true,
-        data: matchingLeads.map(l => l.id)
-      });
-    }
-
     // Sorting
     const orderBy: Record<string, 'asc' | 'desc'> = {};
     if (['createdAt', 'updatedAt', 'id', 'status', 'customerName'].includes(sortBy)) {
       orderBy[sortBy] = sortOrder === 'asc' ? 'asc' : 'desc';
     } else {
       orderBy['updatedAt'] = 'desc';
+    }
+
+    const idsOnly = searchParams.get('ids_only') === 'true';
+    if (idsOnly) {
+      const matchingLeads = await prisma.lead.findMany({
+        where,
+        orderBy,
+        select: { id: true }
+      });
+      return NextResponse.json({
+        success: true,
+        data: matchingLeads.map(l => l.id)
+      });
     }
 
     // Execute queries
@@ -175,6 +214,7 @@ export async function GET(req: Request) {
             select: {
               id: true,
               status: true,
+              rejectionReason: true,
               installationImages: {
                 select: { id: true, status: true }
               }
