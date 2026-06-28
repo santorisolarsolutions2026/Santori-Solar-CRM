@@ -19,8 +19,16 @@ import {
   UserCheck,
   Users,
   Loader2,
+  SlidersHorizontal,
+  Calendar,
+  MapPin,
+  Sparkles,
+  Tag,
+  Zap,
+  Truck,
 } from 'lucide-react';
 import Link from 'next/link';
+import { LeadTrackingTimeline } from '@/components/LeadTrackingTimeline';
 
 interface Lead {
   id: number;
@@ -150,11 +158,23 @@ export default function LeadsPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [consultantFilter, setConsultantFilter] = useState('');
+  const [tlFilter, setTlFilter] = useState('');
+  const [managerFilter, setManagerFilter] = useState('');
   const [connectionFilter, setConnectionFilter] = useState('');
   const [sourceFilter, setSourceFilter] = useState('');
   const [cityFilter, setCityFilter] = useState('');
+  const [stateFilter, setStateFilter] = useState('');
+  const [dateFromFilter, setDateFromFilter] = useState('');
+  const [dateToFilter, setDateToFilter] = useState('');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(25);
+
+  // Detailed Filter Modal states
+  const [showDetailedFilterModal, setShowDetailedFilterModal] = useState(false);
+  const [activeFilterTab, setActiveFilterTab] = useState<'stages' | 'connection' | 'sources' | 'location' | 'team' | 'dates'>('stages');
+
+  // Track Lead Modal State
+  const [trackingLead, setTrackingLead] = useState<any | null>(null);
 
   // Dropdown lists
   const [consultants, setConsultants] = useState<{ id: number; name: string }[]>([]);
@@ -401,6 +421,22 @@ export default function LeadsPage() {
     }
   };
 
+  // Active Filter Count Calculation
+  const getActiveFilterCount = () => {
+    let count = 0;
+    if (statusFilter) count += statusFilter.split(',').filter(Boolean).length;
+    if (connectionFilter) count += connectionFilter.split(',').filter(Boolean).length;
+    if (sourceFilter) count += sourceFilter.split(',').filter(Boolean).length;
+    if (consultantFilter) count += consultantFilter.split(',').filter(Boolean).length;
+    if (tlFilter) count += tlFilter.split(',').filter(Boolean).length;
+    if (managerFilter) count += managerFilter.split(',').filter(Boolean).length;
+    if (cityFilter) count++;
+    if (stateFilter) count++;
+    if (dateFromFilter) count++;
+    if (dateToFilter) count++;
+    return count;
+  };
+
   // Fetch leads based on filters
   const fetchLeads = async () => {
     setLoading(true);
@@ -411,9 +447,14 @@ export default function LeadsPage() {
         search,
         status: statusFilter,
         consultant_id: consultantFilter,
+        tl_id: tlFilter,
+        manager_id: managerFilter,
         connection_type: connectionFilter,
         lead_source: sourceFilter,
         city: cityFilter,
+        state: stateFilter,
+        date_from: dateFromFilter,
+        date_to: dateToFilter,
       });
 
       const res = await fetch(`/api/v1/leads?${params.toString()}`);
@@ -432,6 +473,7 @@ export default function LeadsPage() {
   useEffect(() => {
     if (user) {
       fetchConsultants();
+      fetchTeamMembers();
     }
   }, [user]);
 
@@ -440,7 +482,7 @@ export default function LeadsPage() {
     if (user) {
       fetchLeads();
     }
-  }, [page, limit, statusFilter, consultantFilter, connectionFilter, sourceFilter, cityFilter, user]);
+  }, [page, limit, statusFilter, consultantFilter, tlFilter, managerFilter, connectionFilter, sourceFilter, cityFilter, stateFilter, dateFromFilter, dateToFilter, user]);
 
   // Handle Search Input (with manual or debounce enter)
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -453,9 +495,14 @@ export default function LeadsPage() {
     setSearch('');
     setStatusFilter('');
     setConsultantFilter('');
+    setTlFilter('');
+    setManagerFilter('');
     setConnectionFilter('');
     setSourceFilter('');
     setCityFilter('');
+    setStateFilter('');
+    setDateFromFilter('');
+    setDateToFilter('');
     setPage(1);
   };
 
@@ -723,26 +770,26 @@ export default function LeadsPage() {
       </div>
 
       {/* Filter and Search Bar Card */}
-      <div className="bg-[#111625] border border-slate-800 rounded-xl p-5 shadow-lg">
-        <form onSubmit={handleSearchSubmit} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="bg-[#111625] border border-slate-800 rounded-xl p-5 shadow-lg space-y-4">
+        <form onSubmit={handleSearchSubmit} className="flex flex-col md:flex-row items-center justify-between gap-4">
           {/* Live Search */}
-          <div className="relative">
+          <div className="relative flex-1 w-full">
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search Name / Mobile / Code..."
-              className="block w-full pl-9 pr-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 text-xs transition-all"
+              placeholder="Search Customer Name / Mobile / Lead Code..."
+              className="block w-full pl-9 pr-4 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 text-xs transition-all shadow-inner"
             />
-            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
           </div>
 
-          {/* Status Filter */}
-          <div>
+          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto shrink-0 justify-end">
+            {/* Quick Stage Select */}
             <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-              className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 text-xs"
+              className="px-3 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 text-xs cursor-pointer min-w-[160px]"
             >
               <option value="">All Pipeline Stages</option>
               {Object.entries(STAGE_BADGES).map(([id, badge]) => (
@@ -751,68 +798,109 @@ export default function LeadsPage() {
                 </option>
               ))}
             </select>
-          </div>
 
-          {/* Connection Type Filter */}
-          <div>
-            <select
-              value={connectionFilter}
-              onChange={(e) => { setConnectionFilter(e.target.value); setPage(1); }}
-              className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 text-xs"
-            >
-              <option value="">All Connection Types</option>
-              <option value="residential">Residential</option>
-              <option value="commercial">Commercial</option>
-              <option value="industrial">Industrial</option>
-            </select>
-          </div>
-
-          {/* Lead Source Filter */}
-          <div>
-            <select
-              value={sourceFilter}
-              onChange={(e) => { setSourceFilter(e.target.value); setPage(1); }}
-              className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 text-xs"
-            >
-              <option value="">All Lead Sources</option>
-              <option value="whatsapp">WhatsApp</option>
-              <option value="cold_call">Cold Call</option>
-              <option value="referral">Referral</option>
-              <option value="walk_in">Walk-In</option>
-              <option value="google_ad">Google Ad</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-
-          {/* City search */}
-          <div>
-            <input
-              type="text"
-              value={cityFilter}
-              onChange={(e) => { setCityFilter(e.target.value); setPage(1); }}
-              placeholder="Filter by City..."
-              className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-300 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 text-xs"
-            />
-          </div>
-
-          {/* Action buttons */}
-          <div className="flex gap-2 shrink-0">
-            <button
-              type="submit"
-              className="flex-1 py-2 px-3 bg-slate-900 border border-slate-800 hover:border-slate-700 text-white rounded-lg font-semibold text-xs flex items-center justify-center gap-1.5 transition-all"
-            >
-              <Filter className="w-3.5 h-3.5" />
-              <span>Filter</span>
-            </button>
+            {/* Amazon / Flipkart Detailed Filter Trigger Button */}
             <button
               type="button"
-              onClick={handleClearFilters}
-              className="py-2 px-3 bg-slate-950 border border-slate-850 hover:bg-slate-900 text-slate-400 hover:text-white rounded-lg text-xs transition-all"
+              onClick={() => setShowDetailedFilterModal(true)}
+              className="py-2.5 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-xl font-bold text-xs shadow-md flex items-center gap-2 transition-all cursor-pointer"
             >
-              Clear
+              <SlidersHorizontal className="w-4 h-4" />
+              <span>Filters</span>
+              {getActiveFilterCount() > 0 && (
+                <span className="bg-slate-950 text-amber-400 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full border border-amber-400/30">
+                  {getActiveFilterCount()}
+                </span>
+              )}
             </button>
+
+            {/* Clear All Button */}
+            {getActiveFilterCount() > 0 || search ? (
+              <button
+                type="button"
+                onClick={handleClearFilters}
+                className="py-2.5 px-3 bg-slate-950 border border-slate-850 hover:bg-slate-900 text-slate-400 hover:text-white rounded-xl text-xs transition-all cursor-pointer"
+              >
+                Reset All
+              </button>
+            ) : null}
           </div>
         </form>
+
+        {/* Active Applied Filter Tags Bar */}
+        {getActiveFilterCount() > 0 && (
+          <div className="pt-3 border-t border-slate-850 flex flex-wrap items-center gap-2 text-xs">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
+              <Filter className="w-3 h-3 text-amber-500" /> Active Filters:
+            </span>
+            {statusFilter && statusFilter.split(',').map(st => (
+              <span key={`st-${st}`} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[11px] font-semibold">
+                Stage: {STAGE_BADGES[Number(st)]?.name || st}
+                <X 
+                  className="w-3 h-3 cursor-pointer hover:text-white ml-0.5" 
+                  onClick={() => {
+                    const remaining = statusFilter.split(',').filter(s => s !== st).join(',');
+                    setStatusFilter(remaining);
+                  }} 
+                />
+              </span>
+            ))}
+            {connectionFilter && connectionFilter.split(',').map(ct => (
+              <span key={`ct-${ct}`} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[11px] font-semibold capitalize">
+                Type: {ct}
+                <X className="w-3 h-3 cursor-pointer hover:text-white ml-0.5" onClick={() => setConnectionFilter(connectionFilter.split(',').filter(s => s !== ct).join(','))} />
+              </span>
+            ))}
+            {sourceFilter && sourceFilter.split(',').map(src => (
+              <span key={`src-${src}`} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[11px] font-semibold capitalize">
+                Source: {src}
+                <X className="w-3 h-3 cursor-pointer hover:text-white ml-0.5" onClick={() => setSourceFilter(sourceFilter.split(',').filter(s => s !== src).join(','))} />
+              </span>
+            ))}
+            {cityFilter && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-semibold">
+                City: {cityFilter}
+                <X className="w-3 h-3 cursor-pointer hover:text-white ml-0.5" onClick={() => setCityFilter('')} />
+              </span>
+            )}
+            {stateFilter && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-semibold">
+                State: {stateFilter}
+                <X className="w-3 h-3 cursor-pointer hover:text-white ml-0.5" onClick={() => setStateFilter('')} />
+              </span>
+            )}
+            {consultantFilter && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[11px] font-semibold">
+                Consultant Assigned
+                <X className="w-3 h-3 cursor-pointer hover:text-white ml-0.5" onClick={() => setConsultantFilter('')} />
+              </span>
+            )}
+            {tlFilter && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-500/10 border border-teal-500/20 text-teal-300 text-[11px] font-semibold">
+                TL Assigned
+                <X className="w-3 h-3 cursor-pointer hover:text-white ml-0.5" onClick={() => setTlFilter('')} />
+              </span>
+            )}
+            {managerFilter && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-[11px] font-semibold">
+                Manager Assigned
+                <X className="w-3 h-3 cursor-pointer hover:text-white ml-0.5" onClick={() => setManagerFilter('')} />
+              </span>
+            )}
+            {(dateFromFilter || dateToFilter) && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-pink-500/10 border border-pink-500/20 text-pink-300 text-[11px] font-semibold">
+                Date: {dateFromFilter || '...'} to {dateToFilter || '...'}
+                <X className="w-3 h-3 cursor-pointer hover:text-white ml-0.5" onClick={() => { setDateFromFilter(''); setDateToFilter(''); }} />
+              </span>
+            )}
+            <button
+              onClick={handleClearFilters}
+              className="text-[10px] font-bold text-slate-400 hover:text-red-400 underline underline-offset-2 ml-1 cursor-pointer"
+            >
+              Clear all
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Bulk Actions Banner */}
@@ -994,6 +1082,13 @@ export default function LeadsPage() {
                       </td>
                       <td className="py-3.5 px-4 text-center w-32">
                         <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => setTrackingLead(lead)}
+                            className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 transition-all cursor-pointer"
+                            title="Track Lead Journey"
+                          >
+                            <Truck className="w-4.5 h-4.5" />
+                          </button>
                           <Link
                             href={`/leads/${lead.id}`}
                             className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white transition-all"
@@ -1396,6 +1491,393 @@ export default function LeadsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Amazon / Flipkart Style Detailed Filter Modal Drawer */}
+      {showDetailedFilterModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md px-4 py-6">
+          <div className="w-full max-w-4xl bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[85vh]">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-slate-800 bg-slate-900/40 flex justify-between items-center shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                  <SlidersHorizontal className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                    <span>Filters</span>
+                    {getActiveFilterCount() > 0 && (
+                      <span className="bg-amber-500 text-slate-950 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                        {getActiveFilterCount()} Active
+                      </span>
+                    )}
+                  </h3>
+                  <p className="text-[11px] text-slate-400">Filter sales leads by stage, geography, source, team allocation, and dates.</p>
+                </div>
+              </div>
+              <button onClick={() => setShowDetailedFilterModal(false)} className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-850 transition-all cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* E-Commerce Two-Column Layout */}
+            <div className="flex-1 flex overflow-hidden min-h-[400px]">
+              {/* Left Navigation Sidebar Category Tabs */}
+              <div className="w-1/3 max-w-[240px] bg-slate-950/60 border-r border-slate-800/80 p-3 space-y-1 overflow-y-auto shrink-0 select-none">
+                {[
+                  { id: 'stages', label: 'Pipeline Stages', icon: Layers, count: statusFilter ? statusFilter.split(',').filter(Boolean).length : 0 },
+                  { id: 'connection', label: 'Connection Type', icon: Zap, count: connectionFilter ? connectionFilter.split(',').filter(Boolean).length : 0 },
+                  { id: 'sources', label: 'Lead Source', icon: Tag, count: sourceFilter ? sourceFilter.split(',').filter(Boolean).length : 0 },
+                  { id: 'location', label: 'City & Location', icon: MapPin, count: (cityFilter ? 1 : 0) + (stateFilter ? 1 : 0) },
+                  { id: 'team', label: 'Team Allocation', icon: Users, count: (consultantFilter ? 1 : 0) + (tlFilter ? 1 : 0) + (managerFilter ? 1 : 0) },
+                  { id: 'dates', label: 'Created Date', icon: Calendar, count: (dateFromFilter ? 1 : 0) + (dateToFilter ? 1 : 0) },
+                ].map((tab) => {
+                  const TabIcon = tab.icon;
+                  const isActive = activeFilterTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveFilterTab(tab.id as any)}
+                      className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer text-left ${
+                        isActive
+                          ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30 shadow-md'
+                          : 'text-slate-400 hover:bg-slate-900/60 hover:text-slate-200 border border-transparent'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <TabIcon className={`w-4 h-4 shrink-0 ${isActive ? 'text-amber-400' : 'text-slate-500'}`} />
+                        <span className="truncate">{tab.label}</span>
+                      </div>
+                      {tab.count > 0 && (
+                        <span className="bg-amber-500 text-slate-950 font-bold text-[9px] px-1.5 py-0.25 rounded-full shrink-0">
+                          {tab.count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Right Filter Options Panel */}
+              <div className="flex-1 p-6 overflow-y-auto bg-[#111625] space-y-6">
+                {/* 1. PIPELINE STAGES TAB */}
+                {activeFilterTab === 'stages' && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                      <div>
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-white">Select Pipeline Stages</h4>
+                        <p className="text-[11px] text-slate-400">Select multiple stages to filter leads.</p>
+                      </div>
+                      {statusFilter && (
+                        <button onClick={() => setStatusFilter('')} className="text-[11px] text-amber-400 font-semibold hover:underline cursor-pointer">
+                          Clear Stages
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {Object.entries(STAGE_BADGES).map(([idStr, badge]) => {
+                        const isChecked = statusFilter.split(',').includes(idStr);
+                        return (
+                          <label
+                            key={idStr}
+                            onClick={() => {
+                              const current = statusFilter ? statusFilter.split(',') : [];
+                              const updated = isChecked ? current.filter(s => s !== idStr) : [...current, idStr];
+                              setStatusFilter(updated.join(','));
+                              setPage(1);
+                            }}
+                            className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer select-none transition-all ${
+                              isChecked
+                                ? 'bg-amber-500/[0.06] border-amber-500/40 shadow-sm'
+                                : 'bg-slate-950/40 border-slate-850 hover:border-slate-800 hover:bg-slate-900/20'
+                            }`}
+                          >
+                            <span className={`text-xs font-bold ${badge.class} border px-2 py-0.5 rounded-full`}>
+                              {badge.name}
+                            </span>
+                            <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${
+                              isChecked ? 'bg-amber-500 border-amber-500 text-slate-950' : 'border-slate-700 bg-slate-900'
+                            }`}>
+                              {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* 2. CONNECTION TYPE TAB */}
+                {activeFilterTab === 'connection' && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                      <div>
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-white">Solar Connection Type</h4>
+                        <p className="text-[11px] text-slate-400">Filter by residential, commercial, or industrial setup.</p>
+                      </div>
+                      {connectionFilter && (
+                        <button onClick={() => setConnectionFilter('')} className="text-[11px] text-amber-400 font-semibold hover:underline cursor-pointer">
+                          Clear Types
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {['residential', 'commercial', 'industrial'].map((type) => {
+                        const isChecked = connectionFilter.split(',').includes(type);
+                        return (
+                          <div
+                            key={type}
+                            onClick={() => {
+                              const current = connectionFilter ? connectionFilter.split(',') : [];
+                              const updated = isChecked ? current.filter(s => s !== type) : [...current, type];
+                              setConnectionFilter(updated.join(','));
+                              setPage(1);
+                            }}
+                            className={`p-4 rounded-xl border text-center cursor-pointer select-none transition-all flex flex-col items-center justify-center gap-2 ${
+                              isChecked
+                                ? 'bg-blue-500/10 border-blue-500/40 shadow-md'
+                                : 'bg-slate-950/40 border-slate-850 hover:border-slate-800'
+                            }`}
+                          >
+                            <Zap className={`w-6 h-6 ${isChecked ? 'text-blue-400' : 'text-slate-500'}`} />
+                            <span className="text-xs font-bold text-white capitalize">{type}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. LEAD SOURCE TAB */}
+                {activeFilterTab === 'sources' && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                      <div>
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-white">Lead Acquisition Source</h4>
+                        <p className="text-[11px] text-slate-400">Filter leads by where they originated.</p>
+                      </div>
+                      {sourceFilter && (
+                        <button onClick={() => setSourceFilter('')} className="text-[11px] text-amber-400 font-semibold hover:underline cursor-pointer">
+                          Clear Sources
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {[
+                        { id: 'whatsapp', name: 'WhatsApp' },
+                        { id: 'cold_call', name: 'Cold Call' },
+                        { id: 'referral', name: 'Referral' },
+                        { id: 'walk_in', name: 'Walk-In' },
+                        { id: 'google_ad', name: 'Google Ad' },
+                        { id: 'other', name: 'Other' },
+                      ].map((src) => {
+                        const isChecked = sourceFilter.split(',').includes(src.id);
+                        return (
+                          <div
+                            key={src.id}
+                            onClick={() => {
+                              const current = sourceFilter ? sourceFilter.split(',') : [];
+                              const updated = isChecked ? current.filter(s => s !== src.id) : [...current, src.id];
+                              setSourceFilter(updated.join(','));
+                              setPage(1);
+                            }}
+                            className={`p-3 rounded-xl border text-center cursor-pointer select-none transition-all flex items-center justify-between ${
+                              isChecked
+                                ? 'bg-purple-500/10 border-purple-500/40 text-purple-300 font-bold'
+                                : 'bg-slate-950/40 border-slate-850 hover:border-slate-800 text-slate-300'
+                            }`}
+                          >
+                            <span className="text-xs font-semibold">{src.name}</span>
+                            {isChecked && <Check className="w-4 h-4 text-purple-400" />}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* 4. LOCATION TAB */}
+                {activeFilterTab === 'location' && (
+                  <div className="space-y-4">
+                    <div className="border-b border-slate-800 pb-3">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-white">City & State Filter</h4>
+                      <p className="text-[11px] text-slate-400">Search leads by customer city or state.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">City Name</label>
+                        <input
+                          type="text"
+                          value={cityFilter}
+                          onChange={(e) => { setCityFilter(e.target.value); setPage(1); }}
+                          placeholder="e.g. Delhi, Jaipur, Mumbai..."
+                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:ring-amber-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">State Name</label>
+                        <input
+                          type="text"
+                          value={stateFilter}
+                          onChange={(e) => { setStateFilter(e.target.value); setPage(1); }}
+                          placeholder="e.g. Rajasthan, Haryana..."
+                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:ring-amber-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 5. TEAM ALLOCATION TAB */}
+                {activeFilterTab === 'team' && (
+                  <div className="space-y-4">
+                    <div className="border-b border-slate-800 pb-3">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-white">Assigned Team Members</h4>
+                      <p className="text-[11px] text-slate-400">Filter leads by assigned Consultants, TLs, or Managers.</p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Assigned Consultant</label>
+                        <select
+                          value={consultantFilter}
+                          onChange={(e) => { setConsultantFilter(e.target.value); setPage(1); }}
+                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500"
+                        >
+                          <option value="">All Consultants</option>
+                          {consultants.map((c) => (
+                            <option key={c.id} value={c.id}>{c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Assigned Team Leader (TL)</label>
+                        <select
+                          value={tlFilter}
+                          onChange={(e) => { setTlFilter(e.target.value); setPage(1); }}
+                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500"
+                        >
+                          <option value="">All Team Leaders</option>
+                          {teamMembers.filter(m => ['tl', 'psa_tl'].includes(m.role)).map((m) => (
+                            <option key={m.id} value={m.id}>{m.name} ({m.role})</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Assigned Manager</label>
+                        <select
+                          value={managerFilter}
+                          onChange={(e) => { setManagerFilter(e.target.value); setPage(1); }}
+                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500"
+                        >
+                          <option value="">All Managers</option>
+                          {teamMembers.filter(m => ['manager', 'sales_head', 'admin', 'director'].includes(m.role)).map((m) => (
+                            <option key={m.id} value={m.id}>{m.name} ({m.role})</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 6. CREATED DATES TAB */}
+                {activeFilterTab === 'dates' && (
+                  <div className="space-y-4">
+                    <div className="border-b border-slate-800 pb-3">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-white">Lead Registration Date Range</h4>
+                      <p className="text-[11px] text-slate-400">Filter leads registered within a specific date timeframe.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">From Date</label>
+                        <input
+                          type="date"
+                          value={dateFromFilter}
+                          onChange={(e) => { setDateFromFilter(e.target.value); setPage(1); }}
+                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">To Date</label>
+                        <input
+                          type="date"
+                          value={dateToFilter}
+                          onChange={(e) => { setDateToFilter(e.target.value); setPage(1); }}
+                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-slate-800 bg-slate-900/30 flex items-center justify-between shrink-0">
+              <button
+                type="button"
+                onClick={handleClearFilters}
+                className="py-2.5 px-4 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-400 hover:text-white rounded-xl font-bold text-xs transition-all cursor-pointer"
+              >
+                Reset All Filters
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowDetailedFilterModal(false)}
+                className="py-2.5 px-6 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-xl font-bold text-xs shadow-lg flex items-center gap-1.5 cursor-pointer"
+              >
+                <Check className="w-4 h-4 stroke-[3]" />
+                <span>Apply & View Leads ({total})</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Track Lead Progress Modal (Amazon Delivery Tracking Style) */}
+      {trackingLead && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md px-4 py-6">
+          <div className="w-full max-w-2xl bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]">
+            <div className="p-4 border-b border-slate-800 bg-slate-900/40 flex justify-between items-center shrink-0">
+              <div className="flex items-center gap-2">
+                <Truck className="w-5 h-5 text-amber-400" />
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                  Lead Journey Tracker: {trackingLead.customerName}
+                </h3>
+              </div>
+              <button
+                onClick={() => setTrackingLead(null)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-850 transition-all cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-5 overflow-y-auto flex-1">
+              <LeadTrackingTimeline lead={trackingLead} />
+            </div>
+            <div className="p-4 border-t border-slate-800 bg-slate-900/30 flex justify-between items-center shrink-0">
+              <Link
+                href={`/leads/${trackingLead.id}`}
+                className="text-xs font-bold text-amber-400 hover:underline flex items-center gap-1"
+              >
+                <span>Open Full Lead Workspace</span> &rarr;
+              </Link>
+              <button
+                onClick={() => setTrackingLead(null)}
+                className="py-2 px-4 bg-slate-800 hover:bg-slate-750 text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
+              >
+                Close Tracker
+              </button>
+            </div>
           </div>
         </div>
       )}

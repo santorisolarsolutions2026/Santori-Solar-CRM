@@ -34,10 +34,12 @@ import {
   XCircle,
   CheckCircle2,
   Download,
+  Truck,
 } from 'lucide-react';
 import Link from 'next/link';
 import { BeautifulAudioPlayer } from '@/components/BeautifulAudioPlayer';
 import { MeetingLocationDisplay } from '@/components/MeetingLocationDisplay';
+import { LeadTrackingTimeline } from '@/components/LeadTrackingTimeline';
 
 interface Lead {
   id: number;
@@ -207,7 +209,7 @@ export default function LeadDetailPage({
   const [lead, setLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
-  const [activeTab, setActiveTab] = useState<'info' | 'logs' | 'meeting' | 'order'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'logs' | 'track' | 'meeting' | 'order'>('info');
 
   // Inline edit state (Form A)
   const [isEditing, setIsEditing] = useState(false);
@@ -1195,6 +1197,17 @@ export default function LeadDetailPage({
                 <History className="w-4 h-4" />
                 <span>Activity Log</span>
               </button>
+              <button
+                onClick={() => setActiveTab('track')}
+                className={`px-5 py-4 border-b-2 transition-all flex items-center justify-center gap-2 shrink-0 ${
+                  activeTab === 'track'
+                    ? 'border-amber-500 text-amber-400 bg-amber-500/[0.02]'
+                    : 'border-transparent text-slate-400 hover:text-white'
+                }`}
+              >
+                <Truck className="w-4 h-4" />
+                <span>Track Progress</span>
+              </button>
               {lead.status >= 8 && (
                 <button
                   onClick={() => setActiveTab('meeting')}
@@ -1227,6 +1240,13 @@ export default function LeadDetailPage({
 
             {/* Tab content panels */}
             <div className="p-6">
+              {/* TRACK TAB */}
+              {activeTab === 'track' && lead && (
+                <div className="space-y-4">
+                  <LeadTrackingTimeline lead={lead} />
+                </div>
+              )}
+
               {/* 1. INFO TAB */}
               {activeTab === 'info' && (
                 <div>

@@ -142,6 +142,12 @@ export async function GET(req: Request) {
     }
 
     // 2. Extra Filters
+    const state = searchParams.get('state') || '';
+    const tlIdStr = searchParams.get('tl_id') || '';
+    const managerIdStr = searchParams.get('manager_id') || '';
+    const dateFromStr = searchParams.get('date_from') || '';
+    const dateToStr = searchParams.get('date_to') || '';
+
     if (search) {
       andConditions.push({
         OR: [
@@ -160,19 +166,61 @@ export async function GET(req: Request) {
       andConditions.push({ city: { contains: city, mode: 'insensitive' } });
     }
 
+    if (state) {
+      andConditions.push({ state: { contains: state, mode: 'insensitive' } });
+    }
+
     if (consultantIdStr) {
-      const consultantId = parseInt(consultantIdStr, 10);
-      if (!isNaN(consultantId)) {
-        andConditions.push({ assignedConsultantId: consultantId });
+      const consultantIds = consultantIdStr.split(',').map(s => parseInt(s, 10)).filter(n => !isNaN(n));
+      if (consultantIds.length > 0) {
+        andConditions.push({ assignedConsultantId: { in: consultantIds } });
+      }
+    }
+
+    if (tlIdStr) {
+      const tlIds = tlIdStr.split(',').map(s => parseInt(s, 10)).filter(n => !isNaN(n));
+      if (tlIds.length > 0) {
+        andConditions.push({ assignedTlId: { in: tlIds } });
+      }
+    }
+
+    if (managerIdStr) {
+      const managerIds = managerIdStr.split(',').map(s => parseInt(s, 10)).filter(n => !isNaN(n));
+      if (managerIds.length > 0) {
+        andConditions.push({ assignedManagerId: { in: managerIds } });
       }
     }
 
     if (connectionType) {
-      andConditions.push({ connectionType });
+      const types = connectionType.split(',').map(s => s.trim()).filter(Boolean);
+      if (types.length > 0) {
+        andConditions.push({ connectionType: { in: types } });
+      }
     }
 
     if (leadSource) {
-      andConditions.push({ leadSource });
+      const sources = leadSource.split(',').map(s => s.trim()).filter(Boolean);
+      if (sources.length > 0) {
+        andConditions.push({ leadSource: { in: sources } });
+      }
+    }
+
+    if (dateFromStr || dateToStr) {
+      const dateQuery: any = {};
+      if (dateFromStr) {
+        const d = new Date(dateFromStr);
+        if (!isNaN(d.getTime())) dateQuery.gte = d;
+      }
+      if (dateToStr) {
+        const d = new Date(dateToStr);
+        if (!isNaN(d.getTime())) {
+          d.setHours(23, 59, 59, 999);
+          dateQuery.lte = d;
+        }
+      }
+      if (Object.keys(dateQuery).length > 0) {
+        andConditions.push({ createdAt: dateQuery });
+      }
     }
 
     const where: Prisma.LeadWhereInput = { AND: andConditions };
