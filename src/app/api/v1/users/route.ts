@@ -27,8 +27,8 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const roleParam = searchParams.get('role') || '';
-
-    const where: any = {};
+    const includeInactive = searchParams.get('include_inactive') === 'true';
+    const where: any = includeInactive ? {} : { isActive: true };
     if (roleParam) {
       if (roleParam.includes(',')) {
         where.role = { in: roleParam.split(',') };
@@ -48,6 +48,7 @@ export async function GET(req: Request) {
         name: true,
         email: true,
         phone: true,
+        address: true,
         employeeId: true,
         role: true,
         reportsTo: true,
@@ -128,10 +129,10 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { name, email, phone, employeeId, role, password, reportsTo, joiningDate, photograph, permissions } = body;
+    const { name, email, phone, address, employeeId, role, password, reportsTo, joiningDate, photograph, permissions } = body;
 
-    if (!name || !email || !employeeId || !role || !password || !String(employeeId).trim()) {
-      return NextResponse.json({ success: false, message: 'Missing required user fields (Employee ID is required).' }, { status: 400 });
+    if (!name || !email || !employeeId || !role || !password || !phone || !address || !String(employeeId).trim() || !String(phone).trim() || !String(address).trim()) {
+      return NextResponse.json({ success: false, message: 'Missing required user fields (Contact number, full address, and Employee ID are required).' }, { status: 400 });
     }
 
     const empIdTrim = String(employeeId).trim();
@@ -158,7 +159,14 @@ export async function POST(req: Request) {
     });
 
     if (existingUser) {
-      return NextResponse.json({ success: false, message: 'User with this email already exists.' }, { status: 409 });
+      if (!existingUser.isActive) {
+        await prisma.user.update({
+          where: { id: existingUser.id },
+          data: { email: `deleted_${existingUser.id}_${existingUser.email}` },
+        });
+      } else {
+        return NextResponse.json({ success: false, message: 'User with this email already exists.' }, { status: 409 });
+      }
     }
 
     // Check duplicate employeeId
@@ -167,7 +175,14 @@ export async function POST(req: Request) {
     });
 
     if (existingEmpId) {
-      return NextResponse.json({ success: false, message: 'User with this Employee ID already exists.' }, { status: 409 });
+      if (!existingEmpId.isActive) {
+        await prisma.user.update({
+          where: { id: existingEmpId.id },
+          data: { employeeId: null },
+        });
+      } else {
+        return NextResponse.json({ success: false, message: 'User with this Employee ID already exists.' }, { status: 409 });
+      }
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -176,7 +191,8 @@ export async function POST(req: Request) {
       data: {
         name,
         email,
-        phone,
+        phone: String(phone).trim(),
+        address: String(address).trim(),
         employeeId: empIdTrim,
         role,
         passwordHash,

@@ -19,11 +19,7 @@ export async function GET(req: Request) {
     const clientType = searchParams.get('client_type') || '';
     const search = searchParams.get('search') || '';
 
-    const where: Prisma.OrderWhereInput = {
-      lead: {
-        isActive: true
-      }
-    };
+    const where: Prisma.OrderWhereInput = {};
     const hasViewAll = userPermissions.includes('orders:view_all');
 
     // Role-specific filtering

@@ -21,6 +21,7 @@ import {
   User,
   History,
   Eye,
+  Search,
 } from 'lucide-react';
 
 interface TeamMember {
@@ -28,6 +29,7 @@ interface TeamMember {
   name: string;
   email: string;
   phone: string | null;
+  address?: string | null;
   employeeId: string | null;
   role: string;
   permissions?: string | null;
@@ -71,89 +73,96 @@ export function getRoleClass(role: string): string {
 }
 
 const ALL_PERMISSIONS = [
-  {
-    key: 'leads:view',
-    label: 'View Leads Pipeline',
-    description: 'Allows viewing lead list and details assigned to the user or their team.',
-    category: 'Leads'
-  },
-  {
-    key: 'leads:view_all',
-    label: 'View All Leads (Bypass scope)',
-    description: 'Allows viewing all leads in the system, bypassing team hierarchy/boundaries.',
-    category: 'Leads'
-  },
+  // Group 1: Leads Pipeline & Management
   {
     key: 'leads:create',
-    label: 'Add New Lead',
-    description: 'Allows registering new customer leads in the system.',
-    category: 'Leads'
+    label: 'Add new lead',
+    description: 'Allows registering and adding new customer leads into the pipeline.',
+    category: 'Leads Pipeline & Management'
+  },
+  {
+    key: 'leads:import',
+    label: 'Import new leads',
+    description: 'Allows bulk uploading and importing leads via CSV/Excel sheets.',
+    category: 'Leads Pipeline & Management'
   },
   {
     key: 'leads:edit',
-    label: 'Edit Lead Details',
-    description: 'Allows editing lead contact, connection, and assignment details.',
-    category: 'Leads'
+    label: 'Edit lead info',
+    description: 'Allows modifying customer contact, connection load, and address details.',
+    category: 'Leads Pipeline & Management'
   },
   {
     key: 'leads:change_status',
-    label: 'Change Lead Pipeline Stage',
-    description: 'Allows changing lead statuses and advancing them through pipeline stages.',
-    category: 'Leads'
+    label: 'Change lead pipeline stage',
+    description: 'Allows advancing leads through stages (Follow up, Meeting Booked, Sale Done).',
+    category: 'Leads Pipeline & Management'
   },
   {
-    key: 'orders:view',
-    label: 'View Orders Queue',
-    description: 'Allows accessing the orders and installations queue.',
-    category: 'Orders'
+    key: 'leads:view',
+    label: 'View all leads',
+    description: 'Allows accessing and viewing leads in the sales pipeline.',
+    category: 'Leads Pipeline & Management'
   },
   {
-    key: 'orders:view_all',
-    label: 'View All Orders (Bypass scope)',
-    description: 'Allows viewing all orders across all teams and departments.',
-    category: 'Orders'
+    key: 'leads:assign',
+    label: 'Assign team members to leads',
+    description: 'Allows assigning or reassigning consultants, team leaders, and managers to leads.',
+    category: 'Leads Pipeline & Management'
   },
+
+  // Group 2: Orders & Fulfillment Queue
   {
     key: 'orders:create',
-    label: 'Convert Lead to Order',
-    description: 'Allows converting a lead to a sale order and punching order details.',
-    category: 'Orders'
+    label: 'Convert lead into Order (Order punching form)',
+    description: 'Allows converting Sale Done leads into formal sales orders and punching payment details.',
+    category: 'Orders & Fulfillment Queue'
   },
   {
     key: 'orders:verify',
-    label: 'Verify Orders (Finance/Ops)',
-    description: 'Allows finance verification of down payments and approving orders for operations.',
-    category: 'Orders'
+    label: 'Verify Orders (Finance)',
+    description: 'Allows finance verification of down payments, payment methods, and bank records.',
+    category: 'Orders & Fulfillment Queue'
   },
   {
     key: 'orders:submit_installation',
     label: 'Submit Orders for Installation',
-    description: 'Allows scheduling installations, completing them, and uploading panel photos.',
-    category: 'Orders'
+    description: 'Allows scheduling solar installations, completing projects, and uploading panel photos.',
+    category: 'Orders & Fulfillment Queue'
   },
-  {
-    key: 'reports:view',
-    label: 'View Reports & Analytics',
-    description: 'Allows viewing performance reports, lead trends, and conversions.',
-    category: 'Reports'
-  },
+
+  // Group 3: Team Directory & Access Control
   {
     key: 'team:view',
     label: 'View Team Directory',
-    description: 'Allows viewing other team members profiles and supervisors.',
-    category: 'Team'
+    description: 'Allows searching and viewing the company directory.',
+    category: 'Team Directory & Access Control'
+  },
+  {
+    key: 'attendance:view',
+    label: 'View Attendance',
+    description: 'Allows viewing daily check-in/out logs, work hours, and location rosters.',
+    category: 'Team Directory & Access Control'
   },
   {
     key: 'team:manage',
-    label: 'Manage Team Members & Access Checklist',
-    description: 'Allows creating/editing users, deactivating accounts, and customizing access permissions.',
-    category: 'Team'
+    label: 'Manage Team Members and Manage Access',
+    description: 'Allows creating team profiles, role assignments, and customizing permissions.',
+    category: 'Team Directory & Access Control'
   },
   {
     key: 'logs:view',
-    label: 'View Team Activity logs',
-    description: 'Allows viewing status change audits and employee logins.',
-    category: 'Team'
+    label: 'View team activity logs',
+    description: 'Allows inspecting audit trails, status changes, and employee logins.',
+    category: 'Team Directory & Access Control'
+  },
+
+  // Group 4: Analytics & Insights
+  {
+    key: 'reports:view',
+    label: 'View Reports',
+    description: 'Allows viewing performance analytics, conversion rates, and revenue trends.',
+    category: 'Analytics & Insights'
   },
 ];
 
@@ -163,39 +172,39 @@ function getLocalDefaultPermissionsForRole(role: string): string[] {
     case 'admin':
     case 'director':
       return [
-        'leads:view', 'leads:view_all', 'leads:create', 'leads:edit', 'leads:change_status',
-        'orders:view', 'orders:view_all', 'orders:create', 'orders:verify', 'orders:submit_installation',
-        'reports:view', 'team:view', 'team:manage', 'logs:view'
+        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view', 'leads:assign',
+        'orders:create', 'orders:verify', 'orders:submit_installation',
+        'team:view', 'attendance:view', 'team:manage', 'logs:view', 'reports:view'
       ];
     case 'sales_head':
       return [
-        'leads:view', 'leads:view_all', 'leads:create', 'leads:edit', 'leads:change_status',
-        'orders:view', 'orders:view_all', 'orders:create', 'reports:view', 'team:view', 'logs:view'
+        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view',
+        'orders:create', 'attendance:view', 'logs:view', 'reports:view'
       ];
     case 'manager':
       return [
-        'leads:view', 'leads:view_all', 'leads:create', 'leads:edit', 'leads:change_status',
-        'orders:view', 'orders:view_all', 'orders:create', 'orders:verify', 'orders:submit_installation',
-        'reports:view', 'team:view', 'logs:view'
+        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view',
+        'orders:create', 'orders:verify', 'orders:submit_installation',
+        'attendance:view', 'logs:view', 'reports:view'
       ];
     case 'finance':
       return [
-        'leads:view', 'leads:view_all', 'orders:view', 'orders:view_all', 'orders:verify', 'reports:view', 'team:view'
+        'leads:view', 'orders:verify', 'reports:view'
       ];
     case 'operations':
       return [
-        'leads:view', 'leads:view_all', 'orders:view', 'orders:view_all', 'orders:verify', 'orders:submit_installation', 'team:view'
+        'leads:view', 'orders:verify', 'orders:submit_installation'
       ];
     case 'tl':
     case 'psa_tl':
       return [
-        'leads:view', 'leads:create', 'leads:edit', 'leads:change_status', 'orders:view', 'orders:create', 'reports:view', 'team:view'
+        'leads:create', 'leads:edit', 'leads:change_status', 'leads:view', 'orders:create', 'reports:view'
       ];
     case 'consultant':
     case 'psa':
     default:
       return [
-        'leads:view', 'leads:create', 'leads:edit', 'leads:change_status', 'orders:view', 'orders:create', 'team:view'
+        'leads:create', 'leads:edit', 'leads:change_status', 'leads:view', 'orders:create'
       ];
   }
 }
@@ -242,6 +251,9 @@ export default function TeamManagementPage() {
   const [managersAndTls, setManagersAndTls] = useState<{ id: number; name: string; role: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
+  const [empSearchInput, setEmpSearchInput] = useState('');
+  const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
   
   // Add User Form Modal
   const [showAddModal, setShowAddModal] = useState(false);
@@ -249,6 +261,7 @@ export default function TeamManagementPage() {
     name: '',
     email: '',
     phone: '',
+    address: '',
     employeeId: '',
     role: 'consultant',
     password: '',
@@ -281,6 +294,7 @@ export default function TeamManagementPage() {
     name: '',
     email: '',
     phone: '',
+    address: '',
     employeeId: '',
     role: 'consultant',
     reportsTo: '',
@@ -311,6 +325,7 @@ export default function TeamManagementPage() {
       name: '',
       email: '',
       phone: '',
+      address: '',
       employeeId: '',
       role: 'consultant',
       password: '',
@@ -351,6 +366,56 @@ export default function TeamManagementPage() {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      const selectable = displayedMembers.filter(m => m.id !== user?.id).map(m => m.id);
+      setSelectedUserIds(selectable);
+    } else {
+      setSelectedUserIds([]);
+    }
+  };
+
+  const handleSelectUser = (id: number) => {
+    if (id === user?.id) return;
+    setSelectedUserIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkAction = async (action: 'activate' | 'deactivate' | 'delete', confirmUnassign = false) => {
+    if (selectedUserIds.length === 0) return;
+    const actionLabel = action === 'activate' ? 'activate' : action === 'deactivate' ? 'deactivate' : 'delete';
+    if (!confirmUnassign && !confirm(`Are you sure you want to ${actionLabel} ${selectedUserIds.length} selected team member(s)?`)) return;
+
+    try {
+      setBulkActionLoading(true);
+      const res = await fetch('/api/v1/users/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userIds: selectedUserIds, action, confirmUnassign }),
+      });
+      const data = await res.json();
+
+      if (!data.success && data.requiresConfirmation) {
+        if (confirm(data.message)) {
+          handleBulkAction(action, true);
+          return;
+        }
+      } else {
+        alert(data.message);
+        if (data.success) {
+          setSelectedUserIds([]);
+          fetchTeam();
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to perform bulk action.');
+    } finally {
+      setBulkActionLoading(false);
     }
   };
 
@@ -407,6 +472,7 @@ export default function TeamManagementPage() {
         name: member.name,
         email: member.email,
         phone: member.phone || '',
+        address: member.address || '',
         employeeId: member.employeeId || '',
         role: member.role,
         reportsTo: member.reportsTo ? String(member.reportsTo) : '',
@@ -582,11 +648,18 @@ export default function TeamManagementPage() {
       finalRole = `${editBaseRole}:${editCustomRoleText.trim()}`;
     }
 
+    if (!editMemberForm.phone.trim() || !editMemberForm.address.trim()) {
+      alert('Contact number and full address are essential required inputs.');
+      setUpdatingMember(false);
+      return;
+    }
+
     try {
       const payload: any = {
         name: editMemberForm.name,
         email: editMemberForm.email,
         phone: editMemberForm.phone,
+        address: editMemberForm.address,
         employeeId: editMemberForm.employeeId,
         role: finalRole,
         permissions: (() => {
@@ -663,32 +736,33 @@ export default function TeamManagementPage() {
     }
   };
 
-  // Completely delete a user after deactivation
-  const handleDeleteUser = async (member: TeamMember) => {
-    if (member.isActive) {
-      alert(`Cannot delete user "${member.name}". The user must be deactivated first.`);
-      return;
-    }
-
-    const confirmMsg = `Are you sure you want to completely and permanently delete the user account for "${member.name}"? This will fail if they have any associated leads in the system. This action cannot be undone.`;
-    if (!window.confirm(confirmMsg)) return;
+  // Completely delete a user after unassigning leads
+  const handleDeleteUser = async (member: TeamMember, confirmUnassign = false) => {
+    if (!confirmUnassign && !window.confirm(`Are you sure you want to delete team member "${member.name}"?`)) return;
 
     try {
-      const res = await fetch(`/api/v1/users/${member.id}`, {
+      const url = `/api/v1/users/${member.id}${confirmUnassign ? '?confirm_unassign=true' : ''}`;
+      const res = await fetch(url, {
         method: 'DELETE',
       });
 
       const data = await res.json();
-      if (data.success) {
-        alert(data.message || `User account successfully deleted.`);
-        closeProfileModal(); // Close the detail profile modal/view if it's open
-        fetchTeam();
+
+      if (!data.success && data.requiresConfirmation) {
+        if (window.confirm(data.message)) {
+          handleDeleteUser(member, true);
+          return;
+        }
       } else {
-        alert(data.message || 'Failed to delete user.');
+        alert(data.message || 'Action completed.');
+        if (data.success) {
+          closeProfileModal();
+          fetchTeam();
+        }
       }
     } catch (err) {
       console.error(err);
-      alert('An error occurred while trying to delete the user.');
+      alert('An error occurred while trying to delete the team member.');
     }
   };
 
@@ -697,6 +771,12 @@ export default function TeamManagementPage() {
     e.preventDefault();
     setSubmitting(true);
     setFormError('');
+
+    if (!form.phone.trim() || !form.address.trim()) {
+      alert('Contact number and full address are essential required inputs.');
+      setSubmitting(false);
+      return;
+    }
 
     let finalRole = form.role;
     if (form.role === 'other') {
@@ -775,6 +855,7 @@ export default function TeamManagementPage() {
 
   const userBaseRole = user?.role ? (user.role.includes(':') ? user.role.split(':')[0] : user.role) : '';
   const isAdminOrDirectorOrSalesHead = hasPermission('team:manage');
+  const hasFullTeamAccess = user?.role === 'admin' || user?.role?.startsWith('admin:') || hasPermission('team:view') || hasPermission('team:manage');
   const titleText = 'Santori Team';
 
   // Extract custom designations currently defined in the database
@@ -785,6 +866,15 @@ export default function TeamManagementPage() {
         .filter((role) => role && role.includes(':'))
     )
   );
+
+  const displayedMembers = members.filter((member) => {
+    if (hasFullTeamAccess) {
+      return true;
+    } else {
+      if (!empSearchInput.trim()) return false;
+      return member.employeeId && member.employeeId.trim().toLowerCase() === empSearchInput.trim().toLowerCase();
+    }
+  });
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -809,12 +899,89 @@ export default function TeamManagementPage() {
         )}
       </div>
 
+      {/* Restricted Directory Search Card for non-admins */}
+      {!hasFullTeamAccess && (
+        <div className="bg-[#111625] border border-slate-800 rounded-xl p-5 shadow-xl space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+              <Lock className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider">Employee Directory Lookup</h3>
+              <p className="text-[11px] text-slate-400">
+                Type an exact Employee ID below to view details of a specific team member.
+              </p>
+            </div>
+          </div>
+
+          <div className="relative max-w-md">
+            <input
+              type="text"
+              value={empSearchInput}
+              onChange={(e) => setEmpSearchInput(e.target.value)}
+              placeholder="Enter exact Employee ID (e.g. EMP-101)..."
+              className="w-full pl-9 pr-4 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white placeholder-slate-500 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/50 font-mono tracking-wide"
+            />
+            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Actions Control Bar */}
+      {isAdminOrDirectorOrSalesHead && selectedUserIds.length > 0 && (
+        <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex items-center justify-between shadow-xl animate-fade-in">
+          <div className="flex items-center gap-3">
+            <span className="w-6 h-6 rounded-full bg-amber-500 text-slate-950 font-bold text-xs flex items-center justify-center font-mono">
+              {selectedUserIds.length}
+            </span>
+            <span className="text-xs font-semibold text-slate-200">Team Member(s) Selected</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleBulkAction('activate')}
+              disabled={bulkActionLoading}
+              className="py-1.5 px-3 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 font-bold text-xs rounded-lg flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+            >
+              <UserCheck className="w-3.5 h-3.5" />
+              <span>Activate</span>
+            </button>
+            <button
+              onClick={() => handleBulkAction('deactivate')}
+              disabled={bulkActionLoading}
+              className="py-1.5 px-3 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-400 font-bold text-xs rounded-lg flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+            >
+              <UserX className="w-3.5 h-3.5" />
+              <span>Deactivate</span>
+            </button>
+            <button
+              onClick={() => handleBulkAction('delete')}
+              disabled={bulkActionLoading}
+              className="py-1.5 px-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 font-bold text-xs rounded-lg flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Delete</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Users table card */}
       <div className="bg-[#111625] border border-slate-800 rounded-xl overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead>
               <tr className="border-b border-slate-800 bg-slate-900/10 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                {isAdminOrDirectorOrSalesHead && (
+                  <th className="py-4 px-3 w-10 text-center">
+                    <input
+                      type="checkbox"
+                      onChange={handleSelectAll}
+                      checked={displayedMembers.length > 0 && displayedMembers.filter(m => m.id !== user?.id).length > 0 && displayedMembers.filter(m => m.id !== user?.id).every(m => selectedUserIds.includes(m.id))}
+                      className="rounded border-slate-700 bg-slate-900 text-amber-500 focus:ring-amber-500/40 cursor-pointer"
+                    />
+                  </th>
+                )}
                 <th className="py-4 px-4 w-20 text-center">Photo</th>
                 <th className="py-4 px-4 w-48">Full Name</th>
                 <th className="py-4 px-4 w-32">Employee ID</th>
@@ -836,14 +1003,28 @@ export default function TeamManagementPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-sm">
-              {members.length === 0 ? (
+              {displayedMembers.length === 0 ? (
                 <tr>
-                  <td colSpan={isAdminOrDirectorOrSalesHead ? 9 : 6} className="py-12 text-center text-slate-500 text-xs">
-                    No team members found.
+                  <td colSpan={isAdminOrDirectorOrSalesHead ? 10 : 6} className="py-12 text-center text-slate-500 text-xs">
+                    {!hasFullTeamAccess ? (
+                      !empSearchInput.trim() ? (
+                        <div className="flex flex-col items-center gap-2">
+                          <Search className="w-6 h-6 text-slate-600" />
+                          <span className="font-semibold text-slate-400">Please enter an exact Employee ID above to view a team member.</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-2">
+                          <UserX className="w-6 h-6 text-slate-600" />
+                          <span>No team member found matching Employee ID "{empSearchInput.trim()}".</span>
+                        </div>
+                      )
+                    ) : (
+                      'No team members found.'
+                    )}
                   </td>
                 </tr>
               ) : (
-                members.map((member) => {
+                displayedMembers.map((member) => {
                   const roleConfig = { label: getRoleLabel(member.role), class: getRoleClass(member.role) };
                   
                   return (
@@ -851,8 +1032,20 @@ export default function TeamManagementPage() {
                       key={member.id}
                       className={`hover:bg-slate-900/10 transition-colors ${
                         !member.isActive ? 'opacity-50' : ''
-                      }`}
+                      } ${selectedUserIds.includes(member.id) ? 'bg-amber-500/5' : ''}`}
                     >
+                      {isAdminOrDirectorOrSalesHead && (
+                        <td className="py-4 px-3 text-center w-10">
+                          {member.id !== user?.id && (
+                            <input
+                              type="checkbox"
+                              checked={selectedUserIds.includes(member.id)}
+                              onChange={() => handleSelectUser(member.id)}
+                              className="rounded border-slate-700 bg-slate-900 text-amber-500 focus:ring-amber-500/40 cursor-pointer"
+                            />
+                          )}
+                        </td>
+                      )}
                       {/* Photograph Column */}
                       <td className="py-4 px-4 text-center w-20">
                         {member.photograph ? (
@@ -865,8 +1058,8 @@ export default function TeamManagementPage() {
                             }}
                           />
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-xs text-amber-500 mx-auto">
-                            {member.name.substring(0, 2).toUpperCase()}
+                          <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-amber-400 mx-auto shrink-0">
+                            <User className="w-4 h-4" />
                           </div>
                         )}
                       </td>
@@ -1036,7 +1229,9 @@ export default function TeamManagementPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Full Name *</label>
+                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
+                    Full Name <span className="text-red-500 font-bold ml-0.5">*</span>
+                  </label>
                   <input
                     type="text"
                     required
@@ -1047,7 +1242,9 @@ export default function TeamManagementPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Employee ID *</label>
+                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
+                    Employee ID <span className="text-red-500 font-bold ml-0.5">*</span>
+                  </label>
                   <input
                     type="text"
                     required
@@ -1058,7 +1255,9 @@ export default function TeamManagementPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Email Address *</label>
+                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
+                    Email Address <span className="text-red-500 font-bold ml-0.5">*</span>
+                  </label>
                   <input
                     type="email"
                     required
@@ -1069,13 +1268,29 @@ export default function TeamManagementPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Contact Phone</label>
+                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
+                    Contact Number <span className="text-red-500 font-bold ml-0.5">*</span>
+                  </label>
                   <input
                     type="text"
+                    required
                     value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: e.target.value })}
                     placeholder="Contact number"
                     className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                  />
+                </div>
+                <div className="col-span-1 sm:col-span-2">
+                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
+                    Full Address <span className="text-red-500 font-bold ml-0.5">*</span>
+                  </label>
+                  <textarea
+                    required
+                    rows={2}
+                    value={form.address}
+                    onChange={(e) => setForm({ ...form, address: e.target.value })}
+                    placeholder="Complete residential address"
+                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none resize-none"
                   />
                 </div>
                 <div>
@@ -1138,7 +1353,9 @@ export default function TeamManagementPage() {
                 )}
 
                 <div>
-                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Initial Password *</label>
+                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
+                    Initial Password <span className="text-red-500 font-bold ml-0.5">*</span>
+                  </label>
                   <input
                     type="password"
                     required
@@ -1164,7 +1381,9 @@ export default function TeamManagementPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Date of Joining *</label>
+                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
+                    Date of Joining <span className="text-red-500 font-bold ml-0.5">*</span>
+                  </label>
                   <input
                     type="date"
                     required
@@ -1388,7 +1607,9 @@ export default function TeamManagementPage() {
                   {/* Member Form Fields */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Full Name *</label>
+                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
+                        Full Name <span className="text-red-500 font-bold ml-0.5">*</span>
+                      </label>
                       <input
                         type="text"
                         required
@@ -1398,7 +1619,9 @@ export default function TeamManagementPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Employee ID *</label>
+                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
+                        Employee ID <span className="text-red-500 font-bold ml-0.5">*</span>
+                      </label>
                       <input
                         type="text"
                         required
@@ -1408,7 +1631,9 @@ export default function TeamManagementPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Email Address *</label>
+                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
+                        Email Address <span className="text-red-500 font-bold ml-0.5">*</span>
+                      </label>
                       <input
                         type="email"
                         required
@@ -1418,12 +1643,28 @@ export default function TeamManagementPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Contact Phone</label>
+                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
+                        Contact Number <span className="text-red-500 font-bold ml-0.5">*</span>
+                      </label>
                       <input
                         type="text"
+                        required
                         value={editMemberForm.phone}
                         onChange={(e) => setEditMemberForm({ ...editMemberForm, phone: e.target.value })}
                         className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                      />
+                    </div>
+                    <div className="col-span-1 sm:col-span-2">
+                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
+                        Full Address <span className="text-red-500 font-bold ml-0.5">*</span>
+                      </label>
+                      <textarea
+                        required
+                        rows={2}
+                        value={editMemberForm.address}
+                        onChange={(e) => setEditMemberForm({ ...editMemberForm, address: e.target.value })}
+                        placeholder="Complete residential address"
+                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none resize-none"
                       />
                     </div>
                     <div>
@@ -1517,7 +1758,9 @@ export default function TeamManagementPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Date of Joining *</label>
+                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
+                        Date of Joining <span className="text-red-500 font-bold ml-0.5">*</span>
+                      </label>
                       <input
                         type="date"
                         required
@@ -1561,17 +1804,17 @@ export default function TeamManagementPage() {
                     </div>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {['Leads', 'Orders', 'Reports', 'Team'].map((cat) => {
+                      {['Leads Pipeline & Management', 'Orders & Fulfillment Queue', 'Team Directory & Access Control', 'Analytics & Insights'].map((cat) => {
                         let IconComponent = Users;
-                        if (cat === 'Leads') IconComponent = Sun;
-                        else if (cat === 'Orders') IconComponent = Lock;
-                        else if (cat === 'Reports') IconComponent = History;
+                        if (cat.includes('Leads')) IconComponent = Sun;
+                        else if (cat.includes('Orders')) IconComponent = Lock;
+                        else if (cat.includes('Analytics')) IconComponent = History;
 
                         return (
                           <div key={cat} className="p-4 bg-slate-900/40 border border-slate-800/80 rounded-xl space-y-3 hover:border-slate-700/50 transition-all duration-200 shadow-md">
                             <div className="flex items-center gap-2 border-b border-slate-850 pb-2 mb-1">
                               <IconComponent className="w-4 h-4 text-amber-500 shrink-0" />
-                              <span className="block text-slate-200 font-bold uppercase tracking-wider text-[10px]">{cat} Permissions</span>
+                              <span className="block text-slate-200 font-bold uppercase tracking-wider text-[10px]">{cat}</span>
                             </div>
                             <div className="space-y-2">
                               {ALL_PERMISSIONS.filter(p => p.category === cat).map((perm) => {
@@ -1729,8 +1972,8 @@ export default function TeamManagementPage() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full bg-slate-850 flex items-center justify-center font-bold text-lg text-amber-500">
-                        {selectedMember.name.substring(0, 2).toUpperCase()}
+                      <div className="w-full h-full bg-slate-850 flex items-center justify-center text-amber-400">
+                        <User className="w-8 h-8" />
                       </div>
                     )}
                   </div>
@@ -1757,8 +2000,12 @@ export default function TeamManagementPage() {
                         <span className="text-white font-mono">{selectedMember.email}</span>
                       </div>
                       <div>
-                        <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Contact Phone</span>
+                        <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Contact Number</span>
                         <span className="text-white font-mono">{selectedMember.phone || '-'}</span>
+                      </div>
+                      <div>
+                        <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Full Address</span>
+                        <span className="text-white">{selectedMember.address || '-'}</span>
                       </div>
                       <div>
                         <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Direct Supervisor</span>

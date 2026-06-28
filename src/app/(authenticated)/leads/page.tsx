@@ -16,6 +16,9 @@ import {
   Upload,
   X,
   Check,
+  UserCheck,
+  Users,
+  Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -155,16 +158,33 @@ export default function LeadsPage() {
 
   // Dropdown lists
   const [consultants, setConsultants] = useState<{ id: number; name: string }[]>([]);
+  const [teamMembers, setTeamMembers] = useState<{ id: number; name: string; role: string }[]>([]);
 
   // Multiple selection and bulk actions states
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [customSelectVal, setCustomSelectVal] = useState('');
 
-  const handleBulkSelectCount = async (count: number | 'all') => {
+  // Bulk Reassignment States
+  const [showBulkAssignModal, setShowBulkAssignModal] = useState(false);
+  const [bulkManagerId, setBulkManagerId] = useState<string>('UNCHANGED');
+  const [bulkTlId, setBulkTlId] = useState<string>('UNCHANGED');
+  const [bulkConsultantId, setBulkConsultantId] = useState<string>('UNCHANGED');
+  const [bulkAssigning, setBulkAssigning] = useState(false);
+
+  const handleArbitrarySelectSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const count = parseInt(customSelectVal, 10);
+    if (isNaN(count) || count <= 0) {
+      alert('Please enter a valid positive number of leads.');
+      return;
+    }
     setLoading(true);
     try {
+      setLimit(count);
+      setPage(1);
       const params = new URLSearchParams({
-        ids_only: 'true',
+        page: '1',
+        limit: count.toString(),
         search,
         status: statusFilter,
         consultant_id: consultantFilter,
@@ -172,30 +192,20 @@ export default function LeadsPage() {
         lead_source: sourceFilter,
         city: cityFilter,
       });
+
       const res = await fetch(`/api/v1/leads?${params.toString()}`);
       const data = await res.json();
-      if (data.success && Array.isArray(data.data)) {
-        if (count === 'all') {
-          setSelectedIds(data.data);
-        } else {
-          setSelectedIds(data.data.slice(0, count));
-        }
+      if (data.success && data.data) {
+        setLeads(data.data.leads);
+        setTotal(data.data.pagination.total);
+        const fetchedIds = data.data.leads.map((l: any) => l.id);
+        setSelectedIds(fetchedIds);
       }
     } catch (err) {
       console.error('Failed to select leads:', err);
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleCustomSelectSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const count = parseInt(customSelectVal, 10);
-    if (isNaN(count) || count <= 0) {
-      alert('Please enter a valid positive number.');
-      return;
-    }
-    handleBulkSelectCount(count);
   };
 
   // Keep track of the last active filters to clear selected IDs only when filters change
@@ -325,6 +335,69 @@ export default function LeadsPage() {
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  // Fetch all team members for bulk reassignments
+  const fetchTeamMembers = async () => {
+    try {
+      const res = await fetch('/api/v1/users', { cache: 'no-store' });
+      const data = await res.json();
+      if (data.success && data.data) {
+        setTeamMembers(data.data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchConsultants();
+    fetchTeamMembers();
+  }, []);
+
+  const handleBulkAssignSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedIds.length === 0) return;
+
+    if (bulkManagerId === 'UNCHANGED' && bulkTlId === 'UNCHANGED' && bulkConsultantId === 'UNCHANGED') {
+      alert('Please select at least one team role to assign or unassign.');
+      return;
+    }
+
+    try {
+      setBulkAssigning(true);
+      const payload: any = { leadIds: selectedIds };
+
+      if (bulkManagerId !== 'UNCHANGED') {
+        payload.assignedManagerId = bulkManagerId === 'UNASSIGN' ? null : Number(bulkManagerId);
+      }
+      if (bulkTlId !== 'UNCHANGED') {
+        payload.assignedTlId = bulkTlId === 'UNASSIGN' ? null : Number(bulkTlId);
+      }
+      if (bulkConsultantId !== 'UNCHANGED') {
+        payload.assignedConsultantId = bulkConsultantId === 'UNASSIGN' ? null : Number(bulkConsultantId);
+      }
+
+      const res = await fetch('/api/v1/leads/bulk-assign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      alert(data.message || 'Leads reassigned successfully.');
+
+      if (data.success) {
+        setShowBulkAssignModal(false);
+        setSelectedIds([]);
+        fetchLeads();
+      }
+    } catch (err) {
+      console.error(err);
+      alert('An error occurred during bulk assignment.');
+    } finally {
+      setBulkAssigning(false);
     }
   };
 
@@ -751,15 +824,26 @@ export default function LeadsPage() {
               <strong>{selectedIds.length}</strong> leads selected {selectedIds.length === total ? "(all matching leads across pages)" : ""}
             </span>
           </div>
-          {hasPermission('leads:edit') && (
-            <button
-              onClick={handleBulkDelete}
-              className="py-2 px-4 bg-red-650 hover:bg-red-500 text-white rounded-lg font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span>Delete Selected Leads</span>
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            {(hasPermission('leads:assign') || user?.role === 'admin' || user?.role === 'director' || user?.role?.startsWith('admin:')) && (
+              <button
+                onClick={() => setShowBulkAssignModal(true)}
+                className="py-2 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <UserCheck className="w-3.5 h-3.5" />
+                <span>Assign Team ({selectedIds.length})</span>
+              </button>
+            )}
+            {hasPermission('leads:edit') && (
+              <button
+                onClick={handleBulkDelete}
+                className="py-2 px-4 bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/50 rounded-lg font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete Selected Leads</span>
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -767,61 +851,35 @@ export default function LeadsPage() {
       <div className="bg-[#111625] border border-slate-800 rounded-xl overflow-hidden shadow-xl">
         {/* Table Header Control Bar */}
         <div className="p-4 border-b border-slate-800 bg-slate-900/20 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold text-slate-400">Select:</span>
-            <div className="flex flex-wrap gap-1.5">
-              <button
-                type="button"
-                onClick={() => handleBulkSelectCount(50)}
-                className="py-1 px-3 bg-slate-950 border border-slate-800 hover:border-slate-700 hover:bg-slate-900 text-slate-300 hover:text-white rounded-lg text-xs font-medium transition-all cursor-pointer"
-              >
-                Top 50
-              </button>
-              <button
-                type="button"
-                onClick={() => handleBulkSelectCount(100)}
-                className="py-1 px-3 bg-slate-950 border border-slate-800 hover:border-slate-700 hover:bg-slate-900 text-slate-300 hover:text-white rounded-lg text-xs font-medium transition-all cursor-pointer"
-              >
-                Top 100
-              </button>
-              <button
-                type="button"
-                onClick={() => handleBulkSelectCount('all')}
-                className="py-1 px-3 bg-slate-950 border border-slate-800 hover:border-slate-700 hover:bg-slate-900 text-slate-300 hover:text-white rounded-lg text-xs font-medium transition-all cursor-pointer"
-              >
-                All Matching
-              </button>
-              {selectedIds.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setSelectedIds([])}
-                  className="py-1 px-3 bg-red-950/20 border border-red-900/30 hover:bg-red-950/40 text-red-400 hover:text-red-300 rounded-lg text-xs font-medium transition-all cursor-pointer"
-                >
-                  Clear Selection ({selectedIds.length})
-                </button>
-              )}
-            </div>
-          </div>
-          
-          <form onSubmit={handleCustomSelectSubmit} className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-400">Custom Select:</span>
+          <form onSubmit={handleArbitrarySelectSubmit} className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold text-slate-300">Arbitrary Select (Display & Select Leads):</span>
             <div className="flex items-center">
               <input
                 type="number"
                 min="1"
-                placeholder="Enter count..."
+                placeholder="Enter count (e.g. 100)..."
                 value={customSelectVal}
                 onChange={(e) => setCustomSelectVal(e.target.value)}
-                className="w-24 px-3 py-1 bg-slate-950 border border-slate-800 rounded-l-lg text-slate-200 focus:outline-none focus:ring-1 focus:ring-amber-500 text-xs"
+                className="w-40 px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-l-lg text-slate-200 focus:outline-none focus:ring-1 focus:ring-amber-500 text-xs"
               />
               <button
                 type="submit"
-                className="py-1 px-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-r-lg text-xs font-bold transition-all cursor-pointer"
+                className="py-1.5 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-r-lg text-xs font-bold transition-all cursor-pointer shadow-md"
               >
-                Select
+                Select & Show All
               </button>
             </div>
           </form>
+
+          {selectedIds.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setSelectedIds([])}
+              className="py-1.5 px-3 bg-red-950/20 border border-red-900/30 hover:bg-red-950/40 text-red-400 hover:text-red-300 rounded-lg text-xs font-medium transition-all cursor-pointer"
+            >
+              Clear Selection ({selectedIds.length})
+            </button>
+          )}
         </div>
 
         <div className="overflow-x-auto">
@@ -1227,6 +1285,117 @@ export default function LeadsPage() {
                 </button>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Reassign Team Modal */}
+      {showBulkAssignModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="w-full max-w-lg bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                  <UserCheck className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-white">Bulk Reassign Team</h3>
+                  <p className="text-[11px] text-slate-400">Reassign Manager, TL, or Consultant for {selectedIds.length} selected lead(s).</p>
+                </div>
+              </div>
+              <button onClick={() => setShowBulkAssignModal(false)} className="text-slate-400 hover:text-white cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleBulkAssignSubmit} className="p-6 space-y-4">
+              {/* Select Manager */}
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                  Assigned Manager
+                </label>
+                <select
+                  value={bulkManagerId}
+                  onChange={(e) => setBulkManagerId(e.target.value)}
+                  className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500 focus:outline-none"
+                >
+                  <option value="UNCHANGED">-- Keep Unchanged --</option>
+                  <option value="UNASSIGN">❌ Unassign Manager</option>
+                  {teamMembers.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name} ({m.role})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Select Team Leader */}
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                  Assigned Team Leader (TL)
+                </label>
+                <select
+                  value={bulkTlId}
+                  onChange={(e) => setBulkTlId(e.target.value)}
+                  className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500 focus:outline-none"
+                >
+                  <option value="UNCHANGED">-- Keep Unchanged --</option>
+                  <option value="UNASSIGN">❌ Unassign Team Leader</option>
+                  {teamMembers.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name} ({m.role})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Select Consultant */}
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                  Assigned Consultant / PSA
+                </label>
+                <select
+                  value={bulkConsultantId}
+                  onChange={(e) => setBulkConsultantId(e.target.value)}
+                  className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500 focus:outline-none"
+                >
+                  <option value="UNCHANGED">-- Keep Unchanged --</option>
+                  <option value="UNASSIGN">❌ Unassign Consultant</option>
+                  {teamMembers.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name} ({m.role})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="pt-4 border-t border-slate-800 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowBulkAssignModal(false)}
+                  className="py-2 px-4 bg-slate-900 border border-slate-800 text-slate-400 rounded-xl font-bold text-xs cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={bulkAssigning}
+                  className="py-2 px-5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-xl font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  {bulkAssigning ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Assigning...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Apply Assignment</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

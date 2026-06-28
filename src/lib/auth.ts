@@ -75,39 +75,39 @@ export function getDefaultPermissionsForRole(role: string): string[] {
     case 'admin':
     case 'director':
       return [
-        'leads:view', 'leads:view_all', 'leads:create', 'leads:edit', 'leads:change_status',
-        'orders:view', 'orders:view_all', 'orders:create', 'orders:verify', 'orders:submit_installation',
-        'reports:view', 'team:view', 'team:manage', 'logs:view'
+        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view', 'leads:view_all', 'leads:assign',
+        'orders:create', 'orders:verify', 'orders:submit_installation', 'orders:view', 'orders:view_all',
+        'team:view', 'attendance:view', 'team:manage', 'logs:view', 'reports:view'
       ];
     case 'sales_head':
       return [
-        'leads:view', 'leads:view_all', 'leads:create', 'leads:edit', 'leads:change_status',
-        'orders:view', 'orders:view_all', 'orders:create', 'reports:view', 'team:view', 'logs:view'
+        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view', 'leads:view_all',
+        'orders:create', 'orders:view', 'orders:view_all', 'attendance:view', 'logs:view', 'reports:view'
       ];
     case 'manager':
       return [
-        'leads:view', 'leads:view_all', 'leads:create', 'leads:edit', 'leads:change_status',
-        'orders:view', 'orders:view_all', 'orders:create', 'orders:verify', 'orders:submit_installation',
-        'reports:view', 'team:view', 'logs:view'
+        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view', 'leads:view_all',
+        'orders:create', 'orders:verify', 'orders:submit_installation', 'orders:view', 'orders:view_all',
+        'attendance:view', 'logs:view', 'reports:view'
       ];
     case 'finance':
       return [
-        'leads:view', 'leads:view_all', 'orders:view', 'orders:view_all', 'orders:verify', 'reports:view', 'team:view'
+        'leads:view', 'leads:view_all', 'orders:view', 'orders:view_all', 'orders:verify', 'reports:view'
       ];
     case 'operations':
       return [
-        'leads:view', 'leads:view_all', 'orders:view', 'orders:view_all', 'orders:verify', 'orders:submit_installation', 'team:view'
+        'leads:view', 'leads:view_all', 'orders:view', 'orders:view_all', 'orders:verify', 'orders:submit_installation'
       ];
     case 'tl':
     case 'psa_tl':
       return [
-        'leads:view', 'leads:create', 'leads:edit', 'leads:change_status', 'orders:view', 'orders:create', 'reports:view', 'team:view'
+        'leads:create', 'leads:edit', 'leads:change_status', 'leads:view', 'orders:view', 'orders:create', 'reports:view'
       ];
     case 'consultant':
     case 'psa':
     default:
       return [
-        'leads:view', 'leads:create', 'leads:edit', 'leads:change_status', 'orders:view', 'orders:create', 'team:view'
+        'leads:create', 'leads:edit', 'leads:change_status', 'leads:view', 'orders:view', 'orders:create'
       ];
   }
 }
@@ -118,6 +118,11 @@ export async function getUserPermissions(userId: number): Promise<string[]> {
     select: { role: true, permissions: true }
   });
   if (!user) return [];
+
+  const baseRole = user.role.includes(':') ? user.role.split(':')[0] : user.role;
+  if (baseRole === 'admin' || baseRole === 'director') {
+    return getDefaultPermissionsForRole('admin');
+  }
   
   return user.permissions && user.permissions.trim()
     ? user.permissions.split(',').map(p => p.trim())

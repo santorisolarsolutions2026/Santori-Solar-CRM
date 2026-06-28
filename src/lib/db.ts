@@ -33,7 +33,7 @@ function createPrismaClient() {
 if (process.env.NODE_ENV === 'production') {
   prisma = createPrismaClient();
 } else {
-  if (!globalForPrisma.prisma) {
+  if (!globalForPrisma.prisma || !(globalForPrisma.prisma as any).attendance) {
     globalForPrisma.prisma = createPrismaClient();
   }
   prisma = globalForPrisma.prisma;

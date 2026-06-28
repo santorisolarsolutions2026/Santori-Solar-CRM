@@ -31,6 +31,7 @@ export async function GET(
         name: true,
         email: true,
         phone: true,
+        address: true,
         employeeId: true,
         role: true,
         permissions: true,
@@ -115,7 +116,7 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { name, email, phone, employeeId, role, reportsTo, isActive, joiningDate, photograph, permissions, password } = body;
+    const { name, email, phone, address, employeeId, role, reportsTo, isActive, joiningDate, photograph, permissions, password } = body;
 
     const isTargetAdmin = user.role.toLowerCase() === 'admin' || user.role.toLowerCase().startsWith('admin:');
 
@@ -152,13 +153,13 @@ export async function PATCH(
       }
     }
 
-    // Self-update validation (can only update phone and photograph)
+    // Self-update validation (can only update phone, address, and photograph)
     if (isSelf && !isAdminOrDirectorOrSalesHead) {
       const keys = Object.keys(body);
-      const allowedKeys = ['phone', 'photograph'];
+      const allowedKeys = ['phone', 'address', 'photograph'];
       const invalidKeys = keys.filter(k => !allowedKeys.includes(k));
       if (invalidKeys.length > 0) {
-        return NextResponse.json({ success: false, message: 'Forbidden. You can only update your photograph and phone number.' }, { status: 403 });
+        return NextResponse.json({ success: false, message: 'Forbidden. You can only update your photograph, address, and phone number.' }, { status: 403 });
       }
     }
 
@@ -173,6 +174,7 @@ export async function PATCH(
     if (name !== undefined) updateData.name = name;
     if (email !== undefined) updateData.email = email;
     if (phone !== undefined) updateData.phone = phone;
+    if (address !== undefined) updateData.address = address;
     if (role !== undefined) updateData.role = role;
     if (permissions !== undefined) updateData.permissions = permissions;
     if (reportsTo !== undefined) updateData.reportsTo = reportsTo ? parseInt(reportsTo, 10) : null;
@@ -326,7 +328,6 @@ export async function DELETE(
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
-    // Allow users with team management permissions to delete users
     const userPermissions = await getUserPermissions(userPayload.id);
     if (!userPermissions.includes('team:manage')) {
       return NextResponse.json({ success: false, message: 'Forbidden. Only users with team management permissions can delete users.' }, { status: 403 });
@@ -338,12 +339,10 @@ export async function DELETE(
       return NextResponse.json({ success: false, message: 'Invalid User ID.' }, { status: 400 });
     }
 
-    // Cannot delete yourself
     if (userId === userPayload.id) {
       return NextResponse.json({ success: false, message: 'Cannot delete your own user account.' }, { status: 400 });
     }
 
-    // Find target user
     const targetUser = await prisma.user.findUnique({
       where: { id: userId },
     });
@@ -357,38 +356,60 @@ export async function DELETE(
       return NextResponse.json({ success: false, message: 'The Admin user cannot be deleted.' }, { status: 400 });
     }
 
-    // Enforce that user must be deactivated before deletion
-    if (targetUser.isActive) {
-      return NextResponse.json({ success: false, message: 'Cannot delete user. Please deactivate the user first.' }, { status: 400 });
-    }
+    const { searchParams } = new URL(req.url);
+    const confirmUnassign = searchParams.get('confirm_unassign') === 'true';
 
-    // Check if user has any associated leads
+    // Count associated assigned leads
     const associatedLeadCount = await prisma.lead.count({
       where: {
         OR: [
           { assignedManagerId: userId },
           { assignedTlId: userId },
           { assignedConsultantId: userId },
-          { createdById: userId },
         ],
       },
     });
 
-    if (associatedLeadCount > 0) {
+    if (associatedLeadCount > 0 && !confirmUnassign) {
       return NextResponse.json({
         success: false,
-        message: `Cannot delete user. This user has ${associatedLeadCount} associated lead(s) in the system. Reassign or delete their leads first.`,
-      }, { status: 400 });
+        requiresConfirmation: true,
+        associatedLeadCount,
+        message: `Warning: '${targetUser.name}' has ${associatedLeadCount} associated lead(s). Deleting this team member will make all associated leads unassigned. Do you want to proceed?`,
+      }, { status: 200 });
     }
 
-    // Delete user from database
-    await prisma.user.delete({
-      where: { id: userId },
-    });
+    // Unassign associated leads if any
+    if (associatedLeadCount > 0) {
+      await prisma.lead.updateMany({
+        where: { assignedManagerId: userId },
+        data: { assignedManagerId: null },
+      });
+      await prisma.lead.updateMany({
+        where: { assignedTlId: userId },
+        data: { assignedTlId: null },
+      });
+      await prisma.lead.updateMany({
+        where: { assignedConsultantId: userId },
+        data: { assignedConsultantId: null },
+      });
+    }
+
+    // Attempt database delete, fallback to soft-delete purge if referenced in foreign tables
+    try {
+      await prisma.user.delete({
+        where: { id: userId },
+      });
+    } catch (e) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { isActive: false, employeeId: null },
+      });
+    }
 
     return NextResponse.json({
       success: true,
-      message: `User '${targetUser.name}' has been successfully deleted.`,
+      message: `Team member '${targetUser.name}' has been deleted successfully, and associated leads are now unassigned.`,
     });
   } catch (error: any) {
     console.error('Delete user error:', error);

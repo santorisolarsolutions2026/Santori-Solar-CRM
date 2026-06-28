@@ -18,6 +18,8 @@ import {
   Camera,
   Upload,
   Trash2,
+  ShieldCheck,
+  CheckCircle2,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -213,8 +215,10 @@ export default function OrdersPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            to_status: isCompleted ? 6 : 13,
-            remark: `[INSTALLATION UPDATE] Status: ${installationStatus}. Notes: ${opsNotes || 'none'}`,
+            to_status: 13,
+            remark: isCompleted 
+              ? `[INSTALLATION COMPLETED] Solar system installed and handed over to client. Notes: ${opsNotes || 'none'}`
+              : `[INSTALLATION UPDATE] Status: ${installationStatus}. Notes: ${opsNotes || 'none'}`,
           }),
         });
 
@@ -415,34 +419,37 @@ export default function OrdersPage() {
                           {hasPermission('orders:verify') && order.status === 'submitted' && (
                             <button
                               onClick={() => { setSelectedOrder(order); setModalMode('finance_verify'); }}
-                              className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-400 font-semibold text-xs flex items-center gap-1 cursor-pointer"
+                              className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-400 font-semibold text-xs flex items-center gap-1 cursor-pointer transition-all"
+                              title="Verify Financial Punching & Documents"
                             >
-                              Verify
+                              <ShieldCheck className="w-4 h-4" />
                             </button>
                           )}
                           {hasPermission('orders:verify') && order.status === 'finance_verified' && (
                             <button
                               onClick={() => { setSelectedOrder(order); setModalMode('ops_update'); setInstallationStatus('ops_assigned'); }}
-                              className="p-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-blue-400 font-semibold text-xs flex items-center gap-1 cursor-pointer"
+                              className="p-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-blue-400 font-semibold text-xs flex items-center gap-1 cursor-pointer transition-all"
+                              title="Schedule Installation"
                             >
-                              Schedule
+                              <Calendar className="w-4 h-4" />
                             </button>
                           )}
                           {hasPermission('orders:submit_installation') && order.status === 'ops_assigned' && (
                             <button
                               onClick={() => { setSelectedOrder(order); setModalMode('ops_update'); setInstallationStatus('completed'); }}
-                              className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 font-semibold text-xs flex items-center gap-1 cursor-pointer"
+                              className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 font-semibold text-xs flex items-center gap-1 cursor-pointer transition-all"
+                              title="Complete Installation & Upload Photos"
                             >
-                              Complete
+                              <CheckCircle2 className="w-4 h-4" />
                             </button>
                           )}
                           {hasPermission('orders:submit_installation') && order.status === 'completed' && (
                             <button
                               onClick={() => { setSelectedOrder(order); setModalMode('view'); }}
-                              className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 font-semibold text-xs flex items-center gap-1 cursor-pointer"
-                              title="Upload/View Completed Photos"
+                              className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 font-semibold text-xs flex items-center gap-1 cursor-pointer transition-all"
+                              title="Installation Photos Gallery"
                             >
-                              {(!order.installationImages || order.installationImages.filter((img) => img.status === 'completed').length === 0) ? 'Add Photos' : 'Photos'}
+                              <Camera className="w-4 h-4" />
                             </button>
                           )}
                         </div>

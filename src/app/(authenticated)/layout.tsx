@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
+import { getCurrentLocationString } from '@/lib/location';
 import {
   Sun,
   LayoutDashboard,
@@ -23,6 +24,7 @@ import {
   Upload,
   Loader2,
   User,
+  Clock,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -190,9 +192,74 @@ export default function AuthenticatedLayout({
     }
   };
 
+  // Attendance states
+  const [todayAttendance, setTodayAttendance] = useState<any>(null);
+  const [attendanceActionLoading, setAttendanceActionLoading] = useState(false);
+
+  const fetchTodayAttendance = async () => {
+    if (!user) return;
+    try {
+      const res = await fetch('/api/v1/attendance/today');
+      const data = await res.json();
+      if (data.success) {
+        setTodayAttendance(data.data);
+      }
+    } catch (err) {
+      console.error('Fetch attendance error:', err);
+    }
+  };
+
+  const handleQuickCheckIn = async () => {
+    try {
+      setAttendanceActionLoading(true);
+      const loc = await getCurrentLocationString();
+      const res = await fetch('/api/v1/attendance/check-in', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ location: loc }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTodayAttendance(data.data);
+        alert(data.message);
+      } else {
+        alert(data.message || 'Check-in failed');
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setAttendanceActionLoading(false);
+    }
+  };
+
+  const handleQuickCheckOut = async () => {
+    if (!confirm('Are you sure you want to Check Out for today?')) return;
+    try {
+      setAttendanceActionLoading(true);
+      const loc = await getCurrentLocationString();
+      const res = await fetch('/api/v1/attendance/check-out', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ location: loc }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTodayAttendance(data.data);
+        alert(data.message);
+      } else {
+        alert(data.message || 'Check-out failed');
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setAttendanceActionLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (user) {
       fetchNotifications();
+      fetchTodayAttendance();
       // Poll notifications every 20 seconds
       const interval = setInterval(fetchNotifications, 20000);
       return () => clearInterval(interval);
@@ -267,10 +334,16 @@ export default function AuthenticatedLayout({
     },
 
     {
+      name: 'Attendance',
+      path: '/attendance',
+      icon: UserCheck,
+      permission: 'attendance:view', // visible only to admin or team members granted attendance:view permission
+    },
+    {
       name: 'Santori Team',
       path: '/team',
       icon: Users,
-      permission: 'team:view',
+      permission: null, // visible to all team members (restricted search-only mode for non-admins)
     },
     {
       name: 'Reports & Analytics',
@@ -332,8 +405,8 @@ export default function AuthenticatedLayout({
                 }}
               />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center font-bold text-sm text-amber-400 uppercase">
-                {user.name.substring(0, 2)}
+              <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700/80 flex items-center justify-center text-amber-400 shrink-0">
+                <User className="w-4 h-4" />
               </div>
             )}
             <div className="min-w-0 flex-1">
@@ -345,6 +418,70 @@ export default function AuthenticatedLayout({
             {userRoleConfig.label}
           </span>
         </button>
+
+        {/* Quick Attendance Check-in / Check-out Widget */}
+        <div className="mx-4 mb-4 p-3.5 bg-slate-900/80 border border-slate-800 rounded-xl space-y-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-amber-400" />
+              <span className="text-xs font-bold text-slate-200">Daily Attendance</span>
+            </div>
+            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider flex items-center gap-1 ${
+              !todayAttendance 
+                ? 'bg-slate-800 text-slate-400 border-slate-700' 
+                : todayAttendance.checkOut 
+                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                  : 'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse'
+            }`}>
+              {!todayAttendance ? '⚪ Pending' : todayAttendance.checkOut ? '✅ Completed' : '🟢 Active'}
+            </span>
+          </div>
+
+          {todayAttendance ? (
+            <div className="text-[11px] text-slate-400 space-y-1 bg-slate-950/60 p-2 rounded-lg border border-slate-850">
+              <div className="flex justify-between">
+                <span>Check In:</span>
+                <span className="font-mono font-semibold text-slate-200">
+                  {new Date(todayAttendance.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
+              {todayAttendance.checkOut && (
+                <div className="flex justify-between">
+                  <span>Check Out:</span>
+                  <span className="font-mono font-semibold text-slate-200">
+                    {new Date(todayAttendance.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+              )}
+            </div>
+          ) : null}
+
+          {!todayAttendance ? (
+            <button
+              type="button"
+              onClick={handleQuickCheckIn}
+              disabled={attendanceActionLoading}
+              className="w-full py-2 px-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md shadow-amber-500/10 flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+            >
+              {attendanceActionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserCheck className="w-3.5 h-3.5" />}
+              <span>Check In Now</span>
+            </button>
+          ) : !todayAttendance.checkOut ? (
+            <button
+              type="button"
+              onClick={handleQuickCheckOut}
+              disabled={attendanceActionLoading}
+              className="w-full py-2 px-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg font-bold text-xs shadow-md flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+            >
+              {attendanceActionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LogOut className="w-3.5 h-3.5" />}
+              <span>Check Out</span>
+            </button>
+          ) : (
+            <div className="text-[10px] text-center text-emerald-400 font-semibold py-0.5">
+              ✓ Day Completed ({Math.floor((todayAttendance.workDurationMin || 0) / 60)}h {(todayAttendance.workDurationMin || 0) % 60}m)
+            </div>
+          )}
+        </div>
 
         {/* Nav Links */}
         <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
@@ -411,8 +548,8 @@ export default function AuthenticatedLayout({
                     }}
                   />
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center font-bold text-sm text-amber-400 uppercase">
-                    {user.name.substring(0, 2)}
+                  <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700/80 flex items-center justify-center text-amber-400 shrink-0">
+                    <User className="w-4 h-4" />
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
@@ -424,6 +561,37 @@ export default function AuthenticatedLayout({
                 {userRoleConfig.label}
               </span>
             </button>
+
+            {/* Quick Attendance Mobile Widget */}
+            <div className="mx-4 mb-4 p-3 bg-slate-900/80 border border-slate-800 rounded-xl space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-amber-400" /> Attendance
+                </span>
+                <span className="text-[9px] font-bold text-amber-400 uppercase">
+                  {!todayAttendance ? 'Not Checked In' : todayAttendance.checkOut ? 'Completed' : 'Checked In'}
+                </span>
+              </div>
+              {!todayAttendance ? (
+                <button
+                  type="button"
+                  onClick={() => { setSidebarOpen(false); handleQuickCheckIn(); }}
+                  disabled={attendanceActionLoading}
+                  className="w-full py-1.5 px-3 bg-amber-500 text-slate-950 rounded-lg font-bold text-xs"
+                >
+                  Check In
+                </button>
+              ) : !todayAttendance.checkOut ? (
+                <button
+                  type="button"
+                  onClick={() => { setSidebarOpen(false); handleQuickCheckOut(); }}
+                  disabled={attendanceActionLoading}
+                  className="w-full py-1.5 px-3 bg-emerald-600 text-white rounded-lg font-bold text-xs"
+                >
+                  Check Out
+                </button>
+              ) : null}
+            </div>
 
             <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
               {filteredMenuItems.map((item) => {
@@ -566,8 +734,8 @@ export default function AuthenticatedLayout({
                   }}
                 />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center font-bold text-sm text-amber-400 uppercase">
-                  {user.name.substring(0, 2)}
+                <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700/80 flex items-center justify-center text-amber-400 shrink-0">
+                  <User className="w-4 h-4" />
                 </div>
               )}
               <div className="text-left">
@@ -613,8 +781,8 @@ export default function AuthenticatedLayout({
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full bg-slate-900 flex items-center justify-center font-bold text-lg text-amber-500">
-                        {user.name.substring(0, 2).toUpperCase()}
+                      <div className="w-full h-full bg-slate-900 flex items-center justify-center text-amber-400">
+                        <User className="w-8 h-8" />
                       </div>
                     )}
                     {uploadingEditPhoto && (

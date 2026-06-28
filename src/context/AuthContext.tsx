@@ -174,7 +174,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const hasPermission = (permission: string) => {
-    return user?.permissions?.includes(permission) || false;
+    if (!user) return false;
+    if (user.role === 'admin' || user.role.startsWith('admin:') || user.role === 'director') return true;
+    return user.permissions?.includes(permission) || false;
   };
 
   return (

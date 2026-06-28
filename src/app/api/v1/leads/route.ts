@@ -334,10 +334,16 @@ export async function POST(req: Request) {
       managerId = tlUser?.reportsTo || null;
     }
 
+    // Enforce team assignment permission on lead creation
+    const canAssign = userPermissions.includes('leads:assign') || ['admin', 'director'].includes(userPayload.role);
+    if (!canAssign && (assignedConsultantId || assignedTlId || assignedManagerId)) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to assign team members to leads.' }, { status: 403 });
+    }
+
     // Resolve assignments hierarchy
-    let finalConsultantId = assignedConsultantId ? parseInt(assignedConsultantId, 10) : null;
-    let finalTlId = assignedTlId ? parseInt(assignedTlId, 10) : tlId;
-    let finalManagerId = assignedManagerId ? parseInt(assignedManagerId, 10) : managerId;
+    let finalConsultantId = (assignedConsultantId && !isNaN(parseInt(assignedConsultantId, 10))) ? parseInt(assignedConsultantId, 10) : null;
+    let finalTlId = (assignedTlId && !isNaN(parseInt(assignedTlId, 10))) ? parseInt(assignedTlId, 10) : tlId;
+    let finalManagerId = (assignedManagerId && !isNaN(parseInt(assignedManagerId, 10))) ? parseInt(assignedManagerId, 10) : managerId;
 
     if (finalConsultantId && !assignedTlId && !assignedManagerId) {
       // Auto-resolve if consultant is assigned and TL/Manager are not explicitly chosen
@@ -362,6 +368,12 @@ export async function POST(req: Request) {
       finalManagerId = tlUser?.reportsTo || null;
     }
 
+    let parsedLoadKw = null;
+    if (sanctionedLoadKw !== undefined && sanctionedLoadKw !== null && String(sanctionedLoadKw).trim() !== '') {
+      const p = parseFloat(String(sanctionedLoadKw));
+      if (!isNaN(p)) parsedLoadKw = p;
+    }
+
     const leadCode = await generateLeadCode();
     const statusToSet = (finalTlId || finalConsultantId || finalManagerId) ? 1 : 0;
 
@@ -374,7 +386,7 @@ export async function POST(req: Request) {
           mobile: cleanMobile,
           mobileAlt: cleanMobileAlt,
           connectionType: connectionType || 'residential',
-          sanctionedLoadKw: sanctionedLoadKw ? parseFloat(sanctionedLoadKw) : null,
+          sanctionedLoadKw: parsedLoadKw,
           address: address || '',
           pinCode: pinCode || '',
           city: city || '',

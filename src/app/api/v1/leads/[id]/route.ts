@@ -144,6 +144,15 @@ export async function PATCH(
       isActive,
     } = body;
 
+    // Check assignment permission if modifying team assignment fields
+    const isChangingAssignment = assignedTlId !== undefined || assignedConsultantId !== undefined || assignedManagerId !== undefined;
+    if (isChangingAssignment) {
+      const canAssign = userPermissions.includes('leads:assign') || ['admin', 'director'].includes(userPayload.role);
+      if (!canAssign) {
+        return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to assign or reassign leads.' }, { status: 403 });
+      }
+    }
+
     // Enforce specific assignment change rules
     if (['tl', 'psa_tl'].includes(userPayload.role)) {
       // TL can only assign to themselves if unassigned, or keep it as themselves

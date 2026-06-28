@@ -33,6 +33,7 @@ import {
   Hourglass,
   XCircle,
   CheckCircle2,
+  Download,
 } from 'lucide-react';
 import Link from 'next/link';
 import { BeautifulAudioPlayer } from '@/components/BeautifulAudioPlayer';
@@ -1088,10 +1089,10 @@ export default function LeadDetailPage({
   };
 
   const docsChecklist = [
-    { type: 'aadhaar', label: 'Aadhaar Card' },
-    { type: 'pan', label: 'PAN Card' },
-    { type: 'electricity_bill', label: 'Electricity Bill' },
-    { type: 'bank_passbook', label: 'Bank Passbook' },
+    { type: 'aadhaar', label: 'Aadhaar Card', sublabel: 'National Identity Proof (Front & Back)' },
+    { type: 'pan', label: 'PAN Card', sublabel: 'Permanent Account Number Card' },
+    { type: 'electricity_bill', label: 'Electricity Bill', sublabel: 'Recent Utility Bill (Max 3 months old)' },
+    { type: 'bank_passbook', label: 'Bank Passbook / Cheque', sublabel: 'Bank details for Direct Benefit Subsidy' },
   ];
 
   const allDocsUploaded = lead.order
@@ -1965,50 +1966,99 @@ export default function LeadDetailPage({
                       )}
                     </form>
                   </div>
-
-                  {/* Document Checklist & Uploads */}
+                     {/* Document Vault Header */}
                   <div className="border-t border-slate-800/80 pt-8 space-y-6">
-                    <div>
-                      <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300">
-                        Order Documents Checklist
-                      </h3>
-                      <p className="text-xs text-slate-500 mt-1">
-                        Upload the 4 required client verification files. Only PDF, JPG, and PNG are allowed (Max 5MB).
-                      </p>
+                    <div className="p-5 bg-gradient-to-r from-slate-900/80 via-[#131b2e] to-slate-900/80 border border-slate-800 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-lg">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2.5">
+                          <FileCheck className="w-5 h-5 text-amber-400" />
+                          <h3 className="text-sm font-bold uppercase tracking-wider text-white">
+                            Client KYC & Verification Vault
+                          </h3>
+                        </div>
+                        <p className="text-xs text-slate-400">
+                          Securely upload required verification documents. Supports PDF, JPG, and PNG (Max 5MB per file).
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3 bg-slate-950/60 px-4 py-2.5 border border-slate-800 rounded-xl w-fit">
+                        <div className="text-right">
+                          <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block">Verification Progress</span>
+                          <span className="text-xs font-bold text-white font-mono">
+                            {docsChecklist.filter(item => getDocStatus(item.type).uploaded).length} / {docsChecklist.length} Verified
+                          </span>
+                        </div>
+                        <div className={`w-3 h-3 rounded-full ${
+                          docsChecklist.every(item => getDocStatus(item.type).uploaded) 
+                            ? 'bg-emerald-500 shadow-sm shadow-emerald-500/50 animate-pulse' 
+                            : 'bg-amber-500'
+                        }`} />
+                      </div>
                     </div>
 
-                    {/* Green check boxes checklist representation */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                    {/* Smooth 2-Column Document Dropzones Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       {docsChecklist.map((item) => {
                         const { uploaded, fileName, id } = getDocStatus(item.type);
+                        const isUploading = uploadingDoc === item.type;
+
                         return (
                           <div
                             key={item.type}
-                            className={`p-4 rounded-xl border flex flex-col justify-between min-h-[8.5rem] h-auto transition-all ${
+                            className={`p-5 rounded-2xl border transition-all duration-300 flex flex-col justify-between space-y-4 ${
                               uploaded
-                                ? 'bg-emerald-500/[0.02] border-emerald-500/20'
-                                : 'bg-slate-950/20 border-slate-850'
+                                ? 'bg-gradient-to-br from-emerald-950/10 via-slate-900/30 to-slate-950/40 border-emerald-500/30 shadow-md shadow-emerald-950/10'
+                                : 'bg-slate-950/40 border-slate-800/80 hover:border-slate-700'
                             }`}
                           >
-                            <div className="flex justify-between items-start">
-                              <span className="text-xs font-bold text-slate-300 leading-snug">{item.label}</span>
-                              {uploaded ? (
-                                <CheckCircle className="w-5 h-5 text-emerald-400" />
-                              ) : (
-                                <div className="w-5 h-5 rounded-full border-2 border-slate-800" />
-                              )}
+                            {/* Card Header: Title & Status Badge */}
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-center gap-3">
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
+                                  uploaded 
+                                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
+                                    : 'bg-slate-900 border-slate-800 text-slate-400'
+                                }`}>
+                                  <FileText className="w-5 h-5" />
+                                </div>
+                                <div>
+                                  <h4 className="text-xs font-bold text-white tracking-wide">{item.label}</h4>
+                                  <span className="text-[10px] text-slate-500 block">{item.sublabel}</span>
+                                </div>
+                              </div>
+
+                              <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wider flex items-center gap-1 shrink-0 ${
+                                uploaded
+                                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                  : 'bg-slate-900/60 text-slate-400 border-slate-800'
+                              }`}>
+                                {uploaded ? (
+                                  <>
+                                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                                    <span>Uploaded</span>
+                                  </>
+                                ) : (
+                                  <span>Required</span>
+                                )}
+                              </span>
                             </div>
 
-                            <div className="mt-4">
+                            {/* Card Content & Upload Area */}
+                            <div className="flex-1 flex flex-col justify-center min-h-[70px]">
                               {uploaded ? (
-                                <div className="flex flex-col gap-1.5 min-w-0">
-                                  <div className="flex items-center gap-3">
+                                <div className="p-3.5 bg-slate-950/60 border border-slate-850 rounded-xl flex items-center justify-between gap-3">
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    <File className="w-4 h-4 text-amber-400 shrink-0" />
+                                    <span className="text-xs text-slate-300 truncate font-medium">{fileName}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2 shrink-0">
                                     <a
                                       href={`/api/v1/orders/${lead.order?.id}/documents/${id}`}
+                                      download={fileName || true}
                                       target="_blank"
-                                      className="text-[10px] text-amber-400 hover:underline truncate font-semibold flex items-center gap-1"
+                                      className="py-1.5 px-2.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-300 hover:text-white rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition-all"
+                                      title="Download Document"
                                     >
-                                      <File className="w-3.5 h-3.5" />
+                                      <Download className="w-3.5 h-3.5 text-amber-400" />
                                       <span>Download</span>
                                     </a>
                                     {isImageFile(fileName) && (
@@ -2018,35 +2068,54 @@ export default function LeadDetailPage({
                                           src: `/api/v1/orders/${lead.order?.id}/documents/${id}`,
                                           title: `${item.label}: ${fileName}`
                                         })}
-                                        className="text-[10px] text-amber-500 hover:underline font-semibold flex items-center gap-1 cursor-pointer bg-transparent border-none p-0 focus:outline-none"
+                                        className="py-1.5 px-2.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-amber-400 hover:text-amber-300 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition-all cursor-pointer"
+                                        title="Preview Image"
                                       >
                                         <Eye className="w-3.5 h-3.5" />
-                                        <span>Preview</span>
                                       </button>
                                     )}
                                   </div>
-                                  <span className="text-[9px] text-slate-500 truncate">{fileName}</span>
                                 </div>
                               ) : (
-                                <span className="text-[10px] text-slate-500 italic">Not uploaded</span>
+                                <label className={`border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center text-center transition-all ${
+                                  isOrderFormDisabled 
+                                    ? 'border-slate-850 bg-slate-950/20 cursor-not-allowed opacity-60' 
+                                    : isUploading 
+                                      ? 'border-amber-500/50 bg-amber-500/[0.02] cursor-wait' 
+                                      : 'border-slate-800 hover:border-slate-700 bg-slate-950/20 hover:bg-slate-900/30 cursor-pointer'
+                                }`}>
+                                  {isUploading ? (
+                                    <div className="flex flex-col items-center gap-2 py-1">
+                                      <Loader2 className="w-5 h-5 text-amber-500 animate-spin" />
+                                      <span className="text-xs font-semibold text-amber-400">Uploading document...</span>
+                                    </div>
+                                  ) : (
+                                    <div className="flex flex-col items-center gap-1.5 py-1">
+                                      <Upload className="w-5 h-5 text-slate-400" />
+                                      <span className="text-xs font-semibold text-slate-300">Click to upload {item.label}</span>
+                                      <span className="text-[10px] text-slate-500">PDF, JPG, or PNG (Max 5MB)</span>
+                                    </div>
+                                  )}
+                                  <input
+                                    type="file"
+                                    className="hidden"
+                                    disabled={uploadingDoc !== null || isOrderFormDisabled}
+                                    onChange={(e) => handleFileChange(item.type, e)}
+                                  />
+                                </label>
                               )}
                             </div>
 
-                            {/* Upload trigger */}
-                            {!isOrderFormDisabled && (
-                              <div className="mt-2 flex items-center gap-3">
-                                <label className="cursor-pointer text-[10px] font-bold text-amber-500 hover:text-amber-400 transition-all flex items-center gap-1.5 w-fit">
-                                  {uploadingDoc === item.type ? (
-                                    <>
-                                      <Loader2 className="w-3 h-3 animate-spin" />
-                                      <span>Uploading...</span>
-                                    </>
+                            {/* Card Footer Actions (Replace / Remove) */}
+                            {uploaded && !isOrderFormDisabled && (
+                              <div className="flex items-center justify-end gap-4 pt-2 border-t border-slate-850/60">
+                                <label className="cursor-pointer text-xs font-semibold text-slate-400 hover:text-amber-400 transition-all flex items-center gap-1.5">
+                                  {isUploading ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-500" />
                                   ) : (
-                                    <>
-                                      <Upload className="w-3 h-3" />
-                                      <span>{uploaded ? 'Replace' : 'Upload'}</span>
-                                    </>
+                                    <Upload className="w-3.5 h-3.5" />
                                   )}
+                                  <span>Replace</span>
                                   <input
                                     type="file"
                                     className="hidden"
@@ -2054,13 +2123,14 @@ export default function LeadDetailPage({
                                     onChange={(e) => handleFileChange(item.type, e)}
                                   />
                                 </label>
-                                {uploaded && id !== null && (
+                                {id !== null && (
                                   <button
+                                    type="button"
                                     onClick={() => handleDeleteDocument(item.type, id)}
-                                    className="text-[10px] font-bold text-red-400 hover:text-red-300 transition-all flex items-center gap-1.5 focus:outline-none"
+                                    className="text-xs font-semibold text-slate-400 hover:text-red-400 transition-all flex items-center gap-1.5 focus:outline-none cursor-pointer"
                                   >
-                                    <Trash2 className="w-3 h-3" />
-                                    <span>Remove File</span>
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                    <span>Remove</span>
                                   </button>
                                 )}
                               </div>
@@ -2069,6 +2139,7 @@ export default function LeadDetailPage({
                         );
                       })}
                     </div>
+                  </div>
 
                     {/* Hard backend disabled submission button */}
                     {lead.order.status === 'draft' && (
@@ -2090,11 +2161,9 @@ export default function LeadDetailPage({
                       </div>
                     )}
                   </div>
-                </div>
-              )}
+                )}
             </div>
           </div>
-        </div>
         
 
         {/* Dynamic transition widget panel in right sidebar */}
@@ -2502,7 +2571,8 @@ export default function LeadDetailPage({
         </div>
       )}
     </div>
-  );
+  </div>
+);
 }
 
 // Simple close widget SVG

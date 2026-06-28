@@ -107,31 +107,6 @@ export async function DELETE(
       });
 
       if (image.status === 'completed') {
-        const remainingCompletedCount = await tx.installationImage.count({
-          where: {
-            orderId,
-            status: 'completed',
-          },
-        });
-
-        if (remainingCompletedCount === 0) {
-          const o = await tx.order.findUnique({
-            where: { id: orderId },
-            select: { leadId: true, status: true }
-          });
-          if (o) {
-            const l = await tx.lead.findUnique({
-              where: { id: o.leadId },
-              select: { status: true }
-            });
-            if (l && (l.status === 6 || o.status === 'completed')) {
-              await tx.lead.update({
-                where: { id: o.leadId },
-                data: { isActive: true }
-              });
-            }
-          }
-        }
       }
     });
 

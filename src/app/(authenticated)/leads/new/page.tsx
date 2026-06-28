@@ -402,62 +402,74 @@ export default function NewLeadPage() {
             </div>
           </div>
 
-          {/* Optional Initial Assignments (Manager / TL roles can assign) */}
+          {/* Optional Initial Assignments (Admins or authorized team members can assign) */}
           <div className="space-y-4 border-t border-slate-800/80 pt-6">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400">Team Allocation</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                  Assign to Manager
-                </label>
-                <select
-                  value={form.assignedManagerId}
-                  onChange={(e) => setForm({ ...form, assignedManagerId: e.target.value })}
-                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-350 text-xs focus:ring-amber-500"
-                >
-                  <option value="">Select Manager</option>
-                  {employees.map((emp) => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.name} ({emp.role.toUpperCase()})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                  Assign to TL
-                </label>
-                <select
-                  value={form.assignedTlId}
-                  onChange={(e) => setForm({ ...form, assignedTlId: e.target.value })}
-                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-350 text-xs focus:ring-amber-500"
-                >
-                  <option value="">Select Team Leader</option>
-                  {employees.map((emp) => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.name} ({emp.role.toUpperCase()})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                  Assign to Consultant
-                </label>
-                <select
-                  value={form.assignedConsultantId}
-                  onChange={(e) => setForm({ ...form, assignedConsultantId: e.target.value })}
-                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-350 text-xs focus:ring-amber-500"
-                >
-                  <option value="">Select Consultant</option>
-                  {employees.map((emp) => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.name} ({emp.role.toUpperCase()})
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400">Team Allocation</h3>
+              {!(hasPermission('leads:assign') || user?.role === 'admin' || user?.role === 'director' || user?.role?.startsWith('admin:')) && (
+                <span className="text-[10px] text-slate-500 italic">🔒 Team allocation restricted</span>
+              )}
             </div>
+
+            {(hasPermission('leads:assign') || user?.role === 'admin' || user?.role === 'director' || user?.role?.startsWith('admin:')) ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                    Assign to Manager
+                  </label>
+                  <select
+                    value={form.assignedManagerId}
+                    onChange={(e) => setForm({ ...form, assignedManagerId: e.target.value })}
+                    className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-350 text-xs focus:ring-amber-500"
+                  >
+                    <option value="">Select Manager</option>
+                    {employees.map((emp) => (
+                      <option key={emp.id} value={emp.id}>
+                        {emp.name} ({emp.role.toUpperCase()})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                    Assign to TL
+                  </label>
+                  <select
+                    value={form.assignedTlId}
+                    onChange={(e) => setForm({ ...form, assignedTlId: e.target.value })}
+                    className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-350 text-xs focus:ring-amber-500"
+                  >
+                    <option value="">Select Team Leader</option>
+                    {employees.map((emp) => (
+                      <option key={emp.id} value={emp.id}>
+                        {emp.name} ({emp.role.toUpperCase()})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                    Assign to Consultant
+                  </label>
+                  <select
+                    value={form.assignedConsultantId}
+                    onChange={(e) => setForm({ ...form, assignedConsultantId: e.target.value })}
+                    className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-350 text-xs focus:ring-amber-500"
+                  >
+                    <option value="">Select Consultant</option>
+                    {employees.map((emp) => (
+                      <option key={emp.id} value={emp.id}>
+                        {emp.name} ({emp.role.toUpperCase()})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            ) : (
+              <div className="p-3 bg-slate-950/40 border border-slate-900 rounded-lg text-slate-400 text-xs italic">
+                You do not have custom permission to manually assign team members to leads. Lead will be registered in your default pool.
+              </div>
+            )}
           </div>
 
           {/* Initial remark */}
