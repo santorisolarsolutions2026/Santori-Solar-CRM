@@ -19,7 +19,7 @@ function createPrismaClient() {
   console.log("[db.ts] dbPort:", dbPort);
   console.log("[db.ts] dbName:", dbName);
 
-  const connectionString = `postgresql://${encodeURIComponent(dbUser)}:${encodeURIComponent(dbPassword)}@${dbHost}:${dbPort}/${dbName}?schema=public`;
+  const connectionString = process.env.DATABASE_URL || `postgresql://${encodeURIComponent(dbUser)}:${encodeURIComponent(dbPassword)}@${dbHost}:${dbPort}/${dbName}?schema=public`;
 
   const ssl = dbHost !== 'localhost' && dbHost !== '127.0.5.1' && dbHost !== '127.0.0.1'
     ? { rejectUnauthorized: false }
