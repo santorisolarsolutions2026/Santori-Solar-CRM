@@ -57,6 +57,26 @@ export async function POST(
         },
       });
 
+      if (approve) {
+        // Create initial ledger payment entry for the down payment
+        const existingPayments = await tx.payment.findMany({
+          where: { orderId },
+        });
+        if (existingPayments.length === 0 && order.downPayment > 0) {
+          await tx.payment.create({
+            data: {
+              orderId,
+              amount: order.downPayment,
+              paymentMethod: order.paymentMethod,
+              transactionRef: order.transactionRef,
+              remarks: 'Initial Down Payment recorded upon order verification.',
+              recordedById: userPayload.id,
+            },
+          });
+        }
+      }
+
+
       // Log activity
       await tx.leadActivityLog.create({
         data: {

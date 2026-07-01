@@ -50,6 +50,7 @@ model User {
   uploadedDocuments    OrderDocument[]
   notifications        Notification[]
   attendances          Attendance[]
+  recordedPayments     Payment[]
 }
 
 model Lead {
@@ -164,6 +165,21 @@ model Order {
   submittedById        Int
   financeProcessedById Int?
   status               String              @default("draft") // draft | submitted | finance_verified | ops_assigned | completed
+  opsStage             Int                 @default(1)
+  deliveryDate         String?
+  deliveryTime         String?
+  isDelivered          Boolean             @default(false)
+  actualDeliveryAt     DateTime?
+  installationDate     String?
+  installationTime     String?
+  isInstalled          Boolean             @default(false)
+  actualInstallationAt DateTime?
+  isMeterInstalled     Boolean             @default(false)
+  actualMeterInstalledAt DateTime?
+  isCommissioned       Boolean             @default(false)
+  actualCommissionedAt DateTime?
+  isSubsidyApplied     Boolean             @default(false)
+  actualSubsidyAppliedAt DateTime?
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
 
@@ -173,6 +189,7 @@ model Order {
   financeProcessedBy   User?               @relation("VerifiedOrders", fields: [financeProcessedById], references: [id])
   documents            OrderDocument[]
   installationImages   InstallationImage[]
+  payments             Payment[]
 }
 
 model InstallationImage {
@@ -239,3 +256,22 @@ model Attendance {
   @@index([userId])
   @@index([date])
 }
+
+model Payment {
+  id             Int      @id @default(autoincrement())
+  orderId        Int
+  amount         Float
+  paymentMethod  String   // cash | upi | cheque | neft | bank_transfer
+  transactionRef String?
+  paymentDate    DateTime @default(now())
+  remarks        String?
+  recordedById   Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  recordedBy     User     @relation(fields: [recordedById], references: [id])
+
+  @@index([orderId])
+}
+

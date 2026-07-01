@@ -8,7 +8,7 @@ export function proxy(request: NextRequest) {
   const { pathname } = url;
 
   // Paths requiring authentication
-  const protectedPaths = ['/dashboard', '/leads', '/team', '/reports', '/orders'];
+  const protectedPaths = ['/dashboard', '/leads', '/team', '/reports', '/finance', '/operations'];
   const isPathProtected = protectedPaths.some((path) => pathname.startsWith(path));
 
   // Paths for guests only

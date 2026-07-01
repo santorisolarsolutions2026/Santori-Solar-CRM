@@ -6,6 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { getCurrentLocationString } from '@/lib/location';
 import {
   Sun,
+  Moon,
   LayoutDashboard,
   Users,
   Briefcase,
@@ -25,6 +26,8 @@ import {
   Loader2,
   User,
   Clock,
+  CreditCard,
+  Wrench,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -70,6 +73,34 @@ export default function AuthenticatedLayout({
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
 
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
+  // Initialize theme from localStorage on mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('solar-crm-theme') as 'dark' | 'light' | null;
+    if (savedTheme) {
+      setTheme(savedTheme);
+      if (savedTheme === 'light') {
+        document.documentElement.classList.add('light');
+      } else {
+        document.documentElement.classList.remove('light');
+      }
+    } else {
+      document.documentElement.classList.remove('light');
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    localStorage.setItem('solar-crm-theme', nextTheme);
+    if (nextTheme === 'light') {
+      document.documentElement.classList.add('light');
+    } else {
+      document.documentElement.classList.remove('light');
+    }
+  };
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent | TouchEvent) {
       if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
@@ -85,6 +116,25 @@ export default function AuthenticatedLayout({
       document.removeEventListener('touchstart', handleClickOutside);
     };
   }, [notifDropdownOpen]);
+
+  const [attendanceDropdownOpen, setAttendanceDropdownOpen] = useState(false);
+  const attendanceRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent | TouchEvent) {
+      if (attendanceRef.current && !attendanceRef.current.contains(event.target as Node)) {
+        setAttendanceDropdownOpen(false);
+      }
+    }
+    if (attendanceDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [attendanceDropdownOpen]);
 
   // Profile modal states
   const [profileModalOpen, setProfileModalOpen] = useState(false);
@@ -327,26 +377,31 @@ export default function AuthenticatedLayout({
       permission: 'leads:view',
     },
     {
-      name: 'Orders Queue',
-      path: '/orders',
-      icon: FileCheck,
+      name: 'Finance and Payments',
+      path: '/finance',
+      icon: CreditCard,
       permission: 'orders:view',
     },
-
+    {
+      name: 'Operations',
+      path: '/operations',
+      icon: Wrench,
+      permission: 'orders:view',
+    },
     {
       name: 'Attendance',
       path: '/attendance',
       icon: UserCheck,
-      permission: 'attendance:view', // visible only to admin or team members granted attendance:view permission
+      permission: 'attendance:view',
     },
     {
       name: 'Santori Team',
       path: '/team',
       icon: Users,
-      permission: null, // visible to all team members (restricted search-only mode for non-admins)
+      permission: 'team:view',
     },
     {
-      name: 'Reports & Analytics',
+      name: 'Report & Analytics',
       path: '/reports',
       icon: LineChart,
       permission: 'reports:view',
@@ -418,70 +473,6 @@ export default function AuthenticatedLayout({
             {userRoleConfig.label}
           </span>
         </button>
-
-        {/* Quick Attendance Check-in / Check-out Widget */}
-        <div className="mx-4 mb-4 p-3.5 bg-slate-900/80 border border-slate-800 rounded-xl space-y-2.5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-amber-400" />
-              <span className="text-xs font-bold text-slate-200">Daily Attendance</span>
-            </div>
-            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider flex items-center gap-1 ${
-              !todayAttendance 
-                ? 'bg-slate-800 text-slate-400 border-slate-700' 
-                : todayAttendance.checkOut 
-                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
-                  : 'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse'
-            }`}>
-              {!todayAttendance ? '⚪ Pending' : todayAttendance.checkOut ? '✅ Completed' : '🟢 Active'}
-            </span>
-          </div>
-
-          {todayAttendance ? (
-            <div className="text-[11px] text-slate-400 space-y-1 bg-slate-950/60 p-2 rounded-lg border border-slate-850">
-              <div className="flex justify-between">
-                <span>Check In:</span>
-                <span className="font-mono font-semibold text-slate-200">
-                  {new Date(todayAttendance.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
-              </div>
-              {todayAttendance.checkOut && (
-                <div className="flex justify-between">
-                  <span>Check Out:</span>
-                  <span className="font-mono font-semibold text-slate-200">
-                    {new Date(todayAttendance.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                </div>
-              )}
-            </div>
-          ) : null}
-
-          {!todayAttendance ? (
-            <button
-              type="button"
-              onClick={handleQuickCheckIn}
-              disabled={attendanceActionLoading}
-              className="w-full py-2 px-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md shadow-amber-500/10 flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
-            >
-              {attendanceActionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserCheck className="w-3.5 h-3.5" />}
-              <span>Check In Now</span>
-            </button>
-          ) : !todayAttendance.checkOut ? (
-            <button
-              type="button"
-              onClick={handleQuickCheckOut}
-              disabled={attendanceActionLoading}
-              className="w-full py-2 px-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg font-bold text-xs shadow-md flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
-            >
-              {attendanceActionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LogOut className="w-3.5 h-3.5" />}
-              <span>Check Out</span>
-            </button>
-          ) : (
-            <div className="text-[10px] text-center text-emerald-400 font-semibold py-0.5">
-              ✓ Day Completed ({Math.floor((todayAttendance.workDurationMin || 0) / 60)}h {(todayAttendance.workDurationMin || 0) % 60}m)
-            </div>
-          )}
-        </div>
 
         {/* Nav Links */}
         <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
@@ -645,6 +636,114 @@ export default function AuthenticatedLayout({
           </div>
 
           <div className="flex items-center gap-4 relative">
+            {/* Quick Attendance Check-in / Check-out Dropdown */}
+            <div className="relative" ref={attendanceRef}>
+              <button
+                onClick={() => setAttendanceDropdownOpen(!attendanceDropdownOpen)}
+                title="Daily Attendance Status"
+                className="py-1.5 px-3 rounded-lg bg-slate-900/80 border border-slate-800 text-slate-400 hover:text-white transition-all relative focus:outline-none cursor-pointer flex items-center gap-2 text-xs font-semibold"
+              >
+                <Clock className="w-4 h-4 text-amber-400" />
+                <span className="hidden sm:inline">Attendance:</span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider flex items-center gap-1 ${
+                  !todayAttendance 
+                    ? 'bg-slate-800 text-slate-400 border-slate-700' 
+                    : todayAttendance.checkOut 
+                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                      : 'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse'
+                }`}>
+                  {!todayAttendance ? '⚪ Pending' : todayAttendance.checkOut ? '✅ Completed' : '🟢 Active'}
+                </span>
+              </button>
+
+              {/* Attendance Dropdown Card */}
+              {attendanceDropdownOpen && (
+                <div className="absolute right-0 mt-3 w-72 bg-[#111625] border border-slate-800 rounded-xl shadow-2xl z-50 p-4 space-y-3 animate-fade-in-down">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-amber-400" />
+                      <span className="text-xs font-bold text-slate-200">Daily Attendance</span>
+                    </div>
+                  </div>
+
+                  {todayAttendance ? (
+                    <div className="text-[11px] text-slate-450 space-y-1 bg-slate-950/60 p-2 rounded-lg border border-slate-850">
+                      <div className="flex justify-between">
+                        <span>Check In Time:</span>
+                        <span className="font-mono font-semibold text-slate-200">
+                          {new Date(todayAttendance.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      {todayAttendance.checkOut ? (
+                        <div className="flex justify-between">
+                          <span>Check Out Time:</span>
+                          <span className="font-mono font-semibold text-slate-200">
+                            {new Date(todayAttendance.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex justify-between">
+                          <span>Active duration:</span>
+                          <span className="font-mono font-semibold text-amber-450">
+                            Active Now
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-slate-450 py-1">
+                      You haven't recorded attendance for today yet.
+                    </p>
+                  )}
+
+                  {!todayAttendance ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleQuickCheckIn();
+                        setAttendanceDropdownOpen(false);
+                      }}
+                      disabled={attendanceActionLoading}
+                      className="w-full py-2 px-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md shadow-amber-500/10 flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {attendanceActionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserCheck className="w-3.5 h-3.5" />}
+                      <span>Check In Now</span>
+                    </button>
+                  ) : !todayAttendance.checkOut ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleQuickCheckOut();
+                        setAttendanceDropdownOpen(false);
+                      }}
+                      disabled={attendanceActionLoading}
+                      className="w-full py-2 px-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg font-bold text-xs shadow-md flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {attendanceActionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LogOut className="w-3.5 h-3.5" />}
+                      <span>Check Out Now</span>
+                    </button>
+                  ) : (
+                    <div className="text-[11px] text-center text-emerald-450 font-semibold py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
+                      ✓ Completed ({Math.floor((todayAttendance.workDurationMin || 0) / 60)}h {(todayAttendance.workDurationMin || 0) % 60}m)
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Theme Toggle Button */}
+            <button
+              onClick={toggleTheme}
+              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              className="p-2 rounded-lg bg-slate-900/80 border border-slate-800 text-slate-400 hover:text-white transition-all relative focus:outline-none cursor-pointer flex items-center justify-center"
+            >
+              {theme === 'dark' ? (
+                <Sun className="w-5 h-5 text-amber-400" />
+              ) : (
+                <Moon className="w-5 h-5 text-indigo-500" />
+              )}
+            </button>
+
             {/* Notification Bell Dropdown */}
             <div className="relative" ref={notifRef}>
               <button

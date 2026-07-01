@@ -11,7 +11,7 @@ function createPrismaClient() {
   const dbPassword = process.env.DB_PASSWORD || "";
   const dbHost = process.env.DB_HOST || "localhost";
   const dbPort = process.env.DB_PORT || "5432";
-  const dbName = process.env.DB_NAME || "solarcrm";
+  const dbName = process.env.DB_NAME || "solar_crm";
 
   console.log("[db.ts] dbUser:", dbUser);
   console.log("[db.ts] dbPassword length:", dbPassword ? dbPassword.length : 'empty');
@@ -25,7 +25,14 @@ function createPrismaClient() {
     ? { rejectUnauthorized: false }
     : undefined;
 
-  const pool = new pg.Pool({ connectionString, ssl, password: dbPassword });
+  const poolConfig: pg.PoolConfig = { connectionString, ssl };
+  if (dbPassword) {
+    poolConfig.password = dbPassword;
+  } else {
+    console.warn("[db.ts] WARNING: DB_PASSWORD environment variable is empty. If your PostgreSQL server requires authentication, set DB_PASSWORD in a .env file.");
+  }
+
+  const pool = new pg.Pool(poolConfig);
   const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });
 }

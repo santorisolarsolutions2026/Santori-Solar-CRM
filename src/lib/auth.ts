@@ -75,39 +75,39 @@ export function getDefaultPermissionsForRole(role: string): string[] {
     case 'admin':
     case 'director':
       return [
-        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view', 'leads:view_all', 'leads:assign',
-        'orders:create', 'orders:verify', 'orders:submit_installation', 'orders:view', 'orders:view_all',
-        'team:view', 'attendance:view', 'team:manage', 'logs:view', 'reports:view'
+        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:assign',
+        'orders:create', 'orders:verify', 'orders:operations',
+        'team:view', 'attendance:view', 'team:manage', 'logs:view', 'leads:track', 'reports:view'
       ];
     case 'sales_head':
       return [
-        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view', 'leads:view_all',
-        'orders:create', 'orders:view', 'orders:view_all', 'attendance:view', 'logs:view', 'reports:view'
+        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all',
+        'orders:create', 'team:view', 'attendance:view', 'logs:view', 'leads:track', 'reports:view'
       ];
     case 'manager':
       return [
-        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view', 'leads:view_all',
-        'orders:create', 'orders:verify', 'orders:submit_installation', 'orders:view', 'orders:view_all',
-        'attendance:view', 'logs:view', 'reports:view'
+        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all',
+        'orders:create', 'orders:verify', 'orders:operations',
+        'team:view', 'attendance:view', 'logs:view', 'leads:track', 'reports:view'
       ];
     case 'finance':
       return [
-        'leads:view', 'leads:view_all', 'orders:view', 'orders:view_all', 'orders:verify', 'reports:view'
+        'leads:view_all', 'orders:verify', 'reports:view'
       ];
     case 'operations':
       return [
-        'leads:view', 'leads:view_all', 'orders:view', 'orders:view_all', 'orders:verify', 'orders:submit_installation'
+        'leads:view_all', 'orders:verify', 'orders:operations'
       ];
     case 'tl':
     case 'psa_tl':
       return [
-        'leads:create', 'leads:edit', 'leads:change_status', 'leads:view', 'orders:view', 'orders:create', 'reports:view'
+        'leads:create', 'leads:edit', 'leads:change_status', 'orders:create', 'leads:track', 'reports:view'
       ];
     case 'consultant':
     case 'psa':
     default:
       return [
-        'leads:create', 'leads:edit', 'leads:change_status', 'leads:view', 'orders:view', 'orders:create'
+        'leads:create', 'leads:edit', 'leads:change_status', 'orders:create', 'leads:track'
       ];
   }
 }
@@ -120,11 +120,39 @@ export async function getUserPermissions(userId: number): Promise<string[]> {
   if (!user) return [];
 
   const baseRole = user.role.includes(':') ? user.role.split(':')[0] : user.role;
+  let basePermissions: string[] = [];
+
   if (baseRole === 'admin' || baseRole === 'director') {
-    return getDefaultPermissionsForRole('admin');
+    basePermissions = getDefaultPermissionsForRole('admin');
+  } else {
+    basePermissions = user.permissions && user.permissions.trim()
+      ? user.permissions.split(',').map(p => p.trim())
+      : getDefaultPermissionsForRole(user.role);
   }
-  
-  return user.permissions && user.permissions.trim()
-    ? user.permissions.split(',').map(p => p.trim())
-    : getDefaultPermissionsForRole(user.role);
+
+  const finalPermissions = [...basePermissions];
+
+  // Implicit page permissions mapping to ensure existing checks ('leads:view', 'orders:view') do not break
+  const hasAnyLeadPermission = [
+    'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:track', 'leads:assign'
+  ].some(p => finalPermissions.includes(p));
+
+  if (hasAnyLeadPermission && !finalPermissions.includes('leads:view')) {
+    finalPermissions.push('leads:view');
+  }
+
+  const hasAnyOrderPermission = [
+    'orders:create', 'orders:verify', 'orders:operations', 'orders:view_all'
+  ].some(p => finalPermissions.includes(p));
+
+  if (hasAnyOrderPermission && !finalPermissions.includes('orders:view')) {
+    finalPermissions.push('orders:view');
+  }
+
+  // Map 'orders:operations' to legacy 'orders:submit_installation' check for backwards compatibility
+  if (finalPermissions.includes('orders:operations') && !finalPermissions.includes('orders:submit_installation')) {
+    finalPermissions.push('orders:submit_installation');
+  }
+
+  return finalPermissions;
 }

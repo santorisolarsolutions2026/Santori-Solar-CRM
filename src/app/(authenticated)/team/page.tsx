@@ -77,7 +77,7 @@ const ALL_PERMISSIONS = [
   {
     key: 'leads:create',
     label: 'Add new lead',
-    description: 'Allows registering and adding new customer leads into the pipeline.',
+    description: 'Allows registering and adding new customer leads into the system.',
     category: 'Leads Pipeline & Management'
   },
   {
@@ -88,7 +88,7 @@ const ALL_PERMISSIONS = [
   },
   {
     key: 'leads:edit',
-    label: 'Edit lead info',
+    label: 'Edit leads info',
     description: 'Allows modifying customer contact, connection load, and address details.',
     category: 'Leads Pipeline & Management'
   },
@@ -99,14 +99,14 @@ const ALL_PERMISSIONS = [
     category: 'Leads Pipeline & Management'
   },
   {
-    key: 'leads:view',
+    key: 'leads:view_all',
     label: 'View all leads',
-    description: 'Allows accessing and viewing leads in the sales pipeline.',
+    description: 'Allows accessing and viewing all leads in the sales pipeline.',
     category: 'Leads Pipeline & Management'
   },
   {
     key: 'leads:assign',
-    label: 'Assign team members to leads',
+    label: 'Assign Team members to leads',
     description: 'Allows assigning or reassigning consultants, team leaders, and managers to leads.',
     category: 'Leads Pipeline & Management'
   },
@@ -114,20 +114,20 @@ const ALL_PERMISSIONS = [
   // Group 2: Orders & Fulfillment Queue
   {
     key: 'orders:create',
-    label: 'Convert lead into Order (Order punching form)',
+    label: 'Convert lead into order',
     description: 'Allows converting Sale Done leads into formal sales orders and punching payment details.',
     category: 'Orders & Fulfillment Queue'
   },
   {
     key: 'orders:verify',
-    label: 'Verify Orders (Finance)',
+    label: 'Verify the orders',
     description: 'Allows finance verification of down payments, payment methods, and bank records.',
     category: 'Orders & Fulfillment Queue'
   },
   {
-    key: 'orders:submit_installation',
-    label: 'Submit Orders for Installation',
-    description: 'Allows scheduling solar installations, completing projects, and uploading panel photos.',
+    key: 'orders:operations',
+    label: 'Operations tasks',
+    description: 'Allows managing delivery, solar installation, net metering, and commissioning stages.',
     category: 'Orders & Fulfillment Queue'
   },
 
@@ -135,7 +135,7 @@ const ALL_PERMISSIONS = [
   {
     key: 'team:view',
     label: 'View Team Directory',
-    description: 'Allows searching and viewing the company directory.',
+    description: 'Allows searching and viewing the company employee directory.',
     category: 'Team Directory & Access Control'
   },
   {
@@ -146,21 +146,27 @@ const ALL_PERMISSIONS = [
   },
   {
     key: 'team:manage',
-    label: 'Manage Team Members and Manage Access',
+    label: 'Manage Team and Access',
     description: 'Allows creating team profiles, role assignments, and customizing permissions.',
     category: 'Team Directory & Access Control'
   },
   {
     key: 'logs:view',
-    label: 'View team activity logs',
-    description: 'Allows inspecting audit trails, status changes, and employee logins.',
+    label: 'View team activity log',
+    description: 'Allows inspecting audit logs, status transitions, and system activities.',
     category: 'Team Directory & Access Control'
+  },
+  {
+    key: 'leads:track',
+    label: 'View lead track progress',
+    description: 'Allows checking the step-by-step progress history of a lead or order.',
+    category: 'Leads Pipeline & Management'
   },
 
   // Group 4: Analytics & Insights
   {
     key: 'reports:view',
-    label: 'View Reports',
+    label: 'View reports',
     description: 'Allows viewing performance analytics, conversion rates, and revenue trends.',
     category: 'Analytics & Insights'
   },
@@ -172,39 +178,39 @@ function getLocalDefaultPermissionsForRole(role: string): string[] {
     case 'admin':
     case 'director':
       return [
-        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view', 'leads:assign',
-        'orders:create', 'orders:verify', 'orders:submit_installation',
-        'team:view', 'attendance:view', 'team:manage', 'logs:view', 'reports:view'
+        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:assign',
+        'orders:create', 'orders:verify', 'orders:operations',
+        'team:view', 'attendance:view', 'team:manage', 'logs:view', 'leads:track', 'reports:view'
       ];
     case 'sales_head':
       return [
-        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view',
-        'orders:create', 'attendance:view', 'logs:view', 'reports:view'
+        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all',
+        'orders:create', 'team:view', 'attendance:view', 'logs:view', 'leads:track', 'reports:view'
       ];
     case 'manager':
       return [
-        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view',
-        'orders:create', 'orders:verify', 'orders:submit_installation',
-        'attendance:view', 'logs:view', 'reports:view'
+        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all',
+        'orders:create', 'orders:verify', 'orders:operations',
+        'team:view', 'attendance:view', 'logs:view', 'leads:track', 'reports:view'
       ];
     case 'finance':
       return [
-        'leads:view', 'orders:verify', 'reports:view'
+        'leads:view_all', 'orders:verify', 'reports:view'
       ];
     case 'operations':
       return [
-        'leads:view', 'orders:verify', 'orders:submit_installation'
+        'leads:view_all', 'orders:verify', 'orders:operations'
       ];
     case 'tl':
     case 'psa_tl':
       return [
-        'leads:create', 'leads:edit', 'leads:change_status', 'leads:view', 'orders:create', 'reports:view'
+        'leads:create', 'leads:edit', 'leads:change_status', 'orders:create', 'leads:track', 'reports:view'
       ];
     case 'consultant':
     case 'psa':
     default:
       return [
-        'leads:create', 'leads:edit', 'leads:change_status', 'leads:view', 'orders:create'
+        'leads:create', 'leads:edit', 'leads:change_status', 'orders:create', 'leads:track'
       ];
   }
 }
@@ -218,12 +224,12 @@ const STAGE_BADGES: Record<number, { name: string; class: string }> = {
   5: { name: 'Call Later', class: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
   6: { name: 'Already Installed', class: 'bg-slate-800/20 text-slate-500 border-slate-800/30' },
   7: { name: 'Decision Pending', class: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
-  8: { name: 'Meeting Booked 📅', class: 'bg-teal-500/10 text-teal-400 border-teal-500/20' },
+  8: { name: 'Meeting Booked', class: 'bg-teal-500/10 text-teal-400 border-teal-500/20' },
   9: { name: 'Meeting Done', class: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
   10: { name: 'Disconnected', class: 'bg-slate-600/15 text-slate-400 border-slate-600/20' },
   11: { name: 'Switch Off', class: 'bg-slate-700/20 text-slate-400 border-slate-700/30' },
   12: { name: 'Can\'t Fit Solar', class: 'bg-stone-900 text-stone-400 border-stone-800/40' },
-  13: { name: '✅ SALE DONE', class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-bold' },
+  13: { name: 'Sale Done', class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-bold' },
 };
 
 function calculateYearsInCompany(joiningDateStr: string | null): string {
@@ -314,6 +320,7 @@ export default function TeamManagementPage() {
   const [editCustomRoleText, setEditCustomRoleText] = useState('');
   const [editBaseRole, setEditBaseRole] = useState('consultant');
   const [editMemberPermissions, setEditMemberPermissions] = useState<string[]>([]);
+  const [selectedPermissionCategory, setSelectedPermissionCategory] = useState<string>('Leads Pipeline & Management');
 
   const closeAddModal = () => {
     setShowAddModal(false);
@@ -1117,13 +1124,15 @@ export default function TeamManagementPage() {
                           </td>
                           <td className="py-4 px-4 text-center w-36">
                             <div className="flex items-center justify-center gap-2">
-                              <button
-                                onClick={() => handleOpenActivityLogs(member)}
-                                className="p-1.5 rounded-lg border bg-slate-900 hover:bg-slate-850 text-slate-400 hover:text-white border-slate-800 hover:border-slate-700 transition-all cursor-pointer flex items-center justify-center"
-                                title="View Activity Logs"
-                              >
-                                <History className="w-4 h-4" />
-                              </button>
+                              {hasPermission('logs:view') && (
+                                <button
+                                  onClick={() => handleOpenActivityLogs(member)}
+                                  className="p-1.5 rounded-lg border bg-slate-900 hover:bg-slate-850 text-slate-400 hover:text-white border-slate-800 hover:border-slate-700 transition-all cursor-pointer flex items-center justify-center"
+                                  title="View Activity Logs"
+                                >
+                                  <History className="w-4 h-4" />
+                                </button>
+                              )}
 
                               {member.id !== user?.id && member.role !== 'admin' && !member.role.startsWith('admin:') && (
                                 <>
@@ -1802,76 +1811,88 @@ export default function TeamManagementPage() {
                         Reset to designation defaults
                       </button>
                     </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {['Leads Pipeline & Management', 'Orders & Fulfillment Queue', 'Team Directory & Access Control', 'Analytics & Insights'].map((cat) => {
-                        let IconComponent = Users;
-                        if (cat.includes('Leads')) IconComponent = Sun;
-                        else if (cat.includes('Orders')) IconComponent = Lock;
-                        else if (cat.includes('Analytics')) IconComponent = History;
-
+                    {/* Sleek Category Navigation Tabs */}
+                    <div className="flex border-b border-slate-800 bg-slate-950/20 text-xs font-semibold overflow-x-auto whitespace-nowrap scrollbar-none gap-1 p-1 rounded-lg">
+                      {[
+                        { key: 'Leads Pipeline & Management', label: 'Leads & Sales', icon: Sun },
+                        { key: 'Orders & Fulfillment Queue', label: 'Orders & Ops', icon: Lock },
+                        { key: 'Team Directory & Access Control', label: 'Team & Access', icon: Users },
+                        { key: 'Analytics & Insights', label: 'Reports & Analytics', icon: History },
+                      ].map((cat) => {
+                        const isActive = selectedPermissionCategory === cat.key;
+                        const Icon = cat.icon;
                         return (
-                          <div key={cat} className="p-4 bg-slate-900/40 border border-slate-800/80 rounded-xl space-y-3 hover:border-slate-700/50 transition-all duration-200 shadow-md">
-                            <div className="flex items-center gap-2 border-b border-slate-850 pb-2 mb-1">
-                              <IconComponent className="w-4 h-4 text-amber-500 shrink-0" />
-                              <span className="block text-slate-200 font-bold uppercase tracking-wider text-[10px]">{cat}</span>
+                          <button
+                            key={cat.key}
+                            type="button"
+                            onClick={() => setSelectedPermissionCategory(cat.key)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
+                              isActive
+                                ? 'bg-amber-500/10 border-amber-500/40 text-amber-400 font-extrabold shadow-sm'
+                                : 'bg-transparent border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
+                            }`}
+                          >
+                            <Icon className="w-3.5 h-3.5" />
+                            <span>{cat.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Permissions Panel grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 min-h-[140px] p-1">
+                      {ALL_PERMISSIONS.filter(p => p.category === selectedPermissionCategory).map((perm) => {
+                        const isChecked = editMemberPermissions.includes(perm.key);
+                        const isDangerous = perm.key.includes('all') || perm.key.includes('manage') || perm.key.includes('verify') || perm.key.includes('delete');
+                        
+                        return (
+                          <label 
+                            key={perm.key} 
+                            className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer select-none transition-all duration-300 hover:-translate-y-[0.5px] ${
+                              isChecked 
+                                ? 'bg-amber-500/[0.02] border-amber-500/30 shadow-md shadow-amber-500/5'
+                                : 'bg-slate-950/40 border-slate-900 hover:border-slate-800 hover:bg-slate-900/10'
+                            }`}
+                          >
+                            {/* Sleek Custom Toggle Switch */}
+                            <div className="relative shrink-0 mt-1 cursor-pointer select-none">
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => {
+                                  if (isChecked) {
+                                    setEditMemberPermissions(editMemberPermissions.filter(k => k !== perm.key));
+                                  } else {
+                                    setEditMemberPermissions([...editMemberPermissions, perm.key]);
+                                  }
+                                }}
+                                className="sr-only"
+                              />
+                              <div className={`w-8 h-4.5 rounded-full transition-colors duration-200 ease-in-out ${
+                                isChecked 
+                                  ? 'bg-amber-500 shadow-md shadow-amber-500/20' 
+                                  : 'bg-slate-800 border border-slate-700/60'
+                              }`} />
+                              <div className={`absolute top-0.75 left-0.75 w-3 h-3 rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${
+                                isChecked ? 'translate-x-3.5' : 'translate-x-0'
+                              }`} />
                             </div>
-                            <div className="space-y-2">
-                              {ALL_PERMISSIONS.filter(p => p.category === cat).map((perm) => {
-                                const isChecked = editMemberPermissions.includes(perm.key);
-                                const isDangerous = perm.key.includes('all') || perm.key.includes('manage') || perm.key.includes('verify') || perm.key.includes('delete');
-                                
-                                return (
-                                  <label 
-                                    key={perm.key} 
-                                    className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer select-none transition-all duration-200 hover:-translate-y-[0.5px] ${
-                                      isChecked 
-                                        ? 'bg-amber-500/[0.03] border-amber-500/30 shadow-sm shadow-amber-500/5'
-                                        : 'bg-slate-950/40 border-slate-850 hover:border-slate-800 hover:bg-slate-900/10'
-                                    }`}
-                                  >
-                                    {/* Beautiful Custom Toggle Switch */}
-                                    <div className="relative shrink-0 mt-1 cursor-pointer select-none">
-                                      <input
-                                        type="checkbox"
-                                        checked={isChecked}
-                                        onChange={() => {
-                                          if (isChecked) {
-                                            setEditMemberPermissions(editMemberPermissions.filter(k => k !== perm.key));
-                                          } else {
-                                            setEditMemberPermissions([...editMemberPermissions, perm.key]);
-                                          }
-                                        }}
-                                        className="sr-only"
-                                      />
-                                      <div className={`w-8 h-4.5 rounded-full transition-colors duration-200 ease-in-out ${
-                                        isChecked 
-                                          ? 'bg-amber-500' 
-                                          : 'bg-slate-800 border border-slate-750'
-                                      }`} />
-                                      <div className={`absolute top-0.75 left-0.75 w-3 h-3 rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${
-                                        isChecked ? 'translate-x-3.5' : 'translate-x-0'
-                                      }`} />
-                                    </div>
-                                    <div className="flex flex-col min-w-0">
-                                      <div className="flex items-center gap-2 flex-wrap">
-                                        <span className={`text-[11px] font-bold transition-colors ${isChecked ? 'text-white' : 'text-slate-350'}`}>
-                                          {perm.label}
-                                        </span>
-                                        {isDangerous && (
-                                          <span className="text-[8px] bg-slate-800 text-slate-400 border border-slate-700/60 rounded-full px-1.5 py-0.25 font-bold uppercase tracking-wider">
-                                            Admin
-                                          </span>
-                                        )}
-                                      </div>
-                                      <span className="text-[9px] text-slate-500 font-mono mt-0.5 tracking-wider uppercase">{perm.key}</span>
-                                      <span className="text-[10px] text-slate-400 mt-1 leading-relaxed font-normal">{perm.description}</span>
-                                    </div>
-                                  </label>
-                                );
-                              })}
+                            
+                            <div className="flex flex-col min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className={`text-[11px] font-bold tracking-wide transition-colors ${isChecked ? 'text-white' : 'text-slate-350'}`}>
+                                  {perm.label}
+                                </span>
+                                {isDangerous && (
+                                  <span className="text-[7px] bg-red-950/30 text-red-400 border border-red-900/40 rounded px-1.5 py-0.25 font-extrabold uppercase tracking-wider">
+                                    Critical
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-[8px] text-slate-500 font-mono mt-0.5 tracking-wider uppercase">{perm.key}</span>
+                              <span className="text-[10px] text-slate-450 mt-1.5 leading-relaxed font-normal">{perm.description}</span>
                             </div>
-                          </div>
+                          </label>
                         );
                       })}
                     </div>

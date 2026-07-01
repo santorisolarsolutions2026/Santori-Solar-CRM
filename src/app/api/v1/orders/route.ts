@@ -82,11 +82,22 @@ export async function GET(req: Request) {
             customerName: true,
             mobile: true,
             city: true,
+            state: true,
+            address: true,
+            pinCode: true,
             leadCode: true,
           },
         },
         submittedBy: { select: { name: true } },
         financeProcessedBy: { select: { name: true } },
+        payments: {
+          select: {
+            id: true,
+            amount: true,
+            paymentMethod: true,
+            paymentDate: true,
+          },
+        },
         documents: {
           select: {
             id: true,

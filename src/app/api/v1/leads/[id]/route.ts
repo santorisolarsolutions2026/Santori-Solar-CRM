@@ -49,18 +49,24 @@ export async function GET(
         consultant: { select: { id: true, name: true, phone: true } },
         tl: { select: { id: true, name: true } },
         manager: { select: { id: true, name: true } },
+        creator: { select: { id: true, name: true, role: true } },
         activityLogs: {
           orderBy: { createdAt: 'desc' },
           include: { user: { select: { name: true, role: true } } },
         },
         meetings: {
           orderBy: { createdAt: 'desc' },
+          include: {
+            executive: { select: { id: true, name: true, role: true } },
+          },
         },
         order: {
           include: {
             documents: {
               select: { id: true, docType: true, fileName: true, fileSizeOctets: true, mimeType: true, uploadedAt: true },
             },
+            submittedBy: { select: { id: true, name: true, role: true } },
+            financeProcessedBy: { select: { id: true, name: true, role: true } },
           },
         },
       },

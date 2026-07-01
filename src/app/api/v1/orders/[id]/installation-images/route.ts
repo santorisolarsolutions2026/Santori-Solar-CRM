@@ -84,27 +84,27 @@ export async function POST(
     const existingCount = await prisma.installationImage.count({
       where: { orderId },
     });
-    if (existingCount >= 7) {
+    if (existingCount >= 20) {
       return NextResponse.json({
         success: false,
-        message: 'Maximum limit of 7 installation images has been reached.',
+        message: 'Maximum limit of 20 installation files has been reached.',
       }, { status: 400 });
     }
 
     const formData = await req.formData();
     const file = formData.get('file') as File;
-    const status = formData.get('status') as string; // in_progress | completed
+    const status = formData.get('status') as string;
 
     if (!file) {
-      return NextResponse.json({ success: false, message: 'Image file is required.' }, { status: 400 });
+      return NextResponse.json({ success: false, message: 'File is required.' }, { status: 400 });
     }
-    if (!status || !['in_progress', 'completed'].includes(status)) {
-      return NextResponse.json({ success: false, message: 'Status must be in_progress or completed.' }, { status: 400 });
+    if (!status || !['in_progress', 'completed', 'delivered_items', 'installation_done', 'meter_sealing_paper', 'plant_commissioned'].includes(status)) {
+      return NextResponse.json({ success: false, message: 'Status must be in_progress, completed, delivered_items, installation_done, meter_sealing_paper, or plant_commissioned.' }, { status: 400 });
     }
 
-    // Ensure it is an image
-    if (!file.type.startsWith('image/')) {
-      return NextResponse.json({ success: false, message: 'Only image files are allowed.' }, { status: 400 });
+    // Ensure it is an image or video
+    if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+      return NextResponse.json({ success: false, message: 'Only image and video files are allowed.' }, { status: 400 });
     }
 
     // Setup folder

@@ -66,12 +66,12 @@ const STAGE_BADGES: Record<number, { name: string; class: string }> = {
   5: { name: 'Call Later', class: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
   6: { name: 'Already Installed', class: 'bg-slate-800/20 text-slate-500 border-slate-800/30' },
   7: { name: 'Decision Pending', class: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
-  8: { name: 'Meeting Booked 📅', class: 'bg-teal-500/10 text-teal-400 border-teal-500/20' },
+  8: { name: 'Meeting Booked', class: 'bg-teal-500/10 text-teal-400 border-teal-500/20' },
   9: { name: 'Meeting Done', class: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
   10: { name: 'Disconnected', class: 'bg-slate-600/15 text-slate-400 border-slate-600/20' },
   11: { name: 'Switch Off', class: 'bg-slate-700/20 text-slate-400 border-slate-700/30' },
   12: { name: 'Can\'t Fit Solar', class: 'bg-stone-900 text-stone-400 border-stone-800/40' },
-  13: { name: '✅ SALE DONE', class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-bold' },
+  13: { name: 'Sale Done', class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-bold' },
 };
 
 const CONNECTION_BADGES: Record<string, string> = {
@@ -175,6 +175,23 @@ export default function LeadsPage() {
 
   // Track Lead Modal State
   const [trackingLead, setTrackingLead] = useState<any | null>(null);
+  const [trackingLoading, setTrackingLoading] = useState(false);
+
+  const handleOpenTracker = async (lead: any) => {
+    setTrackingLead(lead);
+    setTrackingLoading(true);
+    try {
+      const res = await fetch(`/api/v1/leads/${lead.id}`);
+      const data = await res.json();
+      if (data.success && data.data) {
+        setTrackingLead(data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching lead tracker details:', err);
+    } finally {
+      setTrackingLoading(false);
+    }
+  };
 
   // Dropdown lists
   const [consultants, setConsultants] = useState<{ id: number; name: string }[]>([]);
@@ -1064,11 +1081,6 @@ export default function LeadsPage() {
                               {stage.name}
                             </span>
                           )}
-                          {lead.status === 13 && lead.order?.status === 'completed' && (!lead.order?.installationImages || lead.order.installationImages.filter((img) => img.status === 'completed').length === 0) && (
-                            <span className="text-[9px] font-semibold text-rose-400 bg-rose-950/20 border border-rose-900/30 rounded px-1.5 py-0.5 w-fit uppercase tracking-wider">
-                              ⚠️ Photo Not Uploaded
-                            </span>
-                          )}
                         </div>
                       </td>
                       <td className="py-3.5 px-4 font-medium text-slate-300 w-40">
@@ -1082,13 +1094,15 @@ export default function LeadsPage() {
                       </td>
                       <td className="py-3.5 px-4 text-center w-32">
                         <div className="flex items-center justify-center gap-2">
-                          <button
-                            onClick={() => setTrackingLead(lead)}
-                            className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 transition-all cursor-pointer"
-                            title="Track Lead Journey"
-                          >
-                            <Truck className="w-4.5 h-4.5" />
-                          </button>
+                          {hasPermission('leads:track') && (
+                            <button
+                              onClick={() => handleOpenTracker(lead)}
+                              className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 transition-all cursor-pointer"
+                              title="Track Lead Journey"
+                            >
+                              <Truck className="w-4.5 h-4.5" />
+                            </button>
+                          )}
                           <Link
                             href={`/leads/${lead.id}`}
                             className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white transition-all"
@@ -1862,7 +1876,14 @@ export default function LeadsPage() {
               </button>
             </div>
             <div className="p-5 overflow-y-auto flex-1">
-              <LeadTrackingTimeline lead={trackingLead} />
+              {trackingLoading ? (
+                <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                  <Loader2 className="w-10 h-10 text-amber-500 animate-spin" />
+                  <p className="text-xs text-slate-400 font-semibold tracking-wider uppercase font-mono">Loading Lead Journey...</p>
+                </div>
+              ) : (
+                <LeadTrackingTimeline lead={trackingLead} />
+              )}
             </div>
             <div className="p-4 border-t border-slate-800 bg-slate-900/30 flex justify-between items-center shrink-0">
               <Link

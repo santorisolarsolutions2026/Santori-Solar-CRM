@@ -35,6 +35,7 @@ import {
   CheckCircle2,
   Download,
   Truck,
+  Camera,
 } from 'lucide-react';
 import Link from 'next/link';
 import { BeautifulAudioPlayer } from '@/components/BeautifulAudioPlayer';
@@ -131,12 +132,12 @@ const STAGE_BADGES: Record<number, { name: string; class: string }> = {
   5: { name: 'Call Later', class: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
   6: { name: 'Already Installed', class: 'bg-slate-800/20 text-slate-500 border-slate-800/30' },
   7: { name: 'Decision Pending', class: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
-  8: { name: 'Meeting Booked 📅', class: 'bg-teal-500/10 text-teal-400 border-teal-500/20' },
+  8: { name: 'Meeting Booked', class: 'bg-teal-500/10 text-teal-400 border-teal-500/20' },
   9: { name: 'Meeting Done', class: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
   10: { name: 'Disconnected', class: 'bg-slate-600/15 text-slate-400 border-slate-600/20' },
   11: { name: 'Switch Off', class: 'bg-slate-700/20 text-slate-400 border-slate-700/30' },
   12: { name: 'Can\'t Fit Solar', class: 'bg-stone-900 text-stone-400 border-stone-800/40' },
-  13: { name: '✅ SALE DONE', class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-bold' },
+  13: { name: 'Sale Done', class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-bold' },
 };
 
 // Transition matrix for select dropdown option filters
@@ -209,7 +210,94 @@ export default function LeadDetailPage({
   const [lead, setLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
-  const [activeTab, setActiveTab] = useState<'info' | 'logs' | 'track' | 'meeting' | 'order'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'track' | 'meeting' | 'order'>('info');
+
+  // Camera Modal States
+  const [cameraModal, setCameraModal] = useState<{
+    isOpen: boolean;
+    onCapture: (file: File) => void;
+  }>({
+    isOpen: false,
+    onCapture: () => {},
+  });
+
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }
+      });
+      setCameraStream(stream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Could not access camera. Please check permissions.');
+      setCameraModal(prev => ({ ...prev, isOpen: false }));
+    }
+  };
+
+  const stopCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
+    }
+    setCapturedPhoto(null);
+  };
+
+  useEffect(() => {
+    if (cameraModal.isOpen) {
+      startCamera();
+    } else {
+      stopCamera();
+    }
+    return () => {
+      stopCamera();
+    };
+  }, [cameraModal.isOpen]);
+
+  const capturePhoto = () => {
+    if (!videoRef.current) return;
+    const video = videoRef.current;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      setCapturedPhoto(dataUrl);
+      if (cameraStream) {
+        cameraStream.getVideoTracks().forEach(track => track.enabled = false);
+      }
+    }
+  };
+
+  const retakePhoto = () => {
+    setCapturedPhoto(null);
+    if (cameraStream) {
+      cameraStream.getVideoTracks().forEach(track => track.enabled = true);
+    }
+  };
+
+  const confirmPhoto = () => {
+    if (!capturedPhoto) return;
+    const byteString = atob(capturedPhoto.split(',')[1]);
+    const mimeString = capturedPhoto.split(',')[0].split(':')[1].split(';')[0];
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+    const blob = new Blob([ab], { type: mimeString });
+    const file = new window.File([blob], `camera_snapshot_${Date.now()}.jpg`, { type: 'image/jpeg' });
+    cameraModal.onCapture(file);
+    setCameraModal(prev => ({ ...prev, isOpen: false }));
+  };
 
   // Inline edit state (Form A)
   const [isEditing, setIsEditing] = useState(false);
@@ -299,8 +387,6 @@ export default function LeadDetailPage({
     remainingMethod: 'cash',
     financeProvider: '',
     clientType: 'on_grid',
-    subsidyApplicable: false,
-    subsidyAmount: '',
     additionalNotes: '',
   });
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
@@ -379,8 +465,6 @@ export default function LeadDetailPage({
               remainingMethod: data.data.order.remainingMethod || 'cash',
               financeProvider: data.data.order.financeProvider || '',
               clientType: data.data.order.clientType || 'on_grid',
-              subsidyApplicable: data.data.order.subsidyApplicable,
-              subsidyAmount: data.data.order.subsidyAmount?.toString() || '',
               additionalNotes: data.data.order.additionalNotes || '',
             });
           } else {
@@ -422,8 +506,8 @@ export default function LeadDetailPage({
     if (!leadId || typeof window === 'undefined') return;
 
     const savedTab = localStorage.getItem(`solar_crm_lead_active_tab_${leadId}`);
-    if (savedTab && ['info', 'logs', 'meeting', 'order'].includes(savedTab)) {
-      setActiveTab(savedTab as 'info' | 'logs' | 'meeting' | 'order');
+    if (savedTab && ['info', 'track', 'meeting', 'order'].includes(savedTab)) {
+      setActiveTab(savedTab as 'info' | 'track' | 'meeting' | 'order');
     }
 
     const savedIsEditing = localStorage.getItem(`solar_crm_lead_is_editing_${leadId}`);
@@ -742,12 +826,9 @@ export default function LeadDetailPage({
     }
   };
 
-  // Handle Document uploads (Aadhaar, PAN, Electricity Bill, Bank Passbook)
-  const handleFileChange = async (docType: string, e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0 || !lead?.order) return;
-    
+  const executeDocUpload = async (docType: string, file: File) => {
+    if (!lead?.order) return;
     setUploadingDoc(docType);
-    const file = e.target.files[0];
     const formData = new FormData();
     formData.append('file', file);
     formData.append('doc_type', docType);
@@ -768,6 +849,13 @@ export default function LeadDetailPage({
     } finally {
       setUploadingDoc(null);
     }
+  };
+
+  // Handle Document uploads (Aadhaar, PAN, Electricity Bill, Bank Passbook)
+  const handleFileChange = async (docType: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0 || !lead?.order) return;
+    const file = e.target.files[0];
+    await executeDocUpload(docType, file);
   };
 
   // Handle Document removal
@@ -1059,7 +1147,7 @@ export default function LeadDetailPage({
   const stageBadge = STAGE_BADGES[lead.status] || { name: `Stage ${lead.status}`, class: 'bg-slate-500' };
 
   // Helper variables to govern order form disable state
-  const isOrderFormLocked = lead.order?.status !== 'draft' && !hasPermission('orders:verify') && !hasPermission('orders:submit_installation');
+  const isOrderFormLocked = lead.order?.status !== 'draft';
   const isOrderFormDisabled = !hasPermission('orders:create') || isOrderFormLocked;
 
   // Calculate dynamic allowed transitions for select input
@@ -1186,28 +1274,19 @@ export default function LeadDetailPage({
                 <User className="w-4 h-4" />
                 <span>Info</span>
               </button>
-              <button
-                onClick={() => setActiveTab('logs')}
-                className={`px-5 py-4 border-b-2 transition-all flex items-center justify-center gap-2 shrink-0 ${
-                  activeTab === 'logs'
-                    ? 'border-amber-500 text-amber-400 bg-amber-500/[0.02]'
-                    : 'border-transparent text-slate-400 hover:text-white'
-                }`}
-              >
-                <History className="w-4 h-4" />
-                <span>Activity Log</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('track')}
-                className={`px-5 py-4 border-b-2 transition-all flex items-center justify-center gap-2 shrink-0 ${
-                  activeTab === 'track'
-                    ? 'border-amber-500 text-amber-400 bg-amber-500/[0.02]'
-                    : 'border-transparent text-slate-400 hover:text-white'
-                }`}
-              >
-                <Truck className="w-4 h-4" />
-                <span>Track Progress</span>
-              </button>
+              {hasPermission('leads:track') && (
+                <button
+                  onClick={() => setActiveTab('track')}
+                  className={`px-5 py-4 border-b-2 transition-all flex items-center justify-center gap-2 shrink-0 ${
+                    activeTab === 'track'
+                      ? 'border-amber-500 text-amber-400 bg-amber-500/[0.02]'
+                      : 'border-transparent text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Truck className="w-4 h-4" />
+                  <span>Track Progress</span>
+                </button>
+              )}
               {lead.status >= 8 && (
                 <button
                   onClick={() => setActiveTab('meeting')}
@@ -1520,55 +1599,6 @@ export default function LeadDetailPage({
                 </div>
               )}
 
-              {/* 2. ACTIVITY LOG TAB */}
-              {activeTab === 'logs' && (
-                <div className="relative border-l-2 border-slate-800 ml-3 pl-6 space-y-6">
-                  {lead.activityLogs.map((log) => {
-                    const fromStage = log.fromStatus ? STAGE_BADGES[log.fromStatus] : null;
-                    const toStage = STAGE_BADGES[log.toStatus] || { name: `Stage ${log.toStatus}`, class: 'bg-slate-500' };
-
-                    return (
-                      <div key={log.id} className="relative">
-                        {/* Bullet dot */}
-                        <div className="absolute -left-[31px] top-1.5 w-3.5 h-3.5 rounded-full bg-slate-950 border-2 border-amber-500" />
-                        
-                        <div>
-                          <p className="text-xs font-semibold text-slate-300">
-                            {new Date(log.createdAt).toLocaleString('en-IN', {
-                              day: '2-digit',
-                              month: 'short',
-                              year: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </p>
-                          <div className="flex items-center gap-1.5 mt-1">
-                            {fromStage ? (
-                              <>
-                                <span className={`text-[9px] px-2 py-0.25 border rounded-full uppercase tracking-wider ${fromStage.class}`}>
-                                  {fromStage.name}
-                                </span>
-                                <span className="text-slate-500">→</span>
-                              </>
-                            ) : null}
-                            <span className={`text-[9px] px-2 py-0.25 border rounded-full uppercase tracking-wider ${toStage.class}`}>
-                              {toStage.name}
-                            </span>
-                          </div>
-                          <p className="text-xs text-slate-400 mt-1">
-                            Updated by <strong>{log.user.name}</strong> ({log.user.role})
-                          </p>
-                          {log.remark && (
-                            <p className="text-xs text-slate-500 italic mt-1 leading-normal border-l-2 border-slate-800 pl-2">
-                              "{log.remark}"
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
 
               {/* 3. MEETING TAB */}
               {activeTab === 'meeting' && (
@@ -2097,43 +2127,74 @@ export default function LeadDetailPage({
                                   </div>
                                 </div>
                               ) : (
-                                <label className={`border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center text-center transition-all ${
-                                  isOrderFormDisabled 
-                                    ? 'border-slate-850 bg-slate-950/20 cursor-not-allowed opacity-60' 
-                                    : isUploading 
-                                      ? 'border-amber-500/50 bg-amber-500/[0.02] cursor-wait' 
-                                      : 'border-slate-800 hover:border-slate-700 bg-slate-950/20 hover:bg-slate-900/30 cursor-pointer'
-                                }`}>
-                                  {isUploading ? (
-                                    <div className="flex flex-col items-center gap-2 py-1">
-                                      <Loader2 className="w-5 h-5 text-amber-500 animate-spin" />
-                                      <span className="text-xs font-semibold text-amber-400">Uploading document...</span>
-                                    </div>
-                                  ) : (
-                                    <div className="flex flex-col items-center gap-1.5 py-1">
-                                      <Upload className="w-5 h-5 text-slate-400" />
-                                      <span className="text-xs font-semibold text-slate-300">Click to upload {item.label}</span>
-                                      <span className="text-[10px] text-slate-500">PDF, JPG, or PNG (Max 5MB)</span>
-                                    </div>
+                                <div className="space-y-2">
+                                  <label className={`border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center text-center transition-all ${
+                                    isOrderFormDisabled 
+                                      ? 'border-slate-850 bg-slate-950/20 cursor-not-allowed opacity-60' 
+                                      : isUploading 
+                                        ? 'border-amber-500/50 bg-amber-500/[0.02] cursor-wait' 
+                                        : 'border-slate-800 hover:border-slate-700 bg-slate-950/20 hover:bg-slate-900/30 cursor-pointer'
+                                  }`}>
+                                    {isUploading ? (
+                                      <div className="flex flex-col items-center gap-2 py-1">
+                                        <Loader2 className="w-5 h-5 text-amber-500 animate-spin" />
+                                        <span className="text-xs font-semibold text-amber-400">Uploading document...</span>
+                                      </div>
+                                    ) : (
+                                      <div className="flex flex-col items-center gap-1.5 py-1">
+                                        <Upload className="w-5 h-5 text-slate-400" />
+                                        <span className="text-xs font-semibold text-slate-300">Click to upload {item.label}</span>
+                                        <span className="text-[10px] text-slate-500">PDF, JPG, or PNG (Max 5MB)</span>
+                                      </div>
+                                    )}
+                                    <input
+                                      type="file"
+                                      className="hidden"
+                                      disabled={uploadingDoc !== null || isOrderFormDisabled}
+                                      onChange={(e) => handleFileChange(item.type, e)}
+                                    />
+                                  </label>
+
+                                  {!isOrderFormDisabled && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setCameraModal({
+                                          isOpen: true,
+                                          onCapture: (file) => executeDocUpload(item.type, file)
+                                        });
+                                      }}
+                                      className="w-full py-1.5 bg-slate-950 border border-slate-850 hover:border-slate-800 text-slate-350 hover:text-white rounded-lg text-[10px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                                    >
+                                      <Camera className="w-3.5 h-3.5 text-slate-450" />
+                                      <span>Or Open Camera</span>
+                                    </button>
                                   )}
-                                  <input
-                                    type="file"
-                                    className="hidden"
-                                    disabled={uploadingDoc !== null || isOrderFormDisabled}
-                                    onChange={(e) => handleFileChange(item.type, e)}
-                                  />
-                                </label>
+                                </div>
                               )}
                             </div>
 
                             {/* Card Footer Actions (Replace / Remove) */}
                             {uploaded && !isOrderFormDisabled && (
                               <div className="flex items-center justify-end gap-4 pt-2 border-t border-slate-850/60">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setCameraModal({
+                                      isOpen: true,
+                                      onCapture: (file) => executeDocUpload(item.type, file)
+                                    });
+                                  }}
+                                  className="text-xs font-semibold text-slate-400 hover:text-amber-400 transition-all flex items-center gap-1.5 cursor-pointer"
+                                >
+                                  <Camera className="w-3.5 h-3.5 text-slate-500" />
+                                  <span>Snap Photo</span>
+                                </button>
                                 <label className="cursor-pointer text-xs font-semibold text-slate-400 hover:text-amber-400 transition-all flex items-center gap-1.5">
                                   {isUploading ? (
                                     <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-500" />
                                   ) : (
-                                    <Upload className="w-3.5 h-3.5" />
+                                    <Upload className="w-3.5 h-3.5 text-slate-500" />
                                   )}
                                   <span>Replace</span>
                                   <input
@@ -2477,7 +2538,7 @@ export default function LeadDetailPage({
                   onChange={(e) => setFormCOutcome(e.target.value)}
                   className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-350 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-xs"
                 >
-                  <option value="sale_done">Sale Done ⭐ (Confirms purchase - creates draft order)</option>
+                  <option value="sale_done">Sale Done (Confirms purchase - creates draft order)</option>
                   <option value="follow_up">Follow Up (Needs scheduled callback/warm lead)</option>
                   <option value="not_interested">Not Interested (Disqualified)</option>
                 </select>
@@ -2587,6 +2648,79 @@ export default function LeadDetailPage({
                 {previewImage.title}
               </div>
             )}
+          </div>
+        </div>
+      )}
+      {/* WebRTC Camera Modal */}
+      {cameraModal.isOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 px-4 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-2xl max-w-md w-full space-y-4 text-center text-white animate-fade-in-up">
+            <div className="flex justify-between items-center pb-2 border-b border-slate-800">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-200">Capture Proof Photo</span>
+              <button 
+                type="button" 
+                onClick={() => setCameraModal(prev => ({ ...prev, isOpen: false }))}
+                className="text-slate-400 hover:text-white cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-slate-950 border border-slate-850 flex items-center justify-center">
+              {capturedPhoto ? (
+                <img 
+                  src={capturedPhoto} 
+                  alt="Captured Preview" 
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <video 
+                  ref={videoRef}
+                  autoPlay 
+                  playsInline 
+                  className="w-full h-full object-cover"
+                />
+              )}
+            </div>
+
+            <div className="flex gap-3 justify-center pt-2">
+              {capturedPhoto ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={retakePhoto}
+                    className="w-1/2 py-2 bg-slate-800 hover:bg-slate-750 text-slate-350 hover:text-white rounded-lg text-xs font-bold transition-all cursor-pointer"
+                  >
+                    Retake
+                  </button>
+                  <button
+                    type="button"
+                    onClick={confirmPhoto}
+                    className="w-1/2 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md shadow-emerald-500/10"
+                  >
+                    Use Photo
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setCameraModal(prev => ({ ...prev, isOpen: false }))}
+                    className="w-1/3 py-2 bg-slate-800 hover:bg-slate-750 text-slate-400 hover:text-slate-250 rounded-lg text-xs cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={capturePhoto}
+                    className="w-2/3 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md shadow-amber-500/10 flex items-center justify-center gap-1.5"
+                  >
+                    <Camera className="w-4 h-4" />
+                    <span>Capture Photo</span>
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}

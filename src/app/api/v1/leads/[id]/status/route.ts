@@ -25,8 +25,23 @@ async function generateOrderCode() {
     orderBy: { id: 'desc' },
     select: { id: true },
   });
-  const nextId = (lastOrder?.id || 0) + 1;
-  return `ORD-${String(nextId).padStart(5, '0')}`;
+  let nextId = (lastOrder?.id || 0) + 1;
+  let attempts = 0;
+  const maxAttempts = 15;
+
+  while (attempts < maxAttempts) {
+    const code = `ORD-${String(nextId).padStart(5, '0')}`;
+    const existing = await prisma.order.findUnique({
+      where: { orderCode: code },
+      select: { id: true },
+    });
+    if (!existing) {
+      return code;
+    }
+    nextId++;
+    attempts++;
+  }
+  return `ORD-${Date.now()}`;
 }
 
 export async function POST(
@@ -253,21 +268,26 @@ export async function POST(
       if (outcome === 'sale_done') {
         finalStatusNum = 13;
         updateData.status = 13;
-        // Proceed with Stage 13 Setup
-        const orderCode = await generateOrderCode();
-        orderCreationData = {
-          orderCode,
-          connectionNumber: lead.connectionNumber || '',
-          systemSizeKw: 0.0,
-          totalValue: 0.0,
-          downPayment: 0.0,
-          paymentMethod: 'cash',
-          remainingMethod: 'cash',
-          clientType: 'on_grid',
-          subsidyApplicable: false,
-          submittedById: userPayload.id,
-          status: 'draft',
-        };
+        // Proceed with Stage 13 Setup only if order doesn't exist yet
+        const existingOrder = await prisma.order.findUnique({
+          where: { leadId },
+        });
+        if (!existingOrder) {
+          const orderCode = await generateOrderCode();
+          orderCreationData = {
+            orderCode,
+            connectionNumber: lead.connectionNumber || '',
+            systemSizeKw: 0.0,
+            totalValue: 0.0,
+            downPayment: 0.0,
+            paymentMethod: 'cash',
+            remainingMethod: 'cash',
+            clientType: 'on_grid',
+            subsidyApplicable: false,
+            submittedById: userPayload.id,
+            status: 'draft',
+          };
+        }
       } else if (outcome === 'follow_up') {
         finalStatusNum = 3;
         updateData.status = 3;
