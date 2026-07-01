@@ -253,6 +253,10 @@ export default function TeamManagementPage() {
   const { user, refreshUser, hasPermission } = useAuth();
   const router = useRouter();
 
+  const isTargetAdminOrDirector = selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:') || selectedMember?.role === 'director' || selectedMember?.role?.startsWith('director:');
+  const isCurrentUserAdmin = user?.role === 'admin' || user?.role?.startsWith('admin:');
+  const canEditPermissionsAndRole = !isTargetAdminOrDirector || isCurrentUserAdmin;
+
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [managersAndTls, setManagersAndTls] = useState<{ id: number; name: string; role: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1690,7 +1694,7 @@ export default function TeamManagementPage() {
                       <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">System Role</label>
                       <select
                         value={editMemberForm.role}
-                        disabled={selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:')}
+                        disabled={!canEditPermissionsAndRole || selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:')}
                         onChange={(e) => setEditMemberForm({ ...editMemberForm, role: e.target.value })}
                         className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500 focus:outline-none disabled:opacity-50"
                       >
@@ -1730,7 +1734,7 @@ export default function TeamManagementPage() {
                           <label className="block text-[9px] font-bold uppercase text-slate-400 mb-1">Base Permissions Access Level</label>
                           <select
                             value={editBaseRole}
-                            disabled={selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:')}
+                            disabled={!canEditPermissionsAndRole || selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:')}
                             onChange={(e) => setEditBaseRole(e.target.value)}
                             className="block w-full px-3 py-2 bg-slate-950 border border-slate-900 rounded-lg text-slate-300 text-xs focus:ring-amber-500 disabled:opacity-50"
                           >
@@ -1844,22 +1848,27 @@ export default function TeamManagementPage() {
                       {ALL_PERMISSIONS.filter(p => p.category === selectedPermissionCategory).map((perm) => {
                         const isChecked = editMemberPermissions.includes(perm.key);
                         const isDangerous = perm.key.includes('all') || perm.key.includes('manage') || perm.key.includes('verify') || perm.key.includes('delete');
+                        const isDisabled = !canEditPermissionsAndRole;
                         
                         return (
                           <label 
                             key={perm.key} 
-                            className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer select-none transition-all duration-300 hover:-translate-y-[0.5px] ${
+                            className={`flex items-start gap-3 p-3.5 rounded-xl border select-none transition-all duration-300 ${
+                              isDisabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:-translate-y-[0.5px]'
+                            } ${
                               isChecked 
                                 ? 'bg-amber-500/[0.02] border-amber-500/30 shadow-md shadow-amber-500/5'
                                 : 'bg-slate-950/40 border-slate-900 hover:border-slate-800 hover:bg-slate-900/10'
                             }`}
                           >
                             {/* Sleek Custom Toggle Switch */}
-                            <div className="relative shrink-0 mt-1 cursor-pointer select-none">
+                            <div className={`relative shrink-0 mt-1 select-none ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
                               <input
                                 type="checkbox"
                                 checked={isChecked}
+                                disabled={isDisabled}
                                 onChange={() => {
+                                  if (isDisabled) return;
                                   if (isChecked) {
                                     setEditMemberPermissions(editMemberPermissions.filter(k => k !== perm.key));
                                   } else {
