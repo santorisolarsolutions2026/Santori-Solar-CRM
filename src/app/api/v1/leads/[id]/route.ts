@@ -1,26 +1,28 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
+import { getAuthenticatedUser, getUserPermissions, getUserSession } from '@/lib/auth';
 
 // Helper to check lead access based on user role
-async function canAccessLead(userId: number, userRole: string, lead: any): Promise<boolean> {
-  const permissions = await getUserPermissions(userId);
+async function canAccessLead(userId: number, lead: any): Promise<boolean> {
+  const { role: userRole, permissions } = await getUserSession(userId);
+  const baseRole = userRole.includes(':') ? userRole.split(':')[0] : userRole;
+
   if (permissions.includes('leads:view_all')) return true;
   
   // Allow Manager and TL to access unassigned leads so they can assign them
   const isUnassigned = !lead.assignedTlId && !lead.assignedConsultantId;
-  if (isUnassigned && ['manager', 'tl', 'psa_tl'].includes(userRole)) return true;
+  if (isUnassigned && ['manager', 'tl', 'psa_tl'].includes(baseRole)) return true;
 
-  if (userRole === 'manager' && lead.assignedManagerId === userId) return true;
-  if (['tl', 'psa_tl'].includes(userRole) && lead.assignedTlId === userId) return true;
-  if (userRole === 'consultant' || userRole === 'psa') {
+  if (baseRole === 'manager' && lead.assignedManagerId === userId) return true;
+  if (['tl', 'psa_tl'].includes(baseRole) && lead.assignedTlId === userId) return true;
+  if (baseRole === 'consultant' || baseRole === 'psa') {
     return lead.assignedConsultantId === userId;
   }
-  if (userRole === 'finance') {
+  if (baseRole === 'finance') {
     // Finance sees only leads at Stage 13 (Sale Done)
     return lead.status === 13;
   }
-  if (userRole === 'operations') {
+  if (baseRole === 'operations') {
     // Operations sees leads at Stage 13 that are processed by finance
     return lead.status === 13 && ['finance_verified', 'ops_assigned', 'completed'].includes(lead.order?.status || '');
   }
@@ -76,12 +78,12 @@ export async function GET(
       return NextResponse.json({ success: false, message: 'Lead not found.' }, { status: 404 });
     }
 
-    const userPermissions = await getUserPermissions(userPayload.id);
+    const { role: userRole, permissions: userPermissions } = await getUserSession(userPayload.id);
     if (!userPermissions.includes('leads:view')) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view leads.' }, { status: 403 });
     }
 
-    if (!await canAccessLead(userPayload.id, userPayload.role, lead)) {
+    if (!await canAccessLead(userPayload.id, lead)) {
       return NextResponse.json({ success: false, message: 'Forbidden. No access to this lead.' }, { status: 403 });
     }
 
@@ -122,12 +124,14 @@ export async function PATCH(
     }
 
     // Enforce update permissions
-    const userPermissions = await getUserPermissions(userPayload.id);
+    const { role: userRole, permissions: userPermissions } = await getUserSession(userPayload.id);
+    const baseRole = userRole.includes(':') ? userRole.split(':')[0] : userRole;
+
     if (!userPermissions.includes('leads:edit')) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to edit lead details.' }, { status: 403 });
     }
 
-    if (!await canAccessLead(userPayload.id, userPayload.role, lead)) {
+    if (!await canAccessLead(userPayload.id, lead)) {
       return NextResponse.json({ success: false, message: 'Forbidden. No access to this lead pool.' }, { status: 403 });
     }
 
@@ -153,14 +157,14 @@ export async function PATCH(
     // Check assignment permission if modifying team assignment fields
     const isChangingAssignment = assignedTlId !== undefined || assignedConsultantId !== undefined || assignedManagerId !== undefined;
     if (isChangingAssignment) {
-      const canAssign = userPermissions.includes('leads:assign') || ['admin', 'director'].includes(userPayload.role);
+      const canAssign = userPermissions.includes('leads:assign') || ['admin', 'director'].includes(baseRole);
       if (!canAssign) {
         return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to assign or reassign leads.' }, { status: 403 });
       }
     }
 
     // Enforce specific assignment change rules
-    if (['tl', 'psa_tl'].includes(userPayload.role)) {
+    if (['tl', 'psa_tl'].includes(baseRole)) {
       // TL can only assign to themselves if unassigned, or keep it as themselves
       if (assignedTlId !== undefined && assignedTlId) {
         const targetTlId = parseInt(assignedTlId, 10);
@@ -180,7 +184,7 @@ export async function PATCH(
           return NextResponse.json({ success: false, message: 'Forbidden. Selected consultant must report to you.' }, { status: 403 });
         }
       }
-    } else if (userPayload.role === 'manager') {
+    } else if (baseRole === 'manager') {
       // Manager can assign TL and Consultant, but they must be under this manager
       if (assignedTlId !== undefined && assignedTlId) {
         const targetTlId = parseInt(assignedTlId, 10);

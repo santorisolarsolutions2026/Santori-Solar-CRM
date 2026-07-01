@@ -156,3 +156,49 @@ export async function getUserPermissions(userId: number): Promise<string[]> {
 
   return finalPermissions;
 }
+
+export async function getUserSession(userId: number): Promise<{ role: string; permissions: string[] }> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true, permissions: true }
+  });
+  if (!user) return { role: '', permissions: [] };
+
+  const baseRole = user.role.includes(':') ? user.role.split(':')[0] : user.role;
+  let basePermissions: string[] = [];
+
+  if (baseRole === 'admin' || baseRole === 'director') {
+    basePermissions = getDefaultPermissionsForRole('admin');
+  } else {
+    basePermissions = user.permissions && user.permissions.trim()
+      ? user.permissions.split(',').map(p => p.trim())
+      : getDefaultPermissionsForRole(user.role);
+  }
+
+  const finalPermissions = [...basePermissions];
+
+  const hasAnyLeadPermission = [
+    'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:track', 'leads:assign'
+  ].some(p => finalPermissions.includes(p));
+
+  if (hasAnyLeadPermission && !finalPermissions.includes('leads:view')) {
+    finalPermissions.push('leads:view');
+  }
+
+  const hasAnyOrderPermission = [
+    'orders:create', 'orders:verify', 'orders:operations', 'orders:view_all'
+  ].some(p => finalPermissions.includes(p));
+
+  if (hasAnyOrderPermission && !finalPermissions.includes('orders:view')) {
+    finalPermissions.push('orders:view');
+  }
+
+  if (finalPermissions.includes('orders:operations') && !finalPermissions.includes('orders:submit_installation')) {
+    finalPermissions.push('orders:submit_installation');
+  }
+
+  return {
+    role: user.role,
+    permissions: finalPermissions
+  };
+}

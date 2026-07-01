@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma, Prisma } from '@/lib/db';
-import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
+import { getAuthenticatedUser, getUserPermissions, getUserSession } from '@/lib/auth';
 
 export async function GET(req: Request) {
   try {
@@ -9,7 +9,9 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
-    const userPermissions = await getUserPermissions(userPayload.id);
+    const { role: userRole, permissions: userPermissions } = await getUserSession(userPayload.id);
+    const baseRole = userRole.includes(':') ? userRole.split(':')[0] : userRole;
+
     if (!userPermissions.includes('orders:view')) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view orders.' }, { status: 403 });
     }
@@ -24,7 +26,7 @@ export async function GET(req: Request) {
 
     // Role-specific filtering
     if (!hasViewAll) {
-      if (userPayload.role === 'finance') {
+      if (baseRole === 'finance') {
         // Finance sees orders in submitted, verified, ops_assigned, completed
         const financeStatuses = ['submitted', 'finance_verified', 'ops_assigned', 'completed'];
         if (status) {
@@ -32,7 +34,7 @@ export async function GET(req: Request) {
         } else {
           where.status = { in: financeStatuses };
         }
-      } else if (userPayload.role === 'operations') {
+      } else if (baseRole === 'operations') {
         // Operations sees only orders that are verified/assigned/completed
         const opsStatuses = ['finance_verified', 'ops_assigned', 'completed'];
         if (status) {
@@ -42,11 +44,11 @@ export async function GET(req: Request) {
         }
       } else {
         // Filter orders by lead assignments for normal team members
-        if (['tl', 'psa_tl'].includes(userPayload.role)) {
+        if (['tl', 'psa_tl'].includes(baseRole)) {
           where.lead = { ...(where.lead as Prisma.LeadWhereInput), assignedTlId: userPayload.id };
-        } else if (userPayload.role === 'manager') {
+        } else if (baseRole === 'manager') {
           where.lead = { ...(where.lead as Prisma.LeadWhereInput), assignedManagerId: userPayload.id };
-        } else if (['admin', 'director', 'sales_head'].includes(userPayload.role)) {
+        } else if (['admin', 'director', 'sales_head'].includes(baseRole)) {
           // Administrative roles can view all orders even without view_all permission
         } else {
           where.lead = { ...(where.lead as Prisma.LeadWhereInput), assignedConsultantId: userPayload.id };

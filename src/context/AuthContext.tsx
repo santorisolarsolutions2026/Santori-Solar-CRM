@@ -175,8 +175,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const hasPermission = (permission: string) => {
     if (!user) return false;
-    if (user.role === 'admin' || user.role.startsWith('admin:') || user.role === 'director') return true;
-    return user.permissions?.includes(permission) || false;
+    const baseRole = user.role.includes(':') ? user.role.split(':')[0] : user.role;
+    if (baseRole === 'admin' || baseRole === 'director') return true;
+
+    const userPerms = user.permissions || [];
+    
+    // Implicit page permissions mapping to mirror backend behaviour
+    const hasAnyLeadPermission = [
+      'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:track', 'leads:assign'
+    ].some(p => userPerms.includes(p));
+
+    const hasAnyOrderPermission = [
+      'orders:create', 'orders:verify', 'orders:operations', 'orders:view_all'
+    ].some(p => userPerms.includes(p));
+
+    const finalPerms = [...userPerms];
+    if (hasAnyLeadPermission && !finalPerms.includes('leads:view')) {
+      finalPerms.push('leads:view');
+    }
+    if (hasAnyOrderPermission && !finalPerms.includes('orders:view')) {
+      finalPerms.push('orders:view');
+    }
+
+    return finalPerms.includes(permission);
   };
 
   return (

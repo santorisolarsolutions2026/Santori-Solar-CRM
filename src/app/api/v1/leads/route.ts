@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma, Prisma } from '@/lib/db';
-import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
+import { getAuthenticatedUser, getUserPermissions, getUserSession } from '@/lib/auth';
 
 // Helper to generate lead code
 async function generateLeadCode() {
@@ -19,7 +19,9 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
-    const userPermissions = await getUserPermissions(userPayload.id);
+    const { role: userRole, permissions: userPermissions } = await getUserSession(userPayload.id);
+    const baseRole = userRole.includes(':') ? userRole.split(':')[0] : userRole;
+
     if (!userPermissions.includes('leads:view')) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view leads.' }, { status: 403 });
     }
@@ -59,7 +61,7 @@ export async function GET(req: Request) {
 
     // 1. Role-based visibility enforcement
     if (!hasViewAll) {
-      if (userPayload.role === 'manager') {
+      if (baseRole === 'manager') {
         andConditions.push({
           OR: [
             { assignedManagerId: userPayload.id },
@@ -73,7 +75,7 @@ export async function GET(req: Request) {
             }
           ]
         });
-      } else if (['tl', 'psa_tl'].includes(userPayload.role)) {
+      } else if (['tl', 'psa_tl'].includes(baseRole)) {
         andConditions.push({
           OR: [
             { assignedTlId: userPayload.id },
@@ -87,7 +89,7 @@ export async function GET(req: Request) {
             }
           ]
         });
-      } else if (userPayload.role === 'consultant' || userPayload.role === 'psa') {
+      } else if (baseRole === 'consultant' || baseRole === 'psa') {
         andConditions.push({
           OR: [
             { assignedConsultantId: userPayload.id },
@@ -100,12 +102,12 @@ export async function GET(req: Request) {
             }
           ]
         });
-      } else if (userPayload.role === 'finance') {
+      } else if (baseRole === 'finance') {
         // Finance sees only leads at Stage 13+ (Sale Done) by default
         if (filteredStatuses.length === 0) {
           andConditions.push({ status: { in: [13] } });
         }
-      } else if (userPayload.role === 'operations') {
+      } else if (baseRole === 'operations') {
         // Operations sees only leads with orders processed by finance by default
         if (filteredStatuses.length === 0) {
           andConditions.push({
@@ -122,7 +124,7 @@ export async function GET(req: Request) {
         }
       } else {
         // Fallback for role without view_all permission
-        if (['admin', 'director', 'sales_head'].includes(userPayload.role)) {
+        if (['admin', 'director', 'sales_head'].includes(baseRole)) {
           // Administrative roles can view all leads even without view_all permission
         } else {
           andConditions.push({
@@ -300,7 +302,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
-    const userPermissions = await getUserPermissions(userPayload.id);
+    const { role: userRole, permissions: userPermissions } = await getUserSession(userPayload.id);
+    const baseRole = userRole.includes(':') ? userRole.split(':')[0] : userRole;
+
     if (!userPermissions.includes('leads:create')) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to add leads.' }, { status: 403 });
     }
@@ -328,15 +332,11 @@ export async function POST(req: Request) {
 
     // Validation - only Customer Name and Mobile Number are strictly required
     if (!customerName || !mobile) {
-      return NextResponse.json({ success: false, message: 'Missing required Customer Name or Mobile Number.' }, { status: 400 });
+      return NextResponse.json({ success: false, message: 'Customer Name and Mobile Number are required.' }, { status: 400 });
     }
 
-    // Clean phone number (strip spaces/dashes and float decimals)
-    let cleanMobile = String(mobile).trim().replace(/[\s-]/g, '');
-    if (cleanMobile.includes('.')) {
-      cleanMobile = cleanMobile.split('.')[0];
-    }
-    if (cleanMobile.length !== 10) {
+    const cleanMobile = String(mobile).trim().replace(/[\s-]/g, '');
+    if (cleanMobile.length !== 10 || isNaN(Number(cleanMobile))) {
       return NextResponse.json({ success: false, message: 'Mobile number must be exactly 10 digits.' }, { status: 400 });
     }
 
@@ -346,7 +346,7 @@ export async function POST(req: Request) {
       cleanMobileAlt = cleanMobileAlt.split('.')[0];
     }
 
-    const isUserAdmin = ['admin', 'director'].includes(userPayload.role);
+    const isUserAdmin = ['admin', 'director'].includes(baseRole);
 
     // Duplicate check
     const existingLead = await prisma.lead.findUnique({
@@ -370,9 +370,9 @@ export async function POST(req: Request) {
     let managerId = null;
     let tlId = null;
 
-    if (userPayload.role === 'manager') {
+    if (baseRole === 'manager') {
       managerId = userPayload.id;
-    } else if (['tl', 'psa_tl'].includes(userPayload.role)) {
+    } else if (['tl', 'psa_tl'].includes(baseRole)) {
       tlId = userPayload.id;
       // Get manager who supervises this TL
       const tlUser = await prisma.user.findUnique({
@@ -383,7 +383,7 @@ export async function POST(req: Request) {
     }
 
     // Enforce team assignment permission on lead creation
-    const canAssign = userPermissions.includes('leads:assign') || ['admin', 'director'].includes(userPayload.role);
+    const canAssign = userPermissions.includes('leads:assign') || ['admin', 'director'].includes(baseRole);
     if (!canAssign && (assignedConsultantId || assignedTlId || assignedManagerId)) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to assign team members to leads.' }, { status: 403 });
     }
