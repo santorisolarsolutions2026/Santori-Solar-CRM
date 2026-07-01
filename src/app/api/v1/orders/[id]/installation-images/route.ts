@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
-import fs from 'node:fs';
-import path from 'node:path';
+import { put } from '@vercel/blob';
 
 // GET: List installation images metadata for a specific order
 export async function GET(
@@ -107,23 +106,15 @@ export async function POST(
       return NextResponse.json({ success: false, message: 'Only image and video files are allowed.' }, { status: 400 });
     }
 
-    // Setup folder
-    const installationsDir = path.join(process.cwd(), 'uploads', 'installations');
-    if (!fs.existsSync(installationsDir)) {
-      fs.mkdirSync(installationsDir, { recursive: true });
-    }
-
-    // Generate unique local file name
+    // Upload to Vercel Blob
     const fileExt = file.name.split('.').pop() || 'png';
-    const cleanFileName = `install_${orderId}_${status}_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
-    const localPath = path.join(installationsDir, cleanFileName);
+    const blobPath = `installations/install_${orderId}_${status}_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+    
+    const blob = await put(blobPath, file, {
+      access: 'public',
+    });
 
-    // Save file buffer
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await fs.promises.writeFile(localPath, buffer);
-
-    // Relative save path
-    const relativePath = `uploads/installations/${cleanFileName}`;
+    const relativePath = blob.url;
 
     // Create DB record
     const newImage = await prisma.$transaction(async (tx) => {

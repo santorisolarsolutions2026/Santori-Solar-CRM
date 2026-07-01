@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
 import fs from 'node:fs';
 import path from 'node:path';
+import { put, del } from '@vercel/blob';
 
 // Define allowed mime types and size limit (5MB)
 const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'application/pdf'];
@@ -76,19 +77,15 @@ export async function POST(
     }
 
     // Create /uploads directory in workspace if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), 'uploads');
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-    }
-
-    // Sanitize and generate unique local file name
+        // Upload to Vercel Blob
     const fileExt = file.name.split('.').pop() || 'dat';
-    const cleanFileName = `order_${orderId}_${docType}_${Date.now()}.${fileExt}`;
-    const localPath = path.join(uploadsDir, cleanFileName);
+    const blobPath = `orders/order_${orderId}_${docType}_${Date.now()}.${fileExt}`;
+    
+    const blob = await put(blobPath, file, {
+      access: 'public',
+    });
 
-    // Write file to filesystem
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await fs.promises.writeFile(localPath, buffer);
+    const fileUrl = blob.url;
 
     // Save metadata to DB
     const orderDoc = await prisma.$transaction(async (tx) => {
@@ -97,15 +94,14 @@ export async function POST(
         where: { orderId, docType },
       });
 
-      if (existingDoc) {
-        // Soft cleanup of local file
+            if (existingDoc) {
+        // Cleanup old file from Vercel Blob
         try {
-          const oldPath = path.join(process.cwd(), 'uploads', path.basename(existingDoc.filePath));
-          if (fs.existsSync(oldPath)) {
-            fs.unlinkSync(oldPath);
+          if (existingDoc.filePath.startsWith('http')) {
+            await del(existingDoc.filePath);
           }
         } catch (err) {
-          console.error('Error removing old file:', err);
+          console.error('Error removing old blob file:', err);
         }
 
         // Delete from database
@@ -118,7 +114,7 @@ export async function POST(
         data: {
           orderId,
           docType,
-          filePath: `/uploads/${cleanFileName}`, // relative reference
+          filePath: fileUrl, // relative reference
           fileName: file.name,
           fileSizeOctets: file.size,
           mimeType: file.type,

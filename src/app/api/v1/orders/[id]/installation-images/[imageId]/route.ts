@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
+import { del } from '@vercel/blob';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -33,6 +34,10 @@ export async function GET(
 
     if (!image || image.orderId !== orderId) {
       return NextResponse.json({ success: false, message: 'Image not found.' }, { status: 404 });
+    }
+
+    if (image.filePath.startsWith('http')) {
+      return NextResponse.redirect(image.filePath);
     }
 
     // Resolve local path
@@ -110,13 +115,21 @@ export async function DELETE(
       }
     });
 
-    // Delete file from disk
-    const localPath = path.join(/*turbopackIgnore: true*/ process.cwd(), image.filePath);
-    if (fs.existsSync(localPath)) {
+    // Delete file from Vercel Blob or disk
+    if (image.filePath.startsWith('http')) {
       try {
-        fs.unlinkSync(localPath);
+        await del(image.filePath);
       } catch (err) {
-        console.error('Failed to delete file from disk:', err);
+        console.error('Failed to delete file from Vercel Blob:', err);
+      }
+    } else {
+      const localPath = path.join(/*turbopackIgnore: true*/ process.cwd(), image.filePath);
+      if (fs.existsSync(localPath)) {
+        try {
+          fs.unlinkSync(localPath);
+        } catch (err) {
+          console.error('Failed to delete file from disk:', err);
+        }
       }
     }
 

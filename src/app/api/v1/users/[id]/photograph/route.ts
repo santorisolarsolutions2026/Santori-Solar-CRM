@@ -29,6 +29,10 @@ export async function GET(
       return NextResponse.json({ success: false, message: 'Photograph not found.' }, { status: 404 });
     }
 
+    if (user.photograph.startsWith('http')) {
+      return NextResponse.redirect(user.photograph);
+    }
+
     // Resolve local path
     const localPath = path.join(/*turbopackIgnore: true*/ process.cwd(), user.photograph);
 

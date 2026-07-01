@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/auth';
-import fs from 'node:fs';
-import path from 'node:path';
+import { put } from '@vercel/blob';
 
 export async function POST(
   req: Request,
@@ -39,24 +38,15 @@ export async function POST(
     if (!file) {
       return NextResponse.json({ success: false, message: 'Audio recording file is required.' }, { status: 400 });
     }
-
-    // Create /uploads/meetings directory if it doesn't exist
-    const meetingsDir = path.join(process.cwd(), 'uploads', 'meetings');
-    if (!fs.existsSync(meetingsDir)) {
-      fs.mkdirSync(meetingsDir, { recursive: true });
-    }
-
-    // Generate unique local file name
+        // Upload to Vercel Blob
     const fileExt = file.name.split('.').pop() || 'webm';
-    const cleanFileName = `meeting_${meetingId}_${Date.now()}.${fileExt}`;
-    const localPath = path.join(meetingsDir, cleanFileName);
+    const blobPath = `meetings/meeting_${meetingId}_${Date.now()}.${fileExt}`;
+    
+    const blob = await put(blobPath, file, {
+      access: 'public',
+    });
 
-    // Write file to filesystem
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await fs.promises.writeFile(localPath, buffer);
-
-    // Save relative reference to DB
-    const relativePath = `/uploads/meetings/${cleanFileName}`;
+    const relativePath = blob.url;
 
     // Update meeting record
     const updatedMeeting = await prisma.meetingBooking.update({

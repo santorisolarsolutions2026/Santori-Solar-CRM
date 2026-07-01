@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth';
-import fs from 'node:fs';
-import path from 'node:path';
+import { put } from '@vercel/blob';
 
 export async function POST(req: Request) {
   try {
@@ -22,23 +21,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'Only image files are allowed.' }, { status: 400 });
     }
 
-    // Create /uploads/photographs directory if it doesn't exist
-    const photographsDir = path.join(process.cwd(), 'uploads', 'photographs');
-    if (!fs.existsSync(photographsDir)) {
-      fs.mkdirSync(photographsDir, { recursive: true });
-    }
-
-    // Generate unique local file name
+    // Upload to Vercel Blob
     const fileExt = file.name.split('.').pop() || 'png';
-    const cleanFileName = `avatar_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
-    const localPath = path.join(photographsDir, cleanFileName);
+    const blobPath = `photographs/avatar_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+    
+    const blob = await put(blobPath, file, {
+      access: 'public',
+    });
 
-    // Write file to filesystem
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await fs.promises.writeFile(localPath, buffer);
-
-    // Save relative reference
-    const relativePath = `/uploads/photographs/${cleanFileName}`;
+    const relativePath = blob.url;
 
     return NextResponse.json({
       success: true,
