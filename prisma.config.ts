@@ -9,13 +9,8 @@ const dbHost = process.env.DB_HOST || "localhost";
 const dbPort = process.env.DB_PORT || "5432";
 const dbName = process.env.DB_NAME || "solar_crm";
 
-<<<<<<< HEAD
-//const databaseUrl = `postgresql://${dbUser}:${dbPassword}@${dbHost}:${dbPort}/${dbName}?schema=public`;
-const databaseUrl = process.env.DATABASE_URL || `postgresql://${dbUser}:${dbPassword}@${dbHost}:${dbPort}/${dbName}?schema=public`;
-=======
 const databaseUrl = process.env.DATABASE_URL || `postgresql://${dbUser}:${dbPassword}@${dbHost}:${dbPort}/${dbName}?schema=public`;
 
->>>>>>> e218086034d57dba76315c37f4c66c694d507b81
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
