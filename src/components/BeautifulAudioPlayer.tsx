@@ -16,27 +16,36 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [prevSrc, setPrevSrc] = useState(src);
 
-  useEffect(() => {
-    // Reset player state when source changes
+  // Reset player state during render when source changes (idiomatic React pattern)
+  if (src !== prevSrc) {
+    setPrevSrc(src);
     setIsPlaying(false);
     setCurrentTime(0);
     setDuration(defaultDuration || 0);
-    setIsLoading(true);
+    setIsLoading(false);
+    setPlaybackRate(1);
+  }
+
+  useEffect(() => {
     if (audioRef.current) {
       audioRef.current.load();
       audioRef.current.playbackRate = 1;
-      setPlaybackRate(1);
     }
-  }, [src, defaultDuration]);
+  }, [src]);
 
   const togglePlay = () => {
     if (!audioRef.current) return;
     if (isPlaying) {
       audioRef.current.pause();
     } else {
-      audioRef.current.play().catch((err) => console.error('Playback error:', err));
+      setIsLoading(true);
+      audioRef.current.play().catch((err) => {
+        console.error('Playback error:', err);
+        setIsLoading(false);
+      });
     }
   };
 
@@ -112,13 +121,22 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
       <audio
         ref={audioRef}
         src={src}
-        onPlay={() => setIsPlaying(true)}
+        onPlay={() => {
+          setIsPlaying(true);
+          setIsLoading(true);
+        }}
         onPause={() => setIsPlaying(false)}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
+        onCanPlay={() => setIsLoading(false)}
+        onCanPlayThrough={() => setIsLoading(false)}
         onWaiting={() => setIsLoading(true)}
         onPlaying={() => setIsLoading(false)}
         onEnded={() => setIsPlaying(false)}
+        onError={(e) => {
+          console.error('Audio playback/load error:', e);
+          setIsLoading(false);
+        }}
         preload="metadata"
       />
 
