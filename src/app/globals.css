@@ -408,3 +408,24 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover,
 input[type="time"]::-webkit-calendar-picker-indicator:hover {
   transform: scale(1.1);
 }
+
+/* Global style override for form inputs, selects, and textareas to ensure light/dark mode compatibility */
+input:not([type="submit"]):not([type="button"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+select,
+textarea {
+  background-color: var(--bg-input) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* Customize placeholder colors */
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted) !important;
+}
+
+/* Style options inside select */
+select option {
+  background-color: var(--bg-card-solid) !important;
+  color: var(--text-primary) !important;
+}
