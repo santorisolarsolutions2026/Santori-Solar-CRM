@@ -47,9 +47,12 @@ export async function GET(req: Request) {
     // 2. Fetch stats for each consultant
     for (const consultant of consultants) {
       const [leadsAssigned, meetingsBooked, salesClosed, callsMade] = await Promise.all([
-        // Total leads assigned
+        // Total leads assigned (Fresh or above)
         prisma.lead.count({
-          where: { assignedConsultantId: consultant.id },
+          where: { 
+            assignedConsultantId: consultant.id,
+            status: { gte: 1 }
+          },
         }),
         // Meetings booked this month
         prisma.lead.count({

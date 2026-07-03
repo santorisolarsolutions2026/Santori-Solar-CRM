@@ -10,7 +10,14 @@ export async function GET(req: Request) {
     }
 
     const userPermissions = await getUserPermissions(userPayload.id);
-    if (!userPermissions.includes('reports:view')) {
+    const hasAccess = userPermissions.includes('reports:view') ||
+                      userPermissions.includes('leads:view') ||
+                      userPermissions.includes('leads:create') ||
+                      userPermissions.includes('leads:edit') ||
+                      userPermissions.includes('orders:view') ||
+                      userPermissions.includes('orders:create');
+
+    if (!hasAccess) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view reports.' }, { status: 403 });
     }
 

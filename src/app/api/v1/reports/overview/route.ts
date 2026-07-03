@@ -10,7 +10,14 @@ export async function GET(req: Request) {
     }
 
     const userPermissions = await getUserPermissions(userPayload.id);
-    if (!userPermissions.includes('reports:view')) {
+    const hasAccess = userPermissions.includes('reports:view') ||
+                      userPermissions.includes('leads:view') ||
+                      userPermissions.includes('leads:create') ||
+                      userPermissions.includes('leads:edit') ||
+                      userPermissions.includes('orders:view') ||
+                      userPermissions.includes('orders:create');
+
+    if (!hasAccess) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view reports.' }, { status: 403 });
     }
 
@@ -38,8 +45,13 @@ export async function GET(req: Request) {
     todayEnd.setHours(23, 59, 59, 999);
 
     // Queries
-    // 1. Total Leads
-    const totalLeads = await prisma.lead.count({ where: leadWhere });
+    // 1. Total Leads (Fresh Leads pool: status >= 1)
+    const totalFreshLeads = await prisma.lead.count({
+      where: {
+        ...leadWhere,
+        status: { gte: 1 },
+      },
+    });
 
     // 2. Active Leads (not in terminal: 0 Uninitiated, 6 Already Installed, 12 Can't Fit, 13 Sale Done)
     const activeWhere = { ...leadWhere, status: { notIn: [0, 6, 12, 13] }, isActive: true };
@@ -72,13 +84,13 @@ export async function GET(req: Request) {
     };
     const todayFollowUps = await prisma.lead.count({ where: followUpWhere });
 
-    // 6. Conversion Rate (Sales / Total * 100)
-    const conversionRate = totalLeads > 0 ? parseFloat(((salesDoneThisMonth / totalLeads) * 100).toFixed(2)) : 0.0;
+    // 6. Conversion Rate (Sales / Total Fresh Leads * 100)
+    const conversionRate = totalFreshLeads > 0 ? parseFloat(((salesDoneThisMonth / totalFreshLeads) * 100).toFixed(2)) : 0.0;
 
     return NextResponse.json({
       success: true,
       data: {
-        totalLeads,
+        totalLeads: totalFreshLeads,
         activeLeads,
         meetingsBookedThisMonth,
         salesDoneThisMonth,

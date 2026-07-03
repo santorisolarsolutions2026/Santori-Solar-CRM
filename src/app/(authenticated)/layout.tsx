@@ -90,6 +90,27 @@ export default function AuthenticatedLayout({
     }
   }, []);
 
+  // Global click listener for date and time inputs to open showPicker() on click
+  useEffect(() => {
+    const handleInputClick = (e: MouseEvent) => {
+      // Only handle left clicks
+      if (e.button !== 0) return;
+      
+      const target = e.target as HTMLElement;
+      const input = target.closest('input');
+      if (input && (input.type === 'date' || input.type === 'time')) {
+        try {
+          input.showPicker();
+        } catch (err) {
+          console.warn('showPicker is not supported or failed:', err);
+        }
+      }
+    };
+
+    document.addEventListener('click', handleInputClick);
+    return () => document.removeEventListener('click', handleInputClick);
+  }, []);
+
   const toggleTheme = () => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(nextTheme);
@@ -398,7 +419,7 @@ export default function AuthenticatedLayout({
       name: 'Santori Team',
       path: '/team',
       icon: Users,
-      permission: 'team:view',
+      permission: null,
     },
     {
       name: 'Report & Analytics',

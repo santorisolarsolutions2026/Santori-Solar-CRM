@@ -378,3 +378,33 @@ tr:hover {
   background-image: linear-gradient(to right, #ffffff, #f1f5f9, #ffffff) !important;
   border-color: #e2e8f0 !important;
 }
+
+/* Beautiful calendar and time inputs styling */
+input[type="date"],
+input[type="time"] {
+  color-scheme: dark;
+  cursor: pointer;
+}
+
+.light input[type="date"],
+.light input[type="time"] {
+  color-scheme: light;
+}
+
+/* Ensure calendar/clock icons look elegant and don't break layouts */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(0.8);
+  transition: transform 0.2s ease;
+}
+
+.light input[type="date"]::-webkit-calendar-picker-indicator,
+.light input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.2);
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+  transform: scale(1.1);
+}
