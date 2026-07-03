@@ -106,12 +106,10 @@ export default function DashboardPage() {
       const trendData = await trendRes.json();
       if (trendData.success) setTrend(trendData.data);
 
-      // 4. Fetch team performance (if has reports:view permission)
-      if (hasPermission('reports:view')) {
-        const perfRes = await fetch('/api/v1/reports/team-performance');
-        const perfData = await perfRes.json();
-        if (perfData.success) setPerformance(perfData.data);
-      }
+      // 4. Fetch team performance (for all users system-wide)
+      const perfRes = await fetch('/api/v1/reports/team-performance');
+      const perfData = await perfRes.json();
+      if (perfData.success) setPerformance(perfData.data);
 
       // 5. Fetch recent activity
       const feedRes = await fetch('/api/v1/reports/recent-activity');
@@ -410,58 +408,52 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Column 2: Team Leaderboard (Conditional) */}
-        {hasPermission('reports:view') ? (
-          <div className="bg-[#111625] border border-slate-800 rounded-xl p-6 shadow-md h-[28rem] flex flex-col">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 mb-6 flex items-center gap-2">
-              <UserCheck className="w-5 h-5 text-amber-500" />
-              <span>Consultant Leaderboard</span>
-            </h3>
-            <div className="overflow-y-auto pr-1 flex-1">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse min-w-[500px]">
-                  <thead>
-                    <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider sticky top-0 bg-[#111625] pb-3">
-                      <th className="pb-3">Consultant</th>
-                      <th className="pb-3 text-center">Assigned</th>
-                      <th className="pb-3 text-center">Calls</th>
-                      <th className="pb-3 text-center">Meetings</th>
-                      <th className="pb-3 text-center">Sales</th>
-                      <th className="pb-3 text-right">Conv.</th>
+        {/* Column 2: Team Leaderboard (Unconditional) */}
+        <div className="bg-[#111625] border border-slate-800 rounded-xl p-6 shadow-md h-[28rem] flex flex-col">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 mb-6 flex items-center gap-2">
+            <UserCheck className="w-5 h-5 text-amber-500" />
+            <span>Consultant Leaderboard</span>
+          </h3>
+          <div className="overflow-y-auto pr-1 flex-1">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[500px]">
+                <thead>
+                  <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider sticky top-0 bg-[#111625] pb-3">
+                    <th className="pb-3">Consultant</th>
+                    <th className="pb-3 text-center">Assigned</th>
+                    <th className="pb-3 text-center">Calls</th>
+                    <th className="pb-3 text-center">Meetings</th>
+                    <th className="pb-3 text-center">Sales</th>
+                    <th className="pb-3 text-right">Conv.</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60 text-sm">
+                  {performance.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-6 text-center text-slate-500 text-xs">
+                        No team member statistics found.
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/60 text-sm">
-                    {performance.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} className="py-6 text-center text-slate-500 text-xs">
-                          No team member statistics found.
-                        </td>
+                  ) : (
+                    performance.map((member) => (
+                      <tr key={member.id} className="hover:bg-slate-900/20 transition-colors">
+                        <td className="py-3 font-semibold text-white truncate max-w-[90px]">{member.name}</td>
+                        <td className="py-3 text-center text-slate-300">{member.leadsAssigned}</td>
+                        <td className="py-3 text-center text-slate-300">{member.callsMade}</td>
+                        <td className="py-3 text-center text-slate-300">{member.meetingsBooked}</td>
+                        <td className="py-3 text-center text-emerald-400 font-bold">{member.salesClosed}</td>
+                        <td className="py-3 text-right text-amber-400 font-extrabold">{member.conversionRate}%</td>
                       </tr>
-                    ) : (
-                      performance.map((member) => (
-                        <tr key={member.id} className="hover:bg-slate-900/20 transition-colors">
-                          <td className="py-3 font-semibold text-white truncate max-w-[90px]">{member.name}</td>
-                          <td className="py-3 text-center text-slate-300">{member.leadsAssigned}</td>
-                          <td className="py-3 text-center text-slate-300">{member.callsMade}</td>
-                          <td className="py-3 text-center text-slate-300">{member.meetingsBooked}</td>
-                          <td className="py-3 text-center text-emerald-400 font-bold">{member.salesClosed}</td>
-                          <td className="py-3 text-right text-amber-400 font-extrabold">{member.conversionRate}%</td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
-        ) : null}
+        </div>
 
-        {/* Column 3: Recent Activity Stream (Always visible, spans remaining columns if leaderboard is hidden) */}
-        <div className={`${
-          hasPermission('reports:view') 
-            ? 'lg:col-span-1' 
-            : 'lg:col-span-2'
-        } bg-[#111625] border border-slate-800 rounded-xl p-6 shadow-md h-[28rem] flex flex-col`}>
+        {/* Column 3: Recent Activity Stream (Unconditional, lg:col-span-1) */}
+        <div className="lg:col-span-1 bg-[#111625] border border-slate-800 rounded-xl p-6 shadow-md h-[28rem] flex flex-col">
           <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 mb-6 flex items-center gap-2">
             <Clock className="w-5 h-5 text-amber-500" />
             <span>Recent Activity Stream</span>

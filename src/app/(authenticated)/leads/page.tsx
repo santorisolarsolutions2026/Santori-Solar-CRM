@@ -770,7 +770,7 @@ export default function LeadsPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setShowImportModal(true)}
-              className="py-2.5 px-4 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-white rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all shadow-md"
+              className="py-2.5 px-4 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-900 dark:text-white rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all shadow-md"
             >
               <Upload className="w-4 h-4" />
               <span>Import CSV</span>

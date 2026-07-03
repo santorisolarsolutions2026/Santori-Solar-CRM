@@ -28,6 +28,7 @@ import {
   Clock,
   CreditCard,
   Wrench,
+  Flame,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -73,6 +74,9 @@ export default function AuthenticatedLayout({
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
 
+  const [todayAlerts, setTodayAlerts] = useState<any[]>([]);
+  const [showTodayAlertModal, setShowTodayAlertModal] = useState(false);
+
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
   // Initialize theme from localStorage on mount
@@ -110,6 +114,28 @@ export default function AuthenticatedLayout({
     document.addEventListener('click', handleInputClick);
     return () => document.removeEventListener('click', handleInputClick);
   }, []);
+
+  // Fetch personalized daily alerts for the logged-in user once per session
+  useEffect(() => {
+    const hasBeenNotified = sessionStorage.getItem('solar-crm-login-notified');
+    if (!hasBeenNotified && user) {
+      const fetchAlerts = async () => {
+        try {
+          const res = await fetch('/api/v1/users/my-today-alerts');
+          const data = await res.json();
+          if (data.success && data.data.length > 0) {
+            setTodayAlerts(data.data);
+            setShowTodayAlertModal(true);
+          }
+          // Set session storage flag to avoid annoying repeated popups
+          sessionStorage.setItem('solar-crm-login-notified', 'true');
+        } catch (err) {
+          console.error('Failed to fetch login alerts:', err);
+        }
+      };
+      fetchAlerts();
+    }
+  }, [user]);
 
   const toggleTheme = () => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
@@ -1003,6 +1029,62 @@ export default function AuthenticatedLayout({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Personalized Login Today Alerts Modal */}
+      {showTodayAlertModal && todayAlerts.length > 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
+          <div className="w-full max-w-lg bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                  <Flame className="w-4.5 h-4.5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-white">Your Tasks Scheduled Today</h3>
+                  <p className="text-[10px] text-slate-400">You have {todayAlerts.length} personalized action item(s) today.</p>
+                </div>
+              </div>
+              <button onClick={() => setShowTodayAlertModal(false)} className="text-slate-400 hover:text-white cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 max-h-[60vh] overflow-y-auto space-y-3">
+              {todayAlerts.map((alert) => (
+                <div
+                  key={alert.id}
+                  className="p-3 bg-slate-900/30 border border-slate-800 rounded-xl flex items-start gap-3 hover:border-slate-700 transition-colors"
+                >
+                  <div className="text-xs font-mono font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded shrink-0">
+                    {alert.time}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-xs font-bold text-white leading-snug">{alert.title}</h4>
+                    <p className="text-[10px] text-slate-400 mt-1 truncate">{alert.detail}</p>
+                  </div>
+                  <Link
+                    href={`/leads/${alert.leadId}`}
+                    onClick={() => setShowTodayAlertModal(false)}
+                    className="text-[10px] text-amber-400 hover:text-amber-300 font-bold self-center px-2 py-1 rounded hover:bg-slate-900 transition-colors"
+                  >
+                    View Lead
+                  </Link>
+                </div>
+              ))}
+            </div>
+
+            <div className="p-6 border-t border-slate-800 bg-slate-900/10 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowTodayAlertModal(false)}
+                className="py-2 px-5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md cursor-pointer"
+              >
+                Acknowledge & Continue
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -21,17 +21,8 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view reports.' }, { status: 403 });
     }
 
+    // System-wide pipeline metrics (constant for all authenticated users)
     const leadWhere: any = {};
-    const hasViewAll = userPermissions.includes('leads:view_all');
-    if (!hasViewAll) {
-      if (userPayload.role === 'manager') {
-        leadWhere.assignedManagerId = userPayload.id;
-      } else if (['tl', 'psa_tl'].includes(userPayload.role)) {
-        leadWhere.assignedTlId = userPayload.id;
-      } else if (userPayload.role === 'consultant' || userPayload.role === 'psa') {
-        leadWhere.assignedConsultantId = userPayload.id;
-      }
-    }
 
     // Group by status and count
     const stagesCounts = await prisma.lead.groupBy({

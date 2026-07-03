@@ -21,18 +21,8 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view reports.' }, { status: 403 });
     }
 
-    // Role filtration criteria
+    // System-wide upcoming task reminders (constant for all authenticated users)
     const leadWhere: any = {};
-    const hasViewAll = userPermissions.includes('leads:view_all');
-    if (!hasViewAll) {
-      if (userPayload.role === 'manager') {
-        leadWhere.assignedManagerId = userPayload.id;
-      } else if (['tl', 'psa_tl'].includes(userPayload.role)) {
-        leadWhere.assignedTlId = userPayload.id;
-      } else if (userPayload.role === 'consultant' || userPayload.role === 'psa') {
-        leadWhere.assignedConsultantId = userPayload.id;
-      }
-    }
 
     // 1. Fetch upcoming meetings
     const meetings = await prisma.meetingBooking.findMany({
