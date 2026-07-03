@@ -41,7 +41,6 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
     if (isPlaying) {
       audioRef.current.pause();
     } else {
-      setIsLoading(true);
       audioRef.current.play().catch((err) => {
         console.error('Playback error:', err);
         setIsLoading(false);
@@ -123,7 +122,6 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
         src={src}
         onPlay={() => {
           setIsPlaying(true);
-          setIsLoading(true);
         }}
         onPause={() => setIsPlaying(false)}
         onTimeUpdate={handleTimeUpdate}
@@ -173,7 +171,7 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
           <button
             type="button"
             onClick={togglePlay}
-            disabled={isLoading}
+            disabled={!src}
             className="w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-tr from-amber-600 to-amber-400 text-white font-semibold shadow-lg hover:shadow-amber-500/20 active:scale-95 transition-all hover:scale-105 disabled:opacity-50 flex-shrink-0"
           >
             {isLoading ? (

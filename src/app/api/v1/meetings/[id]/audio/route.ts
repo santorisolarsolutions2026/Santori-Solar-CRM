@@ -32,22 +32,45 @@ export async function GET(
       return NextResponse.json({ success: false, message: 'No audio recording found for this meeting.' }, { status: 404 });
     }
 
-    // Resolve local path
-    const localPath = path.join(/*turbopackIgnore: true*/ process.cwd(), meeting.audioRecordingPath);
-
-    if (!fs.existsSync(localPath)) {
-      return NextResponse.json({ success: false, message: 'Audio recording file not found on disk.' }, { status: 404 });
-    }
-
-    const fileBuffer = await fs.promises.readFile(localPath);
-    
-    // Determine content type based on extension
-    const ext = path.extname(localPath).toLowerCase();
+    let fileBuffer: Uint8Array;
     let contentType = 'audio/webm';
-    if (ext === '.wav') contentType = 'audio/wav';
-    if (ext === '.ogg') contentType = 'audio/ogg';
-    if (ext === '.mp3') contentType = 'audio/mpeg';
-    if (ext === '.m4a') contentType = 'audio/mp4';
+
+    if (meeting.audioRecordingPath.startsWith('http://') || meeting.audioRecordingPath.startsWith('https://')) {
+      const response = await fetch(meeting.audioRecordingPath);
+      if (!response.ok) {
+        return NextResponse.json({ success: false, message: 'Audio recording file not found in blob storage.' }, { status: 404 });
+      }
+      const arrayBuffer = await response.arrayBuffer();
+      fileBuffer = Buffer.from(arrayBuffer);
+
+      // Determine content type from headers or URL
+      const contentTypeHeader = response.headers.get('content-type');
+      if (contentTypeHeader) {
+        contentType = contentTypeHeader;
+      } else {
+        const ext = path.extname(meeting.audioRecordingPath).toLowerCase();
+        if (ext === '.wav') contentType = 'audio/wav';
+        if (ext === '.ogg') contentType = 'audio/ogg';
+        if (ext === '.mp3') contentType = 'audio/mpeg';
+        if (ext === '.m4a') contentType = 'audio/mp4';
+      }
+    } else {
+      // Resolve local path
+      const localPath = path.join(/*turbopackIgnore: true*/ process.cwd(), meeting.audioRecordingPath);
+
+      if (!fs.existsSync(localPath)) {
+        return NextResponse.json({ success: false, message: 'Audio recording file not found on disk.' }, { status: 404 });
+      }
+
+      fileBuffer = await fs.promises.readFile(localPath);
+      
+      // Determine content type based on extension
+      const ext = path.extname(localPath).toLowerCase();
+      if (ext === '.wav') contentType = 'audio/wav';
+      if (ext === '.ogg') contentType = 'audio/ogg';
+      if (ext === '.mp3') contentType = 'audio/mpeg';
+      if (ext === '.m4a') contentType = 'audio/mp4';
+    }
 
     const rangeHeader = req.headers.get('range');
     const fileSize = fileBuffer.length;
@@ -69,7 +92,7 @@ export async function GET(
       const chunksize = (end - start) + 1;
       const slicedBuffer = fileBuffer.subarray(start, end + 1);
 
-      return new Response(slicedBuffer, {
+      return new Response(slicedBuffer as any, {
         status: 206,
         headers: {
           'Content-Range': `bytes ${start}-${end}/${fileSize}`,
@@ -80,7 +103,7 @@ export async function GET(
       });
     }
 
-    return new Response(fileBuffer, {
+    return new Response(fileBuffer as any, {
       status: 200,
       headers: {
         'Content-Type': contentType,

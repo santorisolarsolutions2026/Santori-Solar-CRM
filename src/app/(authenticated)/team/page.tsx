@@ -253,10 +253,6 @@ export default function TeamManagementPage() {
   const { user, refreshUser, hasPermission } = useAuth();
   const router = useRouter();
 
-  const isTargetAdminOrDirector = selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:') || selectedMember?.role === 'director' || selectedMember?.role?.startsWith('director:');
-  const isCurrentUserAdmin = user?.role === 'admin' || user?.role?.startsWith('admin:');
-  const canEditPermissionsAndRole = !isTargetAdminOrDirector || isCurrentUserAdmin;
-
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [managersAndTls, setManagersAndTls] = useState<{ id: number; name: string; role: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -264,6 +260,10 @@ export default function TeamManagementPage() {
   const [empSearchInput, setEmpSearchInput] = useState('');
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
+
+  const isTargetAdminOrDirector = selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:') || selectedMember?.role === 'director' || selectedMember?.role?.startsWith('director:');
+  const isCurrentUserAdmin = user?.role === 'admin' || user?.role?.startsWith('admin:');
+  const canEditPermissionsAndRole = !isTargetAdminOrDirector || isCurrentUserAdmin;
   
   // Add User Form Modal
   const [showAddModal, setShowAddModal] = useState(false);
