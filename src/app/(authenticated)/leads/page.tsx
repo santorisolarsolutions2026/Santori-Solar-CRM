@@ -315,23 +315,29 @@ export default function LeadsPage() {
 
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return;
-    if (!window.confirm(`Are you sure you want to permanently delete the ${selectedIds.length} selected leads from the database? This action cannot be undone.`)) return;
-
-    try {
-      const res = await fetch(`/api/v1/leads?ids=${selectedIds.join(',')}`, {
-        method: 'DELETE',
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert(data.message || 'Leads deleted successfully.');
-        setSelectedIds([]);
-        fetchLeads();
-      } else {
-        alert(data.message || 'Failed to delete leads.');
+    
+    const proceed = async () => {
+      try {
+        const res = await fetch(`/api/v1/leads?ids=${selectedIds.join(',')}`, {
+          method: 'DELETE',
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert(data.message || 'Leads deleted successfully.');
+          setSelectedIds([]);
+          fetchLeads();
+        } else {
+          alert(data.message || 'Failed to delete leads.');
+        }
+      } catch (err) {
+        console.error(err);
       }
-    } catch (err) {
-      console.error(err);
-      alert('Network error while deleting leads.');
+    };
+
+    if ((window as any).showConfirm) {
+      (window as any).showConfirm(`Are you sure you want to permanently delete the ${selectedIds.length} selected leads from the database? This action cannot be undone.`, proceed);
+    } else if (window.confirm(`Are you sure you want to permanently delete the ${selectedIds.length} selected leads from the database? This action cannot be undone.`)) {
+      proceed();
     }
   };
 
@@ -524,38 +530,52 @@ export default function LeadsPage() {
   };
 
   const handleDeleteLead = async (leadId: number) => {
-    if (!window.confirm('Are you sure you want to delete this lead permanently? This action cannot be undone.')) return;
-    try {
-      const res = await fetch(`/api/v1/leads/${leadId}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (data.success) {
-        alert(data.message || 'Lead deleted successfully.');
-        fetchLeads();
-      } else {
-        alert(data.message || 'Failed to delete lead.');
+    const proceed = async () => {
+      try {
+        const res = await fetch(`/api/v1/leads/${leadId}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+          alert(data.message || 'Lead deleted successfully.');
+          fetchLeads();
+        } else {
+          alert(data.message || 'Failed to delete lead.');
+        }
+      } catch (err) {
+        console.error(err);
       }
-    } catch (err) {
-      console.error(err);
+    };
+
+    if ((window as any).showConfirm) {
+      (window as any).showConfirm('Are you sure you want to delete this lead permanently? This action cannot be undone.', proceed);
+    } else if (window.confirm('Are you sure you want to delete this lead permanently? This action cannot be undone.')) {
+      proceed();
     }
   };
 
   const handleActivateLead = async (leadId: number) => {
-    if (!window.confirm('Are you sure you want to reactivate this lead?')) return;
-    try {
-      const res = await fetch(`/api/v1/leads/${leadId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isActive: true }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert('Lead reactivated successfully.');
-        fetchLeads();
-      } else {
-        alert(data.message || 'Failed to reactivate lead.');
+    const proceed = async () => {
+      try {
+        const res = await fetch(`/api/v1/leads/${leadId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isActive: true }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('Lead reactivated successfully.');
+          fetchLeads();
+        } else {
+          alert(data.message || 'Failed to reactivate lead.');
+        }
+      } catch (err) {
+        console.error(err);
       }
-    } catch (err) {
-      console.error(err);
+    };
+
+    if ((window as any).showConfirm) {
+      (window as any).showConfirm('Are you sure you want to reactivate this lead?', proceed);
+    } else if (window.confirm('Are you sure you want to reactivate this lead?')) {
+      proceed();
     }
   };
 

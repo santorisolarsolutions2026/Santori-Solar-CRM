@@ -29,6 +29,9 @@ import {
   CreditCard,
   Wrench,
   Flame,
+  CheckCircle,
+  XCircle,
+  Info,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -78,6 +81,68 @@ export default function AuthenticatedLayout({
   const [showTodayAlertModal, setShowTodayAlertModal] = useState(false);
 
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
+  // Toast state
+  const [toasts, setToasts] = useState<{ id: string; message: string; type: 'success' | 'error' | 'info' }[]>([]);
+  // Custom Confirm modal state
+  const [confirmModal, setConfirmModal] = useState<{
+    message: string;
+    onConfirm: () => void;
+    onCancel: () => void;
+  } | null>(null);
+
+  const addToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    const id = Math.random().toString(36).substring(2, 9);
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 4000);
+  };
+
+  useEffect(() => {
+    (window as any).showToast = addToast;
+    
+    // Override window.alert
+    window.alert = (message: string) => {
+      let type: 'success' | 'error' | 'info' = 'info';
+      const msg = String(message).toLowerCase();
+      if (
+        msg.includes('success') || 
+        msg.includes('done') || 
+        msg.includes('recorded') || 
+        msg.includes('booked') || 
+        msg.includes('saved') ||
+        msg.includes('uploaded') ||
+        msg.includes('verified') ||
+        msg.includes('updated') ||
+        msg.includes('deleted') ||
+        msg.includes('reactivated')
+      ) {
+        type = 'success';
+      } else if (
+        msg.includes('error') || 
+        msg.includes('fail') || 
+        msg.includes('invalid') || 
+        msg.includes('require') || 
+        msg.includes('could not') || 
+        msg.includes('cannot') || 
+        msg.includes('permission') ||
+        msg.includes('warning')
+      ) {
+        type = 'error';
+      }
+      addToast(String(message), type);
+    };
+
+    // Expose showConfirm helper
+    (window as any).showConfirm = (message: string, onConfirm: () => void, onCancel?: () => void) => {
+      setConfirmModal({
+        message,
+        onConfirm,
+        onCancel: onCancel || (() => {}),
+      });
+    };
+  }, []);
 
   // Initialize theme from localStorage on mount
   useEffect(() => {
@@ -330,27 +395,32 @@ export default function AuthenticatedLayout({
   };
 
   const handleQuickCheckOut = async () => {
-    if (!confirm('Are you sure you want to Check Out for today?')) return;
-    try {
-      setAttendanceActionLoading(true);
-      const loc = await getCurrentLocationString();
-      const res = await fetch('/api/v1/attendance/check-out', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ location: loc }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setTodayAttendance(data.data);
-        alert(data.message);
-      } else {
-        alert(data.message || 'Check-out failed');
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setAttendanceActionLoading(false);
-    }
+    setConfirmModal({
+      message: 'Are you sure you want to Check Out for today?',
+      onConfirm: async () => {
+        try {
+          setAttendanceActionLoading(true);
+          const loc = await getCurrentLocationString();
+          const res = await fetch('/api/v1/attendance/check-out', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ location: loc }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            setTodayAttendance(data.data);
+            alert(data.message);
+          } else {
+            alert(data.message || 'Check-out failed');
+          }
+        } catch (err) {
+          console.error(err);
+        } finally {
+          setAttendanceActionLoading(false);
+        }
+      },
+      onCancel: () => {},
+    });
   };
 
   useEffect(() => {
@@ -1084,6 +1154,80 @@ export default function AuthenticatedLayout({
               >
                 Acknowledge & Continue
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast notifications container */}
+      <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-2.5 max-w-sm w-full pointer-events-none">
+        {toasts.map((toast) => (
+          <div
+            key={toast.id}
+            className="p-4 rounded-xl shadow-2xl border pointer-events-auto flex items-start gap-3 animate-slide-in-right transition-all bg-[#0f1527]/95 border-slate-800/80 backdrop-blur-md"
+          >
+            <div className="shrink-0 mt-0.5">
+              {toast.type === 'success' && <CheckCircle className="w-5 h-5 text-emerald-400" />}
+              {toast.type === 'error' && <XCircle className="w-5 h-5 text-rose-400" />}
+              {toast.type === 'info' && <Info className="w-5 h-5 text-amber-400" />}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-white leading-normal">
+                {toast.message}
+              </p>
+            </div>
+            <button
+              onClick={() => setToasts((prev) => prev.filter((t) => t.id !== toast.id))}
+              className="shrink-0 text-slate-400 hover:text-white transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* Custom Confirm Modal */}
+      {confirmModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="w-full max-w-md bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-white">Confirm Action</h3>
+              <button
+                onClick={() => {
+                  confirmModal.onCancel();
+                  setConfirmModal(null);
+                }}
+                className="text-slate-400 hover:text-white cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-6">
+              <p className="text-sm text-slate-300 leading-relaxed">
+                {confirmModal.message}
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    confirmModal.onCancel();
+                    setConfirmModal(null);
+                  }}
+                  className="px-4 py-2 bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-lg text-slate-300 hover:text-white transition-all font-semibold text-xs cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    confirmModal.onConfirm();
+                    setConfirmModal(null);
+                  }}
+                  className="px-4 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-slate-950 font-bold rounded-lg transition-all text-xs cursor-pointer shadow-lg shadow-amber-500/10"
+                >
+                  Confirm
+                </button>
+              </div>
             </div>
           </div>
         </div>

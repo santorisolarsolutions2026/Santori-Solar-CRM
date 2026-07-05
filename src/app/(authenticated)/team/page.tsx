@@ -399,34 +399,48 @@ export default function TeamManagementPage() {
   const handleBulkAction = async (action: 'activate' | 'deactivate' | 'delete', confirmUnassign = false) => {
     if (selectedUserIds.length === 0) return;
     const actionLabel = action === 'activate' ? 'activate' : action === 'deactivate' ? 'deactivate' : 'delete';
-    if (!confirmUnassign && !confirm(`Are you sure you want to ${actionLabel} ${selectedUserIds.length} selected team member(s)?`)) return;
+    
+    const executeAction = async (unassign = confirmUnassign) => {
+      try {
+        setBulkActionLoading(true);
+        const res = await fetch('/api/v1/users/bulk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userIds: selectedUserIds, action, confirmUnassign: unassign }),
+        });
+        const data = await res.json();
 
-    try {
-      setBulkActionLoading(true);
-      const res = await fetch('/api/v1/users/bulk', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userIds: selectedUserIds, action, confirmUnassign }),
-      });
-      const data = await res.json();
-
-      if (!data.success && data.requiresConfirmation) {
-        if (confirm(data.message)) {
-          handleBulkAction(action, true);
-          return;
+        if (!data.success && data.requiresConfirmation) {
+          if ((window as any).showConfirm) {
+            (window as any).showConfirm(data.message, () => {
+              handleBulkAction(action, true);
+            });
+          } else if (confirm(data.message)) {
+            handleBulkAction(action, true);
+          }
+        } else {
+          alert(data.message);
+          if (data.success) {
+            setSelectedUserIds([]);
+            fetchTeam();
+          }
         }
-      } else {
-        alert(data.message);
-        if (data.success) {
-          setSelectedUserIds([]);
-          fetchTeam();
-        }
+      } catch (err) {
+        console.error(err);
+        alert('Failed to perform bulk action.');
+      } finally {
+        setBulkActionLoading(false);
       }
-    } catch (err) {
-      console.error(err);
-      alert('Failed to perform bulk action.');
-    } finally {
-      setBulkActionLoading(false);
+    };
+
+    if (!confirmUnassign) {
+      if ((window as any).showConfirm) {
+        (window as any).showConfirm(`Are you sure you want to ${actionLabel} ${selectedUserIds.length} selected team member(s)?`, () => executeAction(false));
+      } else if (confirm(`Are you sure you want to ${actionLabel} ${selectedUserIds.length} selected team member(s)?`)) {
+        executeAction(false);
+      }
+    } else {
+      executeAction(true);
     }
   };
 
@@ -723,57 +737,76 @@ export default function TeamManagementPage() {
       warning = `Warning: Deactivating Consultant "${member.name}" will automatically reassign all their active leads up the hierarchy to their Team Leader (TL). Do you want to proceed?`;
     }
 
-    if (!window.confirm(warning)) return;
-
-    try {
-      const res = await fetch(`/api/v1/users/${member.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isActive: !member.isActive }),
-      });
-      
-      const data = await res.json();
-      if (data.success) {
-        alert(data.message || `User status changed successfully.`);
-        fetchTeam();
-        if (selectedMember && selectedMember.id === member.id) {
-          setSelectedMember(prev => prev ? { ...prev, isActive: !prev.isActive } : null);
+    const proceed = async () => {
+      try {
+        const res = await fetch(`/api/v1/users/${member.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isActive: !member.isActive }),
+        });
+        
+        const data = await res.json();
+        if (data.success) {
+          alert(data.message || `User status changed successfully.`);
+          fetchTeam();
+          if (selectedMember && selectedMember.id === member.id) {
+            setSelectedMember(prev => prev ? { ...prev, isActive: !prev.isActive } : null);
+          }
+        } else {
+          alert(data.message || 'Failed to update user status.');
         }
-      } else {
-        alert(data.message || 'Failed to update user status.');
+      } catch (err) {
+        console.error(err);
       }
-    } catch (err) {
-      console.error(err);
+    };
+
+    if ((window as any).showConfirm) {
+      (window as any).showConfirm(warning, proceed);
+    } else if (window.confirm(warning)) {
+      proceed();
     }
   };
 
   // Completely delete a user after unassigning leads
   const handleDeleteUser = async (member: TeamMember, confirmUnassign = false) => {
-    if (!confirmUnassign && !window.confirm(`Are you sure you want to delete team member "${member.name}"?`)) return;
+    const proceed = async (unassign = confirmUnassign) => {
+      try {
+        const url = `/api/v1/users/${member.id}${unassign ? '?confirm_unassign=true' : ''}`;
+        const res = await fetch(url, {
+          method: 'DELETE',
+        });
 
-    try {
-      const url = `/api/v1/users/${member.id}${confirmUnassign ? '?confirm_unassign=true' : ''}`;
-      const res = await fetch(url, {
-        method: 'DELETE',
-      });
+        const data = await res.json();
 
-      const data = await res.json();
-
-      if (!data.success && data.requiresConfirmation) {
-        if (window.confirm(data.message)) {
-          handleDeleteUser(member, true);
-          return;
+        if (!data.success && data.requiresConfirmation) {
+          if ((window as any).showConfirm) {
+            (window as any).showConfirm(data.message, () => {
+              handleDeleteUser(member, true);
+            });
+          } else if (window.confirm(data.message)) {
+            handleDeleteUser(member, true);
+          }
+        } else {
+          alert(data.message || 'Action completed.');
+          if (data.success) {
+            closeProfileModal();
+            fetchTeam();
+          }
         }
-      } else {
-        alert(data.message || 'Action completed.');
-        if (data.success) {
-          closeProfileModal();
-          fetchTeam();
-        }
+      } catch (err) {
+        console.error(err);
+        alert('An error occurred while trying to delete the team member.');
       }
-    } catch (err) {
-      console.error(err);
-      alert('An error occurred while trying to delete the team member.');
+    };
+
+    if (!confirmUnassign) {
+      if ((window as any).showConfirm) {
+        (window as any).showConfirm(`Are you sure you want to delete team member "${member.name}"?`, () => proceed(false));
+      } else if (window.confirm(`Are you sure you want to delete team member "${member.name}"?`)) {
+        proceed(false);
+      }
+    } else {
+      proceed(true);
     }
   };
 

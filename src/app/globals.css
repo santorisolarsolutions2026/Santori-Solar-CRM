@@ -205,8 +205,25 @@ body {
   transition: background-color 0.3s ease;
 }
 
+/* Opaque / Solid Backgrounds for cards, dropdowns, modals, and sticky headers */
 .bg-\[\#111625\],
-.bg-slate-900,
+.bg-slate-900 {
+  background-color: var(--bg-card-solid) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Sidebar and Header layout bars (use var(--bg-sidebar) for a distinct layout panel appearance) */
+aside.bg-\[\#111625\],
+header.bg-\[\#111625\],
+.animate-slide-in.bg-\[\#111625\] {
+  background-color: var(--bg-sidebar) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Transparent Glass Cards (Only apply to classes explicitly specifying opacity/blur) */
 .bg-slate-900\/80,
 .bg-slate-900\/60,
 .bg-slate-900\/40,
@@ -441,4 +458,20 @@ select option {
 .light [class*="text-gray-200"],
 .light [class*="text-gray-300"] {
   color: var(--text-primary) !important;
+}
+
+/* Toast animations */
+@keyframes slide-in-right {
+  0% {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

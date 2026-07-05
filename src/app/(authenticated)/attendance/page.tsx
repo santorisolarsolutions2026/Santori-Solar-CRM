@@ -127,26 +127,33 @@ export default function AttendancePage() {
   };
 
   const handleCheckOut = async () => {
-    if (!confirm('Are you sure you want to Check Out for today?')) return;
-    try {
-      setActionLoading(true);
-      const loc = await getCurrentLocationString();
-      const res = await fetch('/api/v1/attendance/check-out', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ location: loc }),
-      });
-      const data = await res.json();
-      alert(data.message);
-      if (data.success) {
-        fetchTodayAttendance();
-        fetchAttendanceData();
+    const proceed = async () => {
+      try {
+        setActionLoading(true);
+        const loc = await getCurrentLocationString();
+        const res = await fetch('/api/v1/attendance/check-out', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ location: loc }),
+        });
+        const data = await res.json();
+        alert(data.message);
+        if (data.success) {
+          fetchTodayAttendance();
+          fetchAttendanceData();
+        }
+      } catch (err) {
+        console.error(err);
+        alert('An error occurred during check-out.');
+      } finally {
+        setActionLoading(false);
       }
-    } catch (err) {
-      console.error(err);
-      alert('An error occurred during check-out.');
-    } finally {
-      setActionLoading(false);
+    };
+
+    if ((window as any).showConfirm) {
+      (window as any).showConfirm('Are you sure you want to Check Out for today?', proceed);
+    } else if (confirm('Are you sure you want to Check Out for today?')) {
+      proceed();
     }
   };
 
