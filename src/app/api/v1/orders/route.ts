@@ -81,6 +81,7 @@ export async function GET(req: Request) {
       include: {
         lead: {
           select: {
+            id: true,
             customerName: true,
             mobile: true,
             city: true,

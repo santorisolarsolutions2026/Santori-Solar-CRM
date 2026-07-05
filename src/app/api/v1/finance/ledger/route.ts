@@ -36,17 +36,18 @@ export async function GET(req: Request) {
       include: {
         lead: {
           select: {
+            id: true,
             customerName: true,
             mobile: true,
             city: true,
             leadCode: true,
           },
         },
-        submittedBy: { select: { name: true } },
-        financeProcessedBy: { select: { name: true } },
+        submittedBy: { select: { id: true, name: true } },
+        financeProcessedBy: { select: { id: true, name: true } },
         payments: {
           include: {
-            recordedBy: { select: { name: true } }
+            recordedBy: { select: { id: true, name: true } }
           },
           orderBy: { paymentDate: 'desc' }
         },

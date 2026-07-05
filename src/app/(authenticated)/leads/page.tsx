@@ -1105,9 +1105,13 @@ export default function LeadsPage() {
                       </td>
                       <td className="py-3.5 px-4 font-medium text-slate-300 w-40">
                         {lead.tl?.name ? (
-                          <span>{lead.tl.name} <span className="text-[10px] text-slate-500 font-semibold">(TL)</span></span>
+                          <Link href={`/team?userId=${lead.tl.id}`} className="hover:text-amber-400 hover:underline">
+                            {lead.tl.name} <span className="text-[10px] text-slate-500 font-semibold">(TL)</span>
+                          </Link>
                         ) : lead.consultant?.name ? (
-                          <span>{lead.consultant.name}</span>
+                          <Link href={`/team?userId=${lead.consultant.id}`} className="hover:text-amber-400 hover:underline">
+                            {lead.consultant.name}
+                          </Link>
                         ) : (
                           <span className="text-slate-500 text-xs italic">Unassigned</span>
                         )}

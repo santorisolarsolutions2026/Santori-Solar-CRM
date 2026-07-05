@@ -59,8 +59,8 @@ interface ActivityLog {
   fromStatus: number | null;
   toStatus: number;
   createdAt: string;
-  lead: { customerName: string; leadCode: string };
-  user: { name: string; role: string };
+  lead: { id: number; customerName: string; leadCode: string };
+  user: { id: number; name: string; role: string };
 }
 
 const STAGE_NAMES: Record<number, { name: string; color: string }> = {
@@ -475,8 +475,13 @@ export default function DashboardPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1">
                         <p className="text-xs font-bold text-white truncate">
-                          {log.lead.customerName}
-                          <span className="text-[10px] text-slate-400 font-semibold ml-1.5">
+                          <Link
+                            href={`/leads/${log.lead.id}`}
+                            className="hover:text-amber-400 hover:underline"
+                          >
+                            {log.lead.customerName}
+                          </Link>
+                          <span className="text-[10px] text-slate-400 font-semibold ml-1.5 font-mono">
                             ({log.lead.leadCode})
                           </span>
                         </p>
@@ -491,7 +496,10 @@ export default function DashboardPage() {
                       </div>
                       <p className="text-[10px] text-slate-400 mt-1">
                         Moved to <strong style={{ color: stage.color }}>{stage.name}</strong> by{' '}
-                        <strong>{log.user.name}</strong> ({log.user.role})
+                        <Link href={`/team?userId=${log.user.id}`} className="text-amber-400 hover:underline font-bold">
+                          {log.user.name}
+                        </Link>{' '}
+                        ({log.user.role})
                       </p>
                       {log.remark && (
                         <p className="text-[10px] text-slate-500 italic mt-1 leading-normal border-l-2 border-slate-800 pl-2">

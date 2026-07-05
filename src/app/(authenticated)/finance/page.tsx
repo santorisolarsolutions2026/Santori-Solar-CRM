@@ -27,7 +27,7 @@ interface Payment {
   transactionRef: string | null;
   paymentDate: string;
   remarks: string | null;
-  recordedBy: { name: string };
+  recordedBy: { id: number; name: string };
 }
 
 interface Order {
@@ -48,13 +48,14 @@ interface Order {
   status: string;
   createdAt: string;
   lead: {
+    id: number;
     customerName: string;
     mobile: string;
     city: string;
     leadCode: string;
   };
-  submittedBy: { name: string };
-  financeProcessedBy: { name: string } | null;
+  submittedBy: { id: number; name: string };
+  financeProcessedBy: { id: number; name: string } | null;
   payments: Payment[];
   totalPaid: number;
   balanceOutstanding: number;
@@ -358,14 +359,22 @@ export default function FinancePage() {
                   {pendingOrders.map((order) => (
                     <tr key={order.id} className="hover:bg-slate-900/30 transition-all text-slate-300">
                       <td className="py-4 px-4 font-mono font-bold text-slate-100">{order.orderCode}</td>
-                      <td className="py-4 px-4 font-semibold">{order.lead.customerName}</td>
+                      <td className="py-4 px-4 font-semibold">
+                        <Link href={`/leads/${order.lead.id}`} className="text-amber-400 hover:underline">
+                          {order.lead.customerName}
+                        </Link>
+                      </td>
                       <td className="py-4 px-4 font-semibold text-slate-400">{order.systemSizeKw} kW</td>
                       <td className="py-4 px-4 font-extrabold text-white">₹{order.totalValue.toLocaleString('en-IN')}</td>
                       <td className="py-4 px-4 font-bold text-amber-400">
                         ₹{order.downPayment.toLocaleString('en-IN')}
                         <span className="block text-[10px] text-slate-500 font-normal">Method: {order.paymentMethod.toUpperCase()}</span>
                       </td>
-                      <td className="py-4 px-4 text-slate-400">{order.submittedBy.name}</td>
+                      <td className="py-4 px-4 text-slate-400">
+                        <Link href={`/team?userId=${order.submittedBy.id}`} className="text-amber-400 hover:underline font-bold">
+                          {order.submittedBy.name}
+                        </Link>
+                      </td>
                       <td className="py-4 px-4 text-right">
                         <button
                           onClick={() => { setSelectedOrder(order); setModalMode('verify'); }}
@@ -410,7 +419,11 @@ export default function FinancePage() {
                   {verifiedOrders.map((order) => (
                     <tr key={order.id} className="hover:bg-slate-900/30 transition-all text-slate-300">
                       <td className="py-4 px-4 font-mono font-bold text-slate-100">{order.orderCode}</td>
-                      <td className="py-4 px-4 font-semibold">{order.lead.customerName}</td>
+                      <td className="py-4 px-4 font-semibold">
+                        <Link href={`/leads/${order.lead.id}`} className="text-amber-400 hover:underline">
+                          {order.lead.customerName}
+                        </Link>
+                      </td>
                       <td className="py-4 px-4 font-extrabold text-white">₹{order.totalValue.toLocaleString('en-IN')}</td>
                       <td className="py-4 px-4 font-bold text-slate-400">₹{order.downPayment.toLocaleString('en-IN')}</td>
                       <td className="py-4 px-4 font-extrabold text-emerald-400">₹{order.totalPaid.toLocaleString('en-IN')}</td>
@@ -460,7 +473,13 @@ export default function FinancePage() {
                 <h3 className="text-sm font-bold uppercase tracking-wider text-white">
                   {modalMode === 'verify' ? 'Review & Verify Order' : `Financial Ledger — Order ${selectedOrder.orderCode}`}
                 </h3>
-                <p className="text-[11px] text-slate-400 mt-0.5">Client: {selectedOrder.lead.customerName} ({selectedOrder.lead.city})</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Client:{' '}
+                  <Link href={`/leads/${selectedOrder.lead.id}`} className="text-amber-400 hover:underline font-bold">
+                    {selectedOrder.lead.customerName}
+                  </Link>{' '}
+                  ({selectedOrder.lead.city})
+                </p>
               </div>
               <button 
                 onClick={() => setSelectedOrder(null)} 
@@ -645,7 +664,10 @@ export default function FinancePage() {
                             <div className="flex items-center justify-between text-[9px] text-slate-500 font-medium pt-1.5 border-t border-slate-800/40">
                               <span className="flex items-center gap-1">
                                 <User className="w-2.5 h-2.5 text-slate-500" />
-                                Recorded by {pmt.recordedBy.name}
+                                Recorded by{' '}
+                                <Link href={`/team?userId=${pmt.recordedBy.id}`} className="text-amber-400 hover:underline font-bold">
+                                  {pmt.recordedBy.name}
+                                </Link>
                               </span>
                               <span className="flex items-center gap-1 font-mono">
                                 <Calendar className="w-2.5 h-2.5 text-slate-500" />

@@ -1396,9 +1396,42 @@ export default function LeadDetailPage({
                       <div>
                         <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Assigned Team Hierarchy</p>
                         <div className="text-xs text-slate-400 mt-1.5 space-y-1 bg-slate-950/40 p-2.5 rounded-lg border border-slate-800/40">
-                          <div>Manager: <strong>{lead.manager?.name || 'Unassigned'}</strong></div>
-                          <div>TL: <strong>{lead.tl?.name || 'Unassigned'}</strong></div>
-                          <div>Consultant: <strong>{lead.consultant?.name || 'Unassigned'}</strong></div>
+                          <div>
+                            Manager:{' '}
+                            <strong>
+                              {lead.manager ? (
+                                <Link href={`/team?userId=${lead.manager.id}`} className="text-amber-400 hover:underline">
+                                  {lead.manager.name}
+                                </Link>
+                              ) : (
+                                'Unassigned'
+                              )}
+                            </strong>
+                          </div>
+                          <div>
+                            TL:{' '}
+                            <strong>
+                              {lead.tl ? (
+                                <Link href={`/team?userId=${lead.tl.id}`} className="text-amber-400 hover:underline">
+                                  {lead.tl.name}
+                                </Link>
+                              ) : (
+                                'Unassigned'
+                              )}
+                            </strong>
+                          </div>
+                          <div>
+                            Consultant:{' '}
+                            <strong>
+                              {lead.consultant ? (
+                                <Link href={`/team?userId=${lead.consultant.id}`} className="text-amber-400 hover:underline">
+                                  {lead.consultant.name}
+                                </Link>
+                              ) : (
+                                'Unassigned'
+                              )}
+                            </strong>
+                          </div>
                         </div>
                       </div>
 
@@ -2271,33 +2304,30 @@ export default function LeadDetailPage({
 
         {/* Dynamic transition widget panel in right sidebar */}
         <div className="space-y-6">
-          <div className="bg-[#111625] border border-slate-800 rounded-xl p-6 shadow-lg space-y-6">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 border-b border-slate-800 pb-3 flex items-center gap-2">
-              <Layers className="w-4 h-4 text-amber-500" />
-              <span>Pipeline Stage Control</span>
-            </h3>
+          {(lead.status === 9 || roleFilteredNextStages.length > 0) && (
+            <div className="bg-[#111625] border border-slate-800 rounded-xl p-6 shadow-lg space-y-6">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 border-b border-slate-800 pb-3 flex items-center gap-2">
+                <Layers className="w-4 h-4 text-amber-500" />
+                <span>Pipeline Stage Control</span>
+              </h3>
 
-            {/* Allowed stage dropdown or locked notification */}
-            {lead.status === 9 ? (
-              <div className="space-y-3">
-                <p className="text-xs text-slate-400 leading-normal">
-                  The site meeting has been completed. Please document the client's final outcome to advance the lead.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setShowFormC(true)}
-                  className="w-full py-2.5 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 rounded-lg font-bold text-xs shadow-md shadow-emerald-500/10 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                >
-                  <Sun className="w-4 h-4" />
-                  <span>Document Meeting Outcome</span>
-                </button>
-              </div>
-            ) : roleFilteredNextStages.length === 0 ? (
-              <div className="p-4 bg-slate-950/40 border border-slate-850/80 rounded-xl text-slate-500 text-xs italic text-center">
-                This lead has reached a terminal stage ({stageBadge.name}) or you do not have permissions to trigger transitions.
-              </div>
-            ) : (
-              <form onSubmit={handleStatusSubmit} className="space-y-4">
+              {/* Allowed stage dropdown or locked notification */}
+              {lead.status === 9 ? (
+                <div className="space-y-3">
+                  <p className="text-xs text-slate-400 leading-normal">
+                    The site meeting has been completed. Please document the client's final outcome to advance the lead.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowFormC(true)}
+                    className="w-full py-2.5 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 rounded-lg font-bold text-xs shadow-md shadow-emerald-500/10 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                  >
+                    <Sun className="w-4 h-4" />
+                    <span>Document Meeting Outcome</span>
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleStatusSubmit} className="space-y-4">
                 {/* Visual Custom Status Selector */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-400 mb-2.5">Select Next Status</label>
@@ -2419,7 +2449,7 @@ export default function LeadDetailPage({
                 </button>
               </form>
             )}
-          </div>
+          </div>)}
         </div>
       </div>
 

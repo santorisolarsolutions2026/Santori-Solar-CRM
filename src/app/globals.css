@@ -460,6 +460,34 @@ select option {
   color: var(--text-primary) !important;
 }
 
+/* Light mode overrides for container backgrounds (high contrast & clean colors) */
+.light .bg-slate-950,
+.light .bg-slate-955 {
+  background-color: var(--bg-main) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-secondary) !important;
+}
+
+.light .bg-slate-900\/30,
+.light .bg-slate-900\/40,
+.light .bg-slate-900\/60,
+.light .bg-slate-900\/80,
+.light .bg-slate-850 {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+}
+
+.light .bg-slate-950\/60,
+.light .bg-slate-950\/45,
+.light .bg-slate-950\/40,
+.light .bg-slate-950\/30,
+.light .bg-slate-950\/20,
+.light .bg-slate-950\/10,
+.light .bg-\[\#0b0f19\] {
+  background-color: var(--bg-main) !important;
+  border-color: var(--border-color) !important;
+}
+
 /* Toast animations */
 @keyframes slide-in-right {
   0% {

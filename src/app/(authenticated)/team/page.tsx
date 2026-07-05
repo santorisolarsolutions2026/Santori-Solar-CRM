@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Users,
   Plus,
@@ -252,6 +252,7 @@ function calculateYearsInCompany(joiningDateStr: string | null): string {
 export default function TeamManagementPage() {
   const { user, refreshUser, hasPermission } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [managersAndTls, setManagersAndTls] = useState<{ id: number; name: string; role: string }[]>([]);
@@ -471,6 +472,17 @@ export default function TeamManagementPage() {
       }
     }
   }, [user]);
+
+  useEffect(() => {
+    const userIdParam = searchParams.get('userId');
+    if (userIdParam && members.length > 0) {
+      const targetId = parseInt(userIdParam, 10);
+      const member = members.find(m => m.id === targetId);
+      if (member) {
+        handleOpenProfile(member);
+      }
+    }
+  }, [searchParams, members]);
 
   // Handle opening profile view
   const handleOpenProfile = (member: TeamMember) => {

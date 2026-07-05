@@ -34,12 +34,14 @@ export async function GET(req: Request) {
       include: {
         lead: {
           select: {
+            id: true,
             customerName: true,
             leadCode: true,
           },
         },
         user: {
           select: {
+            id: true,
             name: true,
             role: true,
           },

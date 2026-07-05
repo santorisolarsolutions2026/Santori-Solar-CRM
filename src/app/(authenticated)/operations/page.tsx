@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import Link from 'next/link';
 import {
   Wrench,
   Search,
@@ -60,6 +61,7 @@ interface Order {
   subsidyAmount: number | null;
   createdAt: string;
   lead: {
+    id: number;
     customerName: string;
     mobile: string;
     city: string;
@@ -956,7 +958,11 @@ export default function OperationsPage() {
 
                 {/* Customer Details */}
                 <div>
-                  <h3 className="text-sm font-bold text-white group-hover:text-amber-400 transition-colors">{order.lead.customerName}</h3>
+                  <h3 className="text-sm font-bold text-white group-hover:text-amber-400 transition-colors">
+                    <Link href={`/leads/${order.lead.id}`} className="hover:underline">
+                      {order.lead.customerName}
+                    </Link>
+                  </h3>
                   <p className="text-[11px] text-slate-400 flex items-center gap-1 mt-1">
                     <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                     <span>{order.lead.address}, {order.lead.city}</span>
@@ -2114,7 +2120,11 @@ export default function OperationsPage() {
                       <div className="space-y-3.5 text-xs">
                         <div>
                           <span className="text-[10px] text-slate-500 font-bold block uppercase tracking-wider">Customer Name</span>
-                          <span className="font-semibold text-slate-200">{selectedOrder.lead.customerName}</span>
+                          <span className="font-semibold text-slate-200">
+                            <Link href={`/leads/${selectedOrder.lead.id}`} className="text-amber-400 hover:underline">
+                              {selectedOrder.lead.customerName}
+                            </Link>
+                          </span>
                         </div>
                         <div>
                           <span className="text-[10px] text-slate-500 font-bold block uppercase tracking-wider">Site Address</span>
