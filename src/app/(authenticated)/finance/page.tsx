@@ -25,7 +25,6 @@ interface Payment {
   amount: number;
   paymentMethod: string;
   transactionRef: string | null;
-  receiptPath: string | null;
   paymentDate: string;
   remarks: string | null;
   recordedBy: { id: number; name: string };
@@ -134,38 +133,12 @@ export default function FinancePage() {
   const [newPaymentMethod, setNewPaymentMethod] = useState('upi');
   const [newPaymentRef, setNewPaymentRef] = useState('');
   const [newPaymentRemarks, setNewPaymentRemarks] = useState('');
-  const [newPaymentReceiptPath, setNewPaymentReceiptPath] = useState('');
-  const [receiptUploading, setReceiptUploading] = useState(false);
   const [paymentRecording, setPaymentRecording] = useState(false);
-
-  // Filters and summaries
-  const [filterMethod, setFilterMethod] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [filterStartDate, setFilterStartDate] = useState('');
-  const [filterEndDate, setFilterEndDate] = useState('');
-  const [summaryLoading, setSummaryLoading] = useState(false);
-  const [summaryData, setSummaryData] = useState({
-    totalBookedValue: 0,
-    totalCollected: 0,
-    totalOutstanding: 0,
-    cash: 0,
-    upi: 0,
-    neft: 0,
-    cheque: 0,
-  });
-
-  const [activeReceiptUrl, setActiveReceiptUrl] = useState<string | null>(null);
 
   const fetchLedgerData = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        search,
-        paymentMethod: filterMethod,
-        status: filterStatus,
-        startDate: filterStartDate,
-        endDate: filterEndDate,
-      });
+      const params = new URLSearchParams({ search });
       const res = await fetch(`/api/v1/finance/ledger?${params.toString()}`);
       const data = await res.json();
       if (data.success && data.data) {
@@ -178,39 +151,15 @@ export default function FinancePage() {
     }
   };
 
-  const fetchSummaryData = async () => {
-    setSummaryLoading(true);
-    try {
-      const params = new URLSearchParams({
-        search,
-        paymentMethod: filterMethod,
-        status: filterStatus,
-        startDate: filterStartDate,
-        endDate: filterEndDate,
-      });
-      const res = await fetch(`/api/v1/finance/ledger/summary?${params.toString()}`);
-      const data = await res.json();
-      if (data.success && data.data) {
-        setSummaryData(data.data);
-      }
-    } catch (err) {
-      console.error('Error fetching summary:', err);
-    } finally {
-      setSummaryLoading(false);
-    }
-  };
-
   useEffect(() => {
     if (user) {
       fetchLedgerData();
-      fetchSummaryData();
     }
-  }, [user, filterMethod, filterStatus, filterStartDate, filterEndDate]);
+  }, [user, search]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     fetchLedgerData();
-    fetchSummaryData();
   };
 
   // Verify/Reject action
@@ -249,47 +198,6 @@ export default function FinancePage() {
     }
   };
 
-  const handleReceiptUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Type validation
-    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
-    if (!allowed.includes(file.type)) {
-      alert('Only JPEG, PNG, WEBP images or PDF files are allowed.');
-      return;
-    }
-
-    // Size validation (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('File size exceeds 5MB limit.');
-      return;
-    }
-
-    setReceiptUploading(true);
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const res = await fetch('/api/v1/finance/ledger/upload', {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await res.json();
-      if (data.success) {
-        setNewPaymentReceiptPath(data.filePath);
-        alert('Receipt uploaded successfully.');
-      } else {
-        alert(data.message || 'Upload failed.');
-      }
-    } catch (err) {
-      console.error(err);
-      alert('Error uploading file.');
-    } finally {
-      setReceiptUploading(false);
-    }
-  };
-
   // Add ledger payment action
   const handleRecordPayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -312,7 +220,6 @@ export default function FinancePage() {
           paymentMethod: newPaymentMethod,
           transactionRef: newPaymentRef,
           remarks: newPaymentRemarks,
-          receiptPath: newPaymentReceiptPath,
         }),
       });
 
@@ -332,11 +239,9 @@ export default function FinancePage() {
         setNewPaymentAmount('');
         setNewPaymentRef('');
         setNewPaymentRemarks('');
-        setNewPaymentReceiptPath('');
         
         // Refresh full list
         fetchLedgerData();
-        fetchSummaryData();
         alert('Payment successfully recorded in ledger.');
       } else {
         alert(data.message || 'Failed to record payment.');
@@ -359,138 +264,55 @@ export default function FinancePage() {
 
   return (
     <div className="space-y-6">
-      {/* Search & Filters Controls Bar */}
-      <div className="bg-[#111625] border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-            <Search className="w-4 h-4 text-amber-500" /> Filter & Report Controls
-          </h3>
-          
-          <button
-            type="button"
-            onClick={() => {
-              setSearch('');
-              setFilterMethod('all');
-              setFilterStatus('all');
-              setFilterStartDate('');
-              setFilterEndDate('');
-            }}
-            className="self-end lg:self-auto py-1.5 px-3 bg-slate-900 border border-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-semibold hover:border-slate-700 transition-all cursor-pointer"
-          >
-            Clear Filters
-          </button>
+      {/* Header and Stats */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-white tracking-wide">Finance & Payments Ledger</h1>
+          <p className="text-xs text-slate-400 mt-1">Verify incoming sales orders and maintain the financial transaction ledger.</p>
         </div>
-
-        <form onSubmit={handleSearchSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
-          {/* Text Search */}
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search client/order..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-slate-700 placeholder-slate-655"
-            />
-            <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
-          </div>
-
-          {/* Payment Method */}
-          <select
-            value={filterMethod}
-            onChange={(e) => setFilterMethod(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-slate-700"
-          >
-            <option value="all">All Payment Methods</option>
-            {PAYMENT_METHODS.map((m) => (
-              <option key={m.value} value={m.value}>{m.label}</option>
-            ))}
-          </select>
-
-          {/* Order Status */}
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-slate-700"
-          >
-            <option value="all">All Order Statuses</option>
-            <option value="submitted">Awaiting Verification</option>
-            <option value="finance_verified">Finance Verified</option>
-            <option value="ops_assigned">Ops Assigned</option>
-            <option value="completed">Completed</option>
-          </select>
-
-          {/* Start Date */}
-          <div className="relative">
-            <input
-              type="date"
-              value={filterStartDate}
-              onChange={(e) => setFilterStartDate(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-slate-700 font-mono"
-            />
-          </div>
-
-          {/* End Date */}
-          <div className="relative">
-            <input
-              type="date"
-              value={filterEndDate}
-              onChange={(e) => setFilterEndDate(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-slate-700 font-mono"
-            />
-          </div>
+        
+        <form onSubmit={handleSearchSubmit} className="relative w-full sm:w-64">
+          <input
+            type="text"
+            placeholder="Search by client, order, connection..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-slate-200 text-xs focus:outline-none focus:border-slate-700 placeholder-slate-500"
+          />
+          <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
         </form>
       </div>
 
-      {/* Analytics Summary - Main Ledger Metrics */}
+      {/* Analytics Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between shadow-md">
+        <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between">
           <div>
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Filtered Booked Value</span>
-            <span className="text-xl font-extrabold text-white mt-1 block">₹{summaryData.totalBookedValue.toLocaleString('en-IN')}</span>
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Total Booked Value</span>
+            <span className="text-xl font-extrabold text-white mt-1 block">₹{totalValue.toLocaleString('en-IN')}</span>
           </div>
           <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
             <FileText className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between shadow-md">
+        <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between">
           <div>
             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Payments Collected</span>
-            <span className="text-xl font-extrabold text-emerald-400 mt-1 block">₹{summaryData.totalCollected.toLocaleString('en-IN')}</span>
+            <span className="text-xl font-extrabold text-emerald-400 mt-1 block">₹{totalCollected.toLocaleString('en-IN')}</span>
           </div>
           <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
             <IndianRupee className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between shadow-md">
+        <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between">
           <div>
             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Outstanding Balance</span>
-            <span className="text-xl font-extrabold text-amber-500 mt-1 block">₹{summaryData.totalOutstanding.toLocaleString('en-IN')}</span>
+            <span className="text-xl font-extrabold text-amber-500 mt-1 block">₹{totalOutstanding.toLocaleString('en-IN')}</span>
           </div>
           <div className="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
             <ArrowDownLeft className="w-5 h-5" />
           </div>
-        </div>
-      </div>
-
-      {/* Collection Breakdown by Payment Channels */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-[#111625]/40 border border-slate-800/50 rounded-xl p-4 shadow-md">
-        <div className="text-center md:border-r border-slate-800/70 last:border-0 py-1.5">
-          <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500 block mb-0.5">Cash 💵</span>
-          <span className="text-md font-extrabold text-white">₹{summaryData.cash.toLocaleString('en-IN')}</span>
-        </div>
-        <div className="text-center md:border-r border-slate-800/70 last:border-0 py-1.5">
-          <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500 block mb-0.5">UPI 📱</span>
-          <span className="text-md font-extrabold text-cyan-400">₹{summaryData.upi.toLocaleString('en-IN')}</span>
-        </div>
-        <div className="text-center md:border-r border-slate-800/70 last:border-0 py-1.5">
-          <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500 block mb-0.5">Bank Transfer 🏦</span>
-          <span className="text-md font-extrabold text-indigo-400">₹{summaryData.neft.toLocaleString('en-IN')}</span>
-        </div>
-        <div className="text-center py-1.5">
-          <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500 block mb-0.5">Cheque ✍️</span>
-          <span className="text-md font-extrabold text-amber-500">₹{summaryData.cheque.toLocaleString('en-IN')}</span>
         </div>
       </div>
 
@@ -880,18 +702,6 @@ export default function FinancePage() {
                                 })}
                               </span>
                             </div>
-
-                            {pmt.receiptPath && (
-                              <div className="flex items-center justify-end pt-1">
-                                <button
-                                  type="button"
-                                  onClick={() => setActiveReceiptUrl(pmt.receiptPath)}
-                                  className="text-[10px] font-bold text-amber-500 hover:text-amber-400 flex items-center gap-1 hover:underline cursor-pointer focus:outline-none"
-                                >
-                                  <Eye className="w-3 h-3" /> View Receipt
-                                </button>
-                              </div>
-                            )}
                           </div>
                         ))}
                       </div>
@@ -958,49 +768,6 @@ export default function FinancePage() {
                         />
                       </div>
 
-                      {/* Receipt Uploader Field */}
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                          Upload Receipt / Snap Photo (Optional)
-                        </label>
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="file"
-                            accept="image/*,application/pdf"
-                            onChange={handleReceiptUpload}
-                            disabled={receiptUploading || selectedOrder.balanceOutstanding === 0}
-                            className="hidden"
-                            id="receipt-file-input"
-                          />
-                          <label
-                            htmlFor="receipt-file-input"
-                            className={`flex items-center justify-center gap-1.5 px-4 py-2 bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                              receiptUploading ? 'opacity-50 pointer-events-none' : ''
-                            }`}
-                          >
-                            {receiptUploading ? (
-                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            ) : (
-                              <PlusCircle className="w-3.5 h-3.5" />
-                            )}
-                            <span>Choose File or Take Photo</span>
-                          </label>
-
-                          {newPaymentReceiptPath && (
-                            <div className="flex items-center gap-2 px-3 py-1 bg-slate-900 border border-slate-800 rounded-lg text-[11px] text-slate-300">
-                              <span className="font-semibold text-emerald-450 truncate max-w-[120px]">Receipt Uploaded</span>
-                              <button
-                                type="button"
-                                onClick={() => setNewPaymentReceiptPath('')}
-                                className="text-slate-500 hover:text-rose-405 transition-colors cursor-pointer"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
                       {selectedOrder.balanceOutstanding === 0 ? (
                         <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs rounded-lg font-bold text-center">
                           ✓ This ledger has been fully cleared.
@@ -1008,7 +775,7 @@ export default function FinancePage() {
                       ) : (
                         <button
                           type="submit"
-                          disabled={paymentRecording || receiptUploading}
+                          disabled={paymentRecording}
                           className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md shadow-amber-500/10 flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
                         >
                           {paymentRecording ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <PlusCircle className="w-3.5 h-3.5" />}
@@ -1023,57 +790,6 @@ export default function FinancePage() {
 
             </div>
 
-          </div>
-        </div>
-      )}
-      {/* Receipt Viewer Overlay Modal */}
-      {activeReceiptUrl && (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="relative max-w-3xl w-full bg-[#111625] border border-slate-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-            <div className="p-4 border-b border-slate-800 bg-slate-900/30 flex justify-between items-center shrink-0">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-white">Payment Receipt Document</h3>
-              <button
-                onClick={() => setActiveReceiptUrl(null)}
-                className="w-8 h-8 rounded-lg bg-slate-950 hover:bg-slate-900 border border-slate-850 hover:border-slate-700 flex items-center justify-center text-slate-400 hover:text-white cursor-pointer transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            
-            <div className="flex-1 overflow-auto p-6 flex items-center justify-center bg-slate-950/20 min-h-[300px]">
-              {activeReceiptUrl.toLowerCase().includes('.pdf') ? (
-                <div className="w-full h-[60vh] flex flex-col items-center justify-center gap-4 text-center">
-                  <FileText className="w-16 h-16 text-slate-500" />
-                  <p className="text-xs text-slate-400 font-medium">Receipt PDF Document is ready for download.</p>
-                  <a
-                    href={activeReceiptUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-450 hover:to-yellow-450 text-slate-950 font-bold rounded-lg transition-all text-xs cursor-pointer shadow-lg shadow-amber-500/10 flex items-center gap-2"
-                  >
-                    <span>Open in new window</span>
-                  </a>
-                </div>
-              ) : (
-                <img
-                  src={activeReceiptUrl}
-                  alt="Payment Receipt"
-                  className="max-w-full max-h-[60vh] object-contain rounded-lg border border-slate-850 shadow-md"
-                />
-              )}
-            </div>
-            
-            <div className="p-4 border-t border-slate-800 bg-slate-900/20 flex justify-end shrink-0">
-              <a
-                href={activeReceiptUrl}
-                download={`receipt_${Date.now()}`}
-                target="_blank"
-                rel="noreferrer"
-                className="px-4 py-2 bg-slate-950 hover:bg-slate-900 border border-slate-850 hover:border-slate-700 rounded-lg text-slate-300 hover:text-white transition-all font-bold text-xs cursor-pointer"
-              >
-                Download Receipt
-              </a>
-            </div>
           </div>
         </div>
       )}
