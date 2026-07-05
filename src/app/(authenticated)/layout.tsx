@@ -32,8 +32,10 @@ import {
   CheckCircle,
   XCircle,
   Info,
+  Trophy,
 } from 'lucide-react';
 import Link from 'next/link';
+import LeaderboardDrawer from '@/components/LeaderboardDrawer';
 
 interface Notification {
   id: number;
@@ -81,6 +83,9 @@ export default function AuthenticatedLayout({
   const [showTodayAlertModal, setShowTodayAlertModal] = useState(false);
 
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
+  const [leaderboardOpen, setLeaderboardOpen] = useState(false);
+  const [topPerformers, setTopPerformers] = useState<any[]>([]);
 
   // Toast state
   const [toasts, setToasts] = useState<{ id: string; message: string; type: 'success' | 'error' | 'info' }[]>([]);
@@ -433,14 +438,30 @@ export default function AuthenticatedLayout({
       onCancel: () => {},
     });
   };
+  const fetchTopPerformers = async () => {
+    try {
+      const res = await fetch('/api/v1/leaderboard?timeframe=month&department=all');
+      const data = await res.json();
+      if (data.success) {
+        setTopPerformers(data.data.slice(0, 3));
+      }
+    } catch (err) {
+      console.error('Fetch top performers error:', err);
+    }
+  };
 
   useEffect(() => {
     if (user) {
       fetchNotifications();
       fetchTodayAttendance();
-      // Poll notifications every 20 seconds
+      fetchTopPerformers();
+      // Poll notifications every 20 seconds, and leaderboard every 60 seconds
       const interval = setInterval(fetchNotifications, 20000);
-      return () => clearInterval(interval);
+      const leaderboardInterval = setInterval(fetchTopPerformers, 60000);
+      return () => {
+        clearInterval(interval);
+        clearInterval(leaderboardInterval);
+      };
     }
   }, [user]);
 
@@ -624,6 +645,45 @@ export default function AuthenticatedLayout({
           })}
         </nav>
 
+        {/* Leaderboard Sidebar Card (Desktop) */}
+        <div className="mx-4 mb-4 p-3 bg-slate-900/60 border border-slate-800/80 rounded-xl space-y-2 shrink-0">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+              <Trophy className="w-3.5 h-3.5 text-yellow-400" /> Standings
+            </span>
+            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Monthly</span>
+          </div>
+          
+          <div className="space-y-1.5">
+            {topPerformers.map((perf, idx) => (
+              <div key={perf.id} className="flex items-center justify-between text-[11px] py-1 border-b border-slate-850/30 last:border-0">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className={`w-4.5 h-4.5 rounded flex items-center justify-center font-extrabold text-[9px] shrink-0 ${
+                    idx === 0 ? 'bg-yellow-500/20 text-yellow-450 border border-yellow-500/30' :
+                    idx === 1 ? 'bg-slate-400/20 text-slate-300 border border-slate-400/20' :
+                    'bg-amber-700/20 text-amber-550 border border-amber-700/20'
+                  }`}>
+                    {idx + 1}
+                  </span>
+                  <span className="text-slate-300 truncate font-semibold">{perf.name}</span>
+                </div>
+                <span className="font-bold text-amber-400 shrink-0">{perf.points} pts</span>
+              </div>
+            ))}
+            {topPerformers.length === 0 && (
+              <p className="text-[10px] text-slate-550 text-center py-1">No standing data</p>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setLeaderboardOpen(true)}
+            className="w-full mt-1.5 py-1 px-3 bg-slate-950 hover:bg-slate-855 border border-slate-800 text-slate-400 hover:text-white rounded-lg font-bold text-[10px] transition-all cursor-pointer text-center"
+          >
+            View Leaderboard
+          </button>
+        </div>
+
         {/* Logout */}
         <div className="p-4 border-t border-slate-800">
           <button
@@ -733,6 +793,48 @@ export default function AuthenticatedLayout({
                 );
               })}
             </nav>
+
+            {/* Leaderboard Sidebar Card (Mobile) */}
+            <div className="mx-4 mb-4 p-3 bg-slate-900/60 border border-slate-800/80 rounded-xl space-y-2 shrink-0">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                  <Trophy className="w-3.5 h-3.5 text-yellow-400" /> Standings
+                </span>
+                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Monthly</span>
+              </div>
+              
+              <div className="space-y-1.5">
+                {topPerformers.map((perf, idx) => (
+                  <div key={perf.id} className="flex items-center justify-between text-[11px] py-1 border-b border-slate-850/30 last:border-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className={`w-4.5 h-4.5 rounded flex items-center justify-center font-extrabold text-[9px] shrink-0 ${
+                        idx === 0 ? 'bg-yellow-500/20 text-yellow-450 border border-yellow-500/30' :
+                        idx === 1 ? 'bg-slate-400/20 text-slate-300 border border-slate-400/20' :
+                        'bg-amber-700/20 text-amber-550 border border-amber-700/20'
+                      }`}>
+                        {idx + 1}
+                      </span>
+                      <span className="text-slate-300 truncate font-semibold">{perf.name}</span>
+                    </div>
+                    <span className="font-bold text-amber-400 shrink-0">{perf.points} pts</span>
+                  </div>
+                ))}
+                {topPerformers.length === 0 && (
+                  <p className="text-[10px] text-slate-555 text-center py-1">No standing data</p>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setSidebarOpen(false);
+                  setLeaderboardOpen(true);
+                }}
+                className="w-full mt-1.5 py-1 px-3 bg-slate-950 hover:bg-slate-850 border border-slate-800 text-slate-400 hover:text-white rounded-lg font-bold text-[10px] transition-all cursor-pointer text-center"
+              >
+                View Leaderboard
+              </button>
+            </div>
 
             <div className="p-4 border-t border-slate-800">
               <button
@@ -1273,6 +1375,9 @@ export default function AuthenticatedLayout({
           </div>
         </div>
       )}
+
+      {/* Leaderboard Slide Drawer */}
+      <LeaderboardDrawer isOpen={leaderboardOpen} onClose={() => setLeaderboardOpen(false)} />
     </div>
   );
 }
