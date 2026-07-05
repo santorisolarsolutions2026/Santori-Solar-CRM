@@ -22,7 +22,6 @@ export async function GET(req: Request) {
     const startDate = searchParams.get('startDate') || '';
     const endDate = searchParams.get('endDate') || '';
 
-    // Search query matches order code, connection number, or customer name
     const where: any = {};
 
     if (statusParam && statusParam !== 'all') {
@@ -31,38 +30,59 @@ export async function GET(req: Request) {
       where.status = { in: ['submitted', 'finance_verified', 'ops_assigned', 'completed'] };
     }
 
+    const conditions: any[] = [];
+
     if (search) {
-      where.OR = [
-        { orderCode: { contains: search, mode: 'insensitive' } },
-        { connectionNumber: { contains: search, mode: 'insensitive' } },
-        { lead: { customerName: { contains: search, mode: 'insensitive' } } },
-      ];
+      conditions.push({
+        OR: [
+          { orderCode: { contains: search, mode: 'insensitive' } },
+          { connectionNumber: { contains: search, mode: 'insensitive' } },
+          { lead: { customerName: { contains: search, mode: 'insensitive' } } },
+        ]
+      });
     }
 
-    // Apply payments sub-filtering
-    const paymentsSubFilter: any = {};
-    if (paymentMethod && paymentMethod !== 'all') {
-      paymentsSubFilter.paymentMethod = paymentMethod;
-    }
+    const paymentMethodFilter = paymentMethod !== 'all' ? paymentMethod : undefined;
+    const hasDateFilter = !!(startDate || endDate);
 
-    if (startDate || endDate) {
-      const paymentDateFilter: any = {};
-      if (startDate) {
-        paymentDateFilter.gte = new Date(startDate);
-      }
+    let dateFilter: any = undefined;
+    if (hasDateFilter) {
+      dateFilter = {};
+      if (startDate) dateFilter.gte = new Date(startDate);
       if (endDate) {
         const end = new Date(endDate);
         end.setHours(23, 59, 59, 999);
-        paymentDateFilter.lte = end;
+        dateFilter.lte = end;
       }
-      paymentsSubFilter.paymentDate = paymentDateFilter;
     }
 
-    // If sub-filters are applied, force the Order where condition to only show orders that have matching payments
-    if (Object.keys(paymentsSubFilter).length > 0) {
-      where.payments = {
-        some: paymentsSubFilter
-      };
+    const paymentsSubFilter: any = {};
+    if (paymentMethodFilter) {
+      paymentsSubFilter.paymentMethod = paymentMethodFilter;
+    }
+    if (dateFilter) {
+      paymentsSubFilter.paymentDate = dateFilter;
+    }
+
+    if (paymentMethodFilter || hasDateFilter) {
+      const orderCriteria: any[] = [{ payments: { none: {} } }];
+      if (paymentMethodFilter) {
+        orderCriteria.push({ paymentMethod: paymentMethodFilter });
+      }
+      if (dateFilter) {
+        orderCriteria.push({ createdAt: dateFilter });
+      }
+
+      conditions.push({
+        OR: [
+          { payments: { some: paymentsSubFilter } },
+          { AND: orderCriteria }
+        ]
+      });
+    }
+
+    if (conditions.length > 0) {
+      where.AND = conditions;
     }
 
     const orders = await prisma.order.findMany({
