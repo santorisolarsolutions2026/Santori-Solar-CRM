@@ -2,21 +2,31 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from 'recharts';
+import dynamic from 'next/dynamic';
+
+const TrendLineChart = dynamic(
+  () => import('@/components/ReportsCharts').then((mod) => mod.TrendLineChart),
+  {
+    ssr: false,
+    loading: () => <div className="h-full w-full bg-slate-950/20 animate-pulse rounded-xl" />,
+  }
+);
+
+const LeadSourcePieChart = dynamic(
+  () => import('@/components/ReportsCharts').then((mod) => mod.LeadSourcePieChart),
+  {
+    ssr: false,
+    loading: () => <div className="h-full w-full bg-slate-950/20 animate-pulse rounded-xl" />,
+  }
+);
+
+const PipelineBarChart = dynamic(
+  () => import('@/components/ReportsCharts').then((mod) => mod.PipelineBarChart),
+  {
+    ssr: false,
+    loading: () => <div className="h-full w-full bg-slate-950/20 animate-pulse rounded-xl" />,
+  }
+);
 import {
   Sun,
   FileSpreadsheet,
@@ -276,22 +286,7 @@ export default function ReportsPage() {
         <div className="bg-[#111625] border border-slate-800 rounded-xl p-6 shadow-lg print:border-black">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-6 print:text-black">Daily Conversion trend</h3>
           <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={trend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
-                <XAxis dataKey="date" stroke="#6b7280" fontSize={10} tickLine={false} />
-                <YAxis stroke="#6b7280" fontSize={10} tickLine={false} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#111625', border: '1px solid #1f2937', borderRadius: '8px' }}
-                  labelStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}
-                  itemStyle={{ fontSize: '12px' }}
-                  cursor={false}
-                />
-                <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
-                <Line type="monotone" name="Leads Created" dataKey="created" stroke="#3B82F6" strokeWidth={2.5} activeDot={{ r: 6 }} dot={false} />
-                <Line type="monotone" name="Sales Completed" dataKey="closed" stroke="#10B981" strokeWidth={2.5} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
+            <TrendLineChart trend={trend} />
           </div>
         </div>
 
@@ -299,30 +294,7 @@ export default function ReportsPage() {
         <div className="bg-[#111625] border border-slate-800 rounded-xl p-6 shadow-lg print:border-black">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-6 print:text-black">Lead Acquisition Channels</h3>
           <div className="h-72 w-full flex items-center justify-center">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={leadSourceData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={90}
-                  paddingAngle={5}
-                  dataKey="value"
-                  label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
-                  labelLine={false}
-                >
-                  {leadSourceData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#111625', border: '1px solid #1f2937', borderRadius: '8px' }}
-                  labelStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}
-                  itemStyle={{ fontSize: '12px' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            <LeadSourcePieChart leadSourceData={leadSourceData} colors={COLORS} />
           </div>
         </div>
 
@@ -330,20 +302,7 @@ export default function ReportsPage() {
         <div className="bg-[#111625] border border-slate-800 rounded-xl p-6 shadow-lg lg:col-span-2 print:border-black">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-6 print:text-black">Lead Pipeline Stage Distribution</h3>
           <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={pipelineBarData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
-                <XAxis dataKey="name" stroke="#6b7280" fontSize={8} tickLine={false} />
-                <YAxis stroke="#6b7280" fontSize={10} tickLine={false} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#111625', border: '1px solid #1f2937', borderRadius: '8px' }}
-                  labelStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}
-                  itemStyle={{ fontSize: '12px' }}
-                  cursor={false}
-                />
-                <Bar dataKey="Leads" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <PipelineBarChart pipelineBarData={pipelineBarData} />
           </div>
         </div>
 
