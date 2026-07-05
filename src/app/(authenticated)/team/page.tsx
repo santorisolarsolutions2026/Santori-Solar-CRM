@@ -125,6 +125,12 @@ const ALL_PERMISSIONS = [
     category: 'Orders & Fulfillment Queue'
   },
   {
+    key: 'orders:finance_access',
+    label: 'Access to Finance & Payments Details',
+    description: 'Allows viewing the Finance & Payments tab, ledger, and payment records.',
+    category: 'Orders & Fulfillment Queue'
+  },
+  {
     key: 'orders:operations',
     label: 'Operations tasks',
     description: 'Allows managing delivery, solar installation, net metering, and commissioning stages.',
@@ -179,7 +185,7 @@ function getLocalDefaultPermissionsForRole(role: string): string[] {
     case 'director':
       return [
         'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:assign',
-        'orders:create', 'orders:verify', 'orders:operations',
+        'orders:create', 'orders:verify', 'orders:finance_access', 'orders:operations',
         'team:view', 'attendance:view', 'team:manage', 'logs:view', 'leads:track', 'reports:view'
       ];
     case 'sales_head':
@@ -195,7 +201,7 @@ function getLocalDefaultPermissionsForRole(role: string): string[] {
       ];
     case 'finance':
       return [
-        'leads:view_all', 'orders:verify', 'reports:view'
+        'leads:view_all', 'orders:verify', 'orders:finance_access', 'reports:view'
       ];
     case 'operations':
       return [

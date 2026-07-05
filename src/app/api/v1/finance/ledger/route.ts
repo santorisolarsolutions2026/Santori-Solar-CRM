@@ -11,7 +11,7 @@ export async function GET(req: Request) {
     }
 
     const userPermissions = await getUserPermissions(userPayload.id);
-    if (!userPermissions.includes('orders:view')) {
+    if (!userPermissions.includes('orders:finance_access')) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view this.' }, { status: 403 });
     }
 

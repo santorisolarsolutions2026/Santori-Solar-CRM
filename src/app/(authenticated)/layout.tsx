@@ -508,7 +508,7 @@ export default function AuthenticatedLayout({
       name: 'Finance and Payments',
       path: '/finance',
       icon: CreditCard,
-      permission: 'orders:view',
+      permission: 'orders:finance_access',
     },
     {
       name: 'Operations',

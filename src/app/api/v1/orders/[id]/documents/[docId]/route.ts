@@ -36,10 +36,16 @@ export async function GET(
     // Role/Permission visibility check
     const userPermissions = await getUserPermissions(userPayload.id);
     const isOwner = doc.order.submittedById === userPayload.id;
-    const hasViewAccess = userPermissions.includes('orders:view') || isOwner;
+    const hasViewAccess = userPermissions.includes('orders:view') || 
+                          userPermissions.includes('orders:finance_access') || 
+                          isOwner;
 
     if (!hasViewAccess) {
       return NextResponse.json({ success: false, message: 'Forbidden. No access to this document.' }, { status: 403 });
+    }
+
+    if (doc.filePath.startsWith('http')) {
+      return NextResponse.redirect(doc.filePath);
     }
 
     // Resolve file path

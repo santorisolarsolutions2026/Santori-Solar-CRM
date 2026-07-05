@@ -91,7 +91,29 @@ const DOC_TYPES: Record<string, string> = {
 };
 
 export default function FinancePage() {
-  const { user, hasPermission } = useAuth();
+  const { user, loading: authLoading, hasPermission } = useAuth();
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+      </div>
+    );
+  }
+
+  if (!hasPermission('orders:finance_access')) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center bg-[#111625] border border-slate-800 rounded-xl shadow-lg mt-6">
+        <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 text-red-500 rounded-full flex items-center justify-center mb-4 animate-pulse">
+          <AlertTriangle className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl font-bold text-white mb-2">Access Denied</h2>
+        <p className="text-sm text-slate-400 max-w-md">
+          You do not have the required permissions to view Finance & Payments details. Please contact your administrator if you believe this is in error.
+        </p>
+      </div>
+    );
+  }
   
   const [activeTab, setActiveTab] = useState<'pending' | 'ledger'>('pending');
   const [orders, setOrders] = useState<Order[]>([]);
