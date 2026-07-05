@@ -27,6 +27,7 @@ import {
   Plus,
   ChevronLeft,
   ChevronRight,
+  AlertTriangle,
 } from 'lucide-react';
 
 interface Order {
@@ -87,7 +88,29 @@ interface InstallationImage {
 }
 
 export default function OperationsPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading, hasPermission } = useAuth();
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+      </div>
+    );
+  }
+
+  if (!hasPermission('orders:operations')) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center bg-[#111625] border border-slate-800 rounded-xl shadow-lg mt-6">
+        <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 text-red-500 rounded-full flex items-center justify-center mb-4 animate-pulse">
+          <AlertTriangle className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl font-bold text-white mb-2">Access Denied</h2>
+        <p className="text-sm text-slate-400 max-w-md">
+          You do not have the required permissions to view Operations details. Please contact your administrator if you believe this is in error.
+        </p>
+      </div>
+    );
+  }
   
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);

@@ -132,8 +132,8 @@ const ALL_PERMISSIONS = [
   },
   {
     key: 'orders:operations',
-    label: 'Operations tasks',
-    description: 'Allows managing delivery, solar installation, net metering, and commissioning stages.',
+    label: 'Access to Operations Details',
+    description: 'Allows viewing the Operations tab and managing delivery, solar installation, net metering, and commissioning stages.',
     category: 'Orders & Fulfillment Queue'
   },
 

@@ -514,7 +514,7 @@ export default function AuthenticatedLayout({
       name: 'Operations',
       path: '/operations',
       icon: Wrench,
-      permission: 'orders:view',
+      permission: 'orders:operations',
     },
     {
       name: 'Attendance',

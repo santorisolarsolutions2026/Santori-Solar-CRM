@@ -15,7 +15,7 @@ export async function GET(
     }
 
     const userPermissions = await getUserPermissions(userPayload.id);
-    if (!userPermissions.includes('orders:view')) {
+    if (!userPermissions.includes('orders:view') && !userPermissions.includes('orders:operations')) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view orders.' }, { status: 403 });
     }
 

@@ -12,7 +12,7 @@ export async function GET(req: Request) {
     const { role: userRole, permissions: userPermissions } = await getUserSession(userPayload.id);
     const baseRole = userRole.includes(':') ? userRole.split(':')[0] : userRole;
 
-    if (!userPermissions.includes('orders:view')) {
+    if (!userPermissions.includes('orders:view') && !userPermissions.includes('orders:operations')) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view orders.' }, { status: 403 });
     }
 
