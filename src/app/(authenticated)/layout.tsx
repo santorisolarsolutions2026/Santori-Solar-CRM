@@ -86,6 +86,7 @@ export default function AuthenticatedLayout({
 
   const [leaderboardOpen, setLeaderboardOpen] = useState(false);
   const [topPerformers, setTopPerformers] = useState<any[]>([]);
+  const [myStanding, setMyStanding] = useState<{ rank: number; points: number } | null>(null);
 
   // Toast state
   const [toasts, setToasts] = useState<{ id: string; message: string; type: 'success' | 'error' | 'info' }[]>([]);
@@ -444,6 +445,14 @@ export default function AuthenticatedLayout({
       const data = await res.json();
       if (data.success) {
         setTopPerformers(data.data.slice(0, 3));
+        if (user) {
+          const myRankIndex = data.data.findIndex((p: any) => p.id === user.id);
+          if (myRankIndex !== -1 && myRankIndex >= 3) {
+            setMyStanding({ rank: myRankIndex + 1, points: data.data[myRankIndex].points });
+          } else {
+            setMyStanding(null);
+          }
+        }
       }
     } catch (err) {
       console.error('Fetch top performers error:', err);
@@ -673,6 +682,17 @@ export default function AuthenticatedLayout({
             {topPerformers.length === 0 && (
               <p className="text-[10px] text-slate-550 text-center py-1">No standing data</p>
             )}
+            {myStanding && (
+              <div className="pt-1.5 border-t border-dashed border-slate-800 flex items-center justify-between text-[11px]">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="w-4.5 h-4.5 rounded bg-slate-800 text-slate-400 border border-slate-700/65 flex items-center justify-center font-extrabold text-[9px] shrink-0">
+                    {myStanding.rank}
+                  </span>
+                  <span className="text-slate-350 truncate font-semibold">Your Standing</span>
+                </div>
+                <span className="font-bold text-amber-550 shrink-0">{myStanding.points} pts</span>
+              </div>
+            )}
           </div>
 
           <button
@@ -821,6 +841,17 @@ export default function AuthenticatedLayout({
                 ))}
                 {topPerformers.length === 0 && (
                   <p className="text-[10px] text-slate-555 text-center py-1">No standing data</p>
+                )}
+                {myStanding && (
+                  <div className="pt-1.5 border-t border-dashed border-slate-800 flex items-center justify-between text-[11px]">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="w-4.5 h-4.5 rounded bg-slate-800 text-slate-400 border border-slate-700/65 flex items-center justify-center font-extrabold text-[9px] shrink-0">
+                        {myStanding.rank}
+                      </span>
+                      <span className="text-slate-350 truncate font-semibold">Your Standing</span>
+                    </div>
+                    <span className="font-bold text-amber-555 shrink-0">{myStanding.points} pts</span>
+                  </div>
                 )}
               </div>
 
@@ -1377,7 +1408,7 @@ export default function AuthenticatedLayout({
       )}
 
       {/* Leaderboard Slide Drawer */}
-      <LeaderboardDrawer isOpen={leaderboardOpen} onClose={() => setLeaderboardOpen(false)} />
+      <LeaderboardDrawer isOpen={leaderboardOpen} onClose={() => setLeaderboardOpen(false)} currentUserId={user.id} />
     </div>
   );
 }

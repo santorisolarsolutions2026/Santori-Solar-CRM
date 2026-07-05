@@ -46,9 +46,10 @@ interface LeaderboardUser {
 interface LeaderboardDrawerProps {
   isOpen: boolean;
   onClose: () => void;
+  currentUserId?: number;
 }
 
-export default function LeaderboardDrawer({ isOpen, onClose }: LeaderboardDrawerProps) {
+export default function LeaderboardDrawer({ isOpen, onClose, currentUserId }: LeaderboardDrawerProps) {
   const [timeframe, setTimeframe] = useState<'week' | 'month' | 'all'>('month');
   const [department, setDepartment] = useState<'all' | 'sales' | 'finance' | 'operations'>('all');
   const [search, setSearch] = useState('');
@@ -248,11 +249,14 @@ export default function LeaderboardDrawer({ isOpen, onClose }: LeaderboardDrawer
               const isExpanded = expandedUserId === user.id;
               const roleConfig = getRoleConfig(user.role);
 
+              const isCurrentUser = user.id === currentUserId;
               return (
                 <div
                   key={user.id}
-                  className={`bg-[#111625] border rounded-xl overflow-hidden transition-all duration-250 hover:bg-[#151b2e] ${badgeStyle.glow} ${
-                    isExpanded ? 'ring-1 ring-amber-500/20 shadow-lg shadow-amber-500/2' : ''
+                  className={`bg-[#111625] border rounded-xl overflow-hidden transition-all duration-250 hover:bg-[#151b2e] ${
+                    isCurrentUser ? 'border-amber-500/40 ring-1 ring-amber-500/10 bg-[#161d2f]/70' : badgeStyle.glow
+                  } ${
+                    isExpanded ? 'ring-1 ring-amber-500/25 shadow-lg shadow-amber-500/2' : ''
                   }`}
                 >
                   <button
@@ -285,7 +289,9 @@ export default function LeaderboardDrawer({ isOpen, onClose }: LeaderboardDrawer
                       {/* Name and Role */}
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <p className="text-xs font-bold text-slate-100 truncate">{user.name}</p>
+                          <p className="text-xs font-bold text-slate-100 truncate">
+                            {user.name} {isCurrentUser && <span className="text-[10px] text-amber-455 font-semibold">(You)</span>}
+                          </p>
                           {badgeStyle.trophy && <Trophy className={`w-3.5 h-3.5 ${badgeStyle.trophy}`} />}
                         </div>
                         <span className={`inline-block text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 border rounded-full mt-1 ${roleConfig.color}`}>

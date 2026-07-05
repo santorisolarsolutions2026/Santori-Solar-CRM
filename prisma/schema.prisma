@@ -263,6 +263,7 @@ model Payment {
   amount         Float
   paymentMethod  String   // cash | upi | cheque | neft | bank_transfer
   transactionRef String?
+  receiptPath    String?
   paymentDate    DateTime @default(now())
   remarks        String?
   recordedById   Int
