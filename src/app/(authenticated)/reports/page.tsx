@@ -116,25 +116,35 @@ export default function ReportsPage() {
 
   const fetchData = async () => {
     try {
-      const [statsRes, pipelineRes, trendRes] = await Promise.all([
+      const fetchPromises: Promise<any>[] = [
         fetch('/api/v1/reports/overview'),
         fetch('/api/v1/reports/pipeline'),
         fetch('/api/v1/reports/trend'),
-      ]);
+      ];
 
-      const statsData = await statsRes.json();
-      const pipelineData = await pipelineRes.json();
-      const trendData = await trendRes.json();
+      const userHasReportsView = hasPermission('reports:view');
+      if (userHasReportsView) {
+        fetchPromises.push(fetch('/api/v1/reports/team-performance'));
+      }
+
+      const results = await Promise.all(fetchPromises);
+
+      const statsRes = results[0];
+      const pipelineRes = results[1];
+      const trendRes = results[2];
+      const perfRes = userHasReportsView ? results[3] : null;
+
+      const [statsData, pipelineData, trendData, perfData] = await Promise.all([
+        statsRes.json(),
+        pipelineRes.json(),
+        trendRes.json(),
+        perfRes ? perfRes.json() : Promise.resolve({ success: false }),
+      ]);
 
       if (statsData.success) setStats(statsData.data);
       if (pipelineData.success) setPipeline(pipelineData.data);
       if (trendData.success) setTrend(trendData.data);
-
-      if (hasPermission('reports:view')) {
-        const perfRes = await fetch('/api/v1/reports/team-performance');
-        const perfData = await perfRes.json();
-        if (perfData.success) setPerformance(perfData.data);
-      }
+      if (perfData && perfData.success) setPerformance(perfData.data);
     } catch (err) {
       console.error(err);
     } finally {

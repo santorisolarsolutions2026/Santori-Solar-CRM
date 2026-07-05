@@ -34,45 +34,52 @@ export async function GET(req: Request) {
     const todayEnd = new Date();
     todayEnd.setHours(23, 59, 59, 999);
 
-    // Queries
-    // 1. Total Leads (Fresh Leads pool: status >= 1)
-    const totalFreshLeads = await prisma.lead.count({
-      where: {
-        ...leadWhere,
-        status: { gte: 1 },
-      },
-    });
-
-    // 2. Active Leads (not in terminal: 0 Uninitiated, 6 Already Installed, 12 Can't Fit, 13 Sale Done)
-    const activeWhere = { ...leadWhere, status: { notIn: [0, 6, 12, 13] }, isActive: true };
-    const activeLeads = await prisma.lead.count({ where: activeWhere });
-
-    // 3. Meetings Booked (This month)
-    const meetingWhere = {
-      ...leadWhere,
-      status: { in: [8, 9, 13] },
-      createdAt: { gte: startOfMonth },
-    };
-    const meetingsBookedThisMonth = await prisma.lead.count({ where: meetingWhere });
-
-    // 4. Sales Done (This month)
-    const salesWhere = {
-      ...leadWhere,
-      status: 13,
-      createdAt: { gte: startOfMonth },
-    };
-    const salesDoneThisMonth = await prisma.lead.count({ where: salesWhere });
-
-    // 5. Today's Follow-Ups
-    const followUpWhere = {
-      ...leadWhere,
-      status: { in: [3, 5] },
-      followupAt: {
-        gte: todayStart,
-        lte: todayEnd,
-      },
-    };
-    const todayFollowUps = await prisma.lead.count({ where: followUpWhere });
+    // Concurrent Queries using Promise.all
+    const [
+      totalFreshLeads,
+      activeLeads,
+      meetingsBookedThisMonth,
+      salesDoneThisMonth,
+      todayFollowUps
+    ] = await Promise.all([
+      prisma.lead.count({
+        where: {
+          ...leadWhere,
+          status: { gte: 1 },
+        },
+      }),
+      prisma.lead.count({
+        where: {
+          ...leadWhere,
+          status: { notIn: [0, 6, 12, 13] },
+          isActive: true,
+        },
+      }),
+      prisma.lead.count({
+        where: {
+          ...leadWhere,
+          status: { in: [8, 9, 13] },
+          createdAt: { gte: startOfMonth },
+        },
+      }),
+      prisma.lead.count({
+        where: {
+          ...leadWhere,
+          status: 13,
+          createdAt: { gte: startOfMonth },
+        },
+      }),
+      prisma.lead.count({
+        where: {
+          ...leadWhere,
+          status: { in: [3, 5] },
+          followupAt: {
+            gte: todayStart,
+            lte: todayEnd,
+          },
+        },
+      }),
+    ]);
 
     // 6. Conversion Rate (Sales / Total Fresh Leads * 100)
     const conversionRate = totalFreshLeads > 0 ? parseFloat(((salesDoneThisMonth / totalFreshLeads) * 100).toFixed(2)) : 0.0;

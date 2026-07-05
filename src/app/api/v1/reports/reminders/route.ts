@@ -24,28 +24,47 @@ export async function GET(req: Request) {
     // System-wide upcoming task reminders (constant for all authenticated users)
     const leadWhere: any = {};
 
-    // 1. Fetch upcoming meetings
-    const meetings = await prisma.meetingBooking.findMany({
-      where: {
-        lead: {
+    // Concurrent database fetches using Promise.all
+    const [meetings, followups] = await Promise.all([
+      prisma.meetingBooking.findMany({
+        where: {
+          lead: {
+            ...leadWhere,
+            isActive: true,
+          },
+        },
+        include: {
+          lead: {
+            select: {
+              customerName: true,
+              leadCode: true,
+            },
+          },
+          executive: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      }),
+      prisma.lead.findMany({
+        where: {
           ...leadWhere,
           isActive: true,
-        },
-      },
-      include: {
-        lead: {
-          select: {
-            customerName: true,
-            leadCode: true,
+          followupAt: {
+            not: null,
+            gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Today onwards / last 24h
           },
         },
-        executive: {
-          select: {
-            name: true,
-          },
+        select: {
+          id: true,
+          customerName: true,
+          leadCode: true,
+          followupAt: true,
+          statusSub: true,
         },
-      },
-    });
+      }),
+    ]);
 
     const formattedMeetings: any[] = [];
     for (const m of meetings) {
@@ -67,25 +86,6 @@ export async function GET(req: Request) {
         console.error('Error parsing meeting datetime:', err);
       }
     }
-
-    // 2. Fetch upcoming follow-ups
-    const followups = await prisma.lead.findMany({
-      where: {
-        ...leadWhere,
-        isActive: true,
-        followupAt: {
-          not: null,
-          gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Today onwards / last 24h
-        },
-      },
-      select: {
-        id: true,
-        customerName: true,
-        leadCode: true,
-        followupAt: true,
-        statusSub: true,
-      },
-    });
 
     const formattedFollowups = followups.map((f) => ({
       id: `followup-${f.id}`,

@@ -90,36 +90,43 @@ export default function DashboardPage() {
 
   const fetchData = async () => {
     try {
-      // 1. Fetch overview stats
-      const statsRes = await fetch('/api/v1/reports/overview');
-      const statsData = await statsRes.json();
+      const [
+        statsRes,
+        pipelineRes,
+        trendRes,
+        perfRes,
+        feedRes,
+        remindersRes
+      ] = await Promise.all([
+        fetch('/api/v1/reports/overview'),
+        fetch('/api/v1/reports/pipeline'),
+        fetch('/api/v1/reports/trend'),
+        fetch('/api/v1/reports/team-performance'),
+        fetch('/api/v1/reports/recent-activity'),
+        fetch('/api/v1/reports/reminders'),
+      ]);
+
+      const [
+        statsData,
+        pipelineData,
+        trendData,
+        perfData,
+        feedData,
+        remindersData
+      ] = await Promise.all([
+        statsRes.json(),
+        pipelineRes.json(),
+        trendRes.json(),
+        perfRes.json(),
+        feedRes.json(),
+        remindersRes.json()
+      ]);
+
       if (statsData.success) setStats(statsData.data);
-
-      // 2. Fetch pipeline
-      const pipelineRes = await fetch('/api/v1/reports/pipeline');
-      const pipelineData = await pipelineRes.json();
       if (pipelineData.success) setPipeline(pipelineData.data);
-
-      // 3. Fetch trends
-      const trendRes = await fetch('/api/v1/reports/trend');
-      const trendData = await trendRes.json();
       if (trendData.success) setTrend(trendData.data);
-
-      // 4. Fetch team performance (for all users system-wide)
-      const perfRes = await fetch('/api/v1/reports/team-performance');
-      const perfData = await perfRes.json();
       if (perfData.success) setPerformance(perfData.data);
-
-      // 5. Fetch recent activity
-      const feedRes = await fetch('/api/v1/reports/recent-activity');
-      const feedData = await feedRes.json();
-      if (feedData.success) {
-        setActivities(feedData.data.logs || feedData.data || []);
-      }
-
-      // 6. Fetch reminders
-      const remindersRes = await fetch('/api/v1/reports/reminders');
-      const remindersData = await remindersRes.json();
+      if (feedData.success) setActivities(feedData.data.logs || feedData.data || []);
       if (remindersData.success) setReminders(remindersData.data);
     } catch (err) {
       console.error('Fetch dashboard data error:', err);

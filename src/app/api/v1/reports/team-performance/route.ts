@@ -33,10 +33,8 @@ export async function GET(req: Request) {
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
 
-    const performanceData = [];
-
-    // 2. Fetch stats for each consultant
-    for (const consultant of consultants) {
+    // Fetch stats for all consultants concurrently
+    const performancePromises = consultants.map(async (consultant) => {
       const [leadsAssigned, meetingsBooked, salesClosed, callsMade] = await Promise.all([
         // Total leads assigned (Fresh or above)
         prisma.lead.count({
@@ -72,7 +70,7 @@ export async function GET(req: Request) {
 
       const conversionRate = leadsAssigned > 0 ? parseFloat(((salesClosed / leadsAssigned) * 100).toFixed(2)) : 0.0;
 
-      performanceData.push({
+      return {
         id: consultant.id,
         name: consultant.name,
         email: consultant.email,
@@ -81,8 +79,10 @@ export async function GET(req: Request) {
         salesClosed,
         callsMade,
         conversionRate,
-      });
-    }
+      };
+    });
+
+    const performanceData = await Promise.all(performancePromises);
 
     return NextResponse.json({
       success: true,

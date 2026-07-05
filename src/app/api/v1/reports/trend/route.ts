@@ -24,8 +24,9 @@ export async function GET(req: Request) {
     // System-wide trend metrics (constant for all authenticated users)
     const leadWhere: any = {};
 
-    // Get trend data for the last 15 days
-    const trendData = [];
+    // Batch daily queries concurrently using Promise.all
+    const trendPromises = [];
+
     for (let i = 14; i >= 0; i--) {
       const date = new Date();
       date.setDate(date.getDate() - i);
@@ -36,7 +37,12 @@ export async function GET(req: Request) {
       const endOfDay = new Date(date);
       endOfDay.setHours(23, 59, 59, 999);
 
-      const [createdCount, closedCount] = await Promise.all([
+      const dateString = startOfDay.toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+      });
+
+      const dayPromise = Promise.all([
         prisma.lead.count({
           where: {
             ...leadWhere,
@@ -57,19 +63,16 @@ export async function GET(req: Request) {
             },
           },
         }),
-      ]);
-
-      const dateString = startOfDay.toLocaleDateString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-      });
-
-      trendData.push({
+      ]).then(([createdCount, closedCount]) => ({
         date: dateString,
         created: createdCount,
         closed: closedCount,
-      });
+      }));
+
+      trendPromises.push(dayPromise);
     }
+
+    const trendData = await Promise.all(trendPromises);
 
     return NextResponse.json({
       success: true,
