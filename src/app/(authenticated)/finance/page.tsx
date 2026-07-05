@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import {
   CreditCard,
@@ -17,8 +17,6 @@ import {
   FileText,
   User,
   ArrowDownLeft,
-  Camera,
-  Upload,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -30,7 +28,6 @@ interface Payment {
   paymentDate: string;
   remarks: string | null;
   recordedBy: { id: number; name: string };
-  receiptUrl: string | null;
 }
 
 interface Order {
@@ -137,9 +134,6 @@ export default function FinancePage() {
   const [newPaymentRef, setNewPaymentRef] = useState('');
   const [newPaymentRemarks, setNewPaymentRemarks] = useState('');
   const [paymentRecording, setPaymentRecording] = useState(false);
-  const [receiptFile, setReceiptFile] = useState<File | null>(null);
-  const [uploadingReceipt, setUploadingReceipt] = useState(false);
-  const receiptInputRef = useRef<HTMLInputElement>(null);
 
   const fetchLedgerData = async () => {
     setLoading(true);
@@ -216,36 +210,6 @@ export default function FinancePage() {
     }
 
     setPaymentRecording(true);
-    let uploadedReceiptUrl = '';
-
-    if (receiptFile) {
-      setUploadingReceipt(true);
-      try {
-        const formData = new FormData();
-        formData.append('file', receiptFile);
-        const uploadRes = await fetch('/api/v1/finance/ledger/upload', {
-          method: 'POST',
-          body: formData,
-        });
-        const uploadData = await uploadRes.json();
-        if (!uploadData.success) {
-          alert('Receipt upload failed: ' + (uploadData.message || 'Unknown error'));
-          setUploadingReceipt(false);
-          setPaymentRecording(false);
-          return;
-        }
-        uploadedReceiptUrl = uploadData.url;
-      } catch (err) {
-        console.error('Receipt upload error:', err);
-        alert('Error uploading receipt.');
-        setUploadingReceipt(false);
-        setPaymentRecording(false);
-        return;
-      } finally {
-        setUploadingReceipt(false);
-      }
-    }
-
     try {
       const res = await fetch('/api/v1/finance/ledger', {
         method: 'POST',
@@ -256,7 +220,6 @@ export default function FinancePage() {
           paymentMethod: newPaymentMethod,
           transactionRef: newPaymentRef,
           remarks: newPaymentRemarks,
-          receiptUrl: uploadedReceiptUrl || undefined,
         }),
       });
 
@@ -276,10 +239,6 @@ export default function FinancePage() {
         setNewPaymentAmount('');
         setNewPaymentRef('');
         setNewPaymentRemarks('');
-        setReceiptFile(null);
-        if (receiptInputRef.current) {
-          receiptInputRef.current.value = '';
-        }
         
         // Refresh full list
         fetchLedgerData();
@@ -712,22 +671,9 @@ export default function FinancePage() {
                           <div key={pmt.id} className="p-3.5 bg-slate-900/40 border border-slate-850 rounded-xl text-xs space-y-1.5 hover:bg-slate-900/60 transition-all">
                             <div className="flex justify-between items-center">
                               <span className="font-extrabold text-white text-sm">₹{pmt.amount.toLocaleString('en-IN')}</span>
-                              <div className="flex items-center gap-1.5">
-                                {pmt.receiptUrl && (
-                                  <a
-                                    href={pmt.receiptUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-[9px] bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded text-amber-400 font-bold hover:bg-amber-500/20 transition-all inline-flex items-center gap-1"
-                                  >
-                                    <FileText className="w-3 h-3" />
-                                    <span>Receipt</span>
-                                  </a>
-                                )}
-                                <span className="font-mono text-[9px] bg-slate-950 border border-slate-850 px-2 py-0.5 rounded text-slate-400 capitalize">
-                                  {METHOD_LABELS[pmt.paymentMethod] || pmt.paymentMethod}
-                                </span>
-                              </div>
+                              <span className="font-mono text-[9px] bg-slate-950 border border-slate-850 px-2 py-0.5 rounded text-slate-400 capitalize">
+                                {METHOD_LABELS[pmt.paymentMethod] || pmt.paymentMethod}
+                              </span>
                             </div>
                             
                             {pmt.transactionRef && (
@@ -820,100 +766,6 @@ export default function FinancePage() {
                           disabled={selectedOrder.balanceOutstanding === 0}
                           className="w-full h-20 p-3 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700 placeholder-slate-600"
                         />
-                      </div>
-
-                      {/* Optional Receipt Upload/Capture Option */}
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center justify-between">
-                          <span>Payment Receipt (Optional)</span>
-                          {uploadingReceipt && <span className="text-[9px] text-amber-500 font-bold uppercase animate-pulse">Uploading...</span>}
-                        </label>
-                        <div className="mt-1 flex flex-col gap-2">
-                          <input
-                            type="file"
-                            accept="image/*,application/pdf"
-                            ref={receiptInputRef}
-                            onChange={(e) => {
-                              if (e.target.files && e.target.files[0]) {
-                                setReceiptFile(e.target.files[0]);
-                              }
-                            }}
-                            disabled={selectedOrder.balanceOutstanding === 0}
-                            className="hidden"
-                            id="receipt-file-input"
-                          />
-                          
-                          <div className="flex gap-2">
-                            {/* Standard Upload File Button */}
-                            <button
-                              type="button"
-                              onClick={() => document.getElementById('receipt-file-input')?.click()}
-                              disabled={selectedOrder.balanceOutstanding === 0}
-                              className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-[#131929] hover:bg-slate-900 border border-slate-850 hover:border-slate-750 rounded-lg text-slate-300 hover:text-white text-[11px] font-bold transition-all cursor-pointer disabled:opacity-50"
-                            >
-                              <Upload className="w-3.5 h-3.5 text-slate-450" />
-                              <span>Upload File</span>
-                            </button>
-
-                            {/* Camera Capture Button */}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const input = document.getElementById('receipt-file-input') as HTMLInputElement;
-                                if (input) {
-                                  input.setAttribute('capture', 'environment');
-                                  input.click();
-                                  // Reset capture attribute after click to keep file input flexible
-                                  setTimeout(() => {
-                                    input.removeAttribute('capture');
-                                  }, 1000);
-                                }
-                              }}
-                              disabled={selectedOrder.balanceOutstanding === 0}
-                              className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-[#131929] hover:bg-slate-900 border border-slate-850 hover:border-slate-750 rounded-lg text-slate-300 hover:text-white text-[11px] font-bold transition-all cursor-pointer disabled:opacity-50"
-                            >
-                              <Camera className="w-3.5 h-3.5 text-amber-500" />
-                              <span>Use Camera</span>
-                            </button>
-                          </div>
-
-                          {/* Selected File Preview Box */}
-                          {receiptFile && (
-                            <div className="mt-1 p-2 bg-slate-950/60 border border-slate-850 rounded-lg flex items-center justify-between gap-3 text-slate-350">
-                              <div className="flex items-center gap-2 min-w-0">
-                                {receiptFile.type.startsWith('image/') ? (
-                                  <img
-                                    src={URL.createObjectURL(receiptFile)}
-                                    alt="Receipt Preview"
-                                    className="w-8 h-8 rounded object-cover border border-slate-800 shrink-0"
-                                  />
-                                ) : (
-                                  <div className="w-8 h-8 rounded bg-slate-900 border border-slate-850 flex items-center justify-center shrink-0">
-                                    <FileText className="w-4 h-4 text-amber-400" />
-                                  </div>
-                                )}
-                                <div className="min-w-0 flex-1">
-                                  <p className="text-[10px] font-bold truncate leading-tight text-white">{receiptFile.name}</p>
-                                  <p className="text-[8px] text-slate-500 font-bold uppercase">
-                                    {(receiptFile.size / 1024 / 1024).toFixed(2)} MB
-                                  </p>
-                                </div>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setReceiptFile(null);
-                                  if (receiptInputRef.current) {
-                                    receiptInputRef.current.value = '';
-                                  }
-                                }}
-                                className="w-6 h-6 rounded bg-[#131929] hover:bg-slate-800 border border-slate-850 flex items-center justify-center text-slate-400 hover:text-red-400 transition-colors cursor-pointer shrink-0"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          )}
-                        </div>
                       </div>
 
                       {selectedOrder.balanceOutstanding === 0 ? (

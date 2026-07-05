@@ -101,7 +101,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { orderId, amount, paymentMethod, transactionRef, remarks, receiptUrl } = body;
+    const { orderId, amount, paymentMethod, transactionRef, remarks } = body;
 
     if (!orderId || !amount || !paymentMethod) {
       return NextResponse.json({ success: false, message: 'OrderId, amount, and paymentMethod are required.' }, { status: 400 });
@@ -133,7 +133,6 @@ export async function POST(req: Request) {
           transactionRef: transactionRef || null,
           remarks: remarks || 'Additional payment received.',
           recordedById: userPayload.id,
-          receiptUrl: receiptUrl || null,
         },
         include: {
           recordedBy: { select: { name: true } }
