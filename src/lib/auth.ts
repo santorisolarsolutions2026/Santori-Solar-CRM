@@ -76,7 +76,7 @@ export function getDefaultPermissionsForRole(role: string): string[] {
     case 'director':
       return [
         'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:assign',
-        'orders:create', 'orders:verify', 'orders:operations',
+        'orders:create', 'orders:verify', 'orders:finance_access', 'orders:operations',
         'team:view', 'attendance:view', 'team:manage', 'logs:view', 'leads:track', 'reports:view'
       ];
     case 'sales_head':
@@ -92,7 +92,7 @@ export function getDefaultPermissionsForRole(role: string): string[] {
       ];
     case 'finance':
       return [
-        'leads:view_all', 'orders:verify', 'reports:view'
+        'leads:view_all', 'orders:verify', 'orders:finance_access', 'reports:view'
       ];
     case 'operations':
       return [
@@ -142,7 +142,7 @@ export async function getUserPermissions(userId: number): Promise<string[]> {
   }
 
   const hasAnyOrderPermission = [
-    'orders:create', 'orders:verify', 'orders:operations', 'orders:view_all'
+    'orders:create', 'orders:verify', 'orders:operations', 'orders:finance_access', 'orders:view_all'
   ].some(p => finalPermissions.includes(p));
 
   if (hasAnyOrderPermission && !finalPermissions.includes('orders:view')) {
@@ -186,7 +186,7 @@ export async function getUserSession(userId: number): Promise<{ role: string; pe
   }
 
   const hasAnyOrderPermission = [
-    'orders:create', 'orders:verify', 'orders:operations', 'orders:view_all'
+    'orders:create', 'orders:verify', 'orders:operations', 'orders:finance_access', 'orders:view_all'
   ].some(p => finalPermissions.includes(p));
 
   if (hasAnyOrderPermission && !finalPermissions.includes('orders:view')) {
