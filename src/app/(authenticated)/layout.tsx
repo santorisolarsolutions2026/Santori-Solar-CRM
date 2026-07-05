@@ -250,6 +250,9 @@ export default function AuthenticatedLayout({
 
   // Profile modal states
   const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editEmployeeId, setEditEmployeeId] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [editPhotoPath, setEditPhotoPath] = useState('');
   const [uploadingEditPhoto, setUploadingEditPhoto] = useState(false);
@@ -259,6 +262,9 @@ export default function AuthenticatedLayout({
 
   const handleOpenProfile = () => {
     if (!user) return;
+    setEditName(user.name || '');
+    setEditEmail(user.email || '');
+    setEditEmployeeId(user.employeeId || '');
     setEditPhone(user.phone || '');
     setEditPhotoPath(user.photograph || '');
     setEditPhotoPreviewUrl('');
@@ -313,11 +319,16 @@ export default function AuthenticatedLayout({
     setUpdatingProfile(true);
     setUpdateError('');
 
+    const isAdmin = user.role === 'admin' || user.role.startsWith('admin:');
+
     try {
       const res = await fetch(`/api/v1/users/${user.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          name: isAdmin ? editName : undefined,
+          email: isAdmin ? editEmail : undefined,
+          employeeId: isAdmin ? editEmployeeId : undefined,
           phone: editPhone,
           photograph: editPhotoPath,
         }),
@@ -1031,31 +1042,61 @@ export default function AuthenticatedLayout({
                   <div className="grid grid-cols-2 gap-4 text-xs">
                     <div>
                       <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Full Name</span>
-                      <span className="text-white text-xs font-semibold block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg opacity-70">
-                        {user.name}
-                      </span>
+                      {user.role === 'admin' || user.role.startsWith('admin:') ? (
+                        <input
+                          type="text"
+                          required
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                        />
+                      ) : (
+                        <span className="text-white text-xs font-semibold block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg opacity-70 truncate" title={user.name}>
+                          {user.name}
+                        </span>
+                      )}
                     </div>
                     <div>
                       <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Employee ID</span>
-                      <span className="text-white text-xs font-mono block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg opacity-70">
-                        {user.employeeId || 'Not Set'}
-                      </span>
+                      {user.role === 'admin' || user.role.startsWith('admin:') ? (
+                        <input
+                          type="text"
+                          required
+                          value={editEmployeeId}
+                          onChange={(e) => setEditEmployeeId(e.target.value)}
+                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none font-mono"
+                        />
+                      ) : (
+                        <span className="text-white text-xs font-mono block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg opacity-70 truncate" title={user.employeeId || 'Not Set'}>
+                          {user.employeeId || 'Not Set'}
+                        </span>
+                      )}
                     </div>
                     <div>
                       <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Email Address</span>
-                      <span className="text-slate-300 text-xs font-mono block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg opacity-70">
-                        {user.email}
-                      </span>
+                      {user.role === 'admin' || user.role.startsWith('admin:') ? (
+                        <input
+                          type="email"
+                          required
+                          value={editEmail}
+                          onChange={(e) => setEditEmail(e.target.value)}
+                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none font-mono"
+                        />
+                      ) : (
+                        <span className="text-slate-300 text-xs font-mono block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg opacity-70 truncate" title={user.email}>
+                          {user.email}
+                        </span>
+                      )}
                     </div>
                     <div>
                       <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">System Role</span>
-                      <span className="text-slate-355 text-xs block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg capitalize opacity-70">
+                      <span className="text-slate-355 text-xs block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg capitalize opacity-70 truncate" title={user.role.includes(':') ? user.role.split(':')[1] : (roleLabels[user.role]?.label || user.role)}>
                         {user.role.includes(':') ? user.role.split(':')[1] : (roleLabels[user.role]?.label || user.role)}
                       </span>
                     </div>
                     <div>
                       <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Years in Company</span>
-                      <span className="text-slate-355 text-xs block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg opacity-70">
+                      <span className="text-slate-355 text-xs block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg opacity-70 truncate" title={calculateYearsInCompany(user.joiningDate)}>
                         {calculateYearsInCompany(user.joiningDate)}
                       </span>
                     </div>

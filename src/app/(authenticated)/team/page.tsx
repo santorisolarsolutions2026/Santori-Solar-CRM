@@ -286,6 +286,9 @@ export default function TeamManagementPage() {
   const [addPhotoPreviewUrl, setAddPhotoPreviewUrl] = useState('');
 
   // Edit Own Profile state
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editEmployeeId, setEditEmployeeId] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [editPhotoPath, setEditPhotoPath] = useState('');
   const [uploadingEditPhoto, setUploadingEditPhoto] = useState(false);
@@ -488,6 +491,9 @@ export default function TeamManagementPage() {
   const handleOpenProfile = (member: TeamMember) => {
     setSelectedMember(member);
     if (member.id === user?.id) {
+      setEditName(member.name);
+      setEditEmail(member.email);
+      setEditEmployeeId(member.employeeId || '');
       setEditPhone(member.phone || '');
       setEditPhotoPath(member.photograph || '');
       setUpdateError('');
@@ -879,6 +885,9 @@ export default function TeamManagementPage() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          name: isCurrentUserAdmin ? editName : undefined,
+          email: isCurrentUserAdmin ? editEmail : undefined,
+          employeeId: isCurrentUserAdmin ? editEmployeeId : undefined,
           phone: editPhone,
           photograph: editPhotoPath,
         }),
@@ -1551,25 +1560,61 @@ export default function TeamManagementPage() {
                     <div className="grid grid-cols-2 gap-4 text-xs">
                       <div>
                         <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Full Name</span>
-                        <span className="text-white text-xs font-semibold block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg opacity-70">
-                          {selectedMember.name}
-                        </span>
+                        {isCurrentUserAdmin ? (
+                          <input
+                            type="text"
+                            required
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                          />
+                        ) : (
+                          <span className="text-white text-xs font-semibold block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg opacity-70 truncate" title={selectedMember.name}>
+                            {selectedMember.name}
+                          </span>
+                        )}
+                      </div>
+                      <div>
+                        <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Employee ID</span>
+                        {isCurrentUserAdmin ? (
+                          <input
+                            type="text"
+                            required
+                            value={editEmployeeId}
+                            onChange={(e) => setEditEmployeeId(e.target.value)}
+                            className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none font-mono"
+                          />
+                        ) : (
+                          <span className="text-white text-xs font-mono block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg opacity-70 truncate" title={selectedMember.employeeId || 'Not Set'}>
+                            {selectedMember.employeeId || 'Not Set'}
+                          </span>
+                        )}
                       </div>
                       <div>
                         <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Email Address</span>
-                        <span className="text-slate-300 text-xs font-mono block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg opacity-70">
-                          {selectedMember.email}
-                        </span>
+                        {isCurrentUserAdmin ? (
+                          <input
+                            type="email"
+                            required
+                            value={editEmail}
+                            onChange={(e) => setEditEmail(e.target.value)}
+                            className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none font-mono"
+                          />
+                        ) : (
+                          <span className="text-slate-300 text-xs font-mono block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg opacity-70 truncate" title={selectedMember.email}>
+                            {selectedMember.email}
+                          </span>
+                        )}
                       </div>
                       <div>
                         <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">System Role</span>
-                        <span className="text-slate-355 text-xs block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg capitalize opacity-70">
+                        <span className="text-slate-355 text-xs block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg capitalize opacity-70 truncate" title={getRoleLabel(selectedMember.role)}>
                           {getRoleLabel(selectedMember.role)}
                         </span>
                       </div>
                       <div>
                         <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Years in Company</span>
-                        <span className="text-slate-355 text-xs block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg opacity-70">
+                        <span className="text-slate-355 text-xs block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg opacity-70 truncate" title={calculateYearsInCompany(selectedMember.joiningDate)}>
                           {calculateYearsInCompany(selectedMember.joiningDate)}
                         </span>
                       </div>
