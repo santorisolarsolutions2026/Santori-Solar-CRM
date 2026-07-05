@@ -472,7 +472,8 @@ select option {
 .light .bg-slate-900\/40,
 .light .bg-slate-900\/60,
 .light .bg-slate-900\/80,
-.light .bg-slate-850 {
+.light .bg-slate-850,
+.light .bg-\[\#0f1527\]\/95 {
   background-color: var(--bg-card) !important;
   border-color: var(--border-color) !important;
 }
