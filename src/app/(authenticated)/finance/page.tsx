@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import {
   CreditCard,
@@ -17,6 +17,10 @@ import {
   FileText,
   User,
   ArrowDownLeft,
+  Camera,
+  Upload,
+  Trash2,
+  Image,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -138,6 +142,8 @@ export default function FinancePage() {
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptUrl, setReceiptUrl] = useState('');
   const [receiptUploading, setReceiptUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const fetchLedgerData = async () => {
     setLoading(true);
@@ -828,40 +834,100 @@ export default function FinancePage() {
                       </div>
 
                       <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Receipt Image</label>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div>
-                            <span className="block text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">Upload File</span>
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={handleReceiptFileChange}
-                              disabled={selectedOrder.balanceOutstanding === 0 || receiptUploading}
-                              className="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-400 focus:outline-none focus:border-slate-700 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-slate-850 file:text-slate-200 hover:file:bg-slate-800 cursor-pointer"
-                            />
-                          </div>
-                          <div>
-                            <span className="block text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">Take Photo</span>
-                            <input
-                              type="file"
-                              accept="image/*"
-                              capture="environment"
-                              onChange={handleReceiptFileChange}
-                              disabled={selectedOrder.balanceOutstanding === 0 || receiptUploading}
-                              className="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-400 focus:outline-none focus:border-slate-700 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-slate-850 file:text-slate-200 hover:file:bg-slate-800 cursor-pointer"
-                            />
-                          </div>
-                        </div>
-                        {receiptUrl && (
-                          <div className="mt-2 text-[10px] text-emerald-400 font-bold flex items-center gap-1">
-                            <span>✓ Uploaded successfully.</span>
-                            <a href={receiptUrl} target="_blank" rel="noopener noreferrer" className="underline text-amber-400 hover:text-amber-300">View uploaded image</a>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Receipt Image</label>
+                        
+                        {/* Hidden file inputs */}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          ref={fileInputRef}
+                          onChange={handleReceiptFileChange}
+                          disabled={selectedOrder.balanceOutstanding === 0 || receiptUploading}
+                          className="hidden"
+                        />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          ref={cameraInputRef}
+                          onChange={handleReceiptFileChange}
+                          disabled={selectedOrder.balanceOutstanding === 0 || receiptUploading}
+                          className="hidden"
+                        />
+
+                        {/* State 1: Uploading */}
+                        {receiptUploading && (
+                          <div className="flex flex-col items-center justify-center p-6 bg-slate-950/60 border border-dashed border-amber-500/40 rounded-xl space-y-2 animate-pulse">
+                            <Loader2 className="w-6 h-6 text-amber-500 animate-spin" />
+                            <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">Uploading receipt to Vercel Blob...</span>
                           </div>
                         )}
-                        {receiptUploading && (
-                          <div className="mt-1 flex items-center gap-1.5 text-[10px] text-amber-400">
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                            <span>Uploading to Vercel Blob...</span>
+
+                        {/* State 2: Uploaded (Success Preview) */}
+                        {!receiptUploading && receiptUrl && (
+                          <div className="p-3 bg-slate-950 border border-emerald-500/30 rounded-xl space-y-3 relative group overflow-hidden">
+                            <div className="absolute top-2 right-2 z-10">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setReceiptUrl('');
+                                  setReceiptFile(null);
+                                }}
+                                className="p-1.5 bg-rose-500/10 border border-rose-500/20 text-rose-450 hover:bg-rose-500/25 rounded-lg transition-all cursor-pointer"
+                                title="Remove Receipt"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="w-12 h-12 bg-slate-900 border border-slate-800 rounded-lg flex items-center justify-center overflow-hidden bg-cover bg-center" style={{ backgroundImage: `url(${receiptUrl})` }}>
+                                {!receiptUrl && <Image className="w-5 h-5 text-slate-500" />}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[11px] font-bold text-emerald-400 truncate flex items-center gap-1">
+                                  <span>✓ Uploaded Successfully</span>
+                                </p>
+                                <a 
+                                  href={receiptUrl} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer" 
+                                  className="text-[10px] text-amber-400 hover:text-amber-300 font-bold underline mt-0.5 inline-block"
+                                >
+                                  View Full Receipt Image
+                                </a>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* State 3: Ready to Upload (Empty Form) */}
+                        {!receiptUploading && !receiptUrl && (
+                          <div className="grid grid-cols-2 gap-3">
+                            <button
+                              type="button"
+                              onClick={() => fileInputRef.current?.click()}
+                              disabled={selectedOrder.balanceOutstanding === 0}
+                              className="flex flex-col items-center justify-center p-4 bg-slate-950 hover:bg-slate-900 border border-slate-850 hover:border-amber-500/30 rounded-xl space-y-1.5 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed group"
+                            >
+                              <div className="w-8 h-8 bg-slate-900 border border-slate-800 group-hover:border-amber-500/20 rounded-lg flex items-center justify-center transition-all">
+                                <Upload className="w-4 h-4 text-slate-400 group-hover:text-amber-400 transition-colors" />
+                              </div>
+                              <span className="text-[10px] font-bold text-slate-300 group-hover:text-white transition-colors">Upload File</span>
+                              <span className="text-[8px] text-slate-500">From Device</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => cameraInputRef.current?.click()}
+                              disabled={selectedOrder.balanceOutstanding === 0}
+                              className="flex flex-col items-center justify-center p-4 bg-slate-950 hover:bg-slate-900 border border-slate-850 hover:border-amber-500/30 rounded-xl space-y-1.5 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed group"
+                            >
+                              <div className="w-8 h-8 bg-slate-900 border border-slate-800 group-hover:border-amber-500/20 rounded-lg flex items-center justify-center transition-all">
+                                <Camera className="w-4 h-4 text-slate-400 group-hover:text-amber-400 transition-colors" />
+                              </div>
+                              <span className="text-[10px] font-bold text-slate-300 group-hover:text-white transition-colors">Take Photo</span>
+                              <span className="text-[8px] text-slate-500">Open Camera</span>
+                            </button>
                           </div>
                         )}
                       </div>
