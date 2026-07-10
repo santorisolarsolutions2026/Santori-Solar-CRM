@@ -584,8 +584,12 @@ export default function AuthenticatedLayout({
       <aside className="hidden md:flex flex-col w-64 bg-[#111625] border-r border-slate-800 shadow-xl">
         <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800">
           <Link href="/dashboard" className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-tr from-amber-500 to-yellow-400 rounded-lg flex items-center justify-center shadow-md shadow-amber-500/10">
-              <Sun className="w-5 h-5 text-slate-950 font-bold" />
+            <div className="w-8 h-8 bg-slate-900 border border-slate-800 rounded-lg flex items-center justify-center overflow-hidden p-1 shadow-md shadow-black/20">
+              <img
+                src="/logo.png"
+                alt="Santori Solar Solutions Logo"
+                className="w-full h-full object-contain"
+              />
             </div>
             <span className="text-xl font-extrabold text-white tracking-wide">
               Solar<span className="text-amber-400">CRM</span>
@@ -701,9 +705,18 @@ export default function AuthenticatedLayout({
         <div className="fixed inset-0 z-50 flex md:hidden bg-black/60 backdrop-blur-sm">
           <div className="relative w-64 max-w-xs bg-[#111625] flex flex-col h-full shadow-2xl animate-slide-in">
             <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800">
-              <span className="text-xl font-extrabold text-white tracking-wide">
-                Solar<span className="text-amber-400">CRM</span>
-              </span>
+              <Link href="/dashboard" className="flex items-center gap-3" onClick={() => setSidebarOpen(false)}>
+                <div className="w-8 h-8 bg-slate-900 border border-slate-800 rounded-lg flex items-center justify-center overflow-hidden p-1 shadow-md shadow-black/20">
+                  <img
+                    src="/logo.png"
+                    alt="Santori Solar Solutions Logo"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <span className="text-xl font-extrabold text-white tracking-wide">
+                  Solar<span className="text-amber-400">CRM</span>
+                </span>
+              </Link>
               <button onClick={() => setSidebarOpen(false)} className="text-slate-400 hover:text-white">
                 <X className="w-6 h-6" />
               </button>
