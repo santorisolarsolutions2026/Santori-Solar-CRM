@@ -859,7 +859,7 @@ export default function FinancePage() {
                         {receiptUploading && (
                           <div className="flex flex-col items-center justify-center p-6 bg-slate-950/60 border border-dashed border-amber-500/40 rounded-xl space-y-2 animate-pulse">
                             <Loader2 className="w-6 h-6 text-amber-500 animate-spin" />
-                            <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">Image being uploaded to vercel blob</span>
+                            <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">Receipt is Uploading</span>
                           </div>
                         )}
 
