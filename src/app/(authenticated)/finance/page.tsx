@@ -829,13 +829,29 @@ export default function FinancePage() {
 
                       <div>
                         <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Receipt Image</label>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleReceiptFileChange}
-                          disabled={selectedOrder.balanceOutstanding === 0 || receiptUploading}
-                          className="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-400 focus:outline-none focus:border-slate-700 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-slate-850 file:text-slate-200 hover:file:bg-slate-800 cursor-pointer"
-                        />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <span className="block text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">Upload File</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleReceiptFileChange}
+                              disabled={selectedOrder.balanceOutstanding === 0 || receiptUploading}
+                              className="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-400 focus:outline-none focus:border-slate-700 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-slate-850 file:text-slate-200 hover:file:bg-slate-800 cursor-pointer"
+                            />
+                          </div>
+                          <div>
+                            <span className="block text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">Take Photo</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              capture="environment"
+                              onChange={handleReceiptFileChange}
+                              disabled={selectedOrder.balanceOutstanding === 0 || receiptUploading}
+                              className="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-400 focus:outline-none focus:border-slate-700 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-slate-850 file:text-slate-200 hover:file:bg-slate-800 cursor-pointer"
+                            />
+                          </div>
+                        </div>
                         {receiptUrl && (
                           <div className="mt-2 text-[10px] text-emerald-400 font-bold flex items-center gap-1">
                             <span>✓ Uploaded successfully.</span>
