@@ -28,6 +28,7 @@ interface Payment {
   paymentDate: string;
   remarks: string | null;
   recordedBy: { id: number; name: string };
+  receiptUrl?: string | null;
 }
 
 interface Order {
@@ -134,6 +135,9 @@ export default function FinancePage() {
   const [newPaymentRef, setNewPaymentRef] = useState('');
   const [newPaymentRemarks, setNewPaymentRemarks] = useState('');
   const [paymentRecording, setPaymentRecording] = useState(false);
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptUrl, setReceiptUrl] = useState('');
+  const [receiptUploading, setReceiptUploading] = useState(false);
 
   const fetchLedgerData = async () => {
     setLoading(true);
@@ -198,6 +202,44 @@ export default function FinancePage() {
     }
   };
 
+  // Handle receipt image upload
+  const handleReceiptFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Only image files are allowed as receipt copies.');
+      return;
+    }
+
+    setReceiptFile(file);
+    setReceiptUploading(true);
+    setReceiptUrl('');
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch('/api/v1/finance/receipt-upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success) {
+        setReceiptUrl(data.url);
+      } else {
+        alert(data.message || 'Failed to upload receipt copy.');
+        setReceiptFile(null);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error uploading receipt copy.');
+      setReceiptFile(null);
+    } finally {
+      setReceiptUploading(false);
+    }
+  };
+
   // Add ledger payment action
   const handleRecordPayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -220,6 +262,7 @@ export default function FinancePage() {
           paymentMethod: newPaymentMethod,
           transactionRef: newPaymentRef,
           remarks: newPaymentRemarks,
+          receiptUrl: receiptUrl || null,
         }),
       });
 
@@ -239,6 +282,8 @@ export default function FinancePage() {
         setNewPaymentAmount('');
         setNewPaymentRef('');
         setNewPaymentRemarks('');
+        setReceiptFile(null);
+        setReceiptUrl('');
         
         // Refresh full list
         fetchLedgerData();
@@ -682,6 +727,20 @@ export default function FinancePage() {
                             {pmt.remarks && (
                               <p className="text-[11px] text-slate-300 italic">"{pmt.remarks}"</p>
                             )}
+                            {pmt.receiptUrl && (
+                              <div className="flex items-center gap-1.5 pt-0.5">
+                                <span className="text-[10px] text-slate-400">Receipt copy:</span>
+                                <a 
+                                  href={pmt.receiptUrl} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer" 
+                                  className="text-[10px] text-amber-400 hover:underline font-bold flex items-center gap-1"
+                                >
+                                  <FileText className="w-3 h-3 text-amber-400" />
+                                  <span>View Image</span>
+                                </a>
+                              </div>
+                            )}
 
                             <div className="flex items-center justify-between text-[9px] text-slate-500 font-medium pt-1.5 border-t border-slate-800/40">
                               <span className="flex items-center gap-1">
@@ -768,6 +827,29 @@ export default function FinancePage() {
                         />
                       </div>
 
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Receipt Image</label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleReceiptFileChange}
+                          disabled={selectedOrder.balanceOutstanding === 0 || receiptUploading}
+                          className="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-400 focus:outline-none focus:border-slate-700 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-slate-850 file:text-slate-200 hover:file:bg-slate-800 cursor-pointer"
+                        />
+                        {receiptUrl && (
+                          <div className="mt-2 text-[10px] text-emerald-400 font-bold flex items-center gap-1">
+                            <span>✓ Uploaded successfully.</span>
+                            <a href={receiptUrl} target="_blank" rel="noopener noreferrer" className="underline text-amber-400 hover:text-amber-300">View uploaded image</a>
+                          </div>
+                        )}
+                        {receiptUploading && (
+                          <div className="mt-1 flex items-center gap-1.5 text-[10px] text-amber-400">
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                            <span>Uploading to Vercel Blob...</span>
+                          </div>
+                        )}
+                      </div>
+
                       {selectedOrder.balanceOutstanding === 0 ? (
                         <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs rounded-lg font-bold text-center">
                           ✓ This ledger has been fully cleared.
@@ -775,7 +857,7 @@ export default function FinancePage() {
                       ) : (
                         <button
                           type="submit"
-                          disabled={paymentRecording}
+                          disabled={paymentRecording || receiptUploading}
                           className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md shadow-amber-500/10 flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
                         >
                           {paymentRecording ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <PlusCircle className="w-3.5 h-3.5" />}
