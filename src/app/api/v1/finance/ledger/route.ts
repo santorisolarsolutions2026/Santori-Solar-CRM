@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
-import { put } from '@vercel/blob';
 
 // GET /api/v1/finance/ledger
 export async function GET(req: Request) {
@@ -101,26 +100,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to modify ledger.' }, { status: 403 });
     }
 
-    const contentType = req.headers.get('content-type') || '';
-    let orderId: string, amount: string, paymentMethod: string, transactionRef: string | null = null, remarks: string | null = null;
-    let file: File | null = null;
-
-    if (contentType.includes('multipart/form-data')) {
-      const formData = await req.formData();
-      orderId = formData.get('orderId') as string;
-      amount = formData.get('amount') as string;
-      paymentMethod = formData.get('paymentMethod') as string;
-      transactionRef = formData.get('transactionRef') as string | null;
-      remarks = formData.get('remarks') as string | null;
-      file = formData.get('file') as File | null;
-    } else {
-      const body = await req.json();
-      orderId = body.orderId;
-      amount = body.amount;
-      paymentMethod = body.paymentMethod;
-      transactionRef = body.transactionRef;
-      remarks = body.remarks;
-    }
+    const body = await req.json();
+    const { orderId, amount, paymentMethod, transactionRef, remarks } = body;
 
     if (!orderId || !amount || !paymentMethod) {
       return NextResponse.json({ success: false, message: 'OrderId, amount, and paymentMethod are required.' }, { status: 400 });
@@ -142,34 +123,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'Order not found.' }, { status: 404 });
     }
 
-    let receiptPath: string | null = null;
-    if (file) {
-      const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'application/pdf'];
-      const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-
-      if (!ALLOWED_MIMES.includes(file.type)) {
-        return NextResponse.json(
-          { success: false, message: `Invalid file type: ${file.type}. Only JPEG, PNG, and PDF are allowed.` },
-          { status: 400 }
-        );
-      }
-
-      if (file.size > MAX_FILE_SIZE) {
-        return NextResponse.json(
-          { success: false, message: 'File size exceeds 5MB limit.' },
-          { status: 400 }
-        );
-      }
-
-      // Upload to Vercel Blob
-      const fileExt = file.name.split('.').pop() || 'dat';
-      const blobPath = `receipts/receipt_${orderIdNum}_${Date.now()}.${fileExt}`;
-      const blob = await put(blobPath, file, {
-        access: 'public',
-      });
-      receiptPath = blob.url;
-    }
-
     // Create payment entry
     const payment = await prisma.$transaction(async (tx) => {
       const newPayment = await tx.payment.create({
@@ -180,7 +133,6 @@ export async function POST(req: Request) {
           transactionRef: transactionRef || null,
           remarks: remarks || 'Additional payment received.',
           recordedById: userPayload.id,
-          receiptPath: receiptPath,
         },
         include: {
           recordedBy: { select: { name: true } }
@@ -194,7 +146,7 @@ export async function POST(req: Request) {
           userId: userPayload.id,
           fromStatus: 13,
           toStatus: 13,
-          remark: `Payment of ₹${amountNum.toLocaleString('en-IN')} recorded by Finance (${userPayload.name}). Method: ${paymentMethod}. Ref: ${transactionRef || 'N/A'}${receiptPath ? ' with receipt attachment' : ''}`
+          remark: `Payment of ₹${amountNum.toLocaleString('en-IN')} recorded by Finance (${userPayload.name}). Method: ${paymentMethod}. Ref: ${transactionRef || 'N/A'}`
         }
       });
 
