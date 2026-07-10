@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import {
   CreditCard,
@@ -17,6 +17,8 @@ import {
   FileText,
   User,
   ArrowDownLeft,
+  Camera,
+  Upload,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -28,6 +30,7 @@ interface Payment {
   paymentDate: string;
   remarks: string | null;
   recordedBy: { id: number; name: string };
+  receiptPath?: string | null;
 }
 
 interface Order {
@@ -135,6 +138,97 @@ export default function FinancePage() {
   const [newPaymentRemarks, setNewPaymentRemarks] = useState('');
   const [paymentRecording, setPaymentRecording] = useState(false);
 
+  // Optional payment receipt inputs
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Camera Modal States for receipts
+  const [cameraModal, setCameraModal] = useState<{
+    isOpen: boolean;
+    onCapture: (file: File) => void;
+  }>({
+    isOpen: false,
+    onCapture: () => {},
+  });
+
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }
+      });
+      setCameraStream(stream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Could not access camera. Please check permissions.');
+      setCameraModal(prev => ({ ...prev, isOpen: false }));
+    }
+  };
+
+  const stopCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
+    }
+    setCapturedPhoto(null);
+  };
+
+  useEffect(() => {
+    if (cameraModal.isOpen) {
+      startCamera();
+    } else {
+      stopCamera();
+    }
+    return () => {
+      stopCamera();
+    };
+  }, [cameraModal.isOpen]);
+
+  const capturePhoto = () => {
+    if (!videoRef.current) return;
+    const video = videoRef.current;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      setCapturedPhoto(dataUrl);
+      if (cameraStream) {
+        cameraStream.getVideoTracks().forEach(track => track.enabled = false);
+      }
+    }
+  };
+
+  const retakePhoto = () => {
+    setCapturedPhoto(null);
+    if (cameraStream) {
+      cameraStream.getVideoTracks().forEach(track => track.enabled = true);
+    }
+  };
+
+  const confirmPhoto = () => {
+    if (!capturedPhoto) return;
+    const byteString = atob(capturedPhoto.split(',')[1]);
+    const mimeString = capturedPhoto.split(',')[0].split(':')[1].split(';')[0];
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+    const blob = new Blob([ab], { type: mimeString });
+    const file = new window.File([blob], `receipt_${Date.now()}.jpg`, { type: 'image/jpeg' });
+    cameraModal.onCapture(file);
+    setCameraModal(prev => ({ ...prev, isOpen: false }));
+  };
+
   const fetchLedgerData = async () => {
     setLoading(true);
     try {
@@ -209,18 +303,25 @@ export default function FinancePage() {
       return;
     }
 
+    const formData = new FormData();
+    formData.append('orderId', selectedOrder.id.toString());
+    formData.append('amount', amt.toString());
+    formData.append('paymentMethod', newPaymentMethod);
+    if (newPaymentRef) {
+      formData.append('transactionRef', newPaymentRef);
+    }
+    if (newPaymentRemarks) {
+      formData.append('remarks', newPaymentRemarks);
+    }
+    if (receiptFile) {
+      formData.append('file', receiptFile);
+    }
+
     setPaymentRecording(true);
     try {
       const res = await fetch('/api/v1/finance/ledger', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orderId: selectedOrder.id,
-          amount: amt,
-          paymentMethod: newPaymentMethod,
-          transactionRef: newPaymentRef,
-          remarks: newPaymentRemarks,
-        }),
+        body: formData,
       });
 
       const data = await res.json();
@@ -239,6 +340,7 @@ export default function FinancePage() {
         setNewPaymentAmount('');
         setNewPaymentRef('');
         setNewPaymentRemarks('');
+        setReceiptFile(null);
         
         // Refresh full list
         fetchLedgerData();
@@ -682,6 +784,20 @@ export default function FinancePage() {
                             {pmt.remarks && (
                               <p className="text-[11px] text-slate-300 italic">"{pmt.remarks}"</p>
                             )}
+                            {pmt.receiptPath && (
+                              <div className="pt-1 flex items-center gap-1.5">
+                                <span className="text-[10px] text-slate-500">Receipt:</span>
+                                <a 
+                                  href={pmt.receiptPath} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer" 
+                                  className="text-amber-400 hover:text-amber-300 hover:underline font-bold text-[10px] flex items-center gap-1 inline-flex"
+                                >
+                                  <FileText className="w-3 h-3 text-amber-500" />
+                                  View Receipt File
+                                </a>
+                              </div>
+                            )}
 
                             <div className="flex items-center justify-between text-[9px] text-slate-500 font-medium pt-1.5 border-t border-slate-800/40">
                               <span className="flex items-center gap-1">
@@ -768,6 +884,62 @@ export default function FinancePage() {
                         />
                       </div>
 
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Receipt Attachment (Optional)</label>
+                        
+                        {receiptFile ? (
+                          <div className="flex items-center justify-between p-2 bg-slate-950 border border-slate-800 rounded-lg text-xs">
+                            <div className="flex items-center gap-2 truncate">
+                              <FileText className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                              <span className="text-slate-300 truncate max-w-[120px] font-medium">{receiptFile.name}</span>
+                              <span className="text-slate-500 font-mono text-[9px]">({(receiptFile.size / 1024).toFixed(0)} KB)</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setReceiptFile(null)}
+                              className="text-slate-500 hover:text-red-400 cursor-pointer p-1"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              type="button"
+                              onClick={() => fileInputRef.current?.click()}
+                              disabled={selectedOrder.balanceOutstanding === 0}
+                              className="flex items-center justify-center gap-1.5 py-2 px-3 bg-slate-950 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-350 hover:text-white rounded-lg text-xs font-semibold transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <Upload className="w-3.5 h-3.5 text-amber-500" />
+                              <span>Upload File</span>
+                            </button>
+                            <input
+                              type="file"
+                              ref={fileInputRef}
+                              accept="image/*,application/pdf"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) setReceiptFile(file);
+                              }}
+                            />
+                            
+                            <button
+                              type="button"
+                              onClick={() => setCameraModal({
+                                isOpen: true,
+                                onCapture: (file) => setReceiptFile(file)
+                              })}
+                              disabled={selectedOrder.balanceOutstanding === 0}
+                              className="flex items-center justify-center gap-1.5 py-2 px-3 bg-slate-950 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-350 hover:text-white rounded-lg text-xs font-semibold transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <Camera className="w-3.5 h-3.5 text-amber-500" />
+                              <span>Click Photo</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
                       {selectedOrder.balanceOutstanding === 0 ? (
                         <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs rounded-lg font-bold text-center">
                           ✓ This ledger has been fully cleared.
@@ -790,6 +962,80 @@ export default function FinancePage() {
 
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* WebRTC Camera Modal */}
+      {cameraModal.isOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 px-4 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-2xl max-w-md w-full space-y-4 text-center text-white">
+            <div className="flex justify-between items-center pb-2 border-b border-slate-800">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-200">Capture Receipt Photo</span>
+              <button 
+                type="button" 
+                onClick={() => setCameraModal(prev => ({ ...prev, isOpen: false }))}
+                className="text-slate-400 hover:text-white cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-slate-950 border border-slate-850 flex items-center justify-center">
+              {capturedPhoto ? (
+                <img 
+                  src={capturedPhoto} 
+                  alt="Captured Preview" 
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <video 
+                  ref={videoRef}
+                  autoPlay 
+                  playsInline 
+                  className="w-full h-full object-cover"
+                />
+              )}
+            </div>
+
+            <div className="flex gap-3 justify-center pt-2">
+              {capturedPhoto ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={retakePhoto}
+                    className="w-1/2 py-2 bg-slate-800 hover:bg-slate-750 text-slate-350 hover:text-white rounded-lg text-xs font-bold transition-all cursor-pointer"
+                  >
+                    Retake
+                  </button>
+                  <button
+                    type="button"
+                    onClick={confirmPhoto}
+                    className="w-1/2 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md shadow-emerald-500/10"
+                  >
+                    Use Photo
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setCameraModal(prev => ({ ...prev, isOpen: false }))}
+                    className="w-1/3 py-2 bg-slate-800 hover:bg-slate-750 text-slate-400 hover:text-slate-250 rounded-lg text-xs cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={capturePhoto}
+                    className="w-2/3 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md shadow-amber-500/10 flex items-center justify-center gap-1.5"
+                  >
+                    <Camera className="w-4 h-4" />
+                    <span>Capture Photo</span>
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
