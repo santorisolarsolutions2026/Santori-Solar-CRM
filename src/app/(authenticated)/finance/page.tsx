@@ -21,6 +21,7 @@ import {
   Upload,
   Trash2,
   Image,
+  SlidersHorizontal,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -144,6 +145,28 @@ export default function FinancePage() {
   const [receiptUploading, setReceiptUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  // Filter States
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterDateRange, setFilterDateRange] = useState('all'); // all | today | yesterday | last7 | last30 | custom
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [filterPaymentMethod, setFilterPaymentMethod] = useState('all'); // all | cash | upi | cheque | neft | bank_transfer
+  const [filterBalanceStatus, setFilterBalanceStatus] = useState('all'); // all | cleared | outstanding
+  const [filterMinAmount, setFilterMinAmount] = useState('');
+  const [filterMaxAmount, setFilterMaxAmount] = useState('');
+  const [filterOrderStatus, setFilterOrderStatus] = useState('all'); // all | submitted | finance_verified | ops_assigned | completed
+
+  const handleResetFilters = () => {
+    setFilterDateRange('all');
+    setStartDate('');
+    setEndDate('');
+    setFilterPaymentMethod('all');
+    setFilterBalanceStatus('all');
+    setFilterMinAmount('');
+    setFilterMaxAmount('');
+    setFilterOrderStatus('all');
+  };
 
   const fetchLedgerData = async () => {
     setLoading(true);
@@ -305,8 +328,72 @@ export default function FinancePage() {
     }
   };
 
-  const pendingOrders = orders.filter(o => o.status === 'submitted');
-  const verifiedOrders = orders.filter(o => o.status !== 'submitted');
+  const filteredOrders = orders.filter((order) => {
+    // 1. Order Status Filter
+    if (filterOrderStatus !== 'all') {
+      if (order.status !== filterOrderStatus) return false;
+    }
+
+    // 2. Payment Method Filter
+    if (filterPaymentMethod !== 'all') {
+      const hasMatchingPayment = order.payments.some(p => p.paymentMethod === filterPaymentMethod);
+      const matchesDownPayment = order.paymentMethod === filterPaymentMethod;
+      if (!hasMatchingPayment && !matchesDownPayment) return false;
+    }
+
+    // 3. Outstanding Balance Status Filter
+    if (filterBalanceStatus !== 'all') {
+      if (filterBalanceStatus === 'cleared' && order.balanceOutstanding > 0) return false;
+      if (filterBalanceStatus === 'outstanding' && order.balanceOutstanding === 0) return false;
+    }
+
+    // 4. Amount Range Filter
+    const val = order.totalValue;
+    if (filterMinAmount) {
+      const min = parseFloat(filterMinAmount);
+      if (!isNaN(min) && val < min) return false;
+    }
+    if (filterMaxAmount) {
+      const max = parseFloat(filterMaxAmount);
+      if (!isNaN(max) && val > max) return false;
+    }
+
+    // 5. Date Filter
+    if (filterDateRange !== 'all') {
+      const orderDate = new Date(order.createdAt);
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      if (filterDateRange === 'today') {
+        if (orderDate < startOfToday) return false;
+      } else if (filterDateRange === 'yesterday') {
+        const startOfYesterday = new Date(startOfToday.getTime() - 24 * 60 * 60 * 1000);
+        if (orderDate < startOfYesterday || orderDate >= startOfToday) return false;
+      } else if (filterDateRange === 'last7') {
+        const sevenDaysAgo = new Date(startOfToday.getTime() - 7 * 24 * 60 * 60 * 1000);
+        if (orderDate < sevenDaysAgo) return false;
+      } else if (filterDateRange === 'last30') {
+        const thirtyDaysAgo = new Date(startOfToday.getTime() - 30 * 24 * 60 * 60 * 1000);
+        if (orderDate < thirtyDaysAgo) return false;
+      } else if (filterDateRange === 'custom') {
+        if (startDate) {
+          const start = new Date(startDate);
+          start.setHours(0,0,0,0);
+          if (orderDate < start) return false;
+        }
+        if (endDate) {
+          const end = new Date(endDate);
+          end.setHours(23,59,59,999);
+          if (orderDate > end) return false;
+        }
+      }
+    }
+
+    return true;
+  });
+
+  const pendingOrders = filteredOrders.filter(o => o.status === 'submitted');
+  const verifiedOrders = filteredOrders.filter(o => o.status !== 'submitted');
 
   // Stats calculation
   const totalValue = verifiedOrders.reduce((sum, o) => sum + o.totalValue, 0);
@@ -322,17 +409,168 @@ export default function FinancePage() {
           <p className="text-xs text-slate-400 mt-1">Verify incoming sales orders and maintain the financial transaction ledger.</p>
         </div>
         
-        <form onSubmit={handleSearchSubmit} className="relative w-full sm:w-64">
-          <input
-            type="text"
-            placeholder="Search by client, order, connection..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-slate-200 text-xs focus:outline-none focus:border-slate-700 placeholder-slate-500"
-          />
-          <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
-        </form>
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <form onSubmit={handleSearchSubmit} className="relative w-full sm:w-64">
+            <input
+              type="text"
+              placeholder="Search by client, order, connection..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-slate-200 text-xs focus:outline-none focus:border-slate-700 placeholder-slate-500"
+            />
+            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+          </form>
+
+          <button
+            type="button"
+            onClick={() => setShowFilters(!showFilters)}
+            className={`px-3 py-2 border rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              showFilters || filterDateRange !== 'all' || filterPaymentMethod !== 'all' || filterBalanceStatus !== 'all' || filterMinAmount || filterMaxAmount || filterOrderStatus !== 'all'
+                ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+                : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-750'
+            }`}
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            <span className="relative">
+              Filters
+              {(filterDateRange !== 'all' || filterPaymentMethod !== 'all' || filterBalanceStatus !== 'all' || filterMinAmount || filterMaxAmount || filterOrderStatus !== 'all') && (
+                <span className="absolute -top-1 -right-2 w-1.5 h-1.5 bg-amber-500 rounded-full animate-ping" />
+              )}
+            </span>
+          </button>
+        </div>
       </div>
+
+      {/* Advanced Filter Panel */}
+      {showFilters && (
+        <div className="p-4 bg-slate-900/40 border border-slate-805 rounded-xl shadow-xl space-y-4">
+          <div className="flex justify-between items-center border-b border-slate-800/60 pb-2.5">
+            <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+              <SlidersHorizontal className="w-3.5 h-3.5 text-amber-500" />
+              <span>Advanced Filters</span>
+            </h3>
+            <button
+              type="button"
+              onClick={handleResetFilters}
+              className="text-[10px] text-rose-450 hover:text-rose-400 hover:underline font-bold"
+            >
+              Clear Filters
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5">
+            {/* Date Range Filter */}
+            <div className="space-y-1">
+              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Date Created</label>
+              <select
+                value={filterDateRange}
+                onChange={(e) => setFilterDateRange(e.target.value)}
+                className="w-full px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700 capitalize"
+              >
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="last7">Last 7 Days</option>
+                <option value="last30">Last 30 Days</option>
+                <option value="custom">Custom Range...</option>
+              </select>
+            </div>
+
+            {/* Payment Method Filter */}
+            <div className="space-y-1">
+              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Payment Method</label>
+              <select
+                value={filterPaymentMethod}
+                onChange={(e) => setFilterPaymentMethod(e.target.value)}
+                className="w-full px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700 capitalize"
+              >
+                <option value="all">All Methods</option>
+                {PAYMENT_METHODS.map((m) => (
+                  <option key={m.value} value={m.value}>{m.label}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Outstanding Balance Filter */}
+            <div className="space-y-1">
+              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Balance Status</label>
+              <select
+                value={filterBalanceStatus}
+                onChange={(e) => setFilterBalanceStatus(e.target.value)}
+                className="w-full px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700"
+              >
+                <option value="all">All Ledgers</option>
+                <option value="cleared">Fully Cleared (Paid)</option>
+                <option value="outstanding">Outstanding Balance</option>
+              </select>
+            </div>
+
+            {/* Order Status Filter */}
+            <div className="space-y-1">
+              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Order Status</label>
+              <select
+                value={filterOrderStatus}
+                onChange={(e) => setFilterOrderStatus(e.target.value)}
+                className="w-full px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700 capitalize"
+              >
+                <option value="all">All Statuses</option>
+                <option value="submitted">Submitted (Awaiting)</option>
+                <option value="finance_verified">Verified</option>
+                <option value="ops_assigned">Scheduled</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-800/40">
+            {/* Custom Date Inputs */}
+            {filterDateRange === 'custom' ? (
+              <div className="space-y-1">
+                <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Custom Date Range</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="flex-1 px-2.5 py-1.5 bg-slate-950 border border-slate-805 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-slate-700"
+                  />
+                  <span className="text-slate-500 text-xs">to</span>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="flex-1 px-2.5 py-1.5 bg-slate-950 border border-slate-805 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-slate-700"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="hidden md:block" />
+            )}
+
+            {/* Contract Value Range */}
+            <div className="space-y-1">
+              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Contract Value Range (₹)</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  placeholder="Min Value"
+                  value={filterMinAmount}
+                  onChange={(e) => setFilterMinAmount(e.target.value)}
+                  className="flex-1 px-2.5 py-1.5 bg-slate-950 border border-slate-805 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-slate-700 placeholder-slate-700"
+                />
+                <span className="text-slate-500 text-xs">to</span>
+                <input
+                  type="number"
+                  placeholder="Max Value"
+                  value={filterMaxAmount}
+                  onChange={(e) => setFilterMaxAmount(e.target.value)}
+                  className="flex-1 px-2.5 py-1.5 bg-slate-950 border border-slate-805 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-slate-700 placeholder-slate-700"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Analytics Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
