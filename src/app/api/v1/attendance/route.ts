@@ -21,6 +21,8 @@ export async function GET(req: Request) {
     const dateParam = searchParams.get('date');
     const targetUserIdStr = searchParams.get('user_id');
     const scope = searchParams.get('scope') || 'team'; // team | personal
+    const monthParam = searchParams.get('month');
+    const yearParam = searchParams.get('year');
 
     const userPermissions = await getUserPermissions(userPayload.id);
     const hasViewAll = userPermissions.includes('team:view') || ['admin', 'director', 'sales_head', 'manager', 'tl', 'psa_tl'].includes(userPayload.role);
@@ -40,6 +42,17 @@ export async function GET(req: Request) {
       const d = new Date(`${dateParam}T00:00:00.000Z`);
       if (!isNaN(d.getTime())) {
         where.date = d;
+      }
+    } else if (monthParam && yearParam) {
+      const year = parseInt(yearParam, 10);
+      const month = parseInt(monthParam, 10);
+      if (!isNaN(year) && !isNaN(month)) {
+        const start = new Date(Date.UTC(year, month - 1, 1));
+        const end = new Date(Date.UTC(year, month, 1));
+        where.date = {
+          gte: start,
+          lt: end
+        };
       }
     }
 
