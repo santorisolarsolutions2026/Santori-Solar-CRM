@@ -367,6 +367,16 @@ export default function LeadsPage() {
     skippedCount: number;
     skipped: { mobile: string; customerName: string; reason: string }[];
   } | null>(null);
+  const [importProgress, setImportProgress] = useState<{
+    total: number;
+    current: number;
+    percent: number;
+    importedCount: number;
+    skippedCount: number;
+    statusText: string;
+  } | null>(null);
+  const [importCancelRequested, setImportCancelRequested] = useState(false);
+  const cancelRef = useRef(false);
 
   // Fetch consultants list for filter
   const fetchConsultants = async () => {
@@ -642,11 +652,28 @@ export default function LeadsPage() {
     reader.readAsText(file);
   };
 
-  // Execute CSV Import
+  // Execute CSV Import (Client-side Chunking)
   const handleExecuteImport = async () => {
     if (csvRows.length === 0) return;
+
+    if (!columnMapping.customerName || !columnMapping.mobile) {
+      alert("Please map the required columns: Customer Name and Contact Number (Mobile).");
+      return;
+    }
+
     setImporting(true);
     setImportResult(null);
+    setImportCancelRequested(false);
+    cancelRef.current = false;
+
+    setImportProgress({
+      total: csvRows.length,
+      current: 0,
+      percent: 0,
+      importedCount: 0,
+      skippedCount: 0,
+      statusText: 'Preparing leads for import...',
+    });
 
     try {
       // Build the list of mapped items
@@ -710,30 +737,90 @@ export default function LeadsPage() {
         return item;
       });
 
-      const res = await fetch('/api/v1/leads/import', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ leads: leadsToImport }),
+      const BATCH_SIZE = 1000;
+      let totalImported = 0;
+      let totalSkipped = 0;
+      const accumulatedSkipped: any[] = [];
+      let cancelFlag = false;
+
+      for (let i = 0; i < leadsToImport.length; i += BATCH_SIZE) {
+        // Check if user requested cancellation
+        if (cancelRef.current) {
+          cancelFlag = true;
+          break;
+        }
+
+        const chunk = leadsToImport.slice(i, i + BATCH_SIZE);
+        const batchNum = Math.floor(i / BATCH_SIZE) + 1;
+        const totalBatches = Math.ceil(leadsToImport.length / BATCH_SIZE);
+
+        setImportProgress({
+          total: leadsToImport.length,
+          current: i,
+          percent: Math.round((i / leadsToImport.length) * 100),
+          importedCount: totalImported,
+          skippedCount: totalSkipped,
+          statusText: `Uploading batch ${batchNum} of ${totalBatches}...`,
+        });
+
+        try {
+          const res = await fetch('/api/v1/leads/import', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ leads: chunk }),
+          });
+
+          const data = await res.json();
+          if (data.success) {
+            totalImported += data.data.importedCount || 0;
+            totalSkipped += data.data.skippedCount || 0;
+            if (data.data.skipped && Array.isArray(data.data.skipped)) {
+              accumulatedSkipped.push(...data.data.skipped);
+            }
+          } else {
+            console.error(`Batch ${batchNum} failed:`, data.message);
+            alert(`Import halted because batch ${batchNum} failed: ${data.message || 'Unknown error'}`);
+            break;
+          }
+        } catch (err) {
+          console.error(`Network error in batch ${batchNum}:`, err);
+          alert(`Network error in batch ${batchNum}. The import has been halted.`);
+          break;
+        }
+      }
+
+      setImportResult({
+        success: true,
+        importedCount: totalImported,
+        skippedCount: totalSkipped + (cancelFlag ? (leadsToImport.length - totalImported - totalSkipped) : 0),
+        skipped: [
+          ...accumulatedSkipped,
+          ...(cancelFlag ? [{
+            customerName: 'Cancelled',
+            mobile: 'N/A',
+            reason: 'Import process was stopped by user.'
+          }] : [])
+        ],
       });
 
-      const data = await res.json();
-      if (data.success) {
-        setImportResult({
-          success: true,
-          importedCount: data.data.importedCount,
-          skippedCount: data.data.skippedCount,
-          skipped: data.data.skipped || [],
-        });
-        fetchLeads();
-      } else {
-        alert(data.message || 'Import failed');
-      }
+      fetchLeads();
     } catch (err) {
       console.error(err);
-      alert('Network or server error during import.');
+      alert('An unexpected error occurred during import.');
     } finally {
       setImporting(false);
+      setImportProgress(null);
+      cancelRef.current = false;
     }
+  };
+
+  const handleCancelImport = () => {
+    setImportCancelRequested(true);
+    cancelRef.current = true;
+    setImportProgress((prev) => prev ? {
+      ...prev,
+      statusText: 'Cancelling after current batch completes...',
+    } : null);
   };
 
   const handleCloseImportModal = () => {
@@ -742,6 +829,8 @@ export default function LeadsPage() {
     setCsvHeaders([]);
     setCsvRows([]);
     setImportResult(null);
+    setImportProgress(null);
+    cancelRef.current = false;
   };
 
   const totalPages = Math.ceil(total / limit);
@@ -1220,7 +1309,11 @@ export default function LeadsPage() {
                 <Upload className="w-5 h-5 text-amber-500" />
                 <h3 className="text-sm font-bold uppercase tracking-wider text-white">Import Leads from CSV</h3>
               </div>
-              <button onClick={handleCloseImportModal} className="text-slate-400 hover:text-white transition-all">
+              <button 
+                onClick={handleCloseImportModal} 
+                disabled={importing} 
+                className="text-slate-400 hover:text-white transition-all disabled:opacity-30 disabled:pointer-events-none"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1234,7 +1327,7 @@ export default function LeadsPage() {
                   </div>
                   <p className="text-xs font-semibold text-slate-300">Select a CSV leads dataset to begin</p>
                   <p className="text-[10px] text-slate-500 mt-1 mb-4">
-                    Required fields: Customer Name, Contact Number, Address, Zip, City, State
+                    Required fields: Customer Name, Contact Number
                   </p>
                   <label className="cursor-pointer py-2 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 rounded-lg font-bold text-xs shadow-md">
                     Choose CSV File
@@ -1256,14 +1349,47 @@ export default function LeadsPage() {
                     </div>
                     <button
                       onClick={() => { setCsvFile(null); setCsvHeaders([]); setCsvRows([]); setImportResult(null); }}
-                      className="text-xs text-red-400 hover:text-red-300 font-bold"
+                      disabled={importing}
+                      className="text-xs text-red-400 hover:text-red-300 font-bold disabled:opacity-30 disabled:pointer-events-none"
                     >
                       Clear File
                     </button>
                   </div>
 
+                  {/* Import Progress Card */}
+                  {importProgress && (
+                    <div className="p-6 bg-slate-900/40 border border-slate-800 rounded-xl space-y-4">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-slate-400 font-medium">{importProgress.statusText}</span>
+                        <span className="text-amber-400 font-extrabold">{importProgress.percent}%</span>
+                      </div>
+                      <div className="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-900">
+                        <div 
+                          className="bg-gradient-to-r from-amber-500 to-yellow-400 h-full transition-all duration-300 ease-out" 
+                          style={{ width: `${importProgress.percent}%` }}
+                        ></div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4 text-center">
+                        <div className="bg-slate-950/60 p-3 rounded-lg border border-slate-850">
+                          <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Processed</span>
+                          <span className="text-xs font-bold text-white mt-1 block">
+                            {importProgress.current} / {importProgress.total}
+                          </span>
+                        </div>
+                        <div className="bg-slate-950/60 p-3 rounded-lg border border-slate-850">
+                          <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Imported</span>
+                          <span className="text-xs font-bold text-emerald-400 mt-1 block">{importProgress.importedCount}</span>
+                        </div>
+                        <div className="bg-slate-950/60 p-3 rounded-lg border border-slate-850">
+                          <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Skipped</span>
+                          <span className="text-xs font-bold text-amber-500 mt-1 block">{importProgress.skippedCount}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Mapping Grid */}
-                  {!importResult && (
+                  {!importResult && !importProgress && (
                     <div className="space-y-4">
                       <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider border-b border-slate-800/80 pb-2">
                         Map CSV Columns to Lead Fields
@@ -1278,10 +1404,10 @@ export default function LeadsPage() {
                           { key: 'customerName', label: 'Customer Name *', req: true },
                           { key: 'mobile', label: 'Contact Number (Mobile) *', req: true },
                           { key: 'mobileAlt', label: 'Alternate Mobile', req: false },
-                          { key: 'address', label: 'Complete Address *', req: true },
-                          { key: 'pinCode', label: 'Pin Code / Zip *', req: true },
-                          { key: 'city', label: 'City *', req: true },
-                          { key: 'state', label: 'State *', req: true },
+                          { key: 'address', label: 'Complete Address', req: false },
+                          { key: 'pinCode', label: 'Pin Code / Zip', req: false },
+                          { key: 'city', label: 'City', req: false },
+                          { key: 'state', label: 'State', req: false },
                           { key: 'sanctionedLoadKw', label: 'PV Capacity (kW)', req: false },
                           { key: 'connectionType', label: 'Connection Type', req: false },
                           { key: 'leadSource', label: 'Lead Source', req: false },
@@ -1311,7 +1437,7 @@ export default function LeadsPage() {
                   )}
 
                   {/* 5 Row Mapped Preview */}
-                  {!importResult && csvRows.length > 0 && (
+                  {!importResult && !importProgress && csvRows.length > 0 && (
                     <div className="space-y-3">
                       <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
                         Mapped Field Preview (First 5 Rows)
@@ -1400,21 +1526,33 @@ export default function LeadsPage() {
             </div>
 
             <div className="p-6 border-t border-slate-800 bg-slate-900/10 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={handleCloseImportModal}
-                className="py-2 px-4 bg-slate-900 border border-slate-800 text-slate-400 rounded-lg font-bold text-xs hover:text-white"
-              >
-                {importResult ? 'Close' : 'Cancel'}
-              </button>
-              {csvFile && !importResult && (
+              {!importProgress ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleCloseImportModal}
+                    className="py-2 px-4 bg-slate-900 border border-slate-800 text-slate-400 rounded-lg font-bold text-xs hover:text-white"
+                  >
+                    {importResult ? 'Close' : 'Cancel'}
+                  </button>
+                  {csvFile && !importResult && (
+                    <button
+                      type="button"
+                      onClick={handleExecuteImport}
+                      className="py-2 px-5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md"
+                    >
+                      Execute Import ({csvRows.length} Leads)
+                    </button>
+                  )}
+                </>
+              ) : (
                 <button
                   type="button"
-                  onClick={handleExecuteImport}
-                  disabled={importing}
-                  className="py-2 px-5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md disabled:opacity-50"
+                  onClick={handleCancelImport}
+                  disabled={importCancelRequested}
+                  className="py-2 px-5 bg-red-600 hover:bg-red-500 text-white rounded-lg font-bold text-xs shadow-md disabled:opacity-50 transition-all duration-200"
                 >
-                  {importing ? 'Importing Leads...' : `Execute Import (${csvRows.length} Leads)`}
+                  {importCancelRequested ? 'Stopping Import...' : 'Stop Import'}
                 </button>
               )}
             </div>
