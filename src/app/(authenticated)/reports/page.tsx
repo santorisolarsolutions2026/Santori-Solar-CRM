@@ -41,6 +41,8 @@ import {
   ShieldAlert,
   Loader2,
   Layers,
+  X,
+  Activity,
 } from 'lucide-react';
 
 interface OverviewStats {
@@ -122,6 +124,14 @@ export default function ReportsPage() {
   const [auditData, setAuditData] = useState<{ employees: any[]; alerts: any[] } | null>(null);
   const [auditLoading, setAuditLoading] = useState(false);
 
+  // States for the interactive employee audit modal
+  const [selectedAuditEmpId, setSelectedAuditEmpId] = useState<number | null>(null);
+  const [modalTimeframe, setModalTimeframe] = useState<'today' | 'custom'>('today');
+  const [customStartDate, setCustomStartDate] = useState<string>('');
+  const [customEndDate, setCustomEndDate] = useState<string>('');
+  const [modalData, setModalData] = useState<{ employee: any; stats: any; timeline: any[] } | null>(null);
+  const [modalLoading, setModalLoading] = useState(false);
+
   const fetchData = async () => {
     try {
       const fetchPromises: Promise<any>[] = [
@@ -186,6 +196,60 @@ export default function ReportsPage() {
       fetchAuditData();
     }
   }, [user, activeReportTab, timeframe]);
+
+  const fetchModalData = async (empId: number, mode: 'today' | 'custom', start?: string, end?: string) => {
+    setModalLoading(true);
+    try {
+      let url = `/api/v1/reports/employee-audit/detail?userId=${empId}`;
+      if (mode === 'custom' && start && end) {
+        const sDate = new Date(start);
+        sDate.setHours(0, 0, 0, 0);
+        const eDate = new Date(end);
+        eDate.setHours(23, 59, 59, 999);
+        url += `&startDate=${sDate.toISOString()}&endDate=${eDate.toISOString()}`;
+      } else {
+        const sDate = new Date();
+        sDate.setHours(0, 0, 0, 0);
+        const eDate = new Date();
+        eDate.setHours(23, 59, 59, 999);
+        url += `&startDate=${sDate.toISOString()}&endDate=${eDate.toISOString()}`;
+      }
+
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.success) {
+        setModalData(data.data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedAuditEmpId !== null) {
+      if (modalTimeframe === 'today') {
+        fetchModalData(selectedAuditEmpId, 'today');
+      } else if (modalTimeframe === 'custom' && customStartDate && customEndDate) {
+        fetchModalData(selectedAuditEmpId, 'custom', customStartDate, customEndDate);
+      }
+    }
+  }, [selectedAuditEmpId, modalTimeframe, customStartDate, customEndDate]);
+
+  const handleOpenAuditModal = (empId: number) => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const prevStr = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    setCustomStartDate(prevStr);
+    setCustomEndDate(todayStr);
+    setModalTimeframe('today');
+    setSelectedAuditEmpId(empId);
+  };
+
+  const handleCloseAuditModal = () => {
+    setSelectedAuditEmpId(null);
+    setModalData(null);
+  };
 
   // Client-side CSV exporter (Section 5.7)
   const handleExportCSV = async () => {
@@ -514,7 +578,12 @@ export default function ReportsPage() {
                         <td className="py-3.5 px-4 font-bold text-white w-48 text-left">
                           <div className="flex items-center gap-2">
                             <span className={`w-2 h-2 rounded-full shrink-0 ${emp.isCurrentlyCheckedIn ? 'bg-emerald-500 animate-pulse shadow-sm shadow-emerald-500/50' : 'bg-slate-700'}`} title={emp.isCurrentlyCheckedIn ? 'Checked In' : 'Not Checked In'} />
-                            <span>{emp.name}</span>
+                            <button
+                              onClick={() => handleOpenAuditModal(emp.id)}
+                              className="text-left font-bold text-white hover:text-amber-400 transition-all hover:underline outline-none cursor-pointer"
+                            >
+                              {emp.name}
+                            </button>
                           </div>
                         </td>
                         <td className="py-3.5 px-4 text-slate-400 capitalize w-32 text-left">{emp.role}</td>
@@ -608,6 +677,202 @@ export default function ReportsPage() {
                   })
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Employee Detail Audit Modal */}
+      {selectedAuditEmpId !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-[#111625] border border-slate-800 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-slate-800 flex justify-between items-start gap-4">
+              <div>
+                <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Employee Work Audit</span>
+                <h2 className="text-lg font-bold text-white mt-1 flex items-center gap-2">
+                  <span>{modalData?.employee?.name || 'Loading...'}</span>
+                  {modalData?.employee && (
+                    <span className="text-[10px] bg-slate-900 border border-slate-850 px-2 py-0.5 rounded text-slate-400 capitalize">
+                      {modalData.employee.role}
+                    </span>
+                  )}
+                </h2>
+                <p className="text-xs text-slate-400 mt-0.5">{modalData?.employee?.email}</p>
+              </div>
+              <button
+                onClick={handleCloseAuditModal}
+                className="p-1.5 rounded-lg border border-slate-800 bg-slate-900/60 text-slate-400 hover:text-white transition-all cursor-pointer outline-none"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 flex-1 overflow-y-auto space-y-6">
+              {/* Controls: Date Filter */}
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-950/40 border border-slate-850 p-4 rounded-xl">
+                <div className="flex bg-slate-900 border border-slate-800 p-1 rounded-lg">
+                  <button
+                    onClick={() => setModalTimeframe('today')}
+                    className={`py-1.5 px-4 rounded text-xs font-bold transition-all cursor-pointer ${
+                      modalTimeframe === 'today'
+                        ? 'bg-amber-500 text-slate-950'
+                        : 'text-slate-400 hover:text-slate-300'
+                    }`}
+                  >
+                    Today
+                  </button>
+                  <button
+                    onClick={() => setModalTimeframe('custom')}
+                    className={`py-1.5 px-4 rounded text-xs font-bold transition-all cursor-pointer ${
+                      modalTimeframe === 'custom'
+                        ? 'bg-amber-500 text-slate-950'
+                        : 'text-slate-400 hover:text-slate-300'
+                    }`}
+                  >
+                    Custom Date Range
+                  </button>
+                </div>
+
+                {modalTimeframe === 'custom' && (
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-slate-500">From:</span>
+                      <input
+                        type="date"
+                        value={customStartDate}
+                        onChange={(e) => setCustomStartDate(e.target.value)}
+                        className="bg-slate-950 border border-slate-800 text-slate-300 px-2 py-1 rounded cursor-pointer"
+                      />
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-slate-500">To:</span>
+                      <input
+                        type="date"
+                        value={customEndDate}
+                        onChange={(e) => setCustomEndDate(e.target.value)}
+                        className="bg-slate-950 border border-slate-800 text-slate-300 px-2 py-1 rounded cursor-pointer"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Loader */}
+              {modalLoading && !modalData ? (
+                <div className="flex flex-col items-center justify-center py-20 text-slate-500 text-xs italic gap-2">
+                  <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
+                  <span>Loading audit stream...</span>
+                </div>
+              ) : (
+                <>
+                  {/* Summary Metric Grid */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="p-4 bg-slate-950/30 border border-slate-850 rounded-xl text-center">
+                      <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Logged Hours</span>
+                      <p className="text-xl font-bold text-white mt-1 font-mono">
+                        {modalData?.stats ? (
+                          `${Math.floor(modalData.stats.totalWorkDurationMin / 60)}h ${modalData.stats.totalWorkDurationMin % 60}m`
+                        ) : '0h 0m'}
+                      </p>
+                    </div>
+                    <div className="p-4 bg-slate-950/30 border border-slate-850 rounded-xl text-center">
+                      <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider text-amber-450">Pipeline Actions</span>
+                      <p className="text-xl font-bold text-amber-400 mt-1 font-mono">
+                        {modalData?.stats?.totalStageChanges || 0}
+                      </p>
+                    </div>
+                    <div className="p-4 bg-slate-950/30 border border-slate-850 rounded-xl text-center">
+                      <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Site Visits</span>
+                      <p className="text-xl font-bold text-cyan-400 mt-1 font-mono">
+                        {modalData?.stats?.totalMeetings || 0}
+                      </p>
+                    </div>
+                    <div className="p-4 bg-slate-950/30 border border-slate-850 rounded-xl text-center">
+                      <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Deals Closed</span>
+                      <p className="text-xl font-bold text-emerald-400 mt-1 font-mono">
+                        {modalData?.stats?.totalSales || 0}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Work Timeline */}
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                      <Activity className="w-4 h-4 text-amber-500" />
+                      <span>Unified Work Stream Log</span>
+                    </h3>
+
+                    {modalLoading && (
+                      <div className="flex items-center justify-center py-2 text-xs text-slate-450 gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin text-amber-500" />
+                        <span>Updating stream...</span>
+                      </div>
+                    )}
+
+                    <div className="relative border-l border-slate-800/80 ml-3 pl-6 space-y-6 pt-1 pb-2">
+                      {!modalData || modalData.timeline.length === 0 ? (
+                        <p className="text-xs text-slate-550 italic py-6 pl-2">No work logs or activities recorded for this timeframe.</p>
+                      ) : (
+                        modalData.timeline.map((evt: any) => {
+                          const isCheck = evt.type === 'check_in' || evt.type === 'check_out';
+                          const isStatus = evt.type === 'status_change';
+                          const isMeet = evt.type === 'meeting_started' || evt.type === 'meeting_ended';
+                          
+                          return (
+                            <div key={evt.id} className="relative">
+                              <span className={`absolute -left-[31px] top-0.5 w-3 h-3 rounded-full border-2 ${
+                                isCheck
+                                  ? 'bg-slate-900 border-slate-500'
+                                  : isStatus
+                                    ? 'bg-amber-950 border-amber-500'
+                                    : isMeet
+                                      ? 'bg-cyan-950 border-cyan-500'
+                                      : 'bg-emerald-950 border-emerald-500'
+                              }`} />
+
+                              <div>
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                                  <h4 className="text-xs font-bold text-white flex items-center flex-wrap gap-x-2">
+                                    <span>{evt.title}</span>
+                                    {evt.leadCode && (
+                                      <span className="text-[10px] font-mono text-slate-400 bg-slate-900 border border-slate-800 px-1.5 py-0.5 rounded">
+                                        {evt.customerName} ({evt.leadCode})
+                                      </span>
+                                    )}
+                                  </h4>
+                                  <span className="text-[10px] text-slate-500 font-mono">
+                                    {new Date(evt.timestamp).toLocaleString('en-IN', {
+                                      day: '2-digit',
+                                      month: 'short',
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                                  {evt.details}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-slate-800 bg-slate-950/20 text-right">
+              <button
+                onClick={handleCloseAuditModal}
+                className="py-2 px-5 bg-slate-900 border border-slate-800 text-slate-350 hover:text-white rounded-lg font-bold text-xs transition-all cursor-pointer outline-none"
+              >
+                Close Audit View
+              </button>
             </div>
           </div>
         </div>
