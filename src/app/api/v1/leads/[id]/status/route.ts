@@ -4,8 +4,8 @@ import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
 
 // Transition validation matrix
 const TRANSITIONS: Record<number, { to: number[]; roles: string[] }> = {
-  1: { to: [2, 3, 4, 5, 6, 10, 11], roles: ['consultant', 'psa', 'tl', 'manager'] },
-  2: { to: [2, 3, 4, 5, 6, 10, 11], roles: ['consultant', 'psa'] },
+  1: { to: [2, 3, 4, 5, 6, 8, 10, 11], roles: ['consultant', 'psa', 'tl', 'manager'] },
+  2: { to: [2, 3, 4, 5, 6, 8, 10, 11], roles: ['consultant', 'psa'] },
   3: { to: [3, 4, 5, 6, 7, 8, 10, 11], roles: ['consultant', 'psa'] },
   4: { to: [3], roles: ['manager', 'admin', 'director', 'sales_head'] }, // reactivate only
   5: { to: [2, 3, 4, 6, 8, 10, 11], roles: ['consultant', 'psa'] },
@@ -13,8 +13,8 @@ const TRANSITIONS: Record<number, { to: number[]; roles: string[] }> = {
   7: { to: [3, 4, 5, 6, 8], roles: ['consultant', 'tl', 'manager'] },
   8: { to: [9], roles: ['consultant', 'tl'] },
   9: { to: [3, 4, 9, 13], roles: ['consultant', 'tl', 'manager'] },
-  10: { to: [2, 3, 4, 5, 6], roles: ['consultant', 'psa'] },
-  11: { to: [2, 3, 4, 5, 6], roles: ['consultant', 'psa'] },
+  10: { to: [2, 3, 4, 5, 6, 8], roles: ['consultant', 'psa'] },
+  11: { to: [2, 3, 4, 5, 6, 8], roles: ['consultant', 'psa'] },
   12: { to: [], roles: [] }, // terminal
   13: { to: [13], roles: ['operations', 'manager', 'admin', 'director', 'sales_head'] }, // terminal but allows installation status self-transition
 };

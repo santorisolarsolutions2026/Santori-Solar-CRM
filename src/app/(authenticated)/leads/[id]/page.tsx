@@ -143,8 +143,8 @@ const STAGE_BADGES: Record<number, { name: string; class: string }> = {
 // Transition matrix for select dropdown option filters
 const ALLOWED_TRANSITIONS: Record<number, number[]> = {
   0: [1], // Uninitiated leads can only transition to Fresh Lead (automatically via assignment)
-  1: [2, 3, 4, 5, 6, 10, 11],
-  2: [2, 3, 4, 5, 6, 10, 11],
+  1: [2, 3, 4, 5, 6, 8, 10, 11],
+  2: [2, 3, 4, 5, 6, 8, 10, 11],
   3: [3, 4, 5, 6, 7, 8, 10, 11],
   4: [3], // reactivate
   5: [2, 3, 4, 6, 8, 10, 11],
@@ -152,8 +152,8 @@ const ALLOWED_TRANSITIONS: Record<number, number[]> = {
   7: [3, 4, 5, 6, 8],
   8: [9],
   9: [3, 4, 13],
-  10: [2, 3, 4, 5, 6],
-  11: [2, 3, 4, 5, 6],
+  10: [2, 3, 4, 5, 6, 8],
+  11: [2, 3, 4, 5, 6, 8],
   12: [],
   13: [],
 };
@@ -210,7 +210,7 @@ export default function LeadDetailPage({
   const [lead, setLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
-  const [activeTab, setActiveTab] = useState<'info' | 'track' | 'meeting' | 'order'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'action' | 'track' | 'meeting' | 'order'>('info');
 
   // Camera Modal States
   const [cameraModal, setCameraModal] = useState<{
@@ -506,8 +506,8 @@ export default function LeadDetailPage({
     if (!leadId || typeof window === 'undefined') return;
 
     const savedTab = localStorage.getItem(`solar_crm_lead_active_tab_${leadId}`);
-    if (savedTab && ['info', 'track', 'meeting', 'order'].includes(savedTab)) {
-      setActiveTab(savedTab as 'info' | 'track' | 'meeting' | 'order');
+    if (savedTab && ['info', 'action', 'track', 'meeting', 'order'].includes(savedTab)) {
+      setActiveTab(savedTab as 'info' | 'action' | 'track' | 'meeting' | 'order');
     }
 
     const savedIsEditing = localStorage.getItem(`solar_crm_lead_is_editing_${leadId}`);
@@ -1279,23 +1279,34 @@ export default function LeadDetailPage({
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main tabs container */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-[#111625] border border-slate-800 rounded-xl overflow-hidden shadow-lg">
-            {/* Tabs selector */}
-            <div className="flex border-b border-slate-800 bg-slate-900/10 text-xs font-semibold overflow-x-auto whitespace-nowrap scrollbar-none">
+      {/* Main tabs container */}
+      <div className="bg-[#111625] border border-slate-800 rounded-xl overflow-hidden shadow-lg">
+          {/* Tabs selector */}
+          <div className="flex border-b border-slate-800 bg-slate-900/10 text-xs font-semibold overflow-x-auto whitespace-nowrap scrollbar-none">
+            <button
+              onClick={() => setActiveTab('info')}
+              className={`px-5 py-4 border-b-2 transition-all flex items-center justify-center gap-2 shrink-0 ${
+                activeTab === 'info'
+                  ? 'border-amber-500 text-amber-400 bg-amber-500/[0.02]'
+                  : 'border-transparent text-slate-400 hover:text-white'
+              }`}
+            >
+              <User className="w-4 h-4" />
+              <span>Info</span>
+            </button>
+            {(lead.status === 9 || roleFilteredNextStages.length > 0) && (
               <button
-                onClick={() => setActiveTab('info')}
+                onClick={() => setActiveTab('action')}
                 className={`px-5 py-4 border-b-2 transition-all flex items-center justify-center gap-2 shrink-0 ${
-                  activeTab === 'info'
+                  activeTab === 'action'
                     ? 'border-amber-500 text-amber-400 bg-amber-500/[0.02]'
                     : 'border-transparent text-slate-400 hover:text-white'
                 }`}
               >
-                <User className="w-4 h-4" />
-                <span>Info</span>
+                <Layers className="w-4 h-4" />
+                <span>Action</span>
               </button>
+            )}
               {hasPermission('leads:track') && (
                 <button
                   onClick={() => setActiveTab('track')}
@@ -1341,6 +1352,159 @@ export default function LeadDetailPage({
 
             {/* Tab content panels */}
             <div className="p-6">
+              {/* ACTION TAB */}
+              {activeTab === 'action' && (
+                <div className="space-y-6">
+                  {lead.status === 9 ? (
+                    <div className="bg-[#111625] border border-slate-800 rounded-xl p-6 space-y-3">
+                      <p className="text-xs text-slate-400 leading-normal">
+                        The site meeting has been completed. Please document the client's final outcome to advance the lead.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setShowFormC(true)}
+                        className="w-full sm:w-auto py-2.5 px-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 rounded-lg font-bold text-xs shadow-md shadow-emerald-500/10 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                      >
+                        <Sun className="w-4 h-4" />
+                        <span>Document Meeting Outcome</span>
+                      </button>
+                    </div>
+                  ) : roleFilteredNextStages.length > 0 ? (
+                    <div className="bg-[#111625] border border-slate-800 rounded-xl p-6 space-y-6">
+                      <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 border-b border-slate-800 pb-3 flex items-center gap-2">
+                        <Layers className="w-4 h-4 text-amber-500" />
+                        <span>Pipeline Stage Control</span>
+                      </h3>
+                      <form onSubmit={handleStatusSubmit} className="space-y-4">
+                        {/* Visual Custom Status Selector */}
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-400 mb-2.5">Select Next Status</label>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[350px] overflow-y-auto pr-1">
+                            {roleFilteredNextStages.map((statusNum) => {
+                              const config = getStageConfig(statusNum);
+                              const isSelected = newStatus === statusNum.toString();
+                              return (
+                                <button
+                                  key={statusNum}
+                                  type="button"
+                                  onClick={() => setNewStatus(statusNum.toString())}
+                                  className={`flex items-start gap-3 p-2.5 rounded-xl border text-left transition-all duration-200 cursor-pointer outline-none relative overflow-hidden ${
+                                    isSelected
+                                      ? `${config.text} ${config.bg} border-amber-500 bg-amber-500/[0.03] ring-1 ring-amber-500/20 translate-x-[2px]`
+                                      : `border-slate-800/80 bg-slate-950/20 text-slate-400 hover:border-slate-700/80 hover:bg-slate-900/10 hover:text-slate-300`
+                                  }`}
+                                >
+                                  <div className={`p-1.5 rounded-lg border ${
+                                    isSelected
+                                      ? `bg-amber-500/15 border-amber-500/30 text-amber-400`
+                                      : `bg-slate-900/40 border-slate-800 text-slate-400`
+                                  } transition-all`}>
+                                    {renderStageIcon(config.icon, "w-4 h-4")}
+                                  </div>
+                                  <div className="flex-1 min-w-0 pr-4">
+                                    <p className="text-xs font-bold uppercase tracking-wider">{config.name}</p>
+                                    <p className="text-[10px] text-slate-500 font-medium truncate mt-0.5">{config.desc}</p>
+                                  </div>
+                                  {isSelected && (
+                                    <div className="absolute right-3 top-3.5 w-4 h-4 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center">
+                                      <Check className="w-3 h-3 stroke-[3]" />
+                                    </div>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Conditional Fields: Stage 3 (Follow Up) details */}
+                        {parseInt(newStatus, 10) === 3 && (
+                          <div className="space-y-4 p-3 bg-slate-950/40 border border-slate-850 rounded-lg animate-fade-in">
+                            <div>
+                              <label className="block text-[10px] font-semibold text-slate-400 mb-1">Sub-Type</label>
+                              <select
+                                value={followUpSub}
+                                onChange={(e) => setFollowUpSub(e.target.value)}
+                                className="block w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded text-slate-300 text-[11px]"
+                              >
+                                <option value="warm">Warm Lead (mild interest)</option>
+                                <option value="hot">Hot Lead 🔥 (very interested)</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-semibold text-slate-400 mb-1">Follow-Up Date & Time *</label>
+                              <input
+                                type="datetime-local"
+                                required
+                                value={followUpTime}
+                                onChange={(e) => setFollowUpTime(e.target.value)}
+                                className="block w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded text-slate-300 text-[11px]"
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Conditional Fields: Stage 5 (Call Later) details */}
+                        {parseInt(newStatus, 10) === 5 && (
+                          <div className="p-3 bg-slate-950/40 border border-slate-850 rounded-lg animate-fade-in">
+                            <label className="block text-[10px] font-semibold text-slate-400 mb-1">Call Back Date & Time *</label>
+                            <input
+                              type="datetime-local"
+                              required
+                              value={followUpTime}
+                              onChange={(e) => setFollowUpTime(e.target.value)}
+                              className="block w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded text-slate-300 text-[11px]"
+                            />
+                          </div>
+                        )}
+
+                        {/* Conditional Fields: Stage 12 (Can't Fit Solar) details */}
+                        {parseInt(newStatus, 10) === 12 && (
+                          <div className="p-3 bg-slate-950/40 border border-slate-850 rounded-lg animate-fade-in">
+                            <label className="block text-[10px] font-semibold text-slate-400 mb-1">Reason for Infeasibility</label>
+                            <select
+                              value={disqualifiedReason}
+                              onChange={(e) => setDisqualifiedReason(e.target.value)}
+                              className="block w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded text-slate-300 text-[11px]"
+                            >
+                              <option value="Shading Issue">Too Much Shading</option>
+                              <option value="Roof Structure">Roof Structurally Unsafe</option>
+                              <option value="Rented Property">Rented Property</option>
+                              <option value="Landlord Refusal">Landlord denied NOC</option>
+                              <option value="Too Small">Terrace Area Too Small</option>
+                              <option value="Other">Other</option>
+                            </select>
+                          </div>
+                        )}
+
+                        {/* Mandatory Remark */}
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-400 mb-2">Remarks / Summary of Interaction *</label>
+                          <textarea
+                            required
+                            value={statusRemark}
+                            onChange={(e) => setStatusRemark(e.target.value)}
+                            placeholder="Enter call notes or reasons for status change..."
+                            className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs h-20 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                          />
+                        </div>
+
+                        <button
+                          type="submit"
+                          disabled={!newStatus}
+                          className="w-full py-2.5 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+                        >
+                          Save Status Change
+                        </button>
+                      </form>
+                    </div>
+                  ) : (
+                    <div className="p-6 text-center text-slate-500 text-xs italic bg-slate-900/10 border border-slate-800 rounded-xl">
+                      No status transitions or actions are available for this lead at stage: <span className="font-bold text-white uppercase tracking-wider">{stageBadge.name}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* TRACK TAB */}
               {activeTab === 'track' && lead && (
                 <div className="space-y-4">
@@ -2300,158 +2464,6 @@ export default function LeadDetailPage({
                 )}
             </div>
           </div>
-        
-
-        {/* Dynamic transition widget panel in right sidebar */}
-        <div className="space-y-6">
-          {(lead.status === 9 || roleFilteredNextStages.length > 0) && (
-            <div className="bg-[#111625] border border-slate-800 rounded-xl p-6 shadow-lg space-y-6">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 border-b border-slate-800 pb-3 flex items-center gap-2">
-                <Layers className="w-4 h-4 text-amber-500" />
-                <span>Pipeline Stage Control</span>
-              </h3>
-
-              {/* Allowed stage dropdown or locked notification */}
-              {lead.status === 9 ? (
-                <div className="space-y-3">
-                  <p className="text-xs text-slate-400 leading-normal">
-                    The site meeting has been completed. Please document the client's final outcome to advance the lead.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setShowFormC(true)}
-                    className="w-full py-2.5 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 rounded-lg font-bold text-xs shadow-md shadow-emerald-500/10 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                  >
-                    <Sun className="w-4 h-4" />
-                    <span>Document Meeting Outcome</span>
-                  </button>
-                </div>
-              ) : (
-                <form onSubmit={handleStatusSubmit} className="space-y-4">
-                {/* Visual Custom Status Selector */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-2.5">Select Next Status</label>
-                  <div className="grid grid-cols-1 gap-2 max-h-[300px] overflow-y-auto pr-1">
-                    {roleFilteredNextStages.map((statusNum) => {
-                      const config = getStageConfig(statusNum);
-                      const isSelected = newStatus === statusNum.toString();
-                      return (
-                        <button
-                          key={statusNum}
-                          type="button"
-                          onClick={() => setNewStatus(statusNum.toString())}
-                          className={`flex items-start gap-3 p-2.5 rounded-xl border text-left transition-all duration-200 cursor-pointer outline-none relative overflow-hidden ${
-                            isSelected
-                              ? `${config.text} ${config.bg} border-amber-500 bg-amber-500/[0.03] ring-1 ring-amber-500/20 translate-x-[2px]`
-                              : `border-slate-800/80 bg-slate-950/20 text-slate-400 hover:border-slate-700/80 hover:bg-slate-900/10 hover:text-slate-300`
-                          }`}
-                        >
-                          <div className={`p-1.5 rounded-lg border ${
-                            isSelected
-                              ? `bg-amber-500/15 border-amber-500/30 text-amber-400`
-                              : `bg-slate-900/40 border-slate-800 text-slate-400`
-                          } transition-all`}>
-                            {renderStageIcon(config.icon, "w-4 h-4")}
-                          </div>
-                          <div className="flex-1 min-w-0 pr-4">
-                            <p className="text-xs font-bold uppercase tracking-wider">{config.name}</p>
-                            <p className="text-[10px] text-slate-500 font-medium truncate mt-0.5">{config.desc}</p>
-                          </div>
-                          {isSelected && (
-                            <div className="absolute right-3 top-3.5 w-4 h-4 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center">
-                              <Check className="w-3 h-3 stroke-[3]" />
-                            </div>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Conditional Fields: Stage 3 (Follow Up) details */}
-                {parseInt(newStatus, 10) === 3 && (
-                  <div className="space-y-4 p-3 bg-slate-950/40 border border-slate-850 rounded-lg animate-fade-in">
-                    <div>
-                      <label className="block text-[10px] font-semibold text-slate-400 mb-1">Sub-Type</label>
-                      <select
-                        value={followUpSub}
-                        onChange={(e) => setFollowUpSub(e.target.value)}
-                        className="block w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded text-slate-300 text-[11px]"
-                      >
-                        <option value="warm">Warm Lead (mild interest)</option>
-                        <option value="hot">Hot Lead 🔥 (very interested)</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-semibold text-slate-400 mb-1">Follow-Up Date & Time *</label>
-                      <input
-                        type="datetime-local"
-                        required
-                        value={followUpTime}
-                        onChange={(e) => setFollowUpTime(e.target.value)}
-                        className="block w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded text-slate-300 text-[11px]"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Conditional Fields: Stage 5 (Call Later) details */}
-                {parseInt(newStatus, 10) === 5 && (
-                  <div className="p-3 bg-slate-950/40 border border-slate-850 rounded-lg animate-fade-in">
-                    <label className="block text-[10px] font-semibold text-slate-400 mb-1">Call Back Date & Time *</label>
-                    <input
-                      type="datetime-local"
-                      required
-                      value={followUpTime}
-                      onChange={(e) => setFollowUpTime(e.target.value)}
-                      className="block w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded text-slate-300 text-[11px]"
-                    />
-                  </div>
-                )}
-
-                {/* Conditional Fields: Stage 12 (Can't Fit Solar) details */}
-                {parseInt(newStatus, 10) === 12 && (
-                  <div className="p-3 bg-slate-950/40 border border-slate-850 rounded-lg animate-fade-in">
-                    <label className="block text-[10px] font-semibold text-slate-400 mb-1">Reason for Infeasibility</label>
-                    <select
-                      value={disqualifiedReason}
-                      onChange={(e) => setDisqualifiedReason(e.target.value)}
-                      className="block w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded text-slate-300 text-[11px]"
-                    >
-                      <option value="Shading Issue">Too Much Shading</option>
-                      <option value="Roof Structure">Roof Structurally Unsafe</option>
-                      <option value="Rented Property">Rented Property</option>
-                      <option value="Landlord Refusal">Landlord denied NOC</option>
-                      <option value="Too Small">Terrace Area Too Small</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-                )}
-
-                {/* Mandatory Remark */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-2">Remarks / Summary of Interaction *</label>
-                  <textarea
-                    required
-                    value={statusRemark}
-                    onChange={(e) => setStatusRemark(e.target.value)}
-                    placeholder="Enter call notes or reasons for status change..."
-                    className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs h-20 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={!newStatus}
-                  className="w-full py-2.5 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
-                >
-                  Save Status Change
-                </button>
-              </form>
-            )}
-          </div>)}
-        </div>
-      </div>
 
       {/* ============================================================== */}
       {/* Form B Modal: Meeting Booking Form */}
@@ -2777,8 +2789,7 @@ export default function LeadDetailPage({
         </div>
       )}
     </div>
-  </div>
-);
+  );
 }
 
 // Simple close widget SVG
