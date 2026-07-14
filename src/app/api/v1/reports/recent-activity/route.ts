@@ -23,6 +23,14 @@ export async function GET(req: Request) {
 
     // System-wide recent activities (constant for all authenticated users)
     const leadWhere: any = {};
+    if (userPayload.role !== 'admin' && userPayload.role !== 'director') {
+      leadWhere.OR = [
+        { assignedManagerId: userPayload.id },
+        { assignedTlId: userPayload.id },
+        { assignedConsultantId: userPayload.id },
+        { createdById: userPayload.id },
+      ];
+    }
 
     // Fetch latest 10 activity logs for leads the user is authorized to see
     const logs = await prisma.leadActivityLog.findMany({

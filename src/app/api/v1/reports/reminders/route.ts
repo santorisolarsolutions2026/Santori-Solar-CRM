@@ -23,6 +23,14 @@ export async function GET(req: Request) {
 
     // System-wide upcoming task reminders (constant for all authenticated users)
     const leadWhere: any = {};
+    if (userPayload.role !== 'admin' && userPayload.role !== 'director') {
+      leadWhere.OR = [
+        { assignedManagerId: userPayload.id },
+        { assignedTlId: userPayload.id },
+        { assignedConsultantId: userPayload.id },
+        { createdById: userPayload.id },
+      ];
+    }
 
     // Concurrent database fetches using Promise.all
     const [meetings, followups] = await Promise.all([

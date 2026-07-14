@@ -23,6 +23,9 @@ export async function GET(req: Request) {
 
     // Find all consultants in the team system-wide (constant for all users)
     const consultantWhere: any = { role: { in: ['consultant', 'psa'] } };
+    if (userPayload.role !== 'admin' && userPayload.role !== 'director') {
+      consultantWhere.id = userPayload.id;
+    }
 
     const consultants = await prisma.user.findMany({
       where: consultantWhere,

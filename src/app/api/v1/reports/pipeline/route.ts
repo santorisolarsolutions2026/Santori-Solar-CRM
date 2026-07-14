@@ -23,6 +23,14 @@ export async function GET(req: Request) {
 
     // System-wide pipeline metrics (constant for all authenticated users)
     const leadWhere: any = {};
+    if (userPayload.role !== 'admin' && userPayload.role !== 'director') {
+      leadWhere.OR = [
+        { assignedManagerId: userPayload.id },
+        { assignedTlId: userPayload.id },
+        { assignedConsultantId: userPayload.id },
+        { createdById: userPayload.id },
+      ];
+    }
 
     // Group by status and count
     const stagesCounts = await prisma.lead.groupBy({
