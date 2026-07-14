@@ -166,6 +166,7 @@ export default function LeadsPage() {
   const [stateFilter, setStateFilter] = useState('');
   const [dateFromFilter, setDateFromFilter] = useState('');
   const [dateToFilter, setDateToFilter] = useState('');
+  const [unassignedFilter, setUnassignedFilter] = useState(false);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(25);
 
@@ -228,6 +229,7 @@ export default function LeadsPage() {
         connection_type: connectionFilter,
         lead_source: sourceFilter,
         city: cityFilter,
+        unassigned: unassignedFilter ? 'true' : 'false',
       });
 
       const res = await fetch(`/api/v1/leads?${params.toString()}`);
@@ -467,6 +469,7 @@ export default function LeadsPage() {
     if (stateFilter) count++;
     if (dateFromFilter) count++;
     if (dateToFilter) count++;
+    if (unassignedFilter) count++;
     return count;
   };
 
@@ -488,6 +491,7 @@ export default function LeadsPage() {
         state: stateFilter,
         date_from: dateFromFilter,
         date_to: dateToFilter,
+        unassigned: unassignedFilter ? 'true' : 'false',
       });
 
       const res = await fetch(`/api/v1/leads?${params.toString()}`);
@@ -515,7 +519,7 @@ export default function LeadsPage() {
     if (user) {
       fetchLeads();
     }
-  }, [page, limit, statusFilter, consultantFilter, tlFilter, managerFilter, connectionFilter, sourceFilter, cityFilter, stateFilter, dateFromFilter, dateToFilter, user]);
+  }, [page, limit, statusFilter, consultantFilter, tlFilter, managerFilter, connectionFilter, sourceFilter, cityFilter, stateFilter, dateFromFilter, dateToFilter, unassignedFilter, user]);
 
   // Handle Search Input (with manual or debounce enter)
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -536,6 +540,7 @@ export default function LeadsPage() {
     setStateFilter('');
     setDateFromFilter('');
     setDateToFilter('');
+    setUnassignedFilter(false);
     setPage(1);
   };
 
@@ -1193,13 +1198,17 @@ export default function LeadsPage() {
                         </div>
                       </td>
                       <td className="py-3.5 px-4 font-medium text-slate-300 w-40">
-                        {lead.tl?.name ? (
+                        {lead.consultant?.name ? (
+                          <Link href={`/team?userId=${lead.consultant.id}`} className="hover:text-amber-400 hover:underline">
+                            {lead.consultant.name}
+                          </Link>
+                        ) : lead.tl?.name ? (
                           <Link href={`/team?userId=${lead.tl.id}`} className="hover:text-amber-400 hover:underline">
                             {lead.tl.name} <span className="text-[10px] text-slate-500 font-semibold">(TL)</span>
                           </Link>
-                        ) : lead.consultant?.name ? (
-                          <Link href={`/team?userId=${lead.consultant.id}`} className="hover:text-amber-400 hover:underline">
-                            {lead.consultant.name}
+                        ) : lead.manager?.name ? (
+                          <Link href={`/team?userId=${lead.manager.id}`} className="hover:text-amber-400 hover:underline">
+                            {lead.manager.name} <span className="text-[10px] text-slate-500 font-semibold">(Mgr)</span>
                           </Link>
                         ) : (
                           <span className="text-slate-500 text-xs italic">Unassigned</span>
@@ -1906,13 +1915,32 @@ export default function LeadsPage() {
                       <p className="text-[11px] text-slate-400">Filter leads by assigned Consultants, TLs, or Managers.</p>
                     </div>
 
-                    <div className="space-y-3">
+                    <div className="space-y-3.5">
+                      <label className="flex items-center gap-2.5 p-3 rounded-xl border border-slate-850 bg-slate-950/40 hover:bg-slate-900/20 cursor-pointer select-none transition-all">
+                        <input
+                          type="checkbox"
+                          checked={unassignedFilter}
+                          onChange={(e) => {
+                            setUnassignedFilter(e.target.checked);
+                            setPage(1);
+                            if (e.target.checked) {
+                              setConsultantFilter('');
+                              setTlFilter('');
+                              setManagerFilter('');
+                            }
+                          }}
+                          className="w-4 h-4 rounded border-slate-800 bg-slate-950 text-amber-500 focus:ring-0 cursor-pointer"
+                        />
+                        <span className="text-xs font-semibold text-slate-200">Show only Unassigned Leads (no coordinators assigned)</span>
+                      </label>
+
                       <div>
                         <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Assigned Consultant</label>
                         <select
                           value={consultantFilter}
                           onChange={(e) => { setConsultantFilter(e.target.value); setPage(1); }}
-                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500"
+                          disabled={unassignedFilter}
+                          className={`block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500 ${unassignedFilter ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                         >
                           <option value="">All Consultants</option>
                           <option value="unassigned">Unassigned (None)</option>
@@ -1927,7 +1955,8 @@ export default function LeadsPage() {
                         <select
                           value={tlFilter}
                           onChange={(e) => { setTlFilter(e.target.value); setPage(1); }}
-                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500"
+                          disabled={unassignedFilter}
+                          className={`block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500 ${unassignedFilter ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                         >
                           <option value="">All Team Leaders</option>
                           <option value="unassigned">Unassigned (None)</option>
@@ -1942,7 +1971,8 @@ export default function LeadsPage() {
                         <select
                           value={managerFilter}
                           onChange={(e) => { setManagerFilter(e.target.value); setPage(1); }}
-                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500"
+                          disabled={unassignedFilter}
+                          className={`block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500 ${unassignedFilter ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                         >
                           <option value="">All Managers</option>
                           <option value="unassigned">Unassigned (None)</option>

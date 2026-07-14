@@ -45,30 +45,54 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'No assignment changes specified.' }, { status: 400 });
     }
 
-    // Update leads in database
-    const result = await prisma.lead.updateMany({
-      where: {
-        id: { in: leadIds },
-      },
-      data: updateData,
+    // Fetch leads to inspect their current statuses and assignments
+    const leads = await prisma.lead.findMany({
+      where: { id: { in: leadIds } },
+      select: { id: true, status: true, assignedManagerId: true, assignedTlId: true, assignedConsultantId: true },
     });
 
-    // Create audit log entries for each assigned lead
-    try {
-      const logEntries = leadIds.map((leadId: number) => ({
-        leadId,
-        userId: userPayload.id,
-        fromStatus: 0,
-        toStatus: 0,
-        remark: `Bulk updated team assignments. Updated fields: ${Object.keys(updateData).join(', ')}.`,
-      }));
+    // Update leads inside a database transaction to calculate promotion individually
+    const result = await prisma.$transaction(async (tx) => {
+      let count = 0;
+      const logEntries: any[] = [];
 
-      await prisma.leadActivityLog.createMany({
-        data: logEntries,
-      });
-    } catch (e) {
-      console.warn('Failed to record activity logs for bulk assignment:', e);
-    }
+      for (const lead of leads) {
+        const finalManagerId = assignedManagerId !== undefined ? (assignedManagerId === null || assignedManagerId === '' ? null : Number(assignedManagerId)) : lead.assignedManagerId;
+        const finalTlId = assignedTlId !== undefined ? (assignedTlId === null || assignedTlId === '' ? null : Number(assignedTlId)) : lead.assignedTlId;
+        const finalConsId = assignedConsultantId !== undefined ? (assignedConsultantId === null || assignedConsultantId === '' ? null : Number(assignedConsultantId)) : lead.assignedConsultantId;
+
+        const individualUpdate: any = { ...updateData };
+        let newStatus = lead.status;
+
+        // Auto-promote from Uninitiated (0) to Fresh Lead (1) when any coordinator gets assigned
+        if (lead.status === 0 && (finalManagerId !== null || finalTlId !== null || finalConsId !== null)) {
+          individualUpdate.status = 1;
+          newStatus = 1;
+        }
+
+        await tx.lead.update({
+          where: { id: lead.id },
+          data: individualUpdate,
+        });
+        count++;
+
+        logEntries.push({
+          leadId: lead.id,
+          userId: userPayload.id,
+          fromStatus: lead.status,
+          toStatus: newStatus,
+          remark: `Bulk updated team assignments. Updated fields: ${Object.keys(updateData).join(', ')}.${newStatus === 1 && lead.status === 0 ? ' Status auto-promoted to Fresh Lead.' : ''}`,
+        });
+      }
+
+      if (logEntries.length > 0) {
+        await tx.leadActivityLog.createMany({
+          data: logEntries,
+        });
+      }
+
+      return { count };
+    });
 
     return NextResponse.json({
       success: true,

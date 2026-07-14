@@ -37,6 +37,7 @@ export async function GET(req: Request) {
     const limit = parseInt(searchParams.get('limit') || '25', 10);
     const sortBy = searchParams.get('sort_by') || 'updatedAt';
     const sortOrder = searchParams.get('sort_order') || 'desc';
+    const unassignedParam = searchParams.get('unassigned') === 'true';
 
     const skip = (page - 1) * limit;
 
@@ -227,6 +228,14 @@ export async function GET(req: Request) {
       } else if (managerIds.length > 0) {
         andConditions.push({ assignedManagerId: { in: managerIds } });
       }
+    }
+
+    if (unassignedParam) {
+      andConditions.push({
+        assignedConsultantId: null,
+        assignedTlId: null,
+        assignedManagerId: null,
+      });
     }
 
     if (connectionType) {
