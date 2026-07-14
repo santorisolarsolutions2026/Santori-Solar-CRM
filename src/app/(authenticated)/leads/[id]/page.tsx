@@ -1419,8 +1419,8 @@ export default function LeadDetailPage({
                                 onChange={(e) => setFollowUpSub(e.target.value)}
                                 className="block w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded text-slate-300 text-[11px]"
                               >
-                                <option value="warm">Warm Lead (mild interest)</option>
-                                <option value="hot">Hot Lead 🔥 (very interested)</option>
+                                <option value="warm">Warm Lead</option>
+                                <option value="hot">Hot Lead</option>
                               </select>
                             </div>
                             <div>
@@ -2693,9 +2693,9 @@ export default function LeadDetailPage({
                   onChange={(e) => setFormCOutcome(e.target.value)}
                   className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-350 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-xs"
                 >
-                  <option value="sale_done">Sale Done (Confirms purchase - creates draft order)</option>
-                  <option value="follow_up">Follow Up (Needs scheduled callback/warm lead)</option>
-                  <option value="not_interested">Not Interested (Disqualified)</option>
+                  <option value="sale_done">Sale Done</option>
+                  <option value="follow_up">Follow Up</option>
+                  <option value="not_interested">Not Interested</option>
                 </select>
               </div>
 
@@ -2710,7 +2710,7 @@ export default function LeadDetailPage({
                       className="block w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded text-slate-300 text-[11px]"
                     >
                       <option value="warm">Warm Lead</option>
-                      <option value="hot">Hot Lead 🔥</option>
+                      <option value="hot">Hot Lead</option>
                     </select>
                   </div>
                   <div>
