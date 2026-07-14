@@ -173,22 +173,58 @@ export async function GET(req: Request) {
     }
 
     if (consultantIdStr) {
-      const consultantIds = consultantIdStr.split(',').map(s => parseInt(s, 10)).filter(n => !isNaN(n));
-      if (consultantIds.length > 0) {
+      const parts = consultantIdStr.split(',').map(s => s.trim());
+      const hasUnassigned = parts.includes('unassigned');
+      const consultantIds = parts.map(s => parseInt(s, 10)).filter(n => !isNaN(n));
+      
+      if (hasUnassigned && consultantIds.length > 0) {
+        andConditions.push({
+          OR: [
+            { assignedConsultantId: null },
+            { assignedConsultantId: { in: consultantIds } }
+          ]
+        });
+      } else if (hasUnassigned) {
+        andConditions.push({ assignedConsultantId: null });
+      } else if (consultantIds.length > 0) {
         andConditions.push({ assignedConsultantId: { in: consultantIds } });
       }
     }
 
     if (tlIdStr) {
-      const tlIds = tlIdStr.split(',').map(s => parseInt(s, 10)).filter(n => !isNaN(n));
-      if (tlIds.length > 0) {
+      const parts = tlIdStr.split(',').map(s => s.trim());
+      const hasUnassigned = parts.includes('unassigned');
+      const tlIds = parts.map(s => parseInt(s, 10)).filter(n => !isNaN(n));
+      
+      if (hasUnassigned && tlIds.length > 0) {
+        andConditions.push({
+          OR: [
+            { assignedTlId: null },
+            { assignedTlId: { in: tlIds } }
+          ]
+        });
+      } else if (hasUnassigned) {
+        andConditions.push({ assignedTlId: null });
+      } else if (tlIds.length > 0) {
         andConditions.push({ assignedTlId: { in: tlIds } });
       }
     }
 
     if (managerIdStr) {
-      const managerIds = managerIdStr.split(',').map(s => parseInt(s, 10)).filter(n => !isNaN(n));
-      if (managerIds.length > 0) {
+      const parts = managerIdStr.split(',').map(s => s.trim());
+      const hasUnassigned = parts.includes('unassigned');
+      const managerIds = parts.map(s => parseInt(s, 10)).filter(n => !isNaN(n));
+      
+      if (hasUnassigned && managerIds.length > 0) {
+        andConditions.push({
+          OR: [
+            { assignedManagerId: null },
+            { assignedManagerId: { in: managerIds } }
+          ]
+        });
+      } else if (hasUnassigned) {
+        andConditions.push({ assignedManagerId: null });
+      } else if (managerIds.length > 0) {
         andConditions.push({ assignedManagerId: { in: managerIds } });
       }
     }

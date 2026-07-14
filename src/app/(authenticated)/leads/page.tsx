@@ -1915,6 +1915,7 @@ export default function LeadsPage() {
                           className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500"
                         >
                           <option value="">All Consultants</option>
+                          <option value="unassigned">Unassigned (None)</option>
                           {consultants.map((c) => (
                             <option key={c.id} value={c.id}>{c.name}</option>
                           ))}
@@ -1929,6 +1930,7 @@ export default function LeadsPage() {
                           className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500"
                         >
                           <option value="">All Team Leaders</option>
+                          <option value="unassigned">Unassigned (None)</option>
                           {teamMembers.filter(m => ['tl', 'psa_tl'].includes(m.role)).map((m) => (
                             <option key={m.id} value={m.id}>{m.name} ({m.role})</option>
                           ))}
@@ -1943,6 +1945,7 @@ export default function LeadsPage() {
                           className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500"
                         >
                           <option value="">All Managers</option>
+                          <option value="unassigned">Unassigned (None)</option>
                           {teamMembers.filter(m => ['manager', 'sales_head', 'admin', 'director'].includes(m.role)).map((m) => (
                             <option key={m.id} value={m.id}>{m.name} ({m.role})</option>
                           ))}
