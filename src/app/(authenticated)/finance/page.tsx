@@ -957,37 +957,39 @@ export default function FinancePage() {
                       <div className="py-8 text-center text-slate-500 text-xs">No payments recorded.</div>
                     ) : (
                       <div className="space-y-3.5 max-h-[45vh] overflow-y-auto pr-1">
-                        {selectedOrder.payments.map((pmt) => (
-                          <div key={pmt.id} className="p-3.5 bg-slate-900/40 border border-slate-850 rounded-xl text-xs space-y-1.5 hover:bg-slate-900/60 transition-all">
-                            <div className="flex justify-between items-center">
-                              <span className="font-extrabold text-white text-sm">₹{pmt.amount.toLocaleString('en-IN')}</span>
-                              <span className="font-mono text-[9px] bg-slate-950 border border-slate-850 px-2 py-0.5 rounded text-slate-400 capitalize">
-                                {METHOD_LABELS[pmt.paymentMethod] || pmt.paymentMethod}
-                              </span>
-                            </div>
-                            
-                            {pmt.transactionRef && (
-                              <p className="text-[10px] text-slate-400 font-mono">Ref: {pmt.transactionRef}</p>
-                            )}
-                            {pmt.remarks && (
-                              <p className="text-[11px] text-slate-300 italic">"{pmt.remarks}"</p>
-                            )}
-                            {pmt.receiptUrl && (
-                              <div className="flex items-center gap-1.5 pt-0.5">
-                                <span className="text-[10px] text-slate-400">Receipt copy:</span>
-                                <a 
-                                  href={pmt.receiptUrl} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer" 
-                                  className="text-[10px] text-amber-400 hover:underline font-bold flex items-center gap-1"
-                                >
-                                  <FileText className="w-3 h-3 text-amber-400" />
-                                  <span>View Image</span>
-                                </a>
+                        {(() => {
+                          const downpaymentDoc = selectedOrder.documents?.find(d => d.docType === 'downpayment_receipt');
+                          return selectedOrder.payments.map((pmt) => (
+                            <div key={pmt.id} className="p-3.5 bg-slate-900/40 border border-slate-850 rounded-xl text-xs space-y-1.5 hover:bg-slate-900/60 transition-all">
+                              <div className="flex justify-between items-center">
+                                <span className="font-extrabold text-white text-sm">₹{pmt.amount.toLocaleString('en-IN')}</span>
+                                <span className="font-mono text-[9px] bg-slate-950 border border-slate-850 px-2 py-0.5 rounded text-slate-400 capitalize">
+                                  {METHOD_LABELS[pmt.paymentMethod] || pmt.paymentMethod}
+                                </span>
                               </div>
-                            )}
+                              
+                              {pmt.transactionRef && (
+                                <p className="text-[10px] text-slate-400 font-mono">Ref: {pmt.transactionRef}</p>
+                              )}
+                              {pmt.remarks && (
+                                <p className="text-[11px] text-slate-300 italic">"{pmt.remarks}"</p>
+                              )}
+                              {(pmt.receiptUrl || (pmt.remarks?.includes('Initial Down Payment') && downpaymentDoc)) ? (
+                                <div className="flex items-center gap-1.5 pt-0.5">
+                                  <span className="text-[10px] text-slate-400">Receipt copy:</span>
+                                  <a 
+                                    href={pmt.receiptUrl || `/api/v1/orders/${selectedOrder.id}/documents/${downpaymentDoc?.id}`} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="text-[10px] text-amber-400 hover:underline font-bold flex items-center gap-1"
+                                  >
+                                    <FileText className="w-3 h-3 text-amber-400" />
+                                    <span>{pmt.receiptUrl ? 'View Image' : 'View Receipt'}</span>
+                                  </a>
+                                </div>
+                              ) : null}
 
-                            <div className="flex items-center justify-between text-[9px] text-slate-500 font-medium pt-1.5 border-t border-slate-800/40">
+                              <div className="flex items-center justify-between text-[9px] text-slate-500 font-medium pt-1.5 border-t border-slate-800/40">
                               <span className="flex items-center gap-1">
                                 <User className="w-2.5 h-2.5 text-slate-500" />
                                 Recorded by{' '}
@@ -1007,7 +1009,8 @@ export default function FinancePage() {
                               </span>
                             </div>
                           </div>
-                        ))}
+                        ))
+                      })()}
                       </div>
                     )}
                   </div>
