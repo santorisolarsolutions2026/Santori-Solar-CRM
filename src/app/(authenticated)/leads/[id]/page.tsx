@@ -2155,6 +2155,104 @@ export default function LeadDetailPage({
                             className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs disabled:opacity-50"
                           />
                         </div>
+
+                        <div className="md:col-span-2 p-4 bg-slate-900/30 border border-slate-850 rounded-xl space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-350 uppercase tracking-wider">Downpayment Receipt</span>
+                            {getDocStatus('downpayment_receipt').uploaded && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase tracking-wider">
+                                Uploaded
+                              </span>
+                            )}
+                          </div>
+
+                          {getDocStatus('downpayment_receipt').uploaded ? (
+                            <div className="p-3 bg-slate-950/60 border border-slate-850 rounded-lg flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <FileText className="w-4 h-4 text-amber-400 shrink-0" />
+                                <span className="text-xs text-slate-350 truncate">{getDocStatus('downpayment_receipt').fileName}</span>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <a
+                                  href={`/api/v1/orders/${lead.order?.id}/documents/${getDocStatus('downpayment_receipt').id}`}
+                                  download={getDocStatus('downpayment_receipt').fileName || true}
+                                  target="_blank"
+                                  className="py-1 px-2.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-300 hover:text-white rounded-lg text-[10px] font-semibold flex items-center gap-1.5 transition-all"
+                                >
+                                  <Download className="w-3 h-3 text-amber-400" />
+                                  <span>Download</span>
+                                </a>
+                                {isImageFile(getDocStatus('downpayment_receipt').fileName) && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setPreviewImage({
+                                      src: `/api/v1/orders/${lead.order?.id}/documents/${getDocStatus('downpayment_receipt').id}`,
+                                      title: `Downpayment Receipt: ${getDocStatus('downpayment_receipt').fileName}`
+                                    })}
+                                    className="py-1 px-2.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-amber-400 hover:text-amber-300 rounded-lg text-[10px] font-semibold flex items-center gap-1 transition-all cursor-pointer"
+                                  >
+                                    <Eye className="w-3 h-3" />
+                                    <span>Preview</span>
+                                  </button>
+                                )}
+                                {!isOrderFormDisabled && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteDocument('downpayment_receipt', getDocStatus('downpayment_receipt').id!)}
+                                    className="py-1 px-2 bg-slate-900 hover:bg-red-950/20 border border-slate-800 hover:border-red-900/30 text-red-400 hover:text-red-300 rounded-lg text-[10px] font-semibold flex items-center gap-1 transition-all cursor-pointer"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col sm:flex-row gap-3">
+                              <label className={`flex-1 border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center text-center transition-all ${
+                                isOrderFormDisabled 
+                                  ? 'border-slate-850 bg-slate-950/20 cursor-not-allowed opacity-60' 
+                                  : uploadingDoc === 'downpayment_receipt'
+                                    ? 'border-amber-500/50 bg-amber-500/[0.02] cursor-wait' 
+                                    : 'border-slate-800 hover:border-slate-700 bg-slate-950/20 hover:bg-slate-900/30 cursor-pointer'
+                              }`}>
+                                {uploadingDoc === 'downpayment_receipt' ? (
+                                  <div className="flex flex-col items-center gap-1.5 py-1">
+                                    <Loader2 className="w-5 h-5 text-amber-500 animate-spin" />
+                                    <span className="text-xs font-semibold text-amber-400">Uploading receipt...</span>
+                                  </div>
+                                ) : (
+                                  <div className="flex flex-col items-center gap-1.5 py-1">
+                                    <Upload className="w-4 h-4 text-slate-400" />
+                                    <span className="text-xs font-semibold text-slate-300">Click to upload receipt</span>
+                                    <span className="text-[10px] text-slate-500">PDF, JPG, or PNG (Max 5MB)</span>
+                                  </div>
+                                )}
+                                <input
+                                  type="file"
+                                  className="hidden"
+                                  disabled={uploadingDoc !== null || isOrderFormDisabled}
+                                  onChange={(e) => handleFileChange('downpayment_receipt', e)}
+                                />
+                              </label>
+
+                              {!isOrderFormDisabled && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setCameraModal({
+                                      isOpen: true,
+                                      onCapture: (file) => executeDocUpload('downpayment_receipt', file)
+                                    });
+                                  }}
+                                  className="sm:w-48 py-4 px-4 bg-slate-950/60 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-bold transition-all cursor-pointer flex flex-col items-center justify-center gap-2"
+                                >
+                                  <Camera className="w-5 h-5 text-slate-400" />
+                                  <span>Open Camera</span>
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
                         <div>
                           <label className="block text-xs font-semibold text-slate-400 mb-1">Remaining Payment Scheme</label>
                           <select

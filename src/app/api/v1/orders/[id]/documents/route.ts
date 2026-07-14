@@ -57,7 +57,7 @@ export async function POST(
       return NextResponse.json({ success: false, message: 'File and doc_type are required.' }, { status: 400 });
     }
 
-    if (!['aadhaar', 'pan', 'electricity_bill', 'bank_passbook'].includes(docType)) {
+    if (!['aadhaar', 'pan', 'electricity_bill', 'bank_passbook', 'downpayment_receipt'].includes(docType)) {
       return NextResponse.json({ success: false, message: 'Invalid document type.' }, { status: 400 });
     }
 

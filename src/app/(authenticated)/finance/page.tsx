@@ -94,6 +94,7 @@ const DOC_TYPES: Record<string, string> = {
   pan: 'PAN Card',
   electricity_bill: 'Electricity Bill',
   bank_passbook: 'Bank Passbook',
+  downpayment_receipt: 'Downpayment Receipt',
 };
 
 export default function FinancePage() {
@@ -873,7 +874,7 @@ export default function FinancePage() {
                       <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-2">Mandatory Documents</h4>
                       
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {['aadhaar', 'pan', 'electricity_bill', 'bank_passbook'].map((type) => {
+                        {['aadhaar', 'pan', 'electricity_bill', 'bank_passbook', 'downpayment_receipt'].map((type) => {
                           const doc = selectedOrder.documents?.find(d => d.docType === type);
                           return (
                             <div key={type} className="p-2.5 bg-slate-950/40 border border-slate-850 rounded-lg flex items-center justify-between">
