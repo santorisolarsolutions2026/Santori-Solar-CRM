@@ -1048,7 +1048,7 @@ export default function LeadsPage() {
                 <span>Assign Team ({selectedIds.length})</span>
               </button>
             )}
-            {hasPermission('leads:edit') && (
+            {hasPermission('leads:delete') && (
               <button
                 onClick={handleBulkDelete}
                 className="py-2 px-4 bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/50 rounded-lg font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
@@ -1223,44 +1223,32 @@ export default function LeadsPage() {
                           >
                             <Eye className="w-4.5 h-4.5" />
                           </Link>
-                          {lead.isActive ? (
-                            hasPermission('leads:edit') && (
-                              <>
-                                <Link
-                                  href={`/leads/${lead.id}?edit=true`}
-                                  className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white transition-all"
-                                  title="Edit Lead Info"
-                                >
-                                  <Edit2 className="w-4.5 h-4.5" />
-                                </Link>
-                                <button
-                                  onClick={() => handleDeleteLead(lead.id)}
-                                  className="p-1.5 rounded-lg bg-slate-900 hover:bg-red-950/20 border border-slate-800 hover:border-red-900/30 text-slate-400 hover:text-red-400 transition-all cursor-pointer"
-                                  title="Deactivate Opportunity"
-                                >
-                                  <Trash2 className="w-4.5 h-4.5" />
-                                </button>
-                              </>
-                            )
-                          ) : (
-                            hasPermission('leads:edit') && (
-                              <>
-                                <button
-                                  onClick={() => handleActivateLead(lead.id)}
-                                  className="p-1.5 rounded-lg bg-slate-900 hover:bg-emerald-950/20 border border-slate-800 hover:border-emerald-900/30 text-slate-400 hover:text-emerald-400 transition-all cursor-pointer"
-                                  title="Activate Lead"
-                                >
-                                  <Check className="w-4.5 h-4.5" />
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteLead(lead.id)}
-                                  className="p-1.5 rounded-lg bg-slate-900 hover:bg-red-950/20 border border-slate-800 hover:border-red-900/30 text-slate-400 hover:text-red-400 transition-all cursor-pointer"
-                                  title="Delete Lead permanently"
-                                >
-                                  <Trash2 className="w-4.5 h-4.5" />
-                                </button>
-                              </>
-                            )
+                          {hasPermission('leads:edit') && (
+                            <Link
+                              href={`/leads/${lead.id}?edit=true`}
+                              className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white transition-all"
+                              title="Edit Lead Info"
+                            >
+                              <Edit2 className="w-4.5 h-4.5" />
+                            </Link>
+                          )}
+                          {!lead.isActive && hasPermission('leads:edit') && (
+                            <button
+                              onClick={() => handleActivateLead(lead.id)}
+                              className="p-1.5 rounded-lg bg-slate-900 hover:bg-emerald-950/20 border border-slate-800 hover:border-emerald-900/30 text-slate-400 hover:text-emerald-400 transition-all cursor-pointer"
+                              title="Activate Lead"
+                            >
+                              <Check className="w-4.5 h-4.5" />
+                            </button>
+                          )}
+                          {hasPermission('leads:delete') && (
+                            <button
+                              onClick={() => handleDeleteLead(lead.id)}
+                              className="p-1.5 rounded-lg bg-slate-900 hover:bg-red-950/20 border border-slate-800 hover:border-red-900/30 text-slate-400 hover:text-red-400 transition-all cursor-pointer"
+                              title={lead.isActive ? "Deactivate Opportunity" : "Delete Lead permanently"}
+                            >
+                              <Trash2 className="w-4.5 h-4.5" />
+                            </button>
                           )}
                         </div>
                       </td>

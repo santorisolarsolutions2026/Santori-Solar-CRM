@@ -182,7 +182,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     // Implicit page permissions mapping to mirror backend behaviour
     const hasAnyLeadPermission = [
-      'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:track', 'leads:assign'
+      'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:track', 'leads:assign', 'leads:delete'
     ].some(p => userPerms.includes(p));
 
     const hasAnyOrderPermission = [

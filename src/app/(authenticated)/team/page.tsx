@@ -93,6 +93,12 @@ const ALL_PERMISSIONS = [
     category: 'Leads Pipeline & Management'
   },
   {
+    key: 'leads:delete',
+    label: 'Delete leads',
+    description: 'Allows permanently deleting leads from the database.',
+    category: 'Leads Pipeline & Management'
+  },
+  {
     key: 'leads:change_status',
     label: 'Change lead pipeline stage',
     description: 'Allows advancing leads through stages (Follow up, Meeting Booked, Sale Done).',
@@ -184,7 +190,7 @@ function getLocalDefaultPermissionsForRole(role: string): string[] {
     case 'admin':
     case 'director':
       return [
-        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:assign',
+        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:assign', 'leads:delete',
         'orders:create', 'orders:verify', 'orders:finance_access', 'orders:operations',
         'team:view', 'attendance:view', 'team:manage', 'logs:view', 'leads:track', 'reports:view'
       ];

@@ -75,7 +75,7 @@ export function getDefaultPermissionsForRole(role: string): string[] {
     case 'admin':
     case 'director':
       return [
-        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:assign',
+        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:assign', 'leads:delete',
         'orders:create', 'orders:verify', 'orders:finance_access', 'orders:operations',
         'team:view', 'attendance:view', 'team:manage', 'logs:view', 'leads:track', 'reports:view'
       ];
@@ -134,7 +134,7 @@ export async function getUserPermissions(userId: number): Promise<string[]> {
 
   // Implicit page permissions mapping to ensure existing checks ('leads:view', 'orders:view') do not break
   const hasAnyLeadPermission = [
-    'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:track', 'leads:assign'
+    'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:track', 'leads:assign', 'leads:delete'
   ].some(p => finalPermissions.includes(p));
 
   if (hasAnyLeadPermission && !finalPermissions.includes('leads:view')) {
@@ -178,7 +178,7 @@ export async function getUserSession(userId: number): Promise<{ role: string; pe
   const finalPermissions = [...basePermissions];
 
   const hasAnyLeadPermission = [
-    'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:track', 'leads:assign'
+    'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:track', 'leads:assign', 'leads:delete'
   ].some(p => finalPermissions.includes(p));
 
   if (hasAnyLeadPermission && !finalPermissions.includes('leads:view')) {

@@ -1239,31 +1239,24 @@ export default function LeadDetailPage({
         </div>
 
         {/* Action controls */}
-        {hasPermission('leads:edit') && (
+        {(hasPermission('leads:edit') || hasPermission('leads:delete')) && (
           <div className="flex gap-2">
-            {lead.isActive ? (
+            {!lead.isActive && hasPermission('leads:edit') && (
+              <button
+                onClick={() => handleActivateLead(lead.id)}
+                className="py-2 px-4 rounded-lg bg-emerald-950/20 text-emerald-400 hover:text-emerald-300 border border-emerald-900/30 transition-all font-semibold text-xs flex items-center gap-1.5"
+              >
+                <Check className="w-4 h-4" />
+                <span>Activate Lead</span>
+              </button>
+            )}
+            {hasPermission('leads:delete') && (
               <button
                 onClick={() => handleDeleteLead(lead.id)}
                 className="py-2 px-4 rounded-lg bg-red-950/20 text-red-400 hover:text-red-300 border border-red-900/30 transition-all font-semibold text-xs flex items-center gap-1.5"
               >
                 Delete Lead
               </button>
-            ) : (
-              <>
-                <button
-                  onClick={() => handleActivateLead(lead.id)}
-                  className="py-2 px-4 rounded-lg bg-emerald-950/20 text-emerald-400 hover:text-emerald-300 border border-emerald-900/30 transition-all font-semibold text-xs flex items-center gap-1.5"
-                >
-                  <Check className="w-4 h-4" />
-                  <span>Activate Lead</span>
-                </button>
-                <button
-                  onClick={() => handleDeleteLead(lead.id)}
-                  className="py-2 px-4 rounded-lg bg-red-950/20 text-red-400 hover:text-red-300 border border-red-900/30 transition-all font-semibold text-xs flex items-center gap-1.5"
-                >
-                  Delete Lead
-                </button>
-              </>
             )}
           </div>
         )}
