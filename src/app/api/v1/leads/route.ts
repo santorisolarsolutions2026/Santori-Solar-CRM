@@ -423,7 +423,7 @@ export async function POST(req: Request) {
     }
 
     const leadCode = await generateLeadCode();
-    const statusToSet = (finalTlId || finalConsultantId || finalManagerId) ? 1 : 0;
+    const statusToSet = 1;
 
     // Create lead inside a database transaction
     const lead = await prisma.$transaction(async (tx) => {

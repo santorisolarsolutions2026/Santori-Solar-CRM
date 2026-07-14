@@ -144,7 +144,7 @@ export async function POST(req: Request) {
             city: city || '',
             state: state || '',
             leadSource: leadSource || 'other',
-            status: 0, // 0 = Uninitiated Lead
+            status: 1, // 1 = Fresh Lead
             createdById: userPayload.id,
             otherData: otherData ? (typeof otherData === 'string' ? otherData : JSON.stringify(otherData)) : null,
             isActive: true,
@@ -159,8 +159,8 @@ export async function POST(req: Request) {
             leadId: newLead.id,
             userId: userPayload.id,
             fromStatus: null,
-            toStatus: 0,
-            remark: 'Lead imported as an Uninitiated Lead from CSV.',
+            toStatus: 1,
+            remark: 'Lead imported as a Fresh Lead from CSV.',
           },
         });
 
