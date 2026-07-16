@@ -48,6 +48,9 @@ export async function POST(
       }
     }
 
+    const body = await req.json().catch(() => ({}));
+    const { financeManagerId, financeTlId, financeConsultantId } = body;
+
     // Validate that order fields are complete
     if (!order.connectionNumber || order.systemSizeKw <= 0 || order.totalValue <= 0) {
       return NextResponse.json(
@@ -69,6 +72,18 @@ export async function POST(
           submittedById: userPayload.id,
         },
       });
+
+      // Update Lead assignments to Finance
+      if (financeManagerId || financeTlId || financeConsultantId) {
+        await tx.lead.update({
+          where: { id: order.leadId },
+          data: {
+            assignedManagerId: financeManagerId ? parseInt(financeManagerId, 10) : null,
+            assignedTlId: financeTlId ? parseInt(financeTlId, 10) : null,
+            assignedConsultantId: financeConsultantId ? parseInt(financeConsultantId, 10) : null,
+          },
+        });
+      }
 
       // Log activity
       await tx.leadActivityLog.create({

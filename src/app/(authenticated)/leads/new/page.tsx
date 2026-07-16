@@ -37,7 +37,36 @@ export default function NewLeadPage() {
   const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   // List of active employees for allocation selectors
-  const [employees, setEmployees] = useState<{ id: number; name: string; role: string }[]>([]);
+  const [employees, setEmployees] = useState<any[]>([]);
+
+  // Filter Sales & Marketing department users (and admin)
+  const isSalesOrAdmin = (emp: any) => {
+    const deptName = emp.department?.name || '';
+    const isSales = deptName === 'Sales' || deptName === 'Sales & Marketing';
+    const isAdmin = emp.role === 'admin' || emp.designation?.name === 'Admin';
+    return isSales || isAdmin;
+  };
+
+  const managers = employees.filter((emp) => {
+    if (!isSalesOrAdmin(emp)) return false;
+    const desName = emp.designation?.name || '';
+    const roleLower = emp.role.toLowerCase();
+    return desName.includes('Manager') || desName.includes('Head') || desName.includes('Admin') || roleLower === 'admin';
+  });
+
+  const tls = employees.filter((emp) => {
+    if (!isSalesOrAdmin(emp)) return false;
+    const desName = emp.designation?.name || '';
+    const roleLower = emp.role.toLowerCase();
+    return desName.includes('TL') || desName.includes('Team Leader') || desName.includes('Manager') || desName.includes('Head') || desName.includes('Admin') || roleLower === 'admin';
+  });
+
+  const consultants = employees.filter((emp) => {
+    if (!isSalesOrAdmin(emp)) return false;
+    const desName = emp.designation?.name || '';
+    const roleLower = emp.role.toLowerCase();
+    return desName.includes('Consultant') || desName.includes('TL') || desName.includes('Team Leader') || desName.includes('Manager') || desName.includes('Head') || desName.includes('Admin') || roleLower === 'admin';
+  });
 
   // Load draft from localStorage on mount
   useEffect(() => {
@@ -423,9 +452,9 @@ export default function NewLeadPage() {
                     className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-350 text-xs focus:ring-amber-500"
                   >
                     <option value="">Select Manager</option>
-                    {employees.map((emp) => (
+                    {managers.map((emp) => (
                       <option key={emp.id} value={emp.id}>
-                        {emp.name} ({emp.role.toUpperCase()})
+                        {emp.name} ({emp.designation?.name || emp.role.toUpperCase()})
                       </option>
                     ))}
                   </select>
@@ -440,9 +469,9 @@ export default function NewLeadPage() {
                     className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-350 text-xs focus:ring-amber-500"
                   >
                     <option value="">Select Team Leader</option>
-                    {employees.map((emp) => (
+                    {tls.map((emp) => (
                       <option key={emp.id} value={emp.id}>
-                        {emp.name} ({emp.role.toUpperCase()})
+                        {emp.name} ({emp.designation?.name || emp.role.toUpperCase()})
                       </option>
                     ))}
                   </select>
@@ -457,9 +486,9 @@ export default function NewLeadPage() {
                     className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-350 text-xs focus:ring-amber-500"
                   >
                     <option value="">Select Consultant</option>
-                    {employees.map((emp) => (
+                    {consultants.map((emp) => (
                       <option key={emp.id} value={emp.id}>
-                        {emp.name} ({emp.role.toUpperCase()})
+                        {emp.name} ({emp.designation?.name || emp.role.toUpperCase()})
                       </option>
                     ))}
                   </select>

@@ -39,7 +39,7 @@ export async function POST(
     }
 
     const body = await req.json();
-    const { approve, remark } = body; // approve is boolean, remark is string
+    const { approve, remark, opsManagerId, opsTlId, opsConsultantId } = body; // approve is boolean, remark is string
 
     if (approve === undefined) {
       return NextResponse.json({ success: false, message: 'Approval status (approve: true/false) is required.' }, { status: 400 });
@@ -56,6 +56,17 @@ export async function POST(
           rejectionReason: approve ? null : (remark || 'Documents/payment issue'),
         },
       });
+
+      if (approve && (opsManagerId || opsTlId || opsConsultantId)) {
+        await tx.lead.update({
+          where: { id: order.leadId },
+          data: {
+            assignedManagerId: opsManagerId ? parseInt(opsManagerId, 10) : null,
+            assignedTlId: opsTlId ? parseInt(opsTlId, 10) : null,
+            assignedConsultantId: opsConsultantId ? parseInt(opsConsultantId, 10) : null,
+          },
+        });
+      }
 
       if (approve) {
         // Create initial ledger payment entry for the down payment

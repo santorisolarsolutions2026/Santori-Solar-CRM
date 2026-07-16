@@ -134,6 +134,38 @@ export default function FinancePage() {
   // Verification action inputs
   const [financeRemark, setFinanceRemark] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+
+  const [employees, setEmployees] = useState<any[]>([]);
+  const [showOpsModal, setShowOpsModal] = useState(false);
+  const [opsManagerId, setOpsManagerId] = useState('');
+  const [opsTlId, setOpsTlId] = useState('');
+  const [opsConsultantId, setOpsConsultantId] = useState('');
+
+  // Helper to check if employee belongs to Operations department
+  const isOpsOrAdmin = (emp: any) => {
+    const deptName = emp.department?.name || '';
+    const isOps = deptName === 'Operations';
+    const isAdmin = emp.role === 'admin' || emp.designation?.name === 'Admin';
+    return isOps || isAdmin;
+  };
+
+  const opsManagers = employees.filter((emp) => {
+    if (!isOpsOrAdmin(emp)) return false;
+    const desName = emp.designation?.name || '';
+    return desName.includes('Manager') || desName.includes('Head') || desName.includes('Admin') || emp.role === 'admin';
+  });
+
+  const opsTls = employees.filter((emp) => {
+    if (!isOpsOrAdmin(emp)) return false;
+    const desName = emp.designation?.name || '';
+    return desName.includes('TL') || desName.includes('Team Leader') || desName.includes('Manager') || desName.includes('Head') || desName.includes('Admin') || emp.role === 'admin';
+  });
+
+  const opsConsultants = employees.filter((emp) => {
+    if (!isOpsOrAdmin(emp)) return false;
+    const desName = emp.designation?.name || '';
+    return desName.includes('Consultant') || desName.includes('TL') || desName.includes('Team Leader') || desName.includes('Manager') || desName.includes('Head') || desName.includes('Admin') || emp.role === 'admin';
+  });
   
   // Record new payment inputs
   const [newPaymentAmount, setNewPaymentAmount] = useState('');
@@ -191,13 +223,29 @@ export default function FinancePage() {
     }
   }, [user, search]);
 
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await fetch('/api/v1/users');
+        const data = await res.json();
+        if (data.success) {
+          const activeEmployees = data.data.filter((u: any) => u.isActive);
+          setEmployees(activeEmployees);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    if (user) fetchUsers();
+  }, [user]);
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     fetchLedgerData();
   };
 
   // Verify/Reject action
-  const handleVerifyOrder = async (approve: boolean) => {
+  const handleVerifyOrder = async (approve: boolean, opsMgrId?: string, opsTld?: string, opsConsId?: string) => {
     if (!selectedOrder) return;
     if (!approve && !financeRemark) {
       alert('Please provide a rejection reason in the remarks field.');
@@ -212,6 +260,9 @@ export default function FinancePage() {
         body: JSON.stringify({
           approve,
           remark: financeRemark,
+          opsManagerId: opsMgrId || null,
+          opsTlId: opsTld || null,
+          opsConsultantId: opsConsId || null,
         }),
       });
 
@@ -219,6 +270,10 @@ export default function FinancePage() {
       if (data.success) {
         setSelectedOrder(null);
         setFinanceRemark('');
+        setShowOpsModal(false);
+        setOpsManagerId('');
+        setOpsTlId('');
+        setOpsConsultantId('');
         fetchLedgerData();
         alert(approve ? 'Order successfully verified!' : 'Order rejected and returned to sales draft.');
       } else {
@@ -934,7 +989,7 @@ export default function FinancePage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleVerifyOrder(true)}
+                        onClick={() => setShowOpsModal(true)}
                         disabled={actionLoading}
                         className="flex-1 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg font-bold text-xs shadow-md shadow-emerald-500/10 transition-all cursor-pointer disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
                       >
@@ -1196,6 +1251,97 @@ export default function FinancePage() {
 
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* Operations Team Allocation Modal */}
+      {showOpsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="w-full max-w-lg bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-white">Assign Operations Team</h3>
+              <button onClick={() => setShowOpsModal(false)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              handleVerifyOrder(true, opsManagerId, opsTlId, opsConsultantId);
+            }} className="p-6 space-y-4">
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Assign the Operations team members who will take responsibility for planning and executing the installation of this solar order.
+              </p>
+
+              <div>
+                <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Operations Manager *</label>
+                <select
+                  required
+                  value={opsManagerId}
+                  onChange={(e) => setOpsManagerId(e.target.value)}
+                  className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                >
+                  <option value="">Select Operations Manager</option>
+                  {opsManagers.map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.name} ({emp.designation?.name || emp.role.toUpperCase()})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Operations Team Leader *</label>
+                <select
+                  required
+                  value={opsTlId}
+                  onChange={(e) => setOpsTlId(e.target.value)}
+                  className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                >
+                  <option value="">Select Operations Team Leader</option>
+                  {opsTls.map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.name} ({emp.designation?.name || emp.role.toUpperCase()})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Operations Consultant *</label>
+                <select
+                  required
+                  value={opsConsultantId}
+                  onChange={(e) => setOpsConsultantId(e.target.value)}
+                  className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                >
+                  <option value="">Select Operations Consultant</option>
+                  {opsConsultants.map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.name} ({emp.designation?.name || emp.role.toUpperCase()})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex gap-3 border-t border-slate-800/80 pt-4 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowOpsModal(false)}
+                  className="py-2 px-4 bg-slate-900 border border-slate-800 text-slate-400 rounded-lg font-bold text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading}
+                  className="py-2 px-5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg font-bold text-xs shadow-md"
+                >
+                  Confirm & Assign Operations
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

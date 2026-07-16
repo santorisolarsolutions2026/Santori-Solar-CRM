@@ -318,7 +318,7 @@ export default function LeadDetailPage({
     connectionNumber: '',
   });
 
-  const [employees, setEmployees] = useState<{ id: number; name: string; role: string }[]>([]);
+  const [employees, setEmployees] = useState<any[]>([]);
 
   // Fetch users for assignments selectors
   useEffect(() => {
@@ -334,8 +334,8 @@ export default function LeadDetailPage({
         console.error(err);
       }
     };
-    if (user && isEditing) fetchUsers();
-  }, [user, isEditing]);
+    if (user) fetchUsers();
+  }, [user]);
 
   // Status widget state
   const [newStatus, setNewStatus] = useState('');
@@ -358,6 +358,8 @@ export default function LeadDetailPage({
     avgMonthlyBill: '',
     connectionType: '',
     assignedExecutiveId: '',
+    assignedManagerId: '',
+    assignedTlId: '',
     notes: '',
   });
 
@@ -367,6 +369,60 @@ export default function LeadDetailPage({
   const [formCSubStatus, setFormCSubStatus] = useState('warm'); // warm/hot or reason
   const [formCFollowUpAt, setFormCFollowUpAt] = useState('');
   const [formCRemark, setFormCRemark] = useState('');
+
+  // Helper to check if employee belongs to Sales & Marketing department and is NOT in a PSA role
+  const isSalesNonPsaOrAdmin = (emp: any) => {
+    const deptName = emp.department?.name || '';
+    const isSales = deptName === 'Sales' || deptName === 'Sales & Marketing';
+    const desName = emp.designation?.name || '';
+    const isPsa = desName.includes('PSA');
+    const isAdmin = emp.role === 'admin' || emp.designation?.name === 'Admin';
+    return (isSales && !isPsa) || isAdmin;
+  };
+
+  const salesManagers = employees.filter((emp) => {
+    if (!isSalesNonPsaOrAdmin(emp)) return false;
+    const desName = emp.designation?.name || '';
+    return desName.includes('Manager') || desName.includes('Head') || desName.includes('Admin') || emp.role === 'admin';
+  });
+
+  const salesTls = employees.filter((emp) => {
+    if (!isSalesNonPsaOrAdmin(emp)) return false;
+    const desName = emp.designation?.name || '';
+    return desName.includes('TL') || desName.includes('Team Leader') || desName.includes('Manager') || desName.includes('Head') || desName.includes('Admin') || emp.role === 'admin';
+  });
+
+  const salesConsultants = employees.filter((emp) => {
+    if (!isSalesNonPsaOrAdmin(emp)) return false;
+    const desName = emp.designation?.name || '';
+    return desName.includes('Consultant') || desName.includes('TL') || desName.includes('Team Leader') || desName.includes('Manager') || desName.includes('Head') || desName.includes('Admin') || emp.role === 'admin';
+  });
+
+  // Helper to check if employee belongs to Finance department
+  const isFinanceOrAdmin = (emp: any) => {
+    const deptName = emp.department?.name || '';
+    const isFinance = deptName === 'Finance';
+    const isAdmin = emp.role === 'admin' || emp.designation?.name === 'Admin';
+    return isFinance || isAdmin;
+  };
+
+  const financeManagers = employees.filter((emp) => {
+    if (!isFinanceOrAdmin(emp)) return false;
+    const desName = emp.designation?.name || '';
+    return desName.includes('Manager') || desName.includes('Head') || desName.includes('Admin') || emp.role === 'admin';
+  });
+
+  const financeTls = employees.filter((emp) => {
+    if (!isFinanceOrAdmin(emp)) return false;
+    const desName = emp.designation?.name || '';
+    return desName.includes('TL') || desName.includes('Team Leader') || desName.includes('Manager') || desName.includes('Head') || desName.includes('Admin') || emp.role === 'admin';
+  });
+
+  const financeConsultants = employees.filter((emp) => {
+    if (!isFinanceOrAdmin(emp)) return false;
+    const desName = emp.designation?.name || '';
+    return desName.includes('Consultant') || desName.includes('TL') || desName.includes('Team Leader') || desName.includes('Manager') || desName.includes('Head') || desName.includes('Admin') || emp.role === 'admin';
+  });
 
   // Image Lightbox State & Helper
   const [previewImage, setPreviewImage] = useState<{ src: string; title: string } | null>(null);
@@ -390,6 +446,10 @@ export default function LeadDetailPage({
     additionalNotes: '',
   });
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
+  const [showFinanceModal, setShowFinanceModal] = useState(false);
+  const [financeManagerId, setFinanceManagerId] = useState('');
+  const [financeTlId, setFinanceTlId] = useState('');
+  const [financeConsultantId, setFinanceConsultantId] = useState('');
 
   // Meeting recording & tracking states
   const [isRecording, setIsRecording] = useState(false);
@@ -447,6 +507,8 @@ export default function LeadDetailPage({
             avgMonthlyBill: '2000',
             connectionType: data.data.connectionType,
             assignedExecutiveId: data.data.assignedConsultantId?.toString() || user?.id.toString() || '',
+            assignedManagerId: data.data.assignedManagerId?.toString() || '',
+            assignedTlId: data.data.assignedTlId?.toString() || '',
             notes: '',
           });
         }
@@ -890,14 +952,24 @@ export default function LeadDetailPage({
   };
 
   // Submit punching order to Finance
-  const handleSubmitOrderToFinance = async () => {
+  const handleSubmitOrderToFinance = async (finManagerId?: string, finTlId?: string, finConsultantId?: string) => {
     if (!lead?.order) return;
     try {
       const res = await fetch(`/api/v1/orders/${lead.order.id}/submit`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          financeManagerId: finManagerId || null,
+          financeTlId: finTlId || null,
+          financeConsultantId: finConsultantId || null,
+        }),
       });
       const data = await res.json();
       if (data.success) {
+        setShowFinanceModal(false);
+        setFinanceManagerId('');
+        setFinanceTlId('');
+        setFinanceConsultantId('');
         fetchLeadDetails();
         alert('Order successfully submitted to Finance Team!');
       } else {
@@ -2543,7 +2615,7 @@ export default function LeadDetailPage({
                         </div>
                         <div>
                           <button
-                            onClick={handleSubmitOrderToFinance}
+                            onClick={() => setShowFinanceModal(true)}
                             className="py-2.5 px-5 rounded-lg font-bold text-xs shadow-lg transition-all bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 cursor-pointer shadow-emerald-500/10 focus:outline-none"
                           >
                             Submit Order for Approval
@@ -2641,6 +2713,58 @@ export default function LeadDetailPage({
                     className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs"
                   />
                 </div>
+                {/* Sales Team allocation selectors */}
+                <div className="sm:col-span-2 border-t border-slate-800/60 pt-3 mt-1">
+                  <h4 className="text-[11px] font-bold uppercase text-amber-400 tracking-wider">Reassign to Sales Team</h4>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Assign to Sales Manager *</label>
+                  <select
+                    required
+                    value={formBData.assignedManagerId}
+                    onChange={(e) => setFormBData({ ...formBData, assignedManagerId: e.target.value })}
+                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs"
+                  >
+                    <option value="">Select Manager</option>
+                    {salesManagers.map((emp) => (
+                      <option key={emp.id} value={emp.id}>
+                        {emp.name} ({emp.designation?.name || emp.role.toUpperCase()})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Assign to Sales TL *</label>
+                  <select
+                    required
+                    value={formBData.assignedTlId}
+                    onChange={(e) => setFormBData({ ...formBData, assignedTlId: e.target.value })}
+                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs"
+                  >
+                    <option value="">Select Team Leader</option>
+                    {salesTls.map((emp) => (
+                      <option key={emp.id} value={emp.id}>
+                        {emp.name} ({emp.designation?.name || emp.role.toUpperCase()})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Assign to Sales Consultant *</label>
+                  <select
+                    required
+                    value={formBData.assignedExecutiveId}
+                    onChange={(e) => setFormBData({ ...formBData, assignedExecutiveId: e.target.value })}
+                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs"
+                  >
+                    <option value="">Select Consultant</option>
+                    {salesConsultants.map((emp) => (
+                      <option key={emp.id} value={emp.id}>
+                        {emp.name} ({emp.designation?.name || emp.role.toUpperCase()})
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <div className="sm:col-span-2">
                   <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Special Executive Instructions</label>
                   <textarea
@@ -2665,6 +2789,96 @@ export default function LeadDetailPage({
                   className="py-2 px-5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md"
                 >
                   Confirm Meeting Booking
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Finance Allocation Modal */}
+      {showFinanceModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="w-full max-w-lg bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-white">Assign Finance Team</h3>
+              <button onClick={() => setShowFinanceModal(false)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              handleSubmitOrderToFinance(financeManagerId, financeTlId, financeConsultantId);
+            }} className="p-6 space-y-4">
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Please assign the Finance department team members who will verify the down-payment and punch details for this order.
+              </p>
+
+              <div>
+                <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Finance Manager *</label>
+                <select
+                  required
+                  value={financeManagerId}
+                  onChange={(e) => setFinanceManagerId(e.target.value)}
+                  className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                >
+                  <option value="">Select Finance Manager</option>
+                  {financeManagers.map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.name} ({emp.designation?.name || emp.role.toUpperCase()})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Finance Team Leader *</label>
+                <select
+                  required
+                  value={financeTlId}
+                  onChange={(e) => setFinanceTlId(e.target.value)}
+                  className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                >
+                  <option value="">Select Finance Team Leader</option>
+                  {financeTls.map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.name} ({emp.designation?.name || emp.role.toUpperCase()})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Finance Consultant *</label>
+                <select
+                  required
+                  value={financeConsultantId}
+                  onChange={(e) => setFinanceConsultantId(e.target.value)}
+                  className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                >
+                  <option value="">Select Finance Consultant</option>
+                  {financeConsultants.map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.name} ({emp.designation?.name || emp.role.toUpperCase()})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex gap-3 border-t border-slate-800/80 pt-4 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowFinanceModal(false)}
+                  className="py-2 px-4 bg-slate-900 border border-slate-800 text-slate-400 rounded-lg font-bold text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="py-2 px-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 rounded-lg font-bold text-xs shadow-md"
+                >
+                  Submit Order to Finance
                 </button>
               </div>
             </form>

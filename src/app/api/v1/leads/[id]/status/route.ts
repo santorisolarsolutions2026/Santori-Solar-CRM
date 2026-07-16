@@ -255,6 +255,12 @@ export async function POST(
       updateData.pinCode = pinCode;
       updateData.connectionType = connectionType;
       updateData.assignedConsultantId = parseInt(assignedExecutiveId, 10);
+      if (formB.assignedManagerId) {
+        updateData.assignedManagerId = parseInt(formB.assignedManagerId, 10);
+      }
+      if (formB.assignedTlId) {
+        updateData.assignedTlId = parseInt(formB.assignedTlId, 10);
+      }
     }
 
     // Stage 9 - Meeting Done (Form C validation)
