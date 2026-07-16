@@ -90,6 +90,10 @@ export async function GET(req: Request) {
         photograph: u.photograph,
         isActive: u.isActive,
         leadsClosed,
+        departmentId: u.departmentId,
+        designationId: u.designationId,
+        department: u.department,
+        designation: u.designation,
       };
 
       if (isAdminOrDirectorOrSalesHead || u.id === userPayload.id) {
