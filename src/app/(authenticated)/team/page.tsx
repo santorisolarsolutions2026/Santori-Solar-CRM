@@ -22,6 +22,10 @@ import {
   History,
   Eye,
   Search,
+  Award,
+  DollarSign,
+  Hammer,
+  Terminal,
 } from 'lucide-react';
 
 interface TeamMember {
@@ -77,115 +81,141 @@ export function getRoleClass(role: string): string {
 }
 
 const ALL_PERMISSIONS = [
-  // Group 1: Leads Pipeline & Management
+  // PSA Level
   {
     key: 'leads:create',
-    label: 'Add new lead',
+    label: 'PSA: Create Leads',
     description: 'Allows registering and adding new customer leads into the system.',
-    category: 'Leads Pipeline & Management'
-  },
-  {
-    key: 'leads:import',
-    label: 'Import new leads',
-    description: 'Allows bulk uploading and importing leads via CSV/Excel sheets.',
-    category: 'Leads Pipeline & Management'
+    category: 'PSA'
   },
   {
     key: 'leads:edit',
-    label: 'Edit leads info',
-    description: 'Allows modifying customer contact, connection load, and address details.',
-    category: 'Leads Pipeline & Management'
-  },
-  {
-    key: 'leads:delete',
-    label: 'Delete leads',
-    description: 'Allows permanently deleting leads from the database.',
-    category: 'Leads Pipeline & Management'
+    label: 'PSA: Edit Lead Details',
+    description: 'Allows editing contact, discom connection load, and lead details before site visit.',
+    category: 'PSA'
   },
   {
     key: 'leads:change_status',
-    label: 'Change lead pipeline stage',
-    description: 'Allows advancing leads through stages (Follow up, Meeting Booked, Sale Done).',
-    category: 'Leads Pipeline & Management'
-  },
-  {
-    key: 'leads:view_all',
-    label: 'View all leads',
-    description: 'Allows accessing and viewing all leads in the sales pipeline.',
-    category: 'Leads Pipeline & Management'
-  },
-  {
-    key: 'leads:assign',
-    label: 'Assign Team members to leads',
-    description: 'Allows assigning or reassigning consultants, team leaders, and managers to leads.',
-    category: 'Leads Pipeline & Management'
-  },
-
-  // Group 2: Orders & Fulfillment Queue
-  {
-    key: 'orders:create',
-    label: 'Convert lead into order',
-    description: 'Allows converting Sale Done leads into formal sales orders and punching payment details.',
-    category: 'Orders & Fulfillment Queue'
-  },
-  {
-    key: 'orders:verify',
-    label: 'Verify the orders',
-    description: 'Allows finance verification of down payments, payment methods, and bank records.',
-    category: 'Orders & Fulfillment Queue'
-  },
-  {
-    key: 'orders:finance_access',
-    label: 'Access to Finance & Payments Details',
-    description: 'Allows viewing the Finance & Payments tab, ledger, and payment records.',
-    category: 'Orders & Fulfillment Queue'
-  },
-  {
-    key: 'orders:operations',
-    label: 'Access to Operations Details',
-    description: 'Allows viewing the Operations tab and managing delivery, solar installation, net metering, and commissioning stages.',
-    category: 'Orders & Fulfillment Queue'
-  },
-
-  // Group 3: Team Directory & Access Control
-  {
-    key: 'team:view',
-    label: 'View Team Directory',
-    description: 'Allows searching and viewing the company employee directory.',
-    category: 'Team Directory & Access Control'
-  },
-  {
-    key: 'attendance:view',
-    label: 'View Attendance',
-    description: 'Allows viewing daily check-in/out logs, work hours, and location rosters.',
-    category: 'Team Directory & Access Control'
-  },
-  {
-    key: 'team:manage',
-    label: 'Manage Team and Access',
-    description: 'Allows creating team profiles, role assignments, and customizing permissions.',
-    category: 'Team Directory & Access Control'
-  },
-  {
-    key: 'logs:view',
-    label: 'View team activity log',
-    description: 'Allows inspecting audit logs, status transitions, and system activities.',
-    category: 'Team Directory & Access Control'
+    label: 'PSA: Book & Schedule Meetings',
+    description: 'Allows advancing leads up to Meeting Booked status and choosing meeting calendar slots.',
+    category: 'PSA'
   },
   {
     key: 'leads:track',
-    label: 'View lead track progress',
-    description: 'Allows checking the step-by-step progress history of a lead or order.',
-    category: 'Leads Pipeline & Management'
+    label: 'PSA: Track logs & Reminders',
+    description: 'Allows tracking lead audit logs, reminders, and daily check-ins.',
+    category: 'PSA'
+  },
+  {
+    key: 'leads:import',
+    label: 'PSA: Bulk CSV Lead Import',
+    description: 'Allows importing lists of raw leads from CSV / Excel spreadsheets.',
+    category: 'PSA'
   },
 
-  // Group 4: Analytics & Insights
+  // Sales Level
   {
-    key: 'reports:view',
-    label: 'View reports',
-    description: 'Allows viewing performance analytics, conversion rates, and revenue trends.',
-    category: 'Analytics & Insights'
+    key: 'orders:create',
+    label: 'Sales: Convert & Punch Order Details',
+    description: 'Allows converting Sale Done leads to sales orders and filling the electricity connection number, system size, and downpayment details.',
+    category: 'Sales'
   },
+  {
+    key: 'orders:submit_installation',
+    label: 'Sales: Submit Punch Form to Finance',
+    description: 'Allows submitting the finalized order punch form and client documents to Finance for verification.',
+    category: 'Sales'
+  },
+  {
+    key: 'leads:view_sales_pipeline',
+    label: 'Sales: View Leads assigned to team',
+    description: 'Allows Sales consultants, TLs, and managers to view their assigned pipeline leads.',
+    category: 'Sales'
+  },
+
+  // Finance Level
+  {
+    key: 'orders:finance_access',
+    label: 'Finance: Access Ledgers & Payments',
+    description: 'Allows full visibility of the Finance tab, payments ledger, outstanding balances, and total order valuations.',
+    category: 'Finance'
+  },
+  {
+    key: 'orders:verify',
+    label: 'Finance: Verify Orders & Downpayment',
+    description: 'Allows approving or rejecting submitted orders based on transaction reference validations.',
+    category: 'Finance'
+  },
+  {
+    key: 'finance:manage_ledger',
+    label: 'Finance: Record Receipt payments',
+    description: 'Allows recording additional client payments, uploading transaction slips, and clearing outstanding balances.',
+    category: 'Finance'
+  },
+  {
+    key: 'reports:view_financials',
+    label: 'Finance: View Financial Reports & Audits',
+    description: 'Allows viewing performance statistics, audit histories, and cashflow reports.',
+    category: 'Finance'
+  },
+
+  // Operations Level
+  {
+    key: 'orders:operations',
+    label: 'Operations: Access Projects & Fulfillment',
+    description: 'Allows full visibility of the Operations dashboard to monitor fulfillment stages.',
+    category: 'Operations'
+  },
+  {
+    key: 'ops:update_stages',
+    label: 'Operations: Update Installation Stages',
+    description: 'Allows logging site surveys, structural stability designs, solar panel installation, net metering, and commissioning progress.',
+    category: 'Operations'
+  },
+  {
+    key: 'ops:upload_drawings',
+    label: 'Operations: Upload engineering layouts',
+    description: 'Allows uploading structural drawings and commissioning documents directly into the order vault.',
+    category: 'Operations'
+  },
+
+  // IT Level
+  {
+    key: 'team:view',
+    label: 'IT: View employee directory',
+    description: 'Allows viewing active employee profiles, contact details, and organization charts.',
+    category: 'IT'
+  },
+  {
+    key: 'attendance:view',
+    label: 'IT: Access attendance logs',
+    description: 'Allows inspecting team daily attendance check-ins, check-outs, and location data.',
+    category: 'IT'
+  },
+  {
+    key: 'team:manage',
+    label: 'IT: Manage Roles & Customize Permissions',
+    description: 'Allows creating new employee records, changing reporting hierarchies, and customizing individual access overrides.',
+    category: 'IT'
+  },
+  {
+    key: 'logs:view',
+    label: 'IT: View System audit activity logs',
+    description: 'Allows checking full database audit trails, status shifts, and logins across the system.',
+    category: 'IT'
+  },
+  {
+    key: 'leads:view_all',
+    label: 'IT: Full pipeline overview visibility',
+    description: 'Bypasses standard assignment checks to view all leads, orders, and installations across the company.',
+    category: 'IT'
+  },
+  {
+    key: 'leads:delete',
+    label: 'IT: Purge & Delete records',
+    description: 'Allows deleting leads or orders permanently from the system.',
+    category: 'IT'
+  }
 ];
 
 function getLocalDefaultPermissionsForRole(role: string): string[] {
@@ -194,40 +224,45 @@ function getLocalDefaultPermissionsForRole(role: string): string[] {
     case 'admin':
     case 'director':
       return [
-        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:assign', 'leads:delete',
-        'orders:create', 'orders:verify', 'orders:finance_access', 'orders:operations',
-        'team:view', 'attendance:view', 'team:manage', 'logs:view', 'leads:track', 'reports:view'
+        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:track',
+        'orders:create', 'orders:submit_installation', 'leads:view_sales_pipeline',
+        'orders:finance_access', 'orders:verify', 'finance:manage_ledger', 'reports:view_financials',
+        'orders:operations', 'ops:update_stages', 'ops:upload_drawings',
+        'team:view', 'attendance:view', 'team:manage', 'logs:view', 'leads:view_all', 'leads:delete'
       ];
     case 'sales_head':
       return [
-        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all',
-        'orders:create', 'team:view', 'attendance:view', 'logs:view', 'leads:track', 'reports:view'
+        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:track',
+        'orders:create', 'orders:submit_installation', 'leads:view_sales_pipeline', 'reports:view_financials',
+        'team:view', 'attendance:view', 'logs:view'
       ];
     case 'manager':
       return [
-        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all',
-        'orders:create', 'orders:verify', 'orders:operations',
-        'team:view', 'attendance:view', 'logs:view', 'leads:track', 'reports:view'
+        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:track',
+        'orders:create', 'orders:submit_installation', 'leads:view_sales_pipeline',
+        'team:view', 'attendance:view', 'logs:view'
       ];
     case 'finance':
       return [
-        'leads:view_all', 'orders:verify', 'orders:finance_access', 'reports:view'
+        'orders:finance_access', 'orders:verify', 'finance:manage_ledger', 'reports:view_financials'
       ];
     case 'operations':
       return [
-        'leads:view_all', 'orders:verify', 'orders:operations'
+        'orders:operations', 'ops:update_stages', 'ops:upload_drawings'
       ];
     case 'tl':
       return [
-        'leads:create', 'leads:edit', 'leads:change_status', 'orders:create', 'leads:track', 'reports:view'
+        'leads:create', 'leads:edit', 'leads:change_status', 'leads:track',
+        'orders:create', 'orders:submit_installation', 'leads:view_sales_pipeline', 'reports:view_financials'
       ];
     case 'psa_tl':
       return [
-        'leads:create', 'leads:edit', 'leads:change_status', 'leads:track', 'reports:view'
+        'leads:create', 'leads:edit', 'leads:change_status', 'leads:track', 'leads:import', 'reports:view_financials'
       ];
     case 'consultant':
       return [
-        'leads:create', 'leads:edit', 'leads:change_status', 'orders:create', 'leads:track'
+        'leads:create', 'leads:edit', 'leads:change_status', 'leads:track',
+        'orders:create', 'orders:submit_installation', 'leads:view_sales_pipeline'
       ];
     case 'psa':
     default:
@@ -383,7 +418,7 @@ export default function TeamManagementPage() {
   const [editCustomRoleText, setEditCustomRoleText] = useState('');
   const [editBaseRole, setEditBaseRole] = useState('consultant');
   const [editMemberPermissions, setEditMemberPermissions] = useState<string[]>([]);
-  const [selectedPermissionCategory, setSelectedPermissionCategory] = useState<string>('Leads Pipeline & Management');
+  const [selectedPermissionCategory, setSelectedPermissionCategory] = useState<string>('PSA');
 
   const closeAddModal = () => {
     setShowAddModal(false);
@@ -1969,10 +2004,11 @@ export default function TeamManagementPage() {
                     {/* Sleek Category Navigation Tabs */}
                     <div className="flex border-b border-slate-800 bg-slate-950/20 text-xs font-semibold overflow-x-auto whitespace-nowrap scrollbar-none gap-1 p-1 rounded-lg">
                       {[
-                        { key: 'Leads Pipeline & Management', label: 'Leads & Sales', icon: Sun },
-                        { key: 'Orders & Fulfillment Queue', label: 'Orders & Ops', icon: Lock },
-                        { key: 'Team Directory & Access Control', label: 'Team & Access', icon: Users },
-                        { key: 'Analytics & Insights', label: 'Reports & Analytics', icon: History },
+                        { key: 'PSA', label: 'PSA (Lead Booking)', icon: Sun },
+                        { key: 'Sales', label: 'Sales (Order Punch)', icon: Award },
+                        { key: 'Finance', label: 'Finance (Ledger & Verify)', icon: DollarSign },
+                        { key: 'Operations', label: 'Operations (Installation)', icon: Hammer },
+                        { key: 'IT', label: 'IT & System Admin', icon: Terminal },
                       ].map((cat) => {
                         const isActive = selectedPermissionCategory === cat.key;
                         const Icon = cat.icon;

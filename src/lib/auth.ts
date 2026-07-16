@@ -75,40 +75,45 @@ export function getDefaultPermissionsForRole(role: string): string[] {
     case 'admin':
     case 'director':
       return [
-        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:assign', 'leads:delete',
-        'orders:create', 'orders:verify', 'orders:finance_access', 'orders:operations',
-        'team:view', 'attendance:view', 'team:manage', 'logs:view', 'leads:track', 'reports:view'
+        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:track',
+        'orders:create', 'orders:submit_installation', 'leads:view_sales_pipeline',
+        'orders:finance_access', 'orders:verify', 'finance:manage_ledger', 'reports:view_financials',
+        'orders:operations', 'ops:update_stages', 'ops:upload_drawings',
+        'team:view', 'attendance:view', 'team:manage', 'logs:view', 'leads:view_all', 'leads:delete'
       ];
     case 'sales_head':
       return [
-        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all',
-        'orders:create', 'team:view', 'attendance:view', 'logs:view', 'leads:track', 'reports:view'
+        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:track',
+        'orders:create', 'orders:submit_installation', 'leads:view_sales_pipeline', 'reports:view_financials',
+        'team:view', 'attendance:view', 'logs:view'
       ];
     case 'manager':
       return [
-        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all',
-        'orders:create', 'orders:verify', 'orders:operations',
-        'team:view', 'attendance:view', 'logs:view', 'leads:track', 'reports:view'
+        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:track',
+        'orders:create', 'orders:submit_installation', 'leads:view_sales_pipeline',
+        'team:view', 'attendance:view', 'logs:view'
       ];
     case 'finance':
       return [
-        'leads:view_all', 'orders:verify', 'orders:finance_access', 'reports:view'
+        'orders:finance_access', 'orders:verify', 'finance:manage_ledger', 'reports:view_financials'
       ];
     case 'operations':
       return [
-        'leads:view_all', 'orders:verify', 'orders:operations'
+        'orders:operations', 'ops:update_stages', 'ops:upload_drawings'
       ];
     case 'tl':
       return [
-        'leads:create', 'leads:edit', 'leads:change_status', 'orders:create', 'leads:track', 'reports:view'
+        'leads:create', 'leads:edit', 'leads:change_status', 'leads:track',
+        'orders:create', 'orders:submit_installation', 'leads:view_sales_pipeline', 'reports:view_financials'
       ];
     case 'psa_tl':
       return [
-        'leads:create', 'leads:edit', 'leads:change_status', 'leads:track', 'reports:view'
+        'leads:create', 'leads:edit', 'leads:change_status', 'leads:track', 'leads:import', 'reports:view_financials'
       ];
     case 'consultant':
       return [
-        'leads:create', 'leads:edit', 'leads:change_status', 'orders:create', 'leads:track'
+        'leads:create', 'leads:edit', 'leads:change_status', 'leads:track',
+        'orders:create', 'orders:submit_installation', 'leads:view_sales_pipeline'
       ];
     case 'psa':
     default:
@@ -144,7 +149,7 @@ export async function getUserPermissions(userId: number): Promise<string[]> {
 
   // Implicit page permissions mapping to ensure existing checks ('leads:view', 'orders:view') do not break
   const hasAnyLeadPermission = [
-    'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:track', 'leads:assign', 'leads:delete'
+    'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:track', 'leads:assign', 'leads:delete', 'leads:view_sales_pipeline'
   ].some(p => finalPermissions.includes(p));
 
   if (hasAnyLeadPermission && !finalPermissions.includes('leads:view')) {
@@ -152,7 +157,7 @@ export async function getUserPermissions(userId: number): Promise<string[]> {
   }
 
   const hasAnyOrderPermission = [
-    'orders:create', 'orders:verify', 'orders:operations', 'orders:finance_access', 'orders:view_all'
+    'orders:create', 'orders:verify', 'orders:operations', 'orders:finance_access', 'orders:view_all', 'orders:submit_installation', 'finance:manage_ledger', 'ops:update_stages', 'ops:upload_drawings'
   ].some(p => finalPermissions.includes(p));
 
   if (hasAnyOrderPermission && !finalPermissions.includes('orders:view')) {
@@ -192,7 +197,7 @@ export async function getUserSession(userId: number): Promise<{ role: string; pe
   const finalPermissions = [...basePermissions];
 
   const hasAnyLeadPermission = [
-    'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:track', 'leads:assign', 'leads:delete'
+    'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:track', 'leads:assign', 'leads:delete', 'leads:view_sales_pipeline'
   ].some(p => finalPermissions.includes(p));
 
   if (hasAnyLeadPermission && !finalPermissions.includes('leads:view')) {
@@ -200,7 +205,7 @@ export async function getUserSession(userId: number): Promise<{ role: string; pe
   }
 
   const hasAnyOrderPermission = [
-    'orders:create', 'orders:verify', 'orders:operations', 'orders:finance_access', 'orders:view_all'
+    'orders:create', 'orders:verify', 'orders:operations', 'orders:finance_access', 'orders:view_all', 'orders:submit_installation', 'finance:manage_ledger', 'ops:update_stages', 'ops:upload_drawings'
   ].some(p => finalPermissions.includes(p));
 
   if (hasAnyOrderPermission && !finalPermissions.includes('orders:view')) {
