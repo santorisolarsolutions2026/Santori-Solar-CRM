@@ -15,6 +15,19 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view employee audit logs.' }, { status: 403 });
     }
 
+    const url = new URL(req.url);
+    const startStr = url.searchParams.get('startDate');
+    const endStr = url.searchParams.get('endDate');
+
+    let dateRangeFilter: any = {};
+    if (startStr && endStr) {
+      const sDate = new Date(startStr);
+      sDate.setHours(0, 0, 0, 0);
+      const eDate = new Date(endStr);
+      eDate.setHours(23, 59, 59, 999);
+      dateRangeFilter = { gte: sDate, lte: eDate };
+    }
+
     // Fetch active employees
     const employees = await prisma.user.findMany({
       where: {
@@ -26,6 +39,11 @@ export async function GET(req: Request) {
       },
       orderBy: { name: 'asc' },
     });
+
+    // Build conditional where clauses for date ranges
+    const meetingsWhere = startStr && endStr ? { meetingStartedAt: dateRangeFilter } : {};
+    const ordersWhere = startStr && endStr ? { createdAt: dateRangeFilter } : {};
+    const logsWhere = startStr && endStr ? { createdAt: dateRangeFilter } : {};
 
     // Fetch all records for mapping
     const [leads, meetings, orders, logs] = await Promise.all([
@@ -39,9 +57,11 @@ export async function GET(req: Request) {
           assignedConsultantId: true,
           assignedTlId: true,
           assignedManagerId: true,
+          createdAt: true,
         }
       }),
       prisma.meetingBooking.findMany({
+        where: meetingsWhere,
         select: {
           id: true,
           leadId: true,
@@ -49,6 +69,7 @@ export async function GET(req: Request) {
         }
       }),
       prisma.order.findMany({
+        where: ordersWhere,
         select: {
           id: true,
           leadId: true,
@@ -56,9 +77,11 @@ export async function GET(req: Request) {
           totalValue: true,
           submittedById: true,
           financeProcessedById: true,
+          createdAt: true,
         }
       }),
       prisma.leadActivityLog.findMany({
+        where: logsWhere,
         select: {
           leadId: true,
           userId: true,
@@ -86,13 +109,20 @@ export async function GET(req: Request) {
       const loggedLeads = userLogMap.get(uId) || new Set<number>();
 
       // Filter leads they worked on
-      const empLeads = leads.filter(lead => 
-        lead.createdById === uId ||
-        lead.assignedConsultantId === uId ||
-        lead.assignedTlId === uId ||
-        lead.assignedManagerId === uId ||
-        loggedLeads.has(lead.id)
-      );
+      const empLeads = leads.filter(lead => {
+        // If date range is specified, lead is "worked on" if created or log-acted in that timeframe
+        if (startStr && endStr) {
+          const createdInTime = lead.createdAt >= dateRangeFilter.gte && lead.createdAt <= dateRangeFilter.lte;
+          return createdInTime || loggedLeads.has(lead.id);
+        }
+        return (
+          lead.createdById === uId ||
+          lead.assignedConsultantId === uId ||
+          lead.assignedTlId === uId ||
+          lead.assignedManagerId === uId ||
+          loggedLeads.has(lead.id)
+        );
+      });
 
       // Meetings Booked:
       // Meetings where they were executive OR lead was created/assigned to them

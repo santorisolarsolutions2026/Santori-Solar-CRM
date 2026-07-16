@@ -120,7 +120,9 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true);
 
   const [activeReportTab, setActiveReportTab] = useState<'pipeline' | 'employee'>('pipeline');
-  const [timeframe, setTimeframe] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [activeDeptTab, setActiveDeptTab] = useState<'PSA' | 'Sales' | 'Finance' | 'Operations' | 'IT'>('PSA');
+  const [filterStartDate, setFilterStartDate] = useState<string>('');
+  const [filterEndDate, setFilterEndDate] = useState<string>('');
   const [auditData, setAuditData] = useState<{ departments: Record<string, any[]> } | null>(null);
   const [auditLoading, setAuditLoading] = useState(false);
 
@@ -177,7 +179,11 @@ export default function ReportsPage() {
   const fetchAuditData = async () => {
     setAuditLoading(true);
     try {
-      const res = await fetch(`/api/v1/reports/employee-audit?timeframe=${timeframe}`);
+      let url = `/api/v1/reports/employee-audit`;
+      if (filterStartDate && filterEndDate) {
+        url += `?startDate=${filterStartDate}&endDate=${filterEndDate}`;
+      }
+      const res = await fetch(url);
       const data = await res.json();
       if (data.success) {
         setAuditData(data.data);
@@ -193,12 +199,15 @@ export default function ReportsPage() {
     if (user && activeReportTab === 'employee') {
       fetchAuditData();
     }
-  }, [user, activeReportTab, timeframe]);
+  }, [user, activeReportTab, filterStartDate, filterEndDate]);
 
   const fetchModalData = async (empId: number, type: string) => {
     setModalLoading(true);
     try {
-      const url = `/api/v1/reports/employee-audit/detail?userId=${empId}&type=${type}`;
+      let url = `/api/v1/reports/employee-audit/detail?userId=${empId}&type=${type}`;
+      if (filterStartDate && filterEndDate) {
+        url += `&startDate=${filterStartDate}&endDate=${filterEndDate}`;
+      }
       const res = await fetch(url);
       const data = await res.json();
       if (data.success) {
@@ -450,167 +459,306 @@ export default function ReportsPage() {
         </>
       ) : (
         /* Employee Audit Dashboard */
-        <div className="space-y-8">
-          <div className="flex justify-between items-center bg-[#111625] border border-slate-800 rounded-xl p-4 shadow-md">
+        <div className="space-y-6">
+          {/* Filter Bar with Date Inputs */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#111625] border border-slate-800 rounded-xl p-5 shadow-md">
             <div>
-              <h2 className="text-sm font-bold text-white uppercase tracking-wider">Departmental Contribution Audit</h2>
-              <p className="text-xs text-slate-400 mt-0.5">Click on any numeric metric count to drill down into specific leads and orders.</p>
+              <h2 className="text-sm font-bold text-white uppercase tracking-wider">Employee Audit filters</h2>
+              <p className="text-xs text-slate-400 mt-0.5">Select a date range to filter contributions across all departments.</p>
             </div>
-            {auditLoading && (
-              <div className="flex items-center gap-2 text-xs text-slate-450">
-                <Loader2 className="w-4 h-4 animate-spin text-amber-500" />
-                <span>Refreshing audit data...</span>
+            
+            <div className="flex flex-wrap items-center gap-3 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="text-slate-500 font-semibold">Start:</span>
+                <input
+                  type="date"
+                  value={filterStartDate}
+                  onChange={(e) => setFilterStartDate(e.target.value)}
+                  className="bg-slate-950 border border-slate-800 text-slate-300 px-3 py-1.5 rounded-lg focus:ring-amber-500 focus:outline-none cursor-pointer"
+                />
               </div>
-            )}
+              <div className="flex items-center gap-2">
+                <span className="text-slate-500 font-semibold">End:</span>
+                <input
+                  type="date"
+                  value={filterEndDate}
+                  onChange={(e) => setFilterEndDate(e.target.value)}
+                  className="bg-slate-950 border border-slate-800 text-slate-300 px-3 py-1.5 rounded-lg focus:ring-amber-500 focus:outline-none cursor-pointer"
+                />
+              </div>
+              {(filterStartDate || filterEndDate) && (
+                <button
+                  onClick={() => {
+                    setFilterStartDate('');
+                    setFilterEndDate('');
+                  }}
+                  className="py-1.5 px-3 bg-slate-900 border border-slate-800 text-slate-400 hover:text-white rounded-lg transition-colors cursor-pointer"
+                >
+                  Clear Filters
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Department Groups Grid */}
-          <div className="space-y-10">
-            {['PSA', 'Sales', 'Finance', 'Operations', 'IT'].map((deptName) => {
-              const deptEmployees = auditData?.departments?.[deptName] || [];
-
+          {/* Department Tab Buttons */}
+          <div className="flex gap-2 border-b border-slate-800 bg-slate-950/20 p-1.5 rounded-xl overflow-x-auto whitespace-nowrap scrollbar-none">
+            {(['PSA', 'Sales', 'Finance', 'Operations', 'IT'] as const).map((dept) => {
+              const isActive = activeDeptTab === dept;
+              const count = auditData?.departments?.[dept]?.length || 0;
               return (
-                <div key={deptName} className="bg-[#111625] border border-slate-800/80 rounded-2xl p-6 shadow-xl space-y-4">
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                    <h3 className="text-sm font-bold text-white tracking-wide uppercase flex items-center gap-2">
-                      <span className={`w-2.5 h-2.5 rounded-full ${
-                        deptName === 'PSA' ? 'bg-amber-500' :
-                        deptName === 'Sales' ? 'bg-cyan-500' :
-                        deptName === 'Finance' ? 'bg-emerald-500' :
-                        deptName === 'Operations' ? 'bg-purple-500' : 'bg-slate-400'
-                      }`} />
-                      <span>{deptName} Department ({deptEmployees.length} Members)</span>
-                    </h3>
-                  </div>
-
-                  {deptEmployees.length === 0 ? (
-                    <p className="text-xs text-slate-500 italic py-4">No active members found in this department.</p>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {deptEmployees.map((emp: any) => (
-                        <div key={emp.id} className="bg-slate-950/40 border border-slate-900 hover:border-slate-800 rounded-xl p-4 transition-all duration-300">
-                          {/* Employee Header */}
-                          <div className="flex justify-between items-start mb-4">
-                            <div>
-                              <h4 className="font-bold text-white text-sm">{emp.name}</h4>
-                              <p className="text-[10px] text-slate-550 font-bold uppercase mt-0.5">{emp.designation}</p>
-                            </div>
-                            <span className="text-[10px] text-slate-550 font-mono">{emp.email}</span>
-                          </div>
-
-                          {/* Dynamic Parameters Grid */}
-                          <div className="grid grid-cols-2 gap-2 text-xs">
-                            {/* PSA Metrics Section */}
-                            <div className="bg-slate-900/40 border border-slate-850 rounded-lg p-2.5 text-center space-y-1">
-                              <span className="text-[9px] uppercase font-bold text-slate-500 block">PSA Pipeline</span>
-                              <div className="flex justify-around items-center pt-1 font-semibold text-slate-400">
-                                <div className="text-center">
-                                  <span className="text-[8px] text-slate-600 block">Worked</span>
-                                  <button
-                                    onClick={() => handleOpenDetailsModal(emp.id, 'leads_worked')}
-                                    className="font-extrabold text-amber-500 hover:text-amber-400 hover:underline transition-all cursor-pointer outline-none"
-                                  >
-                                    {emp.metrics.leadsWorked}
-                                  </button>
-                                </div>
-                                <div className="text-center">
-                                  <span className="text-[8px] text-slate-600 block">Booked</span>
-                                  <button
-                                    onClick={() => handleOpenDetailsModal(emp.id, 'meetings_booked')}
-                                    className="font-extrabold text-cyan-400 hover:text-cyan-300 hover:underline transition-all cursor-pointer outline-none"
-                                  >
-                                    {emp.metrics.meetingsBooked}
-                                  </button>
-                                </div>
-                                <div className="text-center">
-                                  <span className="text-[8px] text-slate-600 block">Sales</span>
-                                  <button
-                                    onClick={() => handleOpenDetailsModal(emp.id, 'meetings_converted')}
-                                    className="font-extrabold text-emerald-450 hover:text-emerald-355 hover:underline transition-all cursor-pointer outline-none"
-                                  >
-                                    {emp.metrics.meetingsConverted}
-                                  </button>
-                                </div>
-                              </div>
-                              <div className="text-[8px] text-slate-500 pt-1.5 border-t border-slate-900/60 mt-1 flex justify-between px-1">
-                                <span>Conversion Rate:</span>
-                                <span className="font-bold text-slate-350">{emp.metrics.conversionRate}%</span>
-                              </div>
-                            </div>
-
-                            {/* Sales Metrics Section */}
-                            <div className="bg-slate-900/40 border border-slate-850 rounded-lg p-2.5 text-center space-y-1 flex flex-col justify-between">
-                              <div>
-                                <span className="text-[9px] uppercase font-bold text-slate-500 block">Sales Orders</span>
-                                <div className="flex justify-around items-center pt-1 font-semibold text-slate-400">
-                                  <div className="text-center">
-                                    <span className="text-[8px] text-slate-600 block">Punched</span>
-                                    <button
-                                      onClick={() => handleOpenDetailsModal(emp.id, 'orders_punched')}
-                                      className="font-extrabold text-indigo-400 hover:text-indigo-300 hover:underline transition-all cursor-pointer outline-none"
-                                    >
-                                      {emp.metrics.ordersPunched}
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="text-[8px] text-slate-500 pt-1.5 border-t border-slate-900/60 mt-1 flex justify-between px-1">
-                                <span>Total Value:</span>
-                                <span className="font-bold text-slate-350">₹{emp.metrics.ordersPunchedValue.toLocaleString('en-IN')}</span>
-                              </div>
-                            </div>
-
-                            {/* Finance Metrics Section */}
-                            <div className="bg-slate-900/40 border border-slate-850 rounded-lg p-2.5 text-center space-y-1 flex flex-col justify-between">
-                              <div>
-                                <span className="text-[9px] uppercase font-bold text-slate-500 block">Finance Ledger</span>
-                                <div className="flex justify-around items-center pt-1 font-semibold text-slate-400">
-                                  <div className="text-center">
-                                    <span className="text-[8px] text-slate-600 block">Verified</span>
-                                    <button
-                                      onClick={() => handleOpenDetailsModal(emp.id, 'orders_verified')}
-                                      className="font-extrabold text-rose-450 hover:text-rose-350 hover:underline transition-all cursor-pointer outline-none"
-                                    >
-                                      {emp.metrics.ordersVerified}
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="text-[8px] text-slate-500 pt-1.5 border-t border-slate-900/60 mt-1 flex justify-between px-1">
-                                <span>Verified Value:</span>
-                                <span className="font-bold text-slate-350">₹{emp.metrics.ordersVerifiedValue.toLocaleString('en-IN')}</span>
-                              </div>
-                            </div>
-
-                            {/* Operations Metrics Section */}
-                            <div className="bg-slate-900/40 border border-slate-850 rounded-lg p-2.5 text-center space-y-1 flex flex-col justify-between">
-                              <div>
-                                <span className="text-[9px] uppercase font-bold text-slate-500 block">Operations Install</span>
-                                <div className="flex justify-around items-center pt-1 font-semibold text-slate-400">
-                                  <div className="text-center">
-                                    <span className="text-[8px] text-slate-600 block">Completed</span>
-                                    <button
-                                      onClick={() => handleOpenDetailsModal(emp.id, 'installations_completed')}
-                                      className="font-extrabold text-purple-400 hover:text-purple-300 hover:underline transition-all cursor-pointer outline-none"
-                                    >
-                                      {emp.metrics.installationsCompleted}
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="text-[8px] text-slate-500 pt-1.5 border-t border-slate-900/60 mt-1 flex justify-between px-1">
-                                <span>Fulfillment:</span>
-                                <span className="font-bold text-slate-350">Site Commissions</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <button
+                  key={dept}
+                  onClick={() => setActiveDeptTab(dept)}
+                  className={`py-2.5 px-5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                    isActive
+                      ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-extrabold shadow-md'
+                      : 'bg-transparent border border-transparent text-slate-400 hover:text-white hover:bg-slate-900/40'
+                  }`}
+                >
+                  <span>{dept} Department</span>
+                  <span className={`px-1.5 py-0.5 rounded text-[10px] ${
+                    isActive ? 'bg-slate-950/20 text-slate-950' : 'bg-slate-900 text-slate-455'
+                  }`}>
+                    {count}
+                  </span>
+                </button>
               );
             })}
+          </div>
+
+          {/* Dynamic Table Section */}
+          <div className="bg-[#111625] border border-slate-800 rounded-2xl p-6 shadow-xl">
+            <div className="flex justify-between items-center mb-6 border-b border-slate-800 pb-3">
+              <h3 className="text-sm font-bold text-white tracking-wide uppercase flex items-center gap-2">
+                <span className={`w-2.5 h-2.5 rounded-full ${
+                  activeDeptTab === 'PSA' ? 'bg-amber-500' :
+                  activeDeptTab === 'Sales' ? 'bg-cyan-500' :
+                  activeDeptTab === 'Finance' ? 'bg-emerald-500' :
+                  activeDeptTab === 'Operations' ? 'bg-purple-500' : 'bg-slate-450'
+                }`} />
+                <span>{activeDeptTab} Staff Performance List</span>
+              </h3>
+              {auditLoading && (
+                <div className="flex items-center gap-2 text-xs text-slate-450 animate-pulse">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-500" />
+                  <span>Syncing...</span>
+                </div>
+              )}
+            </div>
+
+            <div className="overflow-x-auto">
+              {(() => {
+                const employeesList = auditData?.departments?.[activeDeptTab] || [];
+                if (employeesList.length === 0) {
+                  return (
+                    <div className="py-12 text-center text-slate-500 text-xs italic">
+                      No active members found in {activeDeptTab} department for this range.
+                    </div>
+                  );
+                }
+
+                if (activeDeptTab === 'PSA') {
+                  return (
+                    <table className="w-full text-left border-collapse min-w-[800px]">
+                      <thead>
+                        <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                          <th className="pb-3 px-4 text-left">Employee Name</th>
+                          <th className="pb-3 px-4 text-left">Designation</th>
+                          <th className="pb-3 px-4 text-center">Leads Worked</th>
+                          <th className="pb-3 px-4 text-center">Meetings Booked</th>
+                          <th className="pb-3 px-4 text-center">Sales Converted</th>
+                          <th className="pb-3 px-4 text-right">Conversion Rate</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/40 text-sm">
+                        {employeesList.map((emp: any) => (
+                          <tr key={emp.id} className="hover:bg-slate-900/10 transition-colors">
+                            <td className="py-3.5 px-4 font-bold text-white">{emp.name}</td>
+                            <td className="py-3.5 px-4 text-slate-400 font-medium text-xs">{emp.designation}</td>
+                            <td className="py-3.5 px-4 text-center">
+                              <button
+                                onClick={() => handleOpenDetailsModal(emp.id, 'leads_worked')}
+                                className="font-extrabold text-amber-400 hover:text-amber-300 hover:underline outline-none cursor-pointer"
+                              >
+                                {emp.metrics.leadsWorked}
+                              </button>
+                            </td>
+                            <td className="py-3.5 px-4 text-center">
+                              <button
+                                onClick={() => handleOpenDetailsModal(emp.id, 'meetings_booked')}
+                                className="font-extrabold text-cyan-400 hover:text-cyan-300 hover:underline outline-none cursor-pointer"
+                              >
+                                {emp.metrics.meetingsBooked}
+                              </button>
+                            </td>
+                            <td className="py-3.5 px-4 text-center">
+                              <button
+                                onClick={() => handleOpenDetailsModal(emp.id, 'meetings_converted')}
+                                className="font-extrabold text-emerald-450 hover:text-emerald-355 hover:underline outline-none cursor-pointer"
+                              >
+                                {emp.metrics.meetingsConverted}
+                              </button>
+                            </td>
+                            <td className="py-3.5 px-4 text-right font-bold text-slate-300">{emp.metrics.conversionRate}%</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  );
+                }
+
+                if (activeDeptTab === 'Sales') {
+                  return (
+                    <table className="w-full text-left border-collapse min-w-[800px]">
+                      <thead>
+                        <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                          <th className="pb-3 px-4 text-left">Employee Name</th>
+                          <th className="pb-3 px-4 text-left">Designation</th>
+                          <th className="pb-3 px-4 text-center">Leads Handled</th>
+                          <th className="pb-3 px-4 text-center">Sales Converted</th>
+                          <th className="pb-3 px-4 text-center">Orders Punched</th>
+                          <th className="pb-3 px-4 text-right">Value Generated</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/40 text-sm">
+                        {employeesList.map((emp: any) => (
+                          <tr key={emp.id} className="hover:bg-slate-900/10 transition-colors">
+                            <td className="py-3.5 px-4 font-bold text-white">{emp.name}</td>
+                            <td className="py-3.5 px-4 text-slate-400 font-medium text-xs">{emp.designation}</td>
+                            <td className="py-3.5 px-4 text-center">
+                              <button
+                                onClick={() => handleOpenDetailsModal(emp.id, 'leads_worked')}
+                                className="font-extrabold text-amber-400 hover:text-amber-300 hover:underline outline-none cursor-pointer"
+                              >
+                                {emp.metrics.leadsWorked}
+                              </button>
+                            </td>
+                            <td className="py-3.5 px-4 text-center">
+                              <button
+                                onClick={() => handleOpenDetailsModal(emp.id, 'meetings_converted')}
+                                className="font-extrabold text-emerald-450 hover:text-emerald-355 hover:underline outline-none cursor-pointer"
+                              >
+                                {emp.metrics.meetingsConverted}
+                              </button>
+                            </td>
+                            <td className="py-3.5 px-4 text-center">
+                              <button
+                                onClick={() => handleOpenDetailsModal(emp.id, 'orders_punched')}
+                                className="font-extrabold text-indigo-400 hover:text-indigo-350 hover:underline outline-none cursor-pointer"
+                              >
+                                {emp.metrics.ordersPunched}
+                              </button>
+                            </td>
+                            <td className="py-3.5 px-4 text-right font-extrabold text-slate-200">
+                              ₹{emp.metrics.ordersPunchedValue.toLocaleString('en-IN')}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  );
+                }
+
+                if (activeDeptTab === 'Finance') {
+                  return (
+                    <table className="w-full text-left border-collapse min-w-[800px]">
+                      <thead>
+                        <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                          <th className="pb-3 px-4 text-left">Employee Name</th>
+                          <th className="pb-3 px-4 text-left">Designation</th>
+                          <th className="pb-3 px-4 text-center">Orders Verified</th>
+                          <th className="pb-3 px-4 text-right">Total Verified Value</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/40 text-sm">
+                        {employeesList.map((emp: any) => (
+                          <tr key={emp.id} className="hover:bg-slate-900/10 transition-colors">
+                            <td className="py-3.5 px-4 font-bold text-white">{emp.name}</td>
+                            <td className="py-3.5 px-4 text-slate-400 font-medium text-xs">{emp.designation}</td>
+                            <td className="py-3.5 px-4 text-center">
+                              <button
+                                onClick={() => handleOpenDetailsModal(emp.id, 'orders_verified')}
+                                className="font-extrabold text-rose-455 hover:text-rose-350 hover:underline outline-none cursor-pointer"
+                              >
+                                {emp.metrics.ordersVerified}
+                              </button>
+                            </td>
+                            <td className="py-3.5 px-4 text-right font-extrabold text-slate-200">
+                              ₹{emp.metrics.ordersVerifiedValue.toLocaleString('en-IN')}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  );
+                }
+
+                if (activeDeptTab === 'Operations') {
+                  return (
+                    <table className="w-full text-left border-collapse min-w-[800px]">
+                      <thead>
+                        <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                          <th className="pb-3 px-4 text-left">Employee Name</th>
+                          <th className="pb-3 px-4 text-left">Designation</th>
+                          <th className="pb-3 px-4 text-center">Installations Completed</th>
+                          <th className="pb-3 px-4 text-right">Fulfillment Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/40 text-sm">
+                        {employeesList.map((emp: any) => (
+                          <tr key={emp.id} className="hover:bg-slate-900/10 transition-colors">
+                            <td className="py-3.5 px-4 font-bold text-white">{emp.name}</td>
+                            <td className="py-3.5 px-4 text-slate-400 font-medium text-xs">{emp.designation}</td>
+                            <td className="py-3.5 px-4 text-center">
+                              <button
+                                onClick={() => handleOpenDetailsModal(emp.id, 'installations_completed')}
+                                className="font-extrabold text-purple-400 hover:text-purple-300 hover:underline outline-none cursor-pointer"
+                              >
+                                {emp.metrics.installationsCompleted}
+                              </button>
+                            </td>
+                            <td className="py-3.5 px-4 text-right text-slate-400 font-medium">Site Commissioned</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  );
+                }
+
+                if (activeDeptTab === 'IT') {
+                  return (
+                    <table className="w-full text-left border-collapse min-w-[800px]">
+                      <thead>
+                        <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                          <th className="pb-3 px-4 text-left">Employee Name</th>
+                          <th className="pb-3 px-4 text-left">Designation</th>
+                          <th className="pb-3 px-4 text-center">Associated Activities</th>
+                          <th className="pb-3 px-4 text-right">System Override Access</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/40 text-sm">
+                        {employeesList.map((emp: any) => (
+                          <tr key={emp.id} className="hover:bg-slate-900/10 transition-colors">
+                            <td className="py-3.5 px-4 font-bold text-white">{emp.name}</td>
+                            <td className="py-3.5 px-4 text-slate-400 font-medium text-xs">{emp.designation}</td>
+                            <td className="py-3.5 px-4 text-center">
+                              <button
+                                onClick={() => handleOpenDetailsModal(emp.id, 'leads_worked')}
+                                className="font-extrabold text-blue-450 hover:text-blue-350 hover:underline outline-none cursor-pointer"
+                              >
+                                {emp.metrics.leadsWorked} leads
+                              </button>
+                            </td>
+                            <td className="py-3.5 px-4 text-right text-emerald-500 font-semibold">Bypass Enabled</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  );
+                }
+                return null;
+              })()}
+            </div>
           </div>
         </div>
       )}
@@ -632,7 +780,7 @@ export default function ReportsPage() {
                   )}
                 </h2>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Drilldown view: <span className="text-amber-450 font-bold uppercase tracking-wider">{activeDetailType.replace('_', ' ')}</span>
+                  Drilldown view: <span className="text-amber-455 font-bold uppercase tracking-wider">{activeDetailType.replace('_', ' ')}</span>
                 </p>
               </div>
               <button
@@ -673,7 +821,7 @@ export default function ReportsPage() {
                         {modalData.results.map((lead: any) => (
                           <tr key={lead.id} className="hover:bg-slate-900/10">
                             <td className="py-3 px-3 font-bold text-white">
-                              <a href={`/leads/${lead.id}`} className="hover:underline text-amber-400">
+                              <a href={`/leads/${lead.id}`} className="hover:underline text-amber-400 font-semibold">
                                 {lead.leadCode}
                               </a>
                             </td>
@@ -715,14 +863,14 @@ export default function ReportsPage() {
                         {modalData.results.map((meet: any) => (
                           <tr key={meet.id} className="hover:bg-slate-900/10">
                             <td className="py-3 px-3 font-bold text-white">
-                              <a href={`/leads/${meet.leadId}`} className="hover:underline text-amber-400">
+                              <a href={`/leads/${meet.leadId}`} className="hover:underline text-amber-400 font-semibold">
                                 {meet.leadCode}
                               </a>
                             </td>
                             <td className="py-3 px-3 font-medium text-slate-200">{meet.customerName}</td>
                             <td className="py-3 px-3 font-bold text-white">{meet.detail1}</td>
                             <td className="py-3 px-3 text-slate-450">{meet.detail2}</td>
-                            <td className="py-3 px-3 text-slate-450 font-medium">{meet.executiveName}</td>
+                            <td className="py-3 px-3 text-slate-455 font-medium">{meet.executiveName}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -732,7 +880,7 @@ export default function ReportsPage() {
                   {(activeDetailType === 'orders_punched' || activeDetailType === 'orders_verified' || activeDetailType === 'installations_completed') && (
                     <table className="w-full text-left border-collapse min-w-[700px]">
                       <thead>
-                        <tr className="border-b border-slate-850 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                        <tr className="border-b border-slate-855 text-slate-400 text-xs font-semibold uppercase tracking-wider">
                           <th className="pb-3 px-3">Lead Code</th>
                           <th className="pb-3 px-3">Client Name</th>
                           <th className="pb-3 px-3">Order Specs</th>
@@ -745,7 +893,7 @@ export default function ReportsPage() {
                         {modalData.results.map((ord: any) => (
                           <tr key={ord.id} className="hover:bg-slate-900/10">
                             <td className="py-3 px-3 font-bold text-white">
-                              <a href={`/leads/${ord.leadId}`} className="hover:underline text-amber-400">
+                              <a href={`/leads/${ord.leadId}`} className="hover:underline text-amber-400 font-semibold">
                                 {ord.leadCode}
                               </a>
                             </td>

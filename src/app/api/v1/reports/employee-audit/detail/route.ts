@@ -18,6 +18,8 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const userIdStr = url.searchParams.get('userId');
     const type = url.searchParams.get('type') || 'leads_worked';
+    const startStr = url.searchParams.get('startDate');
+    const endStr = url.searchParams.get('endDate');
     
     if (!userIdStr) {
       return NextResponse.json({ success: false, message: 'Missing userId parameter.' }, { status: 400 });
@@ -43,25 +45,45 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, message: 'Employee not found.' }, { status: 404 });
     }
 
+    let dateRangeFilter: any = {};
+    const hasDates = !!(startStr && endStr);
+    if (hasDates) {
+      const sDate = new Date(startStr!);
+      sDate.setHours(0, 0, 0, 0);
+      const eDate = new Date(endStr!);
+      eDate.setHours(23, 59, 59, 999);
+      dateRangeFilter = { gte: sDate, lte: eDate };
+    }
+
     let results: any[] = [];
 
     if (type === 'leads_worked') {
+      const logWhere = hasDates ? { userId, createdAt: dateRangeFilter } : { userId };
       const logs = await prisma.leadActivityLog.findMany({
-        where: { userId },
+        where: logWhere,
         select: { leadId: true }
       });
       const loggedLeadIds = logs.map(l => l.leadId);
 
+      const leadWhere: any = {
+        OR: [
+          { createdById: userId },
+          { assignedConsultantId: userId },
+          { assignedTlId: userId },
+          { assignedManagerId: userId },
+          { id: { in: loggedLeadIds } }
+        ]
+      };
+      if (hasDates) {
+        // If dates are given, they only count if they logged activity or were created during timeframe
+        leadWhere.OR = [
+          { createdById: userId, createdAt: dateRangeFilter },
+          { id: { in: loggedLeadIds } }
+        ];
+      }
+
       const leads = await prisma.lead.findMany({
-        where: {
-          OR: [
-            { createdById: userId },
-            { assignedConsultantId: userId },
-            { assignedTlId: userId },
-            { assignedManagerId: userId },
-            { id: { in: loggedLeadIds } }
-          ]
-        },
+        where: leadWhere,
         select: {
           id: true,
           leadCode: true,
@@ -78,22 +100,27 @@ export async function GET(req: Request) {
       results = leads;
     } 
     else if (type === 'meetings_booked') {
-      const meetings = await prisma.meetingBooking.findMany({
-        where: {
-          OR: [
-            { assignedExecutiveId: userId },
-            {
-              lead: {
-                OR: [
-                  { createdById: userId },
-                  { assignedConsultantId: userId },
-                  { assignedTlId: userId },
-                  { assignedManagerId: userId }
-                ]
-              }
+      const meetingWhere: any = {
+        OR: [
+          { assignedExecutiveId: userId },
+          {
+            lead: {
+              OR: [
+                { createdById: userId },
+                { assignedConsultantId: userId },
+                { assignedTlId: userId },
+                { assignedManagerId: userId }
+              ]
             }
-          ]
-        },
+          }
+        ]
+      };
+      if (hasDates) {
+        meetingWhere.meetingStartedAt = dateRangeFilter;
+      }
+
+      const meetings = await prisma.meetingBooking.findMany({
+        where: meetingWhere,
         select: {
           id: true,
           meetingDate: true,
@@ -124,23 +151,32 @@ export async function GET(req: Request) {
       }));
     } 
     else if (type === 'meetings_converted') {
+      const logWhere = hasDates ? { userId, createdAt: dateRangeFilter } : { userId };
       const logs = await prisma.leadActivityLog.findMany({
-        where: { userId },
+        where: logWhere,
         select: { leadId: true }
       });
       const loggedLeadIds = logs.map(l => l.leadId);
 
+      const leadWhere: any = {
+        status: { gte: 6 },
+        OR: [
+          { createdById: userId },
+          { assignedConsultantId: userId },
+          { assignedTlId: userId },
+          { assignedManagerId: userId },
+          { id: { in: loggedLeadIds } }
+        ]
+      };
+      if (hasDates) {
+        leadWhere.OR = [
+          { createdById: userId, createdAt: dateRangeFilter },
+          { id: { in: loggedLeadIds } }
+        ];
+      }
+
       const leads = await prisma.lead.findMany({
-        where: {
-          status: { gte: 6 },
-          OR: [
-            { createdById: userId },
-            { assignedConsultantId: userId },
-            { assignedTlId: userId },
-            { assignedManagerId: userId },
-            { id: { in: loggedLeadIds } }
-          ]
-        },
+        where: leadWhere,
         select: {
           id: true,
           leadCode: true,
@@ -157,21 +193,26 @@ export async function GET(req: Request) {
       results = leads;
     } 
     else if (type === 'orders_punched') {
-      const orders = await prisma.order.findMany({
-        where: {
-          OR: [
-            { submittedById: userId },
-            {
-              lead: {
-                OR: [
-                  { assignedConsultantId: userId },
-                  { assignedTlId: userId },
-                  { assignedManagerId: userId }
-                ]
-              }
+      const orderWhere: any = {
+        OR: [
+          { submittedById: userId },
+          {
+            lead: {
+              OR: [
+                { assignedConsultantId: userId },
+                { assignedTlId: userId },
+                { assignedManagerId: userId }
+              ]
             }
-          ]
-        },
+          }
+        ]
+      };
+      if (hasDates) {
+        orderWhere.createdAt = dateRangeFilter;
+      }
+
+      const orders = await prisma.order.findMany({
+        where: orderWhere,
         select: {
           id: true,
           orderCode: true,
@@ -201,22 +242,27 @@ export async function GET(req: Request) {
       }));
     } 
     else if (type === 'orders_verified') {
-      const orders = await prisma.order.findMany({
-        where: {
-          status: { notIn: ['draft', 'submitted'] },
-          OR: [
-            { financeProcessedById: userId },
-            {
-              lead: {
-                OR: [
-                  { assignedConsultantId: userId },
-                  { assignedTlId: userId },
-                  { assignedManagerId: userId }
-                ]
-              }
+      const orderWhere: any = {
+        status: { notIn: ['draft', 'submitted'] },
+        OR: [
+          { financeProcessedById: userId },
+          {
+            lead: {
+              OR: [
+                { assignedConsultantId: userId },
+                { assignedTlId: userId },
+                { assignedManagerId: userId }
+              ]
             }
-          ]
-        },
+          }
+        ]
+      };
+      if (hasDates) {
+        orderWhere.createdAt = dateRangeFilter;
+      }
+
+      const orders = await prisma.order.findMany({
+        where: orderWhere,
         select: {
           id: true,
           orderCode: true,
@@ -246,17 +292,22 @@ export async function GET(req: Request) {
       }));
     } 
     else if (type === 'installations_completed') {
+      const orderWhere: any = {
+        status: 'completed',
+        lead: {
+          OR: [
+            { assignedConsultantId: userId },
+            { assignedTlId: userId },
+            { assignedManagerId: userId }
+          ]
+        }
+      };
+      if (hasDates) {
+        orderWhere.createdAt = dateRangeFilter;
+      }
+
       const orders = await prisma.order.findMany({
-        where: {
-          status: 'completed',
-          lead: {
-            OR: [
-              { assignedConsultantId: userId },
-              { assignedTlId: userId },
-              { assignedManagerId: userId }
-            ]
-          }
-        },
+        where: orderWhere,
         select: {
           id: true,
           orderCode: true,
