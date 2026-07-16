@@ -220,7 +220,15 @@ export async function PATCH(
         } else if (departmentName === 'Operations') {
           roleName = 'operations';
         } else if (departmentName === 'IT') {
-          roleName = 'admin';
+          if (designation.level === 2) {
+            roleName = 'director';
+          } else if (designation.level === 3 || designation.level === 4) {
+            roleName = 'manager';
+          } else if (designation.level === 5) {
+            roleName = 'tl';
+          } else {
+            roleName = 'consultant';
+          }
         } else if (departmentName === 'Sales') {
           if (designation.name.includes('Head') || designation.level === 2) {
             roleName = 'sales_head';
@@ -235,6 +243,16 @@ export async function PATCH(
           } else if (designation.name === 'PSA Consultant') {
             roleName = 'psa';
           } else if (designation.name === 'Consultant') {
+            roleName = 'consultant';
+          }
+        } else {
+          if (designation.level === 2) {
+            roleName = 'director';
+          } else if (designation.level === 3 || designation.level === 4) {
+            roleName = 'manager';
+          } else if (designation.level === 5) {
+            roleName = 'tl';
+          } else {
             roleName = 'consultant';
           }
         }

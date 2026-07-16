@@ -166,7 +166,15 @@ export async function POST(req: Request) {
     } else if (departmentName === 'Operations') {
       role = 'operations';
     } else if (departmentName === 'IT') {
-      role = 'admin';
+      if (designation.level === 2) {
+        role = 'director';
+      } else if (designation.level === 3 || designation.level === 4) {
+        role = 'manager';
+      } else if (designation.level === 5) {
+        role = 'tl';
+      } else {
+        role = 'consultant';
+      }
     } else if (departmentName === 'Sales') {
       if (designation.name.includes('Head') || designation.level === 2) {
         role = 'sales_head';
@@ -181,6 +189,16 @@ export async function POST(req: Request) {
       } else if (designation.name === 'PSA Consultant') {
         role = 'psa';
       } else if (designation.name === 'Consultant') {
+        role = 'consultant';
+      }
+    } else {
+      if (designation.level === 2) {
+        role = 'director';
+      } else if (designation.level === 3 || designation.level === 4) {
+        role = 'manager';
+      } else if (designation.level === 5) {
+        role = 'tl';
+      } else {
         role = 'consultant';
       }
     }
