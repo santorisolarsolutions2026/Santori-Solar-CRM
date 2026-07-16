@@ -41,7 +41,7 @@ export async function GET(req: Request) {
     });
 
     // Build conditional where clauses for date ranges
-    const meetingsWhere = startStr && endStr ? { meetingStartedAt: dateRangeFilter } : {};
+    const meetingsWhere = startStr && endStr ? { createdAt: dateRangeFilter } : {};
     const ordersWhere = startStr && endStr ? { createdAt: dateRangeFilter } : {};
     const logsWhere = startStr && endStr ? { createdAt: dateRangeFilter } : {};
 

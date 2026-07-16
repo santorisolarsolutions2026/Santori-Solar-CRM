@@ -650,7 +650,7 @@ export default function ReportsPage() {
                               </button>
                             </td>
                             <td className="py-3.5 px-4 text-right font-extrabold text-slate-200">
-                              ₹{emp.metrics.ordersPunchedValue.toLocaleString('en-IN')}
+                              ₹{(emp.metrics?.ordersPunchedValue || 0).toLocaleString('en-IN')}
                             </td>
                           </tr>
                         ))}
@@ -684,7 +684,7 @@ export default function ReportsPage() {
                               </button>
                             </td>
                             <td className="py-3.5 px-4 text-right font-extrabold text-slate-200">
-                              ₹{emp.metrics.ordersVerifiedValue.toLocaleString('en-IN')}
+                              ₹{(emp.metrics?.ordersVerifiedValue || 0).toLocaleString('en-IN')}
                             </td>
                           </tr>
                         ))}
@@ -775,7 +775,7 @@ export default function ReportsPage() {
                   <span>{modalData?.employee?.name || 'Loading Employee...'}</span>
                   {modalData?.employee && (
                     <span className="text-[10px] bg-slate-900 border border-slate-850 px-2 py-0.5 rounded text-slate-400 font-mono">
-                      {modalData.employee.designation} ({modalData.employee.department?.name || 'Unassigned'})
+                      {modalData.employee.designation?.name || 'Employee'} ({modalData.employee.department?.name || 'Unassigned'})
                     </span>
                   )}
                 </h2>
@@ -905,7 +905,7 @@ export default function ReportsPage() {
                               </span>
                             </td>
                             <td className="py-3 px-3 text-right font-extrabold text-white">
-                              ₹{ord.value.toLocaleString('en-IN')}
+                              ₹{(ord.value || 0).toLocaleString('en-IN')}
                             </td>
                             <td className="py-3 px-3 text-right text-slate-500 font-mono">{ord.date}</td>
                           </tr>

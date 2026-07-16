@@ -116,7 +116,7 @@ export async function GET(req: Request) {
         ]
       };
       if (hasDates) {
-        meetingWhere.meetingStartedAt = dateRangeFilter;
+        meetingWhere.createdAt = dateRangeFilter;
       }
 
       const meetings = await prisma.meetingBooking.findMany({
