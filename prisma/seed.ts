@@ -9,7 +9,7 @@ const dbHost = process.env.DB_HOST || "localhost";
 const dbPort = process.env.DB_PORT || "5432";
 const dbName = process.env.DB_NAME || "solar_crm";
 
-const connectionString = `postgresql://${dbUser}:${dbPassword}@${dbHost}:${dbPort}/${dbName}?schema=public`;
+const connectionString = process.env.DATABASE_URL || `postgresql://${dbUser}:${dbPassword}@${dbHost}:${dbPort}/${dbName}?schema=public`;
 
 const pool = new pg.Pool({ connectionString });
 const adapter = new PrismaPg(pool);
