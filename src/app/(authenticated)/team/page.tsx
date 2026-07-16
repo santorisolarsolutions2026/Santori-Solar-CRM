@@ -267,12 +267,39 @@ export default function TeamManagementPage() {
   const searchParams = useSearchParams();
 
   const [members, setMembers] = useState<TeamMember[]>([]);
-  const [managersAndTls, setManagersAndTls] = useState<{ id: number; name: string; role: string }[]>([]);
+  const [managersAndTls, setManagersAndTls] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [empSearchInput, setEmpSearchInput] = useState('');
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
+
+  const [departmentsList, setDepartmentsList] = useState<{ id: number; name: string }[]>([]);
+  const [designationsList, setDesignationsList] = useState<{ id: number; name: string; level: number; departmentId: number | null }[]>([]);
+
+  const fetchDepartments = async () => {
+    try {
+      const res = await fetch('/api/v1/departments');
+      const data = await res.json();
+      if (data.success && data.data) {
+        setDepartmentsList(data.data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchDesignations = async () => {
+    try {
+      const res = await fetch('/api/v1/designations');
+      const data = await res.json();
+      if (data.success && data.data) {
+        setDesignationsList(data.data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const isTargetAdminOrDirector = selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:') || selectedMember?.role === 'director' || selectedMember?.role?.startsWith('director:');
   const isCurrentUserAdmin = user?.role === 'admin' || user?.role?.startsWith('admin:');
@@ -291,6 +318,8 @@ export default function TeamManagementPage() {
     reportsTo: '',
     joiningDate: '',
     photograph: '',
+    departmentId: '',
+    designationId: '',
   });
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
@@ -327,6 +356,8 @@ export default function TeamManagementPage() {
     joiningDate: '',
     photograph: '',
     isActive: true,
+    departmentId: '',
+    designationId: '',
   });
   const [editMemberPhotoPreviewUrl, setEditMemberPhotoPreviewUrl] = useState('');
   const [editMemberPassword, setEditMemberPassword] = useState('');
@@ -359,6 +390,8 @@ export default function TeamManagementPage() {
       reportsTo: '',
       joiningDate: '',
       photograph: '',
+      departmentId: '',
+      designationId: '',
     });
     setAddCustomRoleText('');
     setAddBaseRole('consultant');
@@ -484,6 +517,8 @@ export default function TeamManagementPage() {
       const userBaseRole = user.role.includes(':') ? user.role.split(':')[0] : user.role;
       if (['admin', 'director', 'sales_head'].includes(userBaseRole)) {
         fetchSupervisors();
+        fetchDepartments();
+        fetchDesignations();
       }
     }
   }, [user]);
@@ -534,6 +569,8 @@ export default function TeamManagementPage() {
         joiningDate: member.joiningDate ? member.joiningDate.split('T')[0] : '',
         photograph: member.photograph || '',
         isActive: member.isActive,
+        departmentId: (member as any).departmentId ? String((member as any).departmentId) : '',
+        designationId: (member as any).designationId ? String((member as any).designationId) : '',
       });
       setEditMemberPhotoPreviewUrl('');
       setUpdateMemberError('');
@@ -725,6 +762,8 @@ export default function TeamManagementPage() {
         joiningDate: editMemberForm.joiningDate ? new Date(editMemberForm.joiningDate) : null,
         photograph: editMemberForm.photograph || null,
         isActive: editMemberForm.isActive,
+        departmentId: editMemberForm.departmentId ? parseInt(editMemberForm.departmentId, 10) : null,
+        designationId: editMemberForm.designationId ? parseInt(editMemberForm.designationId, 10) : null,
       };
 
       if (editMemberPassword.trim()) {
@@ -1373,63 +1412,37 @@ export default function TeamManagementPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">System Designation / Role</label>
+                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
+                    Department
+                  </label>
                   <select
-                    value={form.role}
-                    onChange={(e) => setForm({ ...form, role: e.target.value })}
+                    value={form.departmentId}
+                    onChange={(e) => setForm({ ...form, departmentId: e.target.value })}
                     className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500"
                   >
-                    <option value="admin">Admin</option>
-                    <option value="director">Director</option>
-                    <option value="sales_head">Sales Head</option>
-                    <option value="finance">Finance Manager</option>
-                    <option value="operations">Operations Manager</option>
-                    <option value="psa_tl">PSA Team Leader</option>
-                    <option value="psa">PSA Consultant</option>
-                    <option value="tl">Sales Team Leader</option>
-                    <option value="consultant">Sales Consultant</option>
-                    {customDesignations.map((cd) => (
-                      <option key={cd} value={cd}>
-                        {getRoleLabel(cd)} ({getRoleLabel(cd.split(':')[0]).toUpperCase()} access)
-                      </option>
+                    <option value="">No Department / Shared</option>
+                    {departmentsList.map((dept) => (
+                      <option key={dept.id} value={dept.id}>{dept.name}</option>
                     ))}
-                    <option value="other">Other / Custom Designation...</option>
                   </select>
                 </div>
-
-                {form.role === 'other' && (
-                  <div className="col-span-1 sm:col-span-2 p-4 bg-slate-950/40 border border-slate-800/80 rounded-xl space-y-3">
-                    <div>
-                      <label className="block text-[9px] font-bold uppercase text-slate-400 mb-1">Custom Designation Name *</label>
-                      <input
-                        type="text"
-                        required
-                        value={addCustomRoleText}
-                        onChange={(e) => setAddCustomRoleText(e.target.value)}
-                        placeholder="e.g. Senior Consultant"
-                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-900 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[9px] font-bold uppercase text-slate-400 mb-1">Base Permissions Access Level</label>
-                      <select
-                        value={addBaseRole}
-                        onChange={(e) => setAddBaseRole(e.target.value)}
-                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-900 rounded-lg text-slate-300 text-xs focus:ring-amber-500"
-                      >
-                        <option value="consultant">Sales Consultant</option>
-                        <option value="tl">Sales Team Leader</option>
-                        <option value="psa">PSA Consultant</option>
-                        <option value="psa_tl">PSA Team Leader</option>
-                        <option value="manager">Operations Manager</option>
-                        <option value="finance">Finance Manager</option>
-                        <option value="sales_head">Sales Head</option>
-                        <option value="director">Director</option>
-                        <option value="admin">Admin</option>
-                      </select>
-                    </div>
-                  </div>
-                )}
+                <div>
+                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
+                    Designation
+                  </label>
+                  <select
+                    value={form.designationId}
+                    onChange={(e) => setForm({ ...form, designationId: e.target.value })}
+                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500"
+                  >
+                    <option value="">Select Designation...</option>
+                    {designationsList
+                      .filter((des) => !form.departmentId || des.departmentId === null || des.departmentId === parseInt(form.departmentId, 10))
+                      .map((des) => (
+                        <option key={des.id} value={des.id}>{des.name}</option>
+                      ))}
+                  </select>
+                </div>
 
                 <div>
                   <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
@@ -1452,11 +1465,18 @@ export default function TeamManagementPage() {
                     className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500"
                   >
                     <option value="">No Supervisor (Reports to Admin)</option>
-                    {managersAndTls.map((sup) => (
-                      <option key={sup.id} value={sup.id}>
-                        {sup.name} ({getRoleLabel(sup.role).toUpperCase()})
-                      </option>
-                    ))}
+                    {managersAndTls
+                      .filter((sup) => {
+                        const selectedDes = designationsList.find((d) => d.id === parseInt(form.designationId, 10));
+                        const selectedLevel = selectedDes ? selectedDes.level : 7;
+                        const supLevel = sup.designation?.level ?? 1;
+                        return supLevel < selectedLevel;
+                      })
+                      .map((sup) => (
+                        <option key={sup.id} value={sup.id}>
+                          {sup.name} ({getRoleLabel(sup.role).toUpperCase()})
+                        </option>
+                      ))}
                   </select>
                 </div>
                 <div>
@@ -1793,78 +1813,51 @@ export default function TeamManagementPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">System Role</label>
+                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Department</label>
                       <select
-                        value={editMemberForm.role}
+                        value={editMemberForm.departmentId}
                         disabled={!canEditPermissionsAndRole || selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:')}
-                        onChange={(e) => setEditMemberForm({ ...editMemberForm, role: e.target.value })}
+                        onChange={(e) => setEditMemberForm({ ...editMemberForm, departmentId: e.target.value })}
                         className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500 focus:outline-none disabled:opacity-50"
                       >
-                        {(selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:')) && (
-                          <option value="admin">Admin</option>
-                        )}
-                        <option value="director">Director</option>
-                        <option value="sales_head">Sales Head</option>
-                        <option value="finance">Finance Manager</option>
-                        <option value="operations">Operations Manager</option>
-                        <option value="psa_tl">PSA Team Leader</option>
-                        <option value="psa">PSA Consultant</option>
-                        <option value="tl">Sales Team Leader</option>
-                        <option value="consultant">Sales Consultant</option>
-                        {customDesignations.map((cd) => (
-                          <option key={cd} value={cd}>
-                            {getRoleLabel(cd)} ({getRoleLabel(cd.split(':')[0]).toUpperCase()} access)
-                          </option>
+                        <option value="">No Department / Shared</option>
+                        {departmentsList.map((dept) => (
+                          <option key={dept.id} value={dept.id}>{dept.name}</option>
                         ))}
-                        <option value="other">Other / Custom Designation...</option>
                       </select>
                     </div>
-                    {editMemberForm.role === 'other' && (
-                      <div className="col-span-1 sm:col-span-2 p-4 bg-slate-950/40 border border-slate-800/80 rounded-xl space-y-3">
-                        <div>
-                          <label className="block text-[9px] font-bold uppercase text-slate-400 mb-1">Custom Designation Name *</label>
-                          <input
-                            type="text"
-                            required
-                            value={editCustomRoleText}
-                            onChange={(e) => setEditCustomRoleText(e.target.value)}
-                            placeholder="e.g. Senior Consultant"
-                            className="block w-full px-3 py-2 bg-slate-950 border border-slate-905 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[9px] font-bold uppercase text-slate-400 mb-1">Base Permissions Access Level</label>
-                          <select
-                            value={editBaseRole}
-                            disabled={!canEditPermissionsAndRole || selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:')}
-                            onChange={(e) => setEditBaseRole(e.target.value)}
-                            className="block w-full px-3 py-2 bg-slate-950 border border-slate-900 rounded-lg text-slate-300 text-xs focus:ring-amber-500 disabled:opacity-50"
-                          >
-                            <option value="consultant">Sales Consultant</option>
-                            <option value="tl">Sales Team Leader</option>
-                            <option value="psa">PSA Consultant</option>
-                            <option value="psa_tl">PSA Team Leader</option>
-                            <option value="manager">Operations Manager</option>
-                            <option value="finance">Finance Manager</option>
-                            <option value="sales_head">Sales Head</option>
-                            <option value="director">Director</option>
-                            {(selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:')) && (
-                              <option value="admin">Admin</option>
-                            )}
-                          </select>
-                        </div>
-                      </div>
-                    )}
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Designation</label>
+                      <select
+                        value={editMemberForm.designationId}
+                        disabled={!canEditPermissionsAndRole || selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:')}
+                        onChange={(e) => setEditMemberForm({ ...editMemberForm, designationId: e.target.value })}
+                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500 focus:outline-none disabled:opacity-50"
+                      >
+                        <option value="">Select Designation...</option>
+                        {designationsList
+                          .filter((des) => !editMemberForm.departmentId || des.departmentId === null || des.departmentId === parseInt(editMemberForm.departmentId, 10))
+                          .map((des) => (
+                            <option key={des.id} value={des.id}>{des.name}</option>
+                          ))}
+                      </select>
+                    </div>
                     <div>
                       <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Direct Supervisor</label>
                       <select
                         value={editMemberForm.reportsTo}
                         onChange={(e) => setEditMemberForm({ ...editMemberForm, reportsTo: e.target.value })}
-                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-355 text-xs focus:ring-amber-500 focus:outline-none"
+                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500 focus:outline-none"
                       >
                         <option value="">No Supervisor (Reports to Admin)</option>
                         {managersAndTls
-                          .filter((sup) => sup.id !== selectedMember.id)
+                          .filter((sup) => {
+                            if (sup.id === selectedMember.id) return false;
+                            const selectedDes = designationsList.find((d) => d.id === parseInt(editMemberForm.designationId, 10));
+                            const selectedLevel = selectedDes ? selectedDes.level : 7;
+                            const supLevel = sup.designation?.level ?? 1;
+                            return supLevel < selectedLevel;
+                          })
                           .map((sup) => (
                             <option key={sup.id} value={sup.id}>
                               {sup.name} ({getRoleLabel(sup.role).toUpperCase()})

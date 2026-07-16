@@ -276,6 +276,30 @@ export async function PATCH(
       data: updateData,
     });
 
+    try {
+      if (isInstalled !== undefined && !!isInstalled) {
+        await prisma.activity.create({
+          data: {
+            employeeId: userPayload.id,
+            leadId: order.leadId,
+            activityType: 'INSTALLATION_COMPLETED',
+            metadata: JSON.stringify({ orderCode: order.orderCode }),
+          },
+        });
+      } else if (status !== undefined && status === 'completed') {
+        await prisma.activity.create({
+          data: {
+            employeeId: userPayload.id,
+            leadId: order.leadId,
+            activityType: 'ORDER_COMPLETED',
+            metadata: JSON.stringify({ orderCode: order.orderCode }),
+          },
+        });
+      }
+    } catch (actErr) {
+      console.error('Error logging ops activity:', actErr);
+    }
+
     return NextResponse.json({
       success: true,
       data: updatedOrder,

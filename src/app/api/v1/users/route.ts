@@ -62,6 +62,10 @@ export async function GET(req: Request) {
         joiningDate: true,
         photograph: true,
         permissions: true,
+        departmentId: true,
+        designationId: true,
+        department: { select: { id: true, name: true } },
+        designation: { select: { id: true, name: true, level: true } },
         supervisor: { select: { id: true, name: true } },
         _count: {
           select: {
@@ -129,15 +133,58 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { name, email, phone, address, employeeId, role, password, reportsTo, joiningDate, photograph, permissions } = body;
+    const { name, email, phone, address, employeeId, password, reportsTo, joiningDate, photograph, permissions, departmentId, designationId } = body;
 
-    if (!name || !email || !employeeId || !role || !password || !phone || !address || !String(employeeId).trim() || !String(phone).trim() || !String(address).trim()) {
-      return NextResponse.json({ success: false, message: 'Missing required user fields (Contact number, full address, and Employee ID are required).' }, { status: 400 });
+    if (!name || !email || !employeeId || !password || !phone || !address || !designationId) {
+      return NextResponse.json({ success: false, message: 'Missing required user fields (Name, Email, Employee ID, Password, Phone, Address, and Designation are required).' }, { status: 400 });
     }
 
     const empIdTrim = String(employeeId).trim();
 
-    // Check single admin constraint
+    // Derive role and default permissions
+    let role = 'consultant';
+    const desId = parseInt(designationId, 10);
+    const designation = await prisma.designation.findUnique({ where: { id: desId } });
+    if (!designation) {
+      return NextResponse.json({ success: false, message: 'Invalid designation selected.' }, { status: 400 });
+    }
+
+    let departmentName = '';
+    let deptId: number | null = null;
+    if (departmentId) {
+      deptId = parseInt(departmentId, 10);
+      const department = await prisma.department.findUnique({ where: { id: deptId } });
+      if (department) {
+        departmentName = department.name;
+      }
+    }
+
+    if (designation.name === 'Admin' || designation.level === 1) {
+      role = 'admin';
+    } else if (departmentName === 'Finance') {
+      role = 'finance';
+    } else if (departmentName === 'Operations') {
+      role = 'operations';
+    } else if (departmentName === 'IT') {
+      role = 'admin';
+    } else if (departmentName === 'Sales') {
+      if (designation.name.includes('Head') || designation.level === 2) {
+        role = 'sales_head';
+      } else if (designation.name.includes('PSA Senior Manager') || designation.name.includes('PSA Manager')) {
+        role = 'manager';
+      } else if (designation.name.includes('Senior Manager') || designation.name.includes('Manager')) {
+        role = 'manager';
+      } else if (designation.name === 'PSA TL') {
+        role = 'psa_tl';
+      } else if (designation.name === 'TL') {
+        role = 'tl';
+      } else if (designation.name === 'PSA Consultant') {
+        role = 'psa';
+      } else if (designation.name === 'Consultant') {
+        role = 'consultant';
+      }
+    }
+
     const targetRoleLower = role.toLowerCase();
     if (targetRoleLower === 'admin' || targetRoleLower.startsWith('admin:')) {
       const existingAdmin = await prisma.user.findFirst({
@@ -187,6 +234,9 @@ export async function POST(req: Request) {
 
     const passwordHash = await bcrypt.hash(password, 10);
 
+    const { getDefaultPermissionsForRole } = await import('@/lib/auth');
+    const finalPermissions = permissions || getDefaultPermissionsForRole(role).join(',');
+
     const newUser = await prisma.user.create({
       data: {
         name,
@@ -199,8 +249,10 @@ export async function POST(req: Request) {
         reportsTo: reportsTo ? parseInt(reportsTo, 10) : null,
         joiningDate: joiningDate ? new Date(joiningDate) : null,
         photograph: photograph || null,
-        permissions: permissions || "",
+        permissions: finalPermissions,
         isActive: true,
+        departmentId: deptId,
+        designationId: desId,
       },
     });
 

@@ -7,7 +7,7 @@ const dbUser = process.env.DB_USER || "postgres";
 const dbPassword = process.env.DB_PASSWORD || "";
 const dbHost = process.env.DB_HOST || "localhost";
 const dbPort = process.env.DB_PORT || "5432";
-const dbName = process.env.DB_NAME || "solarcrm";
+const dbName = process.env.DB_NAME || "solar_crm";
 
 const connectionString = `postgresql://${dbUser}:${dbPassword}@${dbHost}:${dbPort}/${dbName}?schema=public`;
 
@@ -17,13 +17,36 @@ const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log('Clearing database...');
+  await prisma.activity.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.orderDocument.deleteMany();
   await prisma.order.deleteMany();
+  await prisma.payment.deleteMany();
+  await prisma.attendance.deleteMany();
   await prisma.meetingBooking.deleteMany();
   await prisma.leadActivityLog.deleteMany();
   await prisma.lead.deleteMany();
   await prisma.user.deleteMany();
+  await prisma.designation.deleteMany();
+  await prisma.department.deleteMany();
+
+  console.log('Seeding departments...');
+  const salesDept = await prisma.department.create({ data: { name: 'Sales' } });
+  const financeDept = await prisma.department.create({ data: { name: 'Finance' } });
+  const opsDept = await prisma.department.create({ data: { name: 'Operations' } });
+  const itDept = await prisma.department.create({ data: { name: 'IT' } });
+
+  console.log('Seeding designations...');
+  const adminDes = await prisma.designation.create({ data: { name: 'Admin', level: 1 } });
+  const headDes = await prisma.designation.create({ data: { name: 'Head', level: 2 } });
+  const srManagerDes = await prisma.designation.create({ data: { name: 'Senior Manager', level: 3 } });
+  const psaSrManagerDes = await prisma.designation.create({ data: { name: 'PSA Senior Manager', level: 3, departmentId: salesDept.id } });
+  const managerDes = await prisma.designation.create({ data: { name: 'Manager', level: 4 } });
+  const psaManagerDes = await prisma.designation.create({ data: { name: 'PSA Manager', level: 4, departmentId: salesDept.id } });
+  const tlDes = await prisma.designation.create({ data: { name: 'TL', level: 5 } });
+  const psaTlDes = await prisma.designation.create({ data: { name: 'PSA TL', level: 5, departmentId: salesDept.id } });
+  const consultantDes = await prisma.designation.create({ data: { name: 'Consultant', level: 6 } });
+  const psaConsultantDes = await prisma.designation.create({ data: { name: 'PSA Consultant', level: 6, departmentId: salesDept.id } });
 
   console.log('Seeding users...');
   const passwordHash = await bcrypt.hash('Password123', 10);
@@ -37,6 +60,8 @@ async function main() {
       passwordHash,
       role: 'admin',
       isActive: true,
+      departmentId: itDept.id,
+      designationId: adminDes.id,
     },
   });
 
@@ -50,6 +75,8 @@ async function main() {
       role: 'sales_head',
       reportsTo: admin.id,
       isActive: true,
+      departmentId: salesDept.id,
+      designationId: headDes.id,
     },
   });
 
@@ -63,6 +90,8 @@ async function main() {
       role: 'manager',
       reportsTo: salesHead.id,
       isActive: true,
+      departmentId: salesDept.id,
+      designationId: managerDes.id,
     },
   });
 
@@ -75,6 +104,8 @@ async function main() {
       role: 'manager',
       reportsTo: salesHead.id,
       isActive: true,
+      departmentId: salesDept.id,
+      designationId: managerDes.id,
     },
   });
 
@@ -88,6 +119,8 @@ async function main() {
       role: 'tl',
       reportsTo: manager1.id,
       isActive: true,
+      departmentId: salesDept.id,
+      designationId: tlDes.id,
     },
   });
 
@@ -97,9 +130,11 @@ async function main() {
       email: 'tl2@solarcrm.com',
       phone: '9876543215',
       passwordHash,
-      role: 'tl',
+      role: 'psa_tl',
       reportsTo: manager2.id,
       isActive: true,
+      departmentId: salesDept.id,
+      designationId: psaTlDes.id,
     },
   });
 
@@ -113,6 +148,8 @@ async function main() {
       role: 'consultant',
       reportsTo: tl1.id,
       isActive: true,
+      departmentId: salesDept.id,
+      designationId: consultantDes.id,
     },
   });
 
@@ -125,6 +162,8 @@ async function main() {
       role: 'consultant',
       reportsTo: tl1.id,
       isActive: true,
+      departmentId: salesDept.id,
+      designationId: consultantDes.id,
     },
   });
 
@@ -134,9 +173,11 @@ async function main() {
       email: 'consultant3@solarcrm.com',
       phone: '9876543218',
       passwordHash,
-      role: 'consultant',
+      role: 'psa',
       reportsTo: tl2.id,
       isActive: true,
+      departmentId: salesDept.id,
+      designationId: psaConsultantDes.id,
     },
   });
 
@@ -147,8 +188,10 @@ async function main() {
       phone: '9876543219',
       passwordHash,
       role: 'consultant',
-      reportsTo: tl2.id,
+      reportsTo: tl1.id,
       isActive: true,
+      departmentId: salesDept.id,
+      designationId: consultantDes.id,
     },
   });
 
@@ -160,8 +203,10 @@ async function main() {
       phone: '9876543220',
       passwordHash,
       role: 'psa',
-      reportsTo: tl1.id,
+      reportsTo: tl2.id,
       isActive: true,
+      departmentId: salesDept.id,
+      designationId: psaConsultantDes.id,
     },
   });
 
@@ -174,6 +219,8 @@ async function main() {
       role: 'psa',
       reportsTo: tl2.id,
       isActive: true,
+      departmentId: salesDept.id,
+      designationId: psaConsultantDes.id,
     },
   });
 
@@ -187,6 +234,8 @@ async function main() {
       role: 'finance',
       reportsTo: admin.id,
       isActive: true,
+      departmentId: financeDept.id,
+      designationId: headDes.id,
     },
   });
 
@@ -200,6 +249,8 @@ async function main() {
       role: 'operations',
       reportsTo: admin.id,
       isActive: true,
+      departmentId: opsDept.id,
+      designationId: headDes.id,
     },
   });
 
@@ -210,7 +261,7 @@ async function main() {
   // Helper for generating lead codes
   const makeLeadCode = (num: number) => `SL-${String(num).padStart(5, '0')}`;
 
-  // Lead 1: Fresh Lead
+  // Lead 1: Fresh Lead (PSA assigned)
   const lead1 = await prisma.lead.create({
     data: {
       leadCode: makeLeadCode(1),
@@ -228,6 +279,15 @@ async function main() {
       assignedTlId: tl1.id,
       assignedConsultantId: consultant1.id,
       createdById: admin.id,
+    }
+  });
+
+  await prisma.activity.create({
+    data: {
+      employeeId: admin.id,
+      leadId: lead1.id,
+      activityType: 'LEAD_CREATED',
+      metadata: JSON.stringify({ remark: 'Lead imported as Fresh Lead.' })
     }
   });
 
@@ -262,6 +322,23 @@ async function main() {
     }
   });
 
+  await prisma.activity.create({
+    data: {
+      employeeId: manager1.id,
+      leadId: lead2.id,
+      activityType: 'LEAD_CREATED',
+    }
+  });
+
+  await prisma.activity.create({
+    data: {
+      employeeId: consultant1.id,
+      leadId: lead2.id,
+      activityType: 'CALL_MADE',
+      metadata: JSON.stringify({ remark: 'Called at 11:30 AM, phone rang but no answer.' })
+    }
+  });
+
   // Lead 3: Follow Up - Hot
   const lead3 = await prisma.lead.create({
     data: {
@@ -292,6 +369,23 @@ async function main() {
       fromStatus: 1,
       toStatus: 3,
       remark: 'Spoke with the owner. Highly interested in commercial solar transition for their clinic.',
+    }
+  });
+
+  await prisma.activity.create({
+    data: {
+      employeeId: tl1.id,
+      leadId: lead3.id,
+      activityType: 'LEAD_CREATED',
+    }
+  });
+
+  await prisma.activity.create({
+    data: {
+      employeeId: consultant2.id,
+      leadId: lead3.id,
+      activityType: 'FOLLOW_UP',
+      metadata: JSON.stringify({ remark: 'Spoke with the owner. Highly interested in commercial solar transition.' })
     }
   });
 
@@ -348,6 +442,23 @@ async function main() {
       connectionType: 'residential',
       assignedExecutiveId: consultant3.id,
       notes: 'Customer wants to understand net metering policy and payback period.',
+    }
+  });
+
+  await prisma.activity.create({
+    data: {
+      employeeId: manager2.id,
+      leadId: lead4.id,
+      activityType: 'LEAD_CREATED',
+    }
+  });
+
+  await prisma.activity.create({
+    data: {
+      employeeId: consultant3.id, // Booked by PSA consultant3 (Anjali)
+      leadId: lead4.id,
+      activityType: 'MEETING_BOOKED',
+      metadata: JSON.stringify({ meetingDate: 'Tomorrow', assignedExecutiveId: consultant3.id })
     }
   });
 
@@ -423,6 +534,39 @@ async function main() {
     }
   });
 
+  await prisma.activity.create({
+    data: {
+      employeeId: admin.id,
+      leadId: lead5.id,
+      activityType: 'LEAD_CREATED',
+    }
+  });
+
+  await prisma.activity.create({
+    data: {
+      employeeId: consultant4.id,
+      leadId: lead5.id,
+      activityType: 'MEETING_BOOKED',
+    }
+  });
+
+  await prisma.activity.create({
+    data: {
+      employeeId: consultant4.id,
+      leadId: lead5.id,
+      activityType: 'MEETING_DONE',
+    }
+  });
+
+  await prisma.activity.create({
+    data: {
+      employeeId: consultant4.id,
+      leadId: lead5.id,
+      activityType: 'SALE_DONE',
+      metadata: JSON.stringify({ orderValue: 1450000, systemSizeKw: 40 })
+    }
+  });
+
   // Lead 6: Call Later
   const lead6 = await prisma.lead.create({
     data: {
@@ -452,6 +596,23 @@ async function main() {
       fromStatus: 1,
       toStatus: 5,
       remark: 'Customer busy, travelling. Asked to call back next week.',
+    }
+  });
+
+  await prisma.activity.create({
+    data: {
+      employeeId: consultant1.id,
+      leadId: lead6.id,
+      activityType: 'LEAD_CREATED',
+    }
+  });
+
+  await prisma.activity.create({
+    data: {
+      employeeId: consultant1.id,
+      leadId: lead6.id,
+      activityType: 'CALL_MADE',
+      metadata: JSON.stringify({ remark: 'Customer busy, travelling. Callback requested.' })
     }
   });
 
@@ -486,7 +647,24 @@ async function main() {
     }
   });
 
-  console.log('Mock leads, meeting bookings, and orders seeded successfully!');
+  await prisma.activity.create({
+    data: {
+      employeeId: manager1.id,
+      leadId: lead7.id,
+      activityType: 'LEAD_CREATED',
+    }
+  });
+
+  await prisma.activity.create({
+    data: {
+      employeeId: consultant2.id,
+      leadId: lead7.id,
+      activityType: 'CALL_MADE',
+      metadata: JSON.stringify({ remark: 'Says the budget is too low right now. Not interested.' })
+    }
+  });
+
+  console.log('Mock leads, meeting bookings, orders, and activities seeded successfully!');
   console.log('System user accounts and sales pipeline mock data seeded successfully.');
 }
 

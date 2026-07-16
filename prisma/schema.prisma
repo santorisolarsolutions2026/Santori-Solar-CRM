@@ -32,6 +32,12 @@ model User {
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
 
+  departmentId         Int?
+  department           Department?         @relation(fields: [departmentId], references: [id])
+  designationId        Int?
+  designation          Designation?        @relation(fields: [designationId], references: [id])
+  activities           Activity[]
+
   // Supervisor relation
   supervisor           User?               @relation("UserSupervisor", fields: [reportsTo], references: [id])
   subordinates         User[]              @relation("UserSupervisor")
@@ -91,6 +97,7 @@ model Lead {
   meetings             MeetingBooking[]
   order                Order?
   notifications        Notification[]
+  activities           Activity[]
 
   @@index([mobile])
   @@index([status])
@@ -274,5 +281,36 @@ model Payment {
   recordedBy     User     @relation(fields: [recordedById], references: [id])
 
   @@index([orderId])
+}
+
+model Department {
+  id           Int           @id @default(autoincrement())
+  name         String        @unique
+  users        User[]
+  designations Designation[]
+}
+
+model Designation {
+  id           Int         @id @default(autoincrement())
+  name         String      @unique
+  level        Int
+  departmentId Int?
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  users        User[]
+}
+
+model Activity {
+  id             Int      @id @default(autoincrement())
+  employeeId     Int
+  employee       User     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  leadId         Int?
+  lead           Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  activityType   String   // MEETING_BOOKED | SALE_DONE | CALL_MADE | FOLLOW_UP | ORDER_APPROVED | ORDER_REJECTED | INSTALLATION_COMPLETED | etc.
+  createdAt      DateTime @default(now())
+  metadata       String?  // JSON string
+
+  @@index([employeeId])
+  @@index([leadId])
+  @@index([activityType])
 }
 

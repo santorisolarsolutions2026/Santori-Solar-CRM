@@ -21,15 +21,29 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view reports.' }, { status: 403 });
     }
 
-    // System-wide overview metrics (constant for all authenticated users)
+    // Fetch user designation level
+    const userDetail = await prisma.user.findUnique({
+      where: { id: userPayload.id },
+      select: { designation: { select: { level: true } } },
+    });
+    const designationLevel = userDetail?.designation?.level ?? 6;
+
+    // System-wide overview metrics (constant for admin/director, hierarchical for others)
     const leadWhere: any = {};
     if (userPayload.role !== 'admin' && userPayload.role !== 'director') {
-      leadWhere.OR = [
-        { assignedManagerId: userPayload.id },
-        { assignedTlId: userPayload.id },
-        { assignedConsultantId: userPayload.id },
-        { createdById: userPayload.id },
-      ];
+      if (designationLevel <= 5) {
+        const { getSubordinateIds } = await import('@/lib/hierarchy');
+        const subIds = await getSubordinateIds(userPayload.id);
+        const subTreeIds = [userPayload.id, ...subIds];
+        leadWhere.OR = [
+          { assignedConsultantId: { in: subTreeIds } },
+          { assignedTlId: { in: subTreeIds } },
+          { assignedManagerId: { in: subTreeIds } },
+          { createdById: userPayload.id },
+        ];
+      } else {
+        leadWhere.assignedConsultantId = userPayload.id;
+      }
     }
 
     const startOfMonth = new Date();

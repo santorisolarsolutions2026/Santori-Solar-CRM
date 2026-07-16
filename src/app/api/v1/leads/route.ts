@@ -60,50 +60,16 @@ export async function GET(req: Request) {
 
     const hasViewAll = userPermissions.includes('leads:view_all');
 
+    // Fetch user designation level
+    const userDetail = await prisma.user.findUnique({
+      where: { id: userPayload.id },
+      select: { designation: { select: { level: true } } },
+    });
+    const designationLevel = userDetail?.designation?.level ?? 6;
+
     // 1. Role-based visibility enforcement
     if (!hasViewAll) {
-      if (baseRole === 'manager') {
-        andConditions.push({
-          OR: [
-            { assignedManagerId: userPayload.id },
-            { assignedTlId: null, assignedConsultantId: null },
-            {
-              order: {
-                status: 'draft',
-                rejectionReason: { not: null },
-                submittedById: userPayload.id,
-              }
-            }
-          ]
-        });
-      } else if (['tl', 'psa_tl'].includes(baseRole)) {
-        andConditions.push({
-          OR: [
-            { assignedTlId: userPayload.id },
-            { assignedTlId: null, assignedConsultantId: null },
-            {
-              order: {
-                status: 'draft',
-                rejectionReason: { not: null },
-                submittedById: userPayload.id,
-              }
-            }
-          ]
-        });
-      } else if (baseRole === 'consultant' || baseRole === 'psa') {
-        andConditions.push({
-          OR: [
-            { assignedConsultantId: userPayload.id },
-            {
-              order: {
-                status: 'draft',
-                rejectionReason: { not: null },
-                submittedById: userPayload.id,
-              }
-            }
-          ]
-        });
-      } else if (baseRole === 'finance') {
+      if (baseRole === 'finance') {
         // Finance sees only leads at Stage 13+ (Sale Done) by default
         if (filteredStatuses.length === 0) {
           andConditions.push({ status: { in: [13] } });
@@ -123,24 +89,42 @@ export async function GET(req: Request) {
             order: { isNot: null }
           });
         }
-      } else {
-        // Fallback for role without view_all permission
-        if (['admin', 'director', 'sales_head'].includes(baseRole)) {
-          // Administrative roles can view all leads even without view_all permission
-        } else {
-          andConditions.push({
-            OR: [
-              { assignedConsultantId: userPayload.id },
-              {
-                order: {
-                  status: 'draft',
-                  rejectionReason: { not: null },
-                  submittedById: userPayload.id,
-                }
+      } else if (designationLevel <= 5) {
+        // TL, Manager, Senior Manager, Head (Level 2 to 5)
+        const { getSubordinateIds } = await import('@/lib/hierarchy');
+        const subordinateIds = await getSubordinateIds(userPayload.id);
+        const allowedIds = [userPayload.id, ...subordinateIds];
+
+        andConditions.push({
+          OR: [
+            { assignedConsultantId: { in: allowedIds } },
+            { assignedTlId: { in: allowedIds } },
+            { assignedManagerId: { in: allowedIds } },
+            { createdById: userPayload.id },
+            { assignedTlId: null, assignedConsultantId: null }, // view unassigned leads
+            {
+              order: {
+                status: 'draft',
+                rejectionReason: { not: null },
+                submittedById: userPayload.id,
               }
-            ]
-          });
-        }
+            }
+          ]
+        });
+      } else {
+        // Consultant / PSA Consultant (Level 6)
+        andConditions.push({
+          OR: [
+            { assignedConsultantId: userPayload.id },
+            {
+              order: {
+                status: 'draft',
+                rejectionReason: { not: null },
+                submittedById: userPayload.id,
+              }
+            }
+          ]
+        });
       }
     }
 
@@ -504,6 +488,16 @@ export async function POST(req: Request) {
           fromStatus: null,
           toStatus: statusToSet,
           remark: notes || (statusToSet === 1 ? 'Lead added to the system as Fresh Lead.' : 'Lead added to the system as unassigned Simple Lead.'),
+        },
+      });
+
+      // Log activity in central Activity table
+      await tx.activity.create({
+        data: {
+          employeeId: userPayload.id,
+          leadId: newLead.id,
+          activityType: 'LEAD_CREATED',
+          metadata: JSON.stringify({ notes: notes || 'Lead added to the system.' }),
         },
       });
 

@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
+import { getSubordinateIds } from '@/lib/hierarchy';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
   try {
@@ -21,51 +24,77 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view reports.' }, { status: 403 });
     }
 
-    // Find all consultants in the team system-wide (constant for all users)
-    const consultantWhere: any = { role: { in: ['consultant', 'psa'] } };
-    if (userPayload.role !== 'admin' && userPayload.role !== 'director') {
-      consultantWhere.id = userPayload.id;
+    // Find target team members to display performance stats for
+    let targetUsers = await prisma.user.findMany({
+      where: { reportsTo: userPayload.id, isActive: true },
+      select: { id: true, name: true, email: true, role: true },
+    });
+
+    // If no subordinates (e.g. Consultant), default to showing themselves
+    if (targetUsers.length === 0) {
+      targetUsers = await prisma.user.findMany({
+        where: { id: userPayload.id },
+        select: { id: true, name: true, email: true, role: true },
+      });
     }
 
-    const consultants = await prisma.user.findMany({
-      where: consultantWhere,
-      select: { id: true, name: true, email: true },
-    });
+    // If Admin, show everyone directly reporting to Admin OR level 2 Heads
+    if (userPayload.role === 'admin' || userPayload.role === 'director') {
+      targetUsers = await prisma.user.findMany({
+        where: {
+          OR: [
+            { reportsTo: userPayload.id, isActive: true },
+            { designation: { level: 2 }, isActive: true }, // Level 2 Heads
+          ]
+        },
+        select: { id: true, name: true, email: true, role: true },
+      });
+    }
 
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
 
-    // Fetch stats for all consultants concurrently
-    const performancePromises = consultants.map(async (consultant) => {
+    const performancePromises = targetUsers.map(async (member) => {
+      // 1. Get all subordinates in their subtree (including themselves)
+      const subIds = await getSubordinateIds(member.id);
+      const subTreeIds = [member.id, ...subIds];
+
+      // 2. Count rolled-up metrics for the subtree from the central Activity & Lead tables
       const [leadsAssigned, meetingsBooked, salesClosed, callsMade] = await Promise.all([
-        // Total leads assigned (Fresh or above)
-        prisma.lead.count({
-          where: { 
-            assignedConsultantId: consultant.id,
-            status: { gte: 1 }
-          },
-        }),
-        // Meetings booked this month
+        // Total leads assigned to this subtree
         prisma.lead.count({
           where: {
-            assignedConsultantId: consultant.id,
-            status: { in: [8, 9, 13] },
+            OR: [
+              { assignedConsultantId: { in: subTreeIds } },
+              { assignedTlId: { in: subTreeIds } },
+              { assignedManagerId: { in: subTreeIds } }
+            ],
+            status: { gte: 1 },
+            isActive: true,
+          },
+        }),
+        // Meetings booked in this subtree this month
+        prisma.activity.count({
+          where: {
+            employeeId: { in: subTreeIds },
+            activityType: 'MEETING_BOOKED',
             createdAt: { gte: startOfMonth },
           },
         }),
-        // Sales closed this month
-        prisma.lead.count({
+        // Sales closed in this subtree this month
+        prisma.activity.count({
           where: {
-            assignedConsultantId: consultant.id,
-            status: 13,
+            employeeId: { in: subTreeIds },
+            activityType: 'SALE_DONE',
             createdAt: { gte: startOfMonth },
           },
         }),
-        // Total activity logs (calls/remarks logged)
-        prisma.leadActivityLog.count({
+        // Total calls made in this subtree this month
+        prisma.activity.count({
           where: {
-            userId: consultant.id,
+            employeeId: { in: subTreeIds },
+            activityType: 'CALL_MADE',
             createdAt: { gte: startOfMonth },
           },
         }),
@@ -74,9 +103,10 @@ export async function GET(req: Request) {
       const conversionRate = leadsAssigned > 0 ? parseFloat(((salesClosed / leadsAssigned) * 100).toFixed(2)) : 0.0;
 
       return {
-        id: consultant.id,
-        name: consultant.name,
-        email: consultant.email,
+        id: member.id,
+        name: member.name,
+        email: member.email,
+        role: member.role,
         leadsAssigned,
         meetingsBooked,
         salesClosed,

@@ -45,6 +45,10 @@ export async function GET(
         logoutLocation: true,
         joiningDate: true,
         photograph: true,
+        departmentId: true,
+        designationId: true,
+        department: { select: { id: true, name: true } },
+        designation: { select: { id: true, name: true, level: true } },
         supervisor: { select: { id: true, name: true } },
       },
     });
@@ -116,7 +120,7 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { name, email, phone, address, employeeId, role, reportsTo, isActive, joiningDate, photograph, permissions, password } = body;
+    const { name, email, phone, address, employeeId, role, reportsTo, isActive, joiningDate, photograph, permissions, password, departmentId, designationId } = body;
 
     const isTargetAdmin = user.role.toLowerCase() === 'admin' || user.role.toLowerCase().startsWith('admin:');
     const isTargetDirector = user.role.toLowerCase() === 'director' || user.role.toLowerCase().startsWith('director:');
@@ -186,16 +190,77 @@ export async function PATCH(
       }
     }
 
+    let derivedRole = role;
+    let derivedPermissions = permissions;
+
+    const targetDesId = designationId !== undefined ? (designationId ? parseInt(designationId, 10) : null) : user.designationId;
+    const targetDeptId = departmentId !== undefined ? (departmentId ? parseInt(departmentId, 10) : null) : user.departmentId;
+
+    if (designationId !== undefined || departmentId !== undefined) {
+      if (targetDesId) {
+        const designation = await prisma.designation.findUnique({ where: { id: targetDesId } });
+        if (!designation) {
+          return NextResponse.json({ success: false, message: 'Invalid designation selected.' }, { status: 400 });
+        }
+
+        let departmentName = '';
+        if (targetDeptId) {
+          const department = await prisma.department.findUnique({ where: { id: targetDeptId } });
+          if (department) {
+            departmentName = department.name;
+          }
+        }
+
+        // Derive role
+        let roleName = 'consultant';
+        if (designation.name === 'Admin' || designation.level === 1) {
+          roleName = 'admin';
+        } else if (departmentName === 'Finance') {
+          roleName = 'finance';
+        } else if (departmentName === 'Operations') {
+          roleName = 'operations';
+        } else if (departmentName === 'IT') {
+          roleName = 'admin';
+        } else if (departmentName === 'Sales') {
+          if (designation.name.includes('Head') || designation.level === 2) {
+            roleName = 'sales_head';
+          } else if (designation.name.includes('PSA Senior Manager') || designation.name.includes('PSA Manager')) {
+            roleName = 'manager';
+          } else if (designation.name.includes('Senior Manager') || designation.name.includes('Manager')) {
+            roleName = 'manager';
+          } else if (designation.name === 'PSA TL') {
+            roleName = 'psa_tl';
+          } else if (designation.name === 'TL') {
+            roleName = 'tl';
+          } else if (designation.name === 'PSA Consultant') {
+            roleName = 'psa';
+          } else if (designation.name === 'Consultant') {
+            roleName = 'consultant';
+          }
+        }
+        derivedRole = roleName;
+
+        if (derivedPermissions === undefined) {
+          if (derivedRole !== user.role) {
+            const { getDefaultPermissionsForRole } = await import('@/lib/auth');
+            derivedPermissions = getDefaultPermissionsForRole(derivedRole).join(',');
+          }
+        }
+      }
+    }
+
     const updateData: any = {};
     if (name !== undefined) updateData.name = name;
     if (email !== undefined) updateData.email = email;
     if (phone !== undefined) updateData.phone = phone;
     if (address !== undefined) updateData.address = address;
-    if (role !== undefined) updateData.role = role;
-    if (permissions !== undefined) updateData.permissions = permissions;
+    if (derivedRole !== undefined) updateData.role = derivedRole;
+    if (derivedPermissions !== undefined) updateData.permissions = derivedPermissions;
     if (reportsTo !== undefined) updateData.reportsTo = reportsTo ? parseInt(reportsTo, 10) : null;
     if (joiningDate !== undefined) updateData.joiningDate = joiningDate ? new Date(joiningDate) : null;
     if (photograph !== undefined) updateData.photograph = photograph;
+    if (departmentId !== undefined) updateData.departmentId = departmentId ? parseInt(departmentId, 10) : null;
+    if (designationId !== undefined) updateData.designationId = designationId ? parseInt(designationId, 10) : null;
 
     if (password !== undefined && password !== null) {
       if (!isAdminOrDirectorOrSalesHead) {

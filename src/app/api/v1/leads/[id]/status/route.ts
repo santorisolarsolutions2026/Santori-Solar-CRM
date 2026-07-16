@@ -377,6 +377,33 @@ export async function POST(
         },
       });
 
+      // Log specific activity type in central Activity table
+      let activityType = 'STATUS_CHANGED';
+      if (finalStatusNum === 8) {
+        activityType = 'MEETING_BOOKED';
+      } else if (finalStatusNum === 9) {
+        activityType = 'MEETING_DONE';
+      } else if (finalStatusNum === 13) {
+        activityType = 'SALE_DONE';
+      } else if (finalStatusNum === 3) {
+        activityType = 'FOLLOW_UP';
+      } else if ([2, 5, 10, 11].includes(finalStatusNum)) {
+        activityType = 'CALL_MADE';
+      }
+
+      await tx.activity.create({
+        data: {
+          employeeId: userPayload.id,
+          leadId,
+          activityType,
+          metadata: JSON.stringify({
+            fromStatus: lead.status,
+            toStatus: finalStatusNum,
+            remark,
+          }),
+        },
+      });
+
       // Create Meeting Booking if present
       if (meetingBookingData) {
         await tx.meetingBooking.create({

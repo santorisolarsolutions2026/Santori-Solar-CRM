@@ -90,6 +90,16 @@ export async function POST(
         },
       });
 
+      // Log in central Activity table
+      await tx.activity.create({
+        data: {
+          employeeId: userPayload.id,
+          leadId: order.leadId,
+          activityType: approve ? 'ORDER_APPROVED' : 'ORDER_REJECTED',
+          metadata: JSON.stringify({ remark: remark || '' }),
+        },
+      });
+
       // Notify submitting consultant
       await tx.notification.create({
         data: {
