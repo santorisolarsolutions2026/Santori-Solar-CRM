@@ -99,15 +99,21 @@ export function getDefaultPermissionsForRole(role: string): string[] {
         'leads:view_all', 'orders:verify', 'orders:operations'
       ];
     case 'tl':
-    case 'psa_tl':
       return [
         'leads:create', 'leads:edit', 'leads:change_status', 'orders:create', 'leads:track', 'reports:view'
       ];
+    case 'psa_tl':
+      return [
+        'leads:create', 'leads:edit', 'leads:change_status', 'leads:track', 'reports:view'
+      ];
     case 'consultant':
+      return [
+        'leads:create', 'leads:edit', 'leads:change_status', 'orders:create', 'leads:track'
+      ];
     case 'psa':
     default:
       return [
-        'leads:create', 'leads:edit', 'leads:change_status', 'orders:create', 'leads:track'
+        'leads:create', 'leads:edit', 'leads:change_status', 'leads:track'
       ];
   }
 }

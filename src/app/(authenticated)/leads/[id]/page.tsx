@@ -1967,19 +1967,23 @@ export default function LeadDetailPage({
                                     This will request microphone and location permissions to log coordinates and record meeting audio.
                                   </p>
                                 </div>
-                                <button
-                                  type="button"
-                                  disabled={isStartingMeeting}
-                                  onClick={() => handleStartMeeting(meet.id)}
-                                  className="w-full sm:w-auto py-2.5 px-5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/10 disabled:opacity-50 transition-all cursor-pointer"
-                                >
-                                  {isStartingMeeting ? (
-                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                  ) : (
-                                    <Mic className="w-3.5 h-3.5" />
-                                  )}
-                                  <span>Start Meeting</span>
-                                </button>
+                                {hasPermission('orders:create') ? (
+                                  <button
+                                    type="button"
+                                    disabled={isStartingMeeting}
+                                    onClick={() => handleStartMeeting(meet.id)}
+                                    className="w-full sm:w-auto py-2.5 px-5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/10 disabled:opacity-50 transition-all cursor-pointer"
+                                  >
+                                    {isStartingMeeting ? (
+                                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    ) : (
+                                      <Mic className="w-3.5 h-3.5" />
+                                    )}
+                                    <span>Start Meeting</span>
+                                  </button>
+                                ) : (
+                                  <span className="text-[10px] text-slate-500 italic">🔒 Restricted to Sales team</span>
+                                )}
                               </div>
                             ) : !meet.meetingEndedAt ? (
                               <div className="p-4 bg-slate-950/45 border border-slate-850 rounded-xl space-y-4">
@@ -1999,47 +2003,53 @@ export default function LeadDetailPage({
                                   </div>
                                 </div>
                                 <div className="flex flex-col sm:flex-row flex-wrap gap-3 items-center w-full">
-                                  {isRecording ? (
-                                    <button
-                                      type="button"
-                                      onClick={handleStopRecording}
-                                      className="w-full sm:w-auto py-2.5 px-4 bg-red-600 hover:bg-red-500 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                                    >
-                                      <Square className="w-3.5 h-3.5" />
-                                      <span>Stop Recording</span>
-                                    </button>
-                                  ) : !audioUploaded && !meet.audioRecordingPath ? (
-                                    <button
-                                      type="button"
-                                      onClick={() => handleStartRecordingOnly(meet.id)}
-                                      className="w-full sm:w-auto py-2.5 px-4 bg-slate-900 border border-slate-800 hover:border-slate-700 text-amber-400 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                                    >
-                                      <Mic className="w-3.5 h-3.5" />
-                                      <span>Start Audio Recording</span>
-                                    </button>
-                                  ) : null}
+                                  {hasPermission('orders:create') ? (
+                                    <>
+                                      {isRecording ? (
+                                        <button
+                                          type="button"
+                                          onClick={handleStopRecording}
+                                          className="w-full sm:w-auto py-2.5 px-4 bg-red-600 hover:bg-red-500 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                                        >
+                                          <Square className="w-3.5 h-3.5" />
+                                          <span>Stop Recording</span>
+                                        </button>
+                                      ) : !audioUploaded && !meet.audioRecordingPath ? (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleStartRecordingOnly(meet.id)}
+                                          className="w-full sm:w-auto py-2.5 px-4 bg-slate-900 border border-slate-800 hover:border-slate-700 text-amber-400 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                                        >
+                                          <Mic className="w-3.5 h-3.5" />
+                                          <span>Start Audio Recording</span>
+                                        </button>
+                                      ) : null}
 
-                                  {(audioUploaded || meet.audioRecordingPath || (!isRecording && !mediaRecorder)) && (
-                                    <button
-                                      type="button"
-                                      disabled={isEndingMeeting || isUploadingAudio}
-                                      onClick={() => handleStopMeeting(meet.id)}
-                                      className="w-full sm:w-auto py-2.5 px-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 rounded-lg font-bold text-xs shadow-md disabled:opacity-50 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                                    >
-                                      {isEndingMeeting ? (
-                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                      ) : (
-                                        <Square className="w-3.5 h-3.5" />
+                                      {(audioUploaded || meet.audioRecordingPath || (!isRecording && !mediaRecorder)) && (
+                                        <button
+                                          type="button"
+                                          disabled={isEndingMeeting || isUploadingAudio}
+                                          onClick={() => handleStopMeeting(meet.id)}
+                                          className="w-full sm:w-auto py-2.5 px-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 rounded-lg font-bold text-xs shadow-md disabled:opacity-50 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                                        >
+                                          {isEndingMeeting ? (
+                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                          ) : (
+                                            <Square className="w-3.5 h-3.5" />
+                                          )}
+                                          <span>Stop Meeting & Log Outcome</span>
+                                        </button>
                                       )}
-                                      <span>Stop Meeting & Log Outcome</span>
-                                    </button>
-                                  )}
 
-                                  {isUploadingAudio && (
-                                    <div className="text-[10px] text-slate-400 flex items-center justify-center gap-1.5 w-full sm:w-auto mt-1 sm:mt-0">
-                                      <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-500" />
-                                      <span>Uploading audio file to server...</span>
-                                    </div>
+                                      {isUploadingAudio && (
+                                        <div className="text-[10px] text-slate-400 flex items-center justify-center gap-1.5 w-full sm:w-auto mt-1 sm:mt-0">
+                                          <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-500" />
+                                          <span>Uploading audio file to server...</span>
+                                        </div>
+                                      )}
+                                    </>
+                                  ) : (
+                                    <span className="text-[10px] text-slate-500 italic">🔒 Restricted to Sales team</span>
                                   )}
                                 </div>
                               </div>
