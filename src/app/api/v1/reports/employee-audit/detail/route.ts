@@ -2,23 +2,6 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
 
-const STAGE_NAMES: Record<number, string> = {
-  1: 'Fresh Lead',
-  2: 'DNP (No Answer)',
-  3: 'Follow Up',
-  4: 'Not Interested',
-  5: 'Call Later',
-  6: 'Already Installed',
-  7: 'Decision Pending',
-  8: 'Meeting Booked',
-  9: 'Meeting Done',
-  10: 'Disconnected',
-  11: 'Switch Off',
-  12: "Can't Fit Solar",
-  13: 'Sale Done',
-  14: 'Disqualified',
-};
-
 export async function GET(req: Request) {
   try {
     const userPayload = getAuthenticatedUser(req);
@@ -34,6 +17,8 @@ export async function GET(req: Request) {
 
     const url = new URL(req.url);
     const userIdStr = url.searchParams.get('userId');
+    const type = url.searchParams.get('type') || 'leads_worked';
+    
     if (!userIdStr) {
       return NextResponse.json({ success: false, message: 'Missing userId parameter.' }, { status: 400 });
     }
@@ -42,207 +27,271 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, message: 'Invalid userId.' }, { status: 400 });
     }
 
-    const startStr = url.searchParams.get('startDate');
-    const endStr = url.searchParams.get('endDate');
-
-    let startDate: Date;
-    let endDate: Date;
-
-    if (startStr && endStr) {
-      startDate = new Date(startStr);
-      endDate = new Date(endStr);
-    } else {
-      // Default to Today (00:00:00 to 23:59:59 local time)
-      startDate = new Date();
-      startDate.setHours(0, 0, 0, 0);
-      endDate = new Date();
-      endDate.setHours(23, 59, 59, 999);
-    }
-
-    // 1. Fetch Employee Details
+    // Fetch user details
     const employee = await prisma.user.findUnique({
       where: { id: userId },
       select: {
-        id: true,
         name: true,
         email: true,
         role: true,
-        isActive: true,
-        lastSeenAt: true,
-      },
+        department: { select: { name: true } },
+        designation: { select: { name: true } }
+      }
     });
 
     if (!employee) {
       return NextResponse.json({ success: false, message: 'Employee not found.' }, { status: 404 });
     }
 
-    // 2. Fetch raw events
-    const [attendances, logs, meetings, orders] = await Promise.all([
-      prisma.attendance.findMany({
+    let results: any[] = [];
+
+    if (type === 'leads_worked') {
+      const logs = await prisma.leadActivityLog.findMany({
+        where: { userId },
+        select: { leadId: true }
+      });
+      const loggedLeadIds = logs.map(l => l.leadId);
+
+      const leads = await prisma.lead.findMany({
         where: {
-          userId,
-          date: {
-            gte: new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate()),
-            lte: new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate()),
-          },
+          OR: [
+            { createdById: userId },
+            { assignedConsultantId: userId },
+            { assignedTlId: userId },
+            { assignedManagerId: userId },
+            { id: { in: loggedLeadIds } }
+          ]
         },
-        orderBy: { date: 'desc' },
-      }),
-      prisma.leadActivityLog.findMany({
+        select: {
+          id: true,
+          leadCode: true,
+          customerName: true,
+          city: true,
+          status: true,
+          createdAt: true,
+          manager: { select: { name: true } },
+          tl: { select: { name: true } },
+          consultant: { select: { name: true } }
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+      results = leads;
+    } 
+    else if (type === 'meetings_booked') {
+      const meetings = await prisma.meetingBooking.findMany({
         where: {
-          userId,
-          createdAt: {
-            gte: startDate,
-            lte: endDate,
-          },
+          OR: [
+            { assignedExecutiveId: userId },
+            {
+              lead: {
+                OR: [
+                  { createdById: userId },
+                  { assignedConsultantId: userId },
+                  { assignedTlId: userId },
+                  { assignedManagerId: userId }
+                ]
+              }
+            }
+          ]
         },
-        include: {
+        select: {
+          id: true,
+          meetingDate: true,
+          meetingTime: true,
+          meetingPinCode: true,
+          meetingCity: true,
+          avgMonthlyBill: true,
+          executive: { select: { name: true } },
           lead: {
             select: {
+              id: true,
               leadCode: true,
               customerName: true,
-            },
-          },
+            }
+          }
         },
-        orderBy: { createdAt: 'desc' },
-      }),
-      prisma.meetingBooking.findMany({
+        orderBy: { createdAt: 'desc' }
+      });
+      results = meetings.map(m => ({
+        id: m.id,
+        leadId: m.lead?.id,
+        leadCode: m.lead?.leadCode,
+        customerName: m.lead?.customerName,
+        detail1: `Scheduled: ${m.meetingDate} ${m.meetingTime}`,
+        detail2: m.meetingCity ? `Location: ${m.meetingCity} (${m.meetingPinCode || ''})` : `Avg Bill: ₹${m.avgMonthlyBill.toLocaleString('en-IN')}`,
+        executiveName: m.executive?.name || 'Unassigned',
+        date: m.meetingDate
+      }));
+    } 
+    else if (type === 'meetings_converted') {
+      const logs = await prisma.leadActivityLog.findMany({
+        where: { userId },
+        select: { leadId: true }
+      });
+      const loggedLeadIds = logs.map(l => l.leadId);
+
+      const leads = await prisma.lead.findMany({
         where: {
-          assignedExecutiveId: userId,
-          meetingStartedAt: {
-            gte: startDate,
-            lte: endDate,
-          },
+          status: { gte: 6 },
+          OR: [
+            { createdById: userId },
+            { assignedConsultantId: userId },
+            { assignedTlId: userId },
+            { assignedManagerId: userId },
+            { id: { in: loggedLeadIds } }
+          ]
         },
-        include: {
+        select: {
+          id: true,
+          leadCode: true,
+          customerName: true,
+          city: true,
+          status: true,
+          createdAt: true,
+          manager: { select: { name: true } },
+          tl: { select: { name: true } },
+          consultant: { select: { name: true } }
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+      results = leads;
+    } 
+    else if (type === 'orders_punched') {
+      const orders = await prisma.order.findMany({
+        where: {
+          OR: [
+            { submittedById: userId },
+            {
+              lead: {
+                OR: [
+                  { assignedConsultantId: userId },
+                  { assignedTlId: userId },
+                  { assignedManagerId: userId }
+                ]
+              }
+            }
+          ]
+        },
+        select: {
+          id: true,
+          orderCode: true,
+          systemSizeKw: true,
+          totalValue: true,
+          status: true,
+          createdAt: true,
           lead: {
             select: {
+              id: true,
               leadCode: true,
-              customerName: true,
-            },
-          },
+              customerName: true
+            }
+          }
         },
-        orderBy: { meetingStartedAt: 'desc' },
-      }),
-      prisma.order.findMany({
+        orderBy: { createdAt: 'desc' }
+      });
+      results = orders.map(o => ({
+        id: o.id,
+        leadId: o.lead?.id,
+        leadCode: o.lead?.leadCode,
+        customerName: o.lead?.customerName,
+        detail1: `System Size: ${o.systemSizeKw} kW`,
+        detail2: `Order Status: ${o.status.toUpperCase()}`,
+        value: o.totalValue,
+        date: new Date(o.createdAt).toLocaleDateString('en-IN')
+      }));
+    } 
+    else if (type === 'orders_verified') {
+      const orders = await prisma.order.findMany({
         where: {
-          submittedById: userId,
-          createdAt: {
-            gte: startDate,
-            lte: endDate,
-          },
+          status: { notIn: ['draft', 'submitted'] },
+          OR: [
+            { financeProcessedById: userId },
+            {
+              lead: {
+                OR: [
+                  { assignedConsultantId: userId },
+                  { assignedTlId: userId },
+                  { assignedManagerId: userId }
+                ]
+              }
+            }
+          ]
         },
-        include: {
+        select: {
+          id: true,
+          orderCode: true,
+          systemSizeKw: true,
+          totalValue: true,
+          status: true,
+          createdAt: true,
           lead: {
             select: {
+              id: true,
               leadCode: true,
-              customerName: true,
-            },
-          },
+              customerName: true
+            }
+          }
         },
-        orderBy: { createdAt: 'desc' },
-      }),
-    ]);
-
-    // 3. Assemble unified chronological timeline
-    const events: any[] = [];
-
-    // Add Check-ins & Check-outs
-    attendances.forEach((att) => {
-      events.push({
-        id: `check_in_${att.id}`,
-        type: 'check_in',
-        timestamp: att.checkIn,
-        title: 'Clocked In',
-        details: `Location: ${att.checkInLocation || 'Web Portal'}. Notes: ${att.notes || 'None'}.`,
+        orderBy: { createdAt: 'desc' }
       });
-
-      if (att.checkOut) {
-        events.push({
-          id: `check_out_${att.id}`,
-          type: 'check_out',
-          timestamp: att.checkOut,
-          title: 'Clocked Out',
-          details: `Location: ${att.checkOutLocation || 'Web Portal'}. Worked: ${Math.floor((att.workDurationMin || 0) / 60)}h ${(att.workDurationMin || 0) % 60}m.`,
-        });
-      }
-    });
-
-    // Add Lead Status Updates
-    logs.forEach((log) => {
-      const fromName = log.fromStatus ? (STAGE_NAMES[log.fromStatus] || `Stage ${log.fromStatus}`) : 'None';
-      const toName = STAGE_NAMES[log.toStatus] || `Stage ${log.toStatus}`;
-      
-      events.push({
-        id: `log_${log.id}`,
-        type: 'status_change',
-        timestamp: log.createdAt,
-        title: `Updated Status to ${toName}`,
-        leadCode: log.lead.leadCode,
-        customerName: log.lead.customerName,
-        details: `Stage transition: "${fromName}" ➔ "${toName}". Remark: "${log.remark || 'No remark entered'}".`,
+      results = orders.map(o => ({
+        id: o.id,
+        leadId: o.lead?.id,
+        leadCode: o.lead?.leadCode,
+        customerName: o.lead?.customerName,
+        detail1: `System Size: ${o.systemSizeKw} kW`,
+        detail2: `Verified Status: ${o.status.toUpperCase()}`,
+        value: o.totalValue,
+        date: new Date(o.createdAt).toLocaleDateString('en-IN')
+      }));
+    } 
+    else if (type === 'installations_completed') {
+      const orders = await prisma.order.findMany({
+        where: {
+          status: 'completed',
+          lead: {
+            OR: [
+              { assignedConsultantId: userId },
+              { assignedTlId: userId },
+              { assignedManagerId: userId }
+            ]
+          }
+        },
+        select: {
+          id: true,
+          orderCode: true,
+          systemSizeKw: true,
+          totalValue: true,
+          status: true,
+          createdAt: true,
+          lead: {
+            select: {
+              id: true,
+              leadCode: true,
+              customerName: true
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
       });
-    });
-
-    // Add Meetings Commenced & Completed
-    meetings.forEach((meet) => {
-      events.push({
-        id: `meet_start_${meet.id}`,
-        type: 'meeting_started',
-        timestamp: meet.meetingStartedAt,
-        title: 'Commenced Site Meeting',
-        leadCode: meet.lead.leadCode,
-        customerName: meet.lead.customerName,
-        details: `Location: ${meet.meetingCity || ''} ${meet.meetingLocality || ''} (Pincode: ${meet.meetingPinCode || 'Unknown'}). Notes: "${meet.notes || 'none'}".`,
-      });
-
-      if (meet.meetingEndedAt) {
-        events.push({
-          id: `meet_end_${meet.id}`,
-          type: 'meeting_ended',
-          timestamp: meet.meetingEndedAt,
-          title: 'Completed Site Meeting',
-          leadCode: meet.lead.leadCode,
-          customerName: meet.lead.customerName,
-          details: `Audio Recording: ${meet.audioRecordingPath ? 'Uploaded' : 'None'}. Duration: ${Math.floor((meet.meetingDurationSec || 0) / 60)}m.`,
-        });
-      }
-    });
-
-    // Add Sales Orders Submitted
-    orders.forEach((ord) => {
-      events.push({
-        id: `order_${ord.id}`,
-        type: 'order_submitted',
-        timestamp: ord.createdAt,
-        title: 'Submitted Sales Order',
-        leadCode: ord.lead.leadCode,
-        customerName: ord.lead.customerName,
-        details: `Solar System Size: ${ord.systemSizeKw} kW. Deal Value: ₹${ord.totalValue.toLocaleString('en-IN')}. Payment Method: ${ord.paymentMethod}. Downpayment: ₹${ord.downPayment.toLocaleString('en-IN')}.`,
-      });
-    });
-
-    // Sort timeline (newest first)
-    events.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-
-    // Calculate aggregated statistics
-    const totalWorkDurationMin = attendances.reduce((sum, a) => sum + (a.workDurationMin || 0), 0);
-    const totalStageChanges = logs.length;
-    const totalMeetings = meetings.length;
-    const totalSales = orders.length;
+      results = orders.map(o => ({
+        id: o.id,
+        leadId: o.lead?.id,
+        leadCode: o.lead?.leadCode,
+        customerName: o.lead?.customerName,
+        detail1: `System Size: ${o.systemSizeKw} kW`,
+        detail2: `Fulfillment: Fully Commissioned`,
+        value: o.totalValue,
+        date: new Date(o.createdAt).toLocaleDateString('en-IN')
+      }));
+    }
 
     return NextResponse.json({
       success: true,
       data: {
         employee,
-        stats: {
-          totalWorkDurationMin,
-          totalStageChanges,
-          totalMeetings,
-          totalSales,
-        },
-        timeline: events,
-      },
+        results
+      }
     });
   } catch (error: any) {
     console.error('Employee audit details API error:', error);

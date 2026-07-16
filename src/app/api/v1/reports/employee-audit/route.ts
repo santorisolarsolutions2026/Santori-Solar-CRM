@@ -15,183 +15,207 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view employee audit logs.' }, { status: 403 });
     }
 
-    const url = new URL(req.url);
-    const timeframe = url.searchParams.get('timeframe') || 'daily';
-
-    const now = new Date();
-    let startDate = new Date();
-    
-    if (timeframe === 'daily') {
-      startDate.setHours(0, 0, 0, 0);
-    } else if (timeframe === 'weekly') {
-      startDate.setDate(now.getDate() - 7);
-      startDate.setHours(0, 0, 0, 0);
-    } else if (timeframe === 'monthly') {
-      startDate.setDate(1);
-      startDate.setHours(0, 0, 0, 0);
-    } else {
-      return NextResponse.json({ success: false, message: 'Invalid timeframe parameter.' }, { status: 400 });
-    }
-
-    // 1. Fetch active employees (excluding admins)
+    // Fetch active employees
     const employees = await prisma.user.findMany({
       where: {
-        role: { not: 'admin' },
         isActive: true,
       },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        lastSeenAt: true,
+      include: {
+        department: { select: { name: true } },
+        designation: { select: { name: true, level: true } }
       },
       orderBy: { name: 'asc' },
     });
 
-    // 2. Fetch all raw data for the timeframe concurrently
-    const [attendances, logs, meetings, orders] = await Promise.all([
-      prisma.attendance.findMany({
-        where: {
-          date: { gte: startDate },
-        },
-      }),
-      prisma.leadActivityLog.findMany({
-        where: {
-          createdAt: { gte: startDate },
-        },
-        include: {
-          lead: {
-            select: {
-              leadCode: true,
-              customerName: true,
-              pinCode: true,
-            },
-          },
-        },
+    // Fetch all records for mapping
+    const [leads, meetings, orders, logs] = await Promise.all([
+      prisma.lead.findMany({
+        select: {
+          id: true,
+          leadCode: true,
+          customerName: true,
+          status: true,
+          createdById: true,
+          assignedConsultantId: true,
+          assignedTlId: true,
+          assignedManagerId: true,
+        }
       }),
       prisma.meetingBooking.findMany({
-        where: {
-          meetingStartedAt: { gte: startDate },
-        },
-        include: {
-          lead: {
-            select: {
-              leadCode: true,
-              customerName: true,
-              pinCode: true,
-              city: true,
-            },
-          },
-        },
+        select: {
+          id: true,
+          leadId: true,
+          assignedExecutiveId: true,
+        }
       }),
       prisma.order.findMany({
-        where: {
-          createdAt: { gte: startDate },
-        },
+        select: {
+          id: true,
+          leadId: true,
+          status: true,
+          totalValue: true,
+          submittedById: true,
+          financeProcessedById: true,
+        }
       }),
+      prisma.leadActivityLog.findMany({
+        select: {
+          leadId: true,
+          userId: true,
+        }
+      })
     ]);
 
-    const globalAlerts: any[] = [];
+    // Build fast lookups / indexes
+    const userLogMap = new Map<number, Set<number>>();
+    logs.forEach(l => {
+      if (!userLogMap.has(l.userId)) {
+        userLogMap.set(l.userId, new Set());
+      }
+      userLogMap.get(l.userId)!.add(l.leadId);
+    });
 
-    // 3. Process records for each employee
-    const auditData = employees.map((emp) => {
-      const empAttendances = attendances.filter((a) => a.userId === emp.id);
-      const empLogs = logs.filter((l) => l.userId === emp.id);
-      const empMeetings = meetings.filter((m) => m.assignedExecutiveId === emp.id);
-      const empOrders = orders.filter((o) => o.submittedById === emp.id);
+    const leadOrderMap = new Map<number, typeof orders[0]>();
+    orders.forEach(o => {
+      leadOrderMap.set(o.leadId, o);
+    });
 
-      // Work hours calculations
-      const totalWorkDurationMin = empAttendances.reduce((sum, a) => sum + (a.workDurationMin || 0), 0);
-      
-      const empAlerts: string[] = [];
+    // Calculate metrics for each employee
+    const processedEmployees = employees.map(emp => {
+      const uId = emp.id;
+      const loggedLeads = userLogMap.get(uId) || new Set<number>();
 
-      // Late Check-in Check (check-in after 10:30 AM local time)
-      empAttendances.forEach((att) => {
-        const checkInTime = new Date(att.checkIn);
-        const hours = checkInTime.getHours();
-        const minutes = checkInTime.getMinutes();
-        if (hours > 10 || (hours === 10 && minutes > 30)) {
-          const timeStr = checkInTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          const dateStr = new Date(att.date).toLocaleDateString([], { day: '2-digit', month: 'short' });
-          const alertMsg = `Late check-in on ${dateStr} at ${timeStr}`;
-          empAlerts.push(alertMsg);
-          globalAlerts.push({
-            employeeId: emp.id,
-            employeeName: emp.name,
-            role: emp.role,
-            type: 'late_check_in',
-            severity: 'low',
-            message: `${emp.name} clocked in late at ${timeStr} on ${dateStr}.`,
-            timestamp: att.checkIn,
-          });
-        }
+      // Filter leads they worked on
+      const empLeads = leads.filter(lead => 
+        lead.createdById === uId ||
+        lead.assignedConsultantId === uId ||
+        lead.assignedTlId === uId ||
+        lead.assignedManagerId === uId ||
+        loggedLeads.has(lead.id)
+      );
+
+      // Meetings Booked:
+      // Meetings where they were executive OR lead was created/assigned to them
+      const empMeetings = meetings.filter(m => {
+        if (m.assignedExecutiveId === uId) return true;
+        const lead = leads.find(l => l.id === m.leadId);
+        if (!lead) return false;
+        return (
+          lead.createdById === uId ||
+          lead.assignedConsultantId === uId ||
+          lead.assignedTlId === uId ||
+          lead.assignedManagerId === uId
+        );
       });
 
-      // Short / Meaningless Remarks Check (e.g. remark length < 5)
-      empLogs.forEach((log) => {
-        const cleanRemark = (log.remark || '').trim();
-        if (cleanRemark.length < 5) {
-          const dateStr = new Date(log.createdAt).toLocaleDateString([], { day: '2-digit', month: 'short' });
-          const alertMsg = `Low detail remark logged on ${dateStr} for lead #${log.lead.leadCode}`;
-          empAlerts.push(alertMsg);
-          globalAlerts.push({
-            employeeId: emp.id,
-            employeeName: emp.name,
-            role: emp.role,
-            type: 'short_remark',
-            severity: 'medium',
-            message: `${emp.name} logged an empty/short remark ("${cleanRemark || 'none'}") changing status to Stage ${log.toStatus} for Lead #${log.lead.leadCode}.`,
-            timestamp: log.createdAt,
-          });
-        }
+      // Meetings Converted (Sale Done / status >= 6 / has verified/submitted order)
+      const empConvertedLeads = empLeads.filter(lead => {
+        const order = leadOrderMap.get(lead.id);
+        const hasOrder = order !== undefined && order.status !== 'draft';
+        return lead.status >= 6 || hasOrder;
       });
 
-      // Location Mismatches Check
-      empMeetings.forEach((meet) => {
-        if (meet.meetingPinCode && meet.lead.pinCode && meet.meetingPinCode !== meet.lead.pinCode) {
-          const dateStr = new Date(meet.meetingStartedAt!).toLocaleDateString([], { day: '2-digit', month: 'short' });
-          const alertMsg = `Location mismatch on ${dateStr} for lead #${meet.lead.leadCode}`;
-          empAlerts.push(alertMsg);
-          globalAlerts.push({
-            employeeId: emp.id,
-            employeeName: emp.name,
-            role: emp.role,
-            type: 'location_mismatch',
-            severity: 'high',
-            message: `${emp.name} conducted a site visit for Lead #${meet.lead.leadCode} at pincode ${meet.meetingPinCode}, which does not match client pincode ${meet.lead.pinCode}.`,
-            timestamp: meet.meetingStartedAt,
-          });
-        }
+      // Orders Punched
+      const empOrdersPunched = orders.filter(o => {
+        if (o.submittedById === uId) return true;
+        const lead = leads.find(l => l.id === o.leadId);
+        if (!lead) return false;
+        return (
+          lead.assignedConsultantId === uId ||
+          lead.assignedTlId === uId ||
+          lead.assignedManagerId === uId
+        );
       });
+      const ordersPunchedValue = empOrdersPunched.reduce((sum, o) => sum + (o.totalValue || 0), 0);
+
+      // Orders Verified
+      const empOrdersVerified = orders.filter(o => {
+        if (o.status === 'draft' || o.status === 'submitted') return false;
+        if (o.financeProcessedById === uId) return true;
+        const lead = leads.find(l => l.id === o.leadId);
+        if (!lead) return false;
+        return (
+          lead.assignedConsultantId === uId ||
+          lead.assignedTlId === uId ||
+          lead.assignedManagerId === uId
+        );
+      });
+      const ordersVerifiedValue = empOrdersVerified.reduce((sum, o) => sum + (o.totalValue || 0), 0);
+
+      // Installations Completed
+      const empInstallationsCompleted = orders.filter(o => {
+        if (o.status !== 'completed') return false;
+        const lead = leads.find(l => l.id === o.leadId);
+        if (!lead) return false;
+        return (
+          lead.assignedConsultantId === uId ||
+          lead.assignedTlId === uId ||
+          lead.assignedManagerId === uId
+        );
+      });
+
+      const leadsWorked = empLeads.length;
+      const meetingsBooked = empMeetings.length;
+      const meetingsConverted = empConvertedLeads.length;
+      const conversionRate = meetingsBooked > 0 
+        ? Math.round((meetingsConverted / meetingsBooked) * 100) 
+        : (leadsWorked > 0 ? Math.round((meetingsConverted / leadsWorked) * 100) : 0);
 
       return {
         id: emp.id,
         name: emp.name,
         email: emp.email,
+        department: emp.department?.name || 'Unassigned',
+        designation: emp.designation?.name || 'Employee',
         role: emp.role,
-        lastSeenAt: emp.lastSeenAt,
-        totalWorkDurationMin,
-        stageChangesLogged: empLogs.length,
-        meetingsCompleted: empMeetings.length,
-        salesClosed: empOrders.length,
-        alerts: empAlerts,
-        isCurrentlyCheckedIn: empAttendances.some((a) => a.status === 'checked_in' && !a.checkOut),
+        metrics: {
+          leadsWorked,
+          meetingsBooked,
+          meetingsConverted,
+          conversionRate,
+          ordersPunched: empOrdersPunched.length,
+          ordersPunchedValue,
+          ordersVerified: empOrdersVerified.length,
+          ordersVerifiedValue,
+          installationsCompleted: empInstallationsCompleted.length
+        }
       };
     });
 
-    // Sort global alerts by timestamp (latest first)
-    globalAlerts.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    // Group by Department
+    const departments: Record<string, typeof processedEmployees> = {
+      'PSA': [],
+      'Sales': [],
+      'Finance': [],
+      'Operations': [],
+      'IT': [],
+      'Unassigned': []
+    };
+
+    processedEmployees.forEach(emp => {
+      const dept = emp.department;
+      if (dept === 'Sales') {
+        const isPsa = emp.designation.includes('PSA') || emp.role.includes('psa');
+        if (isPsa) {
+          departments['PSA'].push(emp);
+        } else {
+          departments['Sales'].push(emp);
+        }
+      } else if (departments[dept]) {
+        departments[dept].push(emp);
+      } else {
+        departments['Unassigned'].push(emp);
+      }
+    });
 
     return NextResponse.json({
       success: true,
       data: {
-        employees: auditData,
-        alerts: globalAlerts,
-      },
+        departments
+      }
     });
   } catch (error: any) {
-    console.error('Employee audit report error:', error);
+    console.error('Employee audit API error:', error);
     return NextResponse.json(
       { success: false, message: 'Internal server error', errors: { details: error.message } },
       { status: 500 }

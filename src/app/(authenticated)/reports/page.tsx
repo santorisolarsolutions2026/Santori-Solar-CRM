@@ -121,15 +121,13 @@ export default function ReportsPage() {
 
   const [activeReportTab, setActiveReportTab] = useState<'pipeline' | 'employee'>('pipeline');
   const [timeframe, setTimeframe] = useState<'daily' | 'weekly' | 'monthly'>('daily');
-  const [auditData, setAuditData] = useState<{ employees: any[]; alerts: any[] } | null>(null);
+  const [auditData, setAuditData] = useState<{ departments: Record<string, any[]> } | null>(null);
   const [auditLoading, setAuditLoading] = useState(false);
 
   // States for the interactive employee audit modal
   const [selectedAuditEmpId, setSelectedAuditEmpId] = useState<number | null>(null);
-  const [modalTimeframe, setModalTimeframe] = useState<'today' | 'custom'>('today');
-  const [customStartDate, setCustomStartDate] = useState<string>('');
-  const [customEndDate, setCustomEndDate] = useState<string>('');
-  const [modalData, setModalData] = useState<{ employee: any; stats: any; timeline: any[] } | null>(null);
+  const [activeDetailType, setActiveDetailType] = useState<string>('leads_worked');
+  const [modalData, setModalData] = useState<{ employee: any; results: any[] } | null>(null);
   const [modalLoading, setModalLoading] = useState(false);
 
   const fetchData = async () => {
@@ -197,24 +195,10 @@ export default function ReportsPage() {
     }
   }, [user, activeReportTab, timeframe]);
 
-  const fetchModalData = async (empId: number, mode: 'today' | 'custom', start?: string, end?: string) => {
+  const fetchModalData = async (empId: number, type: string) => {
     setModalLoading(true);
     try {
-      let url = `/api/v1/reports/employee-audit/detail?userId=${empId}`;
-      if (mode === 'custom' && start && end) {
-        const sDate = new Date(start);
-        sDate.setHours(0, 0, 0, 0);
-        const eDate = new Date(end);
-        eDate.setHours(23, 59, 59, 999);
-        url += `&startDate=${sDate.toISOString()}&endDate=${eDate.toISOString()}`;
-      } else {
-        const sDate = new Date();
-        sDate.setHours(0, 0, 0, 0);
-        const eDate = new Date();
-        eDate.setHours(23, 59, 59, 999);
-        url += `&startDate=${sDate.toISOString()}&endDate=${eDate.toISOString()}`;
-      }
-
+      const url = `/api/v1/reports/employee-audit/detail?userId=${empId}&type=${type}`;
       const res = await fetch(url);
       const data = await res.json();
       if (data.success) {
@@ -229,20 +213,13 @@ export default function ReportsPage() {
 
   useEffect(() => {
     if (selectedAuditEmpId !== null) {
-      if (modalTimeframe === 'today') {
-        fetchModalData(selectedAuditEmpId, 'today');
-      } else if (modalTimeframe === 'custom' && customStartDate && customEndDate) {
-        fetchModalData(selectedAuditEmpId, 'custom', customStartDate, customEndDate);
-      }
+      fetchModalData(selectedAuditEmpId, activeDetailType);
     }
-  }, [selectedAuditEmpId, modalTimeframe, customStartDate, customEndDate]);
+  }, [selectedAuditEmpId, activeDetailType]);
 
-  const handleOpenAuditModal = (empId: number) => {
-    const todayStr = new Date().toISOString().split('T')[0];
-    const prevStr = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    setCustomStartDate(prevStr);
-    setCustomEndDate(todayStr);
-    setModalTimeframe('today');
+  const handleOpenDetailsModal = (empId: number, type: string) => {
+    setModalData(null);
+    setActiveDetailType(type);
     setSelectedAuditEmpId(empId);
   };
 
@@ -473,211 +450,167 @@ export default function ReportsPage() {
         </>
       ) : (
         /* Employee Audit Dashboard */
-        <div className="space-y-6">
-          {/* Timeframe Selector & Audit Status */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#111625] border border-slate-800 rounded-xl p-4 shadow-md">
-            <div className="flex gap-2">
-              {(['daily', 'weekly', 'monthly'] as const).map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setTimeframe(t)}
-                  className={`py-2 px-4 rounded-lg font-bold text-xs capitalize transition-all cursor-pointer ${
-                    timeframe === t
-                      ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-md'
-                      : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
-                  }`}
-                >
-                  {t === 'daily' ? 'Today (Daily)' : t === 'weekly' ? 'Last 7 Days (Weekly)' : 'Current Month (Monthly)'}
-                </button>
-              ))}
+        <div className="space-y-8">
+          <div className="flex justify-between items-center bg-[#111625] border border-slate-800 rounded-xl p-4 shadow-md">
+            <div>
+              <h2 className="text-sm font-bold text-white uppercase tracking-wider">Departmental Contribution Audit</h2>
+              <p className="text-xs text-slate-400 mt-0.5">Click on any numeric metric count to drill down into specific leads and orders.</p>
             </div>
             {auditLoading && (
-              <div className="flex items-center gap-2 text-xs text-slate-400">
+              <div className="flex items-center gap-2 text-xs text-slate-450">
                 <Loader2 className="w-4 h-4 animate-spin text-amber-500" />
-                <span>Syncing Audit Logs...</span>
+                <span>Refreshing audit data...</span>
               </div>
             )}
           </div>
 
-          {/* Audit Metrics Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 bg-[#111625] border border-slate-800 rounded-2xl p-5 shadow-xl">
-            <div className="text-center md:border-r border-slate-800 last:border-0 py-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
-                Active Staff Today
-              </span>
-              <span className="text-3xl font-extrabold text-white">
-                {auditData?.employees.filter(e => e.isCurrentlyCheckedIn).length || 0} / {auditData?.employees.length || 0}
-              </span>
-            </div>
-            <div className="text-center md:border-r border-slate-800 last:border-0 py-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
-                Total Stage Changes
-              </span>
-              <span className="text-3xl font-extrabold text-amber-400">
-                {auditData?.employees.reduce((sum, e) => sum + e.stageChangesLogged, 0) || 0}
-              </span>
-            </div>
-            <div className="text-center md:border-r border-slate-800 last:border-0 py-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
-                Site Visits Logged
-              </span>
-              <span className="text-3xl font-extrabold text-cyan-400">
-                {auditData?.employees.reduce((sum, e) => sum + e.meetingsCompleted, 0) || 0}
-              </span>
-            </div>
-            <div className="text-center py-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
-                Active Audit Flags
-              </span>
-              <span className={`text-3xl font-extrabold ${auditData?.alerts.length ? 'text-red-400 animate-pulse' : 'text-emerald-400'}`}>
-                {auditData?.alerts.length || 0}
-              </span>
-            </div>
-          </div>
+          {/* Department Groups Grid */}
+          <div className="space-y-10">
+            {['PSA', 'Sales', 'Finance', 'Operations', 'IT'].map((deptName) => {
+              const deptEmployees = auditData?.departments?.[deptName] || [];
 
-          {/* Audit Logs Table */}
-          <div className="bg-[#111625] border border-slate-800 rounded-xl p-6 shadow-lg">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">Employee Audit Logs</h3>
-              <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">
-                Sort: Name (A-Z)
-              </span>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse min-w-[850px]">
-                <thead>
-                  <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                    <th className="pb-3 px-4 w-48 text-left">Employee Name</th>
-                    <th className="pb-3 px-4 w-32 text-left">Role</th>
-                    <th className="pb-3 px-4 w-36 text-center">Work Hours Logged</th>
-                    <th className="pb-3 px-4 w-48 text-center text-amber-400 font-bold bg-amber-500/[0.02] border-x border-slate-800/40">
-                      ⚡ Pipeline Stage Changes
-                    </th>
-                    <th className="pb-3 px-4 w-32 text-center">Site Visits</th>
-                    <th className="pb-3 px-4 w-32 text-center">Sales Closed</th>
-                    <th className="pb-3 px-4 w-44 text-right">Audit Flags</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/60 text-sm">
-                  {auditLoading && !auditData ? (
-                    <tr>
-                      <td colSpan={7} className="py-8 text-center text-slate-500 text-xs italic">
-                        <Loader2 className="w-5 h-5 animate-spin text-amber-500 inline mr-2" />
-                        Fetching employee logs...
-                      </td>
-                    </tr>
-                  ) : auditData?.employees.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="py-8 text-center text-slate-550 text-xs italic">
-                        No employees found.
-                      </td>
-                    </tr>
+              return (
+                <div key={deptName} className="bg-[#111625] border border-slate-800/80 rounded-2xl p-6 shadow-xl space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <h3 className="text-sm font-bold text-white tracking-wide uppercase flex items-center gap-2">
+                      <span className={`w-2.5 h-2.5 rounded-full ${
+                        deptName === 'PSA' ? 'bg-amber-500' :
+                        deptName === 'Sales' ? 'bg-cyan-500' :
+                        deptName === 'Finance' ? 'bg-emerald-500' :
+                        deptName === 'Operations' ? 'bg-purple-500' : 'bg-slate-400'
+                      }`} />
+                      <span>{deptName} Department ({deptEmployees.length} Members)</span>
+                    </h3>
+                  </div>
+
+                  {deptEmployees.length === 0 ? (
+                    <p className="text-xs text-slate-500 italic py-4">No active members found in this department.</p>
                   ) : (
-                    auditData?.employees.map((emp) => (
-                      <tr key={emp.id} className="hover:bg-slate-900/10 transition-colors">
-                        <td className="py-3.5 px-4 font-bold text-white w-48 text-left">
-                          <div className="flex items-center gap-2">
-                            <span className={`w-2 h-2 rounded-full shrink-0 ${emp.isCurrentlyCheckedIn ? 'bg-emerald-500 animate-pulse shadow-sm shadow-emerald-500/50' : 'bg-slate-700'}`} title={emp.isCurrentlyCheckedIn ? 'Checked In' : 'Not Checked In'} />
-                            <button
-                              onClick={() => handleOpenAuditModal(emp.id)}
-                              className="text-left font-bold text-white hover:text-amber-400 transition-all hover:underline outline-none cursor-pointer"
-                            >
-                              {emp.name}
-                            </button>
-                          </div>
-                        </td>
-                        <td className="py-3.5 px-4 text-slate-400 capitalize w-32 text-left">{emp.role}</td>
-                        <td className="py-3.5 px-4 text-center text-slate-300 w-36 font-mono">
-                          {emp.totalWorkDurationMin > 0 ? (
-                            `${Math.floor(emp.totalWorkDurationMin / 60)}h ${emp.totalWorkDurationMin % 60}m`
-                          ) : (
-                            <span className="text-slate-600 italic text-xs">No hours</span>
-                          )}
-                        </td>
-                        <td className="py-3.5 px-4 text-center text-white font-extrabold w-48 bg-amber-500/[0.01] border-x border-slate-800/40">
-                          <span className={`px-2.5 py-1 rounded-lg border font-mono ${
-                            emp.stageChangesLogged > 0
-                              ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                              : 'bg-slate-900/60 text-slate-500 border-slate-800'
-                          }`}>
-                            {emp.stageChangesLogged}
-                          </span>
-                        </td>
-                        <td className="py-3.5 px-4 text-center text-slate-300 w-32 font-mono">{emp.meetingsCompleted}</td>
-                        <td className="py-3.5 px-4 text-center text-slate-350 w-32 font-mono">
-                          {emp.salesClosed > 0 ? (
-                            <span className="text-emerald-400 font-bold">{emp.salesClosed}</span>
-                          ) : (
-                            <span className="text-slate-600 font-normal">0</span>
-                          )}
-                        </td>
-                        <td className="py-3.5 px-4 text-right w-44">
-                          {emp.alerts.length > 0 ? (
-                            <div className="flex flex-wrap gap-1 justify-end">
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-950/20 text-red-400 border border-red-900/30">
-                                {emp.alerts.length} Flags ⚠️
-                              </span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {deptEmployees.map((emp: any) => (
+                        <div key={emp.id} className="bg-slate-950/40 border border-slate-900 hover:border-slate-800 rounded-xl p-4 transition-all duration-300">
+                          {/* Employee Header */}
+                          <div className="flex justify-between items-start mb-4">
+                            <div>
+                              <h4 className="font-bold text-white text-sm">{emp.name}</h4>
+                              <p className="text-[10px] text-slate-550 font-bold uppercase mt-0.5">{emp.designation}</p>
                             </div>
-                          ) : (
-                            <span className="text-emerald-500 text-xs font-bold">Clear ✓</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                            <span className="text-[10px] text-slate-550 font-mono">{emp.email}</span>
+                          </div>
 
-          {/* Detailed Audit & Anomalies Panel */}
-          <div className="grid grid-cols-1 gap-6">
-            <div className="bg-[#111625] border border-slate-800 rounded-xl p-6 shadow-lg">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 border-b border-slate-800 pb-3 flex items-center gap-2">
-                <ShieldAlert className="w-4 h-4 text-red-500" />
-                <span>Employee Audit & Discrepancies Log ({timeframe})</span>
-              </h3>
-              <div className="mt-4 max-h-[300px] overflow-y-auto space-y-3 pr-2 scrollbar-thin">
-                {auditLoading && !auditData ? (
-                  <p className="text-xs text-slate-500 italic text-center py-6">Syncing alerts timeline...</p>
-                ) : !auditData || auditData.alerts.length === 0 ? (
-                  <p className="text-xs text-slate-500 italic text-center py-6">No anomalies or audit flags detected in this timeframe.</p>
-                ) : (
-                  auditData.alerts.map((alert, idx) => {
-                    const isHigh = alert.severity === 'high';
-                    const isMed = alert.severity === 'medium';
-                    
-                    return (
-                      <div
-                        key={idx}
-                        className={`p-3.5 rounded-xl border flex items-start gap-3 text-xs ${
-                          isHigh
-                            ? 'bg-red-500/5 border-red-500/20 text-red-400'
-                            : isMed
-                              ? 'bg-amber-500/5 border-amber-500/20 text-amber-400'
-                              : 'bg-slate-950/40 border-slate-850 text-slate-350'
-                        }`}
-                      >
-                        <AlertCircle className={`w-4 h-4 shrink-0 mt-0.5 ${isHigh ? 'text-red-500' : isMed ? 'text-amber-500' : 'text-slate-400'}`} />
-                        <div className="flex-1">
-                          <p className="leading-relaxed font-medium">
-                            {alert.message}
-                          </p>
-                          <span className="text-[10px] text-slate-500 block mt-1.5 font-mono">
-                            Logged: {new Date(alert.timestamp).toLocaleString('en-IN', {
-                              day: '2-digit',
-                              month: 'short',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </span>
+                          {/* Dynamic Parameters Grid */}
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            {/* PSA Metrics Section */}
+                            <div className="bg-slate-900/40 border border-slate-850 rounded-lg p-2.5 text-center space-y-1">
+                              <span className="text-[9px] uppercase font-bold text-slate-500 block">PSA Pipeline</span>
+                              <div className="flex justify-around items-center pt-1 font-semibold text-slate-400">
+                                <div className="text-center">
+                                  <span className="text-[8px] text-slate-600 block">Worked</span>
+                                  <button
+                                    onClick={() => handleOpenDetailsModal(emp.id, 'leads_worked')}
+                                    className="font-extrabold text-amber-500 hover:text-amber-400 hover:underline transition-all cursor-pointer outline-none"
+                                  >
+                                    {emp.metrics.leadsWorked}
+                                  </button>
+                                </div>
+                                <div className="text-center">
+                                  <span className="text-[8px] text-slate-600 block">Booked</span>
+                                  <button
+                                    onClick={() => handleOpenDetailsModal(emp.id, 'meetings_booked')}
+                                    className="font-extrabold text-cyan-400 hover:text-cyan-300 hover:underline transition-all cursor-pointer outline-none"
+                                  >
+                                    {emp.metrics.meetingsBooked}
+                                  </button>
+                                </div>
+                                <div className="text-center">
+                                  <span className="text-[8px] text-slate-600 block">Sales</span>
+                                  <button
+                                    onClick={() => handleOpenDetailsModal(emp.id, 'meetings_converted')}
+                                    className="font-extrabold text-emerald-450 hover:text-emerald-355 hover:underline transition-all cursor-pointer outline-none"
+                                  >
+                                    {emp.metrics.meetingsConverted}
+                                  </button>
+                                </div>
+                              </div>
+                              <div className="text-[8px] text-slate-500 pt-1.5 border-t border-slate-900/60 mt-1 flex justify-between px-1">
+                                <span>Conversion Rate:</span>
+                                <span className="font-bold text-slate-350">{emp.metrics.conversionRate}%</span>
+                              </div>
+                            </div>
+
+                            {/* Sales Metrics Section */}
+                            <div className="bg-slate-900/40 border border-slate-850 rounded-lg p-2.5 text-center space-y-1 flex flex-col justify-between">
+                              <div>
+                                <span className="text-[9px] uppercase font-bold text-slate-500 block">Sales Orders</span>
+                                <div className="flex justify-around items-center pt-1 font-semibold text-slate-400">
+                                  <div className="text-center">
+                                    <span className="text-[8px] text-slate-600 block">Punched</span>
+                                    <button
+                                      onClick={() => handleOpenDetailsModal(emp.id, 'orders_punched')}
+                                      className="font-extrabold text-indigo-400 hover:text-indigo-300 hover:underline transition-all cursor-pointer outline-none"
+                                    >
+                                      {emp.metrics.ordersPunched}
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="text-[8px] text-slate-500 pt-1.5 border-t border-slate-900/60 mt-1 flex justify-between px-1">
+                                <span>Total Value:</span>
+                                <span className="font-bold text-slate-350">₹{emp.metrics.ordersPunchedValue.toLocaleString('en-IN')}</span>
+                              </div>
+                            </div>
+
+                            {/* Finance Metrics Section */}
+                            <div className="bg-slate-900/40 border border-slate-850 rounded-lg p-2.5 text-center space-y-1 flex flex-col justify-between">
+                              <div>
+                                <span className="text-[9px] uppercase font-bold text-slate-500 block">Finance Ledger</span>
+                                <div className="flex justify-around items-center pt-1 font-semibold text-slate-400">
+                                  <div className="text-center">
+                                    <span className="text-[8px] text-slate-600 block">Verified</span>
+                                    <button
+                                      onClick={() => handleOpenDetailsModal(emp.id, 'orders_verified')}
+                                      className="font-extrabold text-rose-450 hover:text-rose-350 hover:underline transition-all cursor-pointer outline-none"
+                                    >
+                                      {emp.metrics.ordersVerified}
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="text-[8px] text-slate-500 pt-1.5 border-t border-slate-900/60 mt-1 flex justify-between px-1">
+                                <span>Verified Value:</span>
+                                <span className="font-bold text-slate-350">₹{emp.metrics.ordersVerifiedValue.toLocaleString('en-IN')}</span>
+                              </div>
+                            </div>
+
+                            {/* Operations Metrics Section */}
+                            <div className="bg-slate-900/40 border border-slate-850 rounded-lg p-2.5 text-center space-y-1 flex flex-col justify-between">
+                              <div>
+                                <span className="text-[9px] uppercase font-bold text-slate-500 block">Operations Install</span>
+                                <div className="flex justify-around items-center pt-1 font-semibold text-slate-400">
+                                  <div className="text-center">
+                                    <span className="text-[8px] text-slate-600 block">Completed</span>
+                                    <button
+                                      onClick={() => handleOpenDetailsModal(emp.id, 'installations_completed')}
+                                      className="font-extrabold text-purple-400 hover:text-purple-300 hover:underline transition-all cursor-pointer outline-none"
+                                    >
+                                      {emp.metrics.installationsCompleted}
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="text-[8px] text-slate-500 pt-1.5 border-t border-slate-900/60 mt-1 flex justify-between px-1">
+                                <span>Fulfillment:</span>
+                                <span className="font-bold text-slate-350">Site Commissions</span>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -685,20 +618,22 @@ export default function ReportsPage() {
       {/* Employee Detail Audit Modal */}
       {selectedAuditEmpId !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[#111625] border border-slate-800 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+          <div className="bg-[#111625] border border-slate-800 rounded-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
             {/* Modal Header */}
             <div className="p-6 border-b border-slate-800 flex justify-between items-start gap-4">
               <div>
-                <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Employee Work Audit</span>
+                <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Contribution Audit Record</span>
                 <h2 className="text-lg font-bold text-white mt-1 flex items-center gap-2">
-                  <span>{modalData?.employee?.name || 'Loading...'}</span>
+                  <span>{modalData?.employee?.name || 'Loading Employee...'}</span>
                   {modalData?.employee && (
-                    <span className="text-[10px] bg-slate-900 border border-slate-850 px-2 py-0.5 rounded text-slate-400 capitalize">
-                      {modalData.employee.role}
+                    <span className="text-[10px] bg-slate-900 border border-slate-850 px-2 py-0.5 rounded text-slate-400 font-mono">
+                      {modalData.employee.designation} ({modalData.employee.department?.name || 'Unassigned'})
                     </span>
                   )}
                 </h2>
-                <p className="text-xs text-slate-400 mt-0.5">{modalData?.employee?.email}</p>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Drilldown view: <span className="text-amber-450 font-bold uppercase tracking-wider">{activeDetailType.replace('_', ' ')}</span>
+                </p>
               </div>
               <button
                 onClick={handleCloseAuditModal}
@@ -709,159 +644,128 @@ export default function ReportsPage() {
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 flex-1 overflow-y-auto space-y-6">
-              {/* Controls: Date Filter */}
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-950/40 border border-slate-850 p-4 rounded-xl">
-                <div className="flex bg-slate-900 border border-slate-800 p-1 rounded-lg">
-                  <button
-                    onClick={() => setModalTimeframe('today')}
-                    className={`py-1.5 px-4 rounded text-xs font-bold transition-all cursor-pointer ${
-                      modalTimeframe === 'today'
-                        ? 'bg-amber-500 text-slate-950'
-                        : 'text-slate-400 hover:text-slate-300'
-                    }`}
-                  >
-                    Today
-                  </button>
-                  <button
-                    onClick={() => setModalTimeframe('custom')}
-                    className={`py-1.5 px-4 rounded text-xs font-bold transition-all cursor-pointer ${
-                      modalTimeframe === 'custom'
-                        ? 'bg-amber-500 text-slate-950'
-                        : 'text-slate-400 hover:text-slate-300'
-                    }`}
-                  >
-                    Custom Date Range
-                  </button>
-                </div>
-
-                {modalTimeframe === 'custom' && (
-                  <div className="flex flex-wrap items-center gap-2 text-xs">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-slate-500">From:</span>
-                      <input
-                        type="date"
-                        value={customStartDate}
-                        onChange={(e) => setCustomStartDate(e.target.value)}
-                        className="bg-slate-950 border border-slate-800 text-slate-300 px-2 py-1 rounded cursor-pointer"
-                      />
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-slate-500">To:</span>
-                      <input
-                        type="date"
-                        value={customEndDate}
-                        onChange={(e) => setCustomEndDate(e.target.value)}
-                        className="bg-slate-950 border border-slate-800 text-slate-300 px-2 py-1 rounded cursor-pointer"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Loader */}
+            <div className="p-6 flex-1 overflow-y-auto min-h-[300px]">
               {modalLoading && !modalData ? (
                 <div className="flex flex-col items-center justify-center py-20 text-slate-500 text-xs italic gap-2">
                   <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
-                  <span>Loading audit stream...</span>
+                  <span>Loading metric details from server...</span>
+                </div>
+              ) : !modalData || !modalData.results || modalData.results.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 text-slate-500 text-xs italic">
+                  <p>No recorded leads, meetings, or orders found for this metric.</p>
                 </div>
               ) : (
-                <>
-                  {/* Summary Metric Grid */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="p-4 bg-slate-950/30 border border-slate-850 rounded-xl text-center">
-                      <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Logged Hours</span>
-                      <p className="text-xl font-bold text-white mt-1 font-mono">
-                        {modalData?.stats ? (
-                          `${Math.floor(modalData.stats.totalWorkDurationMin / 60)}h ${modalData.stats.totalWorkDurationMin % 60}m`
-                        ) : '0h 0m'}
-                      </p>
-                    </div>
-                    <div className="p-4 bg-slate-950/30 border border-slate-850 rounded-xl text-center">
-                      <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider text-amber-450">Pipeline Actions</span>
-                      <p className="text-xl font-bold text-amber-400 mt-1 font-mono">
-                        {modalData?.stats?.totalStageChanges || 0}
-                      </p>
-                    </div>
-                    <div className="p-4 bg-slate-950/30 border border-slate-850 rounded-xl text-center">
-                      <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Site Visits</span>
-                      <p className="text-xl font-bold text-cyan-400 mt-1 font-mono">
-                        {modalData?.stats?.totalMeetings || 0}
-                      </p>
-                    </div>
-                    <div className="p-4 bg-slate-950/30 border border-slate-850 rounded-xl text-center">
-                      <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Deals Closed</span>
-                      <p className="text-xl font-bold text-emerald-400 mt-1 font-mono">
-                        {modalData?.stats?.totalSales || 0}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Work Timeline */}
-                  <div className="space-y-4">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                      <Activity className="w-4 h-4 text-amber-500" />
-                      <span>Unified Work Stream Log</span>
-                    </h3>
-
-                    {modalLoading && (
-                      <div className="flex items-center justify-center py-2 text-xs text-slate-450 gap-2">
-                        <Loader2 className="w-4 h-4 animate-spin text-amber-500" />
-                        <span>Updating stream...</span>
-                      </div>
-                    )}
-
-                    <div className="relative border-l border-slate-800/80 ml-3 pl-6 space-y-6 pt-1 pb-2">
-                      {!modalData || modalData.timeline.length === 0 ? (
-                        <p className="text-xs text-slate-550 italic py-6 pl-2">No work logs or activities recorded for this timeframe.</p>
-                      ) : (
-                        modalData.timeline.map((evt: any) => {
-                          const isCheck = evt.type === 'check_in' || evt.type === 'check_out';
-                          const isStatus = evt.type === 'status_change';
-                          const isMeet = evt.type === 'meeting_started' || evt.type === 'meeting_ended';
-                          
-                          return (
-                            <div key={evt.id} className="relative">
-                              <span className={`absolute -left-[31px] top-0.5 w-3 h-3 rounded-full border-2 ${
-                                isCheck
-                                  ? 'bg-slate-900 border-slate-500'
-                                  : isStatus
-                                    ? 'bg-amber-950 border-amber-500'
-                                    : isMeet
-                                      ? 'bg-cyan-950 border-cyan-500'
-                                      : 'bg-emerald-950 border-emerald-500'
-                              }`} />
-
-                              <div>
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                                  <h4 className="text-xs font-bold text-white flex items-center flex-wrap gap-x-2">
-                                    <span>{evt.title}</span>
-                                    {evt.leadCode && (
-                                      <span className="text-[10px] font-mono text-slate-400 bg-slate-900 border border-slate-800 px-1.5 py-0.5 rounded">
-                                        {evt.customerName} ({evt.leadCode})
-                                      </span>
-                                    )}
-                                  </h4>
-                                  <span className="text-[10px] text-slate-500 font-mono">
-                                    {new Date(evt.timestamp).toLocaleString('en-IN', {
-                                      day: '2-digit',
-                                      month: 'short',
-                                      hour: '2-digit',
-                                      minute: '2-digit',
-                                    })}
-                                  </span>
-                                </div>
-                                <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                                  {evt.details}
-                                </p>
+                <div className="overflow-x-auto">
+                  {/* Render detail view lists based on type */}
+                  {(activeDetailType === 'leads_worked' || activeDetailType === 'meetings_converted') && (
+                    <table className="w-full text-left border-collapse min-w-[700px]">
+                      <thead>
+                        <tr className="border-b border-slate-850 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                          <th className="pb-3 px-3">Lead Code</th>
+                          <th className="pb-3 px-3">Client Name</th>
+                          <th className="pb-3 px-3">Location</th>
+                          <th className="pb-3 px-3">Pipeline Status</th>
+                          <th className="pb-3 px-3">Assigned Team</th>
+                          <th className="pb-3 px-3 text-right">Created Date</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/40 text-xs text-slate-300">
+                        {modalData.results.map((lead: any) => (
+                          <tr key={lead.id} className="hover:bg-slate-900/10">
+                            <td className="py-3 px-3 font-bold text-white">
+                              <a href={`/leads/${lead.id}`} className="hover:underline text-amber-400">
+                                {lead.leadCode}
+                              </a>
+                            </td>
+                            <td className="py-3 px-3 font-medium text-slate-200">{lead.customerName}</td>
+                            <td className="py-3 px-3">{lead.city || 'Unknown'}</td>
+                            <td className="py-3 px-3">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/15">
+                                Stage {lead.status}
+                              </span>
+                            </td>
+                            <td className="py-3 px-3 text-slate-400">
+                              <div className="flex flex-col gap-0.5 text-[10px]">
+                                <span>Mgr: {lead.manager?.name || 'None'}</span>
+                                <span>TL: {lead.tl?.name || 'None'}</span>
+                                <span>Cons: {lead.consultant?.name || 'None'}</span>
                               </div>
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
-                  </div>
-                </>
+                            </td>
+                            <td className="py-3 px-3 text-right text-slate-500 font-mono">
+                              {new Date(lead.createdAt).toLocaleDateString('en-IN')}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+
+                  {activeDetailType === 'meetings_booked' && (
+                    <table className="w-full text-left border-collapse min-w-[700px]">
+                      <thead>
+                        <tr className="border-b border-slate-850 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                          <th className="pb-3 px-3">Lead Code</th>
+                          <th className="pb-3 px-3">Client Name</th>
+                          <th className="pb-3 px-3">Scheduled Slot</th>
+                          <th className="pb-3 px-3">Location Details</th>
+                          <th className="pb-3 px-3">Assigned Executive</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/40 text-xs text-slate-300">
+                        {modalData.results.map((meet: any) => (
+                          <tr key={meet.id} className="hover:bg-slate-900/10">
+                            <td className="py-3 px-3 font-bold text-white">
+                              <a href={`/leads/${meet.leadId}`} className="hover:underline text-amber-400">
+                                {meet.leadCode}
+                              </a>
+                            </td>
+                            <td className="py-3 px-3 font-medium text-slate-200">{meet.customerName}</td>
+                            <td className="py-3 px-3 font-bold text-white">{meet.detail1}</td>
+                            <td className="py-3 px-3 text-slate-450">{meet.detail2}</td>
+                            <td className="py-3 px-3 text-slate-450 font-medium">{meet.executiveName}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+
+                  {(activeDetailType === 'orders_punched' || activeDetailType === 'orders_verified' || activeDetailType === 'installations_completed') && (
+                    <table className="w-full text-left border-collapse min-w-[700px]">
+                      <thead>
+                        <tr className="border-b border-slate-850 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                          <th className="pb-3 px-3">Lead Code</th>
+                          <th className="pb-3 px-3">Client Name</th>
+                          <th className="pb-3 px-3">Order Specs</th>
+                          <th className="pb-3 px-3">Status</th>
+                          <th className="pb-3 px-3 text-right">Deal Value</th>
+                          <th className="pb-3 px-3 text-right">Action Date</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/40 text-xs text-slate-300">
+                        {modalData.results.map((ord: any) => (
+                          <tr key={ord.id} className="hover:bg-slate-900/10">
+                            <td className="py-3 px-3 font-bold text-white">
+                              <a href={`/leads/${ord.leadId}`} className="hover:underline text-amber-400">
+                                {ord.leadCode}
+                              </a>
+                            </td>
+                            <td className="py-3 px-3 font-medium text-slate-200">{ord.customerName}</td>
+                            <td className="py-3 px-3">{ord.detail1}</td>
+                            <td className="py-3 px-3">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/15">
+                                {ord.detail2}
+                              </span>
+                            </td>
+                            <td className="py-3 px-3 text-right font-extrabold text-white">
+                              ₹{ord.value.toLocaleString('en-IN')}
+                            </td>
+                            <td className="py-3 px-3 text-right text-slate-500 font-mono">{ord.date}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
               )}
             </div>
 

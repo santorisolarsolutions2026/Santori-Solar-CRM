@@ -218,6 +218,49 @@ const ALL_PERMISSIONS = [
   }
 ];
 
+function deriveRoleFromDesignationAndDept(designationIdStr: string, departmentIdStr: string, designationsList: any[], departmentsList: any[]): string {
+  if (!designationIdStr) return 'consultant';
+  const desId = parseInt(designationIdStr, 10);
+  const designation = designationsList.find((d) => d.id === desId);
+  if (!designation) return 'consultant';
+
+  let departmentName = '';
+  if (departmentIdStr) {
+    const deptId = parseInt(departmentIdStr, 10);
+    const department = departmentsList.find((d) => d.id === deptId);
+    if (department) {
+      departmentName = department.name;
+    }
+  }
+
+  if (designation.name === 'Admin' || designation.level === 1) {
+    return 'admin';
+  } else if (departmentName === 'Finance') {
+    return 'finance';
+  } else if (departmentName === 'Operations') {
+    return 'operations';
+  } else if (departmentName === 'IT') {
+    if (designation.level === 2) return 'director';
+    if (designation.level === 3 || designation.level === 4) return 'manager';
+    if (designation.level === 5) return 'tl';
+    return 'consultant';
+  } else if (departmentName === 'Sales') {
+    if (designation.name.includes('Head') || designation.level === 2) return 'sales_head';
+    if (designation.name.includes('PSA Senior Manager') || designation.name.includes('PSA Manager')) return 'manager';
+    if (designation.name.includes('Senior Manager') || designation.name.includes('Manager')) return 'manager';
+    if (designation.name === 'PSA TL') return 'psa_tl';
+    if (designation.name === 'TL') return 'tl';
+    if (designation.name === 'PSA Consultant') return 'psa';
+    if (designation.name === 'Consultant') return 'consultant';
+  }
+
+  // Fallback
+  if (designation.level === 2) return 'director';
+  if (designation.level === 3 || designation.level === 4) return 'manager';
+  if (designation.level === 5) return 'tl';
+  return 'consultant';
+}
+
 function getLocalDefaultPermissionsForRole(role: string): string[] {
   const baseRole = role.includes(':') ? role.split(':')[0] : role;
   switch (baseRole) {
@@ -419,6 +462,23 @@ export default function TeamManagementPage() {
   const [editBaseRole, setEditBaseRole] = useState('consultant');
   const [editMemberPermissions, setEditMemberPermissions] = useState<string[]>([]);
   const [selectedPermissionCategory, setSelectedPermissionCategory] = useState<string>('PSA');
+
+  // Automatically reset permissions to designation defaults on active dropdown change
+  useEffect(() => {
+    if (selectedMember && editMemberForm.designationId) {
+      const isDesignationChanged = String(selectedMember.designationId || '') !== String(editMemberForm.designationId);
+      const isDepartmentChanged = String(selectedMember.departmentId || '') !== String(editMemberForm.departmentId);
+      if (isDesignationChanged || isDepartmentChanged) {
+        const derivedRole = deriveRoleFromDesignationAndDept(
+          editMemberForm.designationId,
+          editMemberForm.departmentId,
+          designationsList,
+          departmentsList
+        );
+        setEditMemberPermissions(getLocalDefaultPermissionsForRole(derivedRole));
+      }
+    }
+  }, [editMemberForm.designationId, editMemberForm.departmentId, selectedMember, designationsList, departmentsList]);
 
   const closeAddModal = () => {
     setShowAddModal(false);
