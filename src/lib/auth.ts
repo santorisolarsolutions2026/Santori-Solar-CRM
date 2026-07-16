@@ -115,14 +115,18 @@ export function getDefaultPermissionsForRole(role: string): string[] {
 export async function getUserPermissions(userId: number): Promise<string[]> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { role: true, permissions: true }
+    select: {
+      role: true,
+      permissions: true,
+      department: { select: { name: true } }
+    }
   });
   if (!user) return [];
 
   const baseRole = user.role.includes(':') ? user.role.split(':')[0] : user.role;
   let basePermissions: string[] = [];
 
-  if (baseRole === 'admin' || baseRole === 'director') {
+  if (baseRole === 'admin' || baseRole === 'director' || user.department?.name === 'IT') {
     basePermissions = getDefaultPermissionsForRole('admin');
   } else {
     basePermissions = user.permissions && user.permissions.trim()
@@ -160,14 +164,18 @@ export async function getUserPermissions(userId: number): Promise<string[]> {
 export async function getUserSession(userId: number): Promise<{ role: string; permissions: string[] }> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { role: true, permissions: true }
+    select: {
+      role: true,
+      permissions: true,
+      department: { select: { name: true } }
+    }
   });
   if (!user) return { role: '', permissions: [] };
 
   const baseRole = user.role.includes(':') ? user.role.split(':')[0] : user.role;
   let basePermissions: string[] = [];
 
-  if (baseRole === 'admin' || baseRole === 'director') {
+  if (baseRole === 'admin' || baseRole === 'director' || user.department?.name === 'IT') {
     basePermissions = getDefaultPermissionsForRole('admin');
   } else {
     basePermissions = user.permissions && user.permissions.trim()

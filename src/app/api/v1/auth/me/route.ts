@@ -28,6 +28,7 @@ export async function GET(req: Request) {
         createdAt: true,
         joiningDate: true,
         photograph: true,
+        department: { select: { name: true } }
       },
     });
 
@@ -38,9 +39,12 @@ export async function GET(req: Request) {
       );
     }
 
-    const permissionsList = user.permissions && user.permissions.trim()
-      ? user.permissions.split(',').map((p: string) => p.trim())
-      : getDefaultPermissionsForRole(user.role);
+    const baseRole = user.role.includes(':') ? user.role.split(':')[0] : user.role;
+    const permissionsList = baseRole === 'admin' || baseRole === 'director' || user.department?.name === 'IT'
+      ? getDefaultPermissionsForRole('admin')
+      : user.permissions && user.permissions.trim()
+        ? user.permissions.split(',').map((p: string) => p.trim())
+        : getDefaultPermissionsForRole(user.role);
 
     return NextResponse.json({
       success: true,
