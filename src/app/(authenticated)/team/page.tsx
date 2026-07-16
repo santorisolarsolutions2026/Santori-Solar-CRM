@@ -44,6 +44,10 @@ interface TeamMember {
   photograph: string | null;
   supervisor?: { id: number; name: string } | null;
   leadsClosed?: number;
+  departmentId?: number | null;
+  designationId?: number | null;
+  designation?: { id: number; name: string; level: number } | null;
+  department?: { id: number; name: string } | null;
 }
 
 const ROLE_LABELS: Record<string, { label: string; class: string }> = {
@@ -271,6 +275,8 @@ export default function TeamManagementPage() {
   const [loading, setLoading] = useState(true);
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [empSearchInput, setEmpSearchInput] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedDepartmentFilter, setSelectedDepartmentFilter] = useState('');
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
 
@@ -984,6 +990,22 @@ export default function TeamManagementPage() {
   );
 
   const displayedMembers = members.filter((member) => {
+    // 1. Search Query filter (matches name, email, or employee ID)
+    const q = searchQuery.toLowerCase().trim();
+    if (q) {
+      const matchName = member.name.toLowerCase().includes(q);
+      const matchEmail = member.email.toLowerCase().includes(q);
+      const matchEmpId = member.employeeId && member.employeeId.toLowerCase().includes(q);
+      if (!matchName && !matchEmail && !matchEmpId) return false;
+    }
+
+    // 2. Department filter
+    if (selectedDepartmentFilter) {
+      const deptId = parseInt(selectedDepartmentFilter, 10);
+      if (member.departmentId !== deptId) return false;
+    }
+
+    // 3. Visibility rule
     if (hasFullTeamAccess) {
       return true;
     } else {
@@ -1014,6 +1036,34 @@ export default function TeamManagementPage() {
           </button>
         )}
       </div>
+
+      {/* Directory Search and Department Filter for full-access users */}
+      {hasFullTeamAccess && (
+        <div className="flex flex-col sm:flex-row items-center gap-4 bg-[#111625]/60 border border-slate-800 p-4 rounded-xl shadow-xl">
+          <div className="relative flex-1 w-full">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by name, email, or employee ID..."
+              className="w-full pl-9 pr-4 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-white placeholder-slate-500 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+            />
+            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+          </div>
+          <div className="w-full sm:w-64">
+            <select
+              value={selectedDepartmentFilter}
+              onChange={(e) => setSelectedDepartmentFilter(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-300 text-xs focus:ring-amber-500 focus:outline-none"
+            >
+              <option value="">All Departments</option>
+              {departmentsList.map((dept) => (
+                <option key={dept.id} value={String(dept.id)}>{dept.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      )}
 
       {/* Restricted Directory Search Card for non-admins */}
       {!hasFullTeamAccess && (
@@ -1205,7 +1255,7 @@ export default function TeamManagementPage() {
                       {/* Designation/Role Column */}
                       <td className="py-4 px-4 w-40">
                         <span className={`inline-block text-[9px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${roleConfig.class}`}>
-                          {roleConfig.label}
+                          {member.designation?.name || roleConfig.label}
                         </span>
                       </td>
 
