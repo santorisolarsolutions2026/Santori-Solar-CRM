@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { leadIds, assignedManagerId, assignedTlId, assignedConsultantId } = body;
+    const { leadIds, assignedManagerId, assignedTlId, assignedConsultantId, status } = body;
 
     if (!Array.isArray(leadIds) || leadIds.length === 0) {
       return NextResponse.json({ success: false, message: 'Please select at least one lead.' }, { status: 400 });
@@ -41,8 +41,12 @@ export async function POST(req: Request) {
       updateData.assignedConsultantId = assignedConsultantId === null || assignedConsultantId === '' ? null : Number(assignedConsultantId);
     }
 
+    if (status !== undefined && status !== null && status !== 'UNCHANGED') {
+      updateData.status = Number(status);
+    }
+
     if (Object.keys(updateData).length === 0) {
-      return NextResponse.json({ success: false, message: 'No assignment changes specified.' }, { status: 400 });
+      return NextResponse.json({ success: false, message: 'No assignment or status changes specified.' }, { status: 400 });
     }
 
     // Fetch leads to inspect their current statuses and assignments
@@ -62,10 +66,10 @@ export async function POST(req: Request) {
         const finalConsId = assignedConsultantId !== undefined ? (assignedConsultantId === null || assignedConsultantId === '' ? null : Number(assignedConsultantId)) : lead.assignedConsultantId;
 
         const individualUpdate: any = { ...updateData };
-        let newStatus = lead.status;
+        let newStatus = status !== undefined && status !== null && status !== 'UNCHANGED' ? Number(status) : lead.status;
 
         // Auto-promote from Uninitiated (0) to Fresh Lead (1) when any coordinator gets assigned
-        if (lead.status === 0 && (finalManagerId !== null || finalTlId !== null || finalConsId !== null)) {
+        if (lead.status === 0 && (finalManagerId !== null || finalTlId !== null || finalConsId !== null) && (status === undefined || status === null || status === 'UNCHANGED')) {
           individualUpdate.status = 1;
           newStatus = 1;
         }
@@ -81,7 +85,9 @@ export async function POST(req: Request) {
           userId: userPayload.id,
           fromStatus: lead.status,
           toStatus: newStatus,
-          remark: `Bulk updated team assignments. Updated fields: ${Object.keys(updateData).join(', ')}.${newStatus === 1 && lead.status === 0 ? ' Status auto-promoted to Fresh Lead.' : ''}`,
+          remark: status !== undefined && status !== null && status !== 'UNCHANGED'
+            ? `Bulk updated pipeline status to Stage ${status} (${userPayload.name}).`
+            : `Bulk updated team assignments. Updated fields: ${Object.keys(updateData).join(', ')}.${newStatus === 1 && lead.status === 0 ? ' Status auto-promoted to Fresh Lead.' : ''}`,
         });
       }
 

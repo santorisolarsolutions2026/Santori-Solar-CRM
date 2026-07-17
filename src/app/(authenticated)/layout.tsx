@@ -33,6 +33,8 @@ import {
   XCircle,
   Info,
   Trophy,
+  Flag,
+  Check,
 } from 'lucide-react';
 import Link from 'next/link';
 import LeaderboardDrawer from '@/components/LeaderboardDrawer';
@@ -86,6 +88,38 @@ export default function AuthenticatedLayout({
 
   const [leaderboardOpen, setLeaderboardOpen] = useState(false);
   const [topPerformers, setTopPerformers] = useState<any[]>([]);
+
+  // Flagged Issues drawer state
+  const [issuesDrawerOpen, setIssuesDrawerOpen] = useState(false);
+  const [unresolvedIssues, setUnresolvedIssues] = useState<any[]>([]);
+  const [issuesLoading, setIssuesLoading] = useState(false);
+
+  const fetchFlaggedIssues = async () => {
+    try {
+      setIssuesLoading(true);
+      const res = await fetch('/api/v1/leads/flagged');
+      const data = await res.json();
+      if (data.success) {
+        setUnresolvedIssues(data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching flagged issues:', err);
+    } finally {
+      setIssuesLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchFlaggedIssues();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (issuesDrawerOpen) {
+      fetchFlaggedIssues();
+    }
+  }, [issuesDrawerOpen]);
 
   // Toast state
   const [toasts, setToasts] = useState<{ id: string; message: string; type: 'success' | 'error' | 'info' }[]>([]);
@@ -879,6 +913,21 @@ export default function AuthenticatedLayout({
           </div>
 
           <div className="flex items-center gap-4 relative">
+            {/* Flagged issues dashboard trigger button */}
+            <button
+              type="button"
+              onClick={() => setIssuesDrawerOpen(true)}
+              className="p-2 rounded-lg bg-slate-900/80 border border-slate-800 text-slate-400 hover:text-red-400 transition-all cursor-pointer relative focus:outline-none"
+              title="View Flagged/Unresolved Issues"
+            >
+              <Flag className="w-4 h-4 text-red-500 fill-red-500/10" />
+              {unresolvedIssues.length > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-550 text-[9px] font-extrabold text-white font-sans animate-pulse">
+                  {unresolvedIssues.length}
+                </span>
+              )}
+            </button>
+
             {/* Quick Attendance Check-in / Check-out Dropdown */}
             <div className="relative" ref={attendanceRef}>
               <button
@@ -1391,6 +1440,98 @@ export default function AuthenticatedLayout({
 
       {/* Leaderboard Slide Drawer */}
       <LeaderboardDrawer isOpen={leaderboardOpen} onClose={() => setLeaderboardOpen(false)} />
+
+      {/* Flagged Issues Slide Drawer */}
+      {issuesDrawerOpen && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/70 backdrop-blur-sm animate-fade-in font-sans">
+          <div className="w-full sm:w-[480px] h-full bg-[#0d111d] border-l border-slate-855 shadow-2xl flex flex-col transform transition-transform duration-300 ease-out translate-x-0 animate-slide-in-right">
+            {/* Header */}
+            <div className="p-6 border-b border-slate-850 bg-[#121826] relative overflow-hidden flex items-center justify-between">
+              <div className="absolute -top-12 -left-12 w-32 h-32 bg-red-500/5 rounded-full blur-3xl pointer-events-none" />
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shadow-lg shadow-red-500/10">
+                  <Flag className="w-5 h-5 text-white font-bold fill-white/20" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white tracking-wide flex items-center gap-1.5 font-sans">
+                    Flagged Issues <span className="text-[10px] bg-red-500/25 border border-red-500/30 px-2 py-0.5 rounded-full text-red-400 font-bold animate-pulse">{unresolvedIssues.length}</span>
+                  </h3>
+                  <p className="text-[11px] text-slate-400">Leads with unresolved critical issues</p>
+                </div>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setIssuesDrawerOpen(false)} 
+                className="w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-all cursor-pointer outline-none"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {issuesLoading ? (
+                <div className="flex flex-col items-center justify-center py-20 text-slate-500 text-xs italic gap-2">
+                  <Loader2 className="w-6 h-6 animate-spin text-red-500" />
+                  <span>Loading flagged pipeline opportunities...</span>
+                </div>
+              ) : unresolvedIssues.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 text-slate-500 text-xs italic text-center space-y-1">
+                  <Check className="w-8 h-8 text-emerald-500 mb-1" />
+                  <p className="font-bold text-slate-350">Pipeline is Clean!</p>
+                  <p className="text-[10px] text-slate-500">No active leads are currently flagged with issues.</p>
+                </div>
+              ) : (
+                <div className="space-y-3.5">
+                  {unresolvedIssues.map((lead: any) => (
+                    <div key={lead.id} className="bg-slate-900/30 border border-slate-850 hover:border-slate-800 p-4 rounded-xl space-y-2.5 transition-colors relative overflow-hidden group">
+                      {/* Left border highlighting issue state */}
+                      <div className="absolute top-0 bottom-0 left-0 w-1 bg-red-500" />
+                      
+                      <div className="flex justify-between items-start gap-2 pl-1.5">
+                        <div className="flex-1">
+                          <a 
+                            href={`/leads/${lead.id}`} 
+                            onClick={() => setIssuesDrawerOpen(false)}
+                            className="text-xs font-bold text-white hover:underline flex items-center gap-1.5"
+                          >
+                            <span className="text-amber-400 font-bold hover:underline">#{lead.leadCode}</span>
+                            <span className="text-slate-200 font-semibold">{lead.customerName}</span>
+                          </a>
+                          <span className="text-[10px] text-slate-500 font-mono mt-0.5 block">{lead.city || 'Unknown Location'}</span>
+                        </div>
+                        <span className="px-2 py-0.5 rounded text-[8px] uppercase tracking-wider font-extrabold bg-red-500/10 text-red-400 border border-red-500/15 shrink-0">
+                          {lead.issueType}
+                        </span>
+                      </div>
+
+                      <div className="bg-slate-950/60 border border-slate-900 px-3 py-2 rounded-lg text-xs pl-1.5">
+                        <span className="text-slate-300 block text-[11px] leading-relaxed">{lead.issueDescription}</span>
+                      </div>
+
+                      <div className="flex justify-between items-center text-[10px] text-slate-550 pt-1 border-t border-slate-900/40 pl-1.5">
+                        <span>Cons: <strong className="text-slate-400">{lead.consultantName}</strong></span>
+                        <span className="font-mono">{new Date(lead.updatedAt).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-slate-850 bg-[#121826]/30 text-right">
+              <button
+                type="button"
+                onClick={() => setIssuesDrawerOpen(false)}
+                className="w-full py-2 bg-slate-900 border border-slate-850 text-slate-355 hover:text-white rounded-lg font-bold text-xs transition-all cursor-pointer outline-none"
+              >
+                Close Drawer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

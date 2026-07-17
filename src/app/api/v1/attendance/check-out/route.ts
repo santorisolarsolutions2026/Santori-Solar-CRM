@@ -51,14 +51,22 @@ export async function POST(req: Request) {
     const checkOutTime = now.getTime();
     const workDurationMin = Math.max(1, Math.round((checkOutTime - checkInTime) / (1000 * 60)));
 
+    const hours = now.getHours();
+    const isEarlyCheckOut = hours < 19;
+    const finalStatus = (existing.status === 'half_day' || isEarlyCheckOut) ? 'half_day' : 'completed';
+    const autoNotes = isEarlyCheckOut ? 'Early check-out (before 7:00 PM). Automatically marked as Half Day.' : '';
+    const newNotes = notes
+      ? (existing.notes ? `${existing.notes} | ${notes}` : notes)
+      : (existing.notes ? (autoNotes ? `${existing.notes} | ${autoNotes}` : existing.notes) : (autoNotes || undefined));
+
     const updated = await attendanceModel.update({
       where: { id: existing.id },
       data: {
         checkOut: now,
         checkOutLocation: location || 'Office / Web Portal',
         workDurationMin,
-        status: 'completed',
-        notes: notes ? (existing.notes ? `${existing.notes} | ${notes}` : notes) : existing.notes,
+        status: finalStatus,
+        notes: newNotes,
       },
     });
 

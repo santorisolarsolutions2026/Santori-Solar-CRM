@@ -29,6 +29,7 @@ model User {
   logoutLocation       String?
   joiningDate          DateTime?
   photograph           String?
+  workingLocation      String?
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
 
@@ -274,6 +275,9 @@ model Payment {
   remarks        String?
   recordedById   Int
   receiptUrl     String?
+  isDiscarded    Boolean  @default(false)
+  discardReason  String?
+  changeReason   String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -312,5 +316,12 @@ model Activity {
   @@index([employeeId])
   @@index([leadId])
   @@index([activityType])
+}
+
+model GazettedHoliday {
+  id        Int      @id @default(autoincrement())
+  date      DateTime @unique
+  name      String
+  createdAt DateTime @default(now())
 }
 

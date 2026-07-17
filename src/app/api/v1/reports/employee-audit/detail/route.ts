@@ -93,7 +93,18 @@ export async function GET(req: Request) {
           createdAt: true,
           manager: { select: { name: true } },
           tl: { select: { name: true } },
-          consultant: { select: { name: true } }
+          consultant: { select: { name: true } },
+          activityLogs: {
+            where: logWhere,
+            select: {
+              id: true,
+              createdAt: true,
+              fromStatus: true,
+              toStatus: true,
+              remark: true
+            },
+            orderBy: { createdAt: 'desc' }
+          }
         },
         orderBy: { createdAt: 'desc' }
       });
@@ -334,6 +345,119 @@ export async function GET(req: Request) {
         detail2: `Fulfillment: Fully Commissioned`,
         value: o.totalValue,
         date: new Date(o.createdAt).toLocaleDateString('en-IN')
+      }));
+    }
+    else if (type === 'meetings_done') {
+      const meetingWhere: any = {
+        AND: [
+          {
+            OR: [
+              { assignedExecutiveId: userId },
+              {
+                lead: {
+                  OR: [
+                    { createdById: userId },
+                    { assignedConsultantId: userId },
+                    { assignedTlId: userId },
+                    { assignedManagerId: userId }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            OR: [
+              { meetingStartedAt: { not: null } },
+              { meetingEndedAt: { not: null } },
+              {
+                lead: {
+                  status: { in: [9, 13] }
+                }
+              }
+            ]
+          }
+        ]
+      };
+      if (hasDates) {
+        meetingWhere.createdAt = dateRangeFilter;
+      }
+
+      const meetings = await prisma.meetingBooking.findMany({
+        where: meetingWhere,
+        select: {
+          id: true,
+          meetingDate: true,
+          meetingTime: true,
+          meetingPinCode: true,
+          meetingCity: true,
+          avgMonthlyBill: true,
+          meetingStartedAt: true,
+          meetingEndedAt: true,
+          executive: { select: { name: true } },
+          lead: {
+            select: {
+              id: true,
+              leadCode: true,
+              customerName: true,
+              status: true,
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+      results = meetings.map(m => ({
+        id: m.id,
+        leadId: m.lead?.id,
+        leadCode: m.lead?.leadCode,
+        customerName: m.lead?.customerName,
+        detail1: `Completed: ${m.meetingDate} ${m.meetingTime}`,
+        detail2: m.meetingStartedAt ? `Started: ${new Date(m.meetingStartedAt).toLocaleTimeString()}` : `Lead Status: Done`,
+        executiveName: m.executive?.name || 'Unassigned',
+        date: m.meetingDate
+      }));
+    }
+    else if (type === 'meetings_cancelled') {
+      const meetingWhere: any = {
+        assignedExecutiveId: userId,
+        meetingStartedAt: null,
+        lead: {
+          status: { notIn: [8, 9, 13] }
+        }
+      };
+      if (hasDates) {
+        meetingWhere.createdAt = dateRangeFilter;
+      }
+
+      const meetings = await prisma.meetingBooking.findMany({
+        where: meetingWhere,
+        select: {
+          id: true,
+          meetingDate: true,
+          meetingTime: true,
+          meetingPinCode: true,
+          meetingCity: true,
+          avgMonthlyBill: true,
+          executive: { select: { name: true } },
+          lead: {
+            select: {
+              id: true,
+              leadCode: true,
+              customerName: true,
+              status: true,
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+      results = meetings.map(m => ({
+        id: m.id,
+        leadId: m.lead?.id,
+        leadCode: m.lead?.leadCode,
+        customerName: m.lead?.customerName,
+        detail1: `Cancelled: ${m.meetingDate} ${m.meetingTime}`,
+        detail2: `Lead Status Code: ${m.lead?.status}`,
+        executiveName: m.executive?.name || 'Unassigned',
+        date: m.meetingDate
       }));
     }
 

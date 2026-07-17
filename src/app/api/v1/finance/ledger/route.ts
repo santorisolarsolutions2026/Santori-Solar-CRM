@@ -65,7 +65,7 @@ export async function GET(req: Request) {
 
     // Process orders to calculate totalPaid and balanceOutstanding
     const ledger = orders.map((order) => {
-      const totalPaid = order.payments.reduce((sum, p) => sum + p.amount, 0);
+      const totalPaid = order.payments.filter(p => !p.isDiscarded).reduce((sum, p) => sum + p.amount, 0);
       const balanceOutstanding = Math.max(0, order.totalValue - totalPaid);
       return {
         ...order,
@@ -167,3 +167,155 @@ export async function POST(req: Request) {
     );
   }
 }
+
+// PUT /api/v1/finance/ledger
+export async function PUT(req: Request) {
+  try {
+    const userPayload = getAuthenticatedUser(req);
+    if (!userPayload) {
+      return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
+    }
+
+    const userPermissions = await getUserPermissions(userPayload.id);
+    if (!userPermissions.includes('orders:verify')) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to modify ledger.' }, { status: 403 });
+    }
+
+    const body = await req.json();
+    const { paymentId, amount, paymentMethod, transactionRef, remarks, reason } = body;
+
+    if (!paymentId || !amount || !paymentMethod || !reason) {
+      return NextResponse.json({ success: false, message: 'paymentId, amount, paymentMethod, and reason are required.' }, { status: 400 });
+    }
+
+    const pId = parseInt(paymentId, 10);
+    const amt = parseFloat(amount);
+
+    if (isNaN(pId) || isNaN(amt) || amt <= 0) {
+      return NextResponse.json({ success: false, message: 'Invalid paymentId or amount.' }, { status: 400 });
+    }
+
+    const payment = await prisma.payment.findUnique({
+      where: { id: pId },
+      include: { order: { select: { leadId: true } } }
+    });
+
+    if (!payment) {
+      return NextResponse.json({ success: false, message: 'Payment record not found.' }, { status: 404 });
+    }
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const formattedOldAmt = payment.amount.toLocaleString('en-IN');
+      const formattedNewAmt = amt.toLocaleString('en-IN');
+      const oldRemarks = payment.remarks || '';
+      const newRemarks = `${oldRemarks}\n[Modified] Amount changed from ₹${formattedOldAmt} to ₹${formattedNewAmt} by ${userPayload.name}. Reason: ${reason}`.trim();
+
+      const p = await tx.payment.update({
+        where: { id: pId },
+        data: {
+          amount: amt,
+          paymentMethod,
+          transactionRef: transactionRef || null,
+          remarks: newRemarks,
+          changeReason: reason,
+        },
+        include: {
+          recordedBy: { select: { name: true } }
+        }
+      });
+
+      await tx.leadActivityLog.create({
+        data: {
+          leadId: payment.order.leadId,
+          userId: userPayload.id,
+          fromStatus: 13,
+          toStatus: 13,
+          remark: `[LEDGER MODIFIED] Payment ID #${pId} modified by Finance (${userPayload.name}). Old: ₹${formattedOldAmt}, New: ₹${formattedNewAmt}. Reason: ${reason}`
+        }
+      });
+
+      return p;
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: updated,
+      message: 'Payment details successfully modified in ledger.',
+    });
+  } catch (error: any) {
+    console.error('Modify payment error:', error);
+    return NextResponse.json(
+      { success: false, message: 'Internal server error', errors: { details: error.message } },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE /api/v1/finance/ledger
+export async function DELETE(req: Request) {
+  try {
+    const userPayload = getAuthenticatedUser(req);
+    if (!userPayload) {
+      return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
+    }
+
+    const userPermissions = await getUserPermissions(userPayload.id);
+    if (!userPermissions.includes('orders:verify')) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to delete ledger entries.' }, { status: 403 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const paymentId = searchParams.get('paymentId');
+    const reason = searchParams.get('reason');
+
+    if (!paymentId || !reason) {
+      return NextResponse.json({ success: false, message: 'paymentId and reason are required.' }, { status: 400 });
+    }
+
+    const pId = parseInt(paymentId, 10);
+    if (isNaN(pId)) {
+      return NextResponse.json({ success: false, message: 'Invalid paymentId.' }, { status: 400 });
+    }
+
+    const payment = await prisma.payment.findUnique({
+      where: { id: pId },
+      include: { order: { select: { leadId: true } } }
+    });
+
+    if (!payment) {
+      return NextResponse.json({ success: false, message: 'Payment record not found.' }, { status: 404 });
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.payment.update({
+        where: { id: pId },
+        data: {
+          isDiscarded: true,
+          discardReason: reason,
+        }
+      });
+
+      await tx.leadActivityLog.create({
+        data: {
+          leadId: payment.order.leadId,
+          userId: userPayload.id,
+          fromStatus: 13,
+          toStatus: 13,
+          remark: `[LEDGER DISCARDED] Payment ID #${pId} (₹${payment.amount.toLocaleString('en-IN')}) discarded by Finance (${userPayload.name}). Reason: ${reason}`
+        }
+      });
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Payment successfully discarded from ledger.',
+    });
+  } catch (error: any) {
+    console.error('Delete payment error:', error);
+    return NextResponse.json(
+      { success: false, message: 'Internal server error', errors: { details: error.message } },
+      { status: 500 }
+    );
+  }
+}
+

@@ -26,6 +26,7 @@ import {
   DollarSign,
   Hammer,
   Terminal,
+  SlidersHorizontal,
 } from 'lucide-react';
 
 interface TeamMember {
@@ -391,6 +392,88 @@ export default function TeamManagementPage() {
     }
   };
 
+  const handleCreateDesignation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!designationName.trim()) {
+      alert('Please enter a designation name.');
+      return;
+    }
+    try {
+      const res = await fetch('/api/v1/designations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: designationName,
+          level: Number(designationLevel),
+          departmentId: designationDeptId ? Number(designationDeptId) : null,
+        })
+      });
+      const data = await res.json();
+      alert(data.message);
+      if (data.success) {
+        setDesignationName('');
+        setDesignationLevel(5);
+        setDesignationDeptId('');
+        fetchDesignations();
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error creating designation.');
+    }
+  };
+
+  const handleUpdateDesignation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingDesignation) return;
+    if (!designationName.trim()) {
+      alert('Please enter a designation name.');
+      return;
+    }
+    try {
+      const res = await fetch('/api/v1/designations', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingDesignation.id,
+          name: designationName,
+          level: Number(designationLevel),
+          departmentId: designationDeptId ? Number(designationDeptId) : null,
+        })
+      });
+      const data = await res.json();
+      alert(data.message);
+      if (data.success) {
+        setEditingDesignation(null);
+        setDesignationName('');
+        setDesignationLevel(5);
+        setDesignationDeptId('');
+        fetchDesignations();
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error updating designation.');
+    }
+  };
+
+  const handleDeleteDesignation = async (id: number) => {
+    if (!window.confirm('Are you sure you want to delete this designation?')) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/v1/designations?id=${id}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      alert(data.message);
+      if (data.success) {
+        fetchDesignations();
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error deleting designation.');
+    }
+  };
+
   const isTargetAdminOrDirector = selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:') || selectedMember?.role === 'director' || selectedMember?.role?.startsWith('director:');
   const isCurrentUserAdmin = user?.role === 'admin' || user?.role?.startsWith('admin:');
   const canEditPermissionsAndRole = !isTargetAdminOrDirector || isCurrentUserAdmin;
@@ -433,6 +516,13 @@ export default function TeamManagementPage() {
   const [logsDate, setLogsDate] = useState('');
   const [logsList, setLogsList] = useState<any[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
+
+  // Hierarchy Modal states
+  const [showHierarchyModal, setShowHierarchyModal] = useState(false);
+  const [editingDesignation, setEditingDesignation] = useState<any | null>(null);
+  const [designationName, setDesignationName] = useState('');
+  const [designationLevel, setDesignationLevel] = useState(5);
+  const [designationDeptId, setDesignationDeptId] = useState('');
 
   // Edit Other Member states (for admin/director/sales_head)
   const [editMemberForm, setEditMemberForm] = useState({
@@ -1127,15 +1217,33 @@ export default function TeamManagementPage() {
               : 'Browse company directory and see colleagues.'}
           </p>
         </div>
-        {isAdminOrDirectorOrSalesHead && (
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="py-2.5 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-lg shadow-amber-500/10 flex items-center gap-1.5 transition-all w-fit cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Team Member</span>
-          </button>
-        )}
+        <div className="flex gap-2 flex-wrap items-center">
+          {user?.role === 'admin' && (
+            <button
+              onClick={() => {
+                setEditingDesignation(null);
+                setDesignationName('');
+                setDesignationLevel(5);
+                setDesignationDeptId('');
+                setShowHierarchyModal(true);
+              }}
+              className="py-2.5 px-4 bg-gradient-to-r from-blue-650 to-indigo-650 hover:from-blue-600 hover:to-indigo-600 text-white rounded-lg font-bold text-xs shadow-lg flex items-center gap-1.5 transition-all w-fit cursor-pointer font-sans border border-transparent"
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              <span>Org Hierarchy</span>
+            </button>
+          )}
+          {isAdminOrDirectorOrSalesHead && (
+            <button
+              type="button"
+              onClick={() => setShowAddModal(true)}
+              className="py-2.5 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-955 rounded-lg font-bold text-xs shadow-lg shadow-amber-500/10 flex items-center gap-1.5 transition-all w-fit cursor-pointer border border-transparent"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Team Member</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Directory Search and Department Filter for full-access users */}
@@ -2518,6 +2626,195 @@ export default function TeamManagementPage() {
                 className="py-2 px-5 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 rounded-lg font-bold text-xs shadow-md cursor-pointer"
               >
                 Close Audit Logs
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Org Hierarchy & Designation management Modal */}
+      {showHierarchyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md px-4 py-6 overflow-y-auto">
+          <div className="w-full max-w-5xl bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-8 flex flex-col max-h-[90vh] animate-fade-in-up">
+            <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+              <div className="flex items-center gap-2.5">
+                <SlidersHorizontal className="w-5 h-5 text-amber-500" />
+                <div>
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-white">Organization Hierarchy & Custom Designations</h3>
+                  <p className="text-[11px] text-slate-400">Configure hierarchy levels, designate departments, and update system roles.</p>
+                </div>
+              </div>
+              <button type="button" onClick={() => setShowHierarchyModal(false)} className="text-slate-400 hover:text-white cursor-pointer border border-transparent">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto flex-1 grid grid-cols-1 lg:grid-cols-5 gap-6">
+              {/* Flowchart Tree */}
+              <div className="lg:col-span-3 bg-slate-950/40 p-4 border border-slate-850 rounded-xl space-y-4 max-h-[70vh] overflow-y-auto">
+                <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800/80 pb-2">Flowchart Hierarchy Tree</h4>
+                <div className="flex flex-col items-center gap-3 text-center">
+                  {[
+                    { level: 0, label: 'Level 0: Admin 👑' },
+                    { level: 1, label: 'Level 1: Department Heads 👔' },
+                    { level: 2, label: 'Level 2: Senior Managers 📈' },
+                    { level: 3, label: 'Level 3: Managers 🏢' },
+                    { level: 4, label: 'Level 4: Team Leaders (TL) 👥' },
+                    { level: 5, label: 'Level 5: Consultants / Field Executives 🛠️' },
+                  ].map((levelItem, idx) => {
+                    const levelDesigs = designationsList.filter(d => d.level === levelItem.level);
+                    return (
+                      <React.Fragment key={levelItem.level}>
+                        {idx > 0 && <div className="w-0.5 h-3 bg-slate-800" />}
+                        <div className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 shadow-md space-y-2">
+                          <span className="text-[10px] text-amber-500 font-extrabold uppercase tracking-wider block">{levelItem.label}</span>
+                          {levelDesigs.length === 0 ? (
+                            <span className="text-[10px] text-slate-500 italic block">No designations defined</span>
+                          ) : (
+                            <div className="flex flex-wrap justify-center gap-1.5">
+                              {levelDesigs.map(d => {
+                                const deptName = departmentsList.find(dept => dept.id === d.departmentId)?.name || 'Shared';
+                                return (
+                                  <span key={d.id} className="text-[10px] bg-slate-955 border border-slate-850 px-2.5 py-1 rounded-md text-white font-medium flex items-center gap-1.5">
+                                    <span>{d.name}</span>
+                                    <span className="text-[8px] bg-slate-900 text-slate-400 px-1 rounded uppercase font-bold">{deptName}</span>
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Management Form and List */}
+              <div className="lg:col-span-2 space-y-6 max-h-[70vh] overflow-y-auto">
+                {/* Form */}
+                <div className="bg-slate-900/20 p-4 border border-slate-850 rounded-xl">
+                  <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-2 mb-4">
+                    {editingDesignation ? 'Edit Designation Details' : 'Create Custom Designation'}
+                  </h4>
+
+                  <form onSubmit={editingDesignation ? handleUpdateDesignation : handleCreateDesignation} className="space-y-4">
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Designation Name *</label>
+                      <input
+                        type="text"
+                        required
+                        value={designationName}
+                        onChange={(e) => setDesignationName(e.target.value)}
+                        placeholder="e.g. Regional Manager, Senior Advisor"
+                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Reporting Level *</label>
+                      <select
+                        value={designationLevel}
+                        onChange={(e) => setDesignationLevel(Number(e.target.value))}
+                        className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                      >
+                        <option value={0}>Level 0: Admin</option>
+                        <option value={1}>Level 1: Head</option>
+                        <option value={2}>Level 2: Senior Manager</option>
+                        <option value={3}>Level 3: Manager</option>
+                        <option value={4}>Level 4: Team Leader (TL)</option>
+                        <option value={5}>Level 5: Consultant</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Department Affiliation</label>
+                      <select
+                        value={designationDeptId}
+                        onChange={(e) => setDesignationDeptId(e.target.value)}
+                        className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                      >
+                        <option value="">Shared / No Department</option>
+                        {departmentsList.map((d) => (
+                          <option key={d.id} value={d.id}>{d.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="flex gap-2 justify-end pt-2">
+                      {editingDesignation && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingDesignation(null);
+                            setDesignationName('');
+                            setDesignationLevel(5);
+                            setDesignationDeptId('');
+                          }}
+                          className="py-1.5 px-3 bg-slate-900 border border-slate-800 text-slate-400 rounded-lg font-bold text-xs"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                      <button
+                        type="submit"
+                        className="py-1.5 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 rounded-lg font-bold text-xs shadow-md"
+                      >
+                        {editingDesignation ? 'Save Designation' : 'Create Designation'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                {/* List Table */}
+                <div className="bg-slate-900/20 p-4 border border-slate-850 rounded-xl">
+                  <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-2 mb-3">All Designations</h4>
+                  <div className="max-h-[30vh] overflow-y-auto divide-y divide-slate-850">
+                    {designationsList.map(d => {
+                      const deptName = departmentsList.find(dept => dept.id === d.departmentId)?.name || 'Shared';
+                      return (
+                        <div key={d.id} className="py-2.5 flex justify-between items-center gap-4 text-xs">
+                          <div>
+                            <p className="font-bold text-white">{d.name}</p>
+                            <p className="text-[10px] text-slate-500 font-medium">Level {d.level} • Department: {deptName}</p>
+                          </div>
+                          <div className="flex gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingDesignation(d);
+                                setDesignationName(d.name);
+                                setDesignationLevel(d.level);
+                                setDesignationDeptId(d.departmentId ? String(d.departmentId) : '');
+                              }}
+                              className="p-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-amber-400 transition-all border border-transparent cursor-pointer"
+                            >
+                              <SlidersHorizontal className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteDesignation(d.id)}
+                              className="p-1 rounded bg-slate-900 hover:bg-rose-955/20 text-slate-400 hover:text-rose-500 transition-all border border-transparent cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-slate-800 bg-slate-900/10 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowHierarchyModal(false)}
+                className="py-2 px-5 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 rounded-lg font-bold text-xs shadow-md cursor-pointer"
+              >
+                Close Editor
               </button>
             </div>
           </div>

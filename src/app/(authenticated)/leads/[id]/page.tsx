@@ -1306,7 +1306,17 @@ export default function LeadDetailPage({
                 </span>
               )}
             </div>
-            <p className="text-xs text-slate-400 mt-1">Lead ID: #{lead.leadCode}</p>
+            <div className="flex items-center gap-3 text-xs text-slate-400 mt-1.5 flex-wrap">
+              <span>Lead ID: <strong className="text-white font-mono">#{lead.leadCode}</strong></span>
+              <span className="text-slate-650">•</span>
+              <span>Mobile: <strong className="text-white font-mono">{lead.mobile}</strong></span>
+              {lead.mobileAlt && (
+                <>
+                  <span className="text-slate-650">•</span>
+                  <span>Alt Mobile: <strong className="text-white font-mono">{lead.mobileAlt}</strong></span>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
@@ -1573,6 +1583,34 @@ export default function LeadDetailPage({
               {/* TRACK TAB */}
               {activeTab === 'track' && lead && (
                 <div className="space-y-4">
+                  {user?.role === 'admin' && !(lead.status === 13 || (lead.order && lead.order.status !== 'draft')) && (
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!window.confirm('Are you sure you want to permanently clear the lead tracking journey logs? This will leave a clean slate.')) {
+                            return;
+                          }
+                          try {
+                            const res = await fetch(`/api/v1/leads/${lead.id}/journey`, {
+                              method: 'DELETE'
+                            });
+                            const data = await res.json();
+                            alert(data.message);
+                            if (data.success) {
+                              fetchLeadDetails();
+                            }
+                          } catch (err) {
+                            console.error(err);
+                            alert('Failed to clear lead tracking journey history.');
+                          }
+                        }}
+                        className="py-1.5 px-3 bg-red-950/20 border border-red-900/30 hover:bg-red-950/40 text-red-400 hover:text-red-300 rounded-lg text-xs font-medium transition-all cursor-pointer font-sans"
+                      >
+                        Wipe Tracking Journey History
+                      </button>
+                    </div>
+                  )}
                   <LeadTrackingTimeline lead={lead} />
                 </div>
               )}

@@ -24,6 +24,13 @@ import {
   SlidersHorizontal,
 } from 'lucide-react';
 import Link from 'next/link';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip as ChartTooltip,
+  ResponsiveContainer,
+} from 'recharts';
 
 interface Payment {
   id: number;
@@ -34,6 +41,9 @@ interface Payment {
   remarks: string | null;
   recordedBy: { id: number; name: string };
   receiptUrl?: string | null;
+  isDiscarded?: boolean;
+  discardReason?: string | null;
+  changeReason?: string | null;
 }
 
 interface Order {
@@ -134,6 +144,18 @@ export default function FinancePage() {
   // Verification action inputs
   const [financeRemark, setFinanceRemark] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Edit payment states
+  const [editingPayment, setEditingPayment] = useState<any | null>(null);
+  const [editPaymentAmt, setEditPaymentAmt] = useState('');
+  const [editPaymentMethod, setEditPaymentMethod] = useState('cash');
+  const [editPaymentRef, setEditPaymentRef] = useState('');
+  const [editPaymentRemarks, setEditPaymentRemarks] = useState('');
+  const [editPaymentReason, setEditPaymentReason] = useState('');
+  
+  // Discard payment states
+  const [discardingPayment, setDiscardingPayment] = useState<any | null>(null);
+  const [discardPaymentReason, setDiscardPaymentReason] = useState('');
 
   const [employees, setEmployees] = useState<any[]>([]);
   const [showOpsModal, setShowOpsModal] = useState(false);
@@ -384,6 +406,114 @@ export default function FinancePage() {
     }
   };
 
+  // Modify ledger payment action
+  const handleModifyPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedOrder || !editingPayment) return;
+
+    const amt = parseFloat(editPaymentAmt);
+    if (isNaN(amt) || amt <= 0) {
+      alert('Please enter a valid amount greater than 0.');
+      return;
+    }
+    if (!editPaymentReason.trim()) {
+      alert('Please enter a reason for this payment modification.');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/v1/finance/ledger', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          paymentId: editingPayment.id,
+          amount: amt,
+          paymentMethod: editPaymentMethod,
+          transactionRef: editPaymentRef,
+          remarks: editPaymentRemarks,
+          reason: editPaymentReason,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        // Refresh local order payments list
+        const updatedPayments = selectedOrder.payments.map((p) =>
+          p.id === editingPayment.id ? data.data : p
+        );
+        const totalPaid = updatedPayments.filter(p => !p.isDiscarded).reduce((sum, p) => sum + p.amount, 0);
+        const balanceOutstanding = Math.max(0, selectedOrder.totalValue - totalPaid);
+
+        const updatedOrder = {
+          ...selectedOrder,
+          payments: updatedPayments,
+          totalPaid,
+          balanceOutstanding,
+        };
+        setSelectedOrder(updatedOrder);
+
+        // Reset editing state
+        setEditingPayment(null);
+        setEditPaymentReason('');
+        
+        fetchLedgerData();
+        alert('Payment modified successfully.');
+      } else {
+        alert(data.message || 'Failed to modify payment.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error modifying payment.');
+    }
+  };
+
+  // Discard ledger payment action
+  const handleDiscardPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedOrder || !discardingPayment) return;
+
+    if (!discardPaymentReason.trim()) {
+      alert('Please enter a reason for discarding this payment.');
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/v1/finance/ledger?paymentId=${discardingPayment.id}&reason=${encodeURIComponent(discardPaymentReason)}`, {
+        method: 'DELETE',
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        // Refresh local order payments list by marking discarded
+        const updatedPayments = selectedOrder.payments.map((p) =>
+          p.id === discardingPayment.id ? { ...p, isDiscarded: true, discardReason: discardPaymentReason } : p
+        );
+        const totalPaid = updatedPayments.filter(p => !p.isDiscarded).reduce((sum, p) => sum + p.amount, 0);
+        const balanceOutstanding = Math.max(0, selectedOrder.totalValue - totalPaid);
+
+        const updatedOrder = {
+          ...selectedOrder,
+          payments: updatedPayments,
+          totalPaid,
+          balanceOutstanding,
+        };
+        setSelectedOrder(updatedOrder);
+
+        // Reset discarding state
+        setDiscardingPayment(null);
+        setDiscardPaymentReason('');
+
+        fetchLedgerData();
+        alert('Payment successfully discarded.');
+      } else {
+        alert(data.message || 'Failed to discard payment.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error discarding payment.');
+    }
+  };
+
   const filteredOrders = orders.filter((order) => {
     // 1. Order Status Filter
     if (filterOrderStatus !== 'all') {
@@ -629,37 +759,96 @@ export default function FinancePage() {
       )}
 
       {/* Analytics Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between">
-          <div>
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Total Booked Value</span>
-            <span className="text-xl font-extrabold text-white mt-1 block">₹{totalValue.toLocaleString('en-IN')}</span>
-          </div>
-          <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-            <FileText className="w-5 h-5" />
-          </div>
-        </div>
+      {(() => {
+        // Calculate payment methods breakdown for Pie Chart
+        const methodAmounts = verifiedOrders.reduce((acc: Record<string, number>, order) => {
+          order.payments.forEach(p => {
+            if (p.isDiscarded) return;
+            const m = p.paymentMethod || 'other';
+            acc[m] = (acc[m] || 0) + p.amount;
+          });
+          return acc;
+        }, {});
 
-        <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between">
-          <div>
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Payments Collected</span>
-            <span className="text-xl font-extrabold text-emerald-400 mt-1 block">₹{totalCollected.toLocaleString('en-IN')}</span>
-          </div>
-          <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-            <IndianRupee className="w-5 h-5" />
-          </div>
-        </div>
+        const pieChartData = Object.entries(methodAmounts).map(([method, amount]) => ({
+          name: METHOD_LABELS[method] || method.toUpperCase(),
+          value: amount,
+        })).filter(item => item.value > 0);
 
-        <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between">
-          <div>
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Outstanding Balance</span>
-            <span className="text-xl font-extrabold text-amber-500 mt-1 block">₹{totalOutstanding.toLocaleString('en-IN')}</span>
+        const PIE_COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#8B5CF6', '#EF4444', '#EC4899'];
+
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+            <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Total Order Value</span>
+                  <span className="text-xl font-extrabold text-white mt-1 block">₹{totalValue.toLocaleString('en-IN')}</span>
+                </div>
+                <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+                  <FileText className="w-5 h-5" />
+                </div>
+              </div>
+
+              <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Payments Collected</span>
+                  <span className="text-xl font-extrabold text-emerald-400 mt-1 block">₹{totalCollected.toLocaleString('en-IN')}</span>
+                </div>
+                <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                  <IndianRupee className="w-5 h-5" />
+                </div>
+              </div>
+
+              <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Outstanding Balance</span>
+                  <span className="text-xl font-extrabold text-amber-500 mt-1 block">₹{totalOutstanding.toLocaleString('en-IN')}</span>
+                </div>
+                <div className="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                  <ArrowDownLeft className="w-5 h-5" />
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between min-h-[90px]">
+              <div className="flex-1 flex flex-col justify-between h-full">
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Payment Methods</span>
+                {pieChartData.length === 0 ? (
+                  <div className="flex-1 flex items-center justify-center text-slate-500 text-[10px] italic pt-1">
+                    No payments verified
+                  </div>
+                ) : (
+                  <div className="flex-1 h-[65px] relative">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={pieChartData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={15}
+                          outerRadius={28}
+                          paddingAngle={3}
+                          dataKey="value"
+                        >
+                          {pieChartData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <ChartTooltip
+                          contentStyle={{ backgroundColor: '#111625', border: '1px solid #1f2937', borderRadius: '8px', padding: '4px' }}
+                          itemStyle={{ fontSize: '9px', color: '#fff' }}
+                          formatter={(value: any) => [`₹${Number(value).toLocaleString('en-IN')}`, '']}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-          <div className="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-            <ArrowDownLeft className="w-5 h-5" />
-          </div>
-        </div>
-      </div>
+        );
+      })()}
 
       {/* Tabs */}
       <div className="flex border-b border-slate-800">
@@ -1015,19 +1204,70 @@ export default function FinancePage() {
                         {(() => {
                           const downpaymentDoc = selectedOrder.documents?.find(d => d.docType === 'downpayment_receipt');
                           return selectedOrder.payments.map((pmt) => (
-                            <div key={pmt.id} className="p-3.5 bg-slate-900/40 border border-slate-850 rounded-xl text-xs space-y-1.5 hover:bg-slate-900/60 transition-all">
+                            <div key={pmt.id} className={`p-3.5 border rounded-xl text-xs space-y-1.5 transition-all ${pmt.isDiscarded ? 'bg-red-950/10 border-red-900/20 opacity-60' : 'bg-slate-900/40 border-slate-850 hover:bg-slate-900/60'}`}>
                               <div className="flex justify-between items-center">
-                                <span className="font-extrabold text-white text-sm">₹{pmt.amount.toLocaleString('en-IN')}</span>
-                                <span className="font-mono text-[9px] bg-slate-950 border border-slate-850 px-2 py-0.5 rounded text-slate-400 capitalize">
-                                  {METHOD_LABELS[pmt.paymentMethod] || pmt.paymentMethod}
-                                </span>
+                                <div className="flex items-center gap-2">
+                                  <span className={`font-extrabold text-sm ${pmt.isDiscarded ? 'line-through text-slate-500' : 'text-white'}`}>
+                                    ₹{pmt.amount.toLocaleString('en-IN')}
+                                  </span>
+                                  {pmt.isDiscarded && (
+                                    <span className="text-[9px] bg-rose-950/80 border border-rose-900/50 text-rose-450 px-1.5 py-0.5 rounded font-bold uppercase tracking-wide">
+                                      Discarded
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-mono text-[9px] bg-slate-950 border border-slate-850 px-2 py-0.5 rounded text-slate-400 capitalize">
+                                    {METHOD_LABELS[pmt.paymentMethod] || pmt.paymentMethod}
+                                  </span>
+                                  {!pmt.isDiscarded && hasPermission('orders:verify') && (
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setEditingPayment(pmt);
+                                          setEditPaymentAmt(pmt.amount.toString());
+                                          setEditPaymentMethod(pmt.paymentMethod);
+                                          setEditPaymentRef(pmt.transactionRef || '');
+                                          setEditPaymentRemarks(pmt.remarks || '');
+                                          setEditPaymentReason('');
+                                        }}
+                                        title="Modify Payment"
+                                        className="text-slate-400 hover:text-amber-400 p-1 hover:bg-slate-800 rounded transition-all cursor-pointer border border-transparent"
+                                      >
+                                        <SlidersHorizontal className="w-3.5 h-3.5" />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setDiscardingPayment(pmt);
+                                          setDiscardPaymentReason('');
+                                        }}
+                                        title="Discard Payment"
+                                        className="text-slate-400 hover:text-rose-500 p-1 hover:bg-slate-850 rounded transition-all cursor-pointer border border-transparent"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                               
                               {pmt.transactionRef && (
-                                <p className="text-[10px] text-slate-400 font-mono">Ref: {pmt.transactionRef}</p>
+                                <p className="text-[10px] text-slate-450 font-mono">Ref: {pmt.transactionRef}</p>
                               )}
                               {pmt.remarks && (
-                                <p className="text-[11px] text-slate-300 italic">"{pmt.remarks}"</p>
+                                <p className="text-[11px] text-slate-350 italic">"{pmt.remarks}"</p>
+                              )}
+                              {pmt.isDiscarded && pmt.discardReason && (
+                                <p className="text-[10px] text-rose-400 italic bg-rose-950/20 border border-rose-900/30 p-2 rounded-lg mt-1.5">
+                                  <strong>Discard Reason:</strong> {pmt.discardReason}
+                                </p>
+                              )}
+                              {pmt.changeReason && (
+                                <p className="text-[10px] text-amber-400 italic bg-amber-950/20 border border-amber-900/30 p-2 rounded-lg mt-1.5">
+                                  <strong>Edit Reason:</strong> {pmt.changeReason}
+                                </p>
                               )}
                               {(pmt.receiptUrl || (pmt.remarks?.includes('Initial Down Payment') && downpaymentDoc)) ? (
                                 <div className="flex items-center gap-1.5 pt-0.5">
@@ -1045,26 +1285,26 @@ export default function FinancePage() {
                               ) : null}
 
                               <div className="flex items-center justify-between text-[9px] text-slate-500 font-medium pt-1.5 border-t border-slate-800/40">
-                              <span className="flex items-center gap-1">
-                                <User className="w-2.5 h-2.5 text-slate-500" />
-                                Recorded by{' '}
-                                <Link href={`/team?userId=${pmt.recordedBy.id}`} className="text-amber-400 hover:underline font-bold">
-                                  {pmt.recordedBy.name}
-                                </Link>
-                              </span>
-                              <span className="flex items-center gap-1 font-mono">
-                                <Calendar className="w-2.5 h-2.5 text-slate-500" />
-                                {new Date(pmt.paymentDate).toLocaleDateString('en-IN', {
-                                  day: '2-digit',
-                                  month: 'short',
-                                  year: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })}
-                              </span>
+                                <span className="flex items-center gap-1">
+                                  <User className="w-2.5 h-2.5 text-slate-500" />
+                                  Recorded by{' '}
+                                  <Link href={`/team?userId=${pmt.recordedBy.id}`} className="text-amber-400 hover:underline font-bold">
+                                    {pmt.recordedBy.name}
+                                  </Link>
+                                </span>
+                                <span className="flex items-center gap-1 font-mono">
+                                  <Calendar className="w-2.5 h-2.5 text-slate-500" />
+                                  {new Date(pmt.paymentDate).toLocaleDateString('en-IN', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                </span>
+                              </div>
                             </div>
-                          </div>
-                        ))
+                          ));
                       })()}
                       </div>
                     )}
@@ -1339,6 +1579,148 @@ export default function FinancePage() {
                   className="py-2 px-5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg font-bold text-xs shadow-md"
                 >
                   Confirm & Assign Operations
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Payment Modal */}
+      {editingPayment && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/75 backdrop-blur-sm px-4">
+          <div className="w-full max-w-md bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-white">Modify Payment Record</h3>
+              <button type="button" onClick={() => setEditingPayment(null)} className="text-slate-400 hover:text-white cursor-pointer border border-transparent">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleModifyPayment} className="p-6 space-y-4">
+              <div>
+                <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Receipt Amount (₹) *</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  required
+                  value={editPaymentAmt}
+                  onChange={(e) => setEditPaymentAmt(e.target.value)}
+                  className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Payment Method *</label>
+                <select
+                  required
+                  value={editPaymentMethod}
+                  onChange={(e) => setEditPaymentMethod(e.target.value)}
+                  className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                >
+                  {PAYMENT_METHODS.map((m) => (
+                    <option key={m.value} value={m.value}>{m.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Transaction Reference</label>
+                <input
+                  type="text"
+                  value={editPaymentRef}
+                  onChange={(e) => setEditPaymentRef(e.target.value)}
+                  placeholder="e.g. Bank TXN, UPI ID, Cheque number"
+                  className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Remarks</label>
+                <textarea
+                  value={editPaymentRemarks}
+                  onChange={(e) => setEditPaymentRemarks(e.target.value)}
+                  rows={2}
+                  className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none resize-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-semibold uppercase text-amber-500 mb-1">Reason for Modification *</label>
+                <textarea
+                  required
+                  value={editPaymentReason}
+                  onChange={(e) => setEditPaymentReason(e.target.value)}
+                  placeholder="Explain why this payment record is being changed..."
+                  rows={2}
+                  className="block w-full px-3 py-2 bg-slate-955 border border-amber-900/40 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none resize-none"
+                />
+              </div>
+
+              <div className="flex gap-3 border-t border-slate-800/80 pt-4 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setEditingPayment(null)}
+                  className="py-2 px-4 bg-slate-900 border border-slate-800 text-slate-400 rounded-lg font-bold text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="py-2 px-5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Discard Payment Modal */}
+      {discardingPayment && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/75 backdrop-blur-sm px-4">
+          <div className="w-full max-w-md bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-rose-500 flex items-center gap-1.5">
+                <AlertTriangle className="w-4 h-4 text-rose-500" />
+                <span>Discard Payment Record</span>
+              </h3>
+              <button type="button" onClick={() => setDiscardingPayment(null)} className="text-slate-400 hover:text-white cursor-pointer border border-transparent">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleDiscardPayment} className="p-6 space-y-4">
+              <p className="text-xs text-slate-400 leading-relaxed bg-rose-950/20 border border-rose-900/30 p-3 rounded-lg text-rose-350">
+                Are you sure you want to discard the payment of <strong>₹{discardingPayment.amount.toLocaleString('en-IN')}</strong>? This action cannot be undone, and the order balance outstanding will be automatically adjusted.
+              </p>
+
+              <div>
+                <label className="block text-[10px] font-semibold uppercase text-rose-500 mb-1">Reason for Discarding *</label>
+                <textarea
+                  required
+                  value={discardPaymentReason}
+                  onChange={(e) => setDiscardPaymentReason(e.target.value)}
+                  placeholder="Provide a mandatory reason why this payment is being discarded..."
+                  rows={3}
+                  className="block w-full px-3 py-2 bg-slate-955 border border-rose-900/60 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none resize-none"
+                />
+              </div>
+
+              <div className="flex gap-3 border-t border-slate-800/80 pt-4 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setDiscardingPayment(null)}
+                  className="py-2 px-4 bg-slate-900 border border-slate-800 text-slate-400 rounded-lg font-bold text-xs font-sans"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="py-2 px-5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg font-bold text-xs shadow-md font-sans"
+                >
+                  Confirm Discard
                 </button>
               </div>
             </form>

@@ -209,6 +209,10 @@ export default function LeadsPage() {
   const [bulkConsultantId, setBulkConsultantId] = useState<string>('UNCHANGED');
   const [bulkAssigning, setBulkAssigning] = useState(false);
 
+  // Bulk Stage States
+  const [showBulkStageModal, setShowBulkStageModal] = useState(false);
+  const [bulkStage, setBulkStage] = useState<string>('UNCHANGED');
+
   const handleArbitrarySelectSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const count = parseInt(customSelectVal, 10);
@@ -451,6 +455,78 @@ export default function LeadsPage() {
     } catch (err) {
       console.error(err);
       alert('An error occurred during bulk assignment.');
+    } finally {
+      setBulkAssigning(false);
+    }
+  };
+
+  const handleBulkStageSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedIds.length === 0) return;
+
+    if (bulkStage === 'UNCHANGED') {
+      alert('Please select a pipeline stage to apply.');
+      return;
+    }
+
+    try {
+      setBulkAssigning(true);
+      const payload: any = {
+        leadIds: selectedIds,
+        status: Number(bulkStage)
+      };
+
+      const res = await fetch('/api/v1/leads/bulk-assign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      alert(data.message || 'Leads status updated successfully.');
+
+      if (data.success) {
+        setShowBulkStageModal(false);
+        setSelectedIds([]);
+        fetchLeads();
+      }
+    } catch (err) {
+      console.error(err);
+      alert('An error occurred during bulk status update.');
+    } finally {
+      setBulkAssigning(false);
+    }
+  };
+
+  const handleBulkRevertNotInterested = async () => {
+    if (selectedIds.length === 0) return;
+    if (!window.confirm(`Are you sure you want to revert the ${selectedIds.length} selected lead(s) back to "Fresh Lead" stage?`)) {
+      return;
+    }
+
+    try {
+      setBulkAssigning(true);
+      const payload: any = {
+        leadIds: selectedIds,
+        status: 1 // Stage 1 is Fresh Lead
+      };
+
+      const res = await fetch('/api/v1/leads/bulk-assign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      alert(data.message || 'Leads reverted to Fresh Lead successfully.');
+
+      if (data.success) {
+        setSelectedIds([]);
+        fetchLeads();
+      }
+    } catch (err) {
+      console.error(err);
+      alert('An error occurred while reverting leads.');
     } finally {
       setBulkAssigning(false);
     }
@@ -1043,23 +1119,42 @@ export default function LeadsPage() {
               <strong>{selectedIds.length}</strong> leads selected {selectedIds.length === total ? "(all matching leads across pages)" : ""}
             </span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 flex-wrap">
             {(hasPermission('leads:assign') || user?.role === 'admin' || user?.role === 'director' || user?.role?.startsWith('admin:')) && (
-              <button
-                onClick={() => setShowBulkAssignModal(true)}
-                className="py-2 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
-              >
-                <UserCheck className="w-3.5 h-3.5" />
-                <span>Assign Team ({selectedIds.length})</span>
-              </button>
+              <>
+                <button
+                  onClick={() => setShowBulkAssignModal(true)}
+                  className="py-2 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer font-sans"
+                >
+                  <UserCheck className="w-3.5 h-3.5" />
+                  <span>Assign Team</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setBulkStage('UNCHANGED');
+                    setShowBulkStageModal(true);
+                  }}
+                  className="py-2 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-lg font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer font-sans"
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <span>Change Stage</span>
+                </button>
+                <button
+                  onClick={handleBulkRevertNotInterested}
+                  className="py-2 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer font-sans"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Revert to Fresh</span>
+                </button>
+              </>
             )}
             {hasPermission('leads:delete') && (
               <button
                 onClick={handleBulkDelete}
-                className="py-2 px-4 bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/50 rounded-lg font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                className="py-2 px-4 bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/50 rounded-lg font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer font-sans"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                <span>Delete Selected Leads</span>
+                <span>Delete Leads</span>
               </button>
             )}
           </div>
@@ -1144,7 +1239,18 @@ export default function LeadsPage() {
                   return (
                     <tr
                       key={lead.id}
-                      className={`hover:bg-slate-900/20 transition-all ${
+                      onClick={(e) => {
+                        const target = e.target as HTMLElement;
+                        if (
+                          target.closest('a') ||
+                          target.closest('button') ||
+                          target.closest('input')
+                        ) {
+                          return;
+                        }
+                        window.location.href = `/leads/${lead.id}`;
+                      }}
+                      className={`hover:bg-slate-900/30 transition-all cursor-pointer ${
                         lead.isUnreachable ? 'bg-red-500/[0.01] border-l-2 border-l-red-500' : ''
                       } ${
                         !lead.isActive ? 'opacity-70 border-l-2 border-l-slate-650 bg-slate-900/[0.08]' : ''
@@ -1225,13 +1331,6 @@ export default function LeadsPage() {
                               <Truck className="w-4.5 h-4.5" />
                             </button>
                           )}
-                          <Link
-                            href={`/leads/${lead.id}`}
-                            className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white transition-all"
-                            title="View Lead Details"
-                          >
-                            <Eye className="w-4.5 h-4.5" />
-                          </Link>
                           {hasPermission('leads:edit') && (
                             <Link
                               href={`/leads/${lead.id}?edit=true`}
@@ -1418,7 +1517,7 @@ export default function LeadsPage() {
                             <select
                               value={columnMapping[field.key] || ''}
                               onChange={(e) => setColumnMapping({ ...columnMapping, [field.key]: e.target.value })}
-                              className="block w-full px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded-md text-slate-300 text-xs focus:ring-1 focus:ring-amber-500"
+                              className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none capitalize"
                             >
                               <option value="">-- Ignore / Unmapped --</option>
                               {csvHeaders.map((header) => (
@@ -1659,6 +1758,75 @@ export default function LeadsPage() {
                     <>
                       <Check className="w-3.5 h-3.5" />
                       <span>Apply Assignment</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Pipeline Stage Shift Modal */}
+      {showBulkStageModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="w-full max-w-md bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+                  <SlidersHorizontal className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-white">Bulk Change Pipeline Stage</h3>
+                  <p className="text-[11px] text-slate-400">Update stage for {selectedIds.length} selected lead(s).</p>
+                </div>
+              </div>
+              <button type="button" onClick={() => setShowBulkStageModal(false)} className="text-slate-400 hover:text-white cursor-pointer border border-transparent">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleBulkStageSubmit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                  Select New Pipeline Stage
+                </label>
+                <select
+                  value={bulkStage}
+                  onChange={(e) => setBulkStage(e.target.value)}
+                  className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500 focus:outline-none"
+                >
+                  <option value="UNCHANGED">-- Select Target Stage --</option>
+                  {Object.entries(STAGE_BADGES).map(([id, badge]) => (
+                    <option key={id} value={id}>
+                      {badge.name} (Stage {id})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="pt-4 border-t border-slate-800 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowBulkStageModal(false)}
+                  className="py-2 px-4 bg-slate-900 border border-slate-800 text-slate-400 rounded-xl font-bold text-xs cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={bulkAssigning}
+                  className="py-2 px-5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  {bulkAssigning ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Shifting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Shift Stage</span>
                     </>
                   )}
                 </button>

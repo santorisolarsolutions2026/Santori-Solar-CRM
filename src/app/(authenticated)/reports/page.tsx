@@ -132,6 +132,48 @@ export default function ReportsPage() {
   const [modalData, setModalData] = useState<{ employee: any; results: any[] } | null>(null);
   const [modalLoading, setModalLoading] = useState(false);
 
+  // Timeline calendar modal states
+  const [selectedTimelineEmpId, setSelectedTimelineEmpId] = useState<number | null>(null);
+  const [selectedTimelineEmpName, setSelectedTimelineEmpName] = useState('');
+  const [timelineEvents, setTimelineEvents] = useState<any[]>([]);
+  const [timelineLoading, setTimelineLoading] = useState(false);
+
+  const fetchTimelineData = async (empId: number) => {
+    try {
+      setTimelineLoading(true);
+      let url = `/api/v1/reports/employee-audit/timeline?userId=${empId}`;
+      if (filterStartDate && filterEndDate) {
+        url += `&startDate=${filterStartDate}&endDate=${filterEndDate}`;
+      }
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.success) {
+        setTimelineEvents(data.data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setTimelineLoading(false);
+    }
+  };
+
+  const handleOpenTimelineModal = (empId: number, name: string) => {
+    setTimelineEvents([]);
+    setSelectedTimelineEmpName(name);
+    setSelectedTimelineEmpId(empId);
+  };
+
+  const handleCloseTimelineModal = () => {
+    setSelectedTimelineEmpId(null);
+    setTimelineEvents([]);
+  };
+
+  useEffect(() => {
+    if (selectedTimelineEmpId !== null) {
+      fetchTimelineData(selectedTimelineEmpId);
+    }
+  }, [selectedTimelineEmpId]);
+
   const fetchData = async () => {
     try {
       const fetchPromises: Promise<any>[] = [
@@ -559,13 +601,15 @@ export default function ReportsPage() {
 
                 if (activeDeptTab === 'PSA') {
                   return (
-                    <table className="w-full text-left border-collapse min-w-[800px]">
+                    <table className="w-full text-left border-collapse min-w-[950px]">
                       <thead>
                         <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider">
                           <th className="pb-3 px-4 text-left">Employee Name</th>
                           <th className="pb-3 px-4 text-left">Designation</th>
                           <th className="pb-3 px-4 text-center">Leads Worked</th>
                           <th className="pb-3 px-4 text-center">Meetings Booked</th>
+                          <th className="pb-3 px-4 text-center">Meetings Done</th>
+                          <th className="pb-3 px-4 text-center">Cancelled Meetings</th>
                           <th className="pb-3 px-4 text-center">Sales Converted</th>
                           <th className="pb-3 px-4 text-right">Conversion Rate</th>
                         </tr>
@@ -573,7 +617,17 @@ export default function ReportsPage() {
                       <tbody className="divide-y divide-slate-800/40 text-sm">
                         {employeesList.map((emp: any) => (
                           <tr key={emp.id} className="hover:bg-slate-900/10 transition-colors">
-                            <td className="py-3.5 px-4 font-bold text-white">{emp.name}</td>
+                            <td className="py-3.5 px-4 font-bold text-white flex items-center gap-2">
+                              <span>{emp.name}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenTimelineModal(emp.id, emp.name)}
+                                className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-amber-400 transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium"
+                                title="View Daily Activity Timeline & Calendar"
+                              >
+                                <Calendar className="w-3 h-3 text-amber-500" /> Timeline
+                              </button>
+                            </td>
                             <td className="py-3.5 px-4 text-slate-400 font-medium text-xs">{emp.designation}</td>
                             <td className="py-3.5 px-4 text-center">
                               <button
@@ -589,6 +643,22 @@ export default function ReportsPage() {
                                 className="font-extrabold text-cyan-400 hover:text-cyan-300 hover:underline outline-none cursor-pointer"
                               >
                                 {emp.metrics.meetingsBooked}
+                              </button>
+                            </td>
+                            <td className="py-3.5 px-4 text-center">
+                              <button
+                                onClick={() => handleOpenDetailsModal(emp.id, 'meetings_done')}
+                                className="font-extrabold text-sky-400 hover:text-sky-300 hover:underline outline-none cursor-pointer"
+                              >
+                                {emp.metrics.meetingsDone || 0}
+                              </button>
+                            </td>
+                            <td className="py-3.5 px-4 text-center">
+                              <button
+                                onClick={() => handleOpenDetailsModal(emp.id, 'meetings_cancelled')}
+                                className="font-extrabold text-rose-455 hover:text-rose-350 hover:underline outline-none cursor-pointer"
+                              >
+                                {emp.metrics.meetingsCancelled || 0}
                               </button>
                             </td>
                             <td className="py-3.5 px-4 text-center">
@@ -623,7 +693,17 @@ export default function ReportsPage() {
                       <tbody className="divide-y divide-slate-800/40 text-sm">
                         {employeesList.map((emp: any) => (
                           <tr key={emp.id} className="hover:bg-slate-900/10 transition-colors">
-                            <td className="py-3.5 px-4 font-bold text-white">{emp.name}</td>
+                            <td className="py-3.5 px-4 font-bold text-white flex items-center gap-2">
+                              <span>{emp.name}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenTimelineModal(emp.id, emp.name)}
+                                className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-amber-400 transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium"
+                                title="View Daily Activity Timeline & Calendar"
+                              >
+                                <Calendar className="w-3 h-3 text-amber-500" /> Timeline
+                              </button>
+                            </td>
                             <td className="py-3.5 px-4 text-slate-400 font-medium text-xs">{emp.designation}</td>
                             <td className="py-3.5 px-4 text-center">
                               <button
@@ -673,7 +753,17 @@ export default function ReportsPage() {
                       <tbody className="divide-y divide-slate-800/40 text-sm">
                         {employeesList.map((emp: any) => (
                           <tr key={emp.id} className="hover:bg-slate-900/10 transition-colors">
-                            <td className="py-3.5 px-4 font-bold text-white">{emp.name}</td>
+                            <td className="py-3.5 px-4 font-bold text-white flex items-center gap-2">
+                              <span>{emp.name}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenTimelineModal(emp.id, emp.name)}
+                                className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-amber-400 transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium"
+                                title="View Daily Activity Timeline & Calendar"
+                              >
+                                <Calendar className="w-3 h-3 text-amber-500" /> Timeline
+                              </button>
+                            </td>
                             <td className="py-3.5 px-4 text-slate-400 font-medium text-xs">{emp.designation}</td>
                             <td className="py-3.5 px-4 text-center">
                               <button
@@ -707,7 +797,17 @@ export default function ReportsPage() {
                       <tbody className="divide-y divide-slate-800/40 text-sm">
                         {employeesList.map((emp: any) => (
                           <tr key={emp.id} className="hover:bg-slate-900/10 transition-colors">
-                            <td className="py-3.5 px-4 font-bold text-white">{emp.name}</td>
+                            <td className="py-3.5 px-4 font-bold text-white flex items-center gap-2">
+                              <span>{emp.name}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenTimelineModal(emp.id, emp.name)}
+                                className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-amber-400 transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium"
+                                title="View Daily Activity Timeline & Calendar"
+                              >
+                                <Calendar className="w-3 h-3 text-amber-500" /> Timeline
+                              </button>
+                            </td>
                             <td className="py-3.5 px-4 text-slate-400 font-medium text-xs">{emp.designation}</td>
                             <td className="py-3.5 px-4 text-center">
                               <button
@@ -739,7 +839,17 @@ export default function ReportsPage() {
                       <tbody className="divide-y divide-slate-800/40 text-sm">
                         {employeesList.map((emp: any) => (
                           <tr key={emp.id} className="hover:bg-slate-900/10 transition-colors">
-                            <td className="py-3.5 px-4 font-bold text-white">{emp.name}</td>
+                            <td className="py-3.5 px-4 font-bold text-white flex items-center gap-2">
+                              <span>{emp.name}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenTimelineModal(emp.id, emp.name)}
+                                className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-amber-400 transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium"
+                                title="View Daily Activity Timeline & Calendar"
+                              >
+                                <Calendar className="w-3 h-3 text-amber-500" /> Timeline
+                              </button>
+                            </td>
                             <td className="py-3.5 px-4 text-slate-400 font-medium text-xs">{emp.designation}</td>
                             <td className="py-3.5 px-4 text-center">
                               <button
@@ -806,7 +916,7 @@ export default function ReportsPage() {
                 <div className="overflow-x-auto">
                   {/* Render detail view lists based on type */}
                   {(activeDetailType === 'leads_worked' || activeDetailType === 'meetings_converted') && (
-                    <table className="w-full text-left border-collapse min-w-[700px]">
+                    <table className="w-full text-left border-collapse min-w-[850px]">
                       <thead>
                         <tr className="border-b border-slate-850 text-slate-400 text-xs font-semibold uppercase tracking-wider">
                           <th className="pb-3 px-3">Lead Code</th>
@@ -814,6 +924,7 @@ export default function ReportsPage() {
                           <th className="pb-3 px-3">Location</th>
                           <th className="pb-3 px-3">Pipeline Status</th>
                           <th className="pb-3 px-3">Assigned Team</th>
+                          <th className="pb-3 px-3">Your Actions/Logs</th>
                           <th className="pb-3 px-3 text-right">Created Date</th>
                         </tr>
                       </thead>
@@ -839,6 +950,27 @@ export default function ReportsPage() {
                                 <span>Cons: {lead.consultant?.name || 'None'}</span>
                               </div>
                             </td>
+                            <td className="py-3 px-3 text-slate-400 max-w-[280px]">
+                              {lead.activityLogs && lead.activityLogs.length > 0 ? (
+                                <div className="space-y-1 text-[10px]">
+                                  {lead.activityLogs.map((log: any) => (
+                                    <div key={log.id} className="bg-slate-900/70 p-1.5 rounded border border-slate-800/80 hover:bg-slate-800/45 transition-colors">
+                                      <div className="flex justify-between items-center gap-2 mb-0.5">
+                                        <span className="text-[8px] text-slate-500 font-mono">{new Date(log.createdAt).toLocaleDateString()}</span>
+                                        {log.fromStatus !== log.toStatus && (
+                                          <span className="text-[9px] text-amber-400/90 font-bold font-mono">Stage: {log.fromStatus} → {log.toStatus}</span>
+                                        )}
+                                      </div>
+                                      {log.remark && (
+                                        <span className="text-slate-300 block italic leading-relaxed">&ldquo;{log.remark}&rdquo;</span>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <span className="text-slate-660 text-[10px] italic">No active logs in range</span>
+                              )}
+                            </td>
                             <td className="py-3 px-3 text-right text-slate-500 font-mono">
                               {new Date(lead.createdAt).toLocaleDateString('en-IN')}
                             </td>
@@ -848,7 +980,7 @@ export default function ReportsPage() {
                     </table>
                   )}
 
-                  {activeDetailType === 'meetings_booked' && (
+                  {['meetings_booked', 'meetings_done', 'meetings_cancelled'].includes(activeDetailType) && (
                     <table className="w-full text-left border-collapse min-w-[700px]">
                       <thead>
                         <tr className="border-b border-slate-850 text-slate-400 text-xs font-semibold uppercase tracking-wider">
@@ -918,12 +1050,101 @@ export default function ReportsPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-slate-800 bg-slate-950/20 text-right">
+            <div className="p-4 border-t border-slate-800 bg-slate-955/20 text-right">
               <button
                 onClick={handleCloseAuditModal}
-                className="py-2 px-5 bg-slate-900 border border-slate-800 text-slate-350 hover:text-white rounded-lg font-bold text-xs transition-all cursor-pointer outline-none"
+                className="py-2 px-5 bg-slate-900 border border-slate-800 text-slate-355 hover:text-white rounded-lg font-bold text-xs transition-all cursor-pointer outline-none"
               >
                 Close Audit View
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Activity Timeline Calendar Modal */}
+      {selectedTimelineEmpId !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in font-sans">
+          <div className="bg-[#111625] border border-slate-800 rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-slate-800 flex justify-between items-start gap-4">
+              <div>
+                <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Employee Performance Audit</span>
+                <h2 className="text-lg font-bold text-white mt-1 flex items-center gap-2">
+                  <span>{selectedTimelineEmpName}'s Task Timeline Calendar</span>
+                </h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Chronological trail of daily check-ins, pipeline updates, and meetings.
+                </p>
+              </div>
+              <button
+                onClick={handleCloseTimelineModal}
+                className="p-1.5 rounded-lg border border-slate-800 bg-slate-900/60 text-slate-400 hover:text-white transition-all cursor-pointer outline-none"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 flex-1 overflow-y-auto min-h-[350px] space-y-4">
+              {timelineLoading ? (
+                <div className="flex flex-col items-center justify-center py-20 text-slate-500 text-xs italic gap-2">
+                  <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
+                  <span>Aggregating task trail from database logs...</span>
+                </div>
+              ) : timelineEvents.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 text-slate-500 text-xs italic font-sans">
+                  <p>No logged check-ins, status modifications, or meetings in this timeframe.</p>
+                </div>
+              ) : (
+                <div className="relative border-l border-slate-800 ml-4 pl-6 space-y-6">
+                  {timelineEvents.map((evt: any) => {
+                    const isCheckIn = evt.type === 'check_in';
+                    const isCheckOut = evt.type === 'check_out';
+                    const isLog = evt.type === 'log';
+                    const isMeet = evt.type === 'meeting';
+
+                    const theme = isCheckIn ? { border: 'border-emerald-500', bg: 'bg-emerald-500/10', text: 'text-emerald-400' } :
+                                  isCheckOut ? { border: 'border-teal-500', bg: 'bg-teal-500/10', text: 'text-teal-400' } :
+                                  isLog ? { border: 'border-amber-500', bg: 'bg-amber-500/10', text: 'text-amber-400' } :
+                                  isMeet ? { border: 'border-cyan-500', bg: 'bg-cyan-500/10', text: 'text-cyan-400' } :
+                                  { border: 'border-purple-500', bg: 'bg-purple-500/10', text: 'text-purple-400' };
+
+                    return (
+                      <div key={evt.id} className="relative group">
+                        {/* Dot indicator */}
+                        <div className={`absolute -left-9 top-1 w-5 h-5 rounded-full border-2 ${theme.border} bg-[#111625] flex items-center justify-center`} />
+                        
+                        <div className="bg-slate-900/35 border border-slate-850 hover:border-slate-800 p-4 rounded-xl space-y-1.5 transition-colors">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <span className={`text-xs font-bold uppercase tracking-wider ${theme.text}`}>{evt.title}</span>
+                            <span className="text-[10px] text-slate-500 font-mono font-medium">
+                              {new Date(evt.timestamp).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-300 leading-relaxed font-sans">{evt.description}</p>
+                          
+                          {evt.meta && (evt.meta.notes || evt.meta.remark) && (
+                            <div className="text-[11px] bg-slate-950/60 border border-slate-900/60 px-3 py-1.5 rounded-lg text-slate-400 italic">
+                              &ldquo;{evt.meta.notes || evt.meta.remark}&rdquo;
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-slate-800 bg-slate-955/20 text-right">
+              <button
+                type="button"
+                onClick={handleCloseTimelineModal}
+                className="py-2 px-5 bg-slate-900 border border-slate-800 text-slate-355 hover:text-white rounded-lg font-bold text-xs transition-all cursor-pointer outline-none"
+              >
+                Close Timeline
               </button>
             </div>
           </div>

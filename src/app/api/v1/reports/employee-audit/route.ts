@@ -66,6 +66,8 @@ export async function GET(req: Request) {
           id: true,
           leadId: true,
           assignedExecutiveId: true,
+          meetingStartedAt: true,
+          meetingEndedAt: true,
         }
       }),
       prisma.order.findMany({
@@ -184,6 +186,17 @@ export async function GET(req: Request) {
         );
       });
 
+      const empMeetingsDone = empMeetings.filter(m => {
+        const hasTimestamps = m.meetingStartedAt !== null || m.meetingEndedAt !== null;
+        const lead = leads.find(l => l.id === m.leadId);
+        return hasTimestamps || (lead && (lead.status === 9 || lead.status === 13));
+      });
+
+      const empMeetingsCancelled = empMeetings.filter(m => {
+        const lead = leads.find(l => l.id === m.leadId);
+        return m.meetingStartedAt === null && lead && ![8, 9, 13].includes(lead.status);
+      });
+
       const leadsWorked = empLeads.length;
       const meetingsBooked = empMeetings.length;
       const meetingsConverted = empConvertedLeads.length;
@@ -201,6 +214,8 @@ export async function GET(req: Request) {
         metrics: {
           leadsWorked,
           meetingsBooked,
+          meetingsDone: empMeetingsDone.length,
+          meetingsCancelled: empMeetingsCancelled.length,
           meetingsConverted,
           conversionRate,
           ordersPunched: empOrdersPunched.length,

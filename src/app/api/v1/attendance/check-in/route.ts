@@ -50,14 +50,19 @@ export async function POST(req: Request) {
       ? location
       : (dbUser?.loginLocation || location || 'Unknown Location');
 
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const isLateCheckIn = hours > 10 || (hours === 10 && minutes > 15);
+    const initialStatus = isLateCheckIn ? 'half_day' : 'checked_in';
+
     const attendance = await attendanceModel.create({
       data: {
         userId: userPayload.id,
         date: todayDate,
         checkIn: now,
         checkInLocation: resolvedLocation,
-        status: 'checked_in',
-        notes: notes || undefined,
+        status: initialStatus,
+        notes: notes || (isLateCheckIn ? 'Late check-in (after 10:15 AM). Automatically marked as Half Day.' : undefined),
       },
     });
 

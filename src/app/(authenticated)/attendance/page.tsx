@@ -16,6 +16,8 @@ import {
   ShieldCheck,
   FileSpreadsheet,
   User,
+  X,
+  SlidersHorizontal,
 } from 'lucide-react';
 
 interface AttendanceRecord {
@@ -74,6 +76,106 @@ export default function AttendancePage() {
   const [employees, setEmployees] = useState<any[]>([]);
   const [monthlyLoading, setMonthlyLoading] = useState(false);
 
+  // Holidays and Overrides states
+  const [holidays, setHolidays] = useState<any[]>([]);
+  const [showHolidayModal, setShowHolidayModal] = useState(false);
+  const [newHolidayName, setNewHolidayName] = useState('');
+  const [newHolidayDate, setNewHolidayDate] = useState('');
+
+  const [overrideUserId, setOverrideUserId] = useState<number | null>(null);
+  const [overrideDate, setOverrideDate] = useState('');
+  const [overrideStatus, setOverrideStatus] = useState('');
+  const [showOverrideModal, setShowOverrideModal] = useState(false);
+
+  const fetchHolidays = async () => {
+    try {
+      const res = await fetch('/api/v1/attendance/holidays');
+      const data = await res.json();
+      if (data.success) {
+        setHolidays(data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching holidays:', err);
+    }
+  };
+
+  const handleCreateHoliday = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newHolidayName.trim() || !newHolidayDate) {
+      alert('Please fill out all holiday fields.');
+      return;
+    }
+    try {
+      const res = await fetch('/api/v1/attendance/holidays', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dateStr: newHolidayDate, name: newHolidayName })
+      });
+      const data = await res.json();
+      alert(data.message);
+      if (data.success) {
+        setNewHolidayName('');
+        setNewHolidayDate('');
+        fetchHolidays();
+        fetchAttendanceData();
+        fetchMonthlyRecords();
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error creating holiday.');
+    }
+  };
+
+  const handleDeleteHoliday = async (id: number) => {
+    if (!window.confirm('Are you sure you want to remove this Gazetted Holiday?')) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/v1/attendance/holidays?id=${id}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      alert(data.message);
+      if (data.success) {
+        fetchHolidays();
+        fetchAttendanceData();
+        fetchMonthlyRecords();
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error deleting holiday.');
+    }
+  };
+
+  const handleOverrideSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!overrideUserId || !overrideDate || !overrideStatus) {
+      alert('Missing override parameters.');
+      return;
+    }
+    try {
+      const res = await fetch('/api/v1/attendance/admin-override', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: overrideUserId,
+          dateStr: overrideDate,
+          status: overrideStatus
+        })
+      });
+      const data = await res.json();
+      alert(data.message);
+      if (data.success) {
+        setShowOverrideModal(false);
+        fetchAttendanceData();
+        fetchMonthlyRecords();
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error overriding attendance.');
+    }
+  };
+
   const fetchEmployees = async () => {
     try {
       const res = await fetch('/api/v1/users');
@@ -109,6 +211,7 @@ export default function AttendancePage() {
   useEffect(() => {
     if (user) {
       fetchEmployees();
+      fetchHolidays();
     }
   }, [user]);
 
@@ -235,6 +338,13 @@ export default function AttendancePage() {
 
   const monthlyDays = getDaysInMonthList(selectedMonth, selectedYear);
   const presentDaysCount = monthlyRecords.length;
+
+  const totalWorkingDays = monthlyDays.filter(dayDate => {
+    const dayStr = dayDate.toISOString().split('T')[0];
+    const isMon = dayDate.getUTCDay() === 1;
+    const isHol = holidays.some(h => h.date.split('T')[0] === dayStr);
+    return !isMon && !isHol;
+  }).length;
   
   const totalWorkMin = monthlyRecords.reduce((sum, r) => sum + (r.workDurationMin || 0), 0);
   const totalWorkHoursStr = `${Math.floor(totalWorkMin / 60)}h ${totalWorkMin % 60}m`;
@@ -243,7 +353,58 @@ export default function AttendancePage() {
   const avgWorkMin = completedDays.length > 0 ? Math.round(totalWorkMin / completedDays.length) : 0;
   const avgWorkHoursStr = `${Math.floor(avgWorkMin / 60)}h ${avgWorkMin % 60}m`;
 
-  const lateCheckinsCount = monthlyRecords.filter(r => r.status === 'late').length;
+  const lateCheckinsCount = monthlyRecords.filter(r => r.status === 'late' || r.notes?.includes('Late check-in')).length;
+
+  const renderStatusBadge = (record: any, isFuture: boolean, isWeekend: boolean, dayStr: string) => {
+    const isHoliday = holidays.some(h => h.date.split('T')[0] === dayStr);
+    const holidayName = holidays.find(h => h.date.split('T')[0] === dayStr)?.name;
+
+    if (record) {
+      if (record.status === 'completed' || record.checkOut) {
+        return (
+          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-emerald-500/10 text-emerald-400 border-emerald-500/20 uppercase tracking-wider">
+            Completed
+          </span>
+        );
+      } else if (record.status === 'half_day') {
+        return (
+          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-orange-500/10 text-orange-400 border-orange-500/20 uppercase tracking-wider">
+            Half Day ⚠️
+          </span>
+        );
+      } else {
+        return (
+          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-amber-500/10 text-amber-400 border-amber-500/20 uppercase tracking-wider animate-pulse">
+            Active
+          </span>
+        );
+      }
+    } else if (isFuture) {
+      return (
+        <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full border bg-slate-900/40 text-slate-650 border-slate-900/60 uppercase tracking-wider">
+          Future
+        </span>
+      );
+    } else if (isHoliday) {
+      return (
+        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-blue-500/10 text-blue-450 border-blue-500/20 uppercase tracking-wider" title={holidayName}>
+          Holiday 🌟
+        </span>
+      );
+    } else if (isWeekend) {
+      return (
+        <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full border bg-slate-950 text-slate-500 border-slate-850 uppercase tracking-wider">
+          Weekly Off
+        </span>
+      );
+    } else {
+      return (
+        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-rose-500/10 text-rose-450 border-rose-500/20 uppercase tracking-wider">
+          Absent
+        </span>
+      );
+    }
+  };
 
   const hasAttendanceAccess = user?.role === 'admin' || user?.role?.startsWith('admin:') || hasPermission('attendance:view');
 
@@ -264,7 +425,7 @@ export default function AttendancePage() {
   return (
     <div className="space-y-6">
       {/* Title Header & Daily Control */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-white tracking-wide flex items-center gap-2.5">
             <Clock className="w-6 h-6 text-amber-400" />
@@ -275,8 +436,22 @@ export default function AttendancePage() {
           </p>
         </div>
 
-        {/* Quick Personal Action Box */}
-        <div className="p-3.5 bg-gradient-to-r from-slate-900 via-[#131b2e] to-slate-900 border border-slate-800 rounded-2xl flex items-center gap-4 shadow-lg shrink-0">
+        <div className="flex items-center gap-3 self-end lg:self-auto flex-wrap">
+          {user?.role === 'admin' && (
+            <button
+              onClick={() => {
+                fetchHolidays();
+                setShowHolidayModal(true);
+              }}
+              className="py-2.5 px-4 bg-slate-900 border border-slate-800 text-slate-350 hover:text-white rounded-2xl font-bold text-xs flex items-center gap-1.5 cursor-pointer hover:border-slate-700 transition-all font-sans"
+            >
+              <Calendar className="w-4 h-4 text-amber-500" />
+              <span>Manage Holidays</span>
+            </button>
+          )}
+
+          {/* Quick Personal Action Box */}
+          <div className="p-3.5 bg-gradient-to-r from-slate-900 via-[#131b2e] to-slate-900 border border-slate-800 rounded-2xl flex items-center gap-4 shadow-lg shrink-0">
           <div className="text-right">
             <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block">Today's Status</span>
             <span className={`text-xs font-bold font-mono ${
@@ -311,6 +486,7 @@ export default function AttendancePage() {
           )}
         </div>
       </div>
+    </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -625,7 +801,7 @@ export default function AttendancePage() {
                 <div>
                   <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block">Days Present</span>
                   <span className="text-lg font-extrabold text-emerald-400 mt-1 block font-mono">
-                    {presentDaysCount} <span className="text-xs text-slate-500 font-sans font-normal">/ {monthlyDays.length} days</span>
+                    {presentDaysCount} <span className="text-xs text-slate-500 font-sans font-normal">/ {totalWorkingDays} working days</span>
                   </span>
                 </div>
                 <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
@@ -683,11 +859,11 @@ export default function AttendancePage() {
                       <th className="py-3 px-4">Locations & Remarks</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/60 text-xs font-mono">
+                  <tbody className="divide-y divide-slate-800/60 text-xs font-medium text-slate-300">
                     {monthlyDays.map((dayDate) => {
                       const dayStr = dayDate.toISOString().split('T')[0];
                       const record = monthlyRecords.find(r => r.date.split('T')[0] === dayStr);
-                      const isWeekend = dayDate.getUTCDay() === 0 || dayDate.getUTCDay() === 6;
+                      const isWeekend = dayDate.getUTCDay() === 1; // Monday Weekly Off only
                       
                       const todayDateStr = new Date().toISOString().split('T')[0];
                       const isFuture = dayStr > todayDateStr;
@@ -704,50 +880,35 @@ export default function AttendancePage() {
                             <span className="text-[10px] text-slate-500 font-medium">{weekdayDisplay}</span>
                           </td>
                           <td className="py-3 px-4 font-sans">
-                            {record ? (
-                              record.status === 'completed' || record.checkOut ? (
-                                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-emerald-500/10 text-emerald-400 border-emerald-500/20 uppercase tracking-wider">
-                                  Completed
-                                </span>
-                              ) : record.status === 'late' ? (
-                                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-yellow-500/10 text-yellow-400 border-yellow-500/20 uppercase tracking-wider">
-                                  Late Check-in
-                                </span>
-                              ) : record.status === 'half_day' ? (
-                                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-orange-500/10 text-orange-400 border-orange-500/20 uppercase tracking-wider">
-                                  Half Day
-                                </span>
-                              ) : (
-                                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-amber-500/10 text-amber-400 border-amber-500/20 uppercase tracking-wider animate-pulse">
-                                  Active
-                                </span>
-                              )
-                            ) : isFuture ? (
-                              <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full border bg-slate-900/40 text-slate-600 border-slate-900/60 uppercase tracking-wider">
-                                Future
-                              </span>
-                            ) : isWeekend ? (
-                              <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full border bg-slate-950 text-slate-500 border-slate-850 uppercase tracking-wider">
-                                Weekend
-                              </span>
+                            {user?.role === 'admin' ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setOverrideUserId(parseInt(selectedEmployeeId, 10));
+                                  setOverrideDate(dayStr);
+                                  setOverrideStatus(record ? record.status : 'absent');
+                                  setShowOverrideModal(true);
+                                }}
+                                className="hover:opacity-80 transition-all text-left block focus:outline-none cursor-pointer border border-transparent"
+                              >
+                                {renderStatusBadge(record, isFuture, isWeekend, dayStr)}
+                              </button>
                             ) : (
-                              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-rose-500/10 text-rose-400 border-rose-500/20 uppercase tracking-wider">
-                                Absent
-                              </span>
+                              renderStatusBadge(record, isFuture, isWeekend, dayStr)
                             )}
                           </td>
                           <td className="py-3 px-4 text-slate-300">
                             {record ? (
                               new Date(record.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                             ) : (
-                              <span className="text-slate-600 font-normal">-</span>
+                              <span className="text-slate-650 font-normal">-</span>
                             )}
                           </td>
                           <td className="py-3 px-4 text-slate-300">
                             {record && record.checkOut ? (
                               new Date(record.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                             ) : (
-                              <span className="text-slate-600 font-normal">-</span>
+                              <span className="text-slate-655 font-normal">-</span>
                             )}
                           </td>
                           <td className="py-3 px-4 text-amber-400 font-bold">
@@ -756,7 +917,7 @@ export default function AttendancePage() {
                             ) : record && !record.checkOut ? (
                               <span className="text-slate-500 font-normal italic">Active...</span>
                             ) : (
-                              <span className="text-slate-600 font-normal">-</span>
+                              <span className="text-slate-655 font-normal">-</span>
                             )}
                           </td>
                           <td className="py-3 px-4 text-slate-400 text-xs font-sans max-w-sm truncate" title={record?.checkInLocation || ''}>
@@ -769,13 +930,13 @@ export default function AttendancePage() {
                                   </span>
                                 )}
                                 {record.notes && (
-                                  <span className="text-amber-400/80 italic text-[11px]">
+                                  <span className="text-amber-450 italic text-[11px]">
                                     &ldquo;{record.notes}&rdquo;
                                   </span>
                                 )}
                               </div>
                             ) : (
-                              <span className="text-slate-600">-</span>
+                              <span className="text-slate-655">-</span>
                             )}
                           </td>
                         </tr>
@@ -788,6 +949,151 @@ export default function AttendancePage() {
           </div>
         )}
       </div>
+
+      {/* Manage Holidays Modal */}
+      {showHolidayModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md px-4 py-6 overflow-y-auto font-sans">
+          <div className="w-full max-w-2xl bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-8 flex flex-col max-h-[85vh] animate-fade-in-up">
+            <div className="p-5 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-amber-500" />
+                <h3 className="text-sm font-bold uppercase tracking-wider text-white">Manage Gazetted Holidays</h3>
+              </div>
+              <button type="button" onClick={() => setShowHolidayModal(false)} className="text-slate-400 hover:text-white cursor-pointer border border-transparent">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto flex-1 space-y-6">
+              {/* Form to define holiday */}
+              <form onSubmit={handleCreateHoliday} className="bg-slate-900/40 p-4 border border-slate-800 rounded-xl grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Holiday Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newHolidayName}
+                    onChange={(e) => setNewHolidayName(e.target.value)}
+                    placeholder="e.g. Independence Day, Diwali"
+                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Date *</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="date"
+                      required
+                      value={newHolidayDate}
+                      onChange={(e) => setNewHolidayDate(e.target.value)}
+                      className="block flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                    />
+                    <button
+                      type="submit"
+                      className="py-2 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md transition-all cursor-pointer shrink-0 border border-transparent"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+              </form>
+
+              {/* Holiday List */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold text-white uppercase tracking-wider">Defined Gazetted Holidays</h4>
+                <div className="divide-y divide-slate-800 max-h-[35vh] overflow-y-auto border border-slate-800 rounded-xl bg-slate-950/20 px-4">
+                  {holidays.length === 0 ? (
+                    <p className="py-8 text-center text-slate-500 italic text-xs font-sans">No holidays defined yet.</p>
+                  ) : (
+                    holidays.map(h => (
+                      <div key={h.id} className="py-3 flex justify-between items-center text-xs">
+                        <div className="font-sans">
+                          <p className="font-bold text-white">{h.name}</p>
+                          <p className="text-[10px] text-slate-500 font-mono">{new Date(h.date).toLocaleDateString(undefined, { timeZone: 'UTC', dateStyle: 'medium' })}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteHoliday(h.id)}
+                          className="py-1 px-2.5 bg-slate-900 border border-slate-800 hover:bg-rose-955/20 hover:border-rose-900/30 text-slate-400 hover:text-rose-500 rounded-md transition-all cursor-pointer font-sans"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-5 border-t border-slate-800 bg-slate-900/10 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowHolidayModal(false)}
+                className="py-2 px-5 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 rounded-lg font-bold text-xs shadow-md cursor-pointer"
+              >
+                Close Window
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Attendance Override Modal */}
+      {showOverrideModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md px-4 py-6 font-sans">
+          <div className="w-full max-w-md bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div className="p-5 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-amber-500" />
+                <h3 className="text-sm font-bold uppercase tracking-wider text-white">Override Attendance Status</h3>
+              </div>
+              <button type="button" onClick={() => setShowOverrideModal(false)} className="text-slate-400 hover:text-white cursor-pointer border border-transparent">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleOverrideSubmit}>
+              <div className="p-6 space-y-4">
+                <div className="bg-amber-500/5 border border-amber-500/10 rounded-xl p-3.5 text-xs text-amber-400/90 leading-relaxed font-sans">
+                  You are overriding attendance for:
+                  <strong className="text-white block font-sans mt-1">Date: {overrideDate}</strong>
+                  <strong className="text-white block font-sans">Employee: {employees.find(e => e.id === overrideUserId)?.name || `ID #${overrideUserId}`}</strong>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">New Attendance Status</label>
+                  <select
+                    value={overrideStatus}
+                    onChange={(e) => setOverrideStatus(e.target.value)}
+                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:ring-amber-500 focus:outline-none"
+                  >
+                    <option value="present">Present (Completed)</option>
+                    <option value="half_day">Half Day</option>
+                    <option value="absent">Absent</option>
+                    <option value="clear">Clear Record (Reset)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="p-5 border-t border-slate-800 bg-slate-900/10 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowOverrideModal(false)}
+                  className="py-2 px-4 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-350 rounded-xl font-bold text-xs cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="py-2 px-5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-xl font-bold text-xs shadow-md transition-all cursor-pointer border border-transparent"
+                >
+                  Confirm Override
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
