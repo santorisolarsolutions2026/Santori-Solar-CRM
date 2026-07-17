@@ -13,6 +13,8 @@ export async function GET(req: Request) {
     const userIdStr = searchParams.get('userId');
     const startStr = searchParams.get('startDate');
     const endStr = searchParams.get('endDate');
+    const startTimeStr = searchParams.get('startTime') || '00:00';
+    const endTimeStr = searchParams.get('endTime') || '23:59';
 
     if (!userIdStr) {
       return NextResponse.json({ success: false, message: 'userId is required.' }, { status: 400 });
@@ -27,10 +29,8 @@ export async function GET(req: Request) {
     let dateFilter: any = {};
     const hasDates = !!(startStr && endStr);
     if (hasDates) {
-      const sDate = new Date(startStr!);
-      sDate.setHours(0, 0, 0, 0);
-      const eDate = new Date(endStr!);
-      eDate.setHours(23, 59, 59, 999);
+      const sDate = new Date(`${startStr}T${startTimeStr}:00`);
+      const eDate = new Date(`${endStr}T${endTimeStr}:59.999`);
       dateFilter = { gte: sDate, lte: eDate };
     }
 

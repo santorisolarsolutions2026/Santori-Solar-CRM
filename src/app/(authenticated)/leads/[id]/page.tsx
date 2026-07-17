@@ -1244,10 +1244,20 @@ export default function LeadDetailPage({
   const isOrderFormLocked = lead.order?.status !== 'draft';
   const isOrderFormDisabled = !hasPermission('orders:create') || isOrderFormLocked;
 
+  // Helper variables to govern lead edit locks
+  const baseRole = user?.role ? (user.role.includes(':') ? user.role.split(':')[0] : user.role) : '';
+  const isPsaUser = baseRole === 'psa';
+  const isSalesUser = ['consultant', 'tl', 'manager'].includes(baseRole) && !user?.role.includes('finance') && !user?.role.includes('operations') && !user?.role.includes('admin') && !user?.role.includes('it');
+  
+  const isPsaLocked = isPsaUser && [8, 9, 13].includes(lead.status);
+  const isSalesLocked = isSalesUser && lead.order && lead.order.status !== 'draft';
+  const isLeadLocked = isPsaLocked || isSalesLocked;
+
   // Calculate dynamic allowed transitions for select input
   const nextStageIds = ALLOWED_TRANSITIONS[lead.status] || [];
   // Filter by user role permissions (Admin bypassed)
   let roleFilteredNextStages = nextStageIds.filter((statusNum) => {
+    if (isLeadLocked) return false;
     if (!hasPermission('leads:change_status')) return false;
     // Transitioning to stage 13 requires orders:create permission
     if (statusNum === 13) {
@@ -1618,6 +1628,17 @@ export default function LeadDetailPage({
               {/* 1. INFO TAB */}
               {activeTab === 'info' && (
                 <div>
+                  {isLeadLocked && (
+                    <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-xs flex items-start gap-3 shadow-md mb-6 animate-fade-in-up">
+                      <Lock className="w-5 h-5 shrink-0" />
+                      <div>
+                        <strong className="text-white font-bold block mb-0.5">Lead Details Locked</strong>
+                        {isPsaLocked
+                          ? "This lead's details are locked for PSA editing because a meeting has been booked. They will unlock if the sales team schedules a follow-up or calls later."
+                          : "This lead's details are locked for Sales editing because the order has been submitted to Finance."}
+                      </div>
+                    </div>
+                  )}
                   {!isEditing ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
                       <div>
@@ -1724,7 +1745,7 @@ export default function LeadDetailPage({
                       })()}
 
                       {/* Edit Trigger */}
-                      {hasPermission('leads:edit') && (
+                      {hasPermission('leads:edit') && !isLeadLocked && (
                         <div className="md:col-span-2 pt-4 border-t border-slate-800/80">
                           <button
                             onClick={() => setIsEditing(true)}

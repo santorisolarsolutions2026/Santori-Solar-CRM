@@ -46,12 +46,12 @@ export async function GET(req: Request) {
     }
 
     let dateRangeFilter: any = {};
+    const startTimeStr = url.searchParams.get('startTime') || '00:00';
+    const endTimeStr = url.searchParams.get('endTime') || '23:59';
     const hasDates = !!(startStr && endStr);
     if (hasDates) {
-      const sDate = new Date(startStr!);
-      sDate.setHours(0, 0, 0, 0);
-      const eDate = new Date(endStr!);
-      eDate.setHours(23, 59, 59, 999);
+      const sDate = new Date(`${startStr}T${startTimeStr}:00`);
+      const eDate = new Date(`${endStr}T${endTimeStr}:59.999`);
       dateRangeFilter = { gte: sDate, lte: eDate };
     }
 
@@ -75,7 +75,6 @@ export async function GET(req: Request) {
         ]
       };
       if (hasDates) {
-        // If dates are given, they only count if they logged activity or were created during timeframe
         leadWhere.OR = [
           { createdById: userId, createdAt: dateRangeFilter },
           { id: { in: loggedLeadIds } }
@@ -155,8 +154,8 @@ export async function GET(req: Request) {
         leadId: m.lead?.id,
         leadCode: m.lead?.leadCode,
         customerName: m.lead?.customerName,
-        detail1: `Scheduled: ${m.meetingDate} ${m.meetingTime}`,
-        detail2: m.meetingCity ? `Location: ${m.meetingCity} (${m.meetingPinCode || ''})` : `Avg Bill: ₹${m.avgMonthlyBill.toLocaleString('en-IN')}`,
+        detail1: `Meeting scheduled for ${m.meetingDate} at ${m.meetingTime}`,
+        detail2: m.meetingCity ? `Meeting location is ${m.meetingCity} (Pincode: ${m.meetingPinCode || 'N/A'})` : `Customer avg monthly bill is ₹${m.avgMonthlyBill.toLocaleString('en-IN')}`,
         executiveName: m.executive?.name || 'Unassigned',
         date: m.meetingDate
       }));
@@ -246,8 +245,8 @@ export async function GET(req: Request) {
         leadId: o.lead?.id,
         leadCode: o.lead?.leadCode,
         customerName: o.lead?.customerName,
-        detail1: `System Size: ${o.systemSizeKw} kW`,
-        detail2: `Order Status: ${o.status.toUpperCase()}`,
+        detail1: `Solar system package generated: Size ${o.systemSizeKw} kW`,
+        detail2: `Order status is currently: ${o.status.toUpperCase()}`,
         value: o.totalValue,
         date: new Date(o.createdAt).toLocaleDateString('en-IN')
       }));
@@ -296,15 +295,15 @@ export async function GET(req: Request) {
         leadId: o.lead?.id,
         leadCode: o.lead?.leadCode,
         customerName: o.lead?.customerName,
-        detail1: `System Size: ${o.systemSizeKw} kW`,
-        detail2: `Verified Status: ${o.status.toUpperCase()}`,
+        detail1: `Solar project verified: Size ${o.systemSizeKw} kW`,
+        detail2: `Verification status: ${o.status.toUpperCase()}`,
         value: o.totalValue,
         date: new Date(o.createdAt).toLocaleDateString('en-IN')
       }));
     } 
     else if (type === 'installations_completed') {
       const orderWhere: any = {
-        status: 'completed',
+        isInstalled: true,
         lead: {
           OR: [
             { assignedConsultantId: userId },
@@ -341,8 +340,8 @@ export async function GET(req: Request) {
         leadId: o.lead?.id,
         leadCode: o.lead?.leadCode,
         customerName: o.lead?.customerName,
-        detail1: `System Size: ${o.systemSizeKw} kW`,
-        detail2: `Fulfillment: Fully Commissioned`,
+        detail1: `Solar structural installation completed: Size ${o.systemSizeKw} kW`,
+        detail2: `Installation completed successfully`,
         value: o.totalValue,
         date: new Date(o.createdAt).toLocaleDateString('en-IN')
       }));
@@ -410,8 +409,8 @@ export async function GET(req: Request) {
         leadId: m.lead?.id,
         leadCode: m.lead?.leadCode,
         customerName: m.lead?.customerName,
-        detail1: `Completed: ${m.meetingDate} ${m.meetingTime}`,
-        detail2: m.meetingStartedAt ? `Started: ${new Date(m.meetingStartedAt).toLocaleTimeString()}` : `Lead Status: Done`,
+        detail1: `Meeting conducted successfully on ${m.meetingDate} at ${m.meetingTime}`,
+        detail2: m.meetingStartedAt ? `Session started at ${new Date(m.meetingStartedAt).toLocaleTimeString()}` : `Meeting marked done.`,
         executiveName: m.executive?.name || 'Unassigned',
         date: m.meetingDate
       }));
@@ -454,10 +453,104 @@ export async function GET(req: Request) {
         leadId: m.lead?.id,
         leadCode: m.lead?.leadCode,
         customerName: m.lead?.customerName,
-        detail1: `Cancelled: ${m.meetingDate} ${m.meetingTime}`,
-        detail2: `Lead Status Code: ${m.lead?.status}`,
+        detail1: `Meeting cancelled on ${m.meetingDate} at ${m.meetingTime}`,
+        detail2: `Lead current status code: Stage ${m.lead?.status}`,
         executiveName: m.executive?.name || 'Unassigned',
         date: m.meetingDate
+      }));
+    }
+    else if (type === 'ledger_activities') {
+      const logWhere = hasDates ? { recordedById: userId, createdAt: dateRangeFilter } : { recordedById: userId };
+      const payments = await prisma.payment.findMany({
+        where: logWhere,
+        include: {
+          order: {
+            include: {
+              lead: {
+                select: { id: true, leadCode: true, customerName: true }
+              }
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+      results = payments.map(p => ({
+        id: p.id,
+        leadId: p.order?.lead?.id,
+        leadCode: p.order?.lead?.leadCode,
+        customerName: p.order?.lead?.customerName,
+        detail1: `Recorded payment of ₹${p.amount.toLocaleString('en-IN')} via ${p.paymentMethod.toUpperCase()}`,
+        detail2: p.isDiscarded ? `Payment discarded: "${p.discardReason || 'N/A'}"` : `Payment reference: ${p.transactionRef || 'None'}`,
+        value: p.amount,
+        date: new Date(p.createdAt).toLocaleDateString('en-IN')
+      }));
+    }
+    else if (type === 'deliveries_completed') {
+      const orderWhere: any = {
+        isDelivered: true,
+        lead: {
+          OR: [
+            { assignedConsultantId: userId },
+            { assignedTlId: userId },
+            { assignedManagerId: userId }
+          ]
+        }
+      };
+      if (hasDates) {
+        orderWhere.createdAt = dateRangeFilter;
+      }
+      const orders = await prisma.order.findMany({
+        where: orderWhere,
+        include: {
+          lead: {
+            select: { id: true, leadCode: true, customerName: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+      results = orders.map(o => ({
+        id: o.id,
+        leadId: o.lead?.id,
+        leadCode: o.lead?.leadCode,
+        customerName: o.lead?.customerName,
+        detail1: `Delivered solar equipment for project: Size ${o.systemSizeKw} kW`,
+        detail2: `Delivery completed successfully`,
+        value: o.totalValue,
+        date: new Date(o.createdAt).toLocaleDateString('en-IN')
+      }));
+    }
+    else if (type === 'commissioned_completed') {
+      const orderWhere: any = {
+        isCommissioned: true,
+        lead: {
+          OR: [
+            { assignedConsultantId: userId },
+            { assignedTlId: userId },
+            { assignedManagerId: userId }
+          ]
+        }
+      };
+      if (hasDates) {
+        orderWhere.createdAt = dateRangeFilter;
+      }
+      const orders = await prisma.order.findMany({
+        where: orderWhere,
+        include: {
+          lead: {
+            select: { id: true, leadCode: true, customerName: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+      results = orders.map(o => ({
+        id: o.id,
+        leadId: o.lead?.id,
+        leadCode: o.lead?.leadCode,
+        customerName: o.lead?.customerName,
+        detail1: `Solar plant commissioned and grid-tied: Size ${o.systemSizeKw} kW`,
+        detail2: `Plant fully commissioned and operational`,
+        value: o.totalValue,
+        date: new Date(o.createdAt).toLocaleDateString('en-IN')
       }));
     }
 
@@ -472,7 +565,7 @@ export async function GET(req: Request) {
     console.error('Employee audit details API error:', error);
     return NextResponse.json(
       { success: false, message: 'Internal server error', errors: { details: error.message } },
-      { status: 500 }
+      { status: 550 }
     );
   }
 }

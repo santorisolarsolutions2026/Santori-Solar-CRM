@@ -16,7 +16,15 @@ async function canAccessLead(userId: number, lead: any): Promise<boolean> {
   if (baseRole === 'manager' && lead.assignedManagerId === userId) return true;
   if (['tl', 'psa_tl'].includes(baseRole) && lead.assignedTlId === userId) return true;
   if (baseRole === 'consultant' || baseRole === 'psa') {
-    return lead.assignedConsultantId === userId;
+    if (lead.assignedConsultantId === userId) return true;
+    if (lead.createdById === userId) return true;
+    if (baseRole === 'psa') {
+      const hasMeeting = await prisma.meetingBooking.findFirst({
+        where: { leadId: lead.id, assignedExecutiveId: userId }
+      });
+      if (hasMeeting) return true;
+    }
+    return false;
   }
   if (baseRole === 'finance') {
     // Finance sees only leads at Stage 13 (Sale Done)
@@ -133,6 +141,25 @@ export async function PATCH(
 
     if (!await canAccessLead(userPayload.id, lead)) {
       return NextResponse.json({ success: false, message: 'Forbidden. No access to this lead pool.' }, { status: 403 });
+    }
+
+    // PSA Edit Lock: If the user's role is psa, and the lead status is 8 (Meeting Booked), 9 (Meeting Done), or 13 (Sale Done), then details are locked.
+    if (baseRole === 'psa') {
+      const isLockedForPsa = lead.status === 8 || lead.status === 9 || lead.status === 13;
+      if (isLockedForPsa) {
+        return NextResponse.json({ success: false, message: 'Forbidden. Lead details are locked after meeting is booked.' }, { status: 403 });
+      }
+    }
+
+    // Sales Edit Lock: once order has been sent to be verified, details are locked.
+    const isSalesTeam = ['consultant', 'tl', 'manager'].includes(baseRole) && !userRole.includes('finance') && !userRole.includes('operations') && !userRole.includes('admin') && !userRole.includes('it');
+    if (isSalesTeam) {
+      const leadOrder = await prisma.order.findFirst({
+        where: { leadId: lead.id }
+      });
+      if (leadOrder && leadOrder.status !== 'draft') {
+        return NextResponse.json({ success: false, message: 'Forbidden. Lead details are locked once order is sent for verification.' }, { status: 403 });
+      }
     }
 
     const body = await req.json();

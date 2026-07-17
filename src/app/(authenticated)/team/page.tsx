@@ -2650,41 +2650,46 @@ export default function TeamManagementPage() {
             </div>
 
             <div className="p-6 overflow-y-auto flex-1 grid grid-cols-1 lg:grid-cols-5 gap-6">
-              {/* Flowchart Tree */}
-              <div className="lg:col-span-3 bg-slate-950/40 p-4 border border-slate-850 rounded-xl space-y-4 max-h-[70vh] overflow-y-auto">
-                <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800/80 pb-2">Flowchart Hierarchy Tree</h4>
-                <div className="flex flex-col items-center gap-3 text-center">
+              {/* Simplified Org Hierarchy Tree */}
+              <div className="lg:col-span-3 bg-slate-950/40 p-5 border border-slate-850 rounded-xl space-y-4 max-h-[70vh] overflow-y-auto">
+                <div className="border-b border-slate-800/80 pb-3 flex justify-between items-center">
+                  <div>
+                    <h4 className="text-xs font-bold text-white uppercase tracking-wider">Designation Tiers & Reporting</h4>
+                    <p className="text-[10px] text-slate-500">Designations grouped by reporting authority level (Level 0 to Level 5).</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3.5">
                   {[
-                    { level: 0, label: 'Level 0: Admin 👑' },
-                    { level: 1, label: 'Level 1: Department Heads 👔' },
-                    { level: 2, label: 'Level 2: Senior Managers 📈' },
-                    { level: 3, label: 'Level 3: Managers 🏢' },
-                    { level: 4, label: 'Level 4: Team Leaders (TL) 👥' },
-                    { level: 5, label: 'Level 5: Consultants / Field Executives 🛠️' },
-                  ].map((levelItem, idx) => {
+                    { level: 0, label: 'Level 0: Admin 👑', color: 'border-red-500/20 text-red-400 bg-red-500/5' },
+                    { level: 1, label: 'Level 1: Department Heads 👔', color: 'border-indigo-500/20 text-indigo-400 bg-indigo-500/5' },
+                    { level: 2, label: 'Level 2: Senior Managers 📈', color: 'border-purple-500/20 text-purple-400 bg-purple-500/5' },
+                    { level: 3, label: 'Level 3: Managers 🏢', color: 'border-amber-500/20 text-amber-400 bg-amber-500/5' },
+                    { level: 4, label: 'Level 4: Team Leaders (TL) 👥', color: 'border-cyan-500/20 text-cyan-400 bg-cyan-500/5' },
+                    { level: 5, label: 'Level 5: Consultants 🛠️', color: 'border-emerald-500/20 text-emerald-400 bg-emerald-500/5' },
+                  ].map((levelItem) => {
                     const levelDesigs = designationsList.filter(d => d.level === levelItem.level);
                     return (
-                      <React.Fragment key={levelItem.level}>
-                        {idx > 0 && <div className="w-0.5 h-3 bg-slate-800" />}
-                        <div className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 shadow-md space-y-2">
-                          <span className="text-[10px] text-amber-500 font-extrabold uppercase tracking-wider block">{levelItem.label}</span>
+                      <div key={levelItem.level} className={`flex flex-col sm:flex-row gap-3 items-start sm:items-center border rounded-xl p-3.5 transition-all hover:bg-slate-900/40 ${levelItem.color}`}>
+                        <div className="w-full sm:w-44 shrink-0">
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider block">{levelItem.label}</span>
+                        </div>
+                        <div className="flex-1 flex flex-wrap gap-2">
                           {levelDesigs.length === 0 ? (
-                            <span className="text-[10px] text-slate-500 italic block">No designations defined</span>
+                            <span className="text-[10px] text-slate-500 italic">No designations at this level</span>
                           ) : (
-                            <div className="flex flex-wrap justify-center gap-1.5">
-                              {levelDesigs.map(d => {
-                                const deptName = departmentsList.find(dept => dept.id === d.departmentId)?.name || 'Shared';
-                                return (
-                                  <span key={d.id} className="text-[10px] bg-slate-955 border border-slate-850 px-2.5 py-1 rounded-md text-white font-medium flex items-center gap-1.5">
-                                    <span>{d.name}</span>
-                                    <span className="text-[8px] bg-slate-900 text-slate-400 px-1 rounded uppercase font-bold">{deptName}</span>
-                                  </span>
-                                );
-                              })}
-                            </div>
+                            levelDesigs.map(d => {
+                              const deptName = departmentsList.find(dept => dept.id === d.departmentId)?.name || 'Shared';
+                              return (
+                                <span key={d.id} className="text-[10px] bg-slate-950 border border-slate-800 px-2.5 py-1.5 rounded-lg text-white font-semibold flex items-center gap-1.5 shadow-sm">
+                                  <span>{d.name}</span>
+                                  <span className="text-[8px] bg-slate-900 text-slate-400 px-1 rounded uppercase font-bold">{deptName}</span>
+                                </span>
+                              );
+                            })
                           )}
                         </div>
-                      </React.Fragment>
+                      </div>
                     );
                   })}
                 </div>

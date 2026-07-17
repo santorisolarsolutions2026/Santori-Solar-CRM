@@ -18,13 +18,13 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const startStr = url.searchParams.get('startDate');
     const endStr = url.searchParams.get('endDate');
+    const startTimeStr = url.searchParams.get('startTime') || '00:00';
+    const endTimeStr = url.searchParams.get('endTime') || '23:59';
 
     let dateRangeFilter: any = {};
     if (startStr && endStr) {
-      const sDate = new Date(startStr);
-      sDate.setHours(0, 0, 0, 0);
-      const eDate = new Date(endStr);
-      eDate.setHours(23, 59, 59, 999);
+      const sDate = new Date(`${startStr}T${startTimeStr}:00`);
+      const eDate = new Date(`${endStr}T${endTimeStr}:59.999`);
       dateRangeFilter = { gte: sDate, lte: eDate };
     }
 
@@ -44,9 +44,10 @@ export async function GET(req: Request) {
     const meetingsWhere = startStr && endStr ? { createdAt: dateRangeFilter } : {};
     const ordersWhere = startStr && endStr ? { createdAt: dateRangeFilter } : {};
     const logsWhere = startStr && endStr ? { createdAt: dateRangeFilter } : {};
+    const paymentsWhere = startStr && endStr ? { createdAt: dateRangeFilter } : {};
 
     // Fetch all records for mapping
-    const [leads, meetings, orders, logs] = await Promise.all([
+    const [leads, meetings, orders, logs, payments] = await Promise.all([
       prisma.lead.findMany({
         select: {
           id: true,
@@ -80,6 +81,9 @@ export async function GET(req: Request) {
           submittedById: true,
           financeProcessedById: true,
           createdAt: true,
+          isDelivered: true,
+          isInstalled: true,
+          isCommissioned: true
         }
       }),
       prisma.leadActivityLog.findMany({
@@ -87,6 +91,14 @@ export async function GET(req: Request) {
         select: {
           leadId: true,
           userId: true,
+        }
+      }),
+      prisma.payment.findMany({
+        where: paymentsWhere,
+        select: {
+          id: true,
+          recordedById: true,
+          amount: true
         }
       })
     ]);
@@ -174,18 +186,6 @@ export async function GET(req: Request) {
       });
       const ordersVerifiedValue = empOrdersVerified.reduce((sum, o) => sum + (o.totalValue || 0), 0);
 
-      // Installations Completed
-      const empInstallationsCompleted = orders.filter(o => {
-        if (o.status !== 'completed') return false;
-        const lead = leads.find(l => l.id === o.leadId);
-        if (!lead) return false;
-        return (
-          lead.assignedConsultantId === uId ||
-          lead.assignedTlId === uId ||
-          lead.assignedManagerId === uId
-        );
-      });
-
       const empMeetingsDone = empMeetings.filter(m => {
         const hasTimestamps = m.meetingStartedAt !== null || m.meetingEndedAt !== null;
         const lead = leads.find(l => l.id === m.leadId);
@@ -196,6 +196,43 @@ export async function GET(req: Request) {
         const lead = leads.find(l => l.id === m.leadId);
         return m.meetingStartedAt === null && lead && ![8, 9, 13].includes(lead.status);
       });
+
+      // Operations columns: Delivery Done, Installation done, Plants Commissioned
+      const empDeliveries = orders.filter(o => {
+        if (!o.isDelivered) return false;
+        const lead = leads.find(l => l.id === o.leadId);
+        if (!lead) return false;
+        return (
+          lead.assignedConsultantId === uId ||
+          lead.assignedTlId === uId ||
+          lead.assignedManagerId === uId
+        );
+      });
+
+      const empInstallations = orders.filter(o => {
+        if (!o.isInstalled) return false;
+        const lead = leads.find(l => l.id === o.leadId);
+        if (!lead) return false;
+        return (
+          lead.assignedConsultantId === uId ||
+          lead.assignedTlId === uId ||
+          lead.assignedManagerId === uId
+        );
+      });
+
+      const empCommissioned = orders.filter(o => {
+        if (!o.isCommissioned) return false;
+        const lead = leads.find(l => l.id === o.leadId);
+        if (!lead) return false;
+        return (
+          lead.assignedConsultantId === uId ||
+          lead.assignedTlId === uId ||
+          lead.assignedManagerId === uId
+        );
+      });
+
+      // Finance columns: ledgerActivities
+      const empLedgerActivities = payments.filter(p => p.recordedById === uId);
 
       const leadsWorked = empLeads.length;
       const meetingsBooked = empMeetings.length;
@@ -222,7 +259,10 @@ export async function GET(req: Request) {
           ordersPunchedValue,
           ordersVerified: empOrdersVerified.length,
           ordersVerifiedValue,
-          installationsCompleted: empInstallationsCompleted.length
+          ledgerActivities: empLedgerActivities.length,
+          deliveriesCompleted: empDeliveries.length,
+          installationsCompleted: empInstallations.length,
+          commissionedCompleted: empCommissioned.length
         }
       };
     });
@@ -234,10 +274,24 @@ export async function GET(req: Request) {
       'Finance': [],
       'Operations': [],
       'IT': [],
+      'Managers': [],
       'Unassigned': []
     };
 
     processedEmployees.forEach(emp => {
+      const isManagerOrTlOrHead = 
+        emp.role === 'manager' || 
+        emp.role === 'tl' || 
+        emp.role === 'sales_head' ||
+        emp.designation.includes('Manager') || 
+        emp.designation.includes('TL') || 
+        emp.designation.includes('Head') ||
+        emp.designation.includes('Director');
+
+      if (isManagerOrTlOrHead) {
+        departments['Managers'].push(emp);
+      }
+
       const dept = emp.department;
       if (dept === 'Sales') {
         const isPsa = emp.designation.includes('PSA') || emp.role.includes('psa');
