@@ -15,6 +15,17 @@ async function canAccessLead(userId: number, lead: any): Promise<boolean> {
 
   if (baseRole === 'manager' && lead.assignedManagerId === userId) return true;
   if (['tl', 'psa_tl'].includes(baseRole) && lead.assignedTlId === userId) return true;
+
+  // Team/Clan check
+  if (lead.assignedTeamId) {
+    if (lead.assignedTeam?.leaderId === userId) return true;
+    const userDetail = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { teamId: true }
+    });
+    if (userDetail?.teamId === lead.assignedTeamId) return true;
+  }
+
   if (baseRole === 'consultant' || baseRole === 'psa') {
     if (lead.assignedConsultantId === userId) return true;
     if (lead.createdById === userId) return true;
@@ -60,6 +71,7 @@ export async function GET(
         tl: { select: { id: true, name: true } },
         manager: { select: { id: true, name: true } },
         creator: { select: { id: true, name: true, role: true } },
+        assignedTeam: { select: { id: true, name: true, leaderId: true } },
         activityLogs: {
           orderBy: { createdAt: 'desc' },
           include: { user: { select: { name: true, role: true } } },
@@ -125,6 +137,9 @@ export async function PATCH(
 
     const lead = await prisma.lead.findUnique({
       where: { id: leadId },
+      include: {
+        assignedTeam: { select: { id: true, name: true, leaderId: true } }
+      }
     });
 
     if (!lead) {
@@ -176,6 +191,7 @@ export async function PATCH(
       assignedTlId,
       assignedConsultantId,
       assignedManagerId,
+      assignedTeamId,
       discomName,
       connectionNumber,
       isActive,
@@ -259,10 +275,13 @@ export async function PATCH(
     if (discomName !== undefined) updateData.discomName = discomName || null;
     if (connectionNumber !== undefined) updateData.connectionNumber = connectionNumber || null;
     if (isActive !== undefined) updateData.isActive = isActive;
+    if (assignedTeamId !== undefined) {
+      updateData.assignedTeamId = assignedTeamId ? parseInt(assignedTeamId, 10) : null;
+    }
 
     // Handle assignments updates and auto-resolve hierarchy
     let shouldPromoteToFresh = false;
-    if (assignedTlId !== undefined || assignedConsultantId !== undefined || assignedManagerId !== undefined) {
+    if (assignedTlId !== undefined || assignedConsultantId !== undefined || assignedManagerId !== undefined || assignedTeamId !== undefined) {
       let finalTlId = assignedTlId !== undefined ? (assignedTlId ? parseInt(assignedTlId, 10) : null) : lead.assignedTlId;
       let finalConsId = assignedConsultantId !== undefined ? (assignedConsultantId ? parseInt(assignedConsultantId, 10) : null) : lead.assignedConsultantId;
       let finalManagerId = assignedManagerId !== undefined ? (assignedManagerId ? parseInt(assignedManagerId, 10) : null) : lead.assignedManagerId;
@@ -270,7 +289,7 @@ export async function PATCH(
       if (finalConsId && assignedTlId === undefined && assignedManagerId === undefined) {
         const consUser = await prisma.user.findUnique({
           where: { id: finalConsId },
-          select: { reportsTo: true },
+          select: { reportsTo: true, teamId: true },
         });
         if (consUser?.reportsTo) {
           finalTlId = consUser.reportsTo;
@@ -279,6 +298,9 @@ export async function PATCH(
             select: { reportsTo: true },
           });
           finalManagerId = tlUser?.reportsTo || null;
+        }
+        if (consUser?.teamId && assignedTeamId === undefined) {
+          updateData.assignedTeamId = consUser.teamId;
         }
       } else if (finalTlId && assignedManagerId === undefined) {
         const tlUser = await prisma.user.findUnique({

@@ -261,6 +261,18 @@ export async function POST(
       if (formB.assignedTlId) {
         updateData.assignedTlId = parseInt(formB.assignedTlId, 10);
       }
+      if (formB.assignedTeamId) {
+        updateData.assignedTeamId = parseInt(formB.assignedTeamId, 10);
+      } else {
+        // Auto-lookup the team of the assigned executive
+        const execUser = await prisma.user.findUnique({
+          where: { id: parseInt(assignedExecutiveId, 10) },
+          select: { teamId: true },
+        });
+        if (execUser?.teamId) {
+          updateData.assignedTeamId = execUser.teamId;
+        }
+      }
     }
 
     // Stage 9 - Meeting Done (Form C validation)

@@ -120,7 +120,7 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { name, email, phone, address, employeeId, role, reportsTo, isActive, joiningDate, photograph, permissions, password, departmentId, designationId } = body;
+    const { name, email, phone, address, employeeId, role, reportsTo, isActive, joiningDate, photograph, permissions, password, departmentId, designationId, teamId } = body;
 
     const isTargetAdmin = user.role.toLowerCase() === 'admin' || user.role.toLowerCase().startsWith('admin:');
     const isTargetDirector = user.role.toLowerCase() === 'director' || user.role.toLowerCase().startsWith('director:');
@@ -279,6 +279,7 @@ export async function PATCH(
     if (photograph !== undefined) updateData.photograph = photograph;
     if (departmentId !== undefined) updateData.departmentId = departmentId ? parseInt(departmentId, 10) : null;
     if (designationId !== undefined) updateData.designationId = designationId ? parseInt(designationId, 10) : null;
+    if (teamId !== undefined) updateData.teamId = teamId ? parseInt(teamId, 10) : null;
 
     if (password !== undefined && password !== null) {
       if (!isAdminOrDirectorOrSalesHead) {

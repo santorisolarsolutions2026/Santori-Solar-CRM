@@ -365,8 +365,40 @@ export default function TeamManagementPage() {
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
 
+  const [activeTab, setActiveTab] = useState<'users' | 'clans'>('users');
+  const [teams, setTeams] = useState<any[]>([]);
+  const [teamsLoading, setTeamsLoading] = useState(false);
+  const [showTeamModal, setShowTeamModal] = useState(false);
+  const [editingTeam, setEditingTeam] = useState<any | null>(null);
+  const [teamForm, setTeamForm] = useState<{
+    name: string;
+    departmentId: string;
+    leaderId: string;
+    memberIds: number[];
+  }>({
+    name: '',
+    departmentId: '',
+    leaderId: '',
+    memberIds: [],
+  });
+
   const [departmentsList, setDepartmentsList] = useState<{ id: number; name: string }[]>([]);
   const [designationsList, setDesignationsList] = useState<{ id: number; name: string; level: number; departmentId: number | null }[]>([]);
+
+  const fetchTeams = async () => {
+    try {
+      setTeamsLoading(true);
+      const res = await fetch('/api/v1/teams');
+      const data = await res.json();
+      if (data.success && data.data) {
+        setTeams(data.data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setTeamsLoading(false);
+    }
+  };
 
   const fetchDepartments = async () => {
     try {
@@ -493,6 +525,7 @@ export default function TeamManagementPage() {
     photograph: '',
     departmentId: '',
     designationId: '',
+    teamId: '',
   });
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
@@ -513,7 +546,8 @@ export default function TeamManagementPage() {
   // Activity Logs Modal States
   const [showLogsModal, setShowLogsModal] = useState(false);
   const [logsMember, setLogsMember] = useState<TeamMember | null>(null);
-  const [logsDate, setLogsDate] = useState('');
+  const [logsStartDate, setLogsStartDate] = useState('');
+  const [logsEndDate, setLogsEndDate] = useState('');
   const [logsList, setLogsList] = useState<any[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
 
@@ -538,6 +572,7 @@ export default function TeamManagementPage() {
     isActive: true,
     departmentId: '',
     designationId: '',
+    teamId: '',
   });
   const [editMemberPhotoPreviewUrl, setEditMemberPhotoPreviewUrl] = useState('');
   const [editMemberPassword, setEditMemberPassword] = useState('');
@@ -589,6 +624,7 @@ export default function TeamManagementPage() {
       photograph: '',
       departmentId: '',
       designationId: '',
+      teamId: '',
     });
     setAddCustomRoleText('');
     setAddBaseRole('consultant');
@@ -716,6 +752,7 @@ export default function TeamManagementPage() {
         fetchSupervisors();
         fetchDepartments();
         fetchDesignations();
+        fetchTeams();
       }
     }
   }, [user]);
@@ -768,6 +805,7 @@ export default function TeamManagementPage() {
         isActive: member.isActive,
         departmentId: (member as any).departmentId ? String((member as any).departmentId) : '',
         designationId: (member as any).designationId ? String((member as any).designationId) : '',
+        teamId: (member as any).teamId ? String((member as any).teamId) : '',
       });
       setEditMemberPhotoPreviewUrl('');
       setUpdateMemberError('');
@@ -786,15 +824,18 @@ export default function TeamManagementPage() {
     setLogsMember(member);
     setShowLogsModal(true);
     const today = getTodayLocalDateStr();
-    setLogsDate(today);
-    fetchActivityLogs(member.id, today);
+    const start = `${today}T00:00`;
+    const end = `${today}T23:59`;
+    setLogsStartDate(start);
+    setLogsEndDate(end);
+    fetchActivityLogs(member.id, start, end);
   };
 
-  const fetchActivityLogs = async (userId: number, dateStr: string) => {
+  const fetchActivityLogs = async (userId: number, start: string, end: string) => {
     if (!userId) return;
     try {
       setLogsLoading(true);
-      const res = await fetch(`/api/v1/users/${userId}/activity?startDate=${dateStr}&endDate=${dateStr}`);
+      const res = await fetch(`/api/v1/users/${userId}/activity?startDate=${start}&endDate=${end}`);
       const data = await res.json();
       if (data.success) {
         setLogsList(data.data || []);
@@ -805,14 +846,6 @@ export default function TeamManagementPage() {
       console.error('Error fetching logs:', err);
     } finally {
       setLogsLoading(false);
-    }
-  };
-
-  const handleLogsDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newDate = e.target.value;
-    setLogsDate(newDate);
-    if (logsMember) {
-      fetchActivityLogs(logsMember.id, newDate);
     }
   };
 
@@ -1076,6 +1109,55 @@ export default function TeamManagementPage() {
     }
   };
 
+  // Clan (Team) CRUD handlers
+  const handleSaveTeam = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!teamForm.name || !teamForm.departmentId) {
+      alert('Name and Department are required.');
+      return;
+    }
+    try {
+      const isEdit = !!editingTeam;
+      const url = isEdit ? `/api/v1/teams/${editingTeam.id}` : '/api/v1/teams';
+      const method = isEdit ? 'PATCH' : 'POST';
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(teamForm),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(isEdit ? 'Clan updated successfully!' : 'Clan created successfully!');
+        setShowTeamModal(false);
+        setEditingTeam(null);
+        setTeamForm({ name: '', departmentId: '', leaderId: '', memberIds: [] });
+        fetchTeams();
+      } else {
+        alert(data.message || 'Failed to save clan.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error saving clan.');
+    }
+  };
+
+  const handleDeleteTeam = async (tId: number) => {
+    if (!window.confirm('Are you sure you want to delete this clan? Members will not be deleted, but their clan assignment will be cleared.')) return;
+    try {
+      const res = await fetch(`/api/v1/teams/${tId}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        alert('Clan deleted successfully!');
+        fetchTeams();
+      } else {
+        alert(data.message || 'Failed to delete clan.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error deleting clan.');
+    }
+  };
+
   // Add User submit
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1246,309 +1328,608 @@ export default function TeamManagementPage() {
         </div>
       </div>
 
-      {/* Directory Search and Department Filter for full-access users */}
-      {hasFullTeamAccess && (
-        <div className="flex flex-col sm:flex-row items-center gap-4 bg-[#111625]/60 border border-slate-800 p-4 rounded-xl shadow-xl">
-          <div className="relative flex-1 w-full">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by name, email, or employee ID..."
-              className="w-full pl-9 pr-4 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-white placeholder-slate-500 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-            />
-            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
-          </div>
-          <div className="w-full sm:w-64">
-            <select
-              value={selectedDepartmentFilter}
-              onChange={(e) => setSelectedDepartmentFilter(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-300 text-xs focus:ring-amber-500 focus:outline-none"
-            >
-              <option value="">All Departments</option>
-              {departmentsList.map((dept) => (
-                <option key={dept.id} value={String(dept.id)}>{dept.name}</option>
-              ))}
-            </select>
-          </div>
+      {/* Sleek Tab switcher */}
+      {isAdminOrDirectorOrSalesHead && (
+        <div className="flex border-b border-slate-800/80 mb-2">
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`py-3 px-6 font-bold text-xs border-b-2 transition-all cursor-pointer ${
+              activeTab === 'users'
+                ? 'border-amber-500 text-amber-500'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Users & Members
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('clans');
+              fetchTeams();
+            }}
+            className={`py-3 px-6 font-bold text-xs border-b-2 transition-all cursor-pointer ${
+              activeTab === 'clans'
+                ? 'border-amber-500 text-amber-500'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Clans (Teams)
+          </button>
         </div>
       )}
 
-      {/* Restricted Directory Search Card for non-admins */}
-      {!hasFullTeamAccess && (
-        <div className="bg-[#111625] border border-slate-800 rounded-xl p-5 shadow-xl space-y-3">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
-              <Lock className="w-4 h-4" />
+      {activeTab === 'users' && (
+        <>
+          {/* Directory Search and Department Filter for full-access users */}
+          {hasFullTeamAccess && (
+            <div className="flex flex-col sm:flex-row items-center gap-4 bg-[#111625]/60 border border-slate-800 p-4 rounded-xl shadow-xl">
+              <div className="relative flex-1 w-full">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search by name, email, or employee ID..."
+                  className="w-full pl-9 pr-4 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-white placeholder-slate-500 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                />
+                <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+              </div>
+              <div className="w-full sm:w-64">
+                <select
+                  value={selectedDepartmentFilter}
+                  onChange={(e) => setSelectedDepartmentFilter(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-300 text-xs focus:ring-amber-500 focus:outline-none"
+                >
+                  <option value="">All Departments</option>
+                  {departmentsList.map((dept) => (
+                    <option key={dept.id} value={String(dept.id)}>{dept.name}</option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <div>
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider">Employee Directory Lookup</h3>
-              <p className="text-[11px] text-slate-400">
-                Type an exact Employee ID below to view details of a specific team member.
-              </p>
+          )}
+
+          {/* Restricted Directory Search Card for non-admins */}
+          {!hasFullTeamAccess && (
+            <div className="bg-[#111625] border border-slate-800 rounded-xl p-5 shadow-xl space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                  <Lock className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-white uppercase tracking-wider">Employee Directory Lookup</h3>
+                  <p className="text-[11px] text-slate-400">
+                    Type an exact Employee ID below to view details of a specific team member.
+                  </p>
+                </div>
+              </div>
+
+              <div className="relative max-w-md">
+                <input
+                  type="text"
+                  value={empSearchInput}
+                  onChange={(e) => setEmpSearchInput(e.target.value)}
+                  placeholder="Enter exact Employee ID (e.g. EMP-101)..."
+                  className="w-full pl-9 pr-4 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white placeholder-slate-500 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/50 font-mono tracking-wide"
+                />
+                <Search className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className="relative max-w-md">
-            <input
-              type="text"
-              value={empSearchInput}
-              onChange={(e) => setEmpSearchInput(e.target.value)}
-              placeholder="Enter exact Employee ID (e.g. EMP-101)..."
-              className="w-full pl-9 pr-4 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white placeholder-slate-500 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/50 font-mono tracking-wide"
-            />
-            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
-          </div>
-        </div>
-      )}
+          {/* Bulk Actions Control Bar */}
+          {isAdminOrDirectorOrSalesHead && selectedUserIds.length > 0 && (
+            <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex items-center justify-between shadow-xl animate-fade-in">
+              <div className="flex items-center gap-3">
+                <span className="w-6 h-6 rounded-full bg-amber-500 text-slate-950 font-bold text-xs flex items-center justify-center font-mono">
+                  {selectedUserIds.length}
+                </span>
+                <span className="text-xs font-semibold text-slate-200">Team Member(s) Selected</span>
+              </div>
 
-      {/* Bulk Actions Control Bar */}
-      {isAdminOrDirectorOrSalesHead && selectedUserIds.length > 0 && (
-        <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex items-center justify-between shadow-xl animate-fade-in">
-          <div className="flex items-center gap-3">
-            <span className="w-6 h-6 rounded-full bg-amber-500 text-slate-950 font-bold text-xs flex items-center justify-center font-mono">
-              {selectedUserIds.length}
-            </span>
-            <span className="text-xs font-semibold text-slate-200">Team Member(s) Selected</span>
-          </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleBulkAction('activate')}
+                  disabled={bulkActionLoading}
+                  className="py-1.5 px-3 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 font-bold text-xs rounded-lg flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  <UserCheck className="w-3.5 h-3.5" />
+                  <span>Activate</span>
+                </button>
+                <button
+                  onClick={() => handleBulkAction('deactivate')}
+                  disabled={bulkActionLoading}
+                  className="py-1.5 px-3 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-400 font-bold text-xs rounded-lg flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  <UserX className="w-3.5 h-3.5" />
+                  <span>Deactivate</span>
+                </button>
+                <button
+                  onClick={() => handleBulkAction('delete')}
+                  disabled={bulkActionLoading}
+                  className="py-1.5 px-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 font-bold text-xs rounded-lg flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete</span>
+                </button>
+              </div>
+            </div>
+          )}
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => handleBulkAction('activate')}
-              disabled={bulkActionLoading}
-              className="py-1.5 px-3 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 font-bold text-xs rounded-lg flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
-            >
-              <UserCheck className="w-3.5 h-3.5" />
-              <span>Activate</span>
-            </button>
-            <button
-              onClick={() => handleBulkAction('deactivate')}
-              disabled={bulkActionLoading}
-              className="py-1.5 px-3 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-400 font-bold text-xs rounded-lg flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
-            >
-              <UserX className="w-3.5 h-3.5" />
-              <span>Deactivate</span>
-            </button>
-            <button
-              onClick={() => handleBulkAction('delete')}
-              disabled={bulkActionLoading}
-              className="py-1.5 px-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 font-bold text-xs rounded-lg flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span>Delete</span>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Users table card */}
-      <div className="bg-[#111625] border border-slate-800 rounded-xl overflow-hidden shadow-xl">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[1000px]">
-            <thead>
-              <tr className="border-b border-slate-800 bg-slate-900/10 text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                {isAdminOrDirectorOrSalesHead && (
-                  <th className="py-4 px-3 w-10 text-center">
-                    <input
-                      type="checkbox"
-                      onChange={handleSelectAll}
-                      checked={displayedMembers.length > 0 && displayedMembers.filter(m => m.id !== user?.id).length > 0 && displayedMembers.filter(m => m.id !== user?.id).every(m => selectedUserIds.includes(m.id))}
-                      className="rounded border-slate-700 bg-slate-900 text-amber-500 focus:ring-amber-500/40 cursor-pointer"
-                    />
-                  </th>
-                )}
-                <th className="py-4 px-4 w-20 text-center">Photo</th>
-                <th className="py-4 px-4 w-48">Full Name</th>
-                <th className="py-4 px-4 w-32">Employee ID</th>
-                <th className="py-4 px-4 w-40">Designation</th>
-                {isAdminOrDirectorOrSalesHead ? (
-                  <>
-                    <th className="py-4 px-4 w-40">Direct Supervisor</th>
-                    <th className="py-4 px-4 w-36">Years in the Company</th>
-                    <th className="py-4 px-4 w-28 text-center">Leads Closed</th>
-                    <th className="py-4 px-4 w-28 text-center">Status</th>
-                    <th className="py-4 px-4 w-36 text-center">Control</th>
-                  </>
-                ) : (
-                  <>
-                    <th className="py-4 px-4 w-36">Years in the Company</th>
-                    <th className="py-4 px-4 w-28 text-center">Leads Closed</th>
-                  </>
-                )}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60 text-sm">
-              {displayedMembers.length === 0 ? (
-                <tr>
-                  <td colSpan={isAdminOrDirectorOrSalesHead ? 10 : 6} className="py-12 text-center text-slate-500 text-xs">
-                    {!hasFullTeamAccess ? (
-                      !empSearchInput.trim() ? (
-                        <div className="flex flex-col items-center gap-2">
-                          <Search className="w-6 h-6 text-slate-600" />
-                          <span className="font-semibold text-slate-400">Please enter an exact Employee ID above to view a team member.</span>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center gap-2">
-                          <UserX className="w-6 h-6 text-slate-600" />
-                          <span>No team member found matching Employee ID "{empSearchInput.trim()}".</span>
-                        </div>
-                      )
-                    ) : (
-                      'No team members found.'
+          {/* Users table card */}
+          <div className="bg-[#111625] border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[1000px]">
+                <thead>
+                  <tr className="border-b border-slate-800 bg-slate-900/10 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                    {isAdminOrDirectorOrSalesHead && (
+                      <th className="py-4 px-3 w-10 text-center">
+                        <input
+                          type="checkbox"
+                          onChange={handleSelectAll}
+                          checked={displayedMembers.length > 0 && displayedMembers.filter(m => m.id !== user?.id).length > 0 && displayedMembers.filter(m => m.id !== user?.id).every(m => selectedUserIds.includes(m.id))}
+                          className="rounded border-slate-700 bg-slate-900 text-amber-500 focus:ring-amber-500/40 cursor-pointer"
+                        />
+                      </th>
                     )}
-                  </td>
-                </tr>
-              ) : (
-                displayedMembers.map((member) => {
-                  const roleConfig = { label: getRoleLabel(member.role), class: getRoleClass(member.role) };
-                  
-                  return (
-                    <tr
-                      key={member.id}
-                      className={`hover:bg-slate-900/10 transition-colors ${
-                        !member.isActive ? 'opacity-50' : ''
-                      } ${selectedUserIds.includes(member.id) ? 'bg-amber-500/5' : ''}`}
-                    >
-                      {isAdminOrDirectorOrSalesHead && (
-                        <td className="py-4 px-3 text-center w-10">
-                          {member.id !== user?.id && (
-                            <input
-                              type="checkbox"
-                              checked={selectedUserIds.includes(member.id)}
-                              onChange={() => handleSelectUser(member.id)}
-                              className="rounded border-slate-700 bg-slate-900 text-amber-500 focus:ring-amber-500/40 cursor-pointer"
-                            />
-                          )}
-                        </td>
-                      )}
-                      {/* Photograph Column */}
-                      <td className="py-4 px-4 text-center w-20">
-                        {member.photograph ? (
-                          <img
-                            src={`/api/v1/users/${member.id}/photograph?t=${Date.now()}`}
-                            alt={member.name}
-                            className="w-8 h-8 rounded-full object-cover border border-slate-800 mx-auto"
-                            onError={(e) => {
-                              (e.target as HTMLElement).style.display = 'none';
-                            }}
-                          />
+                    <th className="py-4 px-4 w-20 text-center">Photo</th>
+                    <th className="py-4 px-4 w-48">Full Name</th>
+                    <th className="py-4 px-4 w-32">Employee ID</th>
+                    <th className="py-4 px-4 w-40">Designation</th>
+                    {isAdminOrDirectorOrSalesHead ? (
+                      <>
+                        <th className="py-4 px-4 w-40">Direct Supervisor</th>
+                        <th className="py-4 px-4 w-36">Years in the Company</th>
+                        <th className="py-4 px-4 w-28 text-center">Leads Closed</th>
+                        <th className="py-4 px-4 w-28 text-center">Status</th>
+                        <th className="py-4 px-4 w-36 text-center">Control</th>
+                      </>
+                    ) : (
+                      <>
+                        <th className="py-4 px-4 w-36">Years in the Company</th>
+                        <th className="py-4 px-4 w-28 text-center">Leads Closed</th>
+                      </>
+                    )}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60 text-sm">
+                  {displayedMembers.length === 0 ? (
+                    <tr>
+                      <td colSpan={isAdminOrDirectorOrSalesHead ? 10 : 6} className="py-12 text-center text-slate-500 text-xs">
+                        {!hasFullTeamAccess ? (
+                          !empSearchInput.trim() ? (
+                            <div className="flex flex-col items-center gap-2">
+                              <Search className="w-6 h-6 text-slate-600" />
+                              <span className="font-semibold text-slate-400">Please enter an exact Employee ID above to view a team member.</span>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center gap-2">
+                              <UserX className="w-6 h-6 text-slate-600" />
+                              <span>No team member found matching Employee ID "{empSearchInput.trim()}".</span>
+                            </div>
+                          )
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-amber-400 mx-auto shrink-0">
-                            <User className="w-4 h-4" />
-                          </div>
+                          'No team members found.'
                         )}
                       </td>
-
-                      {/* Full Name Column */}
-                      <td className="py-4 px-4 font-bold text-white w-48">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleOpenProfile(member)}
-                            className="hover:text-amber-400 text-left font-bold text-white transition-colors cursor-pointer"
-                          >
-                            {member.name}
-                          </button>
-                          {member.id === user?.id && (
-                            <span className="text-[8px] bg-amber-500/20 text-amber-400 border border-amber-500/20 rounded px-1.5 font-extrabold uppercase">
-                              You
-                            </span>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Employee ID Column */}
-                      <td className="py-4 px-4 font-mono text-xs text-slate-300 w-32">
-                        {member.employeeId || <span className="text-slate-600 italic">Not Set</span>}
-                      </td>
-
-                      {/* Designation/Role Column */}
-                      <td className="py-4 px-4 w-40">
-                        <span className={`inline-block text-[9px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${roleConfig.class}`}>
-                          {member.designation?.name || roleConfig.label}
-                        </span>
-                      </td>
-
-                      {isAdminOrDirectorOrSalesHead ? (
-                        <>
-                          <td className="py-4 px-4 text-slate-400 w-40">
-                            {member.supervisor?.name || <span className="text-slate-600 text-xs italic">None</span>}
-                          </td>
-                          <td className="py-4 px-4 text-slate-300 w-36">
-                            {calculateYearsInCompany(member.joiningDate)}
-                          </td>
-                          <td className="py-4 px-4 text-center text-emerald-400 font-bold font-mono w-28">
-                            {member.leadsClosed || 0}
-                          </td>
-                          <td className="py-4 px-4 text-center w-28">
-                            <span
-                              className={`inline-block text-[9px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${
-                                member.isActive
-                                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                  : 'bg-red-500/10 text-red-400 border-red-500/20'
-                              }`}
-                            >
-                                {member.isActive ? 'Active' : 'Deactivated'}
-                            </span>
-                          </td>
-                          <td className="py-4 px-4 text-center w-36">
-                            <div className="flex items-center justify-center gap-2">
-                              {hasPermission('logs:view') && (
-                                <button
-                                  onClick={() => handleOpenActivityLogs(member)}
-                                  className="p-1.5 rounded-lg border bg-slate-900 hover:bg-slate-850 text-slate-400 hover:text-white border-slate-800 hover:border-slate-700 transition-all cursor-pointer flex items-center justify-center"
-                                  title="View Activity Logs"
-                                >
-                                  <History className="w-4 h-4" />
-                                </button>
+                    </tr>
+                  ) : (
+                    displayedMembers.map((member) => {
+                      const roleConfig = { label: getRoleLabel(member.role), class: getRoleClass(member.role) };
+                      
+                      return (
+                        <tr
+                          key={member.id}
+                          className={`hover:bg-slate-900/10 transition-colors ${
+                            !member.isActive ? 'opacity-50' : ''
+                          } ${selectedUserIds.includes(member.id) ? 'bg-amber-500/5' : ''}`}
+                        >
+                          {isAdminOrDirectorOrSalesHead && (
+                            <td className="py-4 px-3 text-center w-10">
+                              {member.id !== user?.id && (
+                                <input
+                                  type="checkbox"
+                                  checked={selectedUserIds.includes(member.id)}
+                                  onChange={() => handleSelectUser(member.id)}
+                                  className="rounded border-slate-700 bg-slate-900 text-amber-500 focus:ring-amber-500/40 cursor-pointer"
+                                />
                               )}
+                            </td>
+                          )}
+                          {/* Photograph Column */}
+                          <td className="py-4 px-4 text-center w-20">
+                            {member.photograph ? (
+                              <img
+                                src={`/api/v1/users/${member.id}/photograph?t=${Date.now()}`}
+                                alt={member.name}
+                                className="w-8 h-8 rounded-full object-cover border border-slate-800 mx-auto"
+                                onError={(e) => {
+                                  (e.target as HTMLElement).style.display = 'none';
+                                }}
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-amber-400 mx-auto shrink-0">
+                                <User className="w-4 h-4" />
+                              </div>
+                            )}
+                          </td>
 
-                              {member.id !== user?.id && member.role !== 'admin' && !member.role.startsWith('admin:') && (
-                                <>
-                                  <button
-                                    onClick={() => handleToggleActive(member)}
-                                    className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
-                                      member.isActive
-                                        ? 'bg-red-950/20 text-red-400 border-red-900/30 hover:bg-red-950/40'
-                                        : 'bg-emerald-950/20 text-emerald-400 border-emerald-900/30 hover:bg-emerald-950/40'
-                                    }`}
-                                    title={member.isActive ? 'Deactivate Account' : 'Reactivate Account'}
-                                  >
-                                    {member.isActive ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
-                                  </button>
-                                  
-                                  {!member.isActive && (
-                                    <button
-                                      type="button"
-                                      onClick={() => handleDeleteUser(member)}
-                                      className="p-1.5 rounded-lg border bg-rose-950/20 text-rose-455 border-rose-900/30 hover:bg-rose-950/40 transition-all cursor-pointer"
-                                      title="Permanently Delete User"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                  )}
-                                </>
+                          {/* Full Name Column */}
+                          <td className="py-4 px-4 font-bold text-white w-48">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleOpenProfile(member)}
+                                className="hover:text-amber-400 text-left font-bold text-white transition-colors cursor-pointer"
+                              >
+                                {member.name}
+                              </button>
+                              {member.id === user?.id && (
+                                <span className="text-[8px] bg-amber-500/20 text-amber-400 border border-amber-500/20 rounded px-1.5 font-extrabold uppercase">
+                                  You
+                                </span>
                               )}
                             </div>
                           </td>
-                        </>
-                      ) : (
-                        <>
-                          <td className="py-4 px-4 text-slate-300 w-36">
-                            {calculateYearsInCompany(member.joiningDate)}
+
+                          {/* Employee ID Column */}
+                          <td className="py-4 px-4 font-mono text-xs text-slate-300 w-32">
+                            {member.employeeId || <span className="text-slate-600 italic">Not Set</span>}
                           </td>
-                          <td className="py-4 px-4 text-center text-emerald-400 font-bold font-mono w-28">
-                            {member.leadsClosed || 0}
+
+                          {/* Designation/Role Column */}
+                          <td className="py-4 px-4 w-40">
+                            <span className={`inline-block text-[9px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${roleConfig.class}`}>
+                              {member.designation?.name || roleConfig.label}
+                            </span>
                           </td>
-                        </>
+
+                          {isAdminOrDirectorOrSalesHead ? (
+                            <>
+                              <td className="py-4 px-4 text-slate-400 w-40">
+                                {member.supervisor?.name || <span className="text-slate-600 text-xs italic">None</span>}
+                              </td>
+                              <td className="py-4 px-4 text-slate-300 w-36">
+                                {calculateYearsInCompany(member.joiningDate)}
+                              </td>
+                              <td className="py-4 px-4 text-center text-emerald-400 font-bold font-mono w-28">
+                                {member.leadsClosed || 0}
+                              </td>
+                              <td className="py-4 px-4 text-center w-28">
+                                <span
+                                  className={`inline-block text-[9px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${
+                                    member.isActive
+                                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                      : 'bg-red-500/10 text-red-400 border-red-500/20'
+                                  }`}
+                                >
+                                    {member.isActive ? 'Active' : 'Deactivated'}
+                                </span>
+                              </td>
+                              <td className="py-4 px-4 text-center w-36">
+                                <div className="flex items-center justify-center gap-2">
+                                  {hasPermission('logs:view') && (
+                                    <button
+                                      onClick={() => handleOpenActivityLogs(member)}
+                                      className="p-1.5 rounded-lg border bg-slate-900 hover:bg-slate-850 text-slate-400 hover:text-white border-slate-800 hover:border-slate-700 transition-all cursor-pointer flex items-center justify-center"
+                                      title="View Activity Logs"
+                                    >
+                                      <History className="w-4 h-4" />
+                                    </button>
+                                  )}
+
+                                  {member.id !== user?.id && member.role !== 'admin' && !member.role.startsWith('admin:') && (
+                                    <>
+                                      <button
+                                        onClick={() => handleToggleActive(member)}
+                                        className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                                          member.isActive
+                                            ? 'bg-red-950/20 text-red-400 border-red-900/30 hover:bg-red-950/40'
+                                            : 'bg-emerald-950/20 text-emerald-400 border-emerald-900/30 hover:bg-emerald-950/40'
+                                        }`}
+                                        title={member.isActive ? 'Deactivate Account' : 'Reactivate Account'}
+                                      >
+                                        {member.isActive ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
+                                      </button>
+                                      
+                                      {!member.isActive && (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleDeleteUser(member)}
+                                          className="p-1.5 rounded-lg border bg-rose-950/20 text-rose-455 border-rose-900/30 hover:bg-rose-950/40 transition-all cursor-pointer"
+                                          title="Permanently Delete User"
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                        </button>
+                                      )}
+                                    </>
+                                  )}
+                                </div>
+                              </td>
+                            </>
+                          ) : (
+                            <>
+                              <td className="py-4 px-4 text-slate-300 w-36">
+                                {calculateYearsInCompany(member.joiningDate)}
+                              </td>
+                              <td className="py-4 px-4 text-center text-emerald-400 font-bold font-mono w-28">
+                                {member.leadsClosed || 0}
+                              </td>
+                            </>
+                          )}
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+
+      {activeTab === 'clans' && (
+        <div className="space-y-6 animate-fade-in">
+          {/* Clan list card header */}
+          <div className="flex justify-between items-center bg-[#111625]/60 border border-slate-800 p-4 rounded-xl shadow-xl">
+            <div>
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider">Company Clans (Teams)</h3>
+              <p className="text-[11px] text-slate-400 font-medium">View and manage departmental clans, hierarchical trees, and leadership.</p>
+            </div>
+            {isAdminOrDirectorOrSalesHead && (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingTeam(null);
+                  setTeamForm({ name: '', departmentId: '', leaderId: '', memberIds: [] });
+                  setShowTeamModal(true);
+                }}
+                className="py-2 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-955 rounded-lg font-bold text-xs shadow-lg flex items-center gap-1.5 transition-all cursor-pointer border border-transparent"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Create Clan</span>
+              </button>
+            )}
+          </div>
+
+          {/* Clans list grid */}
+          {teamsLoading ? (
+            <div className="py-12 flex flex-col items-center gap-3">
+              <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+              <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider animate-pulse">Loading Clans...</p>
+            </div>
+          ) : teams.length === 0 ? (
+            <div className="py-16 text-center bg-[#111625]/60 border border-dashed border-slate-800 rounded-xl">
+              <p className="text-slate-500 text-xs italic">No clans defined yet. Create a clan to group team members.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
+              {teams.map((team) => {
+                const leader = team.leader;
+                const membersList = team.members || [];
+                
+                return (
+                  <div key={team.id} className="bg-[#111625] border border-slate-800 rounded-xl overflow-hidden shadow-xl flex flex-col hover:border-slate-700/80 transition-all duration-300">
+                    <div className="p-5 border-b border-slate-800 bg-slate-900/10 flex justify-between items-start gap-4">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-bold text-white tracking-wide">{team.name}</h4>
+                          <span className="px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[9px] font-bold uppercase">
+                            {team.department?.name || 'General'}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-400 mt-1">
+                          Leader: {leader ? `${leader.name} (${getRoleLabel(leader.role)})` : 'No Leader Assigned'}
+                        </p>
+                      </div>
+                      
+                      {isAdminOrDirectorOrSalesHead && (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              setEditingTeam(team);
+                              setTeamForm({
+                                name: team.name,
+                                departmentId: String(team.departmentId),
+                                leaderId: team.leaderId ? String(team.leaderId) : '',
+                                memberIds: membersList.map((m: any) => m.id),
+                              });
+                              setShowTeamModal(true);
+                            }}
+                            className="p-1.5 rounded-lg border border-slate-800 bg-slate-900 hover:bg-slate-850 text-slate-400 hover:text-white transition-all cursor-pointer text-xs font-semibold"
+                            title="Edit Clan"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteTeam(team.id)}
+                            className="p-1.5 rounded-lg border border-red-900/30 bg-red-950/20 text-red-400 hover:bg-red-950/40 transition-all cursor-pointer text-xs font-semibold"
+                            title="Delete Clan"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       )}
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                    </div>
+
+                    <div className="p-5 flex-1 space-y-4">
+                      {/* Hierarchical Clan Tree (Leader -> Reports To structure) */}
+                      <div className="space-y-3">
+                        <span className="block text-[9px] font-bold text-slate-500 uppercase tracking-wider">Hierarchy Tree</span>
+                        
+                        {/* Leader node */}
+                        {leader ? (
+                          <div className="p-3 bg-slate-950 border border-amber-500/20 rounded-xl flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 font-bold text-xs">
+                              L
+                            </div>
+                            <div>
+                              <span className="block text-xs font-bold text-white">{leader.name}</span>
+                              <span className="block text-[10px] text-amber-500 font-semibold">{getRoleLabel(leader.role)} (Clan Head)</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="p-3 bg-slate-950/50 border border-dashed border-slate-850 rounded-xl text-center">
+                            <span className="text-slate-500 text-xs italic">No leader assigned to this clan</span>
+                          </div>
+                        )}
+
+                        {/* Connection arrow */}
+                        {membersList.length > 0 && (
+                          <div className="flex justify-center my-1">
+                            <span className="text-slate-600 text-xs">▼</span>
+                          </div>
+                        )}
+
+                        {/* Members list */}
+                        {membersList.length > 0 ? (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-2">
+                            {membersList.map((m: any) => {
+                              const reportsToUser = membersList.find((sup: any) => sup.id === m.reportsTo);
+                              return (
+                                <div key={m.id} className="p-2.5 bg-slate-950/40 border border-slate-850 rounded-lg flex items-center gap-2.5 hover:border-slate-800 transition-all">
+                                  <div className="w-7 h-7 rounded bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 text-xs font-bold font-mono">
+                                    {m.name.charAt(0)}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <span className="block text-xs font-semibold text-slate-200 truncate">{m.name}</span>
+                                    <span className="block text-[9px] text-slate-400 truncate">{getRoleLabel(m.role)}</span>
+                                    {reportsToUser && (
+                                      <span className="block text-[8px] text-slate-500 italic truncate">Reports to: {reportsToUser.name}</span>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <p className="text-slate-500 text-xs italic text-center py-2">No other members in this clan</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
-      </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* Clan (Team) Creation/Edition Modal Dialog */}
+      {showTeamModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="w-full max-w-xl bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-white">
+                {editingTeam ? 'Edit Clan' : 'Create New Clan'}
+              </h3>
+              <button onClick={() => setShowTeamModal(false)} className="text-slate-400 hover:text-white cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveTeam} className="p-6 space-y-4">
+              <div>
+                <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
+                  Clan Name <span className="text-red-500 font-bold">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={teamForm.name}
+                  onChange={(e) => setTeamForm({ ...teamForm, name: e.target.value })}
+                  placeholder="e.g. Sales Clan East, Pre-Sales Alpha"
+                  className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
+                    Department <span className="text-red-500 font-bold">*</span>
+                  </label>
+                  <select
+                    required
+                    value={teamForm.departmentId}
+                    onChange={(e) => setTeamForm({ ...teamForm, departmentId: e.target.value })}
+                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500"
+                  >
+                    <option value="">Select Department...</option>
+                    {departmentsList.map((dept) => (
+                      <option key={dept.id} value={dept.id}>{dept.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
+                    Clan Leader (Head)
+                  </label>
+                  <select
+                    value={teamForm.leaderId}
+                    onChange={(e) => setTeamForm({ ...teamForm, leaderId: e.target.value })}
+                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500"
+                  >
+                    <option value="">No Leader Assigned</option>
+                    {members
+                      .filter((m) => !teamForm.departmentId || m.departmentId === parseInt(teamForm.departmentId, 10))
+                      .map((m) => (
+                        <option key={m.id} value={m.id}>{m.name} ({getRoleLabel(m.role)})</option>
+                      ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold uppercase text-slate-400 mb-2">
+                  Select Clan Members
+                </label>
+                <div className="max-h-48 overflow-y-auto border border-slate-800 bg-slate-950 rounded-lg p-3 space-y-2">
+                  {members
+                    .filter((m) => !teamForm.departmentId || m.departmentId === parseInt(teamForm.departmentId, 10))
+                    .map((m) => {
+                      const isChecked = teamForm.memberIds.includes(m.id);
+                      return (
+                        <label key={m.id} className="flex items-center gap-2 text-xs text-slate-350 cursor-pointer hover:text-white">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              const updatedMemberIds = checked
+                                ? [...teamForm.memberIds, m.id]
+                                : teamForm.memberIds.filter((id) => id !== m.id);
+                              setTeamForm({ ...teamForm, memberIds: updatedMemberIds });
+                            }}
+                            className="rounded text-amber-500 focus:ring-amber-500 bg-slate-900 border-slate-800"
+                          />
+                          <span>{m.name} ({getRoleLabel(m.role)})</span>
+                        </label>
+                      );
+                    })}
+                  {members.filter((m) => !teamForm.departmentId || m.departmentId === parseInt(teamForm.departmentId, 10)).length === 0 && (
+                    <p className="text-[11px] text-slate-500 italic">Please select a department first to see eligible members.</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowTeamModal(false)}
+                  className="px-4 py-2 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-300 text-xs font-semibold rounded-lg cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-955 text-xs font-bold rounded-lg cursor-pointer"
+                >
+                  {editingTeam ? 'Save Changes' : 'Create Clan'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* ============================================================== */}
       {/* Add User Modal Dialog */}
@@ -1736,6 +2117,19 @@ export default function TeamManagementPage() {
                           {sup.name} ({getRoleLabel(sup.role).toUpperCase()})
                         </option>
                       ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Assign to Clan (Team)</label>
+                  <select
+                    value={form.teamId}
+                    onChange={(e) => setForm({ ...form, teamId: e.target.value })}
+                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500"
+                  >
+                    <option value="">No Clan / Unassigned</option>
+                    {teams.map((t) => (
+                      <option key={t.id} value={t.id}>{t.name} ({t.department?.name})</option>
+                    ))}
                   </select>
                 </div>
                 <div>
@@ -2122,6 +2516,19 @@ export default function TeamManagementPage() {
                               {sup.name} ({getRoleLabel(sup.role).toUpperCase()})
                             </option>
                           ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Assign to Clan (Team)</label>
+                      <select
+                        value={editMemberForm.teamId}
+                        onChange={(e) => setEditMemberForm({ ...editMemberForm, teamId: e.target.value })}
+                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500 focus:outline-none"
+                      >
+                        <option value="">No Clan / Unassigned</option>
+                        {teams.map((t) => (
+                          <option key={t.id} value={t.id}>{t.name} ({t.department?.name})</option>
+                        ))}
                       </select>
                     </div>
                     <div>
@@ -2520,29 +2927,55 @@ export default function TeamManagementPage() {
 
             <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
               {/* Date Filter Panel */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-slate-900/20 border border-slate-850 rounded-xl">
-                <div>
-                  <span className="block text-slate-400 font-semibold text-xs">Select Log Date</span>
-                  <span className="block text-[10px] text-slate-500 mt-0.5">Audit actions for specific days</span>
-                </div>
-                <div className="flex items-center gap-2 w-full sm:w-auto">
-                  <input
-                    type="date"
-                    value={logsDate}
-                    max={getTodayLocalDateStr()}
-                    onChange={handleLogsDateChange}
-                    className="block w-full sm:w-auto px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
-                  />
+              <div className="flex flex-col gap-4 p-4 bg-slate-900/20 border border-slate-850 rounded-xl">
+                <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                  <div>
+                    <span className="block text-slate-400 font-semibold text-xs">Filter by Date & Time</span>
+                    <span className="block text-[10px] text-slate-500 mt-0.5">Track employee actions precisely</span>
+                  </div>
                   <button
                     onClick={() => {
                       const today = getTodayLocalDateStr();
-                      setLogsDate(today);
-                      fetchActivityLogs(logsMember.id, today);
+                      const start = `${today}T00:00`;
+                      const end = `${today}T23:59`;
+                      setLogsStartDate(start);
+                      setLogsEndDate(end);
+                      fetchActivityLogs(logsMember.id, start, end);
                     }}
-                    className="px-3 py-1.5 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 rounded-lg text-xs font-semibold shrink-0 cursor-pointer"
+                    className="px-2.5 py-1 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 rounded-lg text-[10px] font-semibold cursor-pointer animate-all"
                   >
-                    Today
+                    Reset Today
                   </button>
+                </div>
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="flex flex-col gap-1 flex-1 min-w-[180px]">
+                    <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Start Date & Time</label>
+                    <input
+                      type="datetime-local"
+                      value={logsStartDate}
+                      onChange={(e) => {
+                        setLogsStartDate(e.target.value);
+                        if (logsMember && logsEndDate) {
+                          fetchActivityLogs(logsMember.id, e.target.value, logsEndDate);
+                        }
+                      }}
+                      className="block w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1 flex-1 min-w-[180px]">
+                    <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">End Date & Time</label>
+                    <input
+                      type="datetime-local"
+                      value={logsEndDate}
+                      onChange={(e) => {
+                        setLogsEndDate(e.target.value);
+                        if (logsMember && logsStartDate) {
+                          fetchActivityLogs(logsMember.id, logsStartDate, e.target.value);
+                        }
+                      }}
+                      className="block w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    />
+                  </div>
                 </div>
               </div>
 
