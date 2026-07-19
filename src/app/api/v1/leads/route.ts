@@ -31,7 +31,6 @@ export async function GET(req: Request) {
     const statusParam = searchParams.get('status') || '';
     const city = searchParams.get('city') || '';
     const consultantIdStr = searchParams.get('consultant_id') || '';
-    const teamIdStr = searchParams.get('team_id') || '';
     const connectionType = searchParams.get('connection_type') || '';
     const leadSource = searchParams.get('lead_source') || '';
     const page = parseInt(searchParams.get('page') || '1', 10);
@@ -64,7 +63,7 @@ export async function GET(req: Request) {
     // Fetch user designation level
     const userDetail = await prisma.user.findUnique({
       where: { id: userPayload.id },
-      select: { teamId: true, designation: { select: { level: true } } },
+      select: { designation: { select: { level: true } } },
     });
     const designationLevel = userDetail?.designation?.level ?? 6;
 
@@ -96,48 +95,35 @@ export async function GET(req: Request) {
         const subordinateIds = await getSubordinateIds(userPayload.id);
         const allowedIds = [userPayload.id, ...subordinateIds];
 
-        const orConditions: Prisma.LeadWhereInput[] = [
-          { assignedConsultantId: { in: allowedIds } },
-          { assignedTlId: { in: allowedIds } },
-          { assignedManagerId: { in: allowedIds } },
-          { createdById: userPayload.id },
-          { assignedTlId: null, assignedConsultantId: null }, // view unassigned leads
-          { assignedTeam: { leaderId: userPayload.id } },
-          {
-            order: {
-              status: 'draft',
-              rejectionReason: { not: null },
-              submittedById: userPayload.id,
-            }
-          }
-        ];
-
-        if (userDetail?.teamId) {
-          orConditions.push({ assignedTeamId: userDetail.teamId });
-        }
-
         andConditions.push({
-          OR: orConditions
+          OR: [
+            { assignedConsultantId: { in: allowedIds } },
+            { assignedTlId: { in: allowedIds } },
+            { assignedManagerId: { in: allowedIds } },
+            { createdById: userPayload.id },
+            { assignedTlId: null, assignedConsultantId: null }, // view unassigned leads
+            {
+              order: {
+                status: 'draft',
+                rejectionReason: { not: null },
+                submittedById: userPayload.id,
+              }
+            }
+          ]
         });
       } else {
         // Consultant / PSA Consultant (Level 6)
-        const orConditions: Prisma.LeadWhereInput[] = [
-          { assignedConsultantId: userPayload.id },
-          {
-            order: {
-              status: 'draft',
-              rejectionReason: { not: null },
-              submittedById: userPayload.id,
-            }
-          }
-        ];
-
-        if (userDetail?.teamId) {
-          orConditions.push({ assignedTeamId: userDetail.teamId });
-        }
-
         andConditions.push({
-          OR: orConditions
+          OR: [
+            { assignedConsultantId: userPayload.id },
+            {
+              order: {
+                status: 'draft',
+                rejectionReason: { not: null },
+                submittedById: userPayload.id,
+              }
+            }
+          ]
         });
       }
     }
@@ -234,25 +220,6 @@ export async function GET(req: Request) {
         assignedTlId: null,
         assignedManagerId: null,
       });
-    }
-
-    if (teamIdStr) {
-      const parts = teamIdStr.split(',').map(s => s.trim());
-      const hasUnassigned = parts.includes('unassigned');
-      const teamIds = parts.map(s => parseInt(s, 10)).filter(n => !isNaN(n));
-      
-      if (hasUnassigned && teamIds.length > 0) {
-        andConditions.push({
-          OR: [
-            { assignedTeamId: null },
-            { assignedTeamId: { in: teamIds } }
-          ]
-        });
-      } else if (hasUnassigned) {
-        andConditions.push({ assignedTeamId: null });
-      } else if (teamIds.length > 0) {
-        andConditions.push({ assignedTeamId: { in: teamIds } });
-      }
     }
 
     if (connectionType) {
@@ -386,7 +353,6 @@ export async function POST(req: Request) {
       assignedTlId,
       assignedConsultantId,
       assignedManagerId,
-      assignedTeamId,
       notes,
       overrideDuplicate,
       discomName,
@@ -455,13 +421,12 @@ export async function POST(req: Request) {
     let finalConsultantId = (assignedConsultantId && !isNaN(parseInt(assignedConsultantId, 10))) ? parseInt(assignedConsultantId, 10) : null;
     let finalTlId = (assignedTlId && !isNaN(parseInt(assignedTlId, 10))) ? parseInt(assignedTlId, 10) : tlId;
     let finalManagerId = (assignedManagerId && !isNaN(parseInt(assignedManagerId, 10))) ? parseInt(assignedManagerId, 10) : managerId;
-    let finalTeamId = (assignedTeamId && !isNaN(parseInt(assignedTeamId, 10))) ? parseInt(assignedTeamId, 10) : null;
 
     if (finalConsultantId && !assignedTlId && !assignedManagerId) {
       // Auto-resolve if consultant is assigned and TL/Manager are not explicitly chosen
       const consUser = await prisma.user.findUnique({
         where: { id: finalConsultantId },
-        select: { reportsTo: true, teamId: true },
+        select: { reportsTo: true },
       });
       if (consUser?.reportsTo) {
         finalTlId = consUser.reportsTo;
@@ -470,9 +435,6 @@ export async function POST(req: Request) {
           select: { reportsTo: true },
         });
         finalManagerId = tlUser?.reportsTo || null;
-      }
-      if (consUser?.teamId && !finalTeamId) {
-        finalTeamId = consUser.teamId;
       }
     } else if (finalTlId && !assignedManagerId) {
       // Auto-resolve if TL is assigned and Manager is not explicitly chosen
@@ -511,7 +473,6 @@ export async function POST(req: Request) {
           assignedManagerId: finalManagerId,
           assignedTlId: finalTlId,
           assignedConsultantId: finalConsultantId,
-          assignedTeamId: finalTeamId,
           createdById: userPayload.id,
           isActive: true,
           discomName: discomName || null,

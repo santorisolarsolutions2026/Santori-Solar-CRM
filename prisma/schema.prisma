@@ -39,10 +39,6 @@ model User {
   designation          Designation?        @relation(fields: [designationId], references: [id])
   activities           Activity[]
 
-  teamId               Int?
-  team                 Team?               @relation("TeamMembers", fields: [teamId], references: [id])
-  ledTeam              Team?               @relation("TeamLeader")
-
   // Supervisor relation
   supervisor           User?               @relation("UserSupervisor", fields: [reportsTo], references: [id])
   subordinates         User[]              @relation("UserSupervisor")
@@ -91,14 +87,12 @@ model Lead {
   otherData            String?
   discomName           String?
   connectionNumber     String?
-  assignedTeamId       Int?
 
   // Relations
   manager              User?               @relation("ManagerLeads", fields: [assignedManagerId], references: [id])
   tl                   User?               @relation("TlLeads", fields: [assignedTlId], references: [id])
   consultant           User?               @relation("ConsultantLeads", fields: [assignedConsultantId], references: [id])
   creator              User                @relation("LeadCreator", fields: [createdById], references: [id])
-  assignedTeam         Team?               @relation("TeamLeads", fields: [assignedTeamId], references: [id])
 
   activityLogs         LeadActivityLog[]
   meetings             MeetingBooking[]
@@ -298,7 +292,6 @@ model Department {
   name         String        @unique
   users        User[]
   designations Designation[]
-  teams        Team[]
 }
 
 model Designation {
@@ -330,18 +323,5 @@ model GazettedHoliday {
   date      DateTime @unique
   name      String
   createdAt DateTime @default(now())
-}
-
-model Team {
-  id           Int        @id @default(autoincrement())
-  name         String     @unique
-  departmentId Int
-  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
-  leaderId     Int?       @unique
-  leader       User?      @relation("TeamLeader", fields: [leaderId], references: [id])
-  members      User[]     @relation("TeamMembers")
-  leads        Lead[]     @relation("TeamLeads")
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
 }
 

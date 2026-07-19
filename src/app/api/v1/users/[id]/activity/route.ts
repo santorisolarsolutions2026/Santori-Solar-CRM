@@ -35,32 +35,19 @@ export async function GET(
     };
 
     if (startDateStr) {
-      let start: Date;
-      let end: Date;
+      // Safely parse YYYY-MM-DD to UTC start of day
+      const [sYear, sMonth, sDay] = startDateStr.split('-').map(Number);
+      const start = new Date(Date.UTC(sYear, sMonth - 1, sDay, 0, 0, 0, 0));
 
-      if (startDateStr.includes('T') || startDateStr.includes(' ') || startDateStr.includes(':')) {
-        start = new Date(startDateStr);
-        const endStr = endDateStr || startDateStr;
-        end = new Date(endStr);
-      } else {
-        const [sYear, sMonth, sDay] = startDateStr.split('-').map(Number);
-        start = new Date(Date.UTC(sYear, sMonth - 1, sDay, 0, 0, 0, 0));
+      // Safely parse end date to UTC end of day
+      const endStr = endDateStr || startDateStr;
+      const [eYear, eMonth, eDay] = endStr.split('-').map(Number);
+      const end = new Date(Date.UTC(eYear, eMonth - 1, eDay, 23, 59, 59, 999));
 
-        const endStr = endDateStr || startDateStr;
-        if (endStr.includes('T') || endStr.includes(' ') || endStr.includes(':')) {
-          end = new Date(endStr);
-        } else {
-          const [eYear, eMonth, eDay] = endStr.split('-').map(Number);
-          end = new Date(Date.UTC(eYear, eMonth - 1, eDay, 23, 59, 59, 999));
-        }
-      }
-
-      if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
-        where.createdAt = {
-          gte: start,
-          lte: end,
-        };
-      }
+      where.createdAt = {
+        gte: start,
+        lte: end,
+      };
     }
 
     const logs = await prisma.leadActivityLog.findMany({

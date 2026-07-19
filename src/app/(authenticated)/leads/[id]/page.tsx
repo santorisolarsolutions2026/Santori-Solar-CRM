@@ -314,36 +314,27 @@ export default function LeadDetailPage({
     assignedManagerId: '',
     assignedTlId: '',
     assignedConsultantId: '',
-    assignedTeamId: '',
     discomName: '',
     connectionNumber: '',
   });
 
   const [employees, setEmployees] = useState<any[]>([]);
-  const [teams, setTeams] = useState<any[]>([]);
 
-  // Fetch users & teams for assignments selectors
+  // Fetch users for assignments selectors
   useEffect(() => {
-    const fetchUsersAndTeams = async () => {
+    const fetchUsers = async () => {
       try {
-        const [usersRes, teamsRes] = await Promise.all([
-          fetch('/api/v1/users'),
-          fetch('/api/v1/teams')
-        ]);
-        const usersData = await usersRes.json();
-        const teamsData = await teamsRes.json();
-        if (usersData.success) {
-          const activeEmployees = usersData.data.filter((u: any) => u.isActive);
+        const res = await fetch('/api/v1/users');
+        const data = await res.json();
+        if (data.success) {
+          const activeEmployees = data.data.filter((u: any) => u.isActive);
           setEmployees(activeEmployees);
-        }
-        if (teamsData.success) {
-          setTeams(teamsData.data || []);
         }
       } catch (err) {
         console.error(err);
       }
     };
-    if (user) fetchUsersAndTeams();
+    if (user) fetchUsers();
   }, [user]);
 
   // Status widget state
@@ -498,7 +489,6 @@ export default function LeadDetailPage({
             assignedManagerId: data.data.assignedManagerId?.toString() || '',
             assignedTlId: data.data.assignedTlId?.toString() || '',
             assignedConsultantId: data.data.assignedConsultantId?.toString() || '',
-            assignedTeamId: data.data.assignedTeamId?.toString() || '',
             discomName: data.data.discomName || '',
             connectionNumber: data.data.connectionNumber || '',
           });
@@ -1916,29 +1906,14 @@ export default function LeadDetailPage({
                             <div>
                               <label className="block text-xs font-semibold text-slate-400 mb-1">Assign to Consultant</label>
                               <select
-                                  value={editForm.assignedConsultantId}
-                                  onChange={(e) => setEditForm({ ...editForm, assignedConsultantId: e.target.value })}
-                                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500"
+                                value={editForm.assignedConsultantId}
+                                onChange={(e) => setEditForm({ ...editForm, assignedConsultantId: e.target.value })}
+                                className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500"
                               >
                                 <option value="">Unassigned</option>
                                 {employees.map((emp) => (
                                   <option key={emp.id} value={emp.id}>
                                     {emp.name} ({emp.role.toUpperCase()})
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                            <div>
-                              <label className="block text-xs font-semibold text-slate-400 mb-1">Assign to Clan (Team)</label>
-                              <select
-                                  value={editForm.assignedTeamId}
-                                  onChange={(e) => setEditForm({ ...editForm, assignedTeamId: e.target.value })}
-                                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500"
-                              >
-                                <option value="">No Clan Assigned</option>
-                                {teams.map((t) => (
-                                  <option key={t.id} value={t.id}>
-                                    {t.name} ({t.department?.name || 'General'})
                                   </option>
                                 ))}
                               </select>

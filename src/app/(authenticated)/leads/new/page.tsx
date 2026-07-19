@@ -24,7 +24,6 @@ export default function NewLeadPage() {
     assignedManagerId: '',
     assignedTlId: '',
     assignedConsultantId: '',
-    assignedTeamId: '',
     notes: '',
     discomName: '',
     connectionNumber: '',
@@ -39,7 +38,6 @@ export default function NewLeadPage() {
 
   // List of active employees for allocation selectors
   const [employees, setEmployees] = useState<any[]>([]);
-  const [teams, setTeams] = useState<any[]>([]);
 
   // Filter Sales & Marketing department users (and admin)
   const isSalesOrAdmin = (emp: any) => {
@@ -97,26 +95,19 @@ export default function NewLeadPage() {
   }, [form, isDataLoaded]);
 
   useEffect(() => {
-    const fetchUsersAndTeams = async () => {
+    const fetchUsers = async () => {
       try {
-        const [usersRes, teamsRes] = await Promise.all([
-          fetch('/api/v1/users'),
-          fetch('/api/v1/teams')
-        ]);
-        const usersData = await usersRes.json();
-        const teamsData = await teamsRes.json();
-        if (usersData.success) {
-          const activeEmployees = usersData.data.filter((u: any) => u.isActive);
+        const res = await fetch('/api/v1/users');
+        const data = await res.json();
+        if (data.success) {
+          const activeEmployees = data.data.filter((u: any) => u.isActive);
           setEmployees(activeEmployees);
-        }
-        if (teamsData.success) {
-          setTeams(teamsData.data || []);
         }
       } catch (err) {
         console.error(err);
       }
     };
-    if (user) fetchUsersAndTeams();
+    if (user) fetchUsers();
   }, [user]);
 
   // Inline Duplicate Check on phone entry (debounced or blur)
@@ -498,23 +489,6 @@ export default function NewLeadPage() {
                     {consultants.map((emp) => (
                       <option key={emp.id} value={emp.id}>
                         {emp.name} ({emp.designation?.name || emp.role.toUpperCase()})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                    Assign to Clan (Team)
-                  </label>
-                  <select
-                    value={form.assignedTeamId}
-                    onChange={(e) => setForm({ ...form, assignedTeamId: e.target.value })}
-                    className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-350 text-xs focus:ring-amber-500"
-                  >
-                    <option value="">Select Clan</option>
-                    {teams.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.name} ({t.department?.name || 'General'})
                       </option>
                     ))}
                   </select>
