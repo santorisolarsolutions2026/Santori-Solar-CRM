@@ -151,11 +151,6 @@ export async function PATCH(
     const isTargetAdmin = user.role.toLowerCase() === 'admin' || user.role.toLowerCase().startsWith('admin:');
     const isTargetDirector = user.role.toLowerCase() === 'director' || user.role.toLowerCase().startsWith('director:');
     
-    // Get fresh logged-in user role
-    const { role: loggedInRole } = await getUserSession(userPayload.id);
-    const loggedInBaseRole = loggedInRole.includes(':') ? loggedInRole.split(':')[0] : loggedInRole;
-    const isEditingUserAdmin = loggedInBaseRole === 'admin';
-
     // Only Admin can change the role or permissions of an Admin or Director
     if ((isTargetAdmin || isTargetDirector) && (role !== undefined || permissions !== undefined)) {
       if (!isEditingUserAdmin) {
