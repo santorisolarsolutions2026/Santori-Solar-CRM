@@ -1807,6 +1807,21 @@ export default function TeamManagementPage() {
                                 </button>
                               )}
 
+                              {isAdminOrDirectorOrSalesHead && member.id !== user?.id && (
+                                <button
+                                  onClick={() => {
+                                    setEditingReportingUser(member);
+                                    const assignedTeam = teamsList.find(t => t.users.some((u: any) => u.id === member.id));
+                                    setNewTeamAssignmentId(assignedTeam ? String(assignedTeam.id) : '');
+                                    setNewSupervisorId(member.reportsTo ? String(member.reportsTo) : '');
+                                  }}
+                                  className="p-1.5 rounded-lg border bg-slate-900 hover:bg-slate-850 text-slate-400 hover:text-white border-slate-800 hover:border-slate-700 transition-all cursor-pointer flex items-center justify-center"
+                                  title="Edit Clan & Supervisor"
+                                >
+                                  <Users className="w-4 h-4 text-amber-500" />
+                                </button>
+                              )}
+
                               {member.id !== user?.id && member.role !== 'admin' && !member.role.startsWith('admin:') && (
                                 <>
                                   <button
