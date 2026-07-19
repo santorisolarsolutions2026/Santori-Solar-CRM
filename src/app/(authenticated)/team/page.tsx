@@ -653,6 +653,52 @@ export default function TeamManagementPage() {
     );
   };
 
+  const renderGlobalHierarchyNodes = (usersList: any[], parentId: number | null, level: number = 0): React.ReactNode => {
+    const filteredUsers = usersList.filter((u) => {
+      if (parentId === null) {
+        return !u.reportsTo || !usersList.some((p) => p.id === u.reportsTo);
+      }
+      return u.reportsTo === parentId;
+    });
+
+    if (filteredUsers.length === 0) return null;
+
+    return (
+      <div className={`space-y-2.5 ${level > 0 ? 'pl-6 border-l-2 border-dashed border-slate-800 mt-2.5 ml-4' : ''}`}>
+        {filteredUsers.map((m: any) => {
+          const deptName = departmentsList.find(d => d.id === m.departmentId)?.name || 'Unassigned';
+          return (
+            <div key={m.id} className="space-y-1">
+              <div className="flex items-center justify-between gap-3 p-3 bg-slate-900/50 hover:bg-slate-900 border border-slate-850 rounded-xl transition-all duration-200">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={`w-1.5 h-8 rounded-full shrink-0 ${
+                    level === 0 ? 'bg-red-500' :
+                    level === 1 ? 'bg-indigo-500' :
+                    level === 2 ? 'bg-purple-500' :
+                    level === 3 ? 'bg-amber-500' :
+                    level === 4 ? 'bg-cyan-500' : 'bg-emerald-500'
+                  }`} />
+                  <div className="w-8 h-8 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center text-slate-350 font-extrabold text-xs uppercase shadow-inner shrink-0">
+                    {m.name.charAt(0)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-white leading-none mb-1">{m.name}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[10px] text-slate-400 font-bold tracking-wide">{m.designation?.name || 'Employee'}</span>
+                      <span className="text-slate-700 text-xs">•</span>
+                      <span className="text-[9px] bg-slate-950 border border-slate-800 text-slate-400 px-1.5 py-0.5 rounded font-bold uppercase">{deptName}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {renderGlobalHierarchyNodes(usersList, m.id, level + 1)}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   const handleCreateDesignation = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!designationName.trim()) {
@@ -780,6 +826,7 @@ export default function TeamManagementPage() {
 
   // Hierarchy Modal states
   const [showHierarchyModal, setShowHierarchyModal] = useState(false);
+  const [modalTab, setModalTab] = useState<'designations' | 'orgTree'>('designations');
   const [editingDesignation, setEditingDesignation] = useState<any | null>(null);
   const [designationName, setDesignationName] = useState('');
   const [designationLevel, setDesignationLevel] = useState(5);
@@ -2271,18 +2318,35 @@ export default function TeamManagementPage() {
                     className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500"
                   >
                     <option value="">No Supervisor (Reports to Admin)</option>
-                    {managersAndTls
-                      .filter((sup) => {
-                        const selectedDes = designationsList.find((d) => d.id === parseInt(form.designationId, 10));
-                        const selectedLevel = selectedDes ? selectedDes.level : 7;
-                        const supLevel = sup.designation?.level ?? 1;
-                        return supLevel < selectedLevel;
-                      })
-                      .map((sup) => (
+                    {(() => {
+                      const selectedDes = designationsList.find((d) => d.id === parseInt(form.designationId, 10));
+                      const selectedLevel = selectedDes ? selectedDes.level : 7;
+                      const selectedDeptId = form.departmentId ? parseInt(form.departmentId, 10) : null;
+                      
+                      const eligibleSupervisors = managersAndTls.filter((sup) => {
+                        const supLevel = sup.designation?.level ?? 0;
+                        
+                        // Level 1 Department Head reports to Admin (Level 0)
+                        if (selectedLevel === 1) {
+                          return supLevel === 0 || sup.role === 'admin';
+                        }
+                        
+                        // Level > 1 must report to someone in same department who is higher in hierarchy
+                        if (selectedLevel > 1) {
+                          const isSameDept = sup.departmentId === selectedDeptId;
+                          const isHigherHierarchy = supLevel < selectedLevel && supLevel > 0;
+                          return isSameDept && isHigherHierarchy;
+                        }
+                        
+                        return false;
+                      });
+
+                      return eligibleSupervisors.map((sup) => (
                         <option key={sup.id} value={sup.id}>
-                          {sup.name} ({getRoleLabel(sup.role).toUpperCase()})
+                          {sup.name} ({sup.designation?.name || 'Supervisor'})
                         </option>
-                      ))}
+                      ));
+                    })()}
                   </select>
                 </div>
                 <div>
@@ -2656,19 +2720,36 @@ export default function TeamManagementPage() {
                         className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500 focus:outline-none"
                       >
                         <option value="">No Supervisor (Reports to Admin)</option>
-                        {managersAndTls
-                          .filter((sup) => {
+                        {(() => {
+                          const selectedDes = designationsList.find((d) => d.id === parseInt(editMemberForm.designationId, 10));
+                          const selectedLevel = selectedDes ? selectedDes.level : 7;
+                          const selectedDeptId = editMemberForm.departmentId ? parseInt(editMemberForm.departmentId, 10) : null;
+                          
+                          const eligibleSupervisors = managersAndTls.filter((sup) => {
                             if (sup.id === selectedMember.id) return false;
-                            const selectedDes = designationsList.find((d) => d.id === parseInt(editMemberForm.designationId, 10));
-                            const selectedLevel = selectedDes ? selectedDes.level : 7;
-                            const supLevel = sup.designation?.level ?? 1;
-                            return supLevel < selectedLevel;
-                          })
-                          .map((sup) => (
+                            const supLevel = sup.designation?.level ?? 0;
+                            
+                            // Level 1 Department Head reports to Admin (Level 0)
+                            if (selectedLevel === 1) {
+                              return supLevel === 0 || sup.role === 'admin';
+                            }
+                            
+                            // Level > 1 must report to someone in same department who is higher in hierarchy
+                            if (selectedLevel > 1) {
+                              const isSameDept = sup.departmentId === selectedDeptId;
+                              const isHigherHierarchy = supLevel < selectedLevel && supLevel > 0;
+                              return isSameDept && isHigherHierarchy;
+                            }
+                            
+                            return false;
+                          });
+
+                          return eligibleSupervisors.map((sup) => (
                             <option key={sup.id} value={sup.id}>
-                              {sup.name} ({getRoleLabel(sup.role).toUpperCase()})
+                              {sup.name} ({sup.designation?.name || 'Supervisor'})
                             </option>
-                          ))}
+                          ));
+                        })()}
                       </select>
                     </div>
                     <div>
@@ -3183,173 +3264,83 @@ export default function TeamManagementPage() {
       {showHierarchyModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md px-4 py-6 overflow-y-auto">
           <div className="w-full max-w-5xl bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-8 flex flex-col max-h-[90vh] animate-fade-in-up">
-            <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
-              <div className="flex items-center gap-2.5">
-                <SlidersHorizontal className="w-5 h-5 text-amber-500" />
-                <div>
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-white">Organization Hierarchy & Custom Designations</h3>
-                  <p className="text-[11px] text-slate-400">Configure hierarchy levels, designate departments, and update system roles.</p>
-                </div>
-              </div>
-              <button type="button" onClick={() => setShowHierarchyModal(false)} className="text-slate-400 hover:text-white cursor-pointer border border-transparent">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-6 overflow-y-auto flex-1 grid grid-cols-1 lg:grid-cols-5 gap-6">
-              {/* Simplified Org Hierarchy Tree */}
-              <div className="lg:col-span-3 bg-slate-950/40 p-5 border border-slate-850 rounded-xl space-y-4 max-h-[70vh] overflow-y-auto">
-                <div className="border-b border-slate-800/80 pb-3 flex justify-between items-center">
+            <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex flex-col gap-4">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2.5">
+                  <SlidersHorizontal className="w-5 h-5 text-amber-500" />
                   <div>
-                    <h4 className="text-xs font-bold text-white uppercase tracking-wider">Designation Tiers & Reporting</h4>
-                    <p className="text-[10px] text-slate-500">Designations grouped by reporting authority level (Level 0 to Level 5).</p>
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-white">Organization Hierarchy & Custom Designations</h3>
+                    <p className="text-[11px] text-slate-400">Configure hierarchy levels, designate departments, and view the visual reporting structure.</p>
                   </div>
                 </div>
-
-                <div className="space-y-3.5">
-                  {[
-                    { level: 0, label: 'Level 0: Admin 👑', color: 'border-red-500/20 text-red-400 bg-red-500/5' },
-                    { level: 1, label: 'Level 1: Department Heads 👔', color: 'border-indigo-500/20 text-indigo-400 bg-indigo-500/5' },
-                    { level: 2, label: 'Level 2: Senior Managers 📈', color: 'border-purple-500/20 text-purple-400 bg-purple-500/5' },
-                    { level: 3, label: 'Level 3: Managers 🏢', color: 'border-amber-500/20 text-amber-400 bg-amber-500/5' },
-                    { level: 4, label: 'Level 4: Team Leaders (TL) 👥', color: 'border-cyan-500/20 text-cyan-400 bg-cyan-500/5' },
-                    { level: 5, label: 'Level 5: Consultants 🛠️', color: 'border-emerald-500/20 text-emerald-400 bg-emerald-500/5' },
-                  ].map((levelItem) => {
-                    const levelDesigs = designationsList.filter(d => d.level === levelItem.level);
-                    return (
-                      <div key={levelItem.level} className={`flex flex-col sm:flex-row gap-3 items-start sm:items-center border rounded-xl p-3.5 transition-all hover:bg-slate-900/40 ${levelItem.color}`}>
-                        <div className="w-full sm:w-44 shrink-0">
-                          <span className="text-[10px] font-extrabold uppercase tracking-wider block">{levelItem.label}</span>
-                        </div>
-                        <div className="flex-1 flex flex-wrap gap-2">
-                          {levelDesigs.length === 0 ? (
-                            <span className="text-[10px] text-slate-500 italic">No designations at this level</span>
-                          ) : (
-                            levelDesigs.map(d => {
-                              const deptName = departmentsList.find(dept => dept.id === d.departmentId)?.name || 'Shared';
-                              return (
-                                <span key={d.id} className="text-[10px] bg-slate-950 border border-slate-800 px-2.5 py-1.5 rounded-lg text-white font-semibold flex items-center gap-1.5 shadow-sm">
-                                  <span>{d.name}</span>
-                                  <span className="text-[8px] bg-slate-900 text-slate-400 px-1 rounded uppercase font-bold">{deptName}</span>
-                                </span>
-                              );
-                            })
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                <button type="button" onClick={() => setShowHierarchyModal(false)} className="text-slate-400 hover:text-white cursor-pointer border border-transparent">
+                  <X className="w-5 h-5" />
+                </button>
               </div>
+              
+              <div className="flex gap-4 border-b border-slate-800/60 pb-1">
+                <button
+                  type="button"
+                  onClick={() => setModalTab('designations')}
+                  className={`pb-2 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                    modalTab === 'designations' ? 'border-b-2 border-amber-500 text-white' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  Designations & Levels
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModalTab('orgTree')}
+                  className={`pb-2 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                    modalTab === 'orgTree' ? 'border-b-2 border-amber-500 text-white' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  Visual Org Tree 🌳
+                </button>
+              </div>
+            </div>
 
-              {/* Management Form and List */}
-              <div className="lg:col-span-2 space-y-6 max-h-[70vh] overflow-y-auto">
-                {/* Form */}
-                <div className="bg-slate-900/20 p-4 border border-slate-850 rounded-xl">
-                  <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-2 mb-4">
-                    {editingDesignation ? 'Edit Designation Details' : 'Create Custom Designation'}
-                  </h4>
-
-                  <form onSubmit={editingDesignation ? handleUpdateDesignation : handleCreateDesignation} className="space-y-4">
+            {modalTab === 'designations' ? (
+              <div className="p-6 overflow-y-auto flex-1 grid grid-cols-1 lg:grid-cols-5 gap-6">
+                {/* Simplified Org Hierarchy Tree */}
+                <div className="lg:col-span-3 bg-slate-950/40 p-5 border border-slate-850 rounded-xl space-y-4 max-h-[70vh] overflow-y-auto">
+                  <div className="border-b border-slate-800/80 pb-3 flex justify-between items-center">
                     <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Designation Name *</label>
-                      <input
-                        type="text"
-                        required
-                        value={designationName}
-                        onChange={(e) => setDesignationName(e.target.value)}
-                        placeholder="e.g. Regional Manager, Senior Advisor"
-                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
-                      />
+                      <h4 className="text-xs font-bold text-white uppercase tracking-wider">Designation Tiers & Reporting</h4>
+                      <p className="text-[10px] text-slate-500">Designations grouped by reporting authority level (Level 0 to Level 6).</p>
                     </div>
+                  </div>
 
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Reporting Level *</label>
-                      <select
-                        value={designationLevel}
-                        onChange={(e) => setDesignationLevel(Number(e.target.value))}
-                        className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
-                      >
-                        <option value={0}>Level 0: Admin</option>
-                        <option value={1}>Level 1: Head</option>
-                        <option value={2}>Level 2: Senior Manager</option>
-                        <option value={3}>Level 3: Manager</option>
-                        <option value={4}>Level 4: Team Leader (TL)</option>
-                        <option value={5}>Level 5: Consultant</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Department Affiliation</label>
-                      <select
-                        value={designationDeptId}
-                        onChange={(e) => setDesignationDeptId(e.target.value)}
-                        className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
-                      >
-                        <option value="">Shared / No Department</option>
-                        {departmentsList.map((d) => (
-                          <option key={d.id} value={d.id}>{d.name}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="flex gap-2 justify-end pt-2">
-                      {editingDesignation && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditingDesignation(null);
-                            setDesignationName('');
-                            setDesignationLevel(5);
-                            setDesignationDeptId('');
-                          }}
-                          className="py-1.5 px-3 bg-slate-900 border border-slate-800 text-slate-400 rounded-lg font-bold text-xs"
-                        >
-                          Cancel
-                        </button>
-                      )}
-                      <button
-                        type="submit"
-                        className="py-1.5 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 rounded-lg font-bold text-xs shadow-md"
-                      >
-                        {editingDesignation ? 'Save Designation' : 'Create Designation'}
-                      </button>
-                    </div>
-                  </form>
-                </div>
-
-                {/* List Table */}
-                <div className="bg-slate-900/20 p-4 border border-slate-850 rounded-xl">
-                  <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-2 mb-3">All Designations</h4>
-                  <div className="max-h-[30vh] overflow-y-auto divide-y divide-slate-850">
-                    {designationsList.map(d => {
-                      const deptName = departmentsList.find(dept => dept.id === d.departmentId)?.name || 'Shared';
+                  <div className="space-y-3.5">
+                    {[
+                      { level: 0, label: 'Level 0: Admin 👑', color: 'border-red-500/20 text-red-400 bg-red-500/5' },
+                      { level: 1, label: 'Level 1: Department Heads 👔', color: 'border-indigo-500/20 text-indigo-400 bg-indigo-500/5' },
+                      { level: 2, label: 'Level 2: Senior Managers 📈', color: 'border-purple-500/20 text-purple-400 bg-purple-500/5' },
+                      { level: 3, label: 'Level 3: Managers 🏢', color: 'border-amber-500/20 text-amber-400 bg-amber-500/5' },
+                      { level: 4, label: 'Level 4: Team Leaders (TL) 👥', color: 'border-cyan-500/20 text-cyan-400 bg-cyan-500/5' },
+                      { level: 5, label: 'Level 5: Consultants 🛠️', color: 'border-emerald-500/20 text-emerald-400 bg-emerald-500/5' },
+                      { level: 6, label: 'Level 6: PSA Consultants 📞', color: 'border-pink-500/20 text-pink-400 bg-pink-500/5' },
+                    ].map((levelItem) => {
+                      const levelDesigs = designationsList.filter(d => d.level === levelItem.level);
                       return (
-                        <div key={d.id} className="py-2.5 flex justify-between items-center gap-4 text-xs">
-                          <div>
-                            <p className="font-bold text-white">{d.name}</p>
-                            <p className="text-[10px] text-slate-500 font-medium">Level {d.level} • Department: {deptName}</p>
+                        <div key={levelItem.level} className={`flex flex-col sm:flex-row gap-3 items-start sm:items-center border rounded-xl p-3.5 transition-all hover:bg-slate-900/40 ${levelItem.color}`}>
+                          <div className="w-full sm:w-44 shrink-0">
+                            <span className="text-[10px] font-extrabold uppercase tracking-wider block">{levelItem.label}</span>
                           </div>
-                          <div className="flex gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setEditingDesignation(d);
-                                setDesignationName(d.name);
-                                setDesignationLevel(d.level);
-                                setDesignationDeptId(d.departmentId ? String(d.departmentId) : '');
-                              }}
-                              className="p-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-amber-400 transition-all border border-transparent cursor-pointer"
-                            >
-                              <SlidersHorizontal className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteDesignation(d.id)}
-                              className="p-1 rounded bg-slate-900 hover:bg-rose-955/20 text-slate-400 hover:text-rose-500 transition-all border border-transparent cursor-pointer"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                          <div className="flex-1 flex flex-wrap gap-2">
+                            {levelDesigs.length === 0 ? (
+                              <span className="text-[10px] text-slate-500 italic">No designations at this level</span>
+                            ) : (
+                              levelDesigs.map(d => {
+                                const deptName = departmentsList.find(dept => dept.id === d.departmentId)?.name || 'Shared';
+                                return (
+                                  <span key={d.id} className="text-[10px] bg-slate-950 border border-slate-800 px-2.5 py-1.5 rounded-lg text-white font-semibold flex items-center gap-1.5 shadow-sm">
+                                    <span>{d.name}</span>
+                                    <span className="text-[8px] bg-slate-900 text-slate-400 px-1 rounded uppercase font-bold">{deptName}</span>
+                                  </span>
+                                );
+                              })
+                            )}
                           </div>
                         </div>
                       );
@@ -3357,8 +3348,137 @@ export default function TeamManagementPage() {
                   </div>
                 </div>
 
+                {/* Management Form and List */}
+                <div className="lg:col-span-2 space-y-6 max-h-[70vh] overflow-y-auto">
+                  {/* Form */}
+                  <div className="bg-slate-900/20 p-4 border border-slate-850 rounded-xl">
+                    <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-2 mb-4">
+                      {editingDesignation ? 'Edit Designation Details' : 'Create Custom Designation'}
+                    </h4>
+
+                    <form onSubmit={editingDesignation ? handleUpdateDesignation : handleCreateDesignation} className="space-y-4">
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Designation Name *</label>
+                        <input
+                          type="text"
+                          required
+                          value={designationName}
+                          onChange={(e) => setDesignationName(e.target.value)}
+                          placeholder="e.g. Regional Manager, Senior Advisor"
+                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Reporting Level *</label>
+                        <select
+                          value={designationLevel}
+                          onChange={(e) => setDesignationLevel(Number(e.target.value))}
+                          className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                        >
+                          <option value={0}>Level 0: Admin</option>
+                          <option value={1}>Level 1: Head</option>
+                          <option value={2}>Level 2: Senior Manager</option>
+                          <option value={3}>Level 3: Manager</option>
+                          <option value={4}>Level 4: Team Leader (TL)</option>
+                          <option value={5}>Level 5: Consultant</option>
+                          <option value={6}>Level 6: PSA Consultant</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Department Affiliation</label>
+                        <select
+                          value={designationDeptId}
+                          onChange={(e) => setDesignationDeptId(e.target.value)}
+                          className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                        >
+                          <option value="">Shared / No Department</option>
+                          {departmentsList.map((d) => (
+                            <option key={d.id} value={d.id}>{d.name}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="flex gap-2 justify-end pt-2">
+                        {editingDesignation && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingDesignation(null);
+                              setDesignationName('');
+                              setDesignationLevel(5);
+                              setDesignationDeptId('');
+                            }}
+                            className="py-1.5 px-3 bg-slate-900 border border-slate-800 text-slate-400 rounded-lg font-bold text-xs"
+                          >
+                            Cancel
+                          </button>
+                        )}
+                        <button
+                          type="submit"
+                          className="py-1.5 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 rounded-lg font-bold text-xs shadow-md"
+                        >
+                          {editingDesignation ? 'Save Designation' : 'Create Designation'}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+
+                  {/* List Table */}
+                  <div className="bg-slate-900/20 p-4 border border-slate-850 rounded-xl">
+                    <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-2 mb-3">All Designations</h4>
+                    <div className="max-h-[30vh] overflow-y-auto divide-y divide-slate-850">
+                      {designationsList.map(d => {
+                        const deptName = departmentsList.find(dept => dept.id === d.departmentId)?.name || 'Shared';
+                        return (
+                          <div key={d.id} className="py-2.5 flex justify-between items-center gap-4 text-xs">
+                            <div>
+                              <p className="font-bold text-white">{d.name}</p>
+                              <p className="text-[10px] text-slate-500 font-medium">Level {d.level} • Department: {deptName}</p>
+                            </div>
+                            <div className="flex gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingDesignation(d);
+                                  setDesignationName(d.name);
+                                  setDesignationLevel(d.level);
+                                  setDesignationDeptId(d.departmentId ? String(d.departmentId) : '');
+                                }}
+                                className="p-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-amber-400 transition-all border border-transparent cursor-pointer"
+                              >
+                                <SlidersHorizontal className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteDesignation(d.id)}
+                                className="p-1 rounded bg-slate-900 hover:bg-rose-955/20 text-slate-400 hover:text-rose-500 transition-all border border-transparent cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="p-6 overflow-y-auto flex-1 bg-slate-950/20 border-t border-slate-850/80">
+                <div className="max-w-4xl mx-auto space-y-4">
+                  <div className="border-b border-slate-800 pb-3">
+                    <h4 className="text-xs font-bold text-white uppercase tracking-wider">Company Organization tree</h4>
+                    <p className="text-[10px] text-slate-500">Interactive visual tree showing reporting lines across all departments recursively.</p>
+                  </div>
+                  <div className="p-4 bg-slate-950/45 border border-slate-850 rounded-xl max-h-[60vh] overflow-y-auto">
+                    {renderGlobalHierarchyNodes(members, null)}
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="p-6 border-t border-slate-800 bg-slate-900/10 flex justify-end">
               <button

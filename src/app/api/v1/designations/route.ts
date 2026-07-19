@@ -66,8 +66,8 @@ export async function POST(req: Request) {
     }
 
     const levelNum = parseInt(level, 10);
-    if (isNaN(levelNum) || levelNum < 0 || levelNum > 5) {
-      return NextResponse.json({ success: false, message: 'Level must be between 0 (Admin) and 5 (Consultant).' }, { status: 400 });
+    if (isNaN(levelNum) || levelNum < 0 || levelNum > 6) {
+      return NextResponse.json({ success: false, message: 'Level must be between 0 (Admin) and 6 (PSA Consultant).' }, { status: 400 });
     }
 
     const deptId = departmentId ? parseInt(departmentId, 10) : null;
@@ -122,7 +122,7 @@ export async function PUT(req: Request) {
 
     const dId = parseInt(id, 10);
     const levelNum = parseInt(level, 10);
-    if (isNaN(dId) || isNaN(levelNum) || levelNum < 0 || levelNum > 5) {
+    if (isNaN(dId) || isNaN(levelNum) || levelNum < 0 || levelNum > 6) {
       return NextResponse.json({ success: false, message: 'Invalid ID or level parameters.' }, { status: 400 });
     }
 

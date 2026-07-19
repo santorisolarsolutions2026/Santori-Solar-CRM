@@ -163,49 +163,82 @@ export async function POST(req: Request) {
       }
     }
 
-    if (designation.name === 'Admin' || designation.level === 1) {
+    if (designation.name === 'Admin' || designation.level === 0) {
       role = 'admin';
     } else if (departmentName === 'Finance') {
       role = 'finance';
     } else if (departmentName === 'Operations') {
       role = 'operations';
     } else if (departmentName === 'IT') {
-      if (designation.level === 2) {
+      if (designation.level === 1) {
         role = 'director';
-      } else if (designation.level === 3 || designation.level === 4) {
+      } else if (designation.level === 2 || designation.level === 3) {
         role = 'manager';
-      } else if (designation.level === 5) {
+      } else if (designation.level === 4) {
         role = 'tl';
       } else {
         role = 'consultant';
       }
     } else if (departmentName === 'Sales') {
-      if (designation.name.includes('Head') || designation.level === 2) {
+      if (designation.name.includes('Head') || designation.level === 1) {
         role = 'sales_head';
-      } else if (designation.name.includes('PSA Senior Manager') || designation.name.includes('PSA Manager')) {
+      } else if (designation.name.includes('PSA Senior Manager') || designation.name.includes('PSA Manager') || designation.level === 2 || designation.level === 3) {
         role = 'manager';
-      } else if (designation.name.includes('Senior Manager') || designation.name.includes('Manager')) {
-        role = 'manager';
-      } else if (designation.name === 'PSA TL') {
+      } else if (designation.name === 'PSA TL' || (designation.level === 4 && designation.name.includes('PSA'))) {
         role = 'psa_tl';
-      } else if (designation.name === 'TL') {
+      } else if (designation.name === 'TL' || designation.level === 4) {
         role = 'tl';
-      } else if (designation.name === 'PSA Consultant') {
+      } else if (designation.name === 'PSA Consultant' || designation.level === 6) {
         role = 'psa';
-      } else if (designation.name === 'Consultant') {
+      } else if (designation.name === 'Consultant' || designation.level === 5) {
         role = 'consultant';
       }
     } else {
-      if (designation.level === 2) {
+      if (designation.level === 1 || designation.level === 2) {
         role = 'director';
-      } else if (designation.level === 3 || designation.level === 4) {
+      } else if (designation.level === 3) {
         role = 'manager';
-      } else if (designation.level === 5) {
+      } else if (designation.level === 4) {
         role = 'tl';
       } else {
         role = 'consultant';
       }
     }
+
+    // Reports To Hierarchical Validation
+    const currentLevel = designation.level;
+    if (currentLevel > 1 && !reportsTo) {
+      return NextResponse.json({ success: false, message: 'Supervisor (Reports To) is required for this designation.' }, { status: 400 });
+    }
+
+    if (reportsTo) {
+      const reportsToId = parseInt(reportsTo, 10);
+      const supervisorUser = await prisma.user.findUnique({
+        where: { id: reportsToId },
+        include: { designation: true }
+      });
+      if (!supervisorUser) {
+        return NextResponse.json({ success: false, message: 'Supervisor not found.' }, { status: 400 });
+      }
+
+      const supLevel = supervisorUser.designation?.level ?? 0;
+
+      // Admin (level 0) is supervisor of Department Heads (level 1)
+      if (supLevel === 0 || supervisorUser.role === 'admin') {
+        if (currentLevel !== 1) {
+          return NextResponse.json({ success: false, message: 'Only Department Heads (Level 1) can report to the Admin.' }, { status: 400 });
+        }
+      } else {
+        // Must be in same department and higher in hierarchy (lower level number)
+        if (supervisorUser.departmentId !== deptId) {
+          return NextResponse.json({ success: false, message: 'Supervisor must belong to the same department.' }, { status: 400 });
+        }
+        if (supLevel >= currentLevel) {
+          return NextResponse.json({ success: false, message: 'Supervisor must be above the employee in the hierarchy.' }, { status: 400 });
+        }
+      }
+    }
+
 
     const targetRoleLower = role.toLowerCase();
     if (targetRoleLower === 'admin' || targetRoleLower.startsWith('admin:')) {

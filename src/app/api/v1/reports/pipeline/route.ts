@@ -24,10 +24,14 @@ export async function GET(req: Request) {
     // System-wide pipeline metrics (constant for all authenticated users)
     const leadWhere: any = {};
     if (userPayload.role !== 'admin' && userPayload.role !== 'director') {
+      const { getSubordinateIds, getAncestorIds } = await import('@/lib/hierarchy');
+      const subIds = await getSubordinateIds(userPayload.id);
+      const ancestorIds = await getAncestorIds(userPayload.id);
+      const allowedIds = [userPayload.id, ...subIds, ...ancestorIds];
       leadWhere.OR = [
-        { assignedManagerId: userPayload.id },
-        { assignedTlId: userPayload.id },
-        { assignedConsultantId: userPayload.id },
+        { assignedConsultantId: { in: allowedIds } },
+        { assignedTlId: { in: allowedIds } },
+        { assignedManagerId: { in: allowedIds } },
         { createdById: userPayload.id },
       ];
     }

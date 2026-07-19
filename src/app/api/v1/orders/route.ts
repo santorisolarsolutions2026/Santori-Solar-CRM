@@ -25,9 +25,34 @@ export async function GET(req: Request) {
     const hasViewAll = userPermissions.includes('orders:view_all');
 
     // Role-specific filtering
-    if (!hasViewAll) {
+    // Role-specific and hierarchy-based filtering
+    if (!hasViewAll && !['admin', 'director', 'sales_head'].includes(baseRole)) {
+      const userDetail = await prisma.user.findUnique({
+        where: { id: userPayload.id },
+        select: { teamId: true }
+      });
+
+      const { getSubordinateIds, getAncestorIds } = await import('@/lib/hierarchy');
+      const subIds = await getSubordinateIds(userPayload.id);
+      const ancestorIds = await getAncestorIds(userPayload.id);
+      const allowedIds = [userPayload.id, ...subIds, ...ancestorIds];
+
+      const leadConditions: Prisma.LeadWhereInput = {
+        OR: [
+          { assignedConsultantId: { in: allowedIds } },
+          { assignedTlId: { in: allowedIds } },
+          { assignedManagerId: { in: allowedIds } },
+          { createdById: userPayload.id }
+        ]
+      };
+
+      if (userDetail?.teamId) {
+        (leadConditions.OR as any).push({ assignedTeamId: userDetail.teamId });
+      }
+
+      where.lead = leadConditions;
+
       if (baseRole === 'finance') {
-        // Finance sees orders in submitted, verified, ops_assigned, completed
         const financeStatuses = ['submitted', 'finance_verified', 'ops_assigned', 'completed'];
         if (status) {
           where.status = financeStatuses.includes(status) ? status : { in: financeStatuses };
@@ -35,7 +60,6 @@ export async function GET(req: Request) {
           where.status = { in: financeStatuses };
         }
       } else if (baseRole === 'operations') {
-        // Operations sees only orders that are verified/assigned/completed
         const opsStatuses = ['finance_verified', 'ops_assigned', 'completed'];
         if (status) {
           where.status = opsStatuses.includes(status) ? status : { in: opsStatuses };
@@ -43,24 +67,29 @@ export async function GET(req: Request) {
           where.status = { in: opsStatuses };
         }
       } else {
-        // Filter orders by lead assignments for normal team members
-        if (['tl', 'psa_tl'].includes(baseRole)) {
-          where.lead = { ...(where.lead as Prisma.LeadWhereInput), assignedTlId: userPayload.id };
-        } else if (baseRole === 'manager') {
-          where.lead = { ...(where.lead as Prisma.LeadWhereInput), assignedManagerId: userPayload.id };
-        } else if (['admin', 'director', 'sales_head'].includes(baseRole)) {
-          // Administrative roles can view all orders even without view_all permission
-        } else {
-          where.lead = { ...(where.lead as Prisma.LeadWhereInput), assignedConsultantId: userPayload.id };
-        }
-
         if (status) {
           where.status = status;
         }
       }
     } else {
-      if (status) {
-        where.status = status;
+      if (baseRole === 'finance') {
+        const financeStatuses = ['submitted', 'finance_verified', 'ops_assigned', 'completed'];
+        if (status) {
+          where.status = financeStatuses.includes(status) ? status : { in: financeStatuses };
+        } else {
+          where.status = { in: financeStatuses };
+        }
+      } else if (baseRole === 'operations') {
+        const opsStatuses = ['finance_verified', 'ops_assigned', 'completed'];
+        if (status) {
+          where.status = opsStatuses.includes(status) ? status : { in: opsStatuses };
+        } else {
+          where.status = { in: opsStatuses };
+        }
+      } else {
+        if (status) {
+          where.status = status;
+        }
       }
     }
 

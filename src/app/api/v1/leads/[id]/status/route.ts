@@ -103,7 +103,7 @@ export async function POST(
     const leadOrder = await prisma.order.findFirst({ where: { leadId } });
     const leadDeptName = getLeadDepartment(lead.status, leadOrder?.status || null);
 
-    const isDeptMember = userDeptName === leadDeptName;
+    const isDeptMember = userDeptName === leadDeptName || (userDeptName === 'Sales' && leadDeptName === 'PSA') || (userDeptName === 'PSA' && leadDeptName === 'Sales');
     const isAdminOrIt = ['admin', 'director'].includes(userPayload.role) || userDeptName === 'IT' || userDeptName === 'Admin';
 
     if (!isDeptMember && !isAdminOrIt) {

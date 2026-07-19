@@ -2,30 +2,13 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser, getUserPermissions, getUserSession } from '@/lib/auth';
 
-// Helper to check lead access based on user role
+// Helper to check lead access based on user role and hierarchy
 async function canAccessLead(userId: number, lead: any): Promise<boolean> {
   const { role: userRole, permissions } = await getUserSession(userId);
   const baseRole = userRole.includes(':') ? userRole.split(':')[0] : userRole;
 
   if (permissions.includes('leads:view_all')) return true;
   
-  // Allow Manager and TL to access unassigned leads so they can assign them
-  const isUnassigned = !lead.assignedTlId && !lead.assignedConsultantId;
-  if (isUnassigned && ['manager', 'tl', 'psa_tl'].includes(baseRole)) return true;
-
-  if (baseRole === 'manager' && lead.assignedManagerId === userId) return true;
-  if (['tl', 'psa_tl'].includes(baseRole) && lead.assignedTlId === userId) return true;
-  if (baseRole === 'consultant' || baseRole === 'psa') {
-    if (lead.assignedConsultantId === userId) return true;
-    if (lead.createdById === userId) return true;
-    if (baseRole === 'psa') {
-      const hasMeeting = await prisma.meetingBooking.findFirst({
-        where: { leadId: lead.id, assignedExecutiveId: userId }
-      });
-      if (hasMeeting) return true;
-    }
-    return false;
-  }
   if (baseRole === 'finance') {
     // Finance sees only leads at Stage 13 (Sale Done)
     return lead.status === 13;
@@ -34,6 +17,28 @@ async function canAccessLead(userId: number, lead: any): Promise<boolean> {
     // Operations sees leads at Stage 13 that are processed by finance
     return lead.status === 13 && ['finance_verified', 'ops_assigned', 'completed'].includes(lead.order?.status || '');
   }
+
+  // Allow Manager and TL to access unassigned leads so they can assign them
+  const isUnassigned = !lead.assignedTlId && !lead.assignedConsultantId;
+  if (isUnassigned && ['manager', 'tl', 'psa_tl'].includes(baseRole)) return true;
+
+  const { getSubordinateIds, getAncestorIds } = await import('@/lib/hierarchy');
+  const subordinateIds = await getSubordinateIds(userId);
+  const ancestorIds = await getAncestorIds(userId);
+  const allowedIds = [userId, ...subordinateIds, ...ancestorIds];
+
+  const assignedPeople = [lead.assignedConsultantId, lead.assignedTlId, lead.assignedManagerId, lead.createdById].filter((id) => id !== null);
+  const isAssignedToHierarchy = assignedPeople.some((id) => allowedIds.includes(id));
+
+  if (isAssignedToHierarchy) return true;
+
+  if (baseRole === 'psa') {
+    const hasMeeting = await prisma.meetingBooking.findFirst({
+      where: { leadId: lead.id, assignedExecutiveId: userId }
+    });
+    if (hasMeeting) return true;
+  }
+
   return false;
 }
 

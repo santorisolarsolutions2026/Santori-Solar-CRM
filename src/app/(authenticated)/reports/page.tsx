@@ -617,24 +617,70 @@ export default function ReportsPage() {
 
                 if (activeDeptTab === 'PSA') {
                   return (
-                    <table className="w-full text-left border-collapse min-w-[950px]">
+                    <table className="w-full text-left border-collapse min-w-[650px]">
                       <thead>
                         <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider">
                           <th className="pb-3 px-4 text-left">Employee Name</th>
                           <th className="pb-3 px-4 text-left">Designation</th>
                           <th className="pb-3 px-4 text-center">Leads Worked</th>
                           <th className="pb-3 px-4 text-center">Meetings Booked</th>
-                          <th className="pb-3 px-4 text-center">Meetings Done</th>
-                          <th className="pb-3 px-4 text-center">Cancelled Meetings</th>
-                          <th className="pb-3 px-4 text-center">Sales Converted</th>
-                          <th className="pb-3 px-4 text-right font-bold text-slate-400">Meeting Done Rate</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-800/40 text-sm">
                         {employeesList.map((emp: any) => {
-                          const meetingDoneRate = emp.metrics.meetingsBooked > 0
-                            ? Math.round((emp.metrics.meetingsDone / emp.metrics.meetingsBooked) * 100)
-                            : 0;
+                          return (
+                            <tr key={emp.id} className="hover:bg-slate-900/10 transition-colors">
+                              <td className="py-3.5 px-4 font-bold text-white flex items-center gap-2">
+                                <span>{emp.name}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenTimelineModal(emp.id, emp.name)}
+                                  className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-amber-400 transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium"
+                                  title="View Daily Activity Timeline & Calendar"
+                                >
+                                  <Calendar className="w-3 h-3 text-amber-500" /> Timeline
+                                </button>
+                              </td>
+                              <td className="py-3.5 px-4 text-slate-400 font-medium text-xs">{emp.designation}</td>
+                              <td className="py-3.5 px-4 text-center">
+                                <button
+                                  onClick={() => handleOpenDetailsModal(emp.id, 'leads_worked')}
+                                  className="font-extrabold text-amber-400 hover:text-amber-300 hover:underline outline-none cursor-pointer"
+                                >
+                                  {emp.metrics.leadsWorked}
+                                </button>
+                              </td>
+                              <td className="py-3.5 px-4 text-center">
+                                <button
+                                  onClick={() => handleOpenDetailsModal(emp.id, 'meetings_booked')}
+                                  className="font-extrabold text-cyan-400 hover:text-cyan-300 hover:underline outline-none cursor-pointer"
+                                >
+                                  {emp.metrics.meetingsBooked}
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  );
+                }
+
+                if (activeDeptTab === 'Sales') {
+                  return (
+                    <table className="w-full text-left border-collapse min-w-[850px]">
+                      <thead>
+                        <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                          <th className="pb-3 px-4 text-left">Employee Name</th>
+                          <th className="pb-3 px-4 text-left">Designation</th>
+                          <th className="pb-3 px-4 text-center">Leads Worked</th>
+                          <th className="pb-3 px-4 text-center">Meetings Booked</th>
+                          <th className="pb-3 px-4 text-center">Sale Done</th>
+                          <th className="pb-3 px-4 text-center">Site Visits</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/40 text-sm">
+                        {employeesList.map((emp: any) => {
                           return (
                             <tr key={emp.id} className="hover:bg-slate-900/10 transition-colors">
                               <td className="py-3.5 px-4 font-bold text-white flex items-center gap-2">
@@ -667,77 +713,10 @@ export default function ReportsPage() {
                               </td>
                               <td className="py-3.5 px-4 text-center">
                                 <button
-                                  onClick={() => handleOpenDetailsModal(emp.id, 'meetings_done')}
-                                  className="font-extrabold text-sky-400 hover:text-sky-300 hover:underline outline-none cursor-pointer"
-                                >
-                                  {emp.metrics.meetingsDone || 0}
-                                </button>
-                              </td>
-                              <td className="py-3.5 px-4 text-center">
-                                <button
-                                  onClick={() => handleOpenDetailsModal(emp.id, 'meetings_cancelled')}
-                                  className="font-extrabold text-rose-455 hover:text-rose-350 hover:underline outline-none cursor-pointer"
-                                >
-                                  {emp.metrics.meetingsCancelled || 0}
-                                </button>
-                              </td>
-                              <td className="py-3.5 px-4 text-center">
-                                <button
                                   onClick={() => handleOpenDetailsModal(emp.id, 'meetings_converted')}
                                   className="font-extrabold text-emerald-450 hover:text-emerald-355 hover:underline outline-none cursor-pointer"
                                 >
                                   {emp.metrics.meetingsConverted}
-                                </button>
-                              </td>
-                              <td className="py-3.5 px-4 text-right font-bold text-slate-300">{meetingDoneRate}%</td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  );
-                }
-
-                if (activeDeptTab === 'Sales') {
-                  return (
-                    <table className="w-full text-left border-collapse min-w-[850px]">
-                      <thead>
-                        <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                          <th className="pb-3 px-4 text-left">Employee Name</th>
-                          <th className="pb-3 px-4 text-left">Designation</th>
-                          <th className="pb-3 px-4 text-center">Leads Handled</th>
-                          <th className="pb-3 px-4 text-center">Meetings Done</th>
-                          <th className="pb-3 px-4 text-center">Sales Converted</th>
-                          <th className="pb-3 px-4 text-center">Orders Punched</th>
-                          <th className="pb-3 px-4 text-right font-bold text-slate-400">Value Generated</th>
-                          <th className="pb-3 px-4 text-right">Sale Conversion Rate</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-800/40 text-sm">
-                        {employeesList.map((emp: any) => {
-                          const saleConversionRate = emp.metrics.meetingsDone > 0
-                            ? Math.round((emp.metrics.meetingsConverted / emp.metrics.meetingsDone) * 100)
-                            : 0;
-                          return (
-                            <tr key={emp.id} className="hover:bg-slate-900/10 transition-colors">
-                              <td className="py-3.5 px-4 font-bold text-white flex items-center gap-2">
-                                <span>{emp.name}</span>
-                                <button
-                                  type="button"
-                                  onClick={() => handleOpenTimelineModal(emp.id, emp.name)}
-                                  className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-amber-400 transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium"
-                                  title="View Daily Activity Timeline & Calendar"
-                                >
-                                  <Calendar className="w-3 h-3 text-amber-500" /> Timeline
-                                </button>
-                              </td>
-                              <td className="py-3.5 px-4 text-slate-400 font-medium text-xs">{emp.designation}</td>
-                              <td className="py-3.5 px-4 text-center">
-                                <button
-                                  onClick={() => handleOpenDetailsModal(emp.id, 'leads_worked')}
-                                  className="font-extrabold text-amber-400 hover:text-amber-300 hover:underline outline-none cursor-pointer"
-                                >
-                                  {emp.metrics.leadsWorked}
                                 </button>
                               </td>
                               <td className="py-3.5 px-4 text-center">
@@ -748,26 +727,6 @@ export default function ReportsPage() {
                                   {emp.metrics.meetingsDone || 0}
                                 </button>
                               </td>
-                              <td className="py-3.5 px-4 text-center">
-                                <button
-                                  onClick={() => handleOpenDetailsModal(emp.id, 'meetings_converted')}
-                                  className="font-extrabold text-emerald-450 hover:text-emerald-355 hover:underline outline-none cursor-pointer"
-                                >
-                                  {emp.metrics.meetingsConverted}
-                                </button>
-                              </td>
-                              <td className="py-3.5 px-4 text-center">
-                                <button
-                                  onClick={() => handleOpenDetailsModal(emp.id, 'orders_punched')}
-                                  className="font-extrabold text-indigo-400 hover:text-indigo-350 hover:underline outline-none cursor-pointer"
-                                >
-                                  {emp.metrics.ordersPunched}
-                                </button>
-                              </td>
-                              <td className="py-3.5 px-4 text-right font-extrabold text-slate-200">
-                                ₹{(emp.metrics?.ordersPunchedValue || 0).toLocaleString('en-IN')}
-                              </td>
-                              <td className="py-3.5 px-4 text-right font-bold text-slate-300">{saleConversionRate}%</td>
                             </tr>
                           );
                         })}

@@ -1,6 +1,50 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
+import { getAuthenticatedUser, getUserPermissions, getUserSession } from '@/lib/auth';
+
+async function canAccessOrder(userId: number, leadId: number, submittedById: number): Promise<boolean> {
+  const { role: userRole, permissions: userPermissions } = await getUserSession(userId);
+  const baseRole = userRole.includes(':') ? userRole.split(':')[0] : userRole;
+
+  if (userPermissions.includes('orders:view_all') || ['admin', 'director', 'sales_head'].includes(baseRole)) return true;
+
+  if (submittedById === userId) return true;
+
+  const userDetail = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { teamId: true }
+  });
+
+  const { getSubordinateIds, getAncestorIds } = await import('@/lib/hierarchy');
+  const subIds = await getSubordinateIds(userId);
+  const ancestorIds = await getAncestorIds(userId);
+  const allowedIds = [userId, ...subIds, ...ancestorIds];
+
+  const lead = await prisma.lead.findUnique({
+    where: { id: leadId },
+    select: {
+      assignedConsultantId: true,
+      assignedTlId: true,
+      assignedManagerId: true,
+      createdById: true,
+      assignedTeamId: true
+    }
+  });
+
+  if (!lead) return false;
+
+  const assignedPeople = [lead.assignedConsultantId, lead.assignedTlId, lead.assignedManagerId, lead.createdById].filter((id) => id !== null);
+  const isAssignedToHierarchy = assignedPeople.some((id) => allowedIds.includes(id));
+
+  if (isAssignedToHierarchy) return true;
+
+  if (userDetail?.teamId && lead.assignedTeamId === userDetail.teamId) {
+    return true;
+  }
+
+  return false;
+}
+
 
 export async function GET(
   req: Request,
@@ -57,17 +101,9 @@ export async function GET(
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view orders.' }, { status: 403 });
     }
 
-    const hasViewAll = userPermissions.includes('orders:view_all');
-    if (!hasViewAll && order.submittedById !== userPayload.id) {
-      // Check supervisor status
-      const lead = await prisma.lead.findUnique({
-        where: { id: order.leadId },
-        select: { assignedTlId: true, assignedManagerId: true }
-      });
-      const isLeadSupervisor = lead && (lead.assignedTlId === userPayload.id || lead.assignedManagerId === userPayload.id);
-      if (!isLeadSupervisor) {
-        return NextResponse.json({ success: false, message: 'Forbidden. You do not have access to this order.' }, { status: 403 });
-      }
+    const hasAccess = await canAccessOrder(userPayload.id, order.leadId, order.submittedById);
+    if (!hasAccess) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have access to this order.' }, { status: 403 });
     }
 
     return NextResponse.json({
@@ -174,13 +210,9 @@ export async function PATCH(
     // EXCEPT when a Finance/Operations user with correct permissions is updating the status/notes of a non-draft order.
     const isFinanceOrOpsUpdate = (canVerify || canInstall) && order.status !== 'draft' && !isPunchingUpdate;
 
-    if (!hasViewAll && !isFinanceOrOpsUpdate && order.submittedById !== userPayload.id) {
-      const lead = await prisma.lead.findUnique({
-        where: { id: order.leadId },
-        select: { assignedTlId: true, assignedManagerId: true }
-      });
-      const isLeadSupervisor = lead && (lead.assignedTlId === userPayload.id || lead.assignedManagerId === userPayload.id);
-      if (!isLeadSupervisor) {
+    if (!isFinanceOrOpsUpdate) {
+      const hasAccess = await canAccessOrder(userPayload.id, order.leadId, order.submittedById);
+      if (!hasAccess) {
         return NextResponse.json({ success: false, message: 'Forbidden. You do not have access to edit this order.' }, { status: 403 });
       }
     }

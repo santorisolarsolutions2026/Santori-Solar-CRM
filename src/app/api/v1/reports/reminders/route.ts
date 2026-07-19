@@ -24,10 +24,14 @@ export async function GET(req: Request) {
     // System-wide upcoming task reminders (constant for all authenticated users)
     const leadWhere: any = {};
     if (userPayload.role !== 'admin' && userPayload.role !== 'director') {
+      const { getSubordinateIds, getAncestorIds } = await import('@/lib/hierarchy');
+      const subIds = await getSubordinateIds(userPayload.id);
+      const ancestorIds = await getAncestorIds(userPayload.id);
+      const allowedIds = [userPayload.id, ...subIds, ...ancestorIds];
       leadWhere.OR = [
-        { assignedManagerId: userPayload.id },
-        { assignedTlId: userPayload.id },
-        { assignedConsultantId: userPayload.id },
+        { assignedConsultantId: { in: allowedIds } },
+        { assignedTlId: { in: allowedIds } },
+        { assignedManagerId: { in: allowedIds } },
         { createdById: userPayload.id },
       ];
     }
@@ -88,6 +92,7 @@ export async function GET(req: Request) {
             customerName: m.lead.customerName,
             leadCode: m.lead.leadCode,
             subtitle: `Executive: ${m.executive.name}. Notes: ${m.notes || 'None'}`,
+            priority: 'high',
           });
         }
       } catch (err) {
@@ -104,6 +109,7 @@ export async function GET(req: Request) {
       customerName: f.customerName,
       leadCode: f.leadCode,
       subtitle: f.statusSub ? `Priority: ${f.statusSub.toUpperCase()}` : 'Priority: WARM',
+      priority: f.statusSub === 'hot' ? 'high' : 'medium',
     })).filter((f) => !isNaN(f.datetime.getTime()));
 
     // Combine and sort ascending chronologically (earliest/closest first)
@@ -113,7 +119,17 @@ export async function GET(req: Request) {
     const cutOffTime = Date.now() - 2 * 60 * 60 * 1000;
     const activeReminders = allReminders.filter((r) => r.datetime.getTime() >= cutOffTime);
 
-    activeReminders.sort((a, b) => a.datetime.getTime() - b.datetime.getTime());
+    // Sort by priority first (high > medium), then by datetime ascending (closer first)
+    activeReminders.sort((a, b) => {
+      const priorityWeight = { high: 2, medium: 1 };
+      const weightA = priorityWeight[a.priority as 'high' | 'medium'] || 0;
+      const weightB = priorityWeight[b.priority as 'high' | 'medium'] || 0;
+      
+      if (weightB !== weightA) {
+        return weightB - weightA;
+      }
+      return a.datetime.getTime() - b.datetime.getTime();
+    });
 
     return NextResponse.json({
       success: true,

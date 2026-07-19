@@ -89,11 +89,12 @@ export async function GET(req: Request) {
             order: { isNot: null }
           });
         }
-      } else if (designationLevel <= 5) {
-        // TL, Manager, Senior Manager, Head (Level 2 to 5)
-        const { getSubordinateIds } = await import('@/lib/hierarchy');
+      } else {
+        // Enforce hierarchy-based visibility
+        const { getSubordinateIds, getAncestorIds } = await import('@/lib/hierarchy');
         const subordinateIds = await getSubordinateIds(userPayload.id);
-        const allowedIds = [userPayload.id, ...subordinateIds];
+        const ancestorIds = await getAncestorIds(userPayload.id);
+        const allowedIds = [userPayload.id, ...subordinateIds, ...ancestorIds];
 
         andConditions.push({
           OR: [
@@ -102,20 +103,6 @@ export async function GET(req: Request) {
             { assignedManagerId: { in: allowedIds } },
             { createdById: userPayload.id },
             { assignedTlId: null, assignedConsultantId: null }, // view unassigned leads
-            {
-              order: {
-                status: 'draft',
-                rejectionReason: { not: null },
-                submittedById: userPayload.id,
-              }
-            }
-          ]
-        });
-      } else {
-        // Consultant / PSA Consultant (Level 6)
-        andConditions.push({
-          OR: [
-            { assignedConsultantId: userPayload.id },
             {
               order: {
                 status: 'draft',

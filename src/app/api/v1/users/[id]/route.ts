@@ -102,14 +102,40 @@ export async function PATCH(
       return NextResponse.json({ success: false, message: 'Invalid User ID.' }, { status: 400 });
     }
 
-    const userPermissions = await getUserPermissions(userPayload.id);
     const isSelf = userId === userPayload.id;
-    const isAdminOrDirectorOrSalesHead = userPermissions.includes('team:manage');
+    const { role: loggedInRole } = await getUserSession(userPayload.id);
+    const loggedInBaseRole = loggedInRole.includes(':') ? loggedInRole.split(':')[0] : loggedInRole;
+    const isEditingUserAdmin = loggedInBaseRole === 'admin';
 
-    // Only Admin, Director, Sales Head, or Self can modify details
-    if (!isAdminOrDirectorOrSalesHead && !isSelf) {
+    let hasWriteAccess = isEditingUserAdmin;
+
+    if (!isEditingUserAdmin) {
+      // Get current logged-in user details
+      const currentUserDetail = await prisma.user.findUnique({
+        where: { id: userPayload.id },
+        include: { designation: true }
+      });
+      const currentLevel = currentUserDetail?.designation?.level ?? 99;
+      const currentDeptId = currentUserDetail?.departmentId;
+
+      // Get target user details
+      const targetUserDetail = await prisma.user.findUnique({
+        where: { id: userId },
+        include: { designation: true }
+      });
+      const targetLevel = targetUserDetail?.designation?.level ?? 99;
+      const targetDeptId = targetUserDetail?.departmentId;
+
+      // Rule: same department, higher level (currentLevel < targetLevel)
+      if (currentDeptId !== null && currentDeptId === targetDeptId && currentLevel < targetLevel) {
+        hasWriteAccess = true;
+      }
+    }
+
+    if (!hasWriteAccess && !isSelf) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to update this user.' }, { status: 403 });
     }
+
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -213,44 +239,42 @@ export async function PATCH(
 
         // Derive role
         let roleName = 'consultant';
-        if (designation.name === 'Admin' || designation.level === 1) {
+        if (designation.name === 'Admin' || designation.level === 0) {
           roleName = 'admin';
         } else if (departmentName === 'Finance') {
           roleName = 'finance';
         } else if (departmentName === 'Operations') {
           roleName = 'operations';
         } else if (departmentName === 'IT') {
-          if (designation.level === 2) {
+          if (designation.level === 1) {
             roleName = 'director';
-          } else if (designation.level === 3 || designation.level === 4) {
+          } else if (designation.level === 2 || designation.level === 3) {
             roleName = 'manager';
-          } else if (designation.level === 5) {
+          } else if (designation.level === 4) {
             roleName = 'tl';
           } else {
             roleName = 'consultant';
           }
         } else if (departmentName === 'Sales') {
-          if (designation.name.includes('Head') || designation.level === 2) {
+          if (designation.name.includes('Head') || designation.level === 1) {
             roleName = 'sales_head';
-          } else if (designation.name.includes('PSA Senior Manager') || designation.name.includes('PSA Manager')) {
+          } else if (designation.name.includes('PSA Senior Manager') || designation.name.includes('PSA Manager') || designation.level === 2 || designation.level === 3) {
             roleName = 'manager';
-          } else if (designation.name.includes('Senior Manager') || designation.name.includes('Manager')) {
-            roleName = 'manager';
-          } else if (designation.name === 'PSA TL') {
+          } else if (designation.name === 'PSA TL' || (designation.level === 4 && designation.name.includes('PSA'))) {
             roleName = 'psa_tl';
-          } else if (designation.name === 'TL') {
+          } else if (designation.name === 'TL' || designation.level === 4) {
             roleName = 'tl';
-          } else if (designation.name === 'PSA Consultant') {
+          } else if (designation.name === 'PSA Consultant' || designation.level === 6) {
             roleName = 'psa';
-          } else if (designation.name === 'Consultant') {
+          } else if (designation.name === 'Consultant' || designation.level === 5) {
             roleName = 'consultant';
           }
         } else {
-          if (designation.level === 2) {
+          if (designation.level === 1 || designation.level === 2) {
             roleName = 'director';
-          } else if (designation.level === 3 || designation.level === 4) {
+          } else if (designation.level === 3) {
             roleName = 'manager';
-          } else if (designation.level === 5) {
+          } else if (designation.level === 4) {
             roleName = 'tl';
           } else {
             roleName = 'consultant';
@@ -266,6 +290,53 @@ export async function PATCH(
         }
       }
     }
+
+    // Reports To Hierarchical Validation on Update
+    const finalDesId = targetDesId || user.designationId;
+    const finalDeptId = targetDeptId;
+    
+    let activeDesignation = null;
+    if (finalDesId) {
+      activeDesignation = await prisma.designation.findUnique({ where: { id: finalDesId } });
+    }
+    const currentLevel = activeDesignation?.level ?? 99;
+
+    const finalReportsTo = reportsTo !== undefined ? (reportsTo ? parseInt(reportsTo, 10) : null) : user.reportsTo;
+
+    if (currentLevel > 1 && !finalReportsTo) {
+      return NextResponse.json({ success: false, message: 'Supervisor (Reports To) is required for this designation.' }, { status: 400 });
+    }
+
+    if (finalReportsTo) {
+      if (finalReportsTo === userId) {
+        return NextResponse.json({ success: false, message: 'User cannot report to themselves.' }, { status: 400 });
+      }
+      const supervisorUser = await prisma.user.findUnique({
+        where: { id: finalReportsTo },
+        include: { designation: true }
+      });
+      if (!supervisorUser) {
+        return NextResponse.json({ success: false, message: 'Supervisor not found.' }, { status: 400 });
+      }
+
+      const supLevel = supervisorUser.designation?.level ?? 0;
+
+      // Admin (level 0) is supervisor of Department Heads (level 1)
+      if (supLevel === 0 || supervisorUser.role === 'admin') {
+        if (currentLevel !== 1) {
+          return NextResponse.json({ success: false, message: 'Only Department Heads (Level 1) can report to the Admin.' }, { status: 400 });
+        }
+      } else {
+        // Must be in same department and higher in hierarchy (lower level number)
+        if (supervisorUser.departmentId !== finalDeptId) {
+          return NextResponse.json({ success: false, message: 'Supervisor must belong to the same department.' }, { status: 400 });
+        }
+        if (supLevel >= currentLevel) {
+          return NextResponse.json({ success: false, message: 'Supervisor must be above the employee in the hierarchy.' }, { status: 400 });
+        }
+      }
+    }
+
 
     const updateData: any = {};
     if (name !== undefined) updateData.name = name;

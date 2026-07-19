@@ -14,6 +14,10 @@ import {
   UserCheck,
   ChevronRight,
   Flame,
+  DollarSign,
+  Truck,
+  Hammer,
+  CheckCircle2,
 } from 'lucide-react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -31,9 +35,24 @@ interface OverviewStats {
   totalLeads: number;
   activeLeads: number;
   meetingsBookedThisMonth: number;
+  meetingsDoneThisMonth?: number;
   salesDoneThisMonth: number;
   todayFollowUps: number;
   conversionRate: number;
+  
+  // Finance stats
+  totalOrdersPending?: number;
+  ordersVerified?: number;
+  totalLedgerValue?: number;
+  totalPaymentsCollected?: number;
+  outstandingBalance?: number;
+
+  // Operations stats
+  totalJobsAssigned?: number;
+  deliveredJobs?: number;
+  installedJobs?: number;
+  commissionedJobs?: number;
+  subsidyJobs?: number;
 }
 
 interface PipelineStage {
@@ -155,50 +174,117 @@ export default function DashboardPage() {
     );
   }
 
-  const statCards = [
-    {
-      name: 'Total Leads Pool',
-      value: stats?.totalLeads || 0,
-      icon: Layers,
-      color: 'from-blue-600/10 to-indigo-600/5 border-blue-500/20 text-blue-400',
-    },
-    {
-      name: 'Active Lead Opportunities',
-      value: stats?.activeLeads || 0,
-      icon: Flame,
-      color: 'from-amber-600/10 to-yellow-600/5 border-amber-500/20 text-amber-400',
-    },
-    {
-      name: 'Meetings Booked (Month)',
-      value: stats?.meetingsBookedThisMonth || 0,
-      icon: Calendar,
-      color: 'from-cyan-600/10 to-blue-600/5 border-cyan-500/20 text-cyan-400',
-    },
-    {
-      name: 'Sales Closed (Month)',
-      value: stats?.salesDoneThisMonth || 0,
-      icon: TrendingUp,
-      color: 'from-emerald-600/10 to-teal-600/5 border-emerald-500/20 text-emerald-400',
-    },
-    {
-      name: "Today's Scheduled Actions",
-      value: stats?.todayFollowUps || 0,
-      icon: Clock,
-      color: 'from-purple-600/10 to-pink-600/5 border-purple-500/20 text-purple-400',
-    },
-    {
-      name: 'Sales Closure Rate',
-      value: `${stats?.conversionRate || 0}%`,
-      icon: Sparkles,
-      color: 'from-pink-600/10 to-rose-600/5 border-pink-500/20 text-pink-400',
-    },
-  ];
+  const userDept = user?.department?.name || '';
+  const userBaseRole = user?.role ? (user.role.includes(':') ? user.role.split(':')[0] : user.role) : '';
 
-  // Filter out redundant ones depending on role (e.g. Finance/Ops don't care about callers as much)
-  const isFinanceOrOps = ['finance', 'operations'].includes(user?.role || '');
-  const activeCards = isFinanceOrOps 
-    ? statCards.filter((card) => ['Total Leads Pool', 'Sales Closed (Month)', 'Sales Closure Rate'].includes(card.name))
-    : statCards;
+  let activeCards: any[] = [];
+
+  if (userDept === 'Finance' || userBaseRole === 'finance') {
+    activeCards = [
+      {
+        name: 'Orders Received (Pending Verification)',
+        value: stats?.totalOrdersPending || 0,
+        icon: Layers,
+        color: 'from-blue-600/10 to-indigo-600/5 border-blue-500/20 text-blue-400',
+      },
+      {
+        name: 'Orders Verified (Month)',
+        value: stats?.ordersVerified || 0,
+        icon: FileCheck,
+        color: 'from-emerald-600/10 to-teal-600/5 border-emerald-500/20 text-emerald-400',
+      },
+      {
+        name: 'Total Ledger Value',
+        value: `₹${(stats?.totalLedgerValue || 0).toLocaleString('en-IN')}`,
+        icon: TrendingUp,
+        color: 'from-cyan-600/10 to-blue-600/5 border-cyan-500/20 text-cyan-400',
+      },
+      {
+        name: 'Payments Collected',
+        value: `₹${(stats?.totalPaymentsCollected || 0).toLocaleString('en-IN')}`,
+        icon: DollarSign,
+        color: 'from-purple-600/10 to-pink-600/5 border-purple-500/20 text-purple-400',
+      },
+      {
+        name: 'Outstanding Balance',
+        value: `₹${(stats?.outstandingBalance || 0).toLocaleString('en-IN')}`,
+        icon: Clock,
+        color: 'from-amber-600/10 to-yellow-600/5 border-amber-500/20 text-amber-400',
+      },
+    ];
+  } else if (userDept === 'Operations' || userBaseRole === 'operations') {
+    activeCards = [
+      {
+        name: 'Total Assigned Jobs',
+        value: stats?.totalJobsAssigned || 0,
+        icon: Layers,
+        color: 'from-blue-600/10 to-indigo-600/5 border-blue-500/20 text-blue-400',
+      },
+      {
+        name: 'Materials Delivered',
+        value: stats?.deliveredJobs || 0,
+        icon: Truck,
+        color: 'from-amber-600/10 to-yellow-600/5 border-amber-500/20 text-amber-400',
+      },
+      {
+        name: 'Installations Completed',
+        value: stats?.installedJobs || 0,
+        icon: Hammer,
+        color: 'from-cyan-600/10 to-blue-600/5 border-cyan-500/20 text-cyan-400',
+      },
+      {
+        name: 'Plants Commissioned',
+        value: stats?.commissionedJobs || 0,
+        icon: CheckCircle2,
+        color: 'from-emerald-600/10 to-teal-600/5 border-emerald-500/20 text-emerald-400',
+      },
+      {
+        name: 'Subsidies Applied',
+        value: stats?.subsidyJobs || 0,
+        icon: Sparkles,
+        color: 'from-pink-600/10 to-rose-600/5 border-pink-500/20 text-pink-400',
+      },
+    ];
+  } else {
+    activeCards = [
+      {
+        name: 'Total Leads Assigned',
+        value: stats?.totalLeads || 0,
+        icon: Layers,
+        color: 'from-blue-600/10 to-indigo-600/5 border-blue-500/20 text-blue-400',
+      },
+      {
+        name: 'Meetings Booked (Month)',
+        value: stats?.meetingsBookedThisMonth || 0,
+        icon: Calendar,
+        color: 'from-cyan-600/10 to-blue-600/5 border-cyan-500/20 text-cyan-400',
+      },
+      {
+        name: 'Meetings Recorded (Month)',
+        value: stats?.meetingsDoneThisMonth || 0,
+        icon: FileCheck,
+        color: 'from-purple-600/10 to-pink-600/5 border-purple-500/20 text-purple-400',
+      },
+      {
+        name: 'Sales Done (Month)',
+        value: stats?.salesDoneThisMonth || 0,
+        icon: TrendingUp,
+        color: 'from-emerald-600/10 to-teal-600/5 border-emerald-500/20 text-emerald-400',
+      },
+      {
+        name: "Today's Scheduled Actions",
+        value: stats?.todayFollowUps || 0,
+        icon: Clock,
+        color: 'from-amber-600/10 to-yellow-600/5 border-amber-500/20 text-amber-400',
+      },
+      {
+        name: 'Sales Closure Rate',
+        value: `${stats?.conversionRate || 0}%`,
+        icon: Sparkles,
+        color: 'from-pink-600/10 to-rose-600/5 border-pink-500/20 text-pink-400',
+      },
+    ];
+  }
 
   return (
     <div className="space-y-6">
@@ -230,7 +316,7 @@ export default function DashboardPage() {
       </div>
 
       {/* KPI Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+      <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-${activeCards.length} gap-6`}>
         {activeCards.map((card, index) => {
           const Icon = card.icon;
           return (
