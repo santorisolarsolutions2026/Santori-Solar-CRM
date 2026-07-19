@@ -172,7 +172,7 @@ export async function getUserPermissions(userId: number): Promise<string[]> {
   return finalPermissions;
 }
 
-export async function getUserSession(userId: number): Promise<{ role: string; permissions: string[] }> {
+export async function getUserSession(userId: number): Promise<{ role: string; permissions: string[]; department?: { name: string } | null }> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
@@ -218,6 +218,7 @@ export async function getUserSession(userId: number): Promise<{ role: string; pe
 
   return {
     role: user.role,
-    permissions: finalPermissions
+    permissions: finalPermissions,
+    department: user.department
   };
 }

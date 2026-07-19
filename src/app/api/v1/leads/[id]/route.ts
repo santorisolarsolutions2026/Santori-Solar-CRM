@@ -60,6 +60,25 @@ export async function GET(
         tl: { select: { id: true, name: true } },
         manager: { select: { id: true, name: true } },
         creator: { select: { id: true, name: true, role: true } },
+        assignedTeam: { select: { id: true, name: true, departmentId: true } },
+        employeeAssignments: {
+          where: { isActive: true },
+          include: {
+            employee: { select: { id: true, name: true, role: true } },
+            assignedBy: { select: { id: true, name: true } },
+          },
+        },
+        tasks: {
+          orderBy: { id: 'asc' },
+          include: { completedBy: { select: { id: true, name: true } } },
+        },
+        documents: {
+          include: { uploader: { select: { id: true, name: true } } },
+        },
+        auditLogs: {
+          orderBy: { createdAt: 'desc' },
+          include: { user: { select: { id: true, name: true } } },
+        },
         activityLogs: {
           orderBy: { createdAt: 'desc' },
           include: { user: { select: { name: true, role: true } } },
@@ -324,6 +343,27 @@ export async function PATCH(
           consultant: { select: { name: true } },
         },
       });
+
+      // Log all changed fields in AuditLog
+      const fieldsToTrack = [
+        'customerName', 'mobileAlt', 'connectionType', 'sanctionedLoadKw', 
+        'address', 'pinCode', 'city', 'state', 'leadSource', 'discomName', 'connectionNumber'
+      ];
+      for (const field of fieldsToTrack) {
+        if (body[field] !== undefined && String(body[field]) !== String((lead as any)[field] || '')) {
+          await tx.auditLog.create({
+            data: {
+              leadId,
+              tableName: 'Lead',
+              recordId: leadId,
+              fieldName: field,
+              oldValue: (lead as any)[field] !== null && (lead as any)[field] !== undefined ? String((lead as any)[field]) : 'None',
+              newValue: body[field] !== null && body[field] !== undefined ? String(body[field]) : 'None',
+              userId: userPayload.id,
+            },
+          });
+        }
+      }
 
       // Log the update activity
       await tx.leadActivityLog.create({

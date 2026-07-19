@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
+import { getAuthenticatedUser, getUserPermissions, getUserSession } from '@/lib/auth';
 
 // Transition validation matrix
 const TRANSITIONS: Record<number, { to: number[]; roles: string[] }> = {
@@ -20,6 +20,16 @@ const TRANSITIONS: Record<number, { to: number[]; roles: string[] }> = {
 };
 
 // Helper to generate order code
+function getLeadDepartment(statusNum: number, orderStatus: string | null): string {
+  if ([1, 2, 3, 5, 7, 10, 11].includes(statusNum)) return 'PSA';
+  if ([8, 9, 14].includes(statusNum)) return 'Sales';
+  if (statusNum === 13) {
+    if (orderStatus === 'submitted') return 'Finance';
+    if (['finance_verified', 'ops_assigned', 'completed'].includes(orderStatus || '')) return 'Operations';
+  }
+  return 'Admin';
+}
+
 async function generateOrderCode() {
   const lastOrder = await prisma.order.findFirst({
     orderBy: { id: 'desc' },
@@ -76,7 +86,7 @@ export async function POST(
       return NextResponse.json({ success: false, message: 'Invalid target status.' }, { status: 400 });
     }
 
-    const userPermissions = await getUserPermissions(userPayload.id);
+    const { role: userRole, permissions: userPermissions, department } = await getUserSession(userPayload.id);
     const hasChangeStatus = userPermissions.includes('leads:change_status');
     const isInstallationUpdate = toStatusNum === 13 && lead.status === 13 && userPermissions.includes('orders:submit_installation');
 
@@ -86,6 +96,39 @@ export async function POST(
 
     if (!remark) {
       return NextResponse.json({ success: false, message: 'Remark is mandatory for status change.' }, { status: 400 });
+    }
+
+    // Verify Department Ownership
+    const userDeptName = department?.name || '';
+    const leadOrder = await prisma.order.findFirst({ where: { leadId } });
+    const leadDeptName = getLeadDepartment(lead.status, leadOrder?.status || null);
+
+    const isDeptMember = userDeptName === leadDeptName;
+    const isAdminOrIt = ['admin', 'director'].includes(userPayload.role) || userDeptName === 'IT' || userDeptName === 'Admin';
+
+    if (!isDeptMember && !isAdminOrIt) {
+      return NextResponse.json({
+        success: false,
+        message: `Forbidden. Only members of the ${leadDeptName} department can update this lead right now.`
+      }, { status: 403 });
+    }
+
+    // Mandatory Task Rule Verification (Sales to Finance check)
+    if (toStatusNum === 13) {
+      const uncompletedTasks = await prisma.leadTask.findMany({
+        where: {
+          leadId,
+          isMandatory: true,
+          isCompleted: false,
+          stageNum: 9, // Sales tasks
+        },
+      });
+      if (uncompletedTasks.length > 0) {
+        return NextResponse.json({
+          success: false,
+          message: `Cannot transition to Finance queue. The following mandatory Sales tasks are incomplete: ${uncompletedTasks.map(t => t.taskName).join(', ')}.`
+        }, { status: 400 });
+      }
     }
 
     // 1. Transition Checks (Admin, Director, and Sales Head can bypass standard matrix, but must follow terminal constraints)
@@ -380,6 +423,19 @@ export async function POST(
           fromStatus: lead.status,
           toStatus: finalStatusNum,
           remark,
+        },
+      });
+
+      // Create Audit Log entry
+      await tx.auditLog.create({
+        data: {
+          leadId,
+          tableName: 'Lead',
+          recordId: leadId,
+          fieldName: 'status',
+          oldValue: lead.status.toString(),
+          newValue: finalStatusNum.toString(),
+          userId: userPayload.id,
         },
       });
 

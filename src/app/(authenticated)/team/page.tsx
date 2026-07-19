@@ -358,6 +358,18 @@ export default function TeamManagementPage() {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [managersAndTls, setManagersAndTls] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Clans (Teams) state variables
+  const [activeTab, setActiveTab] = useState<'members' | 'clans'>('members');
+  const [teamsList, setTeamsList] = useState<any[]>([]);
+  const [loadingTeams, setLoadingTeams] = useState(false);
+  const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
+  const [newTeamName, setNewTeamName] = useState('');
+  const [newTeamDeptId, setNewTeamDeptId] = useState('');
+  const [editingReportingUser, setEditingReportingUser] = useState<any | null>(null);
+  const [newTeamAssignmentId, setNewTeamAssignmentId] = useState('');
+  const [newSupervisorId, setNewSupervisorId] = useState('');
+  const [savingReporting, setSavingReporting] = useState(false);
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [empSearchInput, setEmpSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -389,6 +401,106 @@ export default function TeamManagementPage() {
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const fetchTeams = async () => {
+    setLoadingTeams(true);
+    try {
+      const res = await fetch('/api/v1/teams');
+      const data = await res.json();
+      if (data.success && data.data) {
+        setTeamsList(data.data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingTeams(false);
+    }
+  };
+
+  const handleCreateTeamSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTeamName || !newTeamDeptId) return;
+
+    try {
+      const res = await fetch('/api/v1/teams', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newTeamName,
+          departmentId: newTeamDeptId,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setNewTeamName('');
+        setNewTeamDeptId('');
+        setShowCreateTeamModal(false);
+        fetchTeams();
+      } else {
+        alert(data.message || 'Failed to create team.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error creating team.');
+    }
+  };
+
+  const handleDeleteTeam = async (teamId: number) => {
+    if (!confirm('Are you sure you want to delete this team? All members and leads will be unassigned from this team.')) return;
+
+    try {
+      const res = await fetch(`/api/v1/teams/${teamId}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchTeams();
+      } else {
+        alert(data.message || 'Failed to delete team.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error deleting team.');
+    }
+  };
+
+  const handleUpdateReportingSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingReportingUser) return;
+
+    setSavingReporting(true);
+    try {
+      const targetTeamId = newTeamAssignmentId ? parseInt(newTeamAssignmentId, 10) : null;
+      const targetSupId = newSupervisorId ? parseInt(newSupervisorId, 10) : null;
+
+      const res = await fetch(`/api/v1/teams/${targetTeamId || 0}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          memberAssignments: [
+            {
+              userId: editingReportingUser.id,
+              teamId: targetTeamId,
+              reportsTo: targetSupId,
+            },
+          ],
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setEditingReportingUser(null);
+        fetchTeams();
+        fetchTeam();
+      } else {
+        alert(data.message || 'Failed to save changes.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error saving changes.');
+    } finally {
+      setSavingReporting(false);
     }
   };
 
@@ -716,6 +828,7 @@ export default function TeamManagementPage() {
         fetchSupervisors();
         fetchDepartments();
         fetchDesignations();
+        fetchTeams();
       }
     }
   }, [user]);
@@ -1212,13 +1325,24 @@ export default function TeamManagementPage() {
         <div>
           <h1 className="text-xl font-bold text-white tracking-wide">{titleText}</h1>
           <p className="text-xs text-slate-400 mt-1">
-            {isAdminOrDirectorOrSalesHead
-              ? 'Manage user profiles, assign roles, and handle account status.'
-              : 'Browse company directory and see colleagues.'}
+            {activeTab === 'members'
+              ? (isAdminOrDirectorOrSalesHead
+                ? 'Manage user profiles, assign roles, and handle account status.'
+                : 'Browse company directory and see colleagues.')
+              : 'Create teams (clans), define reporting structures, and track team members.'}
           </p>
         </div>
         <div className="flex gap-2 flex-wrap items-center">
-          {user?.role === 'admin' && (
+          {activeTab === 'clans' && isAdminOrDirectorOrSalesHead && (
+            <button
+              onClick={() => setShowCreateTeamModal(true)}
+              className="py-2.5 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-955 rounded-lg font-bold text-xs shadow-lg flex items-center gap-1.5 transition-all w-fit cursor-pointer border border-transparent animate-fade-in"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create Clan (Team)</span>
+            </button>
+          )}
+          {activeTab === 'members' && user?.role === 'admin' && (
             <button
               onClick={() => {
                 setEditingDesignation(null);
@@ -1233,7 +1357,7 @@ export default function TeamManagementPage() {
               <span>Org Hierarchy</span>
             </button>
           )}
-          {isAdminOrDirectorOrSalesHead && (
+          {activeTab === 'members' && isAdminOrDirectorOrSalesHead && (
             <button
               type="button"
               onClick={() => setShowAddModal(true)}
@@ -1245,6 +1369,38 @@ export default function TeamManagementPage() {
           )}
         </div>
       </div>
+
+      {/* Tab Selector */}
+      {isAdminOrDirectorOrSalesHead && (
+        <div className="flex border border-slate-800 bg-slate-950/60 p-1 rounded-xl w-fit gap-1 shadow-inner">
+          <button
+            onClick={() => setActiveTab('members')}
+            className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
+              activeTab === 'members'
+                ? 'bg-amber-500 text-slate-955 shadow-md shadow-amber-500/10'
+                : 'text-slate-400 hover:text-white hover:bg-slate-900/30'
+            }`}
+          >
+            Members Directory
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('clans');
+              fetchTeams();
+            }}
+            className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
+              activeTab === 'clans'
+                ? 'bg-amber-500 text-slate-955 shadow-md shadow-amber-500/10'
+                : 'text-slate-400 hover:text-white hover:bg-slate-900/30'
+            }`}
+          >
+            Clans (Teams) Manager
+          </button>
+        </div>
+      )}
+
+      {activeTab === 'members' && (
+        <>
 
       {/* Directory Search and Department Filter for full-access users */}
       {hasFullTeamAccess && (
@@ -1548,7 +1704,246 @@ export default function TeamManagementPage() {
             </tbody>
           </table>
         </div>
+        </div>
+      </>
+    )}
+
+    {/* Clans Manager Tab Content */}
+    {activeTab === 'clans' && (
+      <div className="space-y-6 animate-fade-in">
+        {loadingTeams ? (
+          <div className="flex items-center justify-center p-12 bg-[#111625]/60 border border-slate-800 rounded-2xl">
+            <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+          </div>
+        ) : teamsList.length === 0 ? (
+          <div className="flex flex-col items-center justify-center p-12 bg-[#111625]/60 border border-slate-800 rounded-2xl text-center space-y-3">
+            <Users className="w-12 h-12 text-slate-650" />
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider">No Clans / Teams Formed</h3>
+            <p className="text-xs text-slate-400 max-w-sm">
+              Clans allow grouping pre-sales agents, consultants, team leaders, and managers to coordinate workflow stages together.
+            </p>
+            {isAdminOrDirectorOrSalesHead && (
+              <button
+                onClick={() => setShowCreateTeamModal(true)}
+                className="py-2 px-4 bg-amber-500 hover:bg-amber-400 text-slate-955 rounded-lg font-bold text-xs shadow-md transition-all cursor-pointer"
+              >
+                Create Your First Clan
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            {teamsList.map((team) => (
+              <div key={team.id} className="bg-[#111625] border border-slate-805 rounded-2xl shadow-xl overflow-hidden flex flex-col justify-between">
+                {/* Clan Header */}
+                <div className="p-4 bg-slate-900/40 border-b border-slate-800/80 flex items-center justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-extrabold text-white tracking-wide uppercase">{team.name}</h3>
+                      <span className="text-[9px] bg-slate-950/80 text-amber-400 border border-slate-800 rounded px-2 py-0.5 font-bold uppercase tracking-wider">
+                        {team.department?.name || 'Department'}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-mono mt-0.5">Team ID: #{team.id}</p>
+                  </div>
+                  {isAdminOrDirectorOrSalesHead && (
+                    <button
+                      onClick={() => handleDeleteTeam(team.id)}
+                      className="p-2 rounded-lg bg-red-955/10 hover:bg-red-950/30 text-red-400 border border-red-900/20 hover:border-red-900/40 transition-all cursor-pointer"
+                      title="Delete Clan"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Clan Members */}
+                <div className="p-4 flex-1">
+                  <h4 className="text-[10px] font-bold text-slate-450 uppercase tracking-widest mb-3">Clan Hierarchy & Members</h4>
+                  {team.users.length === 0 ? (
+                    <p className="text-xs text-slate-650 italic">No members assigned to this clan yet.</p>
+                  ) : (
+                    <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                      {team.users.map((m: any) => (
+                        <div key={m.id} className="flex items-center justify-between gap-3 p-2 bg-slate-950/40 border border-slate-850 hover:border-slate-800 rounded-xl transition-all">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="w-7 h-7 rounded-lg bg-slate-900 border border-slate-850 flex items-center justify-center text-slate-400 shrink-0 font-bold text-xs uppercase">
+                              {m.name.charAt(0)}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-xs font-bold text-white truncate leading-none mb-1">{m.name}</p>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-[9px] text-slate-500 font-mono uppercase truncate">{m.designation?.name || m.role}</span>
+                                {m.reportsTo && (
+                                  <>
+                                    <span className="text-slate-700 text-[8px]">•</span>
+                                    <span className="text-[8px] text-amber-500/70 font-semibold" title={`Supervisor: ID ${m.reportsTo}`}>
+                                      Reports to: {team.users.find((u: any) => u.id === m.reportsTo)?.name || `ID ${m.reportsTo}`}
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {isAdminOrDirectorOrSalesHead && (
+                            <button
+                              onClick={() => {
+                                setEditingReportingUser(m);
+                                setNewTeamAssignmentId(String(team.id));
+                                setNewSupervisorId(m.reportsTo ? String(m.reportsTo) : '');
+                              }}
+                              className="py-1 px-2.5 bg-slate-900 border border-slate-850 hover:bg-slate-850 hover:border-slate-800 text-[10px] text-slate-400 hover:text-white rounded-lg transition-all font-semibold cursor-pointer"
+                            >
+                              Edit Reporting
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
+    )}
+
+    {/* Create Team Modal */}
+    {showCreateTeamModal && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+        <div className="w-full max-w-md bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+          <div className="p-5 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-white">Form New Clan (Team)</h3>
+            <button onClick={() => setShowCreateTeamModal(false)} className="text-slate-400 hover:text-white cursor-pointer">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <form onSubmit={handleCreateTeamSubmit}>
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="block text-[10px] font-semibold text-slate-455 uppercase tracking-wider mb-1.5 font-mono">Clan / Team Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={newTeamName}
+                  onChange={(e) => setNewTeamName(e.target.value)}
+                  placeholder="e.g. PSA Tigers, Sales Challengers..."
+                  className="w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-semibold text-slate-455 uppercase tracking-wider mb-1.5 font-mono">Department Assignment *</label>
+                <select
+                  required
+                  value={newTeamDeptId}
+                  onChange={(e) => setNewTeamDeptId(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-xl text-slate-350 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                >
+                  <option value="">Select a department...</option>
+                  {departmentsList.map((d) => (
+                    <option key={d.id} value={d.id}>{d.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="p-5 border-t border-slate-800 bg-slate-900/10 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowCreateTeamModal(false)}
+                className="py-2 px-4 bg-slate-900 border border-slate-800 text-slate-400 rounded-xl font-bold text-xs cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="py-2 px-5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-955 rounded-xl font-bold text-xs shadow-md shadow-amber-500/10 cursor-pointer"
+              >
+                Create Team
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    )}
+
+    {/* Edit Reporting Connection Modal */}
+    {editingReportingUser && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+        <div className="w-full max-w-md bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+          <div className="p-5 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-white">Edit Reporting Structure</h3>
+            <button onClick={() => setEditingReportingUser(null)} className="text-slate-400 hover:text-white cursor-pointer">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <form onSubmit={handleUpdateReportingSubmit}>
+            <div className="p-5 space-y-4">
+              <div className="p-3 bg-slate-900/30 border border-slate-850 rounded-xl">
+                <p className="text-xs text-white font-bold">{editingReportingUser.name}</p>
+                <p className="text-[10px] text-slate-500 mt-0.5 uppercase tracking-wide font-mono">
+                  {editingReportingUser.role} (Current Supervisor ID: {editingReportingUser.reportsTo || 'None'})
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-semibold text-slate-455 uppercase tracking-wider mb-1.5">Assign to Clan (Team)</label>
+                <select
+                  value={newTeamAssignmentId}
+                  onChange={(e) => setNewTeamAssignmentId(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-xl text-slate-350 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                >
+                  <option value="">No Clan / Unassigned</option>
+                  {teamsList.map((t) => (
+                    <option key={t.id} value={t.id}>{t.name} ({t.department?.name})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-semibold text-slate-455 uppercase tracking-wider mb-1.5">Reporting Supervisor</label>
+                <select
+                  value={newSupervisorId}
+                  onChange={(e) => setNewSupervisorId(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-955 border border-slate-805 rounded-xl text-slate-350 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                >
+                  <option value="">No Supervisor / Reports directly to Head</option>
+                  {members
+                    .filter((m) => m.id !== editingReportingUser.id)
+                    .map((m) => (
+                      <option key={m.id} value={m.id}>{m.name} ({m.role})</option>
+                    ))}
+                </select>
+              </div>
+            </div>
+            <div className="p-5 border-t border-slate-800 bg-slate-900/10 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setEditingReportingUser(null)}
+                className="py-2 px-4 bg-slate-900 border border-slate-800 text-slate-400 rounded-xl font-bold text-xs cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={savingReporting}
+                className="py-2 px-5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-955 rounded-xl font-bold text-xs shadow-md shadow-amber-500/10 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {savingReporting ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <span>Save Assignment</span>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    )}
 
       {/* ============================================================== */}
       {/* Add User Modal Dialog */}

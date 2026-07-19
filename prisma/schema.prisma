@@ -49,6 +49,16 @@ model User {
   consultantLeads      Lead[]              @relation("ConsultantLeads")
   createdLeads         Lead[]              @relation("LeadCreator")
 
+  // Team relationship
+  teamId               Int?
+  team                 Team?               @relation(fields: [teamId], references: [id])
+  teamAssignments      LeadTeamAssignment[] @relation("TeamAssigner")
+  employeeAssignments  EmployeeAssignment[] @relation("EmployeeAssigned")
+  createdEmployeeAssignments EmployeeAssignment[] @relation("EmployeeAssigner")
+  completedTasks       LeadTask[]
+  uploadedDocs         LeadDocument[]      @relation("DocUploader")
+  auditLogs            AuditLog[]
+
   // Other relationships
   logs                 LeadActivityLog[]
   assignedMeetings     MeetingBooking[]    @relation("MeetingExecutive")
@@ -93,6 +103,15 @@ model Lead {
   tl                   User?               @relation("TlLeads", fields: [assignedTlId], references: [id])
   consultant           User?               @relation("ConsultantLeads", fields: [assignedConsultantId], references: [id])
   creator              User                @relation("LeadCreator", fields: [createdById], references: [id])
+
+  // Team & Assignments
+  assignedTeamId       Int?
+  assignedTeam         Team?               @relation(fields: [assignedTeamId], references: [id])
+  teamAssignments      LeadTeamAssignment[]
+  employeeAssignments  EmployeeAssignment[]
+  tasks                LeadTask[]
+  documents            LeadDocument[]
+  auditLogs            AuditLog[]
 
   activityLogs         LeadActivityLog[]
   meetings             MeetingBooking[]
@@ -292,6 +311,7 @@ model Department {
   name         String        @unique
   users        User[]
   designations Designation[]
+  teams        Team[]
 }
 
 model Designation {
@@ -323,5 +343,85 @@ model GazettedHoliday {
   date      DateTime @unique
   name      String
   createdAt DateTime @default(now())
+}
+
+model Team {
+  id           Int                  @id @default(autoincrement())
+  name         String               @unique
+  departmentId Int
+  department   Department           @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  users        User[]
+  leads        Lead[]
+  assignments  LeadTeamAssignment[]
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+}
+
+model LeadTeamAssignment {
+  id           Int      @id @default(autoincrement())
+  leadId       Int
+  lead         Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  teamId       Int
+  team         Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  assignedById Int
+  assignedBy   User     @relation("TeamAssigner", fields: [assignedById], references: [id])
+  assignedAt   DateTime @default(now())
+}
+
+model EmployeeAssignment {
+  id           Int      @id @default(autoincrement())
+  leadId       Int
+  lead         Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  employeeId   Int
+  employee     User     @relation("EmployeeAssigned", fields: [employeeId], references: [id], onDelete: Cascade)
+  assignedById Int
+  assignedBy   User     @relation("EmployeeAssigner", fields: [assignedById], references: [id])
+  assignedAt   DateTime @default(now())
+  dueDate      DateTime?
+  priority     String   @default("medium") // low | medium | high
+  isActive     Boolean  @default(true)
+}
+
+model LeadTask {
+  id            Int       @id @default(autoincrement())
+  leadId        Int
+  lead          Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  taskName      String
+  isCompleted   Boolean   @default(false)
+  completedById Int?
+  completedBy   User?     @relation(fields: [completedById], references: [id])
+  completedAt   DateTime?
+  stageNum      Int       // 1 to 14
+  isMandatory   Boolean   @default(true)
+}
+
+model LeadDocument {
+  id           Int      @id @default(autoincrement())
+  leadId       Int
+  lead         Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  docType      String   // quotation | site_photo | agreement | kyc | payment_receipt | order_punching_form | installation | commissioning | subsidy
+  filePath     String
+  fileName     String
+  fileSize     Int
+  version      Int      @default(1)
+  uploadedById Int
+  uploader     User     @relation("DocUploader", fields: [uploadedById], references: [id])
+  uploadedAt   DateTime @default(now())
+  isActive     Boolean  @default(true)
+}
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  leadId     Int?
+  lead       Lead?    @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  tableName  String
+  recordId   Int
+  fieldName  String
+  oldValue   String?
+  newValue   String?
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id])
+  createdAt  DateTime @default(now())
+  ip         String?
 }
 

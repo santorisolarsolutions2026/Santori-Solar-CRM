@@ -61,6 +61,7 @@ interface LeadTrackingProps {
     manager?: { id: number; name: string } | null;
     creator?: { id: number; name: string; role: string } | null;
     activityLogs?: ActivityLog[];
+    auditLogs?: any[];
     meetings?: Meeting[];
     order?: Order | null;
   };
@@ -135,6 +136,7 @@ export function LeadTrackingTimeline({ lead }: LeadTrackingProps) {
     if (t.includes('meter')) return <Gauge className="w-4 h-4 stroke-[2]" />;
     if (t.includes('commission')) return <Power className="w-4 h-4 stroke-[2]" />;
     if (t.includes('subsidy')) return <Gift className="w-4 h-4 stroke-[2]" />;
+    if (t.includes('field changed') || t.includes('audit') || t.includes('task update')) return <ShieldCheck className="w-4 h-4 stroke-[2]" />;
     
     // Status-based fallback
     if (toStatus === 8) return <Calendar className="w-4 h-4 stroke-[2]" />;
@@ -328,6 +330,23 @@ export function LeadTrackingTimeline({ lead }: LeadTrackingProps) {
       description: `System Size: ${lead.order.systemSizeKw} kW | Total Value: ₹${lead.order.totalValue?.toLocaleString('en-IN') || '-'} | Status: ${lead.order.status.toUpperCase()}`,
       badge: 'Order Punched',
       user: lead.order.submittedBy ? `${lead.order.submittedBy.name} (${lead.order.submittedBy.role.toUpperCase()})` : undefined,
+    });
+  }
+
+  // 6. Audit Logs
+  if (lead.auditLogs && lead.auditLogs.length > 0) {
+    lead.auditLogs.forEach((audit: any) => {
+      const auditTime = new Date(audit.createdAt).getTime() || 0;
+      events.push({
+        id: `audit-${audit.id}`,
+        title: `Audit Change: ${audit.fieldName}`,
+        date: formatDate(audit.createdAt),
+        fullDate: formatDateTime(audit.createdAt),
+        timestamp: auditTime,
+        description: `Field "${audit.fieldName}" updated from "${audit.oldValue || 'None'}" to "${audit.newValue || 'None'}".`,
+        badge: 'Audit Log',
+        user: audit.user ? `${audit.user.name} (${audit.user.role?.toUpperCase() || 'USER'})` : 'System',
+      });
     });
   }
 

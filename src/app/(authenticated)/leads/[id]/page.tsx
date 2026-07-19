@@ -36,6 +36,7 @@ import {
   Download,
   Truck,
   Camera,
+  Users,
 } from 'lucide-react';
 import Link from 'next/link';
 import { BeautifulAudioPlayer } from '@/components/BeautifulAudioPlayer';
@@ -211,6 +212,18 @@ export default function LeadDetailPage({
   const [loading, setLoading] = useState(true);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState<'info' | 'action' | 'track' | 'meeting' | 'order'>('info');
+
+  // Workflow, tasks, assignments and documents history states
+  const [leadTasks, setLeadTasks] = useState<any[]>([]);
+  const [leadDocuments, setLeadDocuments] = useState<any[]>([]);
+  const [leadAuditLogs, setLeadAuditLogs] = useState<any[]>([]);
+  const [allTeams, setAllTeams] = useState<any[]>([]);
+  const [selectedTeamId, setSelectedTeamId] = useState('');
+  const [selectedEmpId, setSelectedEmpId] = useState('');
+  const [assignDueDate, setAssignDueDate] = useState('');
+  const [assignPriority, setAssignPriority] = useState('medium');
+  const [assigningEmployee, setAssigningEmployee] = useState(false);
+  const [assigningTeam, setAssigningTeam] = useState(false);
 
   // Camera Modal States
   const [cameraModal, setCameraModal] = useState<{
@@ -472,6 +485,12 @@ export default function LeadDetailPage({
       const data = await res.json();
       if (data.success && data.data) {
         setLead(data.data);
+        setLeadTasks(data.data.tasks || []);
+        setLeadDocuments(data.data.documents || []);
+        setLeadAuditLogs(data.data.auditLogs || []);
+        setSelectedTeamId(data.data.assignedTeamId?.toString() || '');
+        const activeAssign = data.data.employeeAssignments?.find((a: any) => a.isActive);
+        setSelectedEmpId(activeAssign?.employeeId?.toString() || data.data.assignedConsultantId?.toString() || '');
         
         // Setup Form A edit values
         const savedEditForm = typeof window !== 'undefined' ? localStorage.getItem(`solar_crm_lead_edit_form_${data.data.id}`) : null;
@@ -545,6 +564,89 @@ export default function LeadDetailPage({
     }
   };
 
+  const fetchAllTeams = async () => {
+    try {
+      const res = await fetch('/api/v1/teams');
+      const data = await res.json();
+      if (data.success && data.data) {
+        setAllTeams(data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching teams:', err);
+    }
+  };
+
+  const handleToggleTask = async (taskId: number, isCompleted: boolean) => {
+    try {
+      const res = await fetch(`/api/v1/leads/${leadId}/tasks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ taskId, isCompleted }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchLeadDetails();
+      } else {
+        alert(data.message || 'Failed to update task.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error updating task.');
+    }
+  };
+
+  const handleAssignTeam = async (teamId: string) => {
+    if (!teamId) return;
+    setAssigningTeam(true);
+    try {
+      const res = await fetch(`/api/v1/leads/${leadId}/team`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teamId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSelectedTeamId(teamId);
+        fetchLeadDetails();
+      } else {
+        alert(data.message || 'Failed to assign team.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error assigning team.');
+    } finally {
+      setAssigningTeam(false);
+    }
+  };
+
+  const handleAssignEmployee = async (empId: string) => {
+    if (!empId) return;
+    setAssigningEmployee(true);
+    try {
+      const res = await fetch(`/api/v1/leads/${leadId}/employee`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employeeId: empId,
+          dueDate: assignDueDate || null,
+          priority: assignPriority,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSelectedEmpId(empId);
+        fetchLeadDetails();
+      } else {
+        alert(data.message || 'Failed to assign employee.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error assigning employee.');
+    } finally {
+      setAssigningEmployee(false);
+    }
+  };
+
   useEffect(() => {
     params.then((p) => {
       const parsedId = parseInt(p.id, 10);
@@ -557,6 +659,7 @@ export default function LeadDetailPage({
   useEffect(() => {
     if (leadId) {
       fetchLeadDetails();
+      fetchAllTeams();
       const isEdit = searchParams.get('edit') === 'true';
       if (isEdit) setIsEditing(true);
     }
@@ -1293,8 +1396,95 @@ export default function LeadDetailPage({
     ? docsChecklist.every((item) => getDocStatus(item.type).uploaded)
     : false;
 
+  const canToggleTask = (taskName: string) => {
+    if (!user) return false;
+    const baseRole = user.role.includes(':') ? user.role.split(':')[0] : user.role;
+    if (['admin', 'director'].includes(baseRole)) return true;
+
+    const userDept = (user as any).department?.name || '';
+    if (userDept === 'IT') return true;
+
+    const financeTaskNames = ['Verify Documents', 'Verify Payments', 'Ledger Entry'];
+    const opsTaskNames = ['Engineering', 'Installation', 'Plant Commissioning', 'Subsidy Applied'];
+
+    if (financeTaskNames.includes(taskName)) return userDept === 'Finance';
+    if (opsTaskNames.includes(taskName)) return userDept === 'Operations';
+
+    const task = leadTasks.find(t => t.taskName === taskName);
+    if (!task) return false;
+    
+    if (task.stageNum <= 7) return userDept === 'PSA';
+    if (task.stageNum === 8 || task.stageNum === 9 || task.stageNum === 14) return userDept === 'Sales';
+
+    return false;
+  };
+
+  const currentStep = (() => {
+    if (!lead) return 0;
+    if ([1, 2, 3, 5, 7, 10, 11].includes(lead.status)) return 0; // PSA
+    if ([8, 9, 14].includes(lead.status)) return 1; // Sales
+    if (lead.status === 13) {
+      if (lead.order?.status === 'submitted') return 2; // Finance
+      if (['finance_verified', 'ops_assigned', 'completed'].includes(lead.order?.status || '')) {
+        return lead.order?.status === 'completed' ? 4 : 3; // Completed vs Operations
+      }
+    }
+    if (lead.status === 6 || lead.status === 12) return 4;
+    return 0;
+  })();
+
+  const steps = [
+    { label: 'PSA Calling', desc: 'Calling & Appointment' },
+    { label: 'Sales Visit', desc: 'Audit & Deal Close' },
+    { label: 'Finance Verify', desc: 'Docs & Payments' },
+    { label: 'Ops Install', desc: 'Solar Commissioning' },
+    { label: 'Handover', desc: 'Subsidy & Handover' }
+  ];
+
   return (
     <div className="space-y-6">
+      {/* Sequential Department Workflow Stepper */}
+      <div className="bg-[#111625]/80 border border-slate-800 rounded-2xl p-5 shadow-xl">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-6 relative">
+          {steps.map((step, idx) => {
+            const isCompleted = idx < currentStep;
+            const isActive = idx === currentStep;
+
+            return (
+              <div key={idx} className="flex items-start md:flex-col gap-3 relative">
+                {idx < steps.length - 1 && (
+                  <div className="hidden md:block absolute left-[26px] top-4 w-[calc(100%-36px)] h-0.5 bg-slate-800">
+                    <div
+                      className="h-full bg-amber-500 transition-all duration-550"
+                      style={{ width: isCompleted ? '100%' : '0%' }}
+                    />
+                  </div>
+                )}
+                
+                <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-xs shrink-0 transition-all duration-300 z-10 ${
+                  isActive
+                    ? 'border-amber-500 bg-amber-500/10 text-amber-400 ring-4 ring-amber-500/15 scale-105'
+                    : isCompleted
+                      ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400'
+                      : 'border-slate-800 bg-slate-950 text-slate-500'
+                }`}>
+                  {isCompleted ? '✓' : idx + 1}
+                </div>
+
+                <div className="min-w-0">
+                  <p className={`text-[11px] font-extrabold uppercase tracking-wider ${
+                    isActive ? 'text-amber-400' : isCompleted ? 'text-emerald-400' : 'text-slate-400'
+                  }`}>
+                    {step.label}
+                  </p>
+                  <p className="text-[9px] text-slate-500 mt-0.5 font-semibold truncate uppercase">{step.desc}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Back button & Title Header */}
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div className="flex items-center gap-3">
@@ -1460,6 +1650,51 @@ export default function LeadDetailPage({
                         <Layers className="w-4 h-4 text-amber-500" />
                         <span>Pipeline Stage Control</span>
                       </h3>
+
+                      {/* Mandatory Stage Tasks Checklist */}
+                      <div className="p-4 bg-slate-950/40 border border-slate-850 rounded-xl space-y-4 shadow-inner">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Workflow Requirements Checklist</span>
+                        </h4>
+                        {leadTasks.length === 0 ? (
+                          <p className="text-xs text-slate-500 italic">No checklist tasks assigned to this lead.</p>
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {leadTasks.map((task) => {
+                              const allowed = canToggleTask(task.taskName);
+                              return (
+                                <label
+                                  key={task.id}
+                                  className={`flex items-start gap-2.5 p-2.5 rounded-xl border text-left transition-all ${
+                                    task.isCompleted
+                                      ? 'border-emerald-950/80 bg-emerald-950/10 text-slate-400'
+                                      : 'border-slate-850 bg-slate-950/20 text-slate-300'
+                                  } ${allowed ? 'cursor-pointer hover:border-slate-800 hover:bg-slate-900/10' : 'opacity-60 cursor-not-allowed'}`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    disabled={!allowed}
+                                    checked={task.isCompleted}
+                                    onChange={(e) => handleToggleTask(task.id, e.target.checked)}
+                                    className="mt-0.5 rounded border-slate-800 bg-slate-900 text-amber-550 focus:ring-amber-500 cursor-pointer"
+                                  />
+                                  <div className="min-w-0 flex-1">
+                                    <p className={`text-xs font-bold ${task.isCompleted ? 'line-through text-slate-500' : 'text-slate-200'}`}>
+                                      {task.taskName}
+                                    </p>
+                                    <p className="text-[9px] text-slate-500 mt-0.5 uppercase tracking-wide font-mono font-semibold">
+                                      {task.isMandatory ? 'Mandatory' : 'Optional'} 
+                                      {task.isCompleted && ` • Done by ${task.completedBy?.name || 'User'}`}
+                                    </p>
+                                  </div>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
                       <form onSubmit={handleStatusSubmit} className="space-y-4">
                         {/* Visual Custom Status Selector */}
                         <div>
@@ -1743,6 +1978,89 @@ export default function LeadDetailPage({
                           return null;
                         }
                       })()}
+
+                      {/* Clan & Employee Assignment Panel */}
+                      <div className="md:col-span-2 pt-6 mt-6 border-t border-slate-800/80 animate-fade-in">
+                        <div className="bg-slate-950/20 border border-slate-850 rounded-2xl p-5 space-y-4">
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                            <Users className="w-4 h-4 text-amber-500" />
+                            <span>Clan & Operator Assignment</span>
+                          </h4>
+                          <p className="text-[11px] text-slate-500">
+                            Assign this lead to a Clan (Team) to delegate ownership, then designate an operator with a priority level and due date.
+                          </p>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {/* Team Selection */}
+                            <div>
+                              <label className="block text-[10px] font-semibold text-slate-450 uppercase mb-1.5">Lead Clan (Team)</label>
+                              <select
+                                disabled={assigningTeam}
+                                value={selectedTeamId}
+                                onChange={(e) => handleAssignTeam(e.target.value)}
+                                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-300 text-xs focus:ring-amber-500 focus:outline-none cursor-pointer"
+                              >
+                                <option value="">Select a team/clan...</option>
+                                {allTeams.map((t) => (
+                                  <option key={t.id} value={t.id}>{t.name} ({t.department?.name})</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            {/* Employee Selection within Team */}
+                            {selectedTeamId && (
+                              <div>
+                                <label className="block text-[10px] font-semibold text-slate-455 uppercase mb-1.5">Assign Operator</label>
+                                <div className="space-y-3">
+                                  <select
+                                    value={selectedEmpId}
+                                    onChange={(e) => setSelectedEmpId(e.target.value)}
+                                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-300 text-xs focus:ring-amber-500 focus:outline-none cursor-pointer"
+                                  >
+                                    <option value="">Select employee...</option>
+                                    {(allTeams.find(t => t.id === parseInt(selectedTeamId, 10))?.users || []).map((u: any) => (
+                                      <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
+                                    ))}
+                                  </select>
+
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                      <label className="block text-[8px] font-semibold text-slate-500 uppercase mb-1">Due Date</label>
+                                      <input
+                                        type="date"
+                                        value={assignDueDate}
+                                        onChange={(e) => setAssignDueDate(e.target.value)}
+                                        className="w-full px-2 py-1.5 bg-slate-955 border border-slate-800 rounded-lg text-slate-300 text-[10px] focus:ring-amber-500 focus:outline-none cursor-pointer"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-[8px] font-semibold text-slate-500 uppercase mb-1">Priority</label>
+                                      <select
+                                        value={assignPriority}
+                                        onChange={(e) => setAssignPriority(e.target.value)}
+                                        className="w-full px-2 py-1.5 bg-slate-955 border border-slate-800 rounded-lg text-slate-300 text-[10px] focus:ring-amber-500 focus:outline-none cursor-pointer"
+                                      >
+                                        <option value="low">Low</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="high">High</option>
+                                      </select>
+                                    </div>
+                                  </div>
+
+                                  <button
+                                    type="button"
+                                    disabled={assigningEmployee || !selectedEmpId}
+                                    onClick={() => handleAssignEmployee(selectedEmpId)}
+                                    className="w-full py-2 bg-amber-500 hover:bg-amber-400 text-slate-955 rounded-xl font-bold text-xs shadow-md transition-all cursor-pointer disabled:opacity-50"
+                                  >
+                                    {assigningEmployee ? 'Assigning...' : 'Assign Operator'}
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
 
                       {/* Edit Trigger */}
                       {hasPermission('leads:edit') && !isLeadLocked && (
@@ -2692,6 +3010,124 @@ export default function LeadDetailPage({
                         </div>
                       </div>
                     )}
+
+                    {/* Document Vault (with Version History) */}
+                    <div className="mt-8 pt-8 border-t border-slate-800 animate-fade-in">
+                      <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 mb-4 flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-amber-500" />
+                        <span>Document Vault & Version History</span>
+                      </h3>
+
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Upload form */}
+                        <div className="bg-slate-950/40 border border-slate-850 p-5 rounded-2xl space-y-4 h-fit">
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Upload Document</h4>
+                          
+                          <form onSubmit={async (e) => {
+                            e.preventDefault();
+                            const form = e.currentTarget;
+                            const fd = new FormData(form);
+                            try {
+                              const res = await fetch(`/api/v1/leads/${leadId}/documents`, {
+                                method: 'POST',
+                                body: fd,
+                              });
+                              const data = await res.json();
+                              if (data.success) {
+                                form.reset();
+                                fetchLeadDetails();
+                              } else {
+                                alert(data.message || 'Failed to upload document.');
+                              }
+                            } catch (err) {
+                              console.error(err);
+                              alert('Error uploading document.');
+                            }
+                          }} className="space-y-4">
+                            <div>
+                              <label className="block text-[10px] font-semibold text-slate-450 uppercase mb-1.5 font-mono">Document Type *</label>
+                              <select name="doc_type" required className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-350 text-xs focus:ring-amber-500 focus:outline-none cursor-pointer">
+                                <option value="">Select doc type...</option>
+                                <option value="quotation">Quotation / Proposal</option>
+                                <option value="site_photo">Site & Layout Photos</option>
+                                <option value="agreement">Signed Customer Agreement</option>
+                                <option value="kyc">KYC Documents (Aadhaar/PAN)</option>
+                                <option value="payment_receipt">Payment Receipt</option>
+                                <option value="order_punching_form">Order Punching Form</option>
+                                <option value="installation">Installation Report</option>
+                                <option value="commissioning">Plant Commissioning Cert</option>
+                                <option value="subsidy">Government Subsidy Form</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-semibold text-slate-455 uppercase mb-1.5 font-mono">Select File * (PDF, PNG, JPG)</label>
+                              <input type="file" name="file" required className="w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-slate-900 file:text-slate-300 file:text-xs file:font-semibold hover:file:bg-slate-850 cursor-pointer" />
+                            </div>
+                            <button type="submit" className="w-full py-2 bg-amber-500 hover:bg-amber-400 text-slate-955 rounded-xl font-bold text-xs shadow-md transition-all cursor-pointer">
+                              Upload Document Version
+                            </button>
+                          </form>
+                        </div>
+
+                        {/* List & History */}
+                        <div className="lg:col-span-2 space-y-4">
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Vault Contents</h4>
+                          {leadDocuments.length === 0 ? (
+                            <p className="text-xs text-slate-500 italic p-6 bg-slate-955/20 border border-slate-850 rounded-2xl text-center">No documents uploaded to this lead yet.</p>
+                          ) : (
+                            <div className="space-y-3">
+                              {/* Group leadDocuments by docType and show latest active and history */}
+                              {Array.from(new Set(leadDocuments.map((d) => d.docType))).map((type) => {
+                                const versions = leadDocuments.filter((d) => d.docType === type);
+                                const activeDoc = versions.find((v) => v.isActive) || versions[0];
+
+                                return (
+                                  <div key={type} className="bg-slate-955/20 border border-slate-850 rounded-2xl p-4 space-y-3">
+                                    <div className="flex items-center justify-between gap-4 flex-wrap border-b border-slate-850 pb-2">
+                                      <div>
+                                        <span className="text-xs font-extrabold text-white uppercase tracking-wider">{type.replace('_', ' ')}</span>
+                                        <p className="text-[10px] text-slate-500 mt-0.5">Active Version: v{activeDoc.version} • Uploaded by {activeDoc.uploader?.name}</p>
+                                      </div>
+                                      <a
+                                        href={activeDoc.filePath}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="py-1 px-3 bg-slate-900 border border-slate-800 text-[11px] text-amber-400 hover:text-amber-300 hover:border-slate-700 rounded-lg font-bold flex items-center gap-1.5 transition-all"
+                                      >
+                                        <Download className="w-3.5 h-3.5" />
+                                        <span>Download v{activeDoc.version}</span>
+                                      </a>
+                                    </div>
+
+                                    {/* History dropdown */}
+                                    {versions.length > 1 && (
+                                      <details className="group">
+                                        <summary className="text-[10px] font-bold text-slate-450 hover:text-white uppercase tracking-widest cursor-pointer list-none flex items-center gap-1">
+                                          <span>▶ View Version History ({versions.length} versions)</span>
+                                        </summary>
+                                        <div className="mt-2 space-y-1.5 pl-3 border-l-2 border-slate-850 animate-fade-in">
+                                          {versions.map((v) => (
+                                            <div key={v.id} className="flex justify-between items-center text-[10px] text-slate-400">
+                                              <span>v{v.version}: <span className="font-mono text-slate-500">{v.fileName}</span> ({Math.round(v.fileSize / 1024)} KB)</span>
+                                              <div className="flex gap-2">
+                                                <span>by {v.uploader?.name}</span>
+                                                <span className="text-slate-650">|</span>
+                                                <a href={v.filePath} target="_blank" rel="noopener noreferrer" className="text-amber-400 hover:underline">Download</a>
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </details>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
                   </div>
                 )}
             </div>

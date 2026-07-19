@@ -58,6 +58,19 @@ export async function GET(req: Request) {
       },
     });
 
+    // Read weights from query parameters or default
+    const wLeadsCreated = parseInt(searchParams.get('wLeadsCreated') || '5', 10);
+    const wLogs = parseInt(searchParams.get('wLogs') || '2', 10);
+    const wMeetingsBooked = parseInt(searchParams.get('wMeetingsBooked') || '10', 10);
+    const wMeetingsConducted = parseInt(searchParams.get('wMeetingsConducted') || '20', 10);
+    const wSalesClosed = parseInt(searchParams.get('wSalesClosed') || '50', 10);
+    const wSalesTl = parseInt(searchParams.get('wSalesTl') || '15', 10);
+    const wSalesManager = parseInt(searchParams.get('wSalesManager') || '10', 10);
+    const wFinanceVerified = parseInt(searchParams.get('wFinanceVerified') || '30', 10);
+    const wPaymentsRecorded = parseInt(searchParams.get('wPaymentsRecorded') || '20', 10);
+    const wDocsUploaded = parseInt(searchParams.get('wDocsUploaded') || '10', 10);
+    const wOpsMilestones = parseInt(searchParams.get('wOpsMilestones') || '25', 10);
+
     const leaderboardPromises = users.map(async (user) => {
       // 1. Leads Created
       const leadsCreatedCount = await prisma.lead.count({
@@ -161,17 +174,17 @@ export async function GET(req: Request) {
 
       // Calculate total points based on Point Allocation Matrix
       const points = 
-        (leadsCreatedCount * 5) +
-        (logsCount * 2) +
-        (meetingsBookedCount * 10) +
-        (meetingsConductedCount * 20) +
-        (salesAsConsultant * 50) +
-        (salesAsTl * 15) +
-        (salesAsManager * 10) +
-        (financeVerifiedCount * 30) +
-        (paymentsRecordedCount * 20) +
-        (docsUploadedCount * 10) +
-        (opsStageUpdatesCount * 25);
+        (leadsCreatedCount * wLeadsCreated) +
+        (logsCount * wLogs) +
+        (meetingsBookedCount * wMeetingsBooked) +
+        (meetingsConductedCount * wMeetingsConducted) +
+        (salesAsConsultant * wSalesClosed) +
+        (salesAsTl * wSalesTl) +
+        (salesAsManager * wSalesManager) +
+        (financeVerifiedCount * wFinanceVerified) +
+        (paymentsRecordedCount * wPaymentsRecorded) +
+        (docsUploadedCount * wDocsUploaded) +
+        (opsStageUpdatesCount * wOpsMilestones);
 
       return {
         id: user.id,
