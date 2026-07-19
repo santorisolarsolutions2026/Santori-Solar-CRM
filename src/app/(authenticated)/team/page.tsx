@@ -370,6 +370,7 @@ export default function TeamManagementPage() {
   const [newTeamAssignmentId, setNewTeamAssignmentId] = useState('');
   const [newSupervisorId, setNewSupervisorId] = useState('');
   const [savingReporting, setSavingReporting] = useState(false);
+  const [dragOverNodeId, setDragOverNodeId] = useState<string | null>(null);
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [empSearchInput, setEmpSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -502,6 +503,154 @@ export default function TeamManagementPage() {
     } finally {
       setSavingReporting(false);
     }
+  };
+
+  const checkIsDescendant = (users: any[], targetId: number, ancestorId: number): boolean => {
+    const target = users.find(u => u.id === targetId);
+    if (!target) return false;
+    if (target.reportsTo === ancestorId) return true;
+    if (!target.reportsTo) return false;
+    return checkIsDescendant(users, target.reportsTo, ancestorId);
+  };
+
+  const handleDragStart = (e: React.DragEvent, userId: number, teamId: number) => {
+    e.dataTransfer.setData('text/plain', JSON.stringify({ userId, teamId }));
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetSupervisorId: number | null, teamId: number) => {
+    e.preventDefault();
+    try {
+      const dataStr = e.dataTransfer.getData('text/plain');
+      if (!dataStr) return;
+      const { userId, teamId: sourceTeamId } = JSON.parse(dataStr);
+
+      if (sourceTeamId !== teamId) {
+        alert("Cannot drag members across different clans. Assign them via Edit Reporting structure first.");
+        return;
+      }
+
+      if (userId === targetSupervisorId) return; // Dropped on self
+
+      // Cycle Check: Make sure targetSupervisorId is not a child/descendant of userId
+      if (targetSupervisorId !== null) {
+        const team = teamsList.find(t => t.id === teamId);
+        if (team) {
+          const isDescendant = checkIsDescendant(team.users, targetSupervisorId, userId);
+          if (isDescendant) {
+            alert("Invalid hierarchy: A supervisor cannot report to their own direct report.");
+            return;
+          }
+        }
+      }
+
+      const res = await fetch(`/api/v1/teams/${teamId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          memberAssignments: [
+            {
+              userId: userId,
+              teamId: teamId,
+              reportsTo: targetSupervisorId,
+            }
+          ]
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchTeams();
+        fetchTeam();
+      } else {
+        alert(data.message || "Failed to update hierarchy.");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const renderHierarchyNodes = (team: any, users: any[], parentId: number | null, level: number = 0): React.ReactNode => {
+    const filteredUsers = users.filter((u) => {
+      if (parentId === null) {
+        return !u.reportsTo || !users.some((p) => p.id === u.reportsTo);
+      }
+      return u.reportsTo === parentId;
+    });
+
+    if (filteredUsers.length === 0) return null;
+
+    return (
+      <div className={`space-y-2 ${level > 0 ? 'pl-4 border-l border-slate-800/85 mt-2' : ''}`}>
+        {filteredUsers.map((m: any) => {
+          const isDragOver = dragOverNodeId === `node-${m.id}-${team.id}`;
+          return (
+            <div key={m.id} className="space-y-1 animate-fade-in">
+              <div
+                draggable={isAdminOrDirectorOrSalesHead}
+                onDragStart={(e) => handleDragStart(e, m.id, team.id)}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  if (isAdminOrDirectorOrSalesHead) {
+                    setDragOverNodeId(`node-${m.id}-${team.id}`);
+                  }
+                }}
+                onDragLeave={() => setDragOverNodeId(null)}
+                onDrop={(e) => {
+                  setDragOverNodeId(null);
+                  handleDrop(e, m.id, team.id);
+                }}
+                className={`flex items-center justify-between gap-3 p-2 bg-slate-950/40 hover:bg-slate-950/70 border rounded-xl transition-all duration-200 cursor-grab active:cursor-grabbing ${
+                  isDragOver
+                    ? 'border-amber-500 bg-amber-500/10 shadow-lg shadow-amber-500/10 scale-[1.01]'
+                    : 'border-slate-850 hover:border-slate-800'
+                }`}
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className={`w-1 h-6 rounded-full shrink-0 ${
+                    level === 0 ? 'bg-amber-500' :
+                    level === 1 ? 'bg-cyan-500' :
+                    level === 2 ? 'bg-indigo-500' : 'bg-slate-750'
+                  }`} />
+                  
+                  <div className="w-7 h-7 rounded-lg bg-slate-900 border border-slate-850 flex items-center justify-center text-slate-400 shrink-0 font-bold text-xs uppercase">
+                    {m.name.charAt(0)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-white truncate leading-none mb-1">{m.name}</p>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[9px] text-slate-500 font-mono uppercase truncate">{m.designation?.name || m.role}</span>
+                      {level > 0 && m.reportsTo && (
+                        <>
+                          <span className="text-slate-700 text-[8px]">•</span>
+                          <span className="text-[8px] text-amber-500/70 font-semibold" title={`Supervisor: ID ${m.reportsTo}`}>
+                            Reports to: {users.find((u: any) => u.id === m.reportsTo)?.name || `ID ${m.reportsTo}`}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {isAdminOrDirectorOrSalesHead && (
+                  <button
+                    onClick={() => {
+                      setEditingReportingUser(m);
+                      setNewTeamAssignmentId(String(team.id));
+                      setNewSupervisorId(m.reportsTo ? String(m.reportsTo) : '');
+                    }}
+                    className="py-1 px-2.5 bg-slate-900 border border-slate-850 hover:bg-slate-850 hover:border-slate-800 text-[10px] text-slate-400 hover:text-white rounded-lg transition-all font-semibold cursor-pointer"
+                  >
+                    Edit Reporting
+                  </button>
+                )}
+              </div>
+              
+              {renderHierarchyNodes(team, users, m.id, level + 1)}
+            </div>
+          );
+        })}
+      </div>
+    );
   };
 
   const handleCreateDesignation = async (e: React.FormEvent) => {
@@ -1763,43 +1912,31 @@ export default function TeamManagementPage() {
                   {team.users.length === 0 ? (
                     <p className="text-xs text-slate-650 italic">No members assigned to this clan yet.</p>
                   ) : (
-                    <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
-                      {team.users.map((m: any) => (
-                        <div key={m.id} className="flex items-center justify-between gap-3 p-2 bg-slate-950/40 border border-slate-850 hover:border-slate-800 rounded-xl transition-all">
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <div className="w-7 h-7 rounded-lg bg-slate-900 border border-slate-850 flex items-center justify-center text-slate-400 shrink-0 font-bold text-xs uppercase">
-                              {m.name.charAt(0)}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-xs font-bold text-white truncate leading-none mb-1">{m.name}</p>
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="text-[9px] text-slate-500 font-mono uppercase truncate">{m.designation?.name || m.role}</span>
-                                {m.reportsTo && (
-                                  <>
-                                    <span className="text-slate-700 text-[8px]">•</span>
-                                    <span className="text-[8px] text-amber-500/70 font-semibold" title={`Supervisor: ID ${m.reportsTo}`}>
-                                      Reports to: {team.users.find((u: any) => u.id === m.reportsTo)?.name || `ID ${m.reportsTo}`}
-                                    </span>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-
-                          {isAdminOrDirectorOrSalesHead && (
-                            <button
-                              onClick={() => {
-                                setEditingReportingUser(m);
-                                setNewTeamAssignmentId(String(team.id));
-                                setNewSupervisorId(m.reportsTo ? String(m.reportsTo) : '');
-                              }}
-                              className="py-1 px-2.5 bg-slate-900 border border-slate-850 hover:bg-slate-850 hover:border-slate-800 text-[10px] text-slate-400 hover:text-white rounded-lg transition-all font-semibold cursor-pointer"
-                            >
-                              Edit Reporting
-                            </button>
-                          )}
+                    <div className="space-y-3">
+                      {isAdminOrDirectorOrSalesHead && (
+                        <div
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            setDragOverNodeId(`root-${team.id}`);
+                          }}
+                          onDragLeave={() => setDragOverNodeId(null)}
+                          onDrop={(e) => {
+                            setDragOverNodeId(null);
+                            handleDrop(e, null, team.id);
+                          }}
+                          className={`border border-dashed p-2.5 rounded-xl text-center text-[10px] uppercase tracking-wider transition-all duration-200 cursor-pointer font-mono font-bold ${
+                            dragOverNodeId === `root-${team.id}`
+                              ? 'border-amber-500 bg-amber-500/10 text-amber-400 scale-[1.01]'
+                              : 'border-slate-800 text-slate-500 hover:text-slate-400 hover:border-slate-700 hover:bg-slate-900/10'
+                          }`}
+                        >
+                          Drop here to make Top-Level (Supervisor: Head)
                         </div>
-                      ))}
+                      )}
+                      
+                      <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
+                        {renderHierarchyNodes(team, team.users, null)}
+                      </div>
                     </div>
                   )}
                 </div>
