@@ -58,14 +58,72 @@ export async function POST(
       });
 
       if (approve && (opsManagerId || opsTlId || opsConsultantId)) {
+        let teamIdToAssign: number | null = null;
+        const selectedOpsUserId = opsConsultantId || opsTlId || opsManagerId;
+        if (selectedOpsUserId) {
+          const selectedUserObj = await tx.user.findUnique({
+            where: { id: parseInt(selectedOpsUserId, 10) },
+            select: { teamId: true }
+          });
+          if (selectedUserObj?.teamId) {
+            teamIdToAssign = selectedUserObj.teamId;
+          }
+        }
+
+        let finalManagerId = opsManagerId ? parseInt(opsManagerId, 10) : null;
+        let finalTlId = opsTlId ? parseInt(opsTlId, 10) : null;
+        let finalConsultantId = opsConsultantId ? parseInt(opsConsultantId, 10) : null;
+
+        let teamMembers: any[] = [];
+        if (teamIdToAssign) {
+          teamMembers = await tx.user.findMany({
+            where: { teamId: teamIdToAssign, isActive: true },
+            include: { designation: true }
+          });
+
+          // Automatically map roles from the team if not explicitly selected
+          for (const member of teamMembers) {
+            const level = member.designation?.level ?? 99;
+            if (level === 2 || level === 3) {
+              if (!finalManagerId) finalManagerId = member.id;
+            } else if (level === 4) {
+              if (!finalTlId) finalTlId = member.id;
+            } else if (level === 5 || level === 6) {
+              if (!finalConsultantId) finalConsultantId = member.id;
+            }
+          }
+        }
+
+        // Update the Lead fields
         await tx.lead.update({
           where: { id: order.leadId },
           data: {
-            assignedManagerId: opsManagerId ? parseInt(opsManagerId, 10) : null,
-            assignedTlId: opsTlId ? parseInt(opsTlId, 10) : null,
-            assignedConsultantId: opsConsultantId ? parseInt(opsConsultantId, 10) : null,
+            assignedManagerId: finalManagerId,
+            assignedTlId: finalTlId,
+            assignedConsultantId: finalConsultantId,
+            assignedTeamId: teamIdToAssign,
           },
         });
+
+        // Create EmployeeAssignments for all team members to ensure visibility
+        if (teamMembers.length > 0) {
+          for (const member of teamMembers) {
+            const existingAssign = await tx.employeeAssignment.findFirst({
+              where: { leadId: order.leadId, employeeId: member.id, isActive: true }
+            });
+            if (!existingAssign) {
+              await tx.employeeAssignment.create({
+                data: {
+                  leadId: order.leadId,
+                  employeeId: member.id,
+                  assignedById: userPayload.id,
+                  priority: 'medium',
+                  isActive: true,
+                }
+              });
+            }
+          }
+        }
       }
 
       if (approve) {

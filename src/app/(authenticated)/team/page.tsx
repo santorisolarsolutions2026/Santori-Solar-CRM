@@ -51,6 +51,7 @@ interface TeamMember {
   leadsClosed?: number;
   departmentId?: number | null;
   designationId?: number | null;
+  teamId?: number | null;
   designation?: { id: number; name: string; level: number } | null;
   department?: { id: number; name: string } | null;
 }
@@ -116,15 +117,33 @@ const ALL_PERMISSIONS = [
 
   // Sales Level
   {
-    key: 'orders:create',
-    label: 'Sales: Convert & Punch Order Details',
-    description: 'Allows converting Sale Done leads to sales orders and filling the electricity connection number, system size, and downpayment details.',
+    key: 'leads:assign',
+    label: 'Sales: Assign Leads to Sales Teams',
+    description: 'Allows assigning leads to pre-sales agents, consultants, team leaders, or managers.',
     category: 'Sales'
   },
   {
-    key: 'orders:submit_installation',
-    label: 'Sales: Submit Punch Form to Finance',
-    description: 'Allows submitting the finalized order punch form and client documents to Finance for verification.',
+    key: 'meetings:complete',
+    label: 'Sales: Meeting Done (Actual Meeting/Recording)',
+    description: 'Allows marking a meeting as done and uploading or attaching the audio recording.',
+    category: 'Sales'
+  },
+  {
+    key: 'orders:create',
+    label: 'Sales: Order Punching Form Filling',
+    description: 'Allows punching order details, connection numbers, system size, and downpayment details.',
+    category: 'Sales'
+  },
+  {
+    key: 'orders:submit_finance',
+    label: 'Sales: Submitting to Finance',
+    description: 'Allows submitting the finalized order punch form and client documents to Finance.',
+    category: 'Sales'
+  },
+  {
+    key: 'orders:assign_finance',
+    label: 'Sales: Finance Team Assignation',
+    description: 'Allows assigning a Finance team member or manager to the punched order.',
     category: 'Sales'
   },
   {
@@ -145,6 +164,12 @@ const ALL_PERMISSIONS = [
     key: 'orders:verify',
     label: 'Finance: Verify Orders & Downpayment',
     description: 'Allows approving or rejecting submitted orders based on transaction reference validations.',
+    category: 'Finance'
+  },
+  {
+    key: 'orders:assign_ops',
+    label: 'Finance: Assign Operations Team',
+    description: 'Allows assigning Operations team members/managers to a verified order.',
     category: 'Finance'
   },
   {
@@ -234,31 +259,32 @@ function deriveRoleFromDesignationAndDept(designationIdStr: string, departmentId
     }
   }
 
-  if (designation.name === 'Admin' || designation.level === 1) {
+  if (designation.name === 'Admin' || designation.level === 0) {
     return 'admin';
   } else if (departmentName === 'Finance') {
     return 'finance';
   } else if (departmentName === 'Operations') {
     return 'operations';
   } else if (departmentName === 'IT') {
-    if (designation.level === 2) return 'director';
-    if (designation.level === 3 || designation.level === 4) return 'manager';
-    if (designation.level === 5) return 'tl';
+    if (designation.level === 1) return 'director';
+    if (designation.level === 2 || designation.level === 3) return 'manager';
+    if (designation.level === 4) return 'tl';
     return 'consultant';
   } else if (departmentName === 'Sales') {
-    if (designation.name.includes('Head') || designation.level === 2) return 'sales_head';
-    if (designation.name.includes('PSA Senior Manager') || designation.name.includes('PSA Manager')) return 'manager';
-    if (designation.name.includes('Senior Manager') || designation.name.includes('Manager')) return 'manager';
-    if (designation.name === 'PSA TL') return 'psa_tl';
-    if (designation.name === 'TL') return 'tl';
-    if (designation.name === 'PSA Consultant') return 'psa';
-    if (designation.name === 'Consultant') return 'consultant';
+    if (designation.name.includes('Head') || designation.level === 1) return 'sales_head';
+    if (designation.name.includes('PSA Senior Manager') || designation.name.includes('PSA Manager') || designation.level === 2 || designation.level === 3) {
+      return 'manager';
+    }
+    if (designation.name === 'PSA TL' || (designation.level === 4 && designation.name.includes('PSA'))) return 'psa_tl';
+    if (designation.name === 'TL' || designation.level === 4) return 'tl';
+    if (designation.name === 'PSA Consultant' || designation.level === 6) return 'psa';
+    if (designation.name === 'Consultant' || designation.level === 5) return 'consultant';
   }
 
   // Fallback
-  if (designation.level === 2) return 'director';
-  if (designation.level === 3 || designation.level === 4) return 'manager';
-  if (designation.level === 5) return 'tl';
+  if (designation.level === 1) return 'director';
+  if (designation.level === 2 || designation.level === 3) return 'manager';
+  if (designation.level === 4) return 'tl';
   return 'consultant';
 }
 
@@ -505,6 +531,63 @@ export default function TeamManagementPage() {
     }
   };
 
+  const handleAddTeamMember = async (userId: number, teamId: number, supervisorId: number | null) => {
+    try {
+      const res = await fetch(`/api/v1/teams/${teamId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          memberAssignments: [
+            {
+              userId,
+              teamId,
+              reportsTo: supervisorId
+            }
+          ]
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchTeams();
+        fetchTeam();
+      } else {
+        alert(data.message || 'Failed to add member.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error adding member to team.');
+    }
+  };
+
+  const handleRemoveTeamMember = async (userId: number, teamId: number) => {
+    if (!confirm('Are you sure you want to remove this member from the team?')) return;
+    try {
+      const res = await fetch(`/api/v1/teams/${teamId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          memberAssignments: [
+            {
+              userId,
+              teamId: null,
+              reportsTo: null
+            }
+          ]
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchTeams();
+        fetchTeam();
+      } else {
+        alert(data.message || 'Failed to remove member.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error removing member from team.');
+    }
+  };
+
   const checkIsDescendant = (users: any[], targetId: number, ancestorId: number): boolean => {
     const target = users.find(u => u.id === targetId);
     if (!target) return false;
@@ -631,18 +714,34 @@ export default function TeamManagementPage() {
                   </div>
                 </div>
 
-                {isAdminOrDirectorOrSalesHead && (
-                  <button
-                    onClick={() => {
-                      setEditingReportingUser(m);
-                      setNewTeamAssignmentId(String(team.id));
-                      setNewSupervisorId(m.reportsTo ? String(m.reportsTo) : '');
-                    }}
-                    className="py-1 px-2.5 bg-slate-900 border border-slate-850 hover:bg-slate-850 hover:border-slate-800 text-[10px] text-slate-400 hover:text-white rounded-lg transition-all font-semibold cursor-pointer"
-                  >
-                    Edit Reporting
-                  </button>
-                )}
+                {(() => {
+                  const isEditorSupervisor = user && m && 
+                    user.departmentId === m.departmentId && 
+                    user.designation && m.designation && 
+                    user.designation.level < m.designation.level;
+                  const canEdit = isAdminOrDirectorOrSalesHead || isEditorSupervisor;
+                  if (!canEdit) return null;
+                  return (
+                    <div className="flex gap-1.5 items-center">
+                      <button
+                        onClick={() => {
+                          setEditingReportingUser(m);
+                          setNewTeamAssignmentId(String(team.id));
+                          setNewSupervisorId(m.reportsTo ? String(m.reportsTo) : '');
+                        }}
+                        className="py-1 px-2 bg-slate-900 border border-slate-850 hover:bg-slate-850 hover:border-slate-800 text-[9px] text-slate-400 hover:text-white rounded-lg transition-all font-semibold cursor-pointer"
+                      >
+                        Reporting
+                      </button>
+                      <button
+                        onClick={() => handleRemoveTeamMember(m.id, team.id)}
+                        className="py-1 px-2 bg-red-950/20 hover:bg-red-950/40 border border-red-900/30 hover:border-red-900/50 text-[9px] text-red-400 hover:text-red-300 rounded-lg transition-all font-semibold cursor-pointer"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  );
+                })()}
               </div>
               
               {renderHierarchyNodes(team, users, m.id, level + 1)}
@@ -781,9 +880,13 @@ export default function TeamManagementPage() {
     }
   };
 
-  const isTargetAdminOrDirector = selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:') || selectedMember?.role === 'director' || selectedMember?.role?.startsWith('director:');
   const isCurrentUserAdmin = user?.role === 'admin' || user?.role?.startsWith('admin:');
-  const canEditPermissionsAndRole = !isTargetAdminOrDirector || isCurrentUserAdmin;
+  const canEditPermissionsAndRole = isCurrentUserAdmin || (
+    user && selectedMember && 
+    user.departmentId === selectedMember.departmentId && 
+    user.designation && selectedMember.designation && 
+    user.designation.level < selectedMember.designation.level
+  );
   
   // Add User Form Modal
   const [showAddModal, setShowAddModal] = useState(false);
@@ -1019,13 +1122,10 @@ export default function TeamManagementPage() {
   useEffect(() => {
     if (user) {
       fetchTeam();
-      const userBaseRole = user.role.includes(':') ? user.role.split(':')[0] : user.role;
-      if (['admin', 'director', 'sales_head'].includes(userBaseRole)) {
-        fetchSupervisors();
-        fetchDepartments();
-        fetchDesignations();
-        fetchTeams();
-      }
+      fetchSupervisors();
+      fetchDepartments();
+      fetchDesignations();
+      fetchTeams();
     }
   }, [user]);
 
@@ -1628,30 +1728,109 @@ export default function TeamManagementPage() {
 
       {/* Restricted Directory Search Card for non-admins */}
       {!hasFullTeamAccess && (
-        <div className="bg-[#111625] border border-slate-800 rounded-xl p-5 shadow-xl space-y-3">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
-              <Lock className="w-4 h-4" />
+        <>
+          <div className="bg-[#111625] border border-slate-800 rounded-xl p-5 shadow-xl space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                <Lock className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-xs font-bold text-white uppercase tracking-wider">Employee Directory Lookup</h3>
+                <p className="text-[11px] text-slate-400">
+                  Type an exact Employee ID below to view details of a specific team member.
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider">Employee Directory Lookup</h3>
-              <p className="text-[11px] text-slate-400">
-                Type an exact Employee ID below to view details of a specific team member.
-              </p>
+
+            <div className="relative max-w-md">
+              <input
+                type="text"
+                value={empSearchInput}
+                onChange={(e) => setEmpSearchInput(e.target.value)}
+                placeholder="Enter exact Employee ID (e.g. EMP-101)..."
+                className="w-full pl-9 pr-4 py-2.5 bg-slate-955 border border-slate-800 rounded-xl text-white placeholder-slate-500 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/50 font-mono tracking-wide"
+              />
+              <Search className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
             </div>
           </div>
 
-          <div className="relative max-w-md">
-            <input
-              type="text"
-              value={empSearchInput}
-              onChange={(e) => setEmpSearchInput(e.target.value)}
-              placeholder="Enter exact Employee ID (e.g. EMP-101)..."
-              className="w-full pl-9 pr-4 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white placeholder-slate-500 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/50 font-mono tracking-wide"
-            />
-            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+          {/* My Team UI Section for non-admins */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+            {/* Main Clan Card */}
+            <div className="bg-[#111625] border border-slate-805 rounded-2xl shadow-xl p-5 lg:col-span-2 space-y-4">
+              {(() => {
+                const myTeam = teamsList.find(t => t.id === user?.teamId);
+                if (!myTeam) {
+                  return (
+                    <div className="text-center py-6">
+                      <Users className="w-10 h-10 text-slate-700 mx-auto mb-2" />
+                      <h3 className="text-sm font-bold text-white uppercase tracking-wider">My Clan (Team)</h3>
+                      <p className="text-xs text-slate-450 mt-1">You are not currently assigned to any Clan / Team.</p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <>
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                      <div>
+                        <h3 className="text-sm font-extrabold text-white uppercase tracking-wide">{myTeam.name}</h3>
+                        <p className="text-[10px] text-slate-500 font-mono mt-0.5">Team ID: #{myTeam.id}</p>
+                      </div>
+                      <span className="text-[9px] bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded px-2.5 py-1 font-bold uppercase tracking-wider">
+                        {myTeam.department?.name || 'Department'}
+                      </span>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h4 className="text-[10px] font-bold text-slate-450 uppercase tracking-widest mb-3 font-sans">Team Structure & Hierarchy</h4>
+                      <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+                        {renderHierarchyNodes(myTeam, myTeam.users, null)}
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+
+            {/* Supervisor Management Control Panel */}
+            {(() => {
+              const myTeam = teamsList.find(t => t.id === user?.teamId);
+              if (!myTeam) return null;
+
+              const isSupervisor = user?.designation && user.designation.level < 5;
+              if (!isSupervisor) return null;
+
+              // Find candidates: active users in same department, not in this team, lower designation level (larger level number)
+              const candidates = members.filter(m => 
+                m.isActive && 
+                m.departmentId === user.departmentId && 
+                m.teamId !== myTeam.id && 
+                user.designation && m.designation && 
+                user.designation.level < m.designation.level
+              );
+
+              return (
+                <div className="bg-[#111625] border border-slate-800 rounded-2xl shadow-xl p-5 space-y-4">
+                  <div className="border-b border-slate-800 pb-3">
+                    <h3 className="text-xs font-bold text-white uppercase tracking-wider">Add Team Member</h3>
+                    <p className="text-[10px] text-slate-450 mt-1 font-sans">Assign department subordinates directly into your team.</p>
+                  </div>
+
+                  {candidates.length === 0 ? (
+                    <p className="text-xs text-slate-500 italic">No eligible candidates available in your department.</p>
+                  ) : (
+                    <MyTeamAddMemberForm 
+                      candidates={candidates} 
+                      myTeam={myTeam} 
+                      onAdd={handleAddTeamMember} 
+                    />
+                  )}
+                </div>
+              );
+            })()}
           </div>
-        </div>
+        </>
       )}
 
       {/* Bulk Actions Control Bar */}
@@ -2109,9 +2288,21 @@ export default function TeamManagementPage() {
                 >
                   <option value="">No Supervisor / Reports directly to Head</option>
                   {members
-                    .filter((m) => m.id !== editingReportingUser.id)
+                    .filter((m) => {
+                      if (m.id === editingReportingUser.id) return false;
+                      const targetLevel = editingReportingUser.designation?.level ?? 99;
+                      const supLevel = m.designation?.level ?? 99;
+                      
+                      // Level 1 Department Head reports to Admin (Level 0)
+                      if (targetLevel === 1) {
+                        return m.role === 'admin' || supLevel === 0;
+                      }
+                      
+                      // Level > 1 reports to same department and higher in hierarchy
+                      return m.departmentId === editingReportingUser.departmentId && supLevel < targetLevel && supLevel > 0;
+                    })
                     .map((m) => (
-                      <option key={m.id} value={m.id}>{m.name} ({m.role})</option>
+                      <option key={m.id} value={m.id}>{m.name} ({m.designation?.name || m.role})</option>
                     ))}
                 </select>
               </div>
@@ -3495,3 +3686,65 @@ export default function TeamManagementPage() {
     </div>
   );
 }
+
+const MyTeamAddMemberForm = ({ 
+  candidates, 
+  myTeam, 
+  onAdd 
+}: { 
+  candidates: any[]; 
+  myTeam: any; 
+  onAdd: (uId: number, tId: number, supId: number | null) => Promise<void>; 
+}) => {
+  const [selectedCandidateId, setSelectedCandidateId] = useState('');
+  const [selectedSupId, setSelectedSupId] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCandidateId) return;
+    await onAdd(parseInt(selectedCandidateId, 10), myTeam.id, selectedSupId ? parseInt(selectedSupId, 10) : null);
+    setSelectedCandidateId('');
+    setSelectedSupId('');
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="block text-[9px] font-bold uppercase text-slate-450 mb-1.5 font-mono">Select Employee *</label>
+        <select
+          required
+          value={selectedCandidateId}
+          onChange={(e) => setSelectedCandidateId(e.target.value)}
+          className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-350 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+        >
+          <option value="">Choose candidate...</option>
+          {candidates.map(c => (
+            <option key={c.id} value={c.id}>{c.name} ({c.designation?.name || c.role})</option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-[9px] font-bold uppercase text-slate-450 mb-1.5 font-mono">Reports To (Supervisor)</label>
+        <select
+          value={selectedSupId}
+          onChange={(e) => setSelectedSupId(e.target.value)}
+          className="w-full px-3 py-2 bg-slate-950 border border-slate-805 rounded-xl text-slate-350 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+        >
+          <option value="">Reports directly to Head</option>
+          {myTeam.users.map((u: any) => (
+            <option key={u.id} value={u.id}>{u.name} ({u.designation?.name || u.role})</option>
+          ))}
+        </select>
+      </div>
+
+      <button
+        type="submit"
+        className="w-full py-2 bg-amber-500 hover:bg-amber-400 text-slate-955 rounded-xl font-bold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-1 border border-transparent"
+      >
+        <Plus className="w-3.5 h-3.5" />
+        <span>Add to Clan</span>
+      </button>
+    </form>
+  );
+};

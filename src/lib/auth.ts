@@ -157,15 +157,21 @@ export async function getUserPermissions(userId: number): Promise<string[]> {
   }
 
   const hasAnyOrderPermission = [
-    'orders:create', 'orders:verify', 'orders:operations', 'orders:finance_access', 'orders:view_all', 'orders:submit_installation', 'finance:manage_ledger', 'ops:update_stages', 'ops:upload_drawings'
+    'orders:create', 'orders:verify', 'orders:operations', 'orders:finance_access', 'orders:view_all', 'orders:submit_installation', 'finance:manage_ledger', 'ops:update_stages', 'ops:upload_drawings',
+    'orders:submit_finance', 'orders:assign_finance', 'orders:assign_ops'
   ].some(p => finalPermissions.includes(p));
 
   if (hasAnyOrderPermission && !finalPermissions.includes('orders:view')) {
     finalPermissions.push('orders:view');
   }
 
-  // Map 'orders:operations' to legacy 'orders:submit_installation' check for backwards compatibility
-  if (finalPermissions.includes('orders:operations') && !finalPermissions.includes('orders:submit_installation')) {
+  // Map 'orders:operations', 'orders:submit_finance', 'orders:assign_finance' to legacy 'orders:submit_installation' check for backwards compatibility
+  if (
+    (finalPermissions.includes('orders:operations') || 
+     finalPermissions.includes('orders:submit_finance') || 
+     finalPermissions.includes('orders:assign_finance')) && 
+    !finalPermissions.includes('orders:submit_installation')
+  ) {
     finalPermissions.push('orders:submit_installation');
   }
 
@@ -205,14 +211,20 @@ export async function getUserSession(userId: number): Promise<{ role: string; pe
   }
 
   const hasAnyOrderPermission = [
-    'orders:create', 'orders:verify', 'orders:operations', 'orders:finance_access', 'orders:view_all', 'orders:submit_installation', 'finance:manage_ledger', 'ops:update_stages', 'ops:upload_drawings'
+    'orders:create', 'orders:verify', 'orders:operations', 'orders:finance_access', 'orders:view_all', 'orders:submit_installation', 'finance:manage_ledger', 'ops:update_stages', 'ops:upload_drawings',
+    'orders:submit_finance', 'orders:assign_finance', 'orders:assign_ops'
   ].some(p => finalPermissions.includes(p));
 
   if (hasAnyOrderPermission && !finalPermissions.includes('orders:view')) {
     finalPermissions.push('orders:view');
   }
 
-  if (finalPermissions.includes('orders:operations') && !finalPermissions.includes('orders:submit_installation')) {
+  if (
+    (finalPermissions.includes('orders:operations') || 
+     finalPermissions.includes('orders:submit_finance') || 
+     finalPermissions.includes('orders:assign_finance')) && 
+    !finalPermissions.includes('orders:submit_installation')
+  ) {
     finalPermissions.push('orders:submit_installation');
   }
 

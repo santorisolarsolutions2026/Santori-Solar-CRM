@@ -163,10 +163,10 @@ export async function GET(req: Request) {
             createdAt: { gte: startOfMonth },
           },
         }),
-        prisma.lead.count({
+        prisma.meetingBooking.count({
           where: {
-            ...leadWhere,
-            status: 9,
+            lead: leadWhere,
+            audioRecordingPath: { not: null },
             createdAt: { gte: startOfMonth },
           },
         }),

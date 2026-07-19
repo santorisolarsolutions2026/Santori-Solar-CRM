@@ -28,7 +28,10 @@ export async function GET(req: Request) {
         createdAt: true,
         joiningDate: true,
         photograph: true,
-        department: { select: { name: true } }
+        departmentId: true,
+        teamId: true,
+        department: { select: { id: true, name: true } },
+        designation: { select: { id: true, name: true, level: true } }
       },
     });
 
