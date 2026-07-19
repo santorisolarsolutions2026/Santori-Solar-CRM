@@ -106,6 +106,8 @@ export async function PATCH(
     const { role: loggedInRole } = await getUserSession(userPayload.id);
     const loggedInBaseRole = loggedInRole.includes(':') ? loggedInRole.split(':')[0] : loggedInRole;
     const isEditingUserAdmin = loggedInBaseRole === 'admin';
+    const userPermissions = await getUserPermissions(userPayload.id);
+    const isAdminOrDirectorOrSalesHead = userPermissions.includes('team:manage');
 
     let hasWriteAccess = isEditingUserAdmin;
 

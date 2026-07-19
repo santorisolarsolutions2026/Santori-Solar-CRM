@@ -65,6 +65,7 @@ interface User {
   joiningDate?: string | null;
   photograph?: string | null;
   permissions?: string[];
+  department?: { name: string } | null;
 }
 
 interface AuthContextType {
