@@ -30,7 +30,9 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize2,
+  Minimize2,
 } from 'lucide-react';
+
 
 interface TeamMember {
   id: number;
@@ -603,6 +605,8 @@ export default function TeamManagementPage() {
   const [treeSearchQuery, setTreeSearchQuery] = useState<string>('');
   const [isDraggingCanvas, setIsDraggingCanvas] = useState<boolean>(false);
   const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isTreeFullScreen, setIsTreeFullScreen] = useState<boolean>(false);
+
 
 
   const [teamsList, setTeamsList] = useState<any[]>([]);
@@ -2476,8 +2480,10 @@ export default function TeamManagementPage() {
         }
       };
 
+
       return (
-        <div className="space-y-6 animate-fade-in">
+
+        <div className={isTreeFullScreen ? "fixed inset-0 z-[100] bg-[#090d16] p-6 flex flex-col space-y-6 overflow-hidden animate-fade-in" : "space-y-6 animate-fade-in"}>
           {/* Controls Panel */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#111625]/60 border border-slate-800 p-4 rounded-xl shadow-xl">
             {/* Search Box */}
@@ -2528,7 +2534,7 @@ export default function TeamManagementPage() {
               )}
             </div>
 
-            {/* Zoom Controls */}
+            {/* Zoom & Fullscreen Controls */}
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mr-1">Zoom: {Math.round(treeScale * 100)}%</span>
               <button
@@ -2554,6 +2560,15 @@ export default function TeamManagementPage() {
                 title="Zoom In"
               >
                 <ZoomIn className="w-3.5 h-3.5" />
+              </button>
+              <div className="w-px h-6 bg-slate-800 mx-1" />
+              <button
+                type="button"
+                onClick={() => setIsTreeFullScreen(!isTreeFullScreen)}
+                className="p-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 cursor-pointer transition-all hover:bg-slate-850"
+                title={isTreeFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+              >
+                {isTreeFullScreen ? <Minimize2 className="w-3.5 h-3.5 text-amber-500" /> : <Maximize2 className="w-3.5 h-3.5" />}
               </button>
             </div>
           </div>
@@ -2604,7 +2619,9 @@ export default function TeamManagementPage() {
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUpOrLeave}
             onMouseLeave={handleMouseUpOrLeave}
-            className={`relative overflow-auto max-h-[65vh] p-8 border border-slate-800/60 rounded-2xl bg-slate-950/20 backdrop-blur-md flex justify-center shadow-2xl transition-all duration-100 ${
+            className={`relative overflow-auto p-8 border border-slate-800/60 rounded-2xl bg-slate-950/20 backdrop-blur-md flex justify-center shadow-2xl ${
+              isTreeFullScreen ? 'flex-1 h-full max-h-none' : 'max-h-[65vh]'
+            } ${
               isDraggingCanvas ? 'cursor-grabbing select-none' : 'cursor-grab'
             }`}
           >
@@ -2643,10 +2660,10 @@ export default function TeamManagementPage() {
               </div>
             )}
           </div>
-
         </div>
       );
     })()}
+
 
 
     {/* Create Team Modal */}
