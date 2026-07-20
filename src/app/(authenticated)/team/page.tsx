@@ -408,6 +408,8 @@ const HierarchyTreeNodeComponent = ({
   onSupervisorChange,
   canModifySupervisorFn,
   eligibleSupervisorsFn,
+  treeDragOverId,
+  setTreeDragOverId,
 }: {
   node: TreeNode;
   onSelectNode: (nodeId: number) => void;
@@ -415,17 +417,51 @@ const HierarchyTreeNodeComponent = ({
   onSupervisorChange: (memberId: number, newSupervisorId: string) => Promise<void>;
   canModifySupervisorFn: (member: TeamMember) => boolean;
   eligibleSupervisorsFn: (member: TeamMember) => TeamMember[];
+  treeDragOverId: number | null;
+  setTreeDragOverId: (id: number | null) => void;
 }) => {
   const hasChildren = node.children && node.children.length > 0;
   const canEdit = canModifySupervisorFn(node.member);
   const eligibleSupervisors = canEdit ? eligibleSupervisorsFn(node.member) : [];
 
   return (
-    <div className="flex flex-col items-center select-none">
+    <div className="flex flex-col items-center select-none animate-fade-in">
       {/* Node Card */}
       <div 
         onClick={() => onSelectNode(node.id)}
-        className="group relative flex flex-col gap-2.5 p-3 bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/40 rounded-xl transition-all duration-300 cursor-pointer shadow-lg w-64 transform hover:-translate-y-0.5 hover:shadow-amber-500/5"
+        draggable={canEdit}
+        onDragStart={(e) => {
+          e.stopPropagation();
+          e.dataTransfer.setData('text/plain', node.id.toString());
+        }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (treeDragOverId !== node.id) {
+            setTreeDragOverId(node.id);
+          }
+        }}
+        onDragLeave={(e) => {
+          e.stopPropagation();
+          if (treeDragOverId === node.id) {
+            setTreeDragOverId(null);
+          }
+        }}
+        onDrop={async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setTreeDragOverId(null);
+          const draggedIdStr = e.dataTransfer.getData('text/plain');
+          if (!draggedIdStr) return;
+          const draggedId = parseInt(draggedIdStr, 10);
+          if (draggedId === node.id) return;
+          await onSupervisorChange(draggedId, node.id.toString());
+        }}
+        className={`group relative flex flex-col gap-2.5 p-3 bg-slate-900/60 hover:bg-slate-900 border rounded-xl transition-all duration-300 cursor-pointer shadow-lg w-64 transform hover:-translate-y-0.5 ${
+          treeDragOverId === node.id 
+            ? 'border-amber-500 bg-amber-500/10 scale-[1.02] shadow-amber-500/10' 
+            : 'border-slate-800 hover:border-amber-500/40 hover:shadow-amber-500/5'
+        }`}
       >
         <div className="flex items-center gap-3">
           <div className={`w-1 h-10 rounded-full shrink-0 bg-gradient-to-b ${getLevelColor(node.member.designation?.level ?? 6)}`} />
@@ -523,6 +559,8 @@ const HierarchyTreeNodeComponent = ({
                 onSupervisorChange={onSupervisorChange}
                 canModifySupervisorFn={canModifySupervisorFn}
                 eligibleSupervisorsFn={eligibleSupervisorsFn}
+                treeDragOverId={treeDragOverId}
+                setTreeDragOverId={setTreeDragOverId}
               />
             </div>
           ))}
@@ -601,6 +639,8 @@ export default function TeamManagementPage() {
   const [focusedNodeId, setFocusedNodeId] = useState<number | null>(null);
   const [treeScale, setTreeScale] = useState<number>(1);
   const [treeSearchQuery, setTreeSearchQuery] = useState<string>('');
+  const [treeDragOverId, setTreeDragOverId] = useState<number | null>(null);
+
 
   const [teamsList, setTeamsList] = useState<any[]>([]);
   const [loadingTeams, setLoadingTeams] = useState(false);
@@ -2600,7 +2640,10 @@ export default function TeamManagementPage() {
                           onSupervisorChange={onSupervisorChange}
                           canModifySupervisorFn={canModifySupervisorFn}
                           eligibleSupervisorsFn={eligibleSupervisorsFn}
+                          treeDragOverId={treeDragOverId}
+                          setTreeDragOverId={setTreeDragOverId}
                         />
+
                       </div>
                     ))}
                   </div>
