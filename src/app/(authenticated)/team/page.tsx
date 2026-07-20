@@ -516,9 +516,9 @@ const HierarchyTreeNodeComponent = ({
         </div>
       </div>
 
-      {/* Connection line down to children container (2px slate-500) */}
+      {/* Connection line down to children container (3px slate-700) */}
       {hasChildren && (
-        <div className="w-[2px] h-6 bg-slate-500" />
+        <div className="w-[3px] h-6 bg-slate-700" />
       )}
 
       {/* Children container with connecting lines */}
@@ -535,19 +535,19 @@ const HierarchyTreeNodeComponent = ({
                 {hasMultiple && (
                   <>
                     {isFirst && (
-                      <div className="absolute top-0 left-1/2 right-0 h-[2px] bg-slate-500" />
+                      <div className="absolute top-0 left-1/2 right-0 h-[3px] bg-slate-700" />
                     )}
                     {isLast && (
-                      <div className="absolute top-0 left-0 right-1/2 h-[2px] bg-slate-500" />
+                      <div className="absolute top-0 left-0 right-1/2 h-[3px] bg-slate-700" />
                     )}
                     {!isFirst && !isLast && (
-                      <div className="absolute top-0 left-0 right-0 h-[2px] bg-slate-500" />
+                      <div className="absolute top-0 left-0 right-0 h-[3px] bg-slate-700" />
                     )}
                   </>
                 )}
 
                 {/* Vertical line going down from the horizontal bar to the child card */}
-                <div className="absolute top-0 left-1/2 w-[2px] h-6 bg-slate-500 -translate-x-1/2" />
+                <div className="absolute top-0 left-1/2 w-[3px] h-6 bg-slate-700 -translate-x-1/2" />
                 
                 <HierarchyTreeNodeComponent
                   node={child}
@@ -666,6 +666,7 @@ export default function TeamManagementPage() {
   const [treeSearchQuery, setTreeSearchQuery] = useState<string>('');
   const [isDraggingCanvas, setIsDraggingCanvas] = useState<boolean>(false);
   const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isTreeFullScreen, setIsTreeFullScreen] = useState<boolean>(false);
 
 
@@ -1282,7 +1283,7 @@ export default function TeamManagementPage() {
 
   const requestRef = React.useRef<number | null>(null);
 
-  // Canvas drag-to-scroll (panning) mouse event handlers
+  // Canvas drag-to-scroll (panning) mouse and touch event handlers
   const handleMouseDown = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     // Prevent dragging when clicking on interactive elements or cards (with class .group)
@@ -1296,10 +1297,27 @@ export default function TeamManagementPage() {
     }
 
     setIsDraggingCanvas(true);
-    if (canvasRef.current) {
+    setDragStart({
+      x: e.clientX - pan.x,
+      y: e.clientY - pan.y
+    });
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const target = e.target as HTMLElement;
+    if (
+      target.closest('button') || 
+      target.closest('select') || 
+      target.closest('input') || 
+      target.closest('.group')
+    ) {
+      return;
+    }
+    if (e.touches.length === 1) {
+      setIsDraggingCanvas(true);
       setDragStart({
-        x: e.clientX + canvasRef.current.scrollLeft,
-        y: e.clientY + canvasRef.current.scrollTop
+        x: e.touches[0].clientX - pan.x,
+        y: e.touches[0].clientY - pan.y
       });
     }
   };
@@ -1308,20 +1326,31 @@ export default function TeamManagementPage() {
     if (!isDraggingCanvas) return;
 
     const handleWindowMouseMove = (e: MouseEvent) => {
-      if (!canvasRef.current) return;
-      const scrollX = dragStart.x - e.clientX;
-      const scrollY = dragStart.y - e.clientY;
+      const newX = e.clientX - dragStart.x;
+      const newY = e.clientY - dragStart.y;
 
       if (requestRef.current) {
         cancelAnimationFrame(requestRef.current);
       }
 
       requestRef.current = requestAnimationFrame(() => {
-        if (canvasRef.current) {
-          canvasRef.current.scrollLeft = scrollX;
-          canvasRef.current.scrollTop = scrollY;
-        }
+        setPan({ x: newX, y: newY });
       });
+    };
+
+    const handleWindowTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        const newX = e.touches[0].clientX - dragStart.x;
+        const newY = e.touches[0].clientY - dragStart.y;
+
+        if (requestRef.current) {
+          cancelAnimationFrame(requestRef.current);
+        }
+
+        requestRef.current = requestAnimationFrame(() => {
+          setPan({ x: newX, y: newY });
+        });
+      }
     };
 
     const handleWindowMouseUp = () => {
@@ -1330,16 +1359,20 @@ export default function TeamManagementPage() {
 
     window.addEventListener('mousemove', handleWindowMouseMove, { passive: true });
     window.addEventListener('mouseup', handleWindowMouseUp, { passive: true });
+    window.addEventListener('touchmove', handleWindowTouchMove, { passive: true });
+    window.addEventListener('touchend', handleWindowMouseUp, { passive: true });
 
     return () => {
       window.removeEventListener('mousemove', handleWindowMouseMove);
       window.removeEventListener('mouseup', handleWindowMouseUp);
+      window.removeEventListener('touchmove', handleWindowTouchMove);
+      window.removeEventListener('touchend', handleWindowMouseUp);
       if (requestRef.current) {
         cancelAnimationFrame(requestRef.current);
         requestRef.current = null;
       }
     };
-  }, [isDraggingCanvas, dragStart]);
+  }, [isDraggingCanvas, dragStart, pan]);
 
 
 
@@ -1972,24 +2005,47 @@ export default function TeamManagementPage() {
 
   const myVisibleMembers = getVisibleMembers(user, members);
 
-  const displayedMembers = myVisibleMembers.filter((member) => {
-    // 1. Search Query filter (matches name, email, or employee ID)
-    const q = searchQuery.toLowerCase().trim();
-    if (q) {
-      const matchName = member.name.toLowerCase().includes(q);
-      const matchEmail = member.email.toLowerCase().includes(q);
-      const matchEmpId = member.employeeId && member.employeeId.toLowerCase().includes(q);
-      if (!matchName && !matchEmail && !matchEmpId) return false;
+  const canModifySupervisor = (targetMember: TeamMember): boolean => {
+    if (!user) return false;
+    if (user.role === 'admin' || user.role?.startsWith('admin:')) return true;
+
+    let currentId = targetMember.reportsTo;
+    const visited = new Set<number>();
+    while (currentId !== null && !visited.has(currentId)) {
+      visited.add(currentId);
+      if (currentId === user.id) return true;
+      const parent = members.find(u => u.id === currentId);
+      currentId = parent ? parent.reportsTo : null;
+    }
+    return false;
+  };
+
+  const displayedMembers = (() => {
+    const exactSearch = empSearchInput.trim().toLowerCase();
+    if (exactSearch) {
+      // Search from ALL members in the system
+      return members.filter((member) => member.employeeId && member.employeeId.trim().toLowerCase() === exactSearch);
     }
 
-    // 2. Department filter
-    if (selectedDepartmentFilter) {
-      const deptId = parseInt(selectedDepartmentFilter, 10);
-      if (member.departmentId !== deptId) return false;
-    }
+    return myVisibleMembers.filter((member) => {
+      // 1. Search Query filter (matches name, email, or employee ID)
+      const q = searchQuery.toLowerCase().trim();
+      if (q) {
+        const matchName = member.name.toLowerCase().includes(q);
+        const matchEmail = member.email.toLowerCase().includes(q);
+        const matchEmpId = member.employeeId && member.employeeId.toLowerCase().includes(q);
+        if (!matchName && !matchEmail && !matchEmpId) return false;
+      }
 
-    return true;
-  });
+      // 2. Department filter
+      if (selectedDepartmentFilter) {
+        const deptId = parseInt(selectedDepartmentFilter, 10);
+        if (member.departmentId !== deptId) return false;
+      }
+
+      return true;
+    });
+  })();
 
 
   return (
@@ -2037,171 +2093,71 @@ export default function TeamManagementPage() {
       </div>
 
       {/* Tab Selector */}
-      {isAdminOrDirectorOrSalesHead && (
-        <div className="flex border border-slate-800 bg-slate-950/60 p-1 rounded-xl w-fit gap-1 shadow-inner">
-          <button
-            onClick={() => setActiveTab('members')}
-            className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
-              activeTab === 'members'
-                ? 'bg-amber-500 text-slate-955 shadow-md shadow-amber-500/10'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900/30'
-            }`}
-          >
-            Members Directory
-          </button>
-          <button
-            onClick={() => {
-              setActiveTab('hierarchy');
-            }}
-            className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
-              activeTab === 'hierarchy'
-                ? 'bg-amber-500 text-slate-955 shadow-md shadow-amber-500/10'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900/30'
-            }`}
-          >
-            Hierarchy Tree
-          </button>
-        </div>
-      )}
+      <div className="flex border border-slate-800 bg-slate-950/60 p-1 rounded-xl w-fit gap-1 shadow-inner">
+        <button
+          onClick={() => setActiveTab('members')}
+          className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
+            activeTab === 'members'
+              ? 'bg-amber-500 text-slate-955 shadow-md shadow-amber-500/10'
+              : 'text-slate-400 hover:text-white hover:bg-slate-900/30'
+          }`}
+        >
+          Members Directory
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab('hierarchy');
+          }}
+          className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
+            activeTab === 'hierarchy'
+              ? 'bg-amber-500 text-slate-955 shadow-md shadow-amber-500/10'
+              : 'text-slate-400 hover:text-white hover:bg-slate-900/30'
+          }`}
+        >
+          Hierarchy Tree
+        </button>
+      </div>
 
 
       {activeTab === 'members' && (
         <>
-
-      {/* Directory Search and Department Filter for full-access users */}
-      {hasFullTeamAccess && (
-        <div className="flex flex-col sm:flex-row items-center gap-4 bg-[#111625]/60 border border-slate-800 p-4 rounded-xl shadow-xl">
-          <div className="relative flex-1 w-full">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by name, email, or employee ID..."
-              className="w-full pl-9 pr-4 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-white placeholder-slate-500 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-            />
-            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
-          </div>
-          <div className="w-full sm:w-64">
-            <select
-              value={selectedDepartmentFilter}
-              onChange={(e) => setSelectedDepartmentFilter(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-300 text-xs focus:ring-amber-500 focus:outline-none"
-            >
-              <option value="">All Departments</option>
-              {departmentsList.map((dept) => (
-                <option key={dept.id} value={String(dept.id)}>{dept.name}</option>
-              ))}
-            </select>
-          </div>
+          {/* Directory Search and Department Filter */}
+      <div className="flex flex-col md:flex-row items-center gap-4 bg-[#111625]/60 border border-slate-805 p-4 rounded-xl shadow-xl">
+        <div className="relative flex-1 w-full">
+          <input
+            type="text"
+            value={searchQuery}
+            disabled={!!empSearchInput.trim()}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={empSearchInput.trim() ? "Clear Employee ID lookup to search by name..." : "Search by name, email, or employee ID..."}
+            className="w-full pl-9 pr-4 py-2 bg-slate-950/80 border border-slate-805 rounded-xl text-white placeholder-slate-505 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/50 disabled:opacity-40"
+          />
+          <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
         </div>
-      )}
-
-      {/* Restricted Directory Search Card for non-admins */}
-      {!hasFullTeamAccess && (
-        <>
-          <div className="bg-[#111625] border border-slate-800 rounded-xl p-5 shadow-xl space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
-                <Lock className="w-4 h-4" />
-              </div>
-              <div>
-                <h3 className="text-xs font-bold text-white uppercase tracking-wider">Employee Directory Lookup</h3>
-                <p className="text-[11px] text-slate-400">
-                  Type an exact Employee ID below to view details of a specific team member.
-                </p>
-              </div>
-            </div>
-
-            <div className="relative max-w-md">
-              <input
-                type="text"
-                value={empSearchInput}
-                onChange={(e) => setEmpSearchInput(e.target.value)}
-                placeholder="Enter exact Employee ID (e.g. EMP-101)..."
-                className="w-full pl-9 pr-4 py-2.5 bg-slate-955 border border-slate-800 rounded-xl text-white placeholder-slate-500 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/50 font-mono tracking-wide"
-              />
-              <Search className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
-            </div>
-          </div>
-
-          {/* My Team UI Section for non-admins */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-            {/* Main Clan Card */}
-            <div className="bg-[#111625] border border-slate-805 rounded-2xl shadow-xl p-5 lg:col-span-2 space-y-4">
-              {(() => {
-                const myTeam = teamsList.find(t => t.id === user?.teamId);
-                if (!myTeam) {
-                  return (
-                    <div className="text-center py-6">
-                      <Users className="w-10 h-10 text-slate-700 mx-auto mb-2" />
-                      <h3 className="text-sm font-bold text-white uppercase tracking-wider">My Clan (Team)</h3>
-                      <p className="text-xs text-slate-450 mt-1">You are not currently assigned to any Clan / Team.</p>
-                    </div>
-                  );
-                }
-
-                return (
-                  <>
-                    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                      <div>
-                        <h3 className="text-sm font-extrabold text-white uppercase tracking-wide">{myTeam.name}</h3>
-                        <p className="text-[10px] text-slate-500 font-mono mt-0.5">Team ID: #{myTeam.id}</p>
-                      </div>
-                      <span className="text-[9px] bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded px-2.5 py-1 font-bold uppercase tracking-wider">
-                        {myTeam.department?.name || 'Department'}
-                      </span>
-                    </div>
-
-                    <div className="space-y-2">
-                      <h4 className="text-[10px] font-bold text-slate-450 uppercase tracking-widest mb-3 font-sans">Team Structure & Hierarchy</h4>
-                      <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
-                        {renderHierarchyNodes(myTeam, myTeam.users, null)}
-                      </div>
-                    </div>
-                  </>
-                );
-              })()}
-            </div>
-
-            {/* Supervisor Management Control Panel */}
-            {(() => {
-              const myTeam = teamsList.find(t => t.id === user?.teamId);
-              if (!myTeam) return null;
-
-              const isSupervisor = user?.designation && user.designation.level < 5;
-              if (!isSupervisor) return null;
-
-              // Find candidates: active users in same department, not in this team, lower designation level (larger level number)
-              const candidates = members.filter(m => 
-                m.isActive && 
-                m.departmentId === user.departmentId && 
-                m.teamId !== myTeam.id && 
-                user.designation && m.designation && 
-                user.designation.level < m.designation.level
-              );
-
-              return (
-                <div className="bg-[#111625] border border-slate-800 rounded-2xl shadow-xl p-5 space-y-4">
-                  <div className="border-b border-slate-800 pb-3">
-                    <h3 className="text-xs font-bold text-white uppercase tracking-wider">Add Team Member</h3>
-                    <p className="text-[10px] text-slate-450 mt-1 font-sans">Assign department subordinates directly into your team.</p>
-                  </div>
-
-                  {candidates.length === 0 ? (
-                    <p className="text-xs text-slate-500 italic">No eligible candidates available in your department.</p>
-                  ) : (
-                    <MyTeamAddMemberForm 
-                      candidates={candidates} 
-                      myTeam={myTeam} 
-                      onAdd={handleAddTeamMember} 
-                    />
-                  )}
-                </div>
-              );
-            })()}
-          </div>
-        </>
-      )}
+        <div className="relative w-full md:w-72">
+          <input
+            type="text"
+            value={empSearchInput}
+            onChange={(e) => setEmpSearchInput(e.target.value)}
+            placeholder="Exact Employee ID Lookup (EMP-101)..."
+            className="w-full pl-9 pr-4 py-2.5 bg-slate-950/80 border border-slate-805 rounded-xl text-white placeholder-slate-505 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/50 font-mono tracking-wide"
+          />
+          <Search className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+        </div>
+        <div className="w-full md:w-60">
+          <select
+            value={selectedDepartmentFilter}
+            disabled={!!empSearchInput.trim()}
+            onChange={(e) => setSelectedDepartmentFilter(e.target.value)}
+            className="w-full px-3 py-2 bg-slate-950 border border-slate-805 rounded-xl text-slate-300 text-xs focus:ring-amber-500 focus:outline-none disabled:opacity-40"
+          >
+            <option value="">All Departments</option>
+            {departmentsList.map((dept) => (
+              <option key={dept.id} value={String(dept.id)}>{dept.name}</option>
+            ))}
+          </select>
+        </div>
+      </div>
 
       {/* Bulk Actions Control Bar */}
       {isAdminOrDirectorOrSalesHead && selectedUserIds.length > 0 && (
@@ -2262,38 +2218,22 @@ export default function TeamManagementPage() {
                 <th className="py-4 px-4 w-48">Full Name</th>
                 <th className="py-4 px-4 w-32">Employee ID</th>
                 <th className="py-4 px-4 w-40">Designation</th>
-                {isAdminOrDirectorOrSalesHead ? (
-                  <>
-                    <th className="py-4 px-4 w-40">Direct Supervisor</th>
-                    <th className="py-4 px-4 w-36">Years in the Company</th>
-                    <th className="py-4 px-4 w-28 text-center">Leads Closed</th>
-                    <th className="py-4 px-4 w-28 text-center">Status</th>
-                    <th className="py-4 px-4 w-36 text-center">Control</th>
-                  </>
-                ) : (
-                  <>
-                    <th className="py-4 px-4 w-36">Years in the Company</th>
-                    <th className="py-4 px-4 w-28 text-center">Leads Closed</th>
-                  </>
-                )}
+                <th className="py-4 px-4 w-40">Direct Supervisor</th>
+                <th className="py-4 px-4 w-36">Years in the Company</th>
+                <th className="py-4 px-4 w-28 text-center">Leads Closed</th>
+                <th className="py-4 px-4 w-28 text-center">Status</th>
+                <th className="py-4 px-4 w-36 text-center">Control</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-sm">
               {displayedMembers.length === 0 ? (
                 <tr>
-                  <td colSpan={isAdminOrDirectorOrSalesHead ? 10 : 6} className="py-12 text-center text-slate-500 text-xs">
-                    {!hasFullTeamAccess ? (
-                      !empSearchInput.trim() ? (
-                        <div className="flex flex-col items-center gap-2">
-                          <Search className="w-6 h-6 text-slate-600" />
-                          <span className="font-semibold text-slate-400">Please enter an exact Employee ID above to view a team member.</span>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center gap-2">
-                          <UserX className="w-6 h-6 text-slate-600" />
-                          <span>No team member found matching Employee ID "{empSearchInput.trim()}".</span>
-                        </div>
-                      )
+                  <td colSpan={isAdminOrDirectorOrSalesHead ? 10 : 9} className="py-12 text-center text-slate-500 text-xs">
+                    {empSearchInput.trim() ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <UserX className="w-6 h-6 text-slate-600" />
+                        <span>No team member found matching Employee ID "{empSearchInput.trim()}".</span>
+                      </div>
                     ) : (
                       'No team members found.'
                     )}
@@ -2368,95 +2308,81 @@ export default function TeamManagementPage() {
                           {member.designation?.name || roleConfig.label}
                         </span>
                       </td>
-
-                      {isAdminOrDirectorOrSalesHead ? (
-                        <>
-                          <td className="py-4 px-4 text-slate-400 w-40">
-                            {member.supervisor?.name || <span className="text-slate-600 text-xs italic">None</span>}
-                          </td>
-                          <td className="py-4 px-4 text-slate-300 w-36">
-                            {calculateYearsInCompany(member.joiningDate)}
-                          </td>
-                          <td className="py-4 px-4 text-center text-emerald-400 font-bold font-mono w-28">
-                            {member.leadsClosed || 0}
-                          </td>
-                          <td className="py-4 px-4 text-center w-28">
-                            <span
-                              className={`inline-block text-[9px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${
-                                member.isActive
-                                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                  : 'bg-red-500/10 text-red-400 border-red-500/20'
-                              }`}
+                      <td className="py-4 px-4 text-slate-400 w-40">
+                        {member.supervisor?.name || <span className="text-slate-650 text-xs italic">None</span>}
+                      </td>
+                      <td className="py-4 px-4 text-slate-300 w-36">
+                        {calculateYearsInCompany(member.joiningDate)}
+                      </td>
+                      <td className="py-4 px-4 text-center text-emerald-400 font-bold font-mono w-28">
+                        {member.leadsClosed || 0}
+                      </td>
+                      <td className="py-4 px-4 text-center w-28">
+                        <span
+                          className={`inline-block text-[9px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${
+                            member.isActive
+                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                              : 'bg-red-500/10 text-red-400 border-red-500/20'
+                          }`}
+                        >
+                          {member.isActive ? 'Active' : 'Deactivated'}
+                        </span>
+                      </td>
+                      <td className="py-4 px-4 text-center w-36">
+                        <div className="flex items-center justify-center gap-2">
+                          {hasPermission('logs:view') && (
+                            <button
+                              onClick={() => handleOpenActivityLogs(member)}
+                              className="p-1.5 rounded-lg border bg-slate-900 hover:bg-slate-850 text-slate-400 hover:text-white border-slate-805 hover:border-slate-700 transition-all cursor-pointer flex items-center justify-center"
+                              title="View Activity Logs"
                             >
-                                {member.isActive ? 'Active' : 'Deactivated'}
-                            </span>
-                          </td>
-                          <td className="py-4 px-4 text-center w-36">
-                            <div className="flex items-center justify-center gap-2">
-                              {hasPermission('logs:view') && (
+                              <History className="w-4 h-4" />
+                            </button>
+                          )}
+
+                          {isAdminOrDirectorOrSalesHead && member.id !== user?.id && (
+                            <button
+                              onClick={() => {
+                                setEditingReportingUser(member);
+                                const assignedTeam = teamsList.find(t => t.users.some((u: any) => u.id === member.id));
+                                setNewTeamAssignmentId(assignedTeam ? String(assignedTeam.id) : '');
+                                setNewSupervisorId(member.reportsTo ? String(member.reportsTo) : '');
+                              }}
+                              className="p-1.5 rounded-lg border bg-slate-900 hover:bg-slate-850 text-slate-400 hover:text-white border-slate-805 hover:border-slate-700 transition-all cursor-pointer flex items-center justify-center"
+                              title="Edit Clan & Supervisor"
+                            >
+                              <Users className="w-4 h-4 text-amber-500" />
+                            </button>
+                          )}
+
+                          {member.id !== user?.id && (user?.role === 'admin' || user?.role?.startsWith('admin:') || canModifySupervisor(member)) && (
+                            <>
+                              <button
+                                onClick={() => handleToggleActive(member)}
+                                className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                                  member.isActive
+                                    ? 'bg-red-950/20 text-red-400 border-red-900/30 hover:bg-red-950/40'
+                                    : 'bg-emerald-950/20 text-emerald-400 border-emerald-900/30 hover:bg-emerald-950/40'
+                                }`}
+                                title={member.isActive ? 'Deactivate Account' : 'Reactivate Account'}
+                              >
+                                {member.isActive ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
+                              </button>
+                              
+                              {(user?.role === 'admin' || user?.role?.startsWith('admin:') || canModifySupervisor(member)) && !member.isActive && (
                                 <button
-                                  onClick={() => handleOpenActivityLogs(member)}
-                                  className="p-1.5 rounded-lg border bg-slate-900 hover:bg-slate-850 text-slate-400 hover:text-white border-slate-800 hover:border-slate-700 transition-all cursor-pointer flex items-center justify-center"
-                                  title="View Activity Logs"
+                                  type="button"
+                                  onClick={() => handleDeleteUser(member)}
+                                  className="p-1.5 rounded-lg border bg-rose-950/20 text-rose-455 border-rose-900/30 hover:bg-rose-950/40 transition-all cursor-pointer"
+                                  title="Permanently Delete User"
                                 >
-                                  <History className="w-4 h-4" />
+                                  <Trash2 className="w-4 h-4" />
                                 </button>
                               )}
-
-                              {isAdminOrDirectorOrSalesHead && member.id !== user?.id && (
-                                <button
-                                  onClick={() => {
-                                    setEditingReportingUser(member);
-                                    const assignedTeam = teamsList.find(t => t.users.some((u: any) => u.id === member.id));
-                                    setNewTeamAssignmentId(assignedTeam ? String(assignedTeam.id) : '');
-                                    setNewSupervisorId(member.reportsTo ? String(member.reportsTo) : '');
-                                  }}
-                                  className="p-1.5 rounded-lg border bg-slate-900 hover:bg-slate-850 text-slate-400 hover:text-white border-slate-800 hover:border-slate-700 transition-all cursor-pointer flex items-center justify-center"
-                                  title="Edit Clan & Supervisor"
-                                >
-                                  <Users className="w-4 h-4 text-amber-500" />
-                                </button>
-                              )}
-
-                              {member.id !== user?.id && member.role !== 'admin' && !member.role.startsWith('admin:') && (
-                                <>
-                                  <button
-                                    onClick={() => handleToggleActive(member)}
-                                    className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
-                                      member.isActive
-                                        ? 'bg-red-950/20 text-red-400 border-red-900/30 hover:bg-red-950/40'
-                                        : 'bg-emerald-950/20 text-emerald-400 border-emerald-900/30 hover:bg-emerald-950/40'
-                                    }`}
-                                    title={member.isActive ? 'Deactivate Account' : 'Reactivate Account'}
-                                  >
-                                    {member.isActive ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
-                                  </button>
-                                  
-                                  {!member.isActive && (
-                                    <button
-                                      type="button"
-                                      onClick={() => handleDeleteUser(member)}
-                                      className="p-1.5 rounded-lg border bg-rose-950/20 text-rose-455 border-rose-900/30 hover:bg-rose-950/40 transition-all cursor-pointer"
-                                      title="Permanently Delete User"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                  )}
-                                </>
-                              )}
-                            </div>
-                          </td>
-                        </>
-                      ) : (
-                        <>
-                          <td className="py-4 px-4 text-slate-300 w-36">
-                            {calculateYearsInCompany(member.joiningDate)}
-                          </td>
-                          <td className="py-4 px-4 text-center text-emerald-400 font-bold font-mono w-28">
-                            {member.leadsClosed || 0}
-                          </td>
-                        </>
-                      )}
+                            </>
+                          )}
+                        </div>
+                      </td>
                     </tr>
                   );
                 })
@@ -2717,7 +2643,8 @@ export default function TeamManagementPage() {
           <div 
             ref={canvasRef}
             onMouseDown={handleMouseDown}
-            className={`relative overflow-auto p-8 border border-slate-800/60 rounded-2xl bg-slate-950/20 backdrop-blur-md shadow-2xl ${
+            onTouchStart={handleTouchStart}
+            className={`relative overflow-hidden p-8 border border-slate-800/60 rounded-2xl bg-slate-950/20 backdrop-blur-md shadow-2xl ${
               isTreeFullScreen ? 'flex-1 h-full max-h-none' : 'max-h-[65vh]'
             } ${
               isDraggingCanvas ? 'cursor-grabbing select-none' : 'cursor-grab'
@@ -2726,7 +2653,7 @@ export default function TeamManagementPage() {
 
             {visibleRoots.length === 0 ? (
               <div className="flex flex-col items-center justify-center p-12 text-center space-y-3">
-                <Users className="w-12 h-12 text-slate-650" />
+                <Users className="w-12 h-12 text-slate-655" />
                 <h3 className="text-sm font-bold text-white uppercase tracking-wider">No Nodes Found</h3>
                 <p className="text-xs text-slate-450 max-w-sm">
                   Ensure you have created active team members and designated their reporting hierarchy structure.
@@ -2738,8 +2665,8 @@ export default function TeamManagementPage() {
                 className="animate-fade-in-up w-max mx-auto"
               >
                 <div 
-                  className="origin-top transition-transform duration-300 ease-out"
-                  style={{ transform: `scale(${treeScale})` }}
+                  className={`origin-top ${isDraggingCanvas ? '' : 'transition-transform duration-300 ease-out'}`}
+                  style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${treeScale})`, transformOrigin: 'top center' }}
                 >
                   <div className="flex gap-12 justify-center min-w-max mx-auto">
                     {visibleRoots.map((rootNode) => (

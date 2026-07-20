@@ -92,8 +92,10 @@ export async function GET(req: Request) {
         leadsClosed,
         departmentId: u.departmentId,
         designationId: u.designationId,
+        reportsTo: u.reportsTo,
         department: u.department,
         designation: u.designation,
+        supervisor: u.supervisor,
       };
 
       if (isAdminOrDirectorOrSalesHead || u.id === userPayload.id) {
