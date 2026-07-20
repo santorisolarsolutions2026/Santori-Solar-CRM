@@ -2529,10 +2529,11 @@ export default function TeamManagementPage() {
         const newSupId = newSupervisorIdStr ? parseInt(newSupervisorIdStr, 10) : null;
         try {
           const res = await fetch(`/api/v1/users/${memberId}`, {
-            method: 'PUT',
+            method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ reportsTo: newSupId })
           });
+
           const data = await res.json();
           if (data.success) {
             // Live refresh state by refetching users
