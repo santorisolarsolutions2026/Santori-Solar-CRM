@@ -403,6 +403,19 @@ const getLevelColor = (level: number) => {
   }
 };
 
+const getLevelBorderColor = (level: number) => {
+  switch (level) {
+    case 0: return 'border-red-500/70 shadow-red-500/10';
+    case 1: return 'border-indigo-500/70 shadow-indigo-500/10';
+    case 2: return 'border-purple-500/70 shadow-purple-500/10';
+    case 3: return 'border-amber-500/70 shadow-amber-500/10';
+    case 4: return 'border-cyan-500/70 shadow-cyan-500/10';
+    case 5: return 'border-emerald-500/70 shadow-emerald-500/10';
+    default: return 'border-slate-700 shadow-slate-500/5';
+  }
+};
+
+
 const HierarchyTreeNodeComponent = ({
   node,
   onSelectNode,
@@ -427,13 +440,13 @@ const HierarchyTreeNodeComponent = ({
       {/* Node Card */}
       <div 
         onClick={() => onSelectNode(node.id)}
-        className="group relative flex flex-col gap-2.5 p-3 bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/40 rounded-xl transition-all duration-300 cursor-pointer shadow-lg w-64 transform hover:-translate-y-0.5 hover:shadow-amber-500/5"
+        className="group relative flex flex-col gap-2.5 p-3.5 bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/40 rounded-xl transition-all duration-300 cursor-pointer shadow-lg w-64 transform hover:-translate-y-0.5 hover:shadow-amber-500/5"
       >
         <div className="flex items-center gap-3">
-          <div className={`w-1 h-10 rounded-full shrink-0 bg-gradient-to-b ${getLevelColor(node.member.designation?.level ?? 6)}`} />
-          
-          {/* Avatar */}
-          <div className="w-9 h-9 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center text-slate-350 font-extrabold text-xs uppercase shadow-inner shrink-0 overflow-hidden">
+          {/* Avatar with hierarchy level border color indicator */}
+          <div className={`w-9.5 h-9.5 rounded-xl bg-slate-950 border-2 flex items-center justify-center text-slate-350 font-extrabold text-xs uppercase shadow-inner shrink-0 overflow-hidden ${
+            getLevelBorderColor(node.member.designation?.level ?? 6)
+          }`}>
             {node.member.photograph ? (
               <img src={node.member.photograph} alt={node.name} className="w-full h-full object-cover animate-fade-in" />
             ) : (
@@ -449,7 +462,7 @@ const HierarchyTreeNodeComponent = ({
                 e.stopPropagation(); // Prevent focusing tree
                 onOpenDetails(node.member);
               }}
-              className="text-xs font-bold text-white hover:text-amber-400 leading-none mb-1 text-left truncate w-full cursor-pointer hover:underline"
+              className="text-xs font-bold text-white hover:text-amber-400 leading-none mb-1 text-left truncate w-full cursor-pointer hover:underline block"
               title="Click to view details"
             >
               {node.name}
@@ -496,9 +509,9 @@ const HierarchyTreeNodeComponent = ({
         </div>
       </div>
 
-      {/* Connection line down to children container */}
+      {/* Connection line down to children container (2px slate-700) */}
       {hasChildren && (
-        <div className="w-px h-6 bg-slate-800" />
+        <div className="w-[2px] h-6 bg-slate-700" />
       )}
 
       {/* Children container with connecting lines */}
@@ -506,7 +519,7 @@ const HierarchyTreeNodeComponent = ({
         <div className="relative flex gap-6 pt-0 justify-center">
           {/* Horizontal line across children columns */}
           <div 
-            className="absolute top-0 h-px bg-slate-800" 
+            className="absolute top-0 h-[2px] bg-slate-700" 
             style={{
               left: `${100 / (node.children.length * 2)}%`,
               right: `${100 / (node.children.length * 2)}%`
@@ -516,7 +529,7 @@ const HierarchyTreeNodeComponent = ({
           {node.children.map((child) => (
             <div key={child.id} className="relative flex flex-col items-center pt-6">
               {/* Vertical line going down from the horizontal bar */}
-              <div className="absolute top-0 w-px h-6 bg-slate-800" />
+              <div className="absolute top-0 w-[2px] h-6 bg-slate-700" />
               
               <HierarchyTreeNodeComponent
                 node={child}
@@ -533,6 +546,7 @@ const HierarchyTreeNodeComponent = ({
     </div>
   );
 };
+
 
 const buildHierarchyTree = (usersList: TeamMember[], departments: { id: number; name: string }[]): TreeNode[] => {
   const map = new Map<number, TreeNode>();
@@ -2619,7 +2633,7 @@ export default function TeamManagementPage() {
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUpOrLeave}
             onMouseLeave={handleMouseUpOrLeave}
-            className={`relative overflow-auto p-8 border border-slate-800/60 rounded-2xl bg-slate-950/20 backdrop-blur-md flex justify-center shadow-2xl ${
+            className={`relative overflow-auto p-8 border border-slate-800/60 rounded-2xl bg-slate-950/20 backdrop-blur-md shadow-2xl ${
               isTreeFullScreen ? 'flex-1 h-full max-h-none' : 'max-h-[65vh]'
             } ${
               isDraggingCanvas ? 'cursor-grabbing select-none' : 'cursor-grab'
@@ -2636,14 +2650,15 @@ export default function TeamManagementPage() {
             ) : (
               <div 
                 key={focusedNodeId || 'root'}
-                className="animate-fade-in-up"
+                className="animate-fade-in-up w-max mx-auto"
               >
                 <div 
                   className="origin-top transition-transform duration-300 ease-out"
                   style={{ transform: `scale(${treeScale})` }}
                 >
-                  <div className="flex gap-12 justify-center">
+                  <div className="flex gap-12 justify-center min-w-max mx-auto">
                     {visibleRoots.map((rootNode) => (
+
                       <div key={rootNode.id} className="flex flex-col items-center">
                         <HierarchyTreeNodeComponent
                           node={rootNode}
