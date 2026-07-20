@@ -622,7 +622,33 @@ const buildHierarchyTree = (usersList: TeamMember[], departments: { id: number; 
   return roots;
 };
 
+const getVisibleMembers = (currentUser: any, allMembers: TeamMember[]): TeamMember[] => {
+  if (!currentUser) return [];
+  const isAdmin = currentUser.role === 'admin' || currentUser.role?.startsWith('admin:');
+  if (isAdmin) return allMembers;
+
+  const descendants = new Set<number>();
+  const queue: number[] = [currentUser.id];
+
+  while (queue.length > 0) {
+    const currentId = queue.shift()!;
+    allMembers.forEach(m => {
+      if (m.reportsTo === currentId && !descendants.has(m.id)) {
+        // Subordinate must be in the same department (or current user is shared)
+        if (currentUser.departmentId === null || m.departmentId === currentUser.departmentId) {
+          descendants.add(m.id);
+          queue.push(m.id);
+        }
+      }
+    });
+  }
+
+  // Return currentUser + descendants
+  return allMembers.filter(m => m.id === currentUser.id || descendants.has(m.id));
+};
+
 export default function TeamManagementPage() {
+
 
 
   const { user, refreshUser, hasPermission } = useAuth();
@@ -1932,7 +1958,7 @@ export default function TeamManagementPage() {
 
   const userBaseRole = user?.role ? (user.role.includes(':') ? user.role.split(':')[0] : user.role) : '';
   const isAdminOrDirectorOrSalesHead = hasPermission('team:manage');
-  const hasFullTeamAccess = user?.role === 'admin' || user?.role?.startsWith('admin:') || hasPermission('team:view') || hasPermission('team:manage');
+  const hasFullTeamAccess = true;
   const titleText = 'Santori Team';
 
   // Extract custom designations currently defined in the database
@@ -1944,7 +1970,9 @@ export default function TeamManagementPage() {
     )
   );
 
-  const displayedMembers = members.filter((member) => {
+  const myVisibleMembers = getVisibleMembers(user, members);
+
+  const displayedMembers = myVisibleMembers.filter((member) => {
     // 1. Search Query filter (matches name, email, or employee ID)
     const q = searchQuery.toLowerCase().trim();
     if (q) {
@@ -1960,14 +1988,9 @@ export default function TeamManagementPage() {
       if (member.departmentId !== deptId) return false;
     }
 
-    // 3. Visibility rule
-    if (hasFullTeamAccess) {
-      return true;
-    } else {
-      if (!empSearchInput.trim()) return false;
-      return member.employeeId && member.employeeId.trim().toLowerCase() === empSearchInput.trim().toLowerCase();
-    }
+    return true;
   });
+
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -2447,13 +2470,9 @@ export default function TeamManagementPage() {
 
     {/* Hierarchy Tree Tab Content */}
     {activeTab === 'hierarchy' && (() => {
-      // Filter members based on user's department for non-admins
-      const isUserAdmin = user?.role === 'admin' || user?.role?.startsWith('admin:');
-      const filteredMembers = isUserAdmin 
-        ? members 
-        : (user?.departmentId 
-            ? members.filter(m => m.departmentId === user.departmentId) 
-            : members.filter(m => m.departmentId === null));
+      // Filter members based on visible members hierarchy (self + subordinates)
+      const filteredMembers = myVisibleMembers;
+
 
       const allRoots = buildHierarchyTree(filteredMembers, departmentsList);
       
