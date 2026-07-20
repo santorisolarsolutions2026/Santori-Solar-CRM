@@ -162,6 +162,102 @@ export async function PATCH(
     const body = await req.json();
     const { name, email, phone, address, employeeId, role, reportsTo, isActive, joiningDate, photograph, permissions, password, departmentId, designationId } = body;
 
+    const ALL_PERMISSIONS_MAP: Record<string, string> = {
+      'leads:create': 'PSA',
+      'leads:import': 'PSA',
+      'leads:manage_calling_stages': 'PSA',
+      'leads:book_meeting': 'PSA',
+      'leads:track': 'PSA',
+      'leads:edit': 'PSA',
+      'leads:assign': 'Sales',
+      'meetings:complete': 'Sales',
+      'orders:create': 'Sales',
+      'orders:submit_finance': 'Sales',
+      'orders:assign_finance': 'Sales',
+      'leads:view_sales_pipeline': 'Sales',
+      'orders:finance_access': 'Finance',
+      'orders:verify': 'Finance',
+      'orders:assign_ops': 'Finance',
+      'finance:manage_ledger': 'Finance',
+      'reports:view_financials': 'Finance',
+      'orders:operations': 'Operations',
+      'ops:update_stages': 'Operations',
+      'ops:upload_drawings': 'Operations',
+      'team:view': 'IT',
+      'attendance:view': 'IT',
+      'team:manage': 'IT',
+      'logs:view': 'IT',
+      'leads:view_all': 'IT',
+    };
+
+    if (permissions !== undefined) {
+      const itKeys = Object.keys(ALL_PERMISSIONS_MAP).filter((k: string) => ALL_PERMISSIONS_MAP[k] === 'IT');
+      const cleanNewPerms = permissions.split(',').map((p: string) => p.trim()).filter((p: string) => p !== 'none');
+      const itCount = cleanNewPerms.filter((k: string) => itKeys.includes(k)).length;
+      if (itCount > 0 && itCount < itKeys.length) {
+        return NextResponse.json({
+          success: false,
+          message: 'Validation failed. IT permissions must be granted either all together or none at all.'
+        }, { status: 400 });
+      }
+
+      if (!isEditingUserAdmin) {
+        const currentUserDetail = await prisma.user.findUnique({
+          where: { id: userPayload.id },
+          include: { department: true }
+        });
+        const deptName = currentUserDetail?.department?.name?.toLowerCase().trim() || '';
+
+        const existingPermissions = user.permissions && user.permissions.trim()
+          ? user.permissions.split(',').map(p => p.trim()).filter(p => p !== 'none')
+          : [];
+
+        const allKeys = new Set([...existingPermissions, ...cleanNewPerms]);
+        for (const key of allKeys) {
+          const wasChecked = existingPermissions.includes(key);
+          const isCheckedNow = cleanNewPerms.includes(key);
+          if (wasChecked !== isCheckedNow) {
+            const category = ALL_PERMISSIONS_MAP[key] || 'Other';
+            
+            if (deptName === 'sales') {
+              if (category !== 'PSA' && category !== 'Sales') {
+                return NextResponse.json({
+                  success: false,
+                  message: 'Forbidden. Sales department supervisors can only modify Sales and PSA permissions.'
+                }, { status: 403 });
+              }
+            } else if (deptName === 'finance') {
+              if (category !== 'Finance') {
+                return NextResponse.json({
+                  success: false,
+                  message: 'Forbidden. Finance department supervisors can only modify Finance permissions.'
+                }, { status: 403 });
+              }
+            } else if (deptName === 'operations') {
+              if (category !== 'Operations') {
+                return NextResponse.json({
+                  success: false,
+                  message: 'Forbidden. Operations department supervisors can only modify Operations permissions.'
+                }, { status: 403 });
+              }
+            } else if (deptName === 'it') {
+              if (category !== 'IT') {
+                return NextResponse.json({
+                  success: false,
+                  message: 'Forbidden. IT department supervisors can only modify IT permissions.'
+                }, { status: 403 });
+              }
+            } else {
+              return NextResponse.json({
+                success: false,
+                message: `Forbidden. You do not have permissions to modify ${category} permissions.`
+              }, { status: 403 });
+            }
+          }
+        }
+      }
+    }
+
     const isTargetAdmin = user.role.toLowerCase() === 'admin' || user.role.toLowerCase().startsWith('admin:');
     const isTargetDirector = user.role.toLowerCase() === 'director' || user.role.toLowerCase().startsWith('director:');
     

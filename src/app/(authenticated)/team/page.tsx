@@ -709,6 +709,30 @@ export default function TeamManagementPage() {
     return false;
   };
 
+  const isCategoryEditable = (category: string): boolean => {
+    if (!user) return false;
+    const isCurrentUserAdmin = user.role === 'admin' || user.role?.startsWith('admin:');
+    if (isCurrentUserAdmin) return true;
+
+    const userDeptName = departmentsList.find(d => d.id === user.departmentId)?.name || '';
+    const deptLower = userDeptName.toLowerCase().trim();
+
+    if (deptLower === 'sales') {
+      return category === 'PSA' || category === 'Sales';
+    }
+    if (deptLower === 'finance') {
+      return category === 'Finance';
+    }
+    if (deptLower === 'operations') {
+      return category === 'Operations';
+    }
+    if (deptLower === 'it') {
+      return category === 'IT';
+    }
+
+    return false;
+  };
+
   const fetchDepartments = async () => {
     try {
       const res = await fetch('/api/v1/departments');
@@ -3539,9 +3563,11 @@ export default function TeamManagementPage() {
                     {/* Permissions Panel grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 min-h-[140px] p-1">
                       {ALL_PERMISSIONS.filter(p => p.category === selectedPermissionCategory).map((perm) => {
-                        const isChecked = editMemberPermissions.includes(perm.key);
+                        const isChecked = perm.category === 'IT'
+                          ? ALL_PERMISSIONS.filter(p => p.category === 'IT').every(p => editMemberPermissions.includes(p.key))
+                          : editMemberPermissions.includes(perm.key);
                         const isDangerous = perm.key.includes('all') || perm.key.includes('manage') || perm.key.includes('verify') || perm.key.includes('delete');
-                        const isDisabled = !canEditPermissionsAndRole;
+                        const isDisabled = !canEditPermissionsAndRole || !isCategoryEditable(perm.category);
                         
                         return (
                           <label 
@@ -3562,10 +3588,20 @@ export default function TeamManagementPage() {
                                 disabled={isDisabled}
                                 onChange={() => {
                                   if (isDisabled) return;
-                                  if (isChecked) {
-                                    setEditMemberPermissions(editMemberPermissions.filter(k => k !== perm.key));
+                                  if (perm.category === 'IT') {
+                                    const itKeys = ALL_PERMISSIONS.filter(p => p.category === 'IT').map(p => p.key);
+                                    if (isChecked) {
+                                      setEditMemberPermissions(editMemberPermissions.filter(k => !itKeys.includes(k)));
+                                    } else {
+                                      const otherKeys = editMemberPermissions.filter(k => !itKeys.includes(k));
+                                      setEditMemberPermissions([...otherKeys, ...itKeys]);
+                                    }
                                   } else {
-                                    setEditMemberPermissions([...editMemberPermissions, perm.key]);
+                                    if (isChecked) {
+                                      setEditMemberPermissions(editMemberPermissions.filter(k => k !== perm.key));
+                                    } else {
+                                      setEditMemberPermissions([...editMemberPermissions, perm.key]);
+                                    }
                                   }
                                 }}
                                 className="sr-only"
@@ -4153,7 +4189,9 @@ export default function TeamManagementPage() {
                         {/* List of checkboxes/switches inside selected category */}
                         <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
                           {ALL_PERMISSIONS.filter(p => p.category === selectedDesignationPermissionCategory).map((perm) => {
-                            const isChecked = designationPermissions.includes(perm.key);
+                            const isChecked = perm.category === 'IT'
+                              ? ALL_PERMISSIONS.filter(p => p.category === 'IT').every(p => designationPermissions.includes(p.key))
+                              : designationPermissions.includes(perm.key);
                             
                             return (
                               <label 
@@ -4170,10 +4208,20 @@ export default function TeamManagementPage() {
                                     type="checkbox"
                                     checked={isChecked}
                                     onChange={() => {
-                                      if (isChecked) {
-                                        setDesignationPermissions(designationPermissions.filter(k => k !== perm.key));
+                                      if (perm.category === 'IT') {
+                                        const itKeys = ALL_PERMISSIONS.filter(p => p.category === 'IT').map(p => p.key);
+                                        if (isChecked) {
+                                          setDesignationPermissions(designationPermissions.filter(k => !itKeys.includes(k)));
+                                        } else {
+                                          const otherKeys = designationPermissions.filter(k => !itKeys.includes(k));
+                                          setDesignationPermissions([...otherKeys, ...itKeys]);
+                                        }
                                       } else {
-                                        setDesignationPermissions([...designationPermissions, perm.key]);
+                                        if (isChecked) {
+                                          setDesignationPermissions(designationPermissions.filter(k => k !== perm.key));
+                                        } else {
+                                          setDesignationPermissions([...designationPermissions, perm.key]);
+                                        }
                                       }
                                     }}
                                     className="sr-only"
