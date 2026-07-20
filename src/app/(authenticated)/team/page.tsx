@@ -408,8 +408,6 @@ const HierarchyTreeNodeComponent = ({
   onSupervisorChange,
   canModifySupervisorFn,
   eligibleSupervisorsFn,
-  treeDragOverId,
-  setTreeDragOverId,
 }: {
   node: TreeNode;
   onSelectNode: (nodeId: number) => void;
@@ -417,8 +415,6 @@ const HierarchyTreeNodeComponent = ({
   onSupervisorChange: (memberId: number, newSupervisorId: string) => Promise<void>;
   canModifySupervisorFn: (member: TeamMember) => boolean;
   eligibleSupervisorsFn: (member: TeamMember) => TeamMember[];
-  treeDragOverId: number | null;
-  setTreeDragOverId: (id: number | null) => void;
 }) => {
   const hasChildren = node.children && node.children.length > 0;
   const canEdit = canModifySupervisorFn(node.member);
@@ -429,39 +425,7 @@ const HierarchyTreeNodeComponent = ({
       {/* Node Card */}
       <div 
         onClick={() => onSelectNode(node.id)}
-        draggable={canEdit}
-        onDragStart={(e) => {
-          e.stopPropagation();
-          e.dataTransfer.setData('text/plain', node.id.toString());
-        }}
-        onDragOver={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (treeDragOverId !== node.id) {
-            setTreeDragOverId(node.id);
-          }
-        }}
-        onDragLeave={(e) => {
-          e.stopPropagation();
-          if (treeDragOverId === node.id) {
-            setTreeDragOverId(null);
-          }
-        }}
-        onDrop={async (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          setTreeDragOverId(null);
-          const draggedIdStr = e.dataTransfer.getData('text/plain');
-          if (!draggedIdStr) return;
-          const draggedId = parseInt(draggedIdStr, 10);
-          if (draggedId === node.id) return;
-          await onSupervisorChange(draggedId, node.id.toString());
-        }}
-        className={`group relative flex flex-col gap-2.5 p-3 bg-slate-900/60 hover:bg-slate-900 border rounded-xl transition-all duration-300 cursor-pointer shadow-lg w-64 transform hover:-translate-y-0.5 ${
-          treeDragOverId === node.id 
-            ? 'border-amber-500 bg-amber-500/10 scale-[1.02] shadow-amber-500/10' 
-            : 'border-slate-800 hover:border-amber-500/40 hover:shadow-amber-500/5'
-        }`}
+        className="group relative flex flex-col gap-2.5 p-3 bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/40 rounded-xl transition-all duration-300 cursor-pointer shadow-lg w-64 transform hover:-translate-y-0.5 hover:shadow-amber-500/5"
       >
         <div className="flex items-center gap-3">
           <div className={`w-1 h-10 rounded-full shrink-0 bg-gradient-to-b ${getLevelColor(node.member.designation?.level ?? 6)}`} />
@@ -559,8 +523,6 @@ const HierarchyTreeNodeComponent = ({
                 onSupervisorChange={onSupervisorChange}
                 canModifySupervisorFn={canModifySupervisorFn}
                 eligibleSupervisorsFn={eligibleSupervisorsFn}
-                treeDragOverId={treeDragOverId}
-                setTreeDragOverId={setTreeDragOverId}
               />
             </div>
           ))}
@@ -639,7 +601,8 @@ export default function TeamManagementPage() {
   const [focusedNodeId, setFocusedNodeId] = useState<number | null>(null);
   const [treeScale, setTreeScale] = useState<number>(1);
   const [treeSearchQuery, setTreeSearchQuery] = useState<string>('');
-  const [treeDragOverId, setTreeDragOverId] = useState<number | null>(null);
+  const [isDraggingCanvas, setIsDraggingCanvas] = useState<boolean>(false);
+  const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
 
   const [teamsList, setTeamsList] = useState<any[]>([]);
@@ -1244,8 +1207,34 @@ export default function TeamManagementPage() {
     };
   }, [activeTab]);
 
+  // Canvas drag-to-scroll (panning) mouse event handlers
+  const handleMouseDown = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('select') || target.closest('input')) return;
+
+    setIsDraggingCanvas(true);
+    if (canvasRef.current) {
+      setDragStart({
+        x: e.clientX - canvasRef.current.scrollLeft,
+        y: e.clientY - canvasRef.current.scrollTop
+      });
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDraggingCanvas || !canvasRef.current) return;
+    e.preventDefault();
+    canvasRef.current.scrollLeft = dragStart.x - e.clientX;
+    canvasRef.current.scrollTop = dragStart.y - e.clientY;
+  };
+
+  const handleMouseUpOrLeave = () => {
+    setIsDraggingCanvas(false);
+  };
+
   // Automatically reset permissions to designation defaults on active dropdown change
   useEffect(() => {
+
 
     if (selectedMember && editMemberForm.designationId) {
       const isDesignationChanged = String(selectedMember.designationId || '') !== String(editMemberForm.designationId);
@@ -2611,7 +2600,13 @@ export default function TeamManagementPage() {
           {/* Canvas Wrapper */}
           <div 
             ref={canvasRef}
-            className="relative overflow-auto max-h-[65vh] p-8 border border-slate-800/60 rounded-2xl bg-slate-950/20 backdrop-blur-md flex justify-center shadow-2xl"
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUpOrLeave}
+            onMouseLeave={handleMouseUpOrLeave}
+            className={`relative overflow-auto max-h-[65vh] p-8 border border-slate-800/60 rounded-2xl bg-slate-950/20 backdrop-blur-md flex justify-center shadow-2xl transition-all duration-100 ${
+              isDraggingCanvas ? 'cursor-grabbing select-none' : 'cursor-grab'
+            }`}
           >
             {visibleRoots.length === 0 ? (
               <div className="flex flex-col items-center justify-center p-12 text-center space-y-3">
@@ -2640,10 +2635,7 @@ export default function TeamManagementPage() {
                           onSupervisorChange={onSupervisorChange}
                           canModifySupervisorFn={canModifySupervisorFn}
                           eligibleSupervisorsFn={eligibleSupervisorsFn}
-                          treeDragOverId={treeDragOverId}
-                          setTreeDragOverId={setTreeDragOverId}
                         />
-
                       </div>
                     ))}
                   </div>
@@ -2651,6 +2643,7 @@ export default function TeamManagementPage() {
               </div>
             )}
           </div>
+
         </div>
       );
     })()}
