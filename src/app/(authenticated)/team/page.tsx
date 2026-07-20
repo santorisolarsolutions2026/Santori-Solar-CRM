@@ -516,33 +516,46 @@ const HierarchyTreeNodeComponent = ({
 
       {/* Children container with connecting lines */}
       {hasChildren && (
-        <div className="relative flex gap-6 pt-0 justify-center">
-          {/* Horizontal line across children columns */}
-          <div 
-            className="absolute top-0 h-[2px] bg-slate-700" 
-            style={{
-              left: `${100 / (node.children.length * 2)}%`,
-              right: `${100 / (node.children.length * 2)}%`
-            }} 
-          />
+        <div className="relative flex gap-x-8 pt-0 justify-center">
+          {node.children.map((child, index) => {
+            const isFirst = index === 0;
+            const isLast = index === node.children.length - 1;
+            const hasMultiple = node.children.length > 1;
 
-          {node.children.map((child) => (
-            <div key={child.id} className="relative flex flex-col items-center pt-6">
-              {/* Vertical line going down from the horizontal bar */}
-              <div className="absolute top-0 w-[2px] h-6 bg-slate-700" />
-              
-              <HierarchyTreeNodeComponent
-                node={child}
-                onSelectNode={onSelectNode}
-                onOpenDetails={onOpenDetails}
-                onSupervisorChange={onSupervisorChange}
-                canModifySupervisorFn={canModifySupervisorFn}
-                eligibleSupervisorsFn={eligibleSupervisorsFn}
-              />
-            </div>
-          ))}
+            return (
+              <div key={child.id} className="relative flex flex-col items-center pt-6">
+                {/* Horizontal connection line segments */}
+                {hasMultiple && (
+                  <>
+                    {isFirst && (
+                      <div className="absolute top-0 left-1/2 right-0 h-[2px] bg-slate-700" />
+                    )}
+                    {isLast && (
+                      <div className="absolute top-0 left-0 right-1/2 h-[2px] bg-slate-700" />
+                    )}
+                    {!isFirst && !isLast && (
+                      <div className="absolute top-0 left-0 right-0 h-[2px] bg-slate-700" />
+                    )}
+                  </>
+                )}
+
+                {/* Vertical line going down from the horizontal bar to the child card */}
+                <div className="absolute top-0 left-1/2 w-[2px] h-6 bg-slate-700 -translate-x-1/2" />
+                
+                <HierarchyTreeNodeComponent
+                  node={child}
+                  onSelectNode={onSelectNode}
+                  onOpenDetails={onOpenDetails}
+                  onSupervisorChange={onSupervisorChange}
+                  canModifySupervisorFn={canModifySupervisorFn}
+                  eligibleSupervisorsFn={eligibleSupervisorsFn}
+                />
+              </div>
+            );
+          })}
         </div>
       )}
+
     </div>
   );
 };
@@ -1225,10 +1238,20 @@ export default function TeamManagementPage() {
     };
   }, [activeTab]);
 
+  const requestRef = React.useRef<number | null>(null);
+
   // Canvas drag-to-scroll (panning) mouse event handlers
   const handleMouseDown = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    if (target.closest('button') || target.closest('select') || target.closest('input')) return;
+    // Prevent dragging when clicking on interactive elements or cards (with class .group)
+    if (
+      target.closest('button') || 
+      target.closest('select') || 
+      target.closest('input') || 
+      target.closest('.group')
+    ) {
+      return;
+    }
 
     setIsDraggingCanvas(true);
     if (canvasRef.current) {
@@ -1242,13 +1265,30 @@ export default function TeamManagementPage() {
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDraggingCanvas || !canvasRef.current) return;
     e.preventDefault();
-    canvasRef.current.scrollLeft = dragStart.x - e.clientX;
-    canvasRef.current.scrollTop = dragStart.y - e.clientY;
+
+    const scrollX = dragStart.x - e.clientX;
+    const scrollY = dragStart.y - e.clientY;
+
+    if (requestRef.current) {
+      cancelAnimationFrame(requestRef.current);
+    }
+
+    requestRef.current = requestAnimationFrame(() => {
+      if (canvasRef.current) {
+        canvasRef.current.scrollLeft = scrollX;
+        canvasRef.current.scrollTop = scrollY;
+      }
+    });
   };
 
   const handleMouseUpOrLeave = () => {
     setIsDraggingCanvas(false);
+    if (requestRef.current) {
+      cancelAnimationFrame(requestRef.current);
+      requestRef.current = null;
+    }
   };
+
 
   // Automatically reset permissions to designation defaults on active dropdown change
   useEffect(() => {
