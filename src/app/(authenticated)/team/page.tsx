@@ -27,6 +27,9 @@ import {
   Hammer,
   Terminal,
   SlidersHorizontal,
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
 } from 'lucide-react';
 
 interface TeamMember {
@@ -376,7 +379,178 @@ function calculateYearsInCompany(joiningDateStr: string | null): string {
   return `${years.toFixed(1)} Year${years.toFixed(1) !== '1.0' ? 's' : ''}`;
 }
 
+interface TreeNode {
+  id: number;
+  name: string;
+  role: string;
+  designationName: string;
+  departmentName: string;
+  member: TeamMember;
+  children: TreeNode[];
+}
+
+const getLevelColor = (level: number) => {
+  switch (level) {
+    case 0: return 'from-red-500 to-rose-600 shadow-red-500/10 border-red-500/20';
+    case 1: return 'from-indigo-500 to-blue-600 shadow-indigo-500/10 border-indigo-500/20';
+    case 2: return 'from-purple-500 to-fuchsia-600 shadow-purple-500/10 border-purple-500/20';
+    case 3: return 'from-amber-500 to-yellow-600 shadow-amber-500/10 border-amber-500/20';
+    case 4: return 'from-cyan-500 to-sky-600 shadow-cyan-500/10 border-cyan-500/20';
+    case 5: return 'from-emerald-500 to-teal-600 shadow-emerald-500/10 border-emerald-500/20';
+    default: return 'from-slate-500 to-slate-600 shadow-slate-500/10 border-slate-500/20';
+  }
+};
+
+const HierarchyTreeNodeComponent = ({
+  node,
+  onSelectNode,
+  onOpenDetails,
+}: {
+  node: TreeNode;
+  onSelectNode: (nodeId: number) => void;
+  onOpenDetails: (member: TeamMember) => void;
+}) => {
+  const hasChildren = node.children && node.children.length > 0;
+
+  return (
+    <div className="flex flex-col items-center select-none">
+      {/* Node Card */}
+      <div 
+        onClick={() => onSelectNode(node.id)}
+        className="group relative flex items-center gap-3 p-3 bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/40 rounded-xl transition-all duration-300 cursor-pointer shadow-lg w-64 transform hover:-translate-y-0.5 hover:shadow-amber-500/5"
+      >
+        <div className={`w-1 h-10 rounded-full shrink-0 bg-gradient-to-b ${getLevelColor(node.member.designation?.level ?? 6)}`} />
+        
+        {/* Avatar */}
+        <div className="w-9 h-9 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center text-slate-350 font-extrabold text-xs uppercase shadow-inner shrink-0 overflow-hidden">
+          {node.member.photograph ? (
+            <img src={node.member.photograph} alt={node.name} className="w-full h-full object-cover animate-fade-in" />
+          ) : (
+            <span className="text-slate-400 font-bold">{node.name.charAt(0)}</span>
+          )}
+        </div>
+
+        {/* Info */}
+        <div className="min-w-0 flex-1">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent focusing tree
+              onOpenDetails(node.member);
+            }}
+            className="text-xs font-bold text-white hover:text-amber-400 leading-none mb-1 text-left truncate w-full cursor-pointer hover:underline"
+            title="Click to view details"
+          >
+            {node.name}
+          </button>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[9px] text-slate-400 font-medium truncate max-w-[100px]">{node.designationName}</span>
+            <span className="text-slate-700 text-[10px]">•</span>
+            <span className="text-[8px] bg-slate-950 border border-slate-800/80 text-slate-400 px-1 py-0.5 rounded font-bold uppercase tracking-wider truncate max-w-[80px]">
+              {node.departmentName}
+            </span>
+          </div>
+        </div>
+
+        {/* Focus badge helper */}
+        <div className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <span className="text-[7px] font-bold text-amber-500 uppercase tracking-widest bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+            Focus
+          </span>
+        </div>
+      </div>
+
+      {/* Connection line down to children container */}
+      {hasChildren && (
+        <div className="w-px h-6 bg-slate-800" />
+      )}
+
+      {/* Children container with connecting lines */}
+      {hasChildren && (
+        <div className="relative flex gap-6 pt-0 justify-center">
+          {/* Horizontal line across children columns */}
+          <div 
+            className="absolute top-0 h-px bg-slate-800" 
+            style={{
+              left: `${100 / (node.children.length * 2)}%`,
+              right: `${100 / (node.children.length * 2)}%`
+            }} 
+          />
+
+          {node.children.map((child) => (
+            <div key={child.id} className="relative flex flex-col items-center pt-6">
+              {/* Vertical line going down from the horizontal bar */}
+              <div className="absolute top-0 w-px h-6 bg-slate-800" />
+              
+              <HierarchyTreeNodeComponent
+                node={child}
+                onSelectNode={onSelectNode}
+                onOpenDetails={onOpenDetails}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const buildHierarchyTree = (usersList: TeamMember[], departments: { id: number; name: string }[]): TreeNode[] => {
+  const map = new Map<number, TreeNode>();
+  usersList.forEach(m => {
+    map.set(m.id, {
+      id: m.id,
+      name: m.name,
+      role: m.role,
+      designationName: m.designation?.name || 'Employee',
+      departmentName: departments.find(d => d.id === m.departmentId)?.name || 'Unassigned',
+      member: m,
+      children: []
+    });
+  });
+
+  const roots: TreeNode[] = [];
+  const visited = new Set<number>();
+
+  // Identify who has no supervisor or whose supervisor is not in the list
+  usersList.forEach(m => {
+    const node = map.get(m.id)!;
+    if (!m.reportsTo || !map.has(m.reportsTo)) {
+      roots.push(node);
+      visited.add(m.id);
+    }
+  });
+
+  // Recursively add children to ensure no cycles are traversed
+  const addChildren = (parentNode: TreeNode) => {
+    usersList.forEach(m => {
+      if (m.reportsTo === parentNode.id && !visited.has(m.id)) {
+        const childNode = map.get(m.id)!;
+        parentNode.children.push(childNode);
+        visited.add(m.id);
+        addChildren(childNode);
+      }
+    });
+  };
+
+  roots.forEach(r => addChildren(r));
+
+  // Handle any nodes not visited (due to cycles or floating references) by adding them as roots
+  usersList.forEach(m => {
+    if (!visited.has(m.id)) {
+      const node = map.get(m.id)!;
+      roots.push(node);
+      visited.add(m.id);
+      addChildren(node);
+    }
+  });
+
+  return roots;
+};
+
 export default function TeamManagementPage() {
+
+
   const { user, refreshUser, hasPermission } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -385,8 +559,12 @@ export default function TeamManagementPage() {
   const [managersAndTls, setManagersAndTls] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Clans (Teams) state variables
-  const [activeTab, setActiveTab] = useState<'members' | 'clans'>('members');
+  // Tab and Hierarchy state variables
+  const [activeTab, setActiveTab] = useState<'members' | 'hierarchy'>('members');
+  const [focusedNodeId, setFocusedNodeId] = useState<number | null>(null);
+  const [treeScale, setTreeScale] = useState<number>(1);
+  const [treeSearchQuery, setTreeSearchQuery] = useState<string>('');
+
   const [teamsList, setTeamsList] = useState<any[]>([]);
   const [loadingTeams, setLoadingTeams] = useState(false);
   const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
@@ -1622,22 +1800,14 @@ export default function TeamManagementPage() {
           <h1 className="text-xl font-bold text-white tracking-wide">{titleText}</h1>
           <p className="text-xs text-slate-400 mt-1">
             {activeTab === 'members'
+
               ? (isAdminOrDirectorOrSalesHead
                 ? 'Manage user profiles, assign roles, and handle account status.'
                 : 'Browse company directory and see colleagues.')
-              : 'Create teams (clans), define reporting structures, and track team members.'}
+              : 'Interactive visual tree of company reporting relationships.'}
           </p>
         </div>
         <div className="flex gap-2 flex-wrap items-center">
-          {activeTab === 'clans' && isAdminOrDirectorOrSalesHead && (
-            <button
-              onClick={() => setShowCreateTeamModal(true)}
-              className="py-2.5 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-955 rounded-lg font-bold text-xs shadow-lg flex items-center gap-1.5 transition-all w-fit cursor-pointer border border-transparent animate-fade-in"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Create Clan (Team)</span>
-            </button>
-          )}
           {activeTab === 'members' && user?.role === 'admin' && (
             <button
               onClick={() => {
@@ -1681,19 +1851,19 @@ export default function TeamManagementPage() {
           </button>
           <button
             onClick={() => {
-              setActiveTab('clans');
-              fetchTeams();
+              setActiveTab('hierarchy');
             }}
             className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
-              activeTab === 'clans'
+              activeTab === 'hierarchy'
                 ? 'bg-amber-500 text-slate-955 shadow-md shadow-amber-500/10'
                 : 'text-slate-400 hover:text-white hover:bg-slate-900/30'
             }`}
           >
-            Clans (Teams) Manager
+            Hierarchy Tree
           </button>
         </div>
       )}
+
 
       {activeTab === 'members' && (
         <>
@@ -2098,95 +2268,207 @@ export default function TeamManagementPage() {
       </>
     )}
 
-    {/* Clans Manager Tab Content */}
-    {activeTab === 'clans' && (
-      <div className="space-y-6 animate-fade-in">
-        {loadingTeams ? (
-          <div className="flex items-center justify-center p-12 bg-[#111625]/60 border border-slate-800 rounded-2xl">
-            <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
-          </div>
-        ) : teamsList.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-12 bg-[#111625]/60 border border-slate-800 rounded-2xl text-center space-y-3">
-            <Users className="w-12 h-12 text-slate-650" />
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">No Clans / Teams Formed</h3>
-            <p className="text-xs text-slate-400 max-w-sm">
-              Clans allow grouping pre-sales agents, consultants, team leaders, and managers to coordinate workflow stages together.
-            </p>
-            {isAdminOrDirectorOrSalesHead && (
-              <button
-                onClick={() => setShowCreateTeamModal(true)}
-                className="py-2 px-4 bg-amber-500 hover:bg-amber-400 text-slate-955 rounded-lg font-bold text-xs shadow-md transition-all cursor-pointer"
-              >
-                Create Your First Clan
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            {teamsList.map((team) => (
-              <div key={team.id} className="bg-[#111625] border border-slate-805 rounded-2xl shadow-xl overflow-hidden flex flex-col justify-between">
-                {/* Clan Header */}
-                <div className="p-4 bg-slate-900/40 border-b border-slate-800/80 flex items-center justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-extrabold text-white tracking-wide uppercase">{team.name}</h3>
-                      <span className="text-[9px] bg-slate-950/80 text-amber-400 border border-slate-800 rounded px-2 py-0.5 font-bold uppercase tracking-wider">
-                        {team.department?.name || 'Department'}
-                      </span>
-                    </div>
-                    <p className="text-[10px] text-slate-500 font-mono mt-0.5">Team ID: #{team.id}</p>
-                  </div>
-                  {isAdminOrDirectorOrSalesHead && (
-                    <button
-                      onClick={() => handleDeleteTeam(team.id)}
-                      className="p-2 rounded-lg bg-red-955/10 hover:bg-red-950/30 text-red-400 border border-red-900/20 hover:border-red-900/40 transition-all cursor-pointer"
-                      title="Delete Clan"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
+    {/* Hierarchy Tree Tab Content */}
+    {activeTab === 'hierarchy' && (() => {
+      const allRoots = buildHierarchyTree(members, departmentsList);
+      
+      // Helper function to find a node by ID in the tree forest
+      const findNodeInTree = (nodes: TreeNode[], targetId: number): TreeNode | null => {
+        for (const n of nodes) {
+          if (n.id === targetId) return n;
+          const found = findNodeInTree(n.children, targetId);
+          if (found) return found;
+        }
+        return null;
+      };
 
-                {/* Clan Members */}
-                <div className="p-4 flex-1">
-                  <h4 className="text-[10px] font-bold text-slate-450 uppercase tracking-widest mb-3">Clan Hierarchy & Members</h4>
-                  {team.users.length === 0 ? (
-                    <p className="text-xs text-slate-650 italic">No members assigned to this clan yet.</p>
-                  ) : (
-                    <div className="space-y-3">
-                      {isAdminOrDirectorOrSalesHead && (
-                        <div
-                          onDragOver={(e) => {
-                            e.preventDefault();
-                            setDragOverNodeId(`root-${team.id}`);
-                          }}
-                          onDragLeave={() => setDragOverNodeId(null)}
-                          onDrop={(e) => {
-                            setDragOverNodeId(null);
-                            handleDrop(e, null, team.id);
-                          }}
-                          className={`border border-dashed p-2.5 rounded-xl text-center text-[10px] uppercase tracking-wider transition-all duration-200 cursor-pointer font-mono font-bold ${
-                            dragOverNodeId === `root-${team.id}`
-                              ? 'border-amber-500 bg-amber-500/10 text-amber-400 scale-[1.01]'
-                              : 'border-slate-800 text-slate-500 hover:text-slate-400 hover:border-slate-700 hover:bg-slate-900/10'
-                          }`}
-                        >
-                          Drop here to make Top-Level (Supervisor: Head)
-                        </div>
-                      )}
-                      
-                      <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
-                        {renderHierarchyNodes(team, team.users, null)}
+      const visibleRoots = focusedNodeId 
+        ? (() => {
+            const found = findNodeInTree(allRoots, focusedNodeId);
+            return found ? [found] : [];
+          })()
+        : allRoots;
+
+      // Get breadcrumbs path
+      const getBreadcrumbs = (targetId: number): TeamMember[] => {
+        const path: TeamMember[] = [];
+        let currentId: number | null = targetId;
+        const visited = new Set<number>();
+        while (currentId !== null && !visited.has(currentId)) {
+          visited.add(currentId);
+          const m = members.find(u => u.id === currentId);
+          if (!m) break;
+          path.push(m);
+          currentId = m.reportsTo;
+        }
+        return path.reverse();
+      };
+
+      const breadcrumbs = focusedNodeId ? getBreadcrumbs(focusedNodeId) : [];
+
+      // Filter members for search suggestions
+      const suggestions = treeSearchQuery.trim()
+        ? members.filter(m => 
+            m.name.toLowerCase().includes(treeSearchQuery.toLowerCase()) || 
+            (m.employeeId && m.employeeId.toLowerCase().includes(treeSearchQuery.toLowerCase()))
+          ).slice(0, 5)
+        : [];
+
+      return (
+        <div className="space-y-6 animate-fade-in">
+          {/* Controls Panel */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#111625]/60 border border-slate-800 p-4 rounded-xl shadow-xl">
+            {/* Search Box */}
+            <div className="relative flex-1 max-w-md">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={treeSearchQuery}
+                  onChange={(e) => setTreeSearchQuery(e.target.value)}
+                  placeholder="Search and focus on employee..."
+                  className="w-full pl-9 pr-4 py-2 bg-slate-955 border border-slate-800 rounded-xl text-white placeholder-slate-500 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                />
+                <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+                {treeSearchQuery && (
+                  <button 
+                    type="button"
+                    onClick={() => setTreeSearchQuery('')}
+                    className="absolute right-3 top-2.5 text-slate-400 hover:text-white cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+              
+              {/* Suggestions dropdown */}
+              {suggestions.length > 0 && (
+                <div className="absolute left-0 right-0 mt-2 z-30 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden divide-y divide-slate-800/60">
+                  {suggestions.map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => {
+                        setFocusedNodeId(m.id);
+                        setTreeSearchQuery('');
+                      }}
+                      className="w-full text-left px-4 py-2.5 hover:bg-slate-850 flex items-center justify-between text-xs transition-colors cursor-pointer"
+                    >
+                      <div>
+                        <p className="font-bold text-white leading-none mb-1">{m.name}</p>
+                        <p className="text-[10px] text-slate-450">{m.designation?.name || 'Employee'}</p>
                       </div>
+                      <span className="text-[9px] bg-slate-950 border border-slate-800 px-1.5 py-0.5 rounded text-slate-400 font-mono font-bold">
+                        {m.employeeId || `#${m.id}`}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Zoom Controls */}
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mr-1">Zoom: {Math.round(treeScale * 100)}%</span>
+              <button
+                type="button"
+                onClick={() => setTreeScale(prev => Math.max(0.5, parseFloat((prev - 0.1).toFixed(1))))}
+                className="p-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 cursor-pointer transition-all hover:bg-slate-850"
+                title="Zoom Out"
+              >
+                <ZoomOut className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setTreeScale(1)}
+                className="p-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 cursor-pointer transition-all hover:bg-slate-850"
+                title="Reset Zoom"
+              >
+                <Maximize2 className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setTreeScale(prev => Math.min(1.5, parseFloat((prev + 0.1).toFixed(1))))}
+                className="p-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 cursor-pointer transition-all hover:bg-slate-850"
+                title="Zoom In"
+              >
+                <ZoomIn className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Breadcrumbs focus path */}
+          {focusedNodeId && (
+            <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-900/40 border border-slate-800/80 rounded-xl text-xs text-slate-300 animate-fade-in">
+              <span className="text-slate-500 font-bold uppercase tracking-wider text-[9px] font-mono">Active Focus:</span>
+              <button 
+                type="button"
+                onClick={() => setFocusedNodeId(null)}
+                className="hover:text-amber-500 hover:underline cursor-pointer font-bold text-slate-300"
+              >
+                All Employees
+              </button>
+              {breadcrumbs.map((ancestor, index) => {
+                const isLast = index === breadcrumbs.length - 1;
+                return (
+                  <React.Fragment key={ancestor.id}>
+                    <span className="text-slate-650 font-bold font-mono">&gt;</span>
+                    <button 
+                      type="button"
+                      onClick={() => setFocusedNodeId(ancestor.id)}
+                      disabled={isLast}
+                      className={`font-semibold hover:text-amber-450 hover:underline cursor-pointer transition-all ${
+                        isLast ? 'text-amber-400 font-bold hover:no-underline pointer-events-none' : 'text-slate-400'
+                      }`}
+                    >
+                      {ancestor.name}
+                    </button>
+                  </React.Fragment>
+                );
+              })}
+              <button
+                type="button"
+                onClick={() => setFocusedNodeId(null)}
+                className="ml-auto text-[9px] bg-slate-950 border border-slate-800 hover:border-slate-750 text-slate-400 hover:text-white px-2 py-1 rounded font-bold uppercase tracking-wide cursor-pointer transition-all"
+              >
+                Reset Focus
+              </button>
+            </div>
+          )}
+
+          {/* Canvas Wrapper */}
+          <div className="relative overflow-auto max-h-[65vh] p-8 border border-slate-800/60 rounded-2xl bg-slate-950/20 backdrop-blur-md flex justify-center shadow-2xl">
+            {visibleRoots.length === 0 ? (
+              <div className="flex flex-col items-center justify-center p-12 text-center space-y-3">
+                <Users className="w-12 h-12 text-slate-650" />
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">No Nodes Found</h3>
+                <p className="text-xs text-slate-450 max-w-sm">
+                  Ensure you have created active team members and designated their reporting hierarchy structure.
+                </p>
+              </div>
+            ) : (
+              <div 
+                key={focusedNodeId || 'root'}
+                className="origin-top transition-transform duration-300 ease-out animate-fade-in-up"
+                style={{ transform: `scale(${treeScale})` }}
+              >
+                <div className="flex gap-12 justify-center">
+                  {visibleRoots.map((rootNode) => (
+                    <div key={rootNode.id} className="flex flex-col items-center">
+                      <HierarchyTreeNodeComponent
+                        node={rootNode}
+                        onSelectNode={(nodeId) => setFocusedNodeId(nodeId)}
+                        onOpenDetails={(member) => handleOpenProfile(member)}
+                      />
                     </div>
-                  )}
+                  ))}
                 </div>
               </div>
-            ))}
+            )}
           </div>
-        )}
-      </div>
-    )}
+        </div>
+      );
+    })()}
+
 
     {/* Create Team Modal */}
     {showCreateTeamModal && (

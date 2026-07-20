@@ -39,7 +39,7 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log('--- START SEEDING HIERARCHY ---');
+  console.log('--- START SEEDING HIERARCHY WITH REAL INDIAN NAMES ---');
   const passwordHash = await bcrypt.hash('Password123', 10);
 
   // Clear everything to prevent foreign key errors
@@ -89,67 +89,103 @@ async function main() {
   const consultantDes = await getOrCreateDesignation('Consultant', 5);
   const psaConsultantDes = await getOrCreateDesignation('PSA Consultant', 6, salesDept.id);
 
-  // 3. Seed users establishing the direct supervisor relationships
-  const createUser = async (name: string, email: string, role: string, deptId: number, desId: number, reportsToId: number | null = null) => {
+  // 3. Create Teams
+  console.log('Seeding Clans (Teams)...');
+  const salesTeam = await prisma.team.create({
+    data: { name: 'Sales Tigers', departmentId: salesDept.id }
+  });
+  const financeTeam = await prisma.team.create({
+    data: { name: 'Finance Wizards', departmentId: financeDept.id }
+  });
+  const opsTeam = await prisma.team.create({
+    data: { name: 'Ops Builders', departmentId: opsDept.id }
+  });
+
+  // 4. Seed users
+  const createUser = async (name: string, email: string, role: string, deptId: number, desId: number, reportsToId: number | null = null, teamId: number | null = null) => {
     return prisma.user.create({
       data: {
         name,
         email,
-        phone: '9999999999',
+        phone: '9876543210',
         passwordHash,
         role,
         isActive: true,
         departmentId: deptId,
         designationId: desId,
-        reportsTo: reportsToId
+        reportsTo: reportsToId,
+        teamId: teamId
       }
     });
   };
 
   console.log('Seeding users and building relationships...');
 
-  // Level 0 - Admin
-  const adminUser = await createUser('Main Admin', 'admin@solarcrm.com', 'admin', adminDept.id, adminDes.id);
+  // Level 0 - Admin (Aarav Sharma)
+  const adminUser = await createUser('Aarav Sharma', 'admin@solarcrm.com', 'admin', adminDept.id, adminDes.id);
   console.log(`Created: ${adminUser.name} (Level 0 System Admin)`);
 
-  // Helper to build a complete reporting stack for a department
-  const buildDeptHierarchy = async (deptName: string, deptId: number, headRole: string, otherRole: string) => {
-    console.log(`Building hierarchy for ${deptName} Department...`);
-    
-    // Level 1 Head (reports to Admin)
-    const head = await createUser(`${deptName} Head`, `${deptName.toLowerCase()}head@solarcrm.com`, headRole, deptId, headDes.id, adminUser.id);
-    
-    // Level 2 Senior Manager (reports to Head)
-    const srmgr = await createUser(`${deptName} Senior Manager`, `${deptName.toLowerCase()}srmgr@solarcrm.com`, otherRole, deptId, srManagerDes.id, head.id);
-    
-    // Level 3 Manager (reports to Senior Manager)
-    const mgr = await createUser(`${deptName} Manager`, `${deptName.toLowerCase()}mgr@solarcrm.com`, otherRole, deptId, managerDes.id, srmgr.id);
-    
-    // Level 4 Team Leader (reports to Manager)
-    const tl = await createUser(`${deptName} Team Leader`, `${deptName.toLowerCase()}tl@solarcrm.com`, otherRole, deptId, tlDes.id, mgr.id);
-    
-    // Level 5 Consultant (reports to Team Leader)
-    const consultant = await createUser(`${deptName} Consultant`, `${deptName.toLowerCase()}consultant@solarcrm.com`, otherRole, deptId, consultantDes.id, tl.id);
+  // --- SALES DEPARTMENT ---
+  console.log('Building Sales hierarchy...');
+  const salesHead = await createUser('Rajesh Kumar', 'rajesh.k@solarcrm.com', 'sales_head', salesDept.id, headDes.id, adminUser.id, salesTeam.id);
+  
+  // Level 2 Sr. Managers reporting to Sales Head
+  const salesSrMgr1 = await createUser('Amit Patel', 'amit.p@solarcrm.com', 'manager', salesDept.id, srManagerDes.id, salesHead.id, salesTeam.id);
+  const salesSrMgr2 = await createUser('Priya Sharma', 'priya.s@solarcrm.com', 'manager', salesDept.id, srManagerDes.id, salesHead.id, salesTeam.id);
 
-    console.log(`- Created Head, Senior Manager, Manager, TL, Consultant for ${deptName}`);
+  // Level 3 Managers reporting to Sr. Managers
+  const salesMgr1 = await createUser('Vikram Singh', 'vikram.s@solarcrm.com', 'manager', salesDept.id, managerDes.id, salesSrMgr1.id, salesTeam.id);
+  const salesMgr2 = await createUser('Ananya Rao', 'ananya.r@solarcrm.com', 'manager', salesDept.id, managerDes.id, salesSrMgr2.id, salesTeam.id);
 
-    return { head, srmgr, mgr, tl, consultant };
-  };
+  // Level 4 Team Leaders reporting to Managers
+  const salesTl1 = await createUser('Sandeep Verma', 'sandeep.v@solarcrm.com', 'tl', salesDept.id, tlDes.id, salesMgr1.id, salesTeam.id);
+  const salesTl2 = await createUser('Neha Gupta', 'neha.g@solarcrm.com', 'tl', salesDept.id, tlDes.id, salesMgr1.id, salesTeam.id);
+  const salesTl3 = await createUser('Karan Malhotra', 'karan.m@solarcrm.com', 'tl', salesDept.id, tlDes.id, salesMgr2.id, salesTeam.id);
 
-  // Seed Sales department
-  const salesStack = await buildDeptHierarchy('Sales', salesDept.id, 'sales_head', 'consultant');
-  // Add Level 6 PSA Consultant for Sales (reports to Sales Consultant)
-  const salesPsa = await createUser('Sales PSA Consultant', 'salespsa@solarcrm.com', 'psa', salesDept.id, psaConsultantDes.id, salesStack.consultant.id);
-  console.log(`- Created PSA Consultant reporting to Sales Consultant`);
+  // Level 5 Consultants reporting to TLs
+  const salesConsultant1 = await createUser('Rohan Das', 'rohan.d@solarcrm.com', 'consultant', salesDept.id, consultantDes.id, salesTl1.id, salesTeam.id);
+  const salesConsultant2 = await createUser('Aditi Iyer', 'aditi.i@solarcrm.com', 'consultant', salesDept.id, consultantDes.id, salesTl1.id, salesTeam.id);
+  const salesConsultant3 = await createUser('Rahul Bose', 'rahul.b@solarcrm.com', 'consultant', salesDept.id, consultantDes.id, salesTl2.id, salesTeam.id);
+  const salesConsultant4 = await createUser('Sneha Reddy', 'sneha.r@solarcrm.com', 'consultant', salesDept.id, consultantDes.id, salesTl3.id, salesTeam.id);
 
-  // Seed Finance department
-  await buildDeptHierarchy('Finance', financeDept.id, 'finance', 'finance');
+  // Level 6 PSA Consultants reporting to Consultants
+  await createUser('Arjun Mehta', 'arjun.m@solarcrm.com', 'psa', salesDept.id, psaConsultantDes.id, salesConsultant1.id, salesTeam.id);
+  await createUser('Kavita Nair', 'kavita.n@solarcrm.com', 'psa', salesDept.id, psaConsultantDes.id, salesConsultant2.id, salesTeam.id);
+  await createUser('Manish Joshi', 'manish.j@solarcrm.com', 'psa', salesDept.id, psaConsultantDes.id, salesConsultant3.id, salesTeam.id);
+  await createUser('Divya Pillai', 'divya.p@solarcrm.com', 'psa', salesDept.id, psaConsultantDes.id, salesConsultant4.id, salesTeam.id);
 
-  // Seed Operations department
-  await buildDeptHierarchy('Operations', opsDept.id, 'operations', 'operations');
 
-  // Seed IT department
-  await buildDeptHierarchy('IT', itDept.id, 'admin', 'admin');
+  // --- FINANCE DEPARTMENT ---
+  console.log('Building Finance hierarchy...');
+  const financeHead = await createUser('Sunita Deshmukh', 'sunita.d@solarcrm.com', 'finance', financeDept.id, headDes.id, adminUser.id, financeTeam.id);
+  const financeSrMgr = await createUser('Suresh Menon', 'suresh.m@solarcrm.com', 'finance', financeDept.id, srManagerDes.id, financeHead.id, financeTeam.id);
+  const financeMgr = await createUser('Meera Nair', 'meera.n@solarcrm.com', 'finance', financeDept.id, managerDes.id, financeSrMgr.id, financeTeam.id);
+  const financeTl = await createUser('Vijay Pillai', 'vijay.p@solarcrm.com', 'finance', financeDept.id, tlDes.id, financeMgr.id, financeTeam.id);
+  
+  // Multiple consultants for Finance
+  await createUser('Deepak Shenoy', 'deepak.s@solarcrm.com', 'finance', financeDept.id, consultantDes.id, financeTl.id, financeTeam.id);
+  await createUser('Ritu Roy', 'ritu.r@solarcrm.com', 'finance', financeDept.id, consultantDes.id, financeTl.id, financeTeam.id);
+
+
+  // --- OPERATIONS DEPARTMENT ---
+  console.log('Building Operations hierarchy...');
+  const opsHead = await createUser('Anil Joshi', 'anil.j@solarcrm.com', 'operations', opsDept.id, headDes.id, adminUser.id, opsTeam.id);
+  const opsSrMgr = await createUser('Harish Rawat', 'harish.r@solarcrm.com', 'operations', opsDept.id, srManagerDes.id, opsHead.id, opsTeam.id);
+  const opsMgr = await createUser('Kriti Sanon', 'kriti.s@solarcrm.com', 'operations', opsDept.id, managerDes.id, opsSrMgr.id, opsTeam.id);
+  const opsTl = await createUser('Ramesh Shinde', 'ramesh.s@solarcrm.com', 'operations', opsDept.id, tlDes.id, opsMgr.id, opsTeam.id);
+
+  // Multiple consultants for Operations
+  await createUser('Sanjay Dutt', 'sanjay.d@solarcrm.com', 'operations', opsDept.id, consultantDes.id, opsTl.id, opsTeam.id);
+  await createUser('Pooja Hegde', 'pooja.h@solarcrm.com', 'operations', opsDept.id, consultantDes.id, opsTl.id, opsTeam.id);
+
+
+  // --- IT DEPARTMENT ---
+  console.log('Building IT hierarchy...');
+  const itHead = await createUser('Devendra Fadnavis', 'devendra.f@solarcrm.com', 'admin', itDept.id, headDes.id, adminUser.id);
+  const itSrMgr = await createUser('Nitin Gadkari', 'nitin.g@solarcrm.com', 'admin', itDept.id, srManagerDes.id, itHead.id);
+  const itMgr = await createUser('Piyush Goyal', 'piyush.g@solarcrm.com', 'admin', itDept.id, managerDes.id, itSrMgr.id);
+  const itTl = await createUser('Srinivas Murthy', 'srinivas.m@solarcrm.com', 'admin', itDept.id, tlDes.id, itMgr.id);
+  await createUser('Ashish Shelar', 'ashish.s@solarcrm.com', 'admin', itDept.id, consultantDes.id, itTl.id);
 
   console.log('--- SEEDING COMPLETED SUCCESSFULLY ---');
 }
