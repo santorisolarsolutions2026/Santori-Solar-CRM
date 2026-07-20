@@ -128,9 +128,21 @@ export async function PATCH(
       const targetLevel = targetUserDetail?.designation?.level ?? 99;
       const targetDeptId = targetUserDetail?.departmentId;
 
-      // Rule: same department, higher level (currentLevel < targetLevel)
+      // Rule: same department, higher level (currentLevel < targetLevel) and reports recursively to current user
       if (currentDeptId !== null && currentDeptId === targetDeptId && currentLevel < targetLevel) {
-        hasWriteAccess = true;
+        let currentReportsTo = targetUserDetail?.reportsTo;
+        const visitedIds = new Set<number>();
+        while (currentReportsTo !== null && currentReportsTo !== undefined && !visitedIds.has(currentReportsTo)) {
+          visitedIds.add(currentReportsTo);
+          if (currentReportsTo === userPayload.id) {
+            hasWriteAccess = true;
+            break;
+          }
+          const parent = await prisma.user.findUnique({
+            where: { id: currentReportsTo }
+          });
+          currentReportsTo = parent?.reportsTo;
+        }
       }
     }
 

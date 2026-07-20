@@ -691,6 +691,24 @@ export default function TeamManagementPage() {
   const [departmentsList, setDepartmentsList] = useState<{ id: number; name: string }[]>([]);
   const [designationsList, setDesignationsList] = useState<{ id: number; name: string; level: number; departmentId: number | null; permissions?: string }[]>([]);
 
+  const canModifySupervisor = (targetMember: TeamMember): boolean => {
+    if (!user) return false;
+    if (user.role === 'admin' || user.role?.startsWith('admin:')) return true;
+
+    // Non-admin can only modify/view subordinates within their own department
+    if (user.departmentId !== targetMember.departmentId) return false;
+
+    let currentId = targetMember.reportsTo;
+    const visited = new Set<number>();
+    while (currentId !== null && !visited.has(currentId)) {
+      visited.add(currentId);
+      if (currentId === user.id) return true;
+      const parent = members.find(u => u.id === currentId);
+      currentId = parent ? parent.reportsTo : null;
+    }
+    return false;
+  };
+
   const fetchDepartments = async () => {
     try {
       const res = await fetch('/api/v1/departments');
@@ -1171,10 +1189,7 @@ export default function TeamManagementPage() {
 
   const isCurrentUserAdmin = user?.role === 'admin' || user?.role?.startsWith('admin:');
   const canEditPermissionsAndRole = isCurrentUserAdmin || (
-    user && selectedMember && 
-    user.departmentId === selectedMember.departmentId && 
-    user.designation && selectedMember.designation && 
-    user.designation.level < selectedMember.designation.level
+    selectedMember && canModifySupervisor(selectedMember)
   );
   
   // Add User Form Modal
@@ -2005,21 +2020,6 @@ export default function TeamManagementPage() {
 
   const myVisibleMembers = getVisibleMembers(user, members);
 
-  const canModifySupervisor = (targetMember: TeamMember): boolean => {
-    if (!user) return false;
-    if (user.role === 'admin' || user.role?.startsWith('admin:')) return true;
-
-    let currentId = targetMember.reportsTo;
-    const visited = new Set<number>();
-    while (currentId !== null && !visited.has(currentId)) {
-      visited.add(currentId);
-      if (currentId === user.id) return true;
-      const parent = members.find(u => u.id === currentId);
-      currentId = parent ? parent.reportsTo : null;
-    }
-    return false;
-  };
-
   const displayedMembers = (() => {
     const exactSearch = empSearchInput.trim().toLowerCase();
     if (exactSearch) {
@@ -2449,6 +2449,9 @@ export default function TeamManagementPage() {
       const canModifySupervisorFn = (targetMember: TeamMember): boolean => {
         if (!user) return false;
         if (user.role === 'admin' || user.role?.startsWith('admin:')) return true;
+
+        // Non-admin can only modify/view subordinates within their own department
+        if (user.departmentId !== targetMember.departmentId) return false;
 
         let currentId = targetMember.reportsTo;
         const visited = new Set<number>();
@@ -3256,7 +3259,7 @@ export default function TeamManagementPage() {
                   </button>
                 </div>
               </form>
-            ) : isAdminOrDirectorOrSalesHead ? (
+            ) : (isAdminOrDirectorOrSalesHead || canModifySupervisor(selectedMember)) ? (
               /* EDIT OTHER MEMBER'S PROFILE VIEW (Admins, Directors, Sales Heads only) */
               <form onSubmit={handleSaveMemberDetails}>
                 <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
