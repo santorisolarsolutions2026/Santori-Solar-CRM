@@ -290,7 +290,8 @@ export async function POST(req: Request) {
     const passwordHash = await bcrypt.hash(password, 10);
 
     const { getDefaultPermissionsForRole } = await import('@/lib/auth');
-    const finalPermissions = permissions || getDefaultPermissionsForRole(role).join(',');
+    const finalPermissions = permissions || designation.permissions || getDefaultPermissionsForRole(role).join(',');
+
 
     const newUser = await prisma.user.create({
       data: {

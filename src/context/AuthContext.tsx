@@ -184,16 +184,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const userPerms = user.permissions || [];
     
+    const finalPerms = [...userPerms];
+
+    // If user has manage_calling_stages or book_meeting, they implicitly get change_status for backwards compatibility
+    if (
+      (finalPerms.includes('leads:manage_calling_stages') || 
+       finalPerms.includes('leads:book_meeting')) && 
+      !finalPerms.includes('leads:change_status')
+    ) {
+      finalPerms.push('leads:change_status');
+    }
+
     // Implicit page permissions mapping to mirror backend behaviour
     const hasAnyLeadPermission = [
-      'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:track', 'leads:assign', 'leads:delete', 'leads:view_sales_pipeline'
-    ].some(p => userPerms.includes(p));
+      'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:track', 'leads:assign', 'leads:delete', 'leads:view_sales_pipeline',
+      'leads:manage_calling_stages', 'leads:book_meeting'
+    ].some(p => finalPerms.includes(p));
 
     const hasAnyOrderPermission = [
       'orders:create', 'orders:verify', 'orders:operations', 'orders:view_all', 'orders:submit_installation', 'finance:manage_ledger', 'ops:update_stages', 'ops:upload_drawings'
-    ].some(p => userPerms.includes(p));
+    ].some(p => finalPerms.includes(p));
 
-    const finalPerms = [...userPerms];
     if (hasAnyLeadPermission && !finalPerms.includes('leads:view')) {
       finalPerms.push('leads:view');
     }
@@ -203,6 +214,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return finalPerms.includes(permission);
   };
+
 
   return (
     <AuthContext.Provider value={{ user, loading, login, logout, refreshUser: fetchUser, hasPermission }}>

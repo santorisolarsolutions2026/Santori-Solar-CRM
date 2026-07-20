@@ -321,6 +321,7 @@ model Designation {
   departmentId Int?
   department   Department? @relation(fields: [departmentId], references: [id], onDelete: Cascade)
   users        User[]
+  permissions  String      @default("")
 }
 
 model Activity {

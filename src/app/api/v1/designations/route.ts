@@ -59,7 +59,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { name, level, departmentId } = body;
+    const { name, level, departmentId, permissions } = body;
 
     if (!name || level === undefined) {
       return NextResponse.json({ success: false, message: 'Name and level are required.' }, { status: 400 });
@@ -84,8 +84,10 @@ export async function POST(req: Request) {
         name,
         level: levelNum,
         departmentId: deptId && !isNaN(deptId) ? deptId : null,
+        permissions: permissions || '',
       }
     });
+
 
     return NextResponse.json({
       success: true,
@@ -114,7 +116,7 @@ export async function PUT(req: Request) {
     }
 
     const body = await req.json();
-    const { id, name, level, departmentId } = body;
+    const { id, name, level, departmentId, permissions } = body;
 
     if (!id || !name || level === undefined) {
       return NextResponse.json({ success: false, message: 'ID, name, and level are required.' }, { status: 400 });
@@ -142,8 +144,10 @@ export async function PUT(req: Request) {
         name,
         level: levelNum,
         departmentId: deptId && !isNaN(deptId) ? deptId : null,
+        permissions: permissions !== undefined ? permissions : undefined,
       }
     });
+
 
     return NextResponse.json({
       success: true,

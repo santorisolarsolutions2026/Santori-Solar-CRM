@@ -27,6 +27,7 @@ import {
   Hammer,
   Terminal,
   SlidersHorizontal,
+  LineChart,
   ZoomIn,
   ZoomOut,
   Maximize2,
@@ -88,23 +89,29 @@ export function getRoleClass(role: string): string {
 }
 
 const ALL_PERMISSIONS = [
-  // PSA Level
+  // PSA Level (Pre-Sales)
   {
     key: 'leads:create',
-    label: 'PSA: Create Leads',
+    label: 'PSA: Add New Lead',
     description: 'Allows registering and adding new customer leads into the system.',
     category: 'PSA'
   },
   {
-    key: 'leads:edit',
-    label: 'PSA: Edit Lead Details',
-    description: 'Allows editing contact, discom connection load, and lead details before site visit.',
+    key: 'leads:import',
+    label: 'PSA: Import New Leads',
+    description: 'Allows importing lists of raw leads from CSV / Excel spreadsheets.',
     category: 'PSA'
   },
   {
-    key: 'leads:change_status',
-    label: 'PSA: Book & Schedule Meetings',
-    description: 'Allows advancing leads up to Meeting Booked status and choosing meeting calendar slots.',
+    key: 'leads:manage_calling_stages',
+    label: 'PSA: Manage Calling Stages',
+    description: 'Allows updating logs and progressing pre-sales call statuses.',
+    category: 'PSA'
+  },
+  {
+    key: 'leads:book_meeting',
+    label: 'PSA: Meeting Booking',
+    description: 'Allows scheduling customer meetings and choosing calendar slots.',
     category: 'PSA'
   },
   {
@@ -114,9 +121,9 @@ const ALL_PERMISSIONS = [
     category: 'PSA'
   },
   {
-    key: 'leads:import',
-    label: 'PSA: Bulk CSV Lead Import',
-    description: 'Allows importing lists of raw leads from CSV / Excel spreadsheets.',
+    key: 'leads:edit',
+    label: 'PSA: Edit Lead Details',
+    description: 'Allows editing contact, discom connection load, and other details.',
     category: 'PSA'
   },
 
@@ -142,7 +149,7 @@ const ALL_PERMISSIONS = [
   {
     key: 'orders:submit_finance',
     label: 'Sales: Submitting to Finance',
-    description: 'Allows submitting the finalized order punch form and client documents to Finance.',
+    description: 'Allows submitting the punched order form and client documents to Finance.',
     category: 'Sales'
   },
   {
@@ -655,7 +662,7 @@ export default function TeamManagementPage() {
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
 
   const [departmentsList, setDepartmentsList] = useState<{ id: number; name: string }[]>([]);
-  const [designationsList, setDesignationsList] = useState<{ id: number; name: string; level: number; departmentId: number | null }[]>([]);
+  const [designationsList, setDesignationsList] = useState<{ id: number; name: string; level: number; departmentId: number | null; permissions?: string }[]>([]);
 
   const fetchDepartments = async () => {
     try {
@@ -1062,6 +1069,7 @@ export default function TeamManagementPage() {
           name: designationName,
           level: Number(designationLevel),
           departmentId: designationDeptId ? Number(designationDeptId) : null,
+          permissions: designationPermissions.join(','),
         })
       });
       const data = await res.json();
@@ -1070,6 +1078,7 @@ export default function TeamManagementPage() {
         setDesignationName('');
         setDesignationLevel(5);
         setDesignationDeptId('');
+        setDesignationPermissions([]);
         fetchDesignations();
       }
     } catch (err) {
@@ -1094,6 +1103,7 @@ export default function TeamManagementPage() {
           name: designationName,
           level: Number(designationLevel),
           departmentId: designationDeptId ? Number(designationDeptId) : null,
+          permissions: designationPermissions.join(','),
         })
       });
       const data = await res.json();
@@ -1103,6 +1113,7 @@ export default function TeamManagementPage() {
         setDesignationName('');
         setDesignationLevel(5);
         setDesignationDeptId('');
+        setDesignationPermissions([]);
         fetchDesignations();
       }
     } catch (err) {
@@ -1110,6 +1121,7 @@ export default function TeamManagementPage() {
       alert('Error updating designation.');
     }
   };
+
 
   const handleDeleteDesignation = async (id: number) => {
     if (!window.confirm('Are you sure you want to delete this designation?')) {
@@ -1213,6 +1225,9 @@ export default function TeamManagementPage() {
   const [editBaseRole, setEditBaseRole] = useState('consultant');
   const [editMemberPermissions, setEditMemberPermissions] = useState<string[]>([]);
   const [selectedPermissionCategory, setSelectedPermissionCategory] = useState<string>('PSA');
+  const [designationPermissions, setDesignationPermissions] = useState<string[]>([]);
+  const [selectedDesignationPermissionCategory, setSelectedDesignationPermissionCategory] = useState<string>('PSA');
+
 
   const canvasRef = React.useRef<HTMLDivElement>(null);
 
@@ -3436,7 +3451,18 @@ export default function TeamManagementPage() {
                       <select
                         value={editMemberForm.designationId}
                         disabled={!canEditPermissionsAndRole || selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:')}
-                        onChange={(e) => setEditMemberForm({ ...editMemberForm, designationId: e.target.value })}
+                        onChange={(e) => {
+                          const desId = e.target.value;
+                          setEditMemberForm({ ...editMemberForm, designationId: desId });
+                          const selectedDesObj = designationsList.find(d => d.id === parseInt(desId, 10));
+                          if (selectedDesObj) {
+                            const newPerms = selectedDesObj.permissions 
+                              ? selectedDesObj.permissions.split(',').map((p: any) => p.trim()) 
+                              : [];
+                            setEditMemberPermissions(newPerms);
+                          }
+                        }}
+
                         className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500 focus:outline-none disabled:opacity-50"
                       >
                         <option value="">Select Designation...</option>
@@ -4135,7 +4161,100 @@ export default function TeamManagementPage() {
                         </select>
                       </div>
 
+                      {/* Designation default permissions panel */}
+                      <div className="border-t border-slate-800/80 pt-3 space-y-3.5">
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                            Default Custom Access Toggles
+                          </label>
+                          <p className="text-[9px] text-slate-500">
+                            Configure the default permissions granted to anyone holding this designation.
+                          </p>
+                        </div>
+
+                        {/* Categories header bar */}
+                        <div className="flex flex-wrap gap-1 border-b border-slate-800 pb-1">
+                          {[
+                            { key: 'PSA', label: 'Pre-Sales', icon: Phone },
+                            { key: 'Sales', label: 'Sales', icon: LineChart },
+                            { key: 'Finance', label: 'Finance', icon: DollarSign },
+                            { key: 'Operations', label: 'Operations', icon: Hammer },
+                            { key: 'IT', label: 'IT & System Admin', icon: Terminal },
+                          ].map((cat) => {
+                            const isActive = selectedDesignationPermissionCategory === cat.key;
+                            const Icon = cat.icon;
+                            return (
+                              <button
+                                key={cat.key}
+                                type="button"
+                                onClick={() => setSelectedDesignationPermissionCategory(cat.key)}
+                                className={`flex items-center gap-1 px-2 py-1 border rounded-md text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                                  isActive
+                                    ? 'bg-amber-500/10 border-amber-500/40 text-amber-400 font-extrabold'
+                                    : 'bg-transparent border-transparent text-slate-450 hover:text-slate-200'
+                                }`}
+                              >
+                                <Icon className="w-3 h-3" />
+                                <span>{cat.label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* List of checkboxes/switches inside selected category */}
+                        <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                          {ALL_PERMISSIONS.filter(p => p.category === selectedDesignationPermissionCategory).map((perm) => {
+                            const isChecked = designationPermissions.includes(perm.key);
+                            
+                            return (
+                              <label 
+                                key={perm.key} 
+                                className={`flex items-start gap-2.5 p-2 rounded-lg border select-none cursor-pointer transition-all duration-200 ${
+                                  isChecked 
+                                    ? 'bg-amber-500/[0.01] border-amber-500/25 shadow-sm shadow-amber-500/5'
+                                    : 'bg-slate-950/20 border-slate-900/60 hover:border-slate-800 hover:bg-slate-900/10'
+                                }`}
+                              >
+                                {/* Switch toggle */}
+                                <div className="relative shrink-0 mt-0.5 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={isChecked}
+                                    onChange={() => {
+                                      if (isChecked) {
+                                        setDesignationPermissions(designationPermissions.filter(k => k !== perm.key));
+                                      } else {
+                                        setDesignationPermissions([...designationPermissions, perm.key]);
+                                      }
+                                    }}
+                                    className="sr-only"
+                                  />
+                                  <div className={`w-7 h-4 rounded-full transition-colors duration-200 ease-in-out ${
+                                    isChecked 
+                                      ? 'bg-amber-500' 
+                                      : 'bg-slate-800 border border-slate-700/60'
+                                  }`} />
+                                  <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${
+                                    isChecked ? 'translate-x-3' : 'translate-x-0'
+                                  }`} />
+                                </div>
+
+                                <div className="flex flex-col min-w-0">
+                                  <span className={`text-[10px] font-bold tracking-wide transition-colors ${isChecked ? 'text-white' : 'text-slate-350'}`}>
+                                    {perm.label}
+                                  </span>
+                                  <span className="text-[8px] text-slate-500 leading-snug">
+                                    {perm.description}
+                                  </span>
+                                </div>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+
                       <div className="flex gap-2 justify-end pt-2">
+
                         {editingDesignation && (
                           <button
                             type="button"
@@ -4144,6 +4263,8 @@ export default function TeamManagementPage() {
                               setDesignationName('');
                               setDesignationLevel(5);
                               setDesignationDeptId('');
+                              setDesignationPermissions([]);
+
                             }}
                             className="py-1.5 px-3 bg-slate-900 border border-slate-800 text-slate-400 rounded-lg font-bold text-xs"
                           >
@@ -4180,6 +4301,8 @@ export default function TeamManagementPage() {
                                   setDesignationName(d.name);
                                   setDesignationLevel(d.level);
                                   setDesignationDeptId(d.departmentId ? String(d.departmentId) : '');
+                                  setDesignationPermissions(d.permissions ? d.permissions.split(',').map((p: any) => p.trim()) : []);
+
                                 }}
                                 className="p-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-amber-400 transition-all border border-transparent cursor-pointer"
                               >

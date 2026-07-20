@@ -147,9 +147,19 @@ export async function getUserPermissions(userId: number): Promise<string[]> {
 
   const finalPermissions = [...basePermissions];
 
+  // If user has manage_calling_stages or book_meeting, they implicitly get change_status for backwards compatibility
+  if (
+    (finalPermissions.includes('leads:manage_calling_stages') || 
+     finalPermissions.includes('leads:book_meeting')) && 
+    !finalPermissions.includes('leads:change_status')
+  ) {
+    finalPermissions.push('leads:change_status');
+  }
+
   // Implicit page permissions mapping to ensure existing checks ('leads:view', 'orders:view') do not break
   const hasAnyLeadPermission = [
-    'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:track', 'leads:assign', 'leads:delete', 'leads:view_sales_pipeline'
+    'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:track', 'leads:assign', 'leads:delete', 'leads:view_sales_pipeline',
+    'leads:manage_calling_stages', 'leads:book_meeting'
   ].some(p => finalPermissions.includes(p));
 
   if (hasAnyLeadPermission && !finalPermissions.includes('leads:view')) {
@@ -164,6 +174,7 @@ export async function getUserPermissions(userId: number): Promise<string[]> {
   if (hasAnyOrderPermission && !finalPermissions.includes('orders:view')) {
     finalPermissions.push('orders:view');
   }
+
 
   // Map 'orders:operations', 'orders:submit_finance', 'orders:assign_finance' to legacy 'orders:submit_installation' check for backwards compatibility
   if (
