@@ -509,38 +509,38 @@ const HierarchyTreeNodeComponent = ({
         </div>
       </div>
 
-      {/* Connection line down to children container (2px slate-700) */}
+      {/* Connection line down to children container (2px slate-500) */}
       {hasChildren && (
-        <div className="w-[2px] h-6 bg-slate-700" />
+        <div className="w-[2px] h-6 bg-slate-500" />
       )}
 
       {/* Children container with connecting lines */}
       {hasChildren && (
-        <div className="relative flex gap-x-8 pt-0 justify-center">
+        <div className="relative flex pt-0 justify-center">
           {node.children.map((child, index) => {
             const isFirst = index === 0;
             const isLast = index === node.children.length - 1;
             const hasMultiple = node.children.length > 1;
 
             return (
-              <div key={child.id} className="relative flex flex-col items-center pt-6">
+              <div key={child.id} className="relative flex flex-col items-center px-4 pt-6">
                 {/* Horizontal connection line segments */}
                 {hasMultiple && (
                   <>
                     {isFirst && (
-                      <div className="absolute top-0 left-1/2 right-0 h-[2px] bg-slate-700" />
+                      <div className="absolute top-0 left-1/2 right-0 h-[2px] bg-slate-500" />
                     )}
                     {isLast && (
-                      <div className="absolute top-0 left-0 right-1/2 h-[2px] bg-slate-700" />
+                      <div className="absolute top-0 left-0 right-1/2 h-[2px] bg-slate-500" />
                     )}
                     {!isFirst && !isLast && (
-                      <div className="absolute top-0 left-0 right-0 h-[2px] bg-slate-700" />
+                      <div className="absolute top-0 left-0 right-0 h-[2px] bg-slate-500" />
                     )}
                   </>
                 )}
 
                 {/* Vertical line going down from the horizontal bar to the child card */}
-                <div className="absolute top-0 left-1/2 w-[2px] h-6 bg-slate-700 -translate-x-1/2" />
+                <div className="absolute top-0 left-1/2 w-[2px] h-6 bg-slate-500 -translate-x-1/2" />
                 
                 <HierarchyTreeNodeComponent
                   node={child}
@@ -555,6 +555,7 @@ const HierarchyTreeNodeComponent = ({
           })}
         </div>
       )}
+
 
     </div>
   );
@@ -1256,38 +1257,49 @@ export default function TeamManagementPage() {
     setIsDraggingCanvas(true);
     if (canvasRef.current) {
       setDragStart({
-        x: e.clientX - canvasRef.current.scrollLeft,
-        y: e.clientY - canvasRef.current.scrollTop
+        x: e.clientX + canvasRef.current.scrollLeft,
+        y: e.clientY + canvasRef.current.scrollTop
       });
     }
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDraggingCanvas || !canvasRef.current) return;
-    e.preventDefault();
+  useEffect(() => {
+    if (!isDraggingCanvas) return;
 
-    const scrollX = dragStart.x - e.clientX;
-    const scrollY = dragStart.y - e.clientY;
+    const handleWindowMouseMove = (e: MouseEvent) => {
+      if (!canvasRef.current) return;
+      const scrollX = dragStart.x - e.clientX;
+      const scrollY = dragStart.y - e.clientY;
 
-    if (requestRef.current) {
-      cancelAnimationFrame(requestRef.current);
-    }
-
-    requestRef.current = requestAnimationFrame(() => {
-      if (canvasRef.current) {
-        canvasRef.current.scrollLeft = scrollX;
-        canvasRef.current.scrollTop = scrollY;
+      if (requestRef.current) {
+        cancelAnimationFrame(requestRef.current);
       }
-    });
-  };
 
-  const handleMouseUpOrLeave = () => {
-    setIsDraggingCanvas(false);
-    if (requestRef.current) {
-      cancelAnimationFrame(requestRef.current);
-      requestRef.current = null;
-    }
-  };
+      requestRef.current = requestAnimationFrame(() => {
+        if (canvasRef.current) {
+          canvasRef.current.scrollLeft = scrollX;
+          canvasRef.current.scrollTop = scrollY;
+        }
+      });
+    };
+
+    const handleWindowMouseUp = () => {
+      setIsDraggingCanvas(false);
+    };
+
+    window.addEventListener('mousemove', handleWindowMouseMove, { passive: true });
+    window.addEventListener('mouseup', handleWindowMouseUp, { passive: true });
+
+    return () => {
+      window.removeEventListener('mousemove', handleWindowMouseMove);
+      window.removeEventListener('mouseup', handleWindowMouseUp);
+      if (requestRef.current) {
+        cancelAnimationFrame(requestRef.current);
+        requestRef.current = null;
+      }
+    };
+  }, [isDraggingCanvas, dragStart]);
+
 
 
   // Automatically reset permissions to designation defaults on active dropdown change
@@ -2670,15 +2682,13 @@ export default function TeamManagementPage() {
           <div 
             ref={canvasRef}
             onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUpOrLeave}
-            onMouseLeave={handleMouseUpOrLeave}
             className={`relative overflow-auto p-8 border border-slate-800/60 rounded-2xl bg-slate-950/20 backdrop-blur-md shadow-2xl ${
               isTreeFullScreen ? 'flex-1 h-full max-h-none' : 'max-h-[65vh]'
             } ${
               isDraggingCanvas ? 'cursor-grabbing select-none' : 'cursor-grab'
             }`}
           >
+
             {visibleRoots.length === 0 ? (
               <div className="flex flex-col items-center justify-center p-12 text-center space-y-3">
                 <Users className="w-12 h-12 text-slate-650" />
