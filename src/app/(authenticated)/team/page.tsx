@@ -405,52 +405,86 @@ const HierarchyTreeNodeComponent = ({
   node,
   onSelectNode,
   onOpenDetails,
+  onSupervisorChange,
+  canModifySupervisorFn,
+  eligibleSupervisorsFn,
 }: {
   node: TreeNode;
   onSelectNode: (nodeId: number) => void;
   onOpenDetails: (member: TeamMember) => void;
+  onSupervisorChange: (memberId: number, newSupervisorId: string) => Promise<void>;
+  canModifySupervisorFn: (member: TeamMember) => boolean;
+  eligibleSupervisorsFn: (member: TeamMember) => TeamMember[];
 }) => {
   const hasChildren = node.children && node.children.length > 0;
+  const canEdit = canModifySupervisorFn(node.member);
+  const eligibleSupervisors = canEdit ? eligibleSupervisorsFn(node.member) : [];
 
   return (
     <div className="flex flex-col items-center select-none">
       {/* Node Card */}
       <div 
         onClick={() => onSelectNode(node.id)}
-        className="group relative flex items-center gap-3 p-3 bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/40 rounded-xl transition-all duration-300 cursor-pointer shadow-lg w-64 transform hover:-translate-y-0.5 hover:shadow-amber-500/5"
+        className="group relative flex flex-col gap-2.5 p-3 bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/40 rounded-xl transition-all duration-300 cursor-pointer shadow-lg w-64 transform hover:-translate-y-0.5 hover:shadow-amber-500/5"
       >
-        <div className={`w-1 h-10 rounded-full shrink-0 bg-gradient-to-b ${getLevelColor(node.member.designation?.level ?? 6)}`} />
-        
-        {/* Avatar */}
-        <div className="w-9 h-9 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center text-slate-350 font-extrabold text-xs uppercase shadow-inner shrink-0 overflow-hidden">
-          {node.member.photograph ? (
-            <img src={node.member.photograph} alt={node.name} className="w-full h-full object-cover animate-fade-in" />
-          ) : (
-            <span className="text-slate-400 font-bold">{node.name.charAt(0)}</span>
-          )}
-        </div>
+        <div className="flex items-center gap-3">
+          <div className={`w-1 h-10 rounded-full shrink-0 bg-gradient-to-b ${getLevelColor(node.member.designation?.level ?? 6)}`} />
+          
+          {/* Avatar */}
+          <div className="w-9 h-9 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center text-slate-350 font-extrabold text-xs uppercase shadow-inner shrink-0 overflow-hidden">
+            {node.member.photograph ? (
+              <img src={node.member.photograph} alt={node.name} className="w-full h-full object-cover animate-fade-in" />
+            ) : (
+              <span className="text-slate-400 font-bold">{node.name.charAt(0)}</span>
+            )}
+          </div>
 
-        {/* Info */}
-        <div className="min-w-0 flex-1">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation(); // Prevent focusing tree
-              onOpenDetails(node.member);
-            }}
-            className="text-xs font-bold text-white hover:text-amber-400 leading-none mb-1 text-left truncate w-full cursor-pointer hover:underline"
-            title="Click to view details"
-          >
-            {node.name}
-          </button>
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[9px] text-slate-400 font-medium truncate max-w-[100px]">{node.designationName}</span>
-            <span className="text-slate-700 text-[10px]">•</span>
-            <span className="text-[8px] bg-slate-950 border border-slate-800/80 text-slate-400 px-1 py-0.5 rounded font-bold uppercase tracking-wider truncate max-w-[80px]">
-              {node.departmentName}
-            </span>
+          {/* Info */}
+          <div className="min-w-0 flex-1">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent focusing tree
+                onOpenDetails(node.member);
+              }}
+              className="text-xs font-bold text-white hover:text-amber-400 leading-none mb-1 text-left truncate w-full cursor-pointer hover:underline"
+              title="Click to view details"
+            >
+              {node.name}
+            </button>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[9px] text-slate-400 font-medium truncate max-w-[100px]">{node.designationName}</span>
+              <span className="text-slate-700 text-[10px]">•</span>
+              <span className="text-[8px] bg-slate-950 border border-slate-800/80 text-slate-400 px-1 py-0.5 rounded font-bold uppercase tracking-wider truncate max-w-[80px]">
+                {node.departmentName}
+              </span>
+            </div>
           </div>
         </div>
+
+        {/* Inline Supervisor Select Dropdown */}
+        {canEdit && eligibleSupervisors.length > 0 && (
+          <div 
+            className="w-full pt-1.5 border-t border-slate-850/60"
+            onClick={(e) => e.stopPropagation()} // Prevent card focus click from firing
+          >
+            <label className="block text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-1 font-mono">
+              Assign Supervisor
+            </label>
+            <select
+              value={node.member.reportsTo || ''}
+              onChange={(e) => onSupervisorChange(node.id, e.target.value)}
+              className="w-full text-[10px] py-1 px-2 bg-slate-955 border border-slate-800 rounded-lg text-slate-350 focus:outline-none focus:ring-1 focus:ring-amber-500/50 cursor-pointer font-sans"
+            >
+              <option value="">No Supervisor (Admin)</option>
+              {eligibleSupervisors.map(sup => (
+                <option key={sup.id} value={sup.id}>
+                  {sup.name} ({sup.designation?.name || 'Supervisor'})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Focus badge helper */}
         <div className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -486,6 +520,9 @@ const HierarchyTreeNodeComponent = ({
                 node={child}
                 onSelectNode={onSelectNode}
                 onOpenDetails={onOpenDetails}
+                onSupervisorChange={onSupervisorChange}
+                canModifySupervisorFn={canModifySupervisorFn}
+                eligibleSupervisorsFn={eligibleSupervisorsFn}
               />
             </div>
           ))}
@@ -1142,8 +1179,34 @@ export default function TeamManagementPage() {
   const [editMemberPermissions, setEditMemberPermissions] = useState<string[]>([]);
   const [selectedPermissionCategory, setSelectedPermissionCategory] = useState<string>('PSA');
 
+  const canvasRef = React.useRef<HTMLDivElement>(null);
+
+  // Trackpad pinch-to-zoom wheel event listener
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (e.ctrlKey) {
+        e.preventDefault();
+        const zoomFactor = 0.03;
+        const direction = e.deltaY < 0 ? 1 : -1;
+        setTreeScale((prev) => {
+          const newScale = prev + direction * zoomFactor;
+          return Math.max(0.5, Math.min(1.5, parseFloat(newScale.toFixed(2))));
+        });
+      }
+    };
+
+    canvas.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      canvas.removeEventListener('wheel', handleWheel);
+    };
+  }, [activeTab]);
+
   // Automatically reset permissions to designation defaults on active dropdown change
   useEffect(() => {
+
     if (selectedMember && editMemberForm.designationId) {
       const isDesignationChanged = String(selectedMember.designationId || '') !== String(editMemberForm.designationId);
       const isDepartmentChanged = String(selectedMember.departmentId || '') !== String(editMemberForm.departmentId);
@@ -2270,7 +2333,15 @@ export default function TeamManagementPage() {
 
     {/* Hierarchy Tree Tab Content */}
     {activeTab === 'hierarchy' && (() => {
-      const allRoots = buildHierarchyTree(members, departmentsList);
+      // Filter members based on user's department for non-admins
+      const isUserAdmin = user?.role === 'admin' || user?.role?.startsWith('admin:');
+      const filteredMembers = isUserAdmin 
+        ? members 
+        : (user?.departmentId 
+            ? members.filter(m => m.departmentId === user.departmentId) 
+            : members.filter(m => m.departmentId === null));
+
+      const allRoots = buildHierarchyTree(filteredMembers, departmentsList);
       
       // Helper function to find a node by ID in the tree forest
       const findNodeInTree = (nodes: TreeNode[], targetId: number): TreeNode | null => {
@@ -2289,14 +2360,14 @@ export default function TeamManagementPage() {
           })()
         : allRoots;
 
-      // Get breadcrumbs path
+      // Get breadcrumbs path using filtered members
       const getBreadcrumbs = (targetId: number): TeamMember[] => {
         const path: TeamMember[] = [];
         let currentId: number | null = targetId;
         const visited = new Set<number>();
         while (currentId !== null && !visited.has(currentId)) {
           visited.add(currentId);
-          const m = members.find(u => u.id === currentId);
+          const m = filteredMembers.find(u => u.id === currentId);
           if (!m) break;
           path.push(m);
           currentId = m.reportsTo;
@@ -2306,13 +2377,75 @@ export default function TeamManagementPage() {
 
       const breadcrumbs = focusedNodeId ? getBreadcrumbs(focusedNodeId) : [];
 
-      // Filter members for search suggestions
+      // Filter members for search suggestions from filteredMembers
       const suggestions = treeSearchQuery.trim()
-        ? members.filter(m => 
+        ? filteredMembers.filter(m => 
             m.name.toLowerCase().includes(treeSearchQuery.toLowerCase()) || 
             (m.employeeId && m.employeeId.toLowerCase().includes(treeSearchQuery.toLowerCase()))
           ).slice(0, 5)
         : [];
+
+      // Inline Supervisor assignment security validation checks:
+      // Allow only Admin or ancestors above target member in target member's reporting line
+      const canModifySupervisorFn = (targetMember: TeamMember): boolean => {
+        if (!user) return false;
+        if (user.role === 'admin' || user.role?.startsWith('admin:')) return true;
+
+        let currentId = targetMember.reportsTo;
+        const visited = new Set<number>();
+        while (currentId !== null && !visited.has(currentId)) {
+          visited.add(currentId);
+          if (currentId === user.id) return true;
+          const parent = members.find(u => u.id === currentId);
+          currentId = parent ? parent.reportsTo : null;
+        }
+        return false;
+      };
+
+      // Inline list of eligible supervisors: must be same department and higher hierarchy designation
+      const eligibleSupervisorsFn = (targetMember: TeamMember): TeamMember[] => {
+        const targetLevel = targetMember.designation?.level ?? 99;
+        const targetDeptId = targetMember.departmentId;
+
+        return filteredMembers.filter((sup) => {
+          if (sup.id === targetMember.id) return false;
+          const supLevel = sup.designation?.level ?? 0;
+          
+          if (targetLevel === 1) {
+            return supLevel === 0 || sup.role === 'admin';
+          }
+          
+          if (targetLevel > 1) {
+            const isSameDept = sup.departmentId === targetDeptId;
+            const isHigherHierarchy = supLevel < targetLevel && supLevel > 0;
+            return isSameDept && isHigherHierarchy;
+          }
+          
+          return false;
+        });
+      };
+
+      // Handler for live updates of supervisor assignment
+      const onSupervisorChange = async (memberId: number, newSupervisorIdStr: string): Promise<void> => {
+        const newSupId = newSupervisorIdStr ? parseInt(newSupervisorIdStr, 10) : null;
+        try {
+          const res = await fetch(`/api/v1/users/${memberId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reportsTo: newSupId })
+          });
+          const data = await res.json();
+          if (data.success) {
+            // Live refresh state by refetching users
+            await fetchTeam();
+          } else {
+            alert(data.error || 'Failed to update supervisor.');
+          }
+        } catch (err) {
+          console.error(err);
+          alert('Network error updating supervisor.');
+        }
+      };
 
       return (
         <div className="space-y-6 animate-fade-in">
@@ -2403,7 +2536,7 @@ export default function TeamManagementPage() {
               <button 
                 type="button"
                 onClick={() => setFocusedNodeId(null)}
-                className="hover:text-amber-500 hover:underline cursor-pointer font-bold text-slate-300"
+                className="hover:text-amber-500 hover:underline cursor-pointer font-bold text-slate-300 font-sans"
               >
                 All Employees
               </button>
@@ -2428,7 +2561,7 @@ export default function TeamManagementPage() {
               <button
                 type="button"
                 onClick={() => setFocusedNodeId(null)}
-                className="ml-auto text-[9px] bg-slate-950 border border-slate-800 hover:border-slate-750 text-slate-400 hover:text-white px-2 py-1 rounded font-bold uppercase tracking-wide cursor-pointer transition-all"
+                className="ml-auto text-[9px] bg-slate-955 border border-slate-800 hover:border-slate-750 text-slate-400 hover:text-white px-2 py-1 rounded font-bold uppercase tracking-wide cursor-pointer transition-all"
               >
                 Reset Focus
               </button>
@@ -2436,7 +2569,10 @@ export default function TeamManagementPage() {
           )}
 
           {/* Canvas Wrapper */}
-          <div className="relative overflow-auto max-h-[65vh] p-8 border border-slate-800/60 rounded-2xl bg-slate-950/20 backdrop-blur-md flex justify-center shadow-2xl">
+          <div 
+            ref={canvasRef}
+            className="relative overflow-auto max-h-[65vh] p-8 border border-slate-800/60 rounded-2xl bg-slate-950/20 backdrop-blur-md flex justify-center shadow-2xl"
+          >
             {visibleRoots.length === 0 ? (
               <div className="flex flex-col items-center justify-center p-12 text-center space-y-3">
                 <Users className="w-12 h-12 text-slate-650" />
@@ -2448,19 +2584,26 @@ export default function TeamManagementPage() {
             ) : (
               <div 
                 key={focusedNodeId || 'root'}
-                className="origin-top transition-transform duration-300 ease-out animate-fade-in-up"
-                style={{ transform: `scale(${treeScale})` }}
+                className="animate-fade-in-up"
               >
-                <div className="flex gap-12 justify-center">
-                  {visibleRoots.map((rootNode) => (
-                    <div key={rootNode.id} className="flex flex-col items-center">
-                      <HierarchyTreeNodeComponent
-                        node={rootNode}
-                        onSelectNode={(nodeId) => setFocusedNodeId(nodeId)}
-                        onOpenDetails={(member) => handleOpenProfile(member)}
-                      />
-                    </div>
-                  ))}
+                <div 
+                  className="origin-top transition-transform duration-300 ease-out"
+                  style={{ transform: `scale(${treeScale})` }}
+                >
+                  <div className="flex gap-12 justify-center">
+                    {visibleRoots.map((rootNode) => (
+                      <div key={rootNode.id} className="flex flex-col items-center">
+                        <HierarchyTreeNodeComponent
+                          node={rootNode}
+                          onSelectNode={(nodeId) => setFocusedNodeId(nodeId)}
+                          onOpenDetails={(member) => handleOpenProfile(member)}
+                          onSupervisorChange={onSupervisorChange}
+                          canModifySupervisorFn={canModifySupervisorFn}
+                          eligibleSupervisorsFn={eligibleSupervisorsFn}
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
