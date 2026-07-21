@@ -437,6 +437,34 @@ export default function LeadDetailPage({
     return desName.includes('Consultant') || desName.includes('TL') || desName.includes('Team Leader') || desName.includes('Manager') || desName.includes('Head') || desName.includes('Admin') || emp.role === 'admin';
   });
 
+  const handleSelectFinanceAssignee = (userIdStr: string) => {
+    if (!userIdStr) {
+      setFinanceManagerId('');
+      setFinanceTlId('');
+      setFinanceConsultantId('');
+      return;
+    }
+
+    const userId = parseInt(userIdStr, 10);
+    const targetUser = employees.find(u => u.id === userId);
+    if (!targetUser) return;
+
+    const level = targetUser.designation?.level ?? 6;
+    if (level <= 3) {
+      setFinanceManagerId(userIdStr);
+      setFinanceTlId('');
+      setFinanceConsultantId('');
+    } else if (level === 4) {
+      setFinanceManagerId('');
+      setFinanceTlId(userIdStr);
+      setFinanceConsultantId('');
+    } else {
+      setFinanceManagerId('');
+      setFinanceTlId('');
+      setFinanceConsultantId(userIdStr);
+    }
+  };
+
   // Image Lightbox State & Helper
   const [previewImage, setPreviewImage] = useState<{ src: string; title: string } | null>(null);
   const isImageFile = (fileName: string) => {
@@ -2190,53 +2218,43 @@ export default function LeadDetailPage({
 
                         {/* Assignment Controls */}
                         {hasPermission('leads:edit') && (
-                          <>
-                            <div>
-                              <label className="block text-xs font-semibold text-slate-400 mb-1">Assign to Manager</label>
-                              <select
-                                value={editForm.assignedManagerId}
-                                onChange={(e) => setEditForm({ ...editForm, assignedManagerId: e.target.value })}
-                                className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500"
-                              >
-                                <option value="">Unassigned</option>
-                                {employees.map((emp) => (
-                                  <option key={emp.id} value={emp.id}>
-                                    {emp.name} ({emp.role.toUpperCase()})
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                            <div>
-                              <label className="block text-xs font-semibold text-slate-400 mb-1">Assign to Team Leader</label>
-                              <select
-                                value={editForm.assignedTlId}
-                                onChange={(e) => setEditForm({ ...editForm, assignedTlId: e.target.value })}
-                                className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500"
-                              >
-                                <option value="">Unassigned</option>
-                                {employees.map((emp) => (
-                                  <option key={emp.id} value={emp.id}>
-                                    {emp.name} ({emp.role.toUpperCase()})
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                            <div>
-                              <label className="block text-xs font-semibold text-slate-400 mb-1">Assign to Consultant</label>
-                              <select
-                                value={editForm.assignedConsultantId}
-                                onChange={(e) => setEditForm({ ...editForm, assignedConsultantId: e.target.value })}
-                                className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500"
-                              >
-                                <option value="">Unassigned</option>
-                                {employees.map((emp) => (
-                                  <option key={emp.id} value={emp.id}>
-                                    {emp.name} ({emp.role.toUpperCase()})
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                          </>
+                          <div className="md:col-span-2">
+                            <label className="block text-xs font-semibold text-slate-400 mb-1">Assign Sales or PSA Member</label>
+                            <select
+                              value={editForm.assignedConsultantId || editForm.assignedTlId || editForm.assignedManagerId || ''}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (!val) {
+                                  setEditForm({ ...editForm, assignedManagerId: '', assignedTlId: '', assignedConsultantId: '' });
+                                  return;
+                                }
+                                const targetUser = employees.find(u => u.id === parseInt(val, 10));
+                                if (!targetUser) return;
+                                const level = targetUser.designation?.level ?? 6;
+                                if (level <= 3) {
+                                  setEditForm({ ...editForm, assignedManagerId: val, assignedTlId: '', assignedConsultantId: '' });
+                                } else if (level === 4) {
+                                  setEditForm({ ...editForm, assignedManagerId: '', assignedTlId: val, assignedConsultantId: '' });
+                                } else {
+                                  setEditForm({ ...editForm, assignedManagerId: '', assignedTlId: '', assignedConsultantId: val });
+                                }
+                              }}
+                              className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500"
+                            >
+                              <option value="">Unassigned</option>
+                              {employees.filter((emp) => {
+                                const deptName = (emp.department?.name || '').toLowerCase();
+                                const roleLower = (emp.role || '').toLowerCase();
+                                const isSalesOrPsaDept = deptName.includes('sales') || deptName.includes('marketing') || deptName.includes('psa');
+                                const isSalesOrPsaRole = roleLower.includes('sales') || roleLower.includes('psa') || roleLower.includes('consultant');
+                                return isSalesOrPsaDept || isSalesOrPsaRole;
+                              }).map((emp) => (
+                                <option key={emp.id} value={emp.id}>
+                                  {emp.name} ({emp.department?.name || 'Shared'} - {emp.designation?.name || emp.role.toUpperCase()})
+                                </option>
+                              ))}
+                            </select>
+                          </div>
                         )}
                       </div>
 
@@ -3321,51 +3339,23 @@ export default function LeadDetailPage({
               </p>
 
               <div>
-                <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Finance Manager *</label>
+                <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Assign Finance Operator *</label>
                 <select
                   required
-                  value={financeManagerId}
-                  onChange={(e) => setFinanceManagerId(e.target.value)}
+                  value={financeConsultantId || financeTlId || financeManagerId}
+                  onChange={(e) => handleSelectFinanceAssignee(e.target.value)}
                   className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
                 >
-                  <option value="">Select Finance Manager</option>
-                  {financeManagers.map((emp) => (
+                  <option value="">Select Finance Member</option>
+                  {employees.filter((emp) => {
+                    const deptName = (emp.department?.name || '').toLowerCase();
+                    const roleLower = (emp.role || '').toLowerCase();
+                    const isFinanceDept = deptName.includes('finance');
+                    const isFinanceRole = roleLower.includes('finance');
+                    return isFinanceDept || isFinanceRole;
+                  }).map((emp) => (
                     <option key={emp.id} value={emp.id}>
-                      {emp.name} ({emp.designation?.name || emp.role.toUpperCase()})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Finance Team Leader *</label>
-                <select
-                  required
-                  value={financeTlId}
-                  onChange={(e) => setFinanceTlId(e.target.value)}
-                  className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
-                >
-                  <option value="">Select Finance Team Leader</option>
-                  {financeTls.map((emp) => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.name} ({emp.designation?.name || emp.role.toUpperCase()})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Finance Consultant *</label>
-                <select
-                  required
-                  value={financeConsultantId}
-                  onChange={(e) => setFinanceConsultantId(e.target.value)}
-                  className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
-                >
-                  <option value="">Select Finance Consultant</option>
-                  {financeConsultants.map((emp) => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.name} ({emp.designation?.name || emp.role.toUpperCase()})
+                      {emp.name} ({emp.department?.name || 'Finance'} - {emp.designation?.name || emp.role.toUpperCase()})
                     </option>
                   ))}
                 </select>

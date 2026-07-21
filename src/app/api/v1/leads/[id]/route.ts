@@ -8,19 +8,6 @@ async function canAccessLead(userId: number, lead: any): Promise<boolean> {
   const baseRole = userRole.includes(':') ? userRole.split(':')[0] : userRole;
 
   if (permissions.includes('leads:view_all')) return true;
-  
-  if (baseRole === 'finance') {
-    // Finance sees only leads at Stage 13 (Sale Done)
-    return lead.status === 13;
-  }
-  if (baseRole === 'operations') {
-    // Operations sees leads at Stage 13 that are processed by finance
-    return lead.status === 13 && ['finance_verified', 'ops_assigned', 'completed'].includes(lead.order?.status || '');
-  }
-
-  // Allow Manager and TL to access unassigned leads so they can assign them
-  const isUnassigned = !lead.assignedTlId && !lead.assignedConsultantId;
-  if (isUnassigned && ['manager', 'tl', 'psa_tl'].includes(baseRole)) return true;
 
   const { getSubordinateIds, getAncestorIds } = await import('@/lib/hierarchy');
   const subordinateIds = await getSubordinateIds(userId);
@@ -29,6 +16,21 @@ async function canAccessLead(userId: number, lead: any): Promise<boolean> {
 
   const assignedPeople = [lead.assignedConsultantId, lead.assignedTlId, lead.assignedManagerId, lead.createdById].filter((id) => id !== null);
   const isAssignedToHierarchy = assignedPeople.some((id) => allowedIds.includes(id));
+  
+  if (baseRole === 'finance') {
+    // Finance sees only leads at Stage 13 (Sale Done) AND must be in hierarchy
+    return lead.status === 13 && isAssignedToHierarchy;
+  }
+  if (baseRole === 'operations') {
+    // Operations sees leads at Stage 13 that are processed by finance AND must be in hierarchy
+    return lead.status === 13 && 
+      ['finance_verified', 'ops_assigned', 'completed'].includes(lead.order?.status || '') && 
+      isAssignedToHierarchy;
+  }
+
+  // Allow Manager and TL to access unassigned leads so they can assign them
+  const isUnassigned = !lead.assignedTlId && !lead.assignedConsultantId;
+  if (isUnassigned && ['manager', 'tl', 'psa_tl'].includes(baseRole)) return true;
 
   if (isAssignedToHierarchy) return true;
 
@@ -287,11 +289,14 @@ export async function PATCH(
     // Handle assignments updates and auto-resolve hierarchy
     let shouldPromoteToFresh = false;
     if (assignedTlId !== undefined || assignedConsultantId !== undefined || assignedManagerId !== undefined) {
-      let finalTlId = assignedTlId !== undefined ? (assignedTlId ? parseInt(assignedTlId, 10) : null) : lead.assignedTlId;
-      let finalConsId = assignedConsultantId !== undefined ? (assignedConsultantId ? parseInt(assignedConsultantId, 10) : null) : lead.assignedConsultantId;
-      let finalManagerId = assignedManagerId !== undefined ? (assignedManagerId ? parseInt(assignedManagerId, 10) : null) : lead.assignedManagerId;
+      let finalTlId = (assignedTlId && assignedTlId !== 'unassigned') ? parseInt(assignedTlId, 10) : null;
+      let finalConsId = (assignedConsultantId && assignedConsultantId !== 'unassigned') ? parseInt(assignedConsultantId, 10) : null;
+      let finalManagerId = (assignedManagerId && assignedManagerId !== 'unassigned') ? parseInt(assignedManagerId, 10) : null;
 
-      if (finalConsId && assignedTlId === undefined && assignedManagerId === undefined) {
+      // If we are setting exactly one assignee, let's clear the others and auto-resolve the supervisors
+      if (finalConsId) {
+        finalTlId = null;
+        finalManagerId = null;
         const consUser = await prisma.user.findUnique({
           where: { id: finalConsId },
           select: { reportsTo: true },
@@ -304,12 +309,17 @@ export async function PATCH(
           });
           finalManagerId = tlUser?.reportsTo || null;
         }
-      } else if (finalTlId && assignedManagerId === undefined) {
+      } else if (finalTlId) {
+        finalConsId = null;
+        finalManagerId = null;
         const tlUser = await prisma.user.findUnique({
           where: { id: finalTlId },
           select: { reportsTo: true },
         });
         finalManagerId = tlUser?.reportsTo || null;
+      } else if (finalManagerId) {
+        finalConsId = null;
+        finalTlId = null;
       }
 
       updateData.assignedTlId = finalTlId;

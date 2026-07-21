@@ -189,6 +189,34 @@ export default function FinancePage() {
     return desName.includes('Consultant') || desName.includes('TL') || desName.includes('Team Leader') || desName.includes('Manager') || desName.includes('Head') || desName.includes('Admin') || emp.role === 'admin';
   });
   
+  const handleSelectOpsAssignee = (userIdStr: string) => {
+    if (!userIdStr) {
+      setOpsManagerId('');
+      setOpsTlId('');
+      setOpsConsultantId('');
+      return;
+    }
+
+    const userId = parseInt(userIdStr, 10);
+    const targetUser = employees.find(u => u.id === userId);
+    if (!targetUser) return;
+
+    const level = targetUser.designation?.level ?? 6;
+    if (level <= 3) {
+      setOpsManagerId(userIdStr);
+      setOpsTlId('');
+      setOpsConsultantId('');
+    } else if (level === 4) {
+      setOpsManagerId('');
+      setOpsTlId(userIdStr);
+      setOpsConsultantId('');
+    } else {
+      setOpsManagerId('');
+      setOpsTlId('');
+      setOpsConsultantId(userIdStr);
+    }
+  };
+
   // Record new payment inputs
   const [newPaymentAmount, setNewPaymentAmount] = useState('');
   const [newPaymentMethod, setNewPaymentMethod] = useState('upi');
@@ -1515,51 +1543,23 @@ export default function FinancePage() {
               </p>
 
               <div>
-                <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Operations Manager *</label>
+                <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Assign Operations Operator *</label>
                 <select
                   required
-                  value={opsManagerId}
-                  onChange={(e) => setOpsManagerId(e.target.value)}
+                  value={opsConsultantId || opsTlId || opsManagerId}
+                  onChange={(e) => handleSelectOpsAssignee(e.target.value)}
                   className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
                 >
-                  <option value="">Select Operations Manager</option>
-                  {opsManagers.map((emp) => (
+                  <option value="">Select Operations Member</option>
+                  {employees.filter((emp) => {
+                    const deptName = (emp.department?.name || '').toLowerCase();
+                    const roleLower = (emp.role || '').toLowerCase();
+                    const isOpsDept = deptName.includes('operations');
+                    const isOpsRole = roleLower.includes('operations');
+                    return isOpsDept || isOpsRole;
+                  }).map((emp) => (
                     <option key={emp.id} value={emp.id}>
-                      {emp.name} ({emp.designation?.name || emp.role.toUpperCase()})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Operations Team Leader *</label>
-                <select
-                  required
-                  value={opsTlId}
-                  onChange={(e) => setOpsTlId(e.target.value)}
-                  className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
-                >
-                  <option value="">Select Operations Team Leader</option>
-                  {opsTls.map((emp) => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.name} ({emp.designation?.name || emp.role.toUpperCase()})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Operations Consultant *</label>
-                <select
-                  required
-                  value={opsConsultantId}
-                  onChange={(e) => setOpsConsultantId(e.target.value)}
-                  className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
-                >
-                  <option value="">Select Operations Consultant</option>
-                  {opsConsultants.map((emp) => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.name} ({emp.designation?.name || emp.role.toUpperCase()})
+                      {emp.name} ({emp.department?.name || 'Operations'} - {emp.designation?.name || emp.role.toUpperCase()})
                     </option>
                   ))}
                 </select>

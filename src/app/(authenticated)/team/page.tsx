@@ -33,6 +33,7 @@ import {
   ZoomOut,
   Maximize2,
   Minimize2,
+  RotateCcw,
 } from 'lucide-react';
 
 
@@ -1485,21 +1486,47 @@ export default function TeamManagementPage() {
 
 
   const canvasRef = React.useRef<HTMLDivElement>(null);
+  const desigCanvasRef = React.useRef<HTMLDivElement>(null);
 
-  // Trackpad pinch-to-zoom wheel event listener
+  // Trackpad pinch-to-zoom and panning wheel event listener for main tree
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+
       if (e.ctrlKey) {
-        e.preventDefault();
-        const zoomFactor = 0.03;
-        const direction = e.deltaY < 0 ? 1 : -1;
-        setTreeScale((prev) => {
-          const newScale = prev + direction * zoomFactor;
-          return Math.max(0.5, Math.min(1.5, parseFloat(newScale.toFixed(2))));
+        // Pinch-to-zoom
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        setTreeScale((prevScale) => {
+          const spaceX = (mouseX - pan.x) / prevScale;
+          const spaceY = (mouseY - pan.y) / prevScale;
+
+          const zoomFactor = 0.05;
+          let newScale = prevScale;
+          if (e.deltaY < 0) {
+            newScale = Math.min(2.0, prevScale + zoomFactor);
+          } else {
+            newScale = Math.max(0.3, prevScale - zoomFactor);
+          }
+
+          setPan({
+            x: mouseX - spaceX * newScale,
+            y: mouseY - spaceY * newScale
+          });
+
+          return newScale;
         });
+      } else {
+        // Trackpad panning (deltaX and deltaY scroll)
+        setPan((prevPan) => ({
+          x: prevPan.x - e.deltaX,
+          y: prevPan.y - e.deltaY
+        }));
       }
     };
 
@@ -1507,7 +1534,55 @@ export default function TeamManagementPage() {
     return () => {
       canvas.removeEventListener('wheel', handleWheel);
     };
-  }, [activeTab]);
+  }, [activeTab, isTreeFullScreen, pan, treeScale]);
+
+  // Trackpad pinch-to-zoom and panning wheel event listener for designations tree
+  useEffect(() => {
+    const canvas = desigCanvasRef.current;
+    if (!canvas) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+
+      if (e.ctrlKey) {
+        // Pinch-to-zoom
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        setDesigTreeScale((prevScale) => {
+          const spaceX = (mouseX - desigPan.x) / prevScale;
+          const spaceY = (mouseY - desigPan.y) / prevScale;
+
+          const zoomFactor = 0.05;
+          let newScale = prevScale;
+          if (e.deltaY < 0) {
+            newScale = Math.min(2.0, prevScale + zoomFactor);
+          } else {
+            newScale = Math.max(0.3, prevScale - zoomFactor);
+          }
+
+          setDesigPan({
+            x: mouseX - spaceX * newScale,
+            y: mouseY - spaceY * newScale
+          });
+
+          return newScale;
+        });
+      } else {
+        // Trackpad panning
+        setDesigPan((prevPan) => ({
+          x: prevPan.x - e.deltaX,
+          y: prevPan.y - e.deltaY
+        }));
+      }
+    };
+
+    canvas.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      canvas.removeEventListener('wheel', handleWheel);
+    };
+  }, [showHierarchyModal, isDesigTreeFullScreen, desigPan, desigTreeScale]);
 
   const requestRef = React.useRef<number | null>(null);
 
@@ -2897,11 +2972,14 @@ export default function TeamManagementPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setTreeScale(1)}
+                onClick={() => {
+                  setTreeScale(1);
+                  setPan({ x: 0, y: 0 });
+                }}
                 className="p-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 cursor-pointer transition-all hover:bg-slate-850"
-                title="Reset Zoom"
+                title="Reset View"
               >
-                <Maximize2 className="w-3.5 h-3.5" />
+                <RotateCcw className="w-3.5 h-3.5" />
               </button>
               <button
                 type="button"
@@ -4757,7 +4835,7 @@ export default function TeamManagementPage() {
                         className="p-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 cursor-pointer transition-all hover:bg-slate-850"
                         title="Reset View"
                       >
-                        <Maximize2 className="w-3.5 h-3.5" />
+                        <RotateCcw className="w-3.5 h-3.5" />
                       </button>
                       <button
                         type="button"
@@ -4781,6 +4859,7 @@ export default function TeamManagementPage() {
 
                   {/* Panning Canvas Area */}
                   <div 
+                    ref={desigCanvasRef}
                     onMouseDown={handleDesigMouseDown}
                     onTouchStart={handleDesigTouchStart}
                     className={`relative overflow-hidden p-8 border border-slate-800/60 rounded-2xl bg-slate-950/20 backdrop-blur-md shadow-2xl flex-1 ${

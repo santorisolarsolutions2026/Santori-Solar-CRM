@@ -69,49 +69,58 @@ export async function GET(req: Request) {
 
     // 1. Role-based visibility enforcement
     if (!hasViewAll) {
+      const { getSubordinateIds, getAncestorIds } = await import('@/lib/hierarchy');
+      const subordinateIds = await getSubordinateIds(userPayload.id);
+      const ancestorIds = await getAncestorIds(userPayload.id);
+      const allowedIds = [userPayload.id, ...subordinateIds, ...ancestorIds];
+
+      const hierarchyCondition: Prisma.LeadWhereInput = {
+        OR: [
+          { assignedConsultantId: { in: allowedIds } },
+          { assignedTlId: { in: allowedIds } },
+          { assignedManagerId: { in: allowedIds } },
+          { createdById: userPayload.id },
+          { assignedTlId: null, assignedConsultantId: null }, // view unassigned leads
+          {
+            order: {
+              status: 'draft',
+              rejectionReason: { not: null },
+              submittedById: userPayload.id,
+            }
+          }
+        ]
+      };
+
       if (baseRole === 'finance') {
-        // Finance sees only leads at Stage 13+ (Sale Done) by default
+        // Finance sees only leads at Stage 13+ (Sale Done) by default AND hierarchy matches
         if (filteredStatuses.length === 0) {
-          andConditions.push({ status: { in: [13] } });
+          andConditions.push({
+            status: { in: [13] },
+            ...hierarchyCondition
+          });
+        } else {
+          andConditions.push(hierarchyCondition);
         }
       } else if (baseRole === 'operations') {
-        // Operations sees only leads with orders processed by finance by default
+        // Operations sees only leads with orders processed by finance by default AND hierarchy matches
         if (filteredStatuses.length === 0) {
           andConditions.push({
             status: 13,
             order: {
               status: { in: ['finance_verified', 'ops_assigned', 'completed'] },
-            }
+            },
+            ...hierarchyCondition
           });
         } else {
-          // If they filtered by status, they still only see leads with orders
+          // If they filtered by status, they still only see leads with orders AND hierarchy matches
           andConditions.push({
-            order: { isNot: null }
+            order: { isNot: null },
+            ...hierarchyCondition
           });
         }
       } else {
-        // Enforce hierarchy-based visibility
-        const { getSubordinateIds, getAncestorIds } = await import('@/lib/hierarchy');
-        const subordinateIds = await getSubordinateIds(userPayload.id);
-        const ancestorIds = await getAncestorIds(userPayload.id);
-        const allowedIds = [userPayload.id, ...subordinateIds, ...ancestorIds];
-
-        andConditions.push({
-          OR: [
-            { assignedConsultantId: { in: allowedIds } },
-            { assignedTlId: { in: allowedIds } },
-            { assignedManagerId: { in: allowedIds } },
-            { createdById: userPayload.id },
-            { assignedTlId: null, assignedConsultantId: null }, // view unassigned leads
-            {
-              order: {
-                status: 'draft',
-                rejectionReason: { not: null },
-                submittedById: userPayload.id,
-              }
-            }
-          ]
-        });
+        // Sales/PSA
+        andConditions.push(hierarchyCondition);
       }
     }
 
@@ -406,10 +415,18 @@ export async function POST(req: Request) {
 
     // Resolve assignments hierarchy
     let finalConsultantId = (assignedConsultantId && !isNaN(parseInt(assignedConsultantId, 10))) ? parseInt(assignedConsultantId, 10) : null;
-    let finalTlId = (assignedTlId && !isNaN(parseInt(assignedTlId, 10))) ? parseInt(assignedTlId, 10) : tlId;
-    let finalManagerId = (assignedManagerId && !isNaN(parseInt(assignedManagerId, 10))) ? parseInt(assignedManagerId, 10) : managerId;
+    let finalTlId = (assignedTlId && !isNaN(parseInt(assignedTlId, 10))) ? parseInt(assignedTlId, 10) : null;
+    let finalManagerId = (assignedManagerId && !isNaN(parseInt(assignedManagerId, 10))) ? parseInt(assignedManagerId, 10) : null;
 
-    if (finalConsultantId && !assignedTlId && !assignedManagerId) {
+    // If no assignment was explicitly sent, fall back to creator's TL/Manager if applicable
+    if (!finalConsultantId && !finalTlId && !finalManagerId) {
+      finalTlId = tlId;
+      finalManagerId = managerId;
+    }
+
+    if (finalConsultantId) {
+      finalTlId = null;
+      finalManagerId = null;
       // Auto-resolve if consultant is assigned and TL/Manager are not explicitly chosen
       const consUser = await prisma.user.findUnique({
         where: { id: finalConsultantId },
@@ -423,13 +440,18 @@ export async function POST(req: Request) {
         });
         finalManagerId = tlUser?.reportsTo || null;
       }
-    } else if (finalTlId && !assignedManagerId) {
+    } else if (finalTlId) {
+      finalConsultantId = null;
+      finalManagerId = null;
       // Auto-resolve if TL is assigned and Manager is not explicitly chosen
       const tlUser = await prisma.user.findUnique({
         where: { id: finalTlId },
         select: { reportsTo: true },
       });
       finalManagerId = tlUser?.reportsTo || null;
+    } else if (finalManagerId) {
+      finalConsultantId = null;
+      finalTlId = null;
     }
 
     let parsedLoadKw = null;

@@ -39,6 +39,56 @@ export default function NewLeadPage() {
   // List of active employees for allocation selectors
   const [employees, setEmployees] = useState<any[]>([]);
 
+  const [selectedAssigneeId, setSelectedAssigneeId] = useState('');
+
+  useEffect(() => {
+    const val = form.assignedConsultantId || form.assignedTlId || form.assignedManagerId;
+    if (val) {
+      setSelectedAssigneeId(val);
+    }
+  }, [form.assignedConsultantId, form.assignedTlId, form.assignedManagerId]);
+
+  const handleSelectAssignee = (userIdStr: string) => {
+    setSelectedAssigneeId(userIdStr);
+    if (!userIdStr) {
+      setForm((prev) => ({
+        ...prev,
+        assignedManagerId: '',
+        assignedTlId: '',
+        assignedConsultantId: '',
+      }));
+      return;
+    }
+
+    const userId = parseInt(userIdStr, 10);
+    const targetUser = employees.find(u => u.id === userId);
+    if (!targetUser) return;
+
+    const level = targetUser.designation?.level ?? 6;
+    if (level <= 3) {
+      setForm((prev) => ({
+        ...prev,
+        assignedManagerId: userIdStr,
+        assignedTlId: '',
+        assignedConsultantId: '',
+      }));
+    } else if (level === 4) {
+      setForm((prev) => ({
+        ...prev,
+        assignedManagerId: '',
+        assignedTlId: userIdStr,
+        assignedConsultantId: '',
+      }));
+    } else {
+      setForm((prev) => ({
+        ...prev,
+        assignedManagerId: '',
+        assignedTlId: '',
+        assignedConsultantId: userIdStr,
+      }));
+    }
+  };
+
   // Filter Sales & Marketing department users (and admin)
   const isSalesOrAdmin = (emp: any) => {
     const deptName = emp.department?.name || '';
@@ -441,58 +491,28 @@ export default function NewLeadPage() {
             </div>
 
             {(hasPermission('leads:assign') || user?.role === 'admin' || user?.role === 'director' || user?.role?.startsWith('admin:')) ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                    Assign to Manager
-                  </label>
-                  <select
-                    value={form.assignedManagerId}
-                    onChange={(e) => setForm({ ...form, assignedManagerId: e.target.value })}
-                    className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-350 text-xs focus:ring-amber-500"
-                  >
-                    <option value="">Select Manager</option>
-                    {managers.map((emp) => (
-                      <option key={emp.id} value={emp.id}>
-                        {emp.name} ({emp.designation?.name || emp.role.toUpperCase()})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                    Assign to TL
-                  </label>
-                  <select
-                    value={form.assignedTlId}
-                    onChange={(e) => setForm({ ...form, assignedTlId: e.target.value })}
-                    className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-350 text-xs focus:ring-amber-500"
-                  >
-                    <option value="">Select Team Leader</option>
-                    {tls.map((emp) => (
-                      <option key={emp.id} value={emp.id}>
-                        {emp.name} ({emp.designation?.name || emp.role.toUpperCase()})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                    Assign to Consultant
-                  </label>
-                  <select
-                    value={form.assignedConsultantId}
-                    onChange={(e) => setForm({ ...form, assignedConsultantId: e.target.value })}
-                    className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-350 text-xs focus:ring-amber-500"
-                  >
-                    <option value="">Select Consultant</option>
-                    {consultants.map((emp) => (
-                      <option key={emp.id} value={emp.id}>
-                        {emp.name} ({emp.designation?.name || emp.role.toUpperCase()})
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                  Assign Sales or PSA Operator
+                </label>
+                <select
+                  value={selectedAssigneeId}
+                  onChange={(e) => handleSelectAssignee(e.target.value)}
+                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-350 text-xs focus:ring-amber-500"
+                >
+                  <option value="">Select Member</option>
+                  {employees.filter((emp) => {
+                    const deptName = (emp.department?.name || '').toLowerCase();
+                    const roleLower = (emp.role || '').toLowerCase();
+                    const isSalesOrPsaDept = deptName.includes('sales') || deptName.includes('marketing') || deptName.includes('psa');
+                    const isSalesOrPsaRole = roleLower.includes('sales') || roleLower.includes('psa') || roleLower.includes('consultant');
+                    return isSalesOrPsaDept || isSalesOrPsaRole;
+                  }).map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.name} ({emp.department?.name || 'Shared'} - {emp.designation?.name || emp.role.toUpperCase()})
+                    </option>
+                  ))}
+                </select>
               </div>
             ) : (
               <div className="p-3 bg-slate-950/40 border border-slate-900 rounded-lg text-slate-400 text-xs italic">
