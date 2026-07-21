@@ -647,6 +647,181 @@ const getVisibleMembers = (currentUser: any, allMembers: TeamMember[]): TeamMemb
   return allMembers.filter(m => m.id === currentUser.id || descendants.has(m.id));
 };
 
+interface DesignationTreeNode {
+  id: number;
+  name: string;
+  level: number;
+  departmentId: number | null;
+  departmentName: string;
+  defaultPermissionsCount: number;
+  children: DesignationTreeNode[];
+}
+
+const buildDesignationHierarchyTree = (
+  designations: any[],
+  departments: any[]
+): DesignationTreeNode[] => {
+  // Map designations to tree nodes
+  const nodes: DesignationTreeNode[] = designations.map((d) => {
+    const dept = departments.find((dept) => dept.id === d.departmentId);
+    let defaultPermsCount = 0;
+    try {
+      const perms = d.permissions ? (typeof d.permissions === 'string' ? d.permissions.split(',').filter(Boolean) : d.permissions) : [];
+      defaultPermsCount = Array.isArray(perms) ? perms.length : 0;
+    } catch {
+      defaultPermsCount = 0;
+    }
+    return {
+      id: d.id,
+      name: d.name,
+      level: d.level,
+      departmentId: d.departmentId,
+      departmentName: dept ? dept.name : 'Shared',
+      defaultPermissionsCount: defaultPermsCount,
+      children: [],
+    };
+  });
+
+  const roots: DesignationTreeNode[] = [];
+
+  // For each node, find its parent and link it
+  nodes.forEach((node) => {
+    if (node.level === 0) {
+      roots.push(node);
+      return;
+    }
+
+    // Find parent: same department first, then Shared, with level < node.level and maximized level
+    let parentNode: DesignationTreeNode | null = null;
+
+    // 1. Same department candidates
+    if (node.departmentId !== null) {
+      const sameDeptCandidates = nodes.filter(
+        (n) => n.departmentId === node.departmentId && n.level < node.level
+      );
+      if (sameDeptCandidates.length > 0) {
+        sameDeptCandidates.sort((a, b) => b.level - a.level); // sort descending to get the highest level
+        parentNode = sameDeptCandidates[0];
+      }
+    }
+
+    // 2. Shared candidates fallback
+    if (!parentNode) {
+      const sharedCandidates = nodes.filter(
+        (n) => n.departmentId === null && n.level < node.level
+      );
+      if (sharedCandidates.length > 0) {
+        sharedCandidates.sort((a, b) => b.level - a.level);
+        parentNode = sharedCandidates[0];
+      }
+    }
+
+    if (parentNode) {
+      parentNode.children.push(node);
+    } else {
+      roots.push(node);
+    }
+  });
+
+  return roots;
+};
+
+const DesignationTreeNodeComponent = ({
+  node,
+  onEdit,
+}: {
+  node: DesignationTreeNode;
+  onEdit?: (designation: any) => void;
+}) => {
+  const hasChildren = node.children && node.children.length > 0;
+
+  return (
+    <div className="flex flex-col items-center select-none animate-fade-in">
+      {/* Node Card */}
+      <div 
+        onClick={() => onEdit?.(node)}
+        className="group relative flex flex-col gap-2.5 p-3.5 bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/40 rounded-xl transition-all duration-300 cursor-pointer shadow-lg w-64 transform hover:-translate-y-0.5 hover:shadow-amber-500/5"
+      >
+        <div className="flex items-center gap-3">
+          {/* Level indicators as color badge */}
+          <div className={`w-9.5 h-9.5 rounded-xl bg-slate-950 border-2 flex flex-col items-center justify-center text-slate-350 font-extrabold text-[10px] uppercase shadow-inner shrink-0 ${
+            getLevelBorderColor(node.level)
+          }`}>
+            <span className="text-[7px] text-slate-500 font-bold block leading-none">LVL</span>
+            <span className="text-xs font-extrabold text-white block mt-0.5 leading-none">{node.level}</span>
+          </div>
+
+          {/* Info */}
+          <div className="min-w-0 flex-1">
+            <h4 className="text-xs font-extrabold text-white leading-none mb-1 group-hover:text-amber-450 transition-colors truncate">
+              {node.name}
+            </h4>
+            <div className="flex items-center gap-1.5 flex-wrap mt-1">
+              <span className="text-[8px] bg-slate-950 border border-slate-800/80 text-slate-400 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
+                {node.departmentName}
+              </span>
+              <span className="text-slate-700 text-[10px]">•</span>
+              <span className="text-[8px] bg-amber-500/5 border border-amber-500/10 text-amber-400/80 px-1.5 py-0.5 rounded font-bold font-mono">
+                {node.defaultPermissionsCount} Defaults
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Edit details hover tip */}
+        <div className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <span className="text-[7px] font-bold text-amber-500 uppercase tracking-widest bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+            Edit
+          </span>
+        </div>
+      </div>
+
+      {/* Connection line down to children container (3px slate-700) */}
+      {hasChildren && (
+        <div className="w-[3px] h-6 bg-slate-700" />
+      )}
+
+      {/* Children container with connecting lines */}
+      {hasChildren && (
+        <div className="relative flex pt-0 justify-center">
+          {node.children.map((child, index) => {
+            const isFirst = index === 0;
+            const isLast = index === node.children.length - 1;
+            const hasMultiple = node.children.length > 1;
+
+            return (
+              <div key={child.id} className="relative flex flex-col items-center px-4 pt-6">
+                {/* Horizontal connection line segments */}
+                {hasMultiple && (
+                  <>
+                    {isFirst && (
+                      <div className="absolute top-0 left-1/2 right-0 h-[3px] bg-slate-700" />
+                    )}
+                    {isLast && (
+                      <div className="absolute top-0 left-0 right-1/2 h-[3px] bg-slate-700" />
+                    )}
+                    {!isFirst && !isLast && (
+                      <div className="absolute top-0 left-0 right-0 h-[3px] bg-slate-700" />
+                    )}
+                  </>
+                )}
+
+                {/* Vertical line going down from the horizontal bar to the child card */}
+                <div className="absolute top-0 left-1/2 w-[3px] h-6 bg-slate-700 -translate-x-1/2" />
+                
+                <DesignationTreeNodeComponent
+                  node={child}
+                  onEdit={onEdit}
+                />
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function TeamManagementPage() {
 
 
@@ -1262,6 +1437,14 @@ export default function TeamManagementPage() {
   const [designationName, setDesignationName] = useState('');
   const [designationLevel, setDesignationLevel] = useState(5);
   const [designationDeptId, setDesignationDeptId] = useState('');
+  
+  // Custom Toggles for Designation Simplification and Org Tree Navigation
+  const [designationsViewMode, setDesignationsViewMode] = useState<'level' | 'department'>('level');
+  const [desigTreeScale, setDesigTreeScale] = useState<number>(1);
+  const [desigPan, setDesigPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isDesigDraggingCanvas, setIsDesigDraggingCanvas] = useState<boolean>(false);
+  const [desigDragStart, setDesigDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isDesigTreeFullScreen, setIsDesigTreeFullScreen] = useState<boolean>(false);
 
   // Edit Other Member states (for admin/director/sales_head)
   const [editMemberForm, setEditMemberForm] = useState({
@@ -1412,6 +1595,98 @@ export default function TeamManagementPage() {
       }
     };
   }, [isDraggingCanvas, dragStart, pan]);
+
+  const desigRequestRef = React.useRef<number | null>(null);
+
+  // Designation Canvas drag-to-scroll (panning) mouse and touch event handlers
+  const handleDesigMouseDown = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (
+      target.closest('button') || 
+      target.closest('select') || 
+      target.closest('input') || 
+      target.closest('.group')
+    ) {
+      return;
+    }
+
+    setIsDesigDraggingCanvas(true);
+    setDesigDragStart({
+      x: e.clientX - desigPan.x,
+      y: e.clientY - desigPan.y
+    });
+  };
+
+  const handleDesigTouchStart = (e: React.TouchEvent) => {
+    const target = e.target as HTMLElement;
+    if (
+      target.closest('button') || 
+      target.closest('select') || 
+      target.closest('input') || 
+      target.closest('.group')
+    ) {
+      return;
+    }
+    if (e.touches.length === 1) {
+      setIsDesigDraggingCanvas(true);
+      setDesigDragStart({
+        x: e.touches[0].clientX - desigPan.x,
+        y: e.touches[0].clientY - desigPan.y
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (!isDesigDraggingCanvas) return;
+
+    const handleWindowMouseMove = (e: MouseEvent) => {
+      const newX = e.clientX - desigDragStart.x;
+      const newY = e.clientY - desigDragStart.y;
+
+      if (desigRequestRef.current) {
+        cancelAnimationFrame(desigRequestRef.current);
+      }
+
+      desigRequestRef.current = requestAnimationFrame(() => {
+        setDesigPan({ x: newX, y: newY });
+      });
+    };
+
+    const handleWindowTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        const newX = e.touches[0].clientX - desigDragStart.x;
+        const newY = e.touches[0].clientY - desigDragStart.y;
+
+        if (desigRequestRef.current) {
+          cancelAnimationFrame(desigRequestRef.current);
+        }
+
+        desigRequestRef.current = requestAnimationFrame(() => {
+          setDesigPan({ x: newX, y: newY });
+        });
+      }
+    };
+
+    const handleWindowMouseUp = () => {
+      setIsDesigDraggingCanvas(false);
+    };
+
+    window.addEventListener('mousemove', handleWindowMouseMove, { passive: true });
+    window.addEventListener('mouseup', handleWindowMouseUp, { passive: true });
+    window.addEventListener('touchmove', handleWindowTouchMove, { passive: true });
+    window.addEventListener('touchend', handleWindowMouseUp, { passive: true });
+
+    return () => {
+      window.removeEventListener('mousemove', handleWindowMouseMove);
+      window.removeEventListener('mouseup', handleWindowMouseUp);
+      window.removeEventListener('touchmove', handleWindowTouchMove);
+      window.removeEventListener('touchend', handleWindowMouseUp);
+      if (desigRequestRef.current) {
+        cancelAnimationFrame(desigRequestRef.current);
+        desigRequestRef.current = null;
+      }
+    };
+  }, [isDesigDraggingCanvas, desigDragStart, desigPan]);
 
 
 
@@ -4085,48 +4360,119 @@ export default function TeamManagementPage() {
               <div className="p-6 overflow-y-auto flex-1 grid grid-cols-1 lg:grid-cols-5 gap-6">
                 {/* Simplified Org Hierarchy Tree */}
                 <div className="lg:col-span-3 bg-slate-950/40 p-5 border border-slate-850 rounded-xl space-y-4 max-h-[70vh] overflow-y-auto">
-                  <div className="border-b border-slate-800/80 pb-3 flex justify-between items-center">
+                  <div className="border-b border-slate-800/80 pb-3 flex flex-wrap justify-between items-center gap-3">
                     <div>
                       <h4 className="text-xs font-bold text-white uppercase tracking-wider">Designation Tiers & Reporting</h4>
-                      <p className="text-[10px] text-slate-500">Designations grouped by reporting authority level (Level 0 to Level 6).</p>
+                      <p className="text-[10px] text-slate-500">
+                        {designationsViewMode === 'level' 
+                          ? 'Designations grouped by reporting authority level (Level 0 to Level 6).' 
+                          : 'Designations grouped by department and sorted by hierarchy.'}
+                      </p>
+                    </div>
+                    {/* View Switcher Toggle */}
+                    <div className="flex bg-slate-950/60 border border-slate-800 p-0.5 rounded-lg">
+                      <button
+                        type="button"
+                        onClick={() => setDesignationsViewMode('level')}
+                        className={`px-2 py-1 rounded-md text-[9px] font-bold uppercase transition-all cursor-pointer ${
+                          designationsViewMode === 'level' ? 'bg-amber-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        Group By Level
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDesignationsViewMode('department')}
+                        className={`px-2 py-1 rounded-md text-[9px] font-bold uppercase transition-all cursor-pointer ${
+                          designationsViewMode === 'department' ? 'bg-amber-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        Group By Dept
+                      </button>
                     </div>
                   </div>
 
-                  <div className="space-y-3.5">
-                    {[
-                      { level: 0, label: 'Level 0: Admin 👑', color: 'border-red-500/20 text-red-400 bg-red-500/5' },
-                      { level: 1, label: 'Level 1: Department Heads 👔', color: 'border-indigo-500/20 text-indigo-400 bg-indigo-500/5' },
-                      { level: 2, label: 'Level 2: Senior Managers 📈', color: 'border-purple-500/20 text-purple-400 bg-purple-500/5' },
-                      { level: 3, label: 'Level 3: Managers 🏢', color: 'border-amber-500/20 text-amber-400 bg-amber-500/5' },
-                      { level: 4, label: 'Level 4: Team Leaders (TL) 👥', color: 'border-cyan-500/20 text-cyan-400 bg-cyan-500/5' },
-                      { level: 5, label: 'Level 5: Consultants 🛠️', color: 'border-emerald-500/20 text-emerald-400 bg-emerald-500/5' },
-                      { level: 6, label: 'Level 6: PSA Consultants 📞', color: 'border-pink-500/20 text-pink-400 bg-pink-500/5' },
-                    ].map((levelItem) => {
-                      const levelDesigs = designationsList.filter(d => d.level === levelItem.level);
-                      return (
-                        <div key={levelItem.level} className={`flex flex-col sm:flex-row gap-3 items-start sm:items-center border rounded-xl p-3.5 transition-all hover:bg-slate-900/40 ${levelItem.color}`}>
-                          <div className="w-full sm:w-44 shrink-0">
-                            <span className="text-[10px] font-extrabold uppercase tracking-wider block">{levelItem.label}</span>
+                  {designationsViewMode === 'level' ? (
+                    <div className="space-y-3.5">
+                      {[
+                        { level: 0, label: 'Level 0: Admin 👑', color: 'border-red-500/20 text-red-400 bg-red-500/5' },
+                        { level: 1, label: 'Level 1: Department Heads 👔', color: 'border-indigo-500/20 text-indigo-400 bg-indigo-500/5' },
+                        { level: 2, label: 'Level 2: Senior Managers 📈', color: 'border-purple-500/20 text-purple-400 bg-purple-500/5' },
+                        { level: 3, label: 'Level 3: Managers 🏢', color: 'border-amber-500/20 text-amber-400 bg-amber-500/5' },
+                        { level: 4, label: 'Level 4: Team Leaders (TL) 👥', color: 'border-cyan-500/20 text-cyan-400 bg-cyan-500/5' },
+                        { level: 5, label: 'Level 5: Consultants 🛠️', color: 'border-emerald-500/20 text-emerald-400 bg-emerald-500/5' },
+                        { level: 6, label: 'Level 6: PSA Consultants 📞', color: 'border-pink-500/20 text-pink-400 bg-pink-500/5' },
+                      ].map((levelItem) => {
+                        const levelDesigs = designationsList.filter(d => d.level === levelItem.level);
+                        return (
+                          <div key={levelItem.level} className={`flex flex-col sm:flex-row gap-3 items-start sm:items-center border rounded-xl p-3.5 transition-all hover:bg-slate-900/40 ${levelItem.color}`}>
+                            <div className="w-full sm:w-44 shrink-0">
+                              <span className="text-[10px] font-extrabold uppercase tracking-wider block">{levelItem.label}</span>
+                            </div>
+                            <div className="flex-1 flex flex-wrap gap-2">
+                              {levelDesigs.length === 0 ? (
+                                <span className="text-[10px] text-slate-500 italic">No designations at this level</span>
+                              ) : (
+                                levelDesigs.map(d => {
+                                  const deptName = departmentsList.find(dept => dept.id === d.departmentId)?.name || 'Shared';
+                                  return (
+                                    <span key={d.id} className="text-[10px] bg-slate-950 border border-slate-800 px-2.5 py-1.5 rounded-lg text-white font-semibold flex items-center gap-1.5 shadow-sm">
+                                      <span>{d.name}</span>
+                                      <span className="text-[8px] bg-slate-900 text-slate-400 px-1 rounded uppercase font-bold">{deptName}</span>
+                                    </span>
+                                  );
+                                })
+                              )}
+                            </div>
                           </div>
-                          <div className="flex-1 flex flex-wrap gap-2">
-                            {levelDesigs.length === 0 ? (
-                              <span className="text-[10px] text-slate-500 italic">No designations at this level</span>
-                            ) : (
-                              levelDesigs.map(d => {
-                                const deptName = departmentsList.find(dept => dept.id === d.departmentId)?.name || 'Shared';
-                                return (
-                                  <span key={d.id} className="text-[10px] bg-slate-950 border border-slate-800 px-2.5 py-1.5 rounded-lg text-white font-semibold flex items-center gap-1.5 shadow-sm">
-                                    <span>{d.name}</span>
-                                    <span className="text-[8px] bg-slate-900 text-slate-400 px-1 rounded uppercase font-bold">{deptName}</span>
-                                  </span>
-                                );
-                              })
-                            )}
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="space-y-3.5">
+                      {[
+                        { id: null, name: 'Shared / General Admin 🌐', color: 'border-red-500/20 text-red-400 bg-red-500/5' },
+                        ...departmentsList.map(dept => {
+                          const deptColors: { [key: string]: string } = {
+                            'sales': 'border-amber-500/20 text-amber-400 bg-amber-500/5',
+                            'finance': 'border-purple-500/20 text-purple-400 bg-purple-500/5',
+                            'operations': 'border-indigo-500/20 text-indigo-400 bg-indigo-500/5',
+                            'it': 'border-cyan-500/20 text-cyan-400 bg-cyan-500/5',
+                          };
+                          return {
+                            id: dept.id,
+                            name: `${dept.name} Department 🏢`,
+                            color: deptColors[dept.name.toLowerCase().trim()] || 'border-slate-800 text-slate-300 bg-slate-900/10'
+                          };
+                        })
+                      ].map((deptItem) => {
+                        const deptDesigs = designationsList.filter(d => d.departmentId === deptItem.id)
+                          .sort((a, b) => a.level - b.level);
+
+                        return (
+                          <div key={deptItem.id ?? 'shared'} className={`flex flex-col sm:flex-row gap-3 items-start sm:items-center border rounded-xl p-3.5 transition-all hover:bg-slate-900/40 ${deptItem.color}`}>
+                            <div className="w-full sm:w-44 shrink-0">
+                              <span className="text-[10px] font-extrabold uppercase tracking-wider block">{deptItem.name}</span>
+                            </div>
+                            <div className="flex-1 flex flex-wrap gap-2">
+                              {deptDesigs.length === 0 ? (
+                                <span className="text-[10px] text-slate-500 italic">No designations in this department</span>
+                              ) : (
+                                deptDesigs.map(d => {
+                                  return (
+                                    <span key={d.id} className="text-[10px] bg-slate-950 border border-slate-800 px-2.5 py-1.5 rounded-lg text-white font-semibold flex items-center gap-1.5 shadow-sm">
+                                      <span>{d.name}</span>
+                                      <span className="text-[8px] bg-slate-900 text-amber-400 px-1 rounded font-extrabold uppercase tracking-wider">Level {d.level}</span>
+                                    </span>
+                                  );
+                                })
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 {/* Management Form and List */}
@@ -4356,19 +4702,113 @@ export default function TeamManagementPage() {
 
                 </div>
               </div>
-            ) : (
-              <div className="p-6 overflow-y-auto flex-1 bg-slate-950/20 border-t border-slate-850/80">
-                <div className="max-w-4xl mx-auto space-y-4">
-                  <div className="border-b border-slate-800 pb-3">
-                    <h4 className="text-xs font-bold text-white uppercase tracking-wider">Company Organization tree</h4>
-                    <p className="text-[10px] text-slate-500">Interactive visual tree showing reporting lines across all departments recursively.</p>
+            ) : (() => {
+              const desigRoots = buildDesignationHierarchyTree(designationsList, departmentsList);
+
+              const handleNodeEdit = (nodeItem: DesignationTreeNode) => {
+                const fullDesig = designationsList.find(d => d.id === nodeItem.id);
+                if (fullDesig) {
+                  setEditingDesignation(fullDesig);
+                  setDesignationName(fullDesig.name);
+                  setDesignationLevel(fullDesig.level);
+                  setDesignationDeptId(fullDesig.departmentId ? String(fullDesig.departmentId) : '');
+                  setDesignationPermissions(fullDesig.permissions ? (typeof fullDesig.permissions === 'string' ? fullDesig.permissions.split(',').map((p: any) => p.trim()) : fullDesig.permissions) : []);
+                  setModalTab('designations');
+                }
+              };
+
+              return (
+                <div className={isDesigTreeFullScreen ? "fixed inset-0 z-[100] bg-[#090d16] p-6 flex flex-col space-y-6 overflow-hidden animate-fade-in" : "p-6 flex-1 flex flex-col space-y-4 min-h-[60vh] overflow-hidden bg-slate-950/20 border-t border-slate-850/80"}>
+                  {/* Controls Panel */}
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#111625]/60 border border-slate-800 p-4 rounded-xl shadow-xl">
+                    <div>
+                      <h4 className="text-xs font-bold text-white uppercase tracking-wider">Visual Designation Hierarchy Tree</h4>
+                      <p className="text-[10px] text-slate-400">Interactive visual tree representing the company designations and reporting flow. Click a node to edit.</p>
+                    </div>
+
+                    {/* Zoom & Fullscreen Controls */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mr-1">Zoom: {Math.round(desigTreeScale * 100)}%</span>
+                      <button
+                        type="button"
+                        onClick={() => setDesigTreeScale(prev => Math.max(0.5, parseFloat((prev - 0.1).toFixed(1))))}
+                        className="p-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 cursor-pointer transition-all hover:bg-slate-850"
+                        title="Zoom Out"
+                      >
+                        <ZoomOut className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDesigTreeScale(1);
+                          setDesigPan({ x: 0, y: 0 });
+                        }}
+                        className="p-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 cursor-pointer transition-all hover:bg-slate-850"
+                        title="Reset View"
+                      >
+                        <Maximize2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDesigTreeScale(prev => Math.min(1.5, parseFloat((prev + 0.1).toFixed(1))))}
+                        className="p-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 cursor-pointer transition-all hover:bg-slate-850"
+                        title="Zoom In"
+                      >
+                        <ZoomIn className="w-3.5 h-3.5" />
+                      </button>
+                      <div className="w-px h-6 bg-slate-800 mx-1" />
+                      <button
+                        type="button"
+                        onClick={() => setIsDesigTreeFullScreen(!isDesigTreeFullScreen)}
+                        className="p-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 cursor-pointer transition-all hover:bg-slate-850"
+                        title={isDesigTreeFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+                      >
+                        {isDesigTreeFullScreen ? <Minimize2 className="w-3.5 h-3.5 text-amber-500" /> : <Maximize2 className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
                   </div>
-                  <div className="p-4 bg-slate-950/45 border border-slate-850 rounded-xl max-h-[60vh] overflow-y-auto">
-                    {renderGlobalHierarchyNodes(members, null)}
+
+                  {/* Panning Canvas Area */}
+                  <div 
+                    onMouseDown={handleDesigMouseDown}
+                    onTouchStart={handleDesigTouchStart}
+                    className={`relative overflow-hidden p-8 border border-slate-800/60 rounded-2xl bg-slate-950/20 backdrop-blur-md shadow-2xl flex-1 ${
+                      isDesigTreeFullScreen ? 'h-full max-h-none' : 'max-h-[60vh] min-h-[45vh]'
+                    } ${
+                      isDesigDraggingCanvas ? 'cursor-grabbing select-none' : 'cursor-grab'
+                    }`}
+                  >
+                    {desigRoots.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center p-12 text-center space-y-3">
+                        <SlidersHorizontal className="w-12 h-12 text-slate-650" />
+                        <h3 className="text-sm font-bold text-white uppercase tracking-wider">No Designations Created</h3>
+                        <p className="text-xs text-slate-450 max-w-sm">
+                          Ensure you have defined designations with appropriate levels.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="animate-fade-in-up w-max mx-auto h-full flex items-center justify-center">
+                        <div 
+                          className={`origin-top ${isDesigDraggingCanvas ? '' : 'transition-transform duration-300 ease-out'}`}
+                          style={{ transform: `translate(${desigPan.x}px, ${desigPan.y}px) scale(${desigTreeScale})`, transformOrigin: 'top center' }}
+                        >
+                          <div className="flex gap-12 justify-center min-w-max mx-auto">
+                            {desigRoots.map((rootNode) => (
+                              <div key={rootNode.id} className="flex flex-col items-center">
+                                <DesignationTreeNodeComponent
+                                  node={rootNode}
+                                  onEdit={handleNodeEdit}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             <div className="p-6 border-t border-slate-800 bg-slate-900/10 flex justify-end">
               <button
