@@ -210,14 +210,25 @@ export async function PATCH(
     };
 
     if (permissions !== undefined) {
-      const itKeys = Object.keys(ALL_PERMISSIONS_MAP).filter((k: string) => ALL_PERMISSIONS_MAP[k] === 'IT');
       const cleanNewPerms = permissions.split(',').map((p: string) => p.trim()).filter((p: string) => p !== 'none');
-      const itCount = cleanNewPerms.filter((k: string) => itKeys.includes(k)).length;
-      if (itCount > 0 && itCount < itKeys.length) {
-        return NextResponse.json({
-          success: false,
-          message: 'Validation failed. IT permissions must be granted either all together or none at all.'
-        }, { status: 400 });
+      const targetDeptIdForCheck = departmentId !== undefined ? (departmentId ? parseInt(departmentId, 10) : null) : user.departmentId;
+      let isTargetIT = false;
+      if (targetDeptIdForCheck) {
+        const targetDept = await prisma.department.findUnique({ where: { id: targetDeptIdForCheck } });
+        if (targetDept?.name === 'IT') {
+          isTargetIT = true;
+        }
+      }
+
+      if (isTargetIT) {
+        const itKeys = Object.keys(ALL_PERMISSIONS_MAP).filter((k: string) => ALL_PERMISSIONS_MAP[k] === 'IT');
+        const itCount = cleanNewPerms.filter((k: string) => itKeys.includes(k)).length;
+        if (itCount > 0 && itCount < itKeys.length) {
+          return NextResponse.json({
+            success: false,
+            message: 'Validation failed. IT permissions must be granted either all together or none at all.'
+          }, { status: 400 });
+        }
       }
 
       if (!isEditingUserAdmin) {
