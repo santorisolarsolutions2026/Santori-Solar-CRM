@@ -575,7 +575,7 @@ export default function AuthenticatedLayout({
       name: 'Attendance',
       path: '/attendance',
       icon: UserCheck,
-      permission: 'attendance:view',
+      permission: null,
     },
     {
       name: 'Santori Team',

@@ -77,6 +77,18 @@ export default function AttendancePage() {
   const [monthlyLoading, setMonthlyLoading] = useState(false);
 
   // Holidays and Overrides states
+  const isIT = user?.department?.name?.toLowerCase().trim() === 'it';
+  const isAdmin = user?.role === 'admin' || user?.role?.startsWith('admin:');
+  const isSupervisor = isAdmin || isIT || (employees && employees.filter((e: any) => e.id !== user?.id).length > 0);
+
+  useEffect(() => {
+    if (user && employees.length > 0) {
+      const hasSubordinates = employees.filter((e: any) => e.id !== user.id).length > 0;
+      if (!isAdmin && !isIT && !hasSubordinates) {
+        setActiveTab('personal');
+      }
+    }
+  }, [user, employees, isAdmin, isIT]);
   const [holidays, setHolidays] = useState<any[]>([]);
   const [showHolidayModal, setShowHolidayModal] = useState(false);
   const [newHolidayName, setNewHolidayName] = useState('');
@@ -406,7 +418,7 @@ export default function AttendancePage() {
     }
   };
 
-  const hasAttendanceAccess = user?.role === 'admin' || user?.role?.startsWith('admin:') || hasPermission('attendance:view');
+  const hasAttendanceAccess = true;
 
   if (!hasAttendanceAccess) {
     return (
@@ -537,15 +549,17 @@ export default function AttendancePage() {
           )}
 
           <div className="flex bg-slate-950/60 border border-slate-800 p-1 rounded-xl">
-            <button
-              type="button"
-              onClick={() => setActiveTab('team')}
-              className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'team' ? 'bg-amber-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Team Roster
-            </button>
+            {isSupervisor && (
+              <button
+                type="button"
+                onClick={() => setActiveTab('team')}
+                className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === 'team' ? 'bg-amber-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Team Roster
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setActiveTab('personal')}
