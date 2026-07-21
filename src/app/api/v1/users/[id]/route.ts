@@ -583,6 +583,25 @@ export async function PATCH(
         }
       }
 
+      // Record user change in audit log
+      for (const fieldName of Object.keys(updateData)) {
+        if (fieldName === 'passwordHash') continue;
+        const oldValue = String(user[fieldName as keyof typeof user] ?? '');
+        const newValue = String(updateData[fieldName]);
+        if (oldValue !== newValue) {
+          await tx.auditLog.create({
+            data: {
+              userId: userPayload.id,
+              tableName: 'User',
+              recordId: userId,
+              fieldName: fieldName,
+              oldValue: oldValue,
+              newValue: newValue,
+            }
+          });
+        }
+      }
+
       return res;
     });
 

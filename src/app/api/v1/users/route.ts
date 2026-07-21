@@ -324,6 +324,24 @@ export async function POST(req: Request) {
       },
     });
 
+    await prisma.auditLog.create({
+      data: {
+        userId: userPayload.id,
+        tableName: 'User',
+        recordId: newUser.id,
+        fieldName: 'CREATE',
+        oldValue: null,
+        newValue: JSON.stringify({
+          name: newUser.name,
+          email: newUser.email,
+          role: newUser.role,
+          employeeId: newUser.employeeId,
+          departmentId: newUser.departmentId,
+          designationId: newUser.designationId,
+        }),
+      }
+    });
+
     return NextResponse.json({
       success: true,
       data: {

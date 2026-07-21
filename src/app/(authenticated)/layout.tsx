@@ -21,6 +21,7 @@ import {
   Calendar,
   AlertTriangle,
   ChevronRight,
+  ChevronDown,
   TrendingUp,
   Upload,
   Loader2,
@@ -35,6 +36,7 @@ import {
   Trophy,
   Flag,
   Check,
+  Database,
 } from 'lucide-react';
 import Link from 'next/link';
 import LeaderboardDrawer from '@/components/LeaderboardDrawer';
@@ -76,6 +78,15 @@ export default function AuthenticatedLayout({
   const pathname = usePathname();
   
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
+    workspace: true,
+    hr: true,
+    admin: true,
+  });
+  
+  const toggleGroup = (groupId: string) => {
+    setExpandedGroups(prev => ({ ...prev, [groupId]: !prev[groupId] }));
+  };
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
@@ -546,55 +557,88 @@ export default function AuthenticatedLayout({
   }
 
   // Sidebar navigation configuration based on permission keys
-  const menuItems = [
+  const sidebarGroups = [
     {
-      name: 'Dashboard',
-      path: '/dashboard',
-      icon: LayoutDashboard,
-      permission: null, // always visible
+      id: 'workspace',
+      title: 'Workspace',
+      items: [
+        {
+          name: 'Dashboard',
+          path: '/dashboard',
+          icon: LayoutDashboard,
+          permission: null,
+        },
+        {
+          name: 'Leads Pipeline',
+          path: '/leads',
+          icon: Layers,
+          permission: 'leads:view',
+        },
+        {
+          name: 'Finance & Payments',
+          path: '/finance',
+          icon: CreditCard,
+          permission: 'orders:finance_access',
+        },
+        {
+          name: 'Operations & Installs',
+          path: '/operations',
+          icon: Wrench,
+          permission: 'orders:operations',
+        },
+      ]
     },
     {
-      name: 'Leads Pipeline',
-      path: '/leads',
-      icon: Layers,
-      permission: 'leads:view',
+      id: 'hr',
+      title: 'Team & HR',
+      items: [
+        {
+          name: 'Attendance',
+          path: '/attendance',
+          icon: UserCheck,
+          permission: null,
+        },
+        {
+          name: 'Santori Team',
+          path: '/team',
+          icon: Users,
+          permission: null,
+        },
+      ]
     },
     {
-      name: 'Finance and Payments',
-      path: '/finance',
-      icon: CreditCard,
-      permission: 'orders:finance_access',
-    },
-    {
-      name: 'Operations',
-      path: '/operations',
-      icon: Wrench,
-      permission: 'orders:operations',
-    },
-    {
-      name: 'Attendance',
-      path: '/attendance',
-      icon: UserCheck,
-      permission: null,
-    },
-    {
-      name: 'Santori Team',
-      path: '/team',
-      icon: Users,
-      permission: null,
-    },
-    {
-      name: 'Report & Analytics',
-      path: '/reports',
-      icon: LineChart,
-      permission: 'reports:view',
-    },
+      id: 'admin',
+      title: 'Admin Console',
+      items: [
+        {
+          name: 'Report & Analytics',
+          path: '/reports',
+          icon: LineChart,
+          permission: 'reports:view',
+        },
+        {
+          name: 'System Logs',
+          path: '/logs',
+          icon: Database,
+          permission: 'logs:view_only_it_admin',
+        },
+      ]
+    }
   ];
 
-  const filteredMenuItems = menuItems.filter((item) => {
-    if (!item.permission) return true;
-    return hasPermission(item.permission);
-  });
+  const isCurrentUserAdmin = user?.role === 'admin' || user?.role?.startsWith('admin:');
+  const isITUser = user?.department?.name === 'IT';
+
+  const visibleGroups = sidebarGroups.map(group => {
+    const filteredItems = group.items.filter(item => {
+      if (item.permission === 'logs:view_only_it_admin') {
+        return isCurrentUserAdmin || isITUser;
+      }
+      if (!item.permission) return true;
+      return hasPermission(item.permission);
+    });
+    return { ...group, items: filteredItems };
+  }).filter(group => group.items.length > 0);
 
   const roleLabels: Record<string, { label: string; color: string }> = {
     admin: { label: 'Admin', color: 'bg-red-500/10 text-red-400 border-red-500/20' },
@@ -662,23 +706,47 @@ export default function AuthenticatedLayout({
         </button>
 
         {/* Nav Links */}
-        <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
-          {filteredMenuItems.map((item) => {
-            const isActive = pathname === item.path || pathname.startsWith(item.path + '/');
-            const Icon = item.icon;
+        <nav className="flex-1 px-4 space-y-4 overflow-y-auto">
+          {visibleGroups.map((group) => {
+            const isExpanded = expandedGroups[group.id];
             return (
-              <Link
-                key={item.path}
-                href={item.path}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all group ${
-                  isActive
-                    ? 'bg-gradient-to-r from-amber-500/10 to-transparent text-amber-400 border-l-2 border-amber-500 pl-3.5'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-900/50'
-                }`}
-              >
-                <Icon className={`w-5 h-5 transition-transform group-hover:scale-110 duration-200 ${isActive ? 'text-amber-400' : 'text-slate-400 group-hover:text-slate-200'}`} />
-                <span>{item.name}</span>
-              </Link>
+              <div key={group.id} className="space-y-1">
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(group.id)}
+                  className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-slate-500 hover:text-slate-350 transition-colors select-none text-left cursor-pointer focus:outline-none"
+                >
+                  <span>{group.title}</span>
+                  {isExpanded ? (
+                    <ChevronDown className="w-3 h-3 text-slate-505" />
+                  ) : (
+                    <ChevronRight className="w-3 h-3 text-slate-505" />
+                  )}
+                </button>
+
+                {isExpanded && (
+                  <div className="space-y-0.5 pl-1.5">
+                    {group.items.map((item) => {
+                      const isActive = pathname === item.path || pathname.startsWith(item.path + '/');
+                      const Icon = item.icon;
+                      return (
+                        <Link
+                          key={item.path}
+                          href={item.path}
+                          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all group ${
+                            isActive
+                              ? 'bg-amber-500/10 text-amber-400 border-l-2 border-amber-500 pl-2.5 font-bold shadow-inner'
+                              : 'text-slate-400 hover:text-white hover:bg-slate-905/40'
+                          }`}
+                        >
+                          <Icon className={`w-4 h-4 transition-transform group-hover:scale-105 duration-200 ${isActive ? 'text-amber-400' : 'text-slate-455 group-hover:text-slate-205'}`} />
+                          <span>{item.name}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             );
           })}
         </nav>
@@ -819,24 +887,48 @@ export default function AuthenticatedLayout({
               ) : null}
             </div>
 
-            <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
-              {filteredMenuItems.map((item) => {
-                const isActive = pathname === item.path || pathname.startsWith(item.path + '/');
-                const Icon = item.icon;
+            <nav className="flex-1 px-4 space-y-4 overflow-y-auto">
+              {visibleGroups.map((group) => {
+                const isExpanded = expandedGroups[group.id];
                 return (
-                  <Link
-                    key={item.path}
-                    href={item.path}
-                    onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
-                      isActive
-                        ? 'bg-gradient-to-r from-amber-500/10 to-transparent text-amber-400 border-l-2 border-amber-500'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-900/50'
-                    }`}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span>{item.name}</span>
-                  </Link>
+                  <div key={group.id} className="space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => toggleGroup(group.id)}
+                      className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-slate-500 hover:text-slate-350 transition-colors select-none text-left cursor-pointer focus:outline-none"
+                    >
+                      <span>{group.title}</span>
+                      {isExpanded ? (
+                        <ChevronDown className="w-3 h-3 text-slate-505" />
+                      ) : (
+                        <ChevronRight className="w-3 h-3 text-slate-505" />
+                      )}
+                    </button>
+
+                    {isExpanded && (
+                      <div className="space-y-0.5 pl-1.5">
+                        {group.items.map((item) => {
+                          const isActive = pathname === item.path || pathname.startsWith(item.path + '/');
+                          const Icon = item.icon;
+                          return (
+                            <Link
+                              key={item.path}
+                              href={item.path}
+                              onClick={() => setSidebarOpen(false)}
+                              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all group ${
+                                isActive
+                                  ? 'bg-amber-500/10 text-amber-400 border-l-2 border-amber-500 pl-2.5 font-bold shadow-inner'
+                                  : 'text-slate-400 hover:text-white hover:bg-slate-905/40'
+                              }`}
+                            >
+                              <Icon className={`w-4 h-4 transition-transform group-hover:scale-105 duration-200 ${isActive ? 'text-amber-400' : 'text-slate-455 group-hover:text-slate-205'}`} />
+                              <span>{item.name}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </nav>
@@ -908,7 +1000,7 @@ export default function AuthenticatedLayout({
               <Menu className="w-6 h-6" />
             </button>
             <h2 className="text-lg font-bold text-white tracking-wide">
-              {filteredMenuItems.find((item) => pathname === item.path || pathname.startsWith(item.path + '/'))?.name || 'System Details'}
+              {visibleGroups.flatMap(g => g.items).find((item) => pathname === item.path || pathname.startsWith(item.path + '/'))?.name || 'System Details'}
             </h2>
           </div>
 
