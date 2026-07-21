@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -843,6 +844,11 @@ export default function TeamManagementPage() {
   const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isTreeFullScreen, setIsTreeFullScreen] = useState<boolean>(false);
+  const [isMounted, setIsMounted] = useState<boolean>(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
 
 
@@ -2825,9 +2831,9 @@ export default function TeamManagementPage() {
       };
 
 
-      return (
+      const treeContent = (
 
-        <div className={isTreeFullScreen ? "fixed inset-0 z-[100] bg-[#090d16] p-6 flex flex-col space-y-6 overflow-hidden animate-fade-in" : "space-y-6 animate-fade-in"}>
+        <div className={isTreeFullScreen ? "fixed inset-0 z-[9999] bg-[#090d16] p-6 flex flex-col space-y-6 overflow-hidden animate-fade-in" : "space-y-6 animate-fade-in"}>
           {/* Controls Panel */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#111625]/60 border border-slate-800 p-4 rounded-xl shadow-xl">
             {/* Search Box */}
@@ -3006,6 +3012,11 @@ export default function TeamManagementPage() {
           </div>
         </div>
       );
+
+      if (isTreeFullScreen && isMounted) {
+        return createPortal(treeContent, document.body);
+      }
+      return treeContent;
     })()}
 
 
@@ -4717,8 +4728,8 @@ export default function TeamManagementPage() {
                 }
               };
 
-              return (
-                <div className={isDesigTreeFullScreen ? "fixed inset-0 z-[100] bg-[#090d16] p-6 flex flex-col space-y-6 overflow-hidden animate-fade-in" : "p-6 flex-1 flex flex-col space-y-4 min-h-[60vh] overflow-hidden bg-slate-950/20 border-t border-slate-850/80"}>
+              const desigTreeContent = (
+                <div className={isDesigTreeFullScreen ? "fixed inset-0 z-[9999] bg-[#090d16] p-6 flex flex-col space-y-6 overflow-hidden animate-fade-in" : "p-6 flex-1 flex flex-col space-y-4 min-h-[60vh] overflow-hidden bg-slate-950/20 border-t border-slate-850/80"}>
                   {/* Controls Panel */}
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#111625]/60 border border-slate-800 p-4 rounded-xl shadow-xl">
                     <div>
@@ -4808,6 +4819,11 @@ export default function TeamManagementPage() {
                   </div>
                 </div>
               );
+
+              if (isDesigTreeFullScreen && isMounted) {
+                return createPortal(desigTreeContent, document.body);
+              }
+              return desigTreeContent;
             })()}
 
             <div className="p-6 border-t border-slate-800 bg-slate-900/10 flex justify-end">
