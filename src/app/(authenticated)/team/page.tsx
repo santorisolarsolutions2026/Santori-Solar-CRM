@@ -1603,7 +1603,20 @@ export default function TeamManagementPage() {
       setEditPhone(member.phone || '');
       setEditPhotoPath(member.photograph || '');
       setUpdateError('');
-    } else if (isAdminOrDirectorOrSalesHead) {
+    } else if (isAdminOrDirectorOrSalesHead || canModifySupervisor(member)) {
+      const userDeptName = departmentsList.find(d => d.id === user?.departmentId)?.name || '';
+      const deptLower = userDeptName.toLowerCase().trim();
+      const isAdmin = user?.role === 'admin' || user?.role?.startsWith('admin:');
+
+      if (isAdmin || deptLower === 'it' || !user?.departmentId) {
+        setSelectedPermissionCategory('PSA');
+      } else if (deptLower === 'sales') {
+        setSelectedPermissionCategory('PSA');
+      } else if (deptLower === 'finance') {
+        setSelectedPermissionCategory('Finance');
+      } else if (deptLower === 'operations') {
+        setSelectedPermissionCategory('Operations');
+      }
       if (member.role.includes(':')) {
         const [base, custom] = member.role.split(':');
         setEditCustomRoleText(custom);
@@ -3539,7 +3552,7 @@ export default function TeamManagementPage() {
                         { key: 'Finance', label: 'Finance (Ledger & Verify)', icon: DollarSign },
                         { key: 'Operations', label: 'Operations (Installation)', icon: Hammer },
                         { key: 'IT', label: 'IT & System Admin', icon: Terminal },
-                      ].map((cat) => {
+                      ].filter(cat => isCategoryEditable(cat.key)).map((cat) => {
                         const isActive = selectedPermissionCategory === cat.key;
                         const Icon = cat.icon;
                         return (
