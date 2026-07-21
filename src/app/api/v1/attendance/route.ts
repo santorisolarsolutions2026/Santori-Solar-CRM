@@ -54,10 +54,13 @@ export async function GET(req: Request) {
     const isAdmin = userPayload.role === 'admin' || userPayload.role?.startsWith('admin:') || isITDept;
 
     const userPermissions = await getUserPermissions(userPayload.id);
-    const hasViewAll = userPermissions.includes('team:view') || ['admin', 'director', 'sales_head', 'manager', 'tl', 'psa_tl'].includes(userPayload.role) || isITDept;
-
     const subordinateIds = isAdmin ? [] : await getSubordinateIds(userPayload.id);
     const allowedUserIds = isAdmin ? [] : [userPayload.id, ...subordinateIds];
+
+    const hasViewAll = userPermissions.includes('team:view') || 
+                       ['admin', 'director', 'sales_head', 'manager', 'tl', 'psa_tl'].includes(userPayload.role) || 
+                       isITDept || 
+                       subordinateIds.length > 0;
 
     const where: Prisma.AttendanceWhereInput = {};
 

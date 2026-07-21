@@ -55,6 +55,29 @@ interface TeamRosterItem {
   attendance: AttendanceRecord | null;
 }
 
+const getVisibleEmployees = (currentUser: any, allEmployees: any[]): any[] => {
+  if (!currentUser) return [];
+  const isAdmin = currentUser.role === 'admin' || currentUser.role?.startsWith('admin:') || currentUser.department?.name?.toLowerCase().trim() === 'it';
+  if (isAdmin) return allEmployees;
+
+  const descendants = new Set<number>();
+  const queue: number[] = [currentUser.id];
+
+  while (queue.length > 0) {
+    const currentId = queue.shift()!;
+    allEmployees.forEach(m => {
+      if (m.reportsTo === currentId && !descendants.has(m.id)) {
+        if (currentUser.departmentId === null || m.departmentId === currentUser.departmentId) {
+          descendants.add(m.id);
+          queue.push(m.id);
+        }
+      }
+    });
+  }
+
+  return allEmployees.filter(m => m.id === currentUser.id || descendants.has(m.id));
+};
+
 export default function AttendancePage() {
   const { user, hasPermission } = useAuth();
   const [selectedDate, setSelectedDate] = useState<string>(() => {
@@ -79,16 +102,17 @@ export default function AttendancePage() {
   // Holidays and Overrides states
   const isIT = user?.department?.name?.toLowerCase().trim() === 'it';
   const isAdmin = user?.role === 'admin' || user?.role?.startsWith('admin:');
-  const isSupervisor = isAdmin || isIT || (employees && employees.filter((e: any) => e.id !== user?.id).length > 0);
+  const visibleEmployees = getVisibleEmployees(user, employees);
+  const isSupervisor = isAdmin || isIT || (visibleEmployees && visibleEmployees.filter((e: any) => e.id !== user?.id).length > 0);
 
   useEffect(() => {
     if (user && employees.length > 0) {
-      const hasSubordinates = employees.filter((e: any) => e.id !== user.id).length > 0;
+      const hasSubordinates = visibleEmployees.filter((e: any) => e.id !== user.id).length > 0;
       if (!isAdmin && !isIT && !hasSubordinates) {
         setActiveTab('personal');
       }
     }
-  }, [user, employees, isAdmin, isIT]);
+  }, [user, employees, visibleEmployees, isAdmin, isIT]);
   const [holidays, setHolidays] = useState<any[]>([]);
   const [showHolidayModal, setShowHolidayModal] = useState(false);
   const [newHolidayName, setNewHolidayName] = useState('');
@@ -604,7 +628,7 @@ export default function AttendancePage() {
                 onChange={(e) => setSelectedEmployeeId(e.target.value)}
                 className="bg-transparent text-white focus:outline-none cursor-pointer font-bold font-sans"
               >
-                {employees.map((emp) => (
+                {visibleEmployees.map((emp) => (
                   <option key={emp.id} value={emp.id} className="bg-slate-950 text-white">
                     {emp.name} ({emp.employeeId || 'No ID'})
                   </option>
