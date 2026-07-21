@@ -10,6 +10,28 @@ function getAttendanceModel() {
   return model;
 }
 
+async function getSubordinateIds(userId: number): Promise<number[]> {
+  const subordinates: number[] = [];
+  const queue = [userId];
+  const visited = new Set<number>([userId]);
+
+  while (queue.length > 0) {
+    const currentId = queue.shift()!;
+    const directSubordinates = await prisma.user.findMany({
+      where: { reportsTo: currentId },
+      select: { id: true }
+    });
+    for (const sub of directSubordinates) {
+      if (!visited.has(sub.id)) {
+        visited.add(sub.id);
+        subordinates.push(sub.id);
+        queue.push(sub.id);
+      }
+    }
+  }
+  return subordinates;
+}
+
 export async function GET(req: Request) {
   try {
     const userPayload = getAuthenticatedUser(req);
@@ -24,17 +46,41 @@ export async function GET(req: Request) {
     const monthParam = searchParams.get('month');
     const yearParam = searchParams.get('year');
 
+    const currentUserDetail = await prisma.user.findUnique({
+      where: { id: userPayload.id },
+      include: { department: true }
+    });
+    const isITDept = currentUserDetail?.department?.name?.toLowerCase().trim() === 'it';
+    const isAdmin = userPayload.role === 'admin' || userPayload.role?.startsWith('admin:') || isITDept;
+
     const userPermissions = await getUserPermissions(userPayload.id);
-    const hasViewAll = userPermissions.includes('team:view') || ['admin', 'director', 'sales_head', 'manager', 'tl', 'psa_tl'].includes(userPayload.role);
+    const hasViewAll = userPermissions.includes('team:view') || ['admin', 'director', 'sales_head', 'manager', 'tl', 'psa_tl'].includes(userPayload.role) || isITDept;
+
+    const subordinateIds = isAdmin ? [] : await getSubordinateIds(userPayload.id);
+    const allowedUserIds = isAdmin ? [] : [userPayload.id, ...subordinateIds];
 
     const where: Prisma.AttendanceWhereInput = {};
 
-    if (scope === 'personal' || !hasViewAll) {
+    if (scope === 'personal') {
       where.userId = userPayload.id;
     } else if (targetUserIdStr) {
       const targetId = parseInt(targetUserIdStr, 10);
       if (!isNaN(targetId)) {
+        if (!isAdmin && !allowedUserIds.includes(targetId)) {
+          return NextResponse.json({
+            success: false,
+            message: 'Forbidden. You can only view attendance for yourself and your subordinates.'
+          }, { status: 403 });
+        }
         where.userId = targetId;
+      }
+    } else {
+      if (!hasViewAll) {
+        where.userId = userPayload.id;
+      } else {
+        if (!isAdmin) {
+          where.userId = { in: allowedUserIds };
+        }
       }
     }
 
@@ -78,11 +124,15 @@ export async function GET(req: Request) {
       },
     });
 
-    // Also fetch all active users to show who has NOT checked in today if dateParam or today is requested
     let teamRoster: any[] = [];
     if (hasViewAll && scope === 'team') {
+      const activeUsersWhere: Prisma.UserWhereInput = { isActive: true };
+      if (!isAdmin) {
+        activeUsersWhere.id = { in: subordinateIds };
+      }
+      
       const activeUsers = await prisma.user.findMany({
-        where: { isActive: true },
+        where: activeUsersWhere,
         select: {
           id: true,
           name: true,

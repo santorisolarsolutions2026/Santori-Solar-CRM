@@ -33,9 +33,27 @@ export async function GET(req: Request) {
       ],
     });
 
+    const itDept = await prisma.department.findFirst({ where: { name: 'IT' } });
+    const processed = designations.map(des => {
+      if (itDept && des.departmentId === itDept.id) {
+        return { ...des, name: 'IT Head' };
+      }
+      return des;
+    });
+
+    const finalDesignations: typeof designations = [];
+    const seen = new Set<string>();
+    for (const des of processed) {
+      const key = des.departmentId ? `${des.departmentId}-${des.name}` : des.name;
+      if (!seen.has(key)) {
+        seen.add(key);
+        finalDesignations.push(des);
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      data: designations,
+      data: finalDesignations,
     });
   } catch (error: any) {
     console.error('Fetch designations error:', error);

@@ -78,8 +78,11 @@ export async function GET(req: Request) {
       orderBy: { name: 'asc' },
     });
 
-    // Truncate non-basic details for basic users, except for their own profile
+    const itDept = await prisma.department.findFirst({ where: { name: 'IT' } });
     const responseData = users.map((u) => {
+      if (itDept && u.departmentId === itDept.id && u.designation) {
+        u.designation.name = 'IT Head';
+      }
       const leadsClosed = (u._count?.consultantLeads || 0) + (u._count?.tlLeads || 0) + (u._count?.managedLeads || 0);
       const baseUser = {
         id: u.id,

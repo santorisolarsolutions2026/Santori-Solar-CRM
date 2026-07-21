@@ -57,6 +57,11 @@ export async function GET(
       return NextResponse.json({ success: false, message: 'User not found.' }, { status: 404 });
     }
 
+    const itDept = await prisma.department.findFirst({ where: { name: 'IT' } });
+    if (itDept && user.departmentId === itDept.id && user.designation) {
+      user.designation.name = 'IT Head';
+    }
+
     const isAdminOrDirectorOrSalesHead = userPermissions.includes('team:manage');
     if (!isAdminOrDirectorOrSalesHead && userId !== userPayload.id) {
       // Basic users can only fetch basic details of others

@@ -2181,19 +2181,21 @@ export default function TeamManagementPage() {
           />
           <Search className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
         </div>
-        <div className="w-full md:w-60">
-          <select
-            value={selectedDepartmentFilter}
-            disabled={!!empSearchInput.trim()}
-            onChange={(e) => setSelectedDepartmentFilter(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-950 border border-slate-805 rounded-xl text-slate-300 text-xs focus:ring-amber-500 focus:outline-none disabled:opacity-40"
-          >
-            <option value="">All Departments</option>
-            {departmentsList.map((dept) => (
-              <option key={dept.id} value={String(dept.id)}>{dept.name}</option>
-            ))}
-          </select>
-        </div>
+        {(user?.role === 'admin' || user?.role?.startsWith('admin:') || (departmentsList.find(d => d.id === user?.departmentId)?.name?.toLowerCase().trim() === 'it')) && (
+          <div className="w-full md:w-60">
+            <select
+              value={selectedDepartmentFilter}
+              disabled={!!empSearchInput.trim()}
+              onChange={(e) => setSelectedDepartmentFilter(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-950 border border-slate-805 rounded-xl text-slate-300 text-xs focus:ring-amber-500 focus:outline-none disabled:opacity-40"
+            >
+              <option value="">All Departments</option>
+              {departmentsList.map((dept) => (
+                <option key={dept.id} value={String(dept.id)}>{dept.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {/* Bulk Actions Control Bar */}
@@ -3025,11 +3027,21 @@ export default function TeamManagementPage() {
                     className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500"
                   >
                     <option value="">Select Designation...</option>
-                    {designationsList
-                      .filter((des) => !form.departmentId || des.departmentId === null || des.departmentId === parseInt(form.departmentId, 10))
-                      .map((des) => (
-                        <option key={des.id} value={des.id}>{des.name}</option>
-                      ))}
+                    {(() => {
+                      const itDeptId = departmentsList.find(d => d.name.toLowerCase().trim() === 'it')?.id;
+                      const selectedDeptId = form.departmentId ? parseInt(form.departmentId, 10) : null;
+                      return designationsList
+                        .filter((des) => !form.departmentId || des.departmentId === null || des.departmentId === selectedDeptId)
+                        .filter((des) => {
+                          if (itDeptId && selectedDeptId === itDeptId) {
+                            return des.name.toLowerCase().trim() === 'it head';
+                          }
+                          return true;
+                        })
+                        .map((des) => (
+                          <option key={des.id} value={des.id}>{des.name}</option>
+                        ));
+                    })()}
                   </select>
                 </div>
 
@@ -3452,11 +3464,21 @@ export default function TeamManagementPage() {
                         className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500 focus:outline-none disabled:opacity-50"
                       >
                         <option value="">Select Designation...</option>
-                        {designationsList
-                          .filter((des) => !editMemberForm.departmentId || des.departmentId === null || des.departmentId === parseInt(editMemberForm.departmentId, 10))
-                          .map((des) => (
-                            <option key={des.id} value={des.id}>{des.name}</option>
-                          ))}
+                        {(() => {
+                          const itDeptId = departmentsList.find(d => d.name.toLowerCase().trim() === 'it')?.id;
+                          const selectedDeptId = editMemberForm.departmentId ? parseInt(editMemberForm.departmentId, 10) : null;
+                          return designationsList
+                            .filter((des) => !editMemberForm.departmentId || des.departmentId === null || des.departmentId === selectedDeptId)
+                            .filter((des) => {
+                              if (itDeptId && selectedDeptId === itDeptId) {
+                                  return des.name.toLowerCase().trim() === 'it head';
+                              }
+                              return true;
+                            })
+                            .map((des) => (
+                              <option key={des.id} value={des.id}>{des.name}</option>
+                            ));
+                        })()}
                       </select>
                     </div>
                     <div>
