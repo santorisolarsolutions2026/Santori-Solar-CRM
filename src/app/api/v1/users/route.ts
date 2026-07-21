@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
+import { getAuthenticatedUser, getUserPermissions, getUserSession } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
 
 export const dynamic = 'force-dynamic';
@@ -136,9 +136,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
-    const userPermissions = await getUserPermissions(userPayload.id);
-    if (!userPermissions.includes('team:manage')) {
-      return NextResponse.json({ success: false, message: 'Forbidden. Only users with team management permissions can create users.' }, { status: 403 });
+    const { role: loggedInRole, permissions: userPermissions, department: loggedInUserDept } = await getUserSession(userPayload.id);
+    const loggedInBaseRole = loggedInRole.includes(':') ? loggedInRole.split(':')[0] : loggedInRole;
+    const isEditingUserAdmin = loggedInBaseRole === 'admin';
+    const isEditingUserIT = loggedInUserDept?.name === 'IT';
+    const hasTeamManagePermission = userPermissions.includes('team:manage');
+
+    const canManageTeam = isEditingUserAdmin || isEditingUserIT || hasTeamManagePermission;
+
+    if (!canManageTeam) {
+      return NextResponse.json({ success: false, message: 'Forbidden. Only IT department members, Admins, or users explicitly granted "team:manage" permission can create users.' }, { status: 403 });
     }
 
     const body = await req.json();

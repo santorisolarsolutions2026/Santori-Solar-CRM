@@ -114,14 +114,14 @@ export async function PATCH(
     const userPermissions = await getUserPermissions(userPayload.id);
     const isAdminOrDirectorOrSalesHead = userPermissions.includes('team:manage');
 
+    const currentUserDetail = await prisma.user.findUnique({
+      where: { id: userPayload.id },
+      include: { designation: true, department: true }
+    });
+
     let hasWriteAccess = isEditingUserAdmin;
 
     if (!isEditingUserAdmin) {
-      // Get current logged-in user details
-      const currentUserDetail = await prisma.user.findUnique({
-        where: { id: userPayload.id },
-        include: { designation: true }
-      });
       const currentLevel = currentUserDetail?.designation?.level ?? 99;
       const currentDeptId = currentUserDetail?.departmentId;
 
@@ -166,6 +166,20 @@ export async function PATCH(
 
     const body = await req.json();
     const { name, email, phone, address, employeeId, role, reportsTo, isActive, joiningDate, photograph, permissions, password, departmentId, designationId } = body;
+
+    const loggedInUserDeptName = currentUserDetail?.department?.name || '';
+    const isEditingUserIT = loggedInUserDeptName === 'IT';
+    const hasTeamManagePermission = userPermissions.includes('team:manage');
+
+    const canChangeAccess = isEditingUserAdmin || isEditingUserIT || hasTeamManagePermission;
+    const isChangingAccess = role !== undefined || permissions !== undefined || departmentId !== undefined || designationId !== undefined || isActive !== undefined;
+
+    if (isChangingAccess && !canChangeAccess) {
+      return NextResponse.json({
+        success: false,
+        message: 'Forbidden. Only IT department members, Admins, or users explicitly granted "team:manage" permission can modify roles, permissions, departments, designations, or active status.'
+      }, { status: 403 });
+    }
 
     const ALL_PERMISSIONS_MAP: Record<string, string> = {
       'leads:create': 'PSA',
@@ -608,9 +622,23 @@ export async function DELETE(
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
+    const { role: loggedInRole } = await getUserSession(userPayload.id);
+    const loggedInBaseRole = loggedInRole.includes(':') ? loggedInRole.split(':')[0] : loggedInRole;
+    const isEditingUserAdmin = loggedInBaseRole === 'admin';
     const userPermissions = await getUserPermissions(userPayload.id);
-    if (!userPermissions.includes('team:manage')) {
-      return NextResponse.json({ success: false, message: 'Forbidden. Only users with team management permissions can delete users.' }, { status: 403 });
+
+    const currentUserDetail = await prisma.user.findUnique({
+      where: { id: userPayload.id },
+      include: { department: true }
+    });
+    const loggedInUserDeptName = currentUserDetail?.department?.name || '';
+    const isEditingUserIT = loggedInUserDeptName === 'IT';
+    const hasTeamManagePermission = userPermissions.includes('team:manage');
+
+    const canDeleteUser = isEditingUserAdmin || isEditingUserIT || hasTeamManagePermission;
+
+    if (!canDeleteUser) {
+      return NextResponse.json({ success: false, message: 'Forbidden. Only IT department members, Admins, or users explicitly granted "team:manage" permission can delete users.' }, { status: 403 });
     }
 
     const { id } = await params;

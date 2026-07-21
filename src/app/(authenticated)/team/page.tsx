@@ -832,6 +832,17 @@ export default function TeamManagementPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // List of active employees for allocation selectors
+  const [departmentsList, setDepartmentsList] = useState<{ id: number; name: string }[]>([]);
+  const [designationsList, setDesignationsList] = useState<{ id: number; name: string; level: number; departmentId: number | null; permissions?: string }[]>([]);
+
+  const isCurrentUserAdmin = user?.role === 'admin' || user?.role?.startsWith('admin:');
+  const loggedInUserDeptName = departmentsList.find(d => d.id === user?.departmentId)?.name || '';
+  const isITUser = loggedInUserDeptName === 'IT';
+  const hasTeamManage = hasPermission('team:manage');
+  const canEditPermissionsAndRole = isCurrentUserAdmin || isITUser || hasTeamManage;
+  const canChangeAccess = canEditPermissionsAndRole;
+
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [managersAndTls, setManagersAndTls] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -870,8 +881,7 @@ export default function TeamManagementPage() {
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
 
-  const [departmentsList, setDepartmentsList] = useState<{ id: number; name: string }[]>([]);
-  const [designationsList, setDesignationsList] = useState<{ id: number; name: string; level: number; departmentId: number | null; permissions?: string }[]>([]);
+  // Moved departmentsList and designationsList to the top of the component
 
   const canModifySupervisor = (targetMember: TeamMember): boolean => {
     if (!user) return false;
@@ -1393,10 +1403,7 @@ export default function TeamManagementPage() {
     }
   };
 
-  const isCurrentUserAdmin = user?.role === 'admin' || user?.role?.startsWith('admin:');
-  const canEditPermissionsAndRole = isCurrentUserAdmin || (
-    selectedMember && canModifySupervisor(selectedMember)
-  );
+  // canEditPermissionsAndRole is now defined globally at the top of the component
   
   // Add User Form Modal
   const [showAddModal, setShowAddModal] = useState(false);
@@ -2750,7 +2757,7 @@ export default function TeamManagementPage() {
                             </button>
                           )}
 
-                          {member.id !== user?.id && (user?.role === 'admin' || user?.role?.startsWith('admin:') || canModifySupervisor(member)) && (
+                          {canEditPermissionsAndRole && member.id !== user?.id && (isCurrentUserAdmin || canModifySupervisor(member)) && (
                             <>
                               <button
                                 onClick={() => handleToggleActive(member)}
@@ -2764,7 +2771,7 @@ export default function TeamManagementPage() {
                                 {member.isActive ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
                               </button>
                               
-                              {(user?.role === 'admin' || user?.role?.startsWith('admin:') || canModifySupervisor(member)) && !member.isActive && (
+                              {!member.isActive && (
                                 <button
                                   type="button"
                                   onClick={() => handleDeleteUser(member)}
@@ -3794,57 +3801,61 @@ export default function TeamManagementPage() {
                         className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
                       />
                     </div>
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Department</label>
-                      <select
-                        value={editMemberForm.departmentId}
-                        disabled={!canEditPermissionsAndRole || selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:')}
-                        onChange={(e) => setEditMemberForm({ ...editMemberForm, departmentId: e.target.value })}
-                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500 focus:outline-none disabled:opacity-50"
-                      >
-                        <option value="">No Department / Shared</option>
-                        {departmentsList.map((dept) => (
-                          <option key={dept.id} value={dept.id}>{dept.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Designation</label>
-                      <select
-                        value={editMemberForm.designationId}
-                        disabled={!canEditPermissionsAndRole || selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:')}
-                        onChange={(e) => {
-                          const desId = e.target.value;
-                          setEditMemberForm({ ...editMemberForm, designationId: desId });
-                          const selectedDesObj = designationsList.find(d => d.id === parseInt(desId, 10));
-                          if (selectedDesObj) {
-                            const newPerms = selectedDesObj.permissions 
-                              ? selectedDesObj.permissions.split(',').map((p: any) => p.trim()) 
-                              : [];
-                            setEditMemberPermissions(newPerms);
-                          }
-                        }}
-
-                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500 focus:outline-none disabled:opacity-50"
-                      >
-                        <option value="">Select Designation...</option>
-                        {(() => {
-                          const itDeptId = departmentsList.find(d => d.name.toLowerCase().trim() === 'it')?.id;
-                          const selectedDeptId = editMemberForm.departmentId ? parseInt(editMemberForm.departmentId, 10) : null;
-                          return designationsList
-                            .filter((des) => !editMemberForm.departmentId || des.departmentId === null || des.departmentId === selectedDeptId)
-                            .filter((des) => {
-                              if (itDeptId && selectedDeptId === itDeptId) {
-                                  return des.name.toLowerCase().trim() === 'it head';
+                    {canEditPermissionsAndRole && (
+                      <>
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Department</label>
+                          <select
+                            value={editMemberForm.departmentId}
+                            disabled={selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:')}
+                            onChange={(e) => setEditMemberForm({ ...editMemberForm, departmentId: e.target.value })}
+                            className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500 focus:outline-none disabled:opacity-50"
+                          >
+                            <option value="">No Department / Shared</option>
+                            {departmentsList.map((dept) => (
+                              <option key={dept.id} value={dept.id}>{dept.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Designation</label>
+                          <select
+                            value={editMemberForm.designationId}
+                            disabled={selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:')}
+                            onChange={(e) => {
+                              const desId = e.target.value;
+                              setEditMemberForm({ ...editMemberForm, designationId: desId });
+                              const selectedDesObj = designationsList.find(d => d.id === parseInt(desId, 10));
+                              if (selectedDesObj) {
+                                const newPerms = selectedDesObj.permissions 
+                                  ? selectedDesObj.permissions.split(',').map((p: any) => p.trim()) 
+                                  : [];
+                                setEditMemberPermissions(newPerms);
                               }
-                              return true;
-                            })
-                            .map((des) => (
-                              <option key={des.id} value={des.id}>{des.name}</option>
-                            ));
-                        })()}
-                      </select>
-                    </div>
+                            }}
+
+                            className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500 focus:outline-none disabled:opacity-50"
+                          >
+                            <option value="">Select Designation...</option>
+                            {(() => {
+                              const itDeptId = departmentsList.find(d => d.name.toLowerCase().trim() === 'it')?.id;
+                              const selectedDeptId = editMemberForm.departmentId ? parseInt(editMemberForm.departmentId, 10) : null;
+                              return designationsList
+                                .filter((des) => !editMemberForm.departmentId || des.departmentId === null || des.departmentId === selectedDeptId)
+                                .filter((des) => {
+                                  if (itDeptId && selectedDeptId === itDeptId) {
+                                      return des.name.toLowerCase().trim() === 'it head';
+                                  }
+                                  return true;
+                                })
+                                .map((des) => (
+                                  <option key={des.id} value={des.id}>{des.name}</option>
+                                ));
+                            })()}
+                          </select>
+                        </div>
+                      </>
+                    )}
                     <div>
                       <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Direct Supervisor</label>
                       <select
@@ -3897,143 +3908,147 @@ export default function TeamManagementPage() {
                         className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500 focus:outline-none"
                       />
                     </div>
-                    <div className="flex items-center gap-2 mt-4 sm:col-span-2">
-                      <input
-                        type="checkbox"
-                        id="edit-member-active"
-                        disabled={selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:')}
-                        checked={editMemberForm.isActive}
-                        onChange={(e) => setEditMemberForm({ ...editMemberForm, isActive: e.target.checked })}
-                        className="w-4 h-4 text-amber-500 bg-slate-950 border-slate-800 rounded focus:ring-amber-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                      />
-                      <label htmlFor="edit-member-active" className="text-xs font-bold uppercase text-slate-400 cursor-pointer select-none flex items-center gap-1.5">
-                        <span>Account Active Status</span>
-                        {(selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:')) && (
-                          <span className="text-[10px] text-red-500 font-normal lowercase tracking-normal italic">(Admin cannot be deactivated)</span>
-                        )}
-                      </label>
-                    </div>
+                    {canEditPermissionsAndRole && (
+                      <div className="flex items-center gap-2 mt-4 sm:col-span-2">
+                        <input
+                          type="checkbox"
+                          id="edit-member-active"
+                          disabled={selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:')}
+                          checked={editMemberForm.isActive}
+                          onChange={(e) => setEditMemberForm({ ...editMemberForm, isActive: e.target.checked })}
+                          className="w-4 h-4 text-amber-500 bg-slate-950 border-slate-800 rounded focus:ring-amber-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        />
+                        <label htmlFor="edit-member-active" className="text-xs font-bold uppercase text-slate-400 cursor-pointer select-none flex items-center gap-1.5">
+                          <span>Account Active Status</span>
+                          {(selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:')) && (
+                            <span className="text-[10px] text-red-500 font-normal lowercase tracking-normal italic">(Admin cannot be deactivated)</span>
+                          )}
+                        </label>
+                      </div>
+                    )}
                   </div>
 
                   {/* Custom Access Permissions Checklist */}
-                  <div className="border-t border-slate-800 pt-4 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h5 className="text-[10px] font-bold uppercase tracking-wider text-amber-500">Custom Access Permissions</h5>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const base = editMemberForm.role === 'other' ? editBaseRole : editMemberForm.role;
-                          setEditMemberPermissions(getLocalDefaultPermissionsForRole(base));
-                        }}
-                        className="text-[9px] font-bold uppercase tracking-wider text-amber-400 hover:text-amber-300 transition-colors bg-slate-900 border border-slate-800/80 px-2 py-1 rounded cursor-pointer"
-                      >
-                        Reset to designation defaults
-                      </button>
-                    </div>
-                    {/* Sleek Category Navigation Tabs */}
-                    <div className="flex border-b border-slate-800 bg-slate-950/20 text-xs font-semibold overflow-x-auto whitespace-nowrap scrollbar-none gap-1 p-1 rounded-lg">
-                      {[
-                        { key: 'PSA', label: 'PSA (Lead Booking)', icon: Sun },
-                        { key: 'Sales', label: 'Sales (Order Punch)', icon: Award },
-                        { key: 'Finance', label: 'Finance (Ledger & Verify)', icon: DollarSign },
-                        { key: 'Operations', label: 'Operations (Installation)', icon: Hammer },
-                        { key: 'IT', label: 'IT & System Admin', icon: Terminal },
-                      ].filter(cat => isCategoryEditable(cat.key)).map((cat) => {
-                        const isActive = selectedPermissionCategory === cat.key;
-                        const Icon = cat.icon;
-                        return (
-                          <button
-                            key={cat.key}
-                            type="button"
-                            onClick={() => setSelectedPermissionCategory(cat.key)}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
-                              isActive
-                                ? 'bg-amber-500/10 border-amber-500/40 text-amber-400 font-extrabold shadow-sm'
-                                : 'bg-transparent border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
-                            }`}
-                          >
-                            <Icon className="w-3.5 h-3.5" />
-                            <span>{cat.label}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
+                  {canEditPermissionsAndRole && (
+                    <div className="border-t border-slate-800 pt-4 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h5 className="text-[10px] font-bold uppercase tracking-wider text-amber-500">Custom Access Permissions</h5>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const base = editMemberForm.role === 'other' ? editBaseRole : editMemberForm.role;
+                            setEditMemberPermissions(getLocalDefaultPermissionsForRole(base));
+                          }}
+                          className="text-[9px] font-bold uppercase tracking-wider text-amber-400 hover:text-amber-300 transition-colors bg-slate-900 border border-slate-800/80 px-2 py-1 rounded cursor-pointer"
+                        >
+                          Reset to designation defaults
+                        </button>
+                      </div>
+                      {/* Sleek Category Navigation Tabs */}
+                      <div className="flex border-b border-slate-800 bg-slate-950/20 text-xs font-semibold overflow-x-auto whitespace-nowrap scrollbar-none gap-1 p-1 rounded-lg">
+                        {[
+                          { key: 'PSA', label: 'PSA (Lead Booking)', icon: Sun },
+                          { key: 'Sales', label: 'Sales (Order Punch)', icon: Award },
+                          { key: 'Finance', label: 'Finance (Ledger & Verify)', icon: DollarSign },
+                          { key: 'Operations', label: 'Operations (Installation)', icon: Hammer },
+                          { key: 'IT', label: 'IT & System Admin', icon: Terminal },
+                        ].filter(cat => isCategoryEditable(cat.key)).map((cat) => {
+                          const isActive = selectedPermissionCategory === cat.key;
+                          const Icon = cat.icon;
+                          return (
+                            <button
+                              key={cat.key}
+                              type="button"
+                              onClick={() => setSelectedPermissionCategory(cat.key)}
+                              className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
+                                isActive
+                                  ? 'bg-amber-500/10 border-amber-500/40 text-amber-400 font-extrabold shadow-sm'
+                                  : 'bg-transparent border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
+                              }`}
+                            >
+                              <Icon className="w-3.5 h-3.5" />
+                              <span>{cat.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
 
-                    {/* Permissions Panel grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 min-h-[140px] p-1">
-                      {ALL_PERMISSIONS.filter(p => p.category === selectedPermissionCategory).map((perm) => {
-                        const isChecked = perm.category === 'IT'
-                          ? ALL_PERMISSIONS.filter(p => p.category === 'IT').every(p => editMemberPermissions.includes(p.key))
-                          : editMemberPermissions.includes(perm.key);
-                        const isDangerous = perm.key.includes('all') || perm.key.includes('manage') || perm.key.includes('verify') || perm.key.includes('delete');
-                        const isDisabled = !canEditPermissionsAndRole || !isCategoryEditable(perm.category);
-                        
-                        return (
-                          <label 
-                            key={perm.key} 
-                            className={`flex items-start gap-3 p-3.5 rounded-xl border select-none transition-all duration-300 ${
-                              isDisabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:-translate-y-[0.5px]'
-                            } ${
-                              isChecked 
-                                ? 'bg-amber-500/[0.02] border-amber-500/30 shadow-md shadow-amber-500/5'
-                                : 'bg-slate-950/40 border-slate-900 hover:border-slate-800 hover:bg-slate-900/10'
-                            }`}
-                          >
-                            {/* Sleek Custom Toggle Switch */}
-                            <div className={`relative shrink-0 mt-1 select-none ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
-                              <input
-                                type="checkbox"
-                                checked={isChecked}
-                                disabled={isDisabled}
-                                onChange={() => {
-                                  if (isDisabled) return;
-                                  if (perm.category === 'IT') {
-                                    const itKeys = ALL_PERMISSIONS.filter(p => p.category === 'IT').map(p => p.key);
-                                    if (isChecked) {
-                                      setEditMemberPermissions(editMemberPermissions.filter(k => !itKeys.includes(k)));
-                                    } else {
-                                      const otherKeys = editMemberPermissions.filter(k => !itKeys.includes(k));
-                                      setEditMemberPermissions([...otherKeys, ...itKeys]);
-                                    }
-                                  } else {
-                                    if (isChecked) {
-                                      setEditMemberPermissions(editMemberPermissions.filter(k => k !== perm.key));
-                                    } else {
-                                      setEditMemberPermissions([...editMemberPermissions, perm.key]);
-                                    }
-                                  }
-                                }}
-                                className="sr-only"
-                              />
-                              <div className={`w-8 h-4.5 rounded-full transition-colors duration-200 ease-in-out ${
+                      {/* Permissions Panel grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 min-h-[140px] p-1">
+                        {ALL_PERMISSIONS.filter(p => p.category === selectedPermissionCategory).map((perm) => {
+                          const isChecked = perm.category === 'IT'
+                            ? ALL_PERMISSIONS.filter(p => p.category === 'IT').every(p => editMemberPermissions.includes(p.key))
+                            : editMemberPermissions.includes(perm.key);
+                          const isDangerous = perm.key.includes('all') || perm.key.includes('manage') || perm.key.includes('verify') || perm.key.includes('delete');
+                          const isDisabled = !canEditPermissionsAndRole || !isCategoryEditable(perm.category);
+                          
+                          return (
+                            <label 
+                              key={perm.key} 
+                              className={`flex items-start gap-3 p-3.5 rounded-xl border select-none transition-all duration-300 ${
+                                isDisabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:-translate-y-[0.5px]'
+                              } ${
                                 isChecked 
-                                  ? 'bg-amber-500 shadow-md shadow-amber-500/20' 
-                                  : 'bg-slate-800 border border-slate-700/60'
-                              }`} />
-                              <div className={`absolute top-0.75 left-0.75 w-3 h-3 rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${
-                                isChecked ? 'translate-x-3.5' : 'translate-x-0'
-                              }`} />
-                            </div>
-                            
-                            <div className="flex flex-col min-w-0">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className={`text-[11px] font-bold tracking-wide transition-colors ${isChecked ? 'text-white' : 'text-slate-350'}`}>
-                                  {perm.label}
-                                </span>
-                                {isDangerous && (
-                                  <span className="text-[7px] bg-red-950/30 text-red-400 border border-red-900/40 rounded px-1.5 py-0.25 font-extrabold uppercase tracking-wider">
-                                    Critical
-                                  </span>
-                                )}
+                                  ? 'bg-amber-500/[0.02] border-amber-500/30 shadow-md shadow-amber-500/5'
+                                  : 'bg-slate-950/40 border-slate-900 hover:border-slate-800 hover:bg-slate-900/10'
+                              }`}
+                            >
+                              {/* Sleek Custom Toggle Switch */}
+                              <div className={`relative shrink-0 mt-1 select-none ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  disabled={isDisabled}
+                                  onChange={() => {
+                                    if (isDisabled) return;
+                                    if (perm.category === 'IT') {
+                                      const itKeys = ALL_PERMISSIONS.filter(p => p.category === 'IT').map(p => p.key);
+                                      if (isChecked) {
+                                        setEditMemberPermissions(editMemberPermissions.filter(k => !itKeys.includes(k)));
+                                      } else {
+                                        const otherKeys = editMemberPermissions.filter(k => !itKeys.includes(k));
+                                        setEditMemberPermissions([...otherKeys, ...itKeys]);
+                                      }
+                                    } else {
+                                      if (isChecked) {
+                                        setEditMemberPermissions(editMemberPermissions.filter(k => k !== perm.key));
+                                      } else {
+                                        setEditMemberPermissions([...editMemberPermissions, perm.key]);
+                                      }
+                                    }
+                                  }}
+                                  className="sr-only"
+                                />
+                                <div className={`w-8 h-4.5 rounded-full transition-colors duration-200 ease-in-out ${
+                                  isChecked 
+                                    ? 'bg-amber-500 shadow-md shadow-amber-500/20' 
+                                    : 'bg-slate-800 border border-slate-700/60'
+                                }`} />
+                                <div className={`absolute top-0.75 left-0.75 w-3 h-3 rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${
+                                  isChecked ? 'translate-x-3.5' : 'translate-x-0'
+                                }`} />
                               </div>
-                              <span className="text-[8px] text-slate-500 font-mono mt-0.5 tracking-wider uppercase">{perm.key}</span>
-                              <span className="text-[10px] text-slate-450 mt-1.5 leading-relaxed font-normal">{perm.description}</span>
-                            </div>
-                          </label>
-                        );
-                      })}
+                              
+                              <div className="flex flex-col min-w-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className={`text-[11px] font-bold tracking-wide transition-colors ${isChecked ? 'text-white' : 'text-slate-350'}`}>
+                                    {perm.label}
+                                  </span>
+                                  {isDangerous && (
+                                    <span className="text-[7px] bg-red-950/30 text-red-400 border border-red-900/40 rounded px-1.5 py-0.25 font-extrabold uppercase tracking-wider">
+                                      Critical
+                                    </span>
+                                  )}
+                                </div>
+                                <span className="text-[8px] text-slate-500 font-mono mt-0.5 tracking-wider uppercase">{perm.key}</span>
+                                <span className="text-[10px] text-slate-450 mt-1.5 leading-relaxed font-normal">{perm.description}</span>
+                              </div>
+                            </label>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Access Logs */}
                   <div className="border-t border-slate-800 pt-4 space-y-4">
