@@ -1,5 +1,8 @@
 import jwt from 'jsonwebtoken';
 import { prisma } from './db';
+import { DEPARTMENT_PERMISSIONS } from './permissions';
+
+export { DEPARTMENT_PERMISSIONS };
 
 const JWT_SECRET = process.env.JWT_SECRET || 'solarcrm-super-secret-key-2026';
 
@@ -69,43 +72,7 @@ export function hasPermission(userRole: string, allowedRoles: string[]): boolean
   return allowedRoles.includes(userRole);
 }
 
-export const DEPARTMENT_PERMISSIONS = {
-  sales: [
-    { key: 'sales:lead_add', label: '1. Add new Lead' },
-    { key: 'sales:lead_import', label: '2. Import Bulk Leads' },
-    { key: 'sales:lead_assign', label: '3. Assign Leads to Sales Team (only to members in team & below in hierarchy)' },
-    { key: 'sales:lead_view_all', label: '4. View All Leads in the system' },
-    { key: 'sales:stage_change', label: '5. Change Calling stages' },
-    { key: 'sales:designation_change', label: '6. Change designation of members under them' },
-    { key: 'sales:attendance_view', label: '7. View Attendance of members under them' },
-    { key: 'sales:lead_track', label: '8. Track lead journey' },
-    { key: 'sales:analytics_view', label: '9. View Team analytics (his own & below in hierarchy)' },
-    { key: 'sales:order_punch', label: '10. Filling order punching form' },
-    { key: 'sales:meeting_book', label: '11. Book Meeting' },
-    { key: 'sales:meeting_done', label: '12. Meeting done' },
-    { key: 'sales:finance_assign', label: '13. Assign Finance member' },
-  ],
-  finance: [
-    { key: 'finance:order_verify_reject', label: '1. Verify the orders / Reject the orders' },
-    { key: 'finance:order_assign', label: '2. Assign the orders (only in team & lower in hierarchy)' },
-    { key: 'finance:ledger_record', label: '3. Maintain Ledger: Record Payment' },
-    { key: 'finance:ledger_delete', label: '4. Maintain Ledger: Delete Payment' },
-    { key: 'finance:designation_change', label: '5. Change designation of members under them' },
-    { key: 'finance:attendance_view', label: '6. View Attendance of members under them' },
-    { key: 'finance:analytics_view', label: '7. View Team analytics (his own & below in hierarchy)' },
-    { key: 'finance:ops_assign', label: '8. Assign Operations Member' },
-  ],
-  ops: [
-    { key: 'ops:delivery_manage', label: '1. Manage Delivery' },
-    { key: 'ops:installation_manage', label: '2. Manage Installation' },
-    { key: 'ops:meter_manage', label: '3. Manage Meter Installation' },
-    { key: 'ops:commission_manage', label: '4. Manage Plant Commission' },
-    { key: 'ops:designation_change', label: '5. Change designation of members under them' },
-    { key: 'ops:attendance_view', label: '6. View Attendance of members under them' },
-    { key: 'ops:analytics_view', label: '7. View Team analytics (his own & below in hierarchy)' },
-    { key: 'ops:subsidy_manage', label: '8. Manage Subsidy Application' },
-  ]
-};
+
 
 export function getDefaultPermissionsForRole(role: string): string[] {
   const baseRole = role.includes(':') ? role.split(':')[0] : role;

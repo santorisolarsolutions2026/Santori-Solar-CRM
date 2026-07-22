@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Lock, CheckCircle2, User, Building, AlertCircle, Save, Loader2 } from 'lucide-react';
-import { DEPARTMENT_PERMISSIONS } from '@/lib/auth';
+import { DEPARTMENT_PERMISSIONS } from '@/lib/permissions';
 
 interface UserItem {
   id: number;
