@@ -133,10 +133,13 @@ export async function getUserPermissions(userId: number): Promise<string[]> {
 
   if (baseRole === 'admin' || baseRole === 'director' || user.department?.name === 'IT') {
     basePermissions = getDefaultPermissionsForRole('admin');
+  } else if (user.permissions && user.permissions.startsWith('CUSTOM:')) {
+    const permContent = user.permissions.replace('CUSTOM:', '').trim();
+    basePermissions = permContent ? permContent.split(',').map(p => p.trim()) : [];
+  } else if (user.permissions && user.permissions.trim()) {
+    basePermissions = user.permissions.split(',').map(p => p.trim());
   } else {
-    basePermissions = user.permissions && user.permissions.trim()
-      ? user.permissions.split(',').map(p => p.trim())
-      : getDefaultPermissionsForRole(user.role);
+    basePermissions = getDefaultPermissionsForRole(user.role);
   }
 
   const finalPermissions = [...basePermissions];

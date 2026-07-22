@@ -30,7 +30,9 @@ export default function AccessControlManager({ currentUser, users, onPermissions
 
   useEffect(() => {
     if (selectedUser) {
-      const permsArray = selectedUser.permissions ? selectedUser.permissions.split(',').map(p => p.trim()) : [];
+      const rawPerms = selectedUser.permissions || '';
+      const cleanPerms = rawPerms.startsWith('CUSTOM:') ? rawPerms.replace('CUSTOM:', '') : rawPerms;
+      const permsArray = cleanPerms ? cleanPerms.split(',').map(p => p.trim()) : [];
       setSelectedPermissions(new Set(permsArray));
     } else {
       setSelectedPermissions(new Set());
@@ -66,10 +68,13 @@ export default function AccessControlManager({ currentUser, users, onPermissions
 
     try {
       const permString = Array.from(selectedPermissions).join(',');
+      // Always store with CUSTOM: prefix so getUserPermissions explicitly respects configured settings even if empty string
+      const customPermPayload = `CUSTOM:${permString}`;
+
       const res = await fetch(`/api/v1/users/${selectedUserId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ permissions: permString }),
+        body: JSON.stringify({ permissions: customPermPayload }),
       });
 
       const data = await res.json();
@@ -95,7 +100,7 @@ export default function AccessControlManager({ currentUser, users, onPermissions
           </div>
           <div>
             <h2 className="text-xl font-bold text-white">Custom Access Level Manager</h2>
-            <p className="text-xs text-slate-400">Configure granular department permissions (IT & Admin Controlled)</p>
+            <p className="text-xs text-slate-400">Configure granular department permissions with instant enforcement (IT & Admin Controlled)</p>
           </div>
         </div>
 
@@ -126,7 +131,7 @@ export default function AccessControlManager({ currentUser, users, onPermissions
         <select
           value={selectedUserId || ''}
           onChange={(e) => setSelectedUserId(e.target.value ? Number(e.target.value) : null)}
-          className="w-full md:w-1/2 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-amber-500/50"
+          className="w-full md:w-1/2 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-amber-500/50 cursor-pointer"
         >
           <option value="">-- Choose a Team Member --</option>
           {users.map(u => (
@@ -183,20 +188,26 @@ export default function AccessControlManager({ currentUser, users, onPermissions
                 {DEPARTMENT_PERMISSIONS.sales.map((item) => {
                   const active = selectedPermissions.has(item.key);
                   return (
-                    <label
+                    <div
                       key={item.key}
-                      className={`flex items-start gap-3 p-2.5 rounded-lg border transition-all cursor-pointer ${
-                        active ? 'bg-blue-500/10 border-blue-500/30 text-slate-200' : 'bg-slate-900/40 border-slate-800/60 text-slate-400 hover:border-slate-700'
+                      onClick={() => togglePermission(item.key)}
+                      className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-200 cursor-pointer select-none ${
+                        active
+                          ? 'bg-blue-500/10 border-blue-500/40 text-slate-200 shadow-sm'
+                          : 'bg-slate-900/40 border-slate-800/60 text-slate-400 hover:border-slate-700'
                       }`}
                     >
-                      <input
-                        type="checkbox"
-                        checked={active}
-                        onChange={() => togglePermission(item.key)}
-                        className="mt-0.5 rounded border-slate-700 bg-slate-950 text-blue-500 focus:ring-0"
-                      />
-                      <span className="text-xs font-medium leading-relaxed">{item.label}</span>
-                    </label>
+                      <span className="text-xs font-semibold leading-relaxed pr-3">{item.label}</span>
+
+                      {/* Interactive Toggle Switch */}
+                      <div className={`relative shrink-0 w-9 h-5 rounded-full transition-colors duration-200 ease-in-out p-0.5 ${
+                        active ? 'bg-blue-500 shadow-md shadow-blue-500/30' : 'bg-slate-800 border border-slate-700/60'
+                      }`}>
+                        <div className={`w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${
+                          active ? 'translate-x-4' : 'translate-x-0'
+                        }`} />
+                      </div>
+                    </div>
                   );
                 })}
               </div>
@@ -216,20 +227,26 @@ export default function AccessControlManager({ currentUser, users, onPermissions
                 {DEPARTMENT_PERMISSIONS.finance.map((item) => {
                   const active = selectedPermissions.has(item.key);
                   return (
-                    <label
+                    <div
                       key={item.key}
-                      className={`flex items-start gap-3 p-2.5 rounded-lg border transition-all cursor-pointer ${
-                        active ? 'bg-emerald-500/10 border-emerald-500/30 text-slate-200' : 'bg-slate-900/40 border-slate-800/60 text-slate-400 hover:border-slate-700'
+                      onClick={() => togglePermission(item.key)}
+                      className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-200 cursor-pointer select-none ${
+                        active
+                          ? 'bg-emerald-500/10 border-emerald-500/40 text-slate-200 shadow-sm'
+                          : 'bg-slate-900/40 border-slate-800/60 text-slate-400 hover:border-slate-700'
                       }`}
                     >
-                      <input
-                        type="checkbox"
-                        checked={active}
-                        onChange={() => togglePermission(item.key)}
-                        className="mt-0.5 rounded border-slate-700 bg-slate-950 text-emerald-500 focus:ring-0"
-                      />
-                      <span className="text-xs font-medium leading-relaxed">{item.label}</span>
-                    </label>
+                      <span className="text-xs font-semibold leading-relaxed pr-3">{item.label}</span>
+
+                      {/* Interactive Toggle Switch */}
+                      <div className={`relative shrink-0 w-9 h-5 rounded-full transition-colors duration-200 ease-in-out p-0.5 ${
+                        active ? 'bg-emerald-500 shadow-md shadow-emerald-500/30' : 'bg-slate-800 border border-slate-700/60'
+                      }`}>
+                        <div className={`w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${
+                          active ? 'translate-x-4' : 'translate-x-0'
+                        }`} />
+                      </div>
+                    </div>
                   );
                 })}
               </div>
@@ -249,20 +266,26 @@ export default function AccessControlManager({ currentUser, users, onPermissions
                 {DEPARTMENT_PERMISSIONS.ops.map((item) => {
                   const active = selectedPermissions.has(item.key);
                   return (
-                    <label
+                    <div
                       key={item.key}
-                      className={`flex items-start gap-3 p-2.5 rounded-lg border transition-all cursor-pointer ${
-                        active ? 'bg-purple-500/10 border-purple-500/30 text-slate-200' : 'bg-slate-900/40 border-slate-800/60 text-slate-400 hover:border-slate-700'
+                      onClick={() => togglePermission(item.key)}
+                      className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-200 cursor-pointer select-none ${
+                        active
+                          ? 'bg-purple-500/10 border-purple-500/40 text-slate-200 shadow-sm'
+                          : 'bg-slate-900/40 border-slate-800/60 text-slate-400 hover:border-slate-700'
                       }`}
                     >
-                      <input
-                        type="checkbox"
-                        checked={active}
-                        onChange={() => togglePermission(item.key)}
-                        className="mt-0.5 rounded border-slate-700 bg-slate-950 text-purple-500 focus:ring-0"
-                      />
-                      <span className="text-xs font-medium leading-relaxed">{item.label}</span>
-                    </label>
+                      <span className="text-xs font-semibold leading-relaxed pr-3">{item.label}</span>
+
+                      {/* Interactive Toggle Switch */}
+                      <div className={`relative shrink-0 w-9 h-5 rounded-full transition-colors duration-200 ease-in-out p-0.5 ${
+                        active ? 'bg-purple-500 shadow-md shadow-purple-500/30' : 'bg-slate-800 border border-slate-700/60'
+                      }`}>
+                        <div className={`w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${
+                          active ? 'translate-x-4' : 'translate-x-0'
+                        }`} />
+                      </div>
+                    </div>
                   );
                 })}
               </div>
