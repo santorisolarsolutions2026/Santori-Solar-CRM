@@ -64,6 +64,8 @@ model User {
   assignedMeetings     MeetingBooking[]    @relation("MeetingExecutive")
   submittedOrders      Order[]             @relation("SubmittedOrders")
   verifiedOrders       Order[]             @relation("VerifiedOrders")
+  assignedFinanceOrders Order[]            @relation("AssignedFinanceOrders")
+  assignedOpsOrders    Order[]             @relation("AssignedOpsOrders")
   uploadedDocuments    OrderDocument[]
   notifications        Notification[]
   attendances          Attendance[]
@@ -191,6 +193,8 @@ model Order {
   rejectionReason      String?
   submittedById        Int
   financeProcessedById Int?
+  assignedFinanceId    Int?
+  assignedOpsId        Int?
   status               String              @default("draft") // draft | submitted | finance_verified | ops_assigned | completed
   opsStage             Int                 @default(1)
   deliveryDate         String?
@@ -214,6 +218,8 @@ model Order {
   lead                 Lead                @relation(fields: [leadId], references: [id], onDelete: Cascade)
   submittedBy          User                @relation("SubmittedOrders", fields: [submittedById], references: [id])
   financeProcessedBy   User?               @relation("VerifiedOrders", fields: [financeProcessedById], references: [id])
+  assignedFinance      User?               @relation("AssignedFinanceOrders", fields: [assignedFinanceId], references: [id])
+  assignedOps          User?               @relation("AssignedOpsOrders", fields: [assignedOpsId], references: [id])
   documents            OrderDocument[]
   installationImages   InstallationImage[]
   payments             Payment[]

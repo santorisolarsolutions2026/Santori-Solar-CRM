@@ -35,6 +35,7 @@ import {
   Minimize2,
   RotateCcw,
 } from 'lucide-react';
+import AccessControlManager from '@/components/AccessControlManager';
 
 
 interface TeamMember {
@@ -848,7 +849,7 @@ export default function TeamManagementPage() {
   const [loading, setLoading] = useState(true);
 
   // Tab and Hierarchy state variables
-  const [activeTab, setActiveTab] = useState<'members' | 'hierarchy'>('members');
+  const [activeTab, setActiveTab] = useState<'members' | 'hierarchy' | 'permissions'>('members');
   const [focusedNodeId, setFocusedNodeId] = useState<number | null>(null);
   const [treeScale, setTreeScale] = useState<number>(1);
   const [treeSearchQuery, setTreeSearchQuery] = useState<string>('');
@@ -2516,7 +2517,35 @@ export default function TeamManagementPage() {
         >
           Hierarchy Tree
         </button>
+        {(user?.role === 'admin' || user?.role === 'director' || user?.department?.name === 'IT') && (
+          <button
+            onClick={() => setActiveTab('permissions')}
+            className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
+              activeTab === 'permissions'
+                ? 'bg-amber-500 text-slate-955 shadow-md shadow-amber-500/10'
+                : 'text-slate-400 hover:text-white hover:bg-slate-900/30'
+            }`}
+          >
+            Custom Access Levels
+          </button>
+        )}
       </div>
+
+      {activeTab === 'permissions' && (
+        <AccessControlManager
+          currentUser={user || { id: 0, role: '' }}
+          users={members.map(m => ({
+            id: m.id,
+            name: m.name,
+            email: m.email,
+            role: m.role,
+            permissions: m.permissions || '',
+            department: m.department,
+            designation: m.designation,
+          }))}
+          onPermissionsUpdated={fetchTeam}
+        />
+      )}
 
 
       {activeTab === 'members' && (

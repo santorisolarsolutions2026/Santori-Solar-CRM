@@ -69,56 +69,83 @@ export function hasPermission(userRole: string, allowedRoles: string[]): boolean
   return allowedRoles.includes(userRole);
 }
 
+export const DEPARTMENT_PERMISSIONS = {
+  sales: [
+    { key: 'sales:lead_add', label: '1. Add new Lead' },
+    { key: 'sales:lead_import', label: '2. Import Bulk Leads' },
+    { key: 'sales:lead_assign', label: '3. Assign Leads to Sales Team (only to members in team & below in hierarchy)' },
+    { key: 'sales:lead_view_all', label: '4. View All Leads in the system' },
+    { key: 'sales:stage_change', label: '5. Change Calling stages' },
+    { key: 'sales:designation_change', label: '6. Change designation of members under them' },
+    { key: 'sales:attendance_view', label: '7. View Attendance of members under them' },
+    { key: 'sales:lead_track', label: '8. Track lead journey' },
+    { key: 'sales:analytics_view', label: '9. View Team analytics (his own & below in hierarchy)' },
+    { key: 'sales:order_punch', label: '10. Filling order punching form' },
+    { key: 'sales:meeting_book', label: '11. Book Meeting' },
+    { key: 'sales:meeting_done', label: '12. Meeting done' },
+    { key: 'sales:finance_assign', label: '13. Assign Finance member' },
+  ],
+  finance: [
+    { key: 'finance:order_verify_reject', label: '1. Verify the orders / Reject the orders' },
+    { key: 'finance:order_assign', label: '2. Assign the orders (only in team & lower in hierarchy)' },
+    { key: 'finance:ledger_record', label: '3. Maintain Ledger: Record Payment' },
+    { key: 'finance:ledger_delete', label: '4. Maintain Ledger: Delete Payment' },
+    { key: 'finance:designation_change', label: '5. Change designation of members under them' },
+    { key: 'finance:attendance_view', label: '6. View Attendance of members under them' },
+    { key: 'finance:analytics_view', label: '7. View Team analytics (his own & below in hierarchy)' },
+    { key: 'finance:ops_assign', label: '8. Assign Operations Member' },
+  ],
+  ops: [
+    { key: 'ops:delivery_manage', label: '1. Manage Delivery' },
+    { key: 'ops:installation_manage', label: '2. Manage Installation' },
+    { key: 'ops:meter_manage', label: '3. Manage Meter Installation' },
+    { key: 'ops:commission_manage', label: '4. Manage Plant Commission' },
+    { key: 'ops:designation_change', label: '5. Change designation of members under them' },
+    { key: 'ops:attendance_view', label: '6. View Attendance of members under them' },
+    { key: 'ops:analytics_view', label: '7. View Team analytics (his own & below in hierarchy)' },
+    { key: 'ops:subsidy_manage', label: '8. Manage Subsidy Application' },
+  ]
+};
+
 export function getDefaultPermissionsForRole(role: string): string[] {
   const baseRole = role.includes(':') ? role.split(':')[0] : role;
   switch (baseRole) {
     case 'admin':
     case 'director':
+    case 'it':
       return [
+        'sales:lead_add', 'sales:lead_import', 'sales:lead_assign', 'sales:lead_view_all', 'sales:stage_change', 'sales:designation_change', 'sales:attendance_view', 'sales:lead_track', 'sales:analytics_view', 'sales:order_punch', 'sales:meeting_book', 'sales:meeting_done', 'sales:finance_assign',
+        'finance:order_verify_reject', 'finance:order_assign', 'finance:ledger_record', 'finance:ledger_delete', 'finance:designation_change', 'finance:attendance_view', 'finance:analytics_view', 'finance:ops_assign',
+        'ops:delivery_manage', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:designation_change', 'ops:attendance_view', 'ops:analytics_view', 'ops:subsidy_manage',
         'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:track',
         'orders:create', 'orders:submit_installation', 'leads:view_sales_pipeline',
         'orders:finance_access', 'orders:verify', 'finance:manage_ledger', 'reports:view_financials',
         'orders:operations', 'ops:update_stages', 'ops:upload_drawings',
-        'team:view', 'attendance:view', 'team:manage', 'logs:view', 'leads:view_all', 'leads:delete'
+        'team:view', 'attendance:view', 'team:manage', 'logs:view', 'leads:view_all', 'leads:delete', 'permissions:manage'
       ];
     case 'sales_head':
-      return [
-        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:track',
-        'orders:create', 'orders:submit_installation', 'leads:view_sales_pipeline', 'reports:view_financials',
-        'team:view', 'attendance:view', 'logs:view'
-      ];
     case 'manager':
+    case 'tl':
+    case 'psa_tl':
+    case 'consultant':
+    case 'psa':
       return [
-        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:track',
-        'orders:create', 'orders:submit_installation', 'leads:view_sales_pipeline',
-        'team:view', 'attendance:view', 'logs:view'
+        'sales:lead_add', 'sales:lead_import', 'sales:lead_assign', 'sales:stage_change', 'sales:designation_change', 'sales:attendance_view', 'sales:lead_track', 'sales:analytics_view', 'sales:order_punch', 'sales:meeting_book', 'sales:meeting_done', 'sales:finance_assign',
+        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:track', 'orders:create', 'leads:view_sales_pipeline', 'team:view', 'attendance:view'
       ];
     case 'finance':
       return [
-        'orders:finance_access', 'orders:verify', 'finance:manage_ledger', 'reports:view_financials'
+        'finance:order_verify_reject', 'finance:order_assign', 'finance:ledger_record', 'finance:ledger_delete', 'finance:designation_change', 'finance:attendance_view', 'finance:analytics_view', 'finance:ops_assign',
+        'orders:finance_access', 'orders:verify', 'finance:manage_ledger', 'reports:view_financials', 'team:view', 'attendance:view'
       ];
     case 'operations':
       return [
-        'orders:operations', 'ops:update_stages', 'ops:upload_drawings'
+        'ops:delivery_manage', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:designation_change', 'ops:attendance_view', 'ops:analytics_view', 'ops:subsidy_manage',
+        'orders:operations', 'ops:update_stages', 'ops:upload_drawings', 'team:view', 'attendance:view'
       ];
-    case 'tl':
-      return [
-        'leads:create', 'leads:edit', 'leads:change_status', 'leads:track',
-        'orders:create', 'orders:submit_installation', 'leads:view_sales_pipeline', 'reports:view_financials'
-      ];
-    case 'psa_tl':
-      return [
-        'leads:create', 'leads:edit', 'leads:change_status', 'leads:track', 'leads:import', 'reports:view_financials'
-      ];
-    case 'consultant':
-      return [
-        'leads:create', 'leads:edit', 'leads:change_status', 'leads:track',
-        'orders:create', 'orders:submit_installation', 'leads:view_sales_pipeline'
-      ];
-    case 'psa':
     default:
       return [
-        'leads:create', 'leads:edit', 'leads:change_status', 'leads:track'
+        'sales:lead_add', 'sales:stage_change', 'sales:lead_track', 'leads:create', 'leads:change_status'
       ];
   }
 }
@@ -147,19 +174,53 @@ export async function getUserPermissions(userId: number): Promise<string[]> {
 
   const finalPermissions = [...basePermissions];
 
-  // If user has manage_calling_stages or book_meeting, they implicitly get change_status for backwards compatibility
-  if (
-    (finalPermissions.includes('leads:manage_calling_stages') || 
-     finalPermissions.includes('leads:book_meeting')) && 
-    !finalPermissions.includes('leads:change_status')
-  ) {
-    finalPermissions.push('leads:change_status');
+  // Auto-map new custom keys to legacy permissions for seamless backward compatibility
+  const mapping: Record<string, string[]> = {
+    'sales:lead_add': ['leads:create'],
+    'sales:lead_import': ['leads:import'],
+    'sales:lead_assign': ['leads:assign'],
+    'sales:lead_view_all': ['leads:view_all'],
+    'sales:stage_change': ['leads:change_status', 'leads:manage_calling_stages'],
+    'sales:designation_change': ['team:change_designation', 'team:manage'],
+    'sales:attendance_view': ['attendance:view'],
+    'sales:lead_track': ['leads:track'],
+    'sales:analytics_view': ['reports:view', 'reports:view_financials'],
+    'sales:order_punch': ['orders:create', 'orders:submit_installation'],
+    'sales:meeting_book': ['leads:book_meeting', 'leads:change_status'],
+    'sales:meeting_done': ['leads:meeting_done', 'leads:change_status'],
+    'sales:finance_assign': ['orders:assign_finance'],
+    'finance:order_verify_reject': ['orders:verify', 'orders:finance_access'],
+    'finance:order_assign': ['orders:assign_finance', 'orders:finance_access'],
+    'finance:ledger_record': ['finance:manage_ledger', 'orders:finance_access'],
+    'finance:ledger_delete': ['finance:manage_ledger', 'finance:delete_ledger'],
+    'finance:designation_change': ['team:change_designation', 'team:manage'],
+    'finance:attendance_view': ['attendance:view'],
+    'finance:analytics_view': ['reports:view', 'reports:view_financials'],
+    'finance:ops_assign': ['orders:assign_ops', 'orders:finance_access'],
+    'ops:delivery_manage': ['orders:operations', 'ops:update_stages'],
+    'ops:installation_manage': ['orders:operations', 'ops:update_stages'],
+    'ops:meter_manage': ['orders:operations', 'ops:update_stages'],
+    'ops:commission_manage': ['orders:operations', 'ops:update_stages'],
+    'ops:designation_change': ['team:change_designation', 'team:manage'],
+    'ops:attendance_view': ['attendance:view'],
+    'ops:analytics_view': ['reports:view'],
+    'ops:subsidy_manage': ['orders:operations', 'ops:update_stages'],
+  };
+
+  for (const [newKey, legacyKeys] of Object.entries(mapping)) {
+    if (finalPermissions.includes(newKey)) {
+      for (const legacyKey of legacyKeys) {
+        if (!finalPermissions.includes(legacyKey)) {
+          finalPermissions.push(legacyKey);
+        }
+      }
+    }
   }
 
   // Implicit page permissions mapping to ensure existing checks ('leads:view', 'orders:view') do not break
   const hasAnyLeadPermission = [
-    'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:track', 'leads:assign', 'leads:delete', 'leads:view_sales_pipeline',
-    'leads:manage_calling_stages', 'leads:book_meeting'
+    'sales:lead_add', 'sales:lead_import', 'sales:stage_change', 'sales:lead_view_all', 'sales:lead_track', 'sales:lead_assign',
+    'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:track', 'leads:assign'
   ].some(p => finalPermissions.includes(p));
 
   if (hasAnyLeadPermission && !finalPermissions.includes('leads:view')) {
@@ -167,23 +228,13 @@ export async function getUserPermissions(userId: number): Promise<string[]> {
   }
 
   const hasAnyOrderPermission = [
-    'orders:create', 'orders:verify', 'orders:operations', 'orders:finance_access', 'orders:view_all', 'orders:submit_installation', 'finance:manage_ledger', 'ops:update_stages', 'ops:upload_drawings',
-    'orders:submit_finance', 'orders:assign_finance', 'orders:assign_ops'
+    'sales:order_punch', 'finance:order_verify_reject', 'finance:order_assign', 'finance:ledger_record', 'finance:ops_assign',
+    'ops:delivery_manage', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:subsidy_manage',
+    'orders:create', 'orders:verify', 'orders:operations', 'orders:finance_access', 'orders:view_all'
   ].some(p => finalPermissions.includes(p));
 
   if (hasAnyOrderPermission && !finalPermissions.includes('orders:view')) {
     finalPermissions.push('orders:view');
-  }
-
-
-  // Map 'orders:operations', 'orders:submit_finance', 'orders:assign_finance' to legacy 'orders:submit_installation' check for backwards compatibility
-  if (
-    (finalPermissions.includes('orders:operations') || 
-     finalPermissions.includes('orders:submit_finance') || 
-     finalPermissions.includes('orders:assign_finance')) && 
-    !finalPermissions.includes('orders:submit_installation')
-  ) {
-    finalPermissions.push('orders:submit_installation');
   }
 
   return finalPermissions;

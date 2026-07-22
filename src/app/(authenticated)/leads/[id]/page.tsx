@@ -2007,28 +2007,28 @@ export default function LeadDetailPage({
                         }
                       })()}
 
-                      {/* Clan & Employee Assignment Panel */}
+                      {/* Team Member Assignment Panel */}
                       <div className="md:col-span-2 pt-6 mt-6 border-t border-slate-800/80 animate-fade-in">
                         <div className="bg-slate-950/20 border border-slate-850 rounded-2xl p-5 space-y-4">
                           <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
                             <Users className="w-4 h-4 text-amber-500" />
-                            <span>Clan & Operator Assignment</span>
+                            <span>Team & Operator Assignment</span>
                           </h4>
                           <p className="text-[11px] text-slate-500">
-                            Assign this lead to a Clan (Team) to delegate ownership, then designate an operator with a priority level and due date.
+                            Assign this lead to a department team or designate an operator with a priority level and due date.
                           </p>
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {/* Team Selection */}
                             <div>
-                              <label className="block text-[10px] font-semibold text-slate-450 uppercase mb-1.5">Lead Clan (Team)</label>
+                              <label className="block text-[10px] font-semibold text-slate-450 uppercase mb-1.5 font-mono">Assigned Team / Department</label>
                               <select
                                 disabled={assigningTeam}
                                 value={selectedTeamId}
                                 onChange={(e) => handleAssignTeam(e.target.value)}
                                 className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-300 text-xs focus:ring-amber-500 focus:outline-none cursor-pointer"
                               >
-                                <option value="">Select a team/clan...</option>
+                                <option value="">Select a team...</option>
                                 {allTeams.map((t) => (
                                   <option key={t.id} value={t.id}>{t.name} ({t.department?.name})</option>
                                 ))}

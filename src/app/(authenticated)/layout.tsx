@@ -37,6 +37,7 @@ import {
   Flag,
   Check,
   Database,
+  PackageCheck,
 } from 'lucide-react';
 import Link from 'next/link';
 import LeaderboardDrawer from '@/components/LeaderboardDrawer';
@@ -585,6 +586,12 @@ export default function AuthenticatedLayout({
           path: '/operations',
           icon: Wrench,
           permission: 'orders:operations',
+        },
+        {
+          name: 'Completed Orders',
+          path: '/orders/completed',
+          icon: PackageCheck,
+          permission: null,
         },
       ]
     },
