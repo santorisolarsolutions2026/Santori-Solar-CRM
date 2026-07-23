@@ -216,57 +216,20 @@ export async function PATCH(
       }
     }
 
-    // Enforce specific assignment change rules
-    if (['tl', 'psa_tl'].includes(baseRole)) {
-      // TL can only assign to themselves if unassigned, or keep it as themselves
-      if (assignedTlId !== undefined && assignedTlId) {
-        const targetTlId = parseInt(assignedTlId, 10);
-        if (targetTlId !== userPayload.id) {
-          return NextResponse.json({ success: false, message: 'Forbidden. TL can only assign leads to themselves.' }, { status: 403 });
-        }
-      }
-      
-      // TL can change consultant, but only to a consultant reporting to them
-      if (assignedConsultantId !== undefined && assignedConsultantId) {
-        const consId = parseInt(assignedConsultantId, 10);
-        const consUser = await prisma.user.findUnique({
-          where: { id: consId },
-          select: { reportsTo: true, role: true },
-        });
-        if (!consUser || !['consultant', 'psa'].includes(consUser.role) || consUser.reportsTo !== userPayload.id) {
-          return NextResponse.json({ success: false, message: 'Forbidden. Selected consultant must report to you.' }, { status: 403 });
-        }
-      }
-    } else if (baseRole === 'manager') {
-      // Manager can assign TL and Consultant, but they must be under this manager
-      if (assignedTlId !== undefined && assignedTlId) {
-        const targetTlId = parseInt(assignedTlId, 10);
-        const tlUser = await prisma.user.findUnique({
-          where: { id: targetTlId },
-          select: { reportsTo: true, role: true },
-        });
-        if (!tlUser || !['tl', 'psa_tl'].includes(tlUser.role) || tlUser.reportsTo !== userPayload.id) {
-          return NextResponse.json({ success: false, message: 'Forbidden. Selected TL must report to you.' }, { status: 403 });
-        }
-      }
-      
-      if (assignedConsultantId !== undefined && assignedConsultantId) {
-        const consId = parseInt(assignedConsultantId, 10);
-        const consUser = await prisma.user.findUnique({
-          where: { id: consId },
-          select: { reportsTo: true, role: true },
-        });
-        if (!consUser || !['consultant', 'psa'].includes(consUser.role)) {
-          return NextResponse.json({ success: false, message: 'Forbidden. Invalid consultant selected.' }, { status: 403 });
-        }
-        
-        // Ensure the consultant's TL reports to this manager
-        const tlOfConsultant = await prisma.user.findUnique({
-          where: { id: consUser.reportsTo || 0 },
-          select: { reportsTo: true },
-        });
-        if (!tlOfConsultant || tlOfConsultant.reportsTo !== userPayload.id) {
-          return NextResponse.json({ success: false, message: 'Forbidden. Selected consultant must report to your team.' }, { status: 403 });
+    // Validate target assignee is in the user's subordinate hierarchy (unless Admin / View All)
+    const isAdmin = ['admin', 'director'].includes(baseRole) || (userPayload as any).department?.name === 'IT' || userPermissions.includes('leads:view_all');
+    if (!isAdmin && isChangingAssignment && assignedConsultantId && assignedConsultantId !== 'unassigned') {
+      const targetId = parseInt(assignedConsultantId, 10);
+      if (!isNaN(targetId)) {
+        const { getSubordinateIds } = await import('@/lib/hierarchy');
+        const subordinateIds = await getSubordinateIds(userPayload.id);
+        const allowedAssigneeIds = [userPayload.id, ...subordinateIds];
+
+        if (!allowedAssigneeIds.includes(targetId)) {
+          return NextResponse.json({
+            success: false,
+            message: 'Forbidden. You can only assign leads to yourself or team members below you in hierarchy.'
+          }, { status: 403 });
         }
       }
     }

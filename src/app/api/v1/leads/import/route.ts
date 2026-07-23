@@ -10,8 +10,12 @@ export async function POST(req: Request) {
     }
 
     const userPermissions = await getUserPermissions(userPayload.id);
-    if (!userPermissions.includes('leads:create')) {
-      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to import leads.' }, { status: 403 });
+    const hasImportPerm = userPermissions.includes('leads:import') || 
+                          userPermissions.includes('sales:lead_import') || 
+                          ['admin', 'director'].includes(userPayload.role) || 
+                          (userPayload as any).department?.name === 'IT';
+    if (!hasImportPerm) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to import bulk leads.' }, { status: 403 });
     }
 
     const body = await req.json();

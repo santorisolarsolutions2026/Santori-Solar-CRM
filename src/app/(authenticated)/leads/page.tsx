@@ -956,15 +956,17 @@ export default function LeadsPage() {
             Nurture, track, and close solar customer deals.
           </p>
         </div>
-        {hasPermission('leads:create') && (
-          <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3">
+          {hasPermission('leads:import') && (
             <button
               onClick={() => setShowImportModal(true)}
-              className="py-2.5 px-4 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-900 dark:text-white rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all shadow-md"
+              className="py-2.5 px-4 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-900 dark:text-white rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
             >
               <Upload className="w-4 h-4" />
               <span>Import CSV</span>
             </button>
+          )}
+          {hasPermission('leads:create') && (
             <Link
               href="/leads/new"
               className="py-2.5 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-lg shadow-amber-500/10 flex items-center gap-1.5 transition-all w-fit"
@@ -972,8 +974,8 @@ export default function LeadsPage() {
               <Plus className="w-4 h-4" />
               <span>Add New Lead</span>
             </Link>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Filter and Search Bar Card */}
