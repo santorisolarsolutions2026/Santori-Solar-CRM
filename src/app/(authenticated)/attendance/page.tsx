@@ -442,7 +442,7 @@ export default function AttendancePage() {
     }
   };
 
-  const hasAttendanceAccess = true;
+  const hasAttendanceAccess = hasPermission('attendance:view') || isAdmin || isIT;
 
   if (!hasAttendanceAccess) {
     return (

@@ -603,7 +603,7 @@ export default function AuthenticatedLayout({
           name: 'Attendance',
           path: '/attendance',
           icon: UserCheck,
-          permission: null,
+          permission: 'attendance:view',
         },
         {
           name: 'Santori Team',

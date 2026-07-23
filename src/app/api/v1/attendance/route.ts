@@ -54,6 +54,20 @@ export async function GET(req: Request) {
     const isAdmin = userPayload.role === 'admin' || userPayload.role?.startsWith('admin:') || isITDept;
 
     const userPermissions = await getUserPermissions(userPayload.id);
+    const hasAttendancePerm = userPermissions.some(p => [
+      'attendance:view',
+      'sales:attendance_view',
+      'finance:attendance_view',
+      'ops:attendance_view'
+    ].includes(p));
+
+    if (!isAdmin && scope !== 'personal' && !hasAttendancePerm) {
+      return NextResponse.json({
+        success: false,
+        message: 'Forbidden. You do not have permission to view team attendance records.'
+      }, { status: 403 });
+    }
+
     const subordinateIds = isAdmin ? [] : await getSubordinateIds(userPayload.id);
     const allowedUserIds = isAdmin ? [] : [userPayload.id, ...subordinateIds];
 
