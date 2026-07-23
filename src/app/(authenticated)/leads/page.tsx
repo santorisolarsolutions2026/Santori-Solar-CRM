@@ -1127,7 +1127,7 @@ export default function LeadsPage() {
                   className="py-2 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer font-sans"
                 >
                   <UserCheck className="w-3.5 h-3.5" />
-                  <span>Assign Team</span>
+                  <span>Assign Member</span>
                 </button>
                 <button
                   onClick={() => {

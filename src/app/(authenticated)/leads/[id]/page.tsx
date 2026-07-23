@@ -37,6 +37,7 @@ import {
   Truck,
   Camera,
   Users,
+  UserCheck,
 } from 'lucide-react';
 import Link from 'next/link';
 import { BeautifulAudioPlayer } from '@/components/BeautifulAudioPlayer';
@@ -65,6 +66,9 @@ interface Lead {
   consultant: { id: number; name: string; phone: string | null } | null;
   tl: { id: number; name: string } | null;
   manager: { id: number; name: string } | null;
+  assignedConsultantId?: number | null;
+  assignedTlId?: number | null;
+  assignedManagerId?: number | null;
   otherData?: string | null;
   discomName?: string | null;
   connectionNumber?: string | null;
@@ -224,6 +228,7 @@ export default function LeadDetailPage({
   const [assignPriority, setAssignPriority] = useState('medium');
   const [assigningEmployee, setAssigningEmployee] = useState(false);
   const [assigningTeam, setAssigningTeam] = useState(false);
+  const [assigningMember, setAssigningMember] = useState(false);
 
   // Camera Modal States
   const [cameraModal, setCameraModal] = useState<{
@@ -672,6 +677,33 @@ export default function LeadDetailPage({
       alert('Error assigning employee.');
     } finally {
       setAssigningEmployee(false);
+    }
+  };
+
+  const handleSingleMemberAssign = async (memberIdStr: string) => {
+    if (!leadId) return;
+    setAssigningMember(true);
+    try {
+      const payload = memberIdStr && memberIdStr !== 'unassigned'
+        ? { assignedConsultantId: parseInt(memberIdStr, 10), assignedTlId: null, assignedManagerId: null }
+        : { assignedConsultantId: 'unassigned', assignedTlId: 'unassigned', assignedManagerId: 'unassigned' };
+
+      const res = await fetch(`/api/v1/leads/${leadId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchLeadDetails();
+      } else {
+        alert(data.message || 'Failed to update lead assignment.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error updating lead assignment.');
+    } finally {
+      setAssigningMember(false);
     }
   };
 
@@ -2007,88 +2039,69 @@ export default function LeadDetailPage({
                         }
                       })()}
 
-                      {/* Team Member Assignment Panel */}
-                      <div className="md:col-span-2 pt-6 mt-6 border-t border-slate-800/80 animate-fade-in">
-                        <div className="bg-slate-950/20 border border-slate-850 rounded-2xl p-5 space-y-4">
-                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-                            <Users className="w-4 h-4 text-amber-500" />
-                            <span>Team & Operator Assignment</span>
-                          </h4>
-                          <p className="text-[11px] text-slate-500">
-                            Assign this lead to a department team or designate an operator with a priority level and due date.
-                          </p>
+                      {/* Single Member Assignment Panel */}
+                      {(hasPermission('leads:assign') || user?.role === 'admin' || user?.role === 'director' || user?.role?.startsWith('admin:')) && (
+                        <div className="md:col-span-2 pt-6 mt-6 border-t border-slate-800/80 animate-fade-in">
+                          <div className="bg-slate-950/40 border border-slate-850 rounded-2xl p-5 space-y-4 shadow-lg">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <h4 className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
+                                <UserCheck className="w-4 h-4 text-amber-500" />
+                                <span>Assign Lead to 1 Member</span>
+                              </h4>
+                              <span className="text-[10px] text-slate-400 bg-slate-900 border border-slate-800 px-2 py-0.5 rounded-full font-mono">
+                                Visible to assigned member & hierarchy above
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-slate-400 leading-relaxed">
+                              Select 1 team member to assign this lead to. The lead will automatically become visible to him and everyone above him in the reporting hierarchy.
+                            </p>
 
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {/* Team Selection */}
-                            <div>
-                              <label className="block text-[10px] font-semibold text-slate-450 uppercase mb-1.5 font-mono">Assigned Team / Department</label>
+                            <div className="flex flex-col sm:flex-row items-center gap-3 pt-1">
                               <select
-                                disabled={assigningTeam}
-                                value={selectedTeamId}
-                                onChange={(e) => handleAssignTeam(e.target.value)}
-                                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-300 text-xs focus:ring-amber-500 focus:outline-none cursor-pointer"
+                                disabled={assigningMember}
+                                value={lead.assignedConsultantId || lead.assignedTlId || lead.assignedManagerId || ''}
+                                onChange={(e) => handleSingleMemberAssign(e.target.value)}
+                                className="w-full sm:flex-1 px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 focus:outline-none cursor-pointer"
                               >
-                                <option value="">Select a team...</option>
-                                {allTeams.map((t) => (
-                                  <option key={t.id} value={t.id}>{t.name} ({t.department?.name})</option>
+                                <option value="">-- Select Assigned Member --</option>
+                                {employees.map((emp) => (
+                                  <option key={emp.id} value={emp.id}>
+                                    {emp.name} ({emp.department?.name || 'Shared'} - {emp.designation?.name || emp.role.toUpperCase()})
+                                  </option>
                                 ))}
                               </select>
+                              {assigningMember && (
+                                <div className="flex items-center gap-2 text-xs text-amber-400 font-semibold shrink-0">
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                  <span>Updating...</span>
+                                </div>
+                              )}
                             </div>
 
-                            {/* Employee Selection within Team */}
-                            {selectedTeamId && (
-                              <div>
-                                <label className="block text-[10px] font-semibold text-slate-455 uppercase mb-1.5">Assign Operator</label>
-                                <div className="space-y-3">
-                                  <select
-                                    value={selectedEmpId}
-                                    onChange={(e) => setSelectedEmpId(e.target.value)}
-                                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-300 text-xs focus:ring-amber-500 focus:outline-none cursor-pointer"
-                                  >
-                                    <option value="">Select employee...</option>
-                                    {(allTeams.find(t => t.id === parseInt(selectedTeamId, 10))?.users || []).map((u: any) => (
-                                      <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
-                                    ))}
-                                  </select>
-
-                                  <div className="grid grid-cols-2 gap-2">
-                                    <div>
-                                      <label className="block text-[8px] font-semibold text-slate-500 uppercase mb-1">Due Date</label>
-                                      <input
-                                        type="date"
-                                        value={assignDueDate}
-                                        onChange={(e) => setAssignDueDate(e.target.value)}
-                                        className="w-full px-2 py-1.5 bg-slate-955 border border-slate-800 rounded-lg text-slate-300 text-[10px] focus:ring-amber-500 focus:outline-none cursor-pointer"
-                                      />
-                                    </div>
-                                    <div>
-                                      <label className="block text-[8px] font-semibold text-slate-500 uppercase mb-1">Priority</label>
-                                      <select
-                                        value={assignPriority}
-                                        onChange={(e) => setAssignPriority(e.target.value)}
-                                        className="w-full px-2 py-1.5 bg-slate-955 border border-slate-800 rounded-lg text-slate-300 text-[10px] focus:ring-amber-500 focus:outline-none cursor-pointer"
-                                      >
-                                        <option value="low">Low</option>
-                                        <option value="medium">Medium</option>
-                                        <option value="high">High</option>
-                                      </select>
-                                    </div>
-                                  </div>
-
-                                  <button
-                                    type="button"
-                                    disabled={assigningEmployee || !selectedEmpId}
-                                    onClick={() => handleAssignEmployee(selectedEmpId)}
-                                    className="w-full py-2 bg-amber-500 hover:bg-amber-400 text-slate-955 rounded-xl font-bold text-xs shadow-md transition-all cursor-pointer disabled:opacity-50"
-                                  >
-                                    {assigningEmployee ? 'Assigning...' : 'Assign Operator'}
-                                  </button>
-                                </div>
+                            {/* Currently assigned hierarchy summary */}
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-900 text-xs">
+                              <div className="bg-slate-900/50 border border-slate-850 p-2.5 rounded-xl">
+                                <span className="text-[9px] uppercase font-bold text-slate-500 block mb-0.5">Assigned Member</span>
+                                <span className="font-bold text-amber-400">
+                                  {lead.consultant ? lead.consultant.name : (lead.tl ? lead.tl.name : (lead.manager ? lead.manager.name : 'Unassigned'))}
+                                </span>
                               </div>
-                            )}
+                              <div className="bg-slate-900/50 border border-slate-850 p-2.5 rounded-xl">
+                                <span className="text-[9px] uppercase font-bold text-slate-500 block mb-0.5">Supervisor (TL)</span>
+                                <span className="font-semibold text-slate-300">
+                                  {lead.tl ? lead.tl.name : 'Auto-resolved / None'}
+                                </span>
+                              </div>
+                              <div className="bg-slate-900/50 border border-slate-850 p-2.5 rounded-xl">
+                                <span className="text-[9px] uppercase font-bold text-slate-500 block mb-0.5">Department Head (Manager)</span>
+                                <span className="font-semibold text-slate-300">
+                                  {lead.manager ? lead.manager.name : 'Auto-resolved / None'}
+                                </span>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      )}
 
                       {/* Edit Trigger */}
                       {hasPermission('leads:edit') && !isLeadLocked && (
