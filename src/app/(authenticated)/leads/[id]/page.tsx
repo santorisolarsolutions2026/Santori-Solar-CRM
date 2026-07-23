@@ -2063,10 +2063,16 @@ export default function LeadDetailPage({
                                 onChange={(e) => handleSingleMemberAssign(e.target.value)}
                                 className="w-full sm:flex-1 px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 focus:outline-none cursor-pointer"
                               >
-                                <option value="">-- Select Assigned Member --</option>
-                                {employees.map((emp) => (
+                                <option value="">-- Select Sales Member --</option>
+                                {employees.filter((emp) => {
+                                  const deptName = (emp.department?.name || '').toLowerCase().trim();
+                                  const roleLower = (emp.role || '').toLowerCase().trim();
+                                  const isSalesDept = deptName.includes('sales') || deptName.includes('psa') || deptName.includes('marketing');
+                                  const isSalesRole = ['sales_head', 'manager', 'tl', 'psa_tl', 'consultant', 'psa'].includes(roleLower) || roleLower.includes('sales') || roleLower.includes('psa');
+                                  return isSalesDept || isSalesRole;
+                                }).map((emp) => (
                                   <option key={emp.id} value={emp.id}>
-                                    {emp.name} ({emp.department?.name || 'Shared'} - {emp.designation?.name || emp.role.toUpperCase()})
+                                    {emp.name} ({emp.department?.name || 'Sales'} - {emp.designation?.name || emp.role.toUpperCase()})
                                   </option>
                                 ))}
                               </select>

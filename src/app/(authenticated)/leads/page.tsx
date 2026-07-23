@@ -1728,7 +1728,13 @@ export default function LeadsPage() {
                 >
                   <option value="UNCHANGED">-- Keep Unchanged --</option>
                   <option value="UNASSIGN">❌ Unassign Consultant</option>
-                  {teamMembers.map((m) => (
+                  {teamMembers.filter((m: any) => {
+                    const deptName = (m.department?.name || '').toLowerCase().trim();
+                    const roleLower = (m.role || '').toLowerCase().trim();
+                    const isSalesDept = deptName.includes('sales') || deptName.includes('psa') || deptName.includes('marketing');
+                    const isSalesRole = ['sales_head', 'manager', 'tl', 'psa_tl', 'consultant', 'psa'].includes(roleLower) || roleLower.includes('sales') || roleLower.includes('psa');
+                    return isSalesDept || isSalesRole;
+                  }).map((m) => (
                     <option key={m.id} value={m.id}>
                       {m.name} ({m.role})
                     </option>
