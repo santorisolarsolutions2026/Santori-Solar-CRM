@@ -171,125 +171,126 @@ export default function AccessControlManager({ currentUser, users, onPermissions
             </div>
           </div>
 
-          {/* Department Permission Sections */}
+          {/* Department Permission Sections Grouped by Category */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-            {/* Sales Department */}
-            <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h3 className="font-bold text-blue-400 text-sm uppercase tracking-wider flex items-center gap-2">
-                  <User className="w-4 h-4" />
-                  PSA & Sales Department
-                </h3>
-                <span className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full font-mono font-bold">13 Levels</span>
-              </div>
+            {/* Helper function to render grouped department permissions */}
+            {([
+              { title: 'PSA & Sales Department', deptKey: 'sales', color: 'blue', icon: User, items: DEPARTMENT_PERMISSIONS.sales },
+              { title: 'Finance Department', deptKey: 'finance', color: 'emerald', icon: Building, items: DEPARTMENT_PERMISSIONS.finance },
+              { title: 'Operations Department', deptKey: 'ops', color: 'purple', icon: Building, items: DEPARTMENT_PERMISSIONS.ops },
+            ] as const).map(({ title, deptKey, color, icon: DeptIcon, items }) => {
+              const activeCount = items.filter(i => selectedPermissions.has(i.key)).length;
+              
+              // Group items by item.group
+              const grouped = items.reduce((acc, item) => {
+                if (!acc[item.group]) acc[item.group] = [];
+                acc[item.group].push(item);
+                return acc;
+              }, {} as Record<string, typeof items>);
 
-              <div className="space-y-2.5">
-                {DEPARTMENT_PERMISSIONS.sales.map((item) => {
-                  const active = selectedPermissions.has(item.key);
-                  return (
-                    <div
-                      key={item.key}
-                      onClick={() => togglePermission(item.key)}
-                      className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-200 cursor-pointer select-none ${
-                        active
-                          ? 'bg-blue-500/10 border-blue-500/40 text-slate-200 shadow-sm'
-                          : 'bg-slate-900/40 border-slate-800/60 text-slate-400 hover:border-slate-700'
-                      }`}
-                    >
-                      <span className="text-xs font-semibold leading-relaxed pr-3">{item.label}</span>
+              const colorClasses = {
+                blue: {
+                  headerText: 'text-blue-400',
+                  badge: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+                  subHeader: 'text-blue-400/90 border-blue-500/20 bg-blue-950/20',
+                  activeBg: 'bg-blue-500/10 border-blue-500/40 text-slate-200',
+                  activeToggle: 'bg-blue-500 shadow-blue-500/30',
+                },
+                emerald: {
+                  headerText: 'text-emerald-400',
+                  badge: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+                  subHeader: 'text-emerald-400/90 border-emerald-500/20 bg-emerald-950/20',
+                  activeBg: 'bg-emerald-500/10 border-emerald-500/40 text-slate-200',
+                  activeToggle: 'bg-emerald-500 shadow-emerald-500/30',
+                },
+                purple: {
+                  headerText: 'text-purple-400',
+                  badge: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+                  subHeader: 'text-purple-400/90 border-purple-500/20 bg-purple-950/20',
+                  activeBg: 'bg-purple-500/10 border-purple-500/40 text-slate-200',
+                  activeToggle: 'bg-purple-500 shadow-purple-500/30',
+                },
+              }[color];
 
-                      {/* Interactive Toggle Switch */}
-                      <div className={`relative shrink-0 w-9 h-5 rounded-full transition-colors duration-200 ease-in-out p-0.5 ${
-                        active ? 'bg-blue-500 shadow-md shadow-blue-500/30' : 'bg-slate-800 border border-slate-700/60'
-                      }`}>
-                        <div className={`w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${
-                          active ? 'translate-x-4' : 'translate-x-0'
-                        }`} />
-                      </div>
+              return (
+                <div key={deptKey} className="bg-slate-950 border border-slate-800 rounded-2xl p-5 space-y-5 flex flex-col justify-between">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                      <h3 className={`font-bold ${colorClasses.headerText} text-sm uppercase tracking-wider flex items-center gap-2`}>
+                        <DeptIcon className="w-4 h-4" />
+                        {title}
+                      </h3>
+                      <span className={`text-[10px] ${colorClasses.badge} border px-2 py-0.5 rounded-full font-mono font-bold`}>
+                        {activeCount} / {items.length} Active
+                      </span>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
 
-            {/* Finance Department */}
-            <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h3 className="font-bold text-emerald-400 text-sm uppercase tracking-wider flex items-center gap-2">
-                  <Building className="w-4 h-4" />
-                  Finance Department
-                </h3>
-                <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full font-mono font-bold">8 Levels</span>
-              </div>
+                    <div className="space-y-4">
+                      {Object.entries(grouped).map(([groupName, groupItems]) => {
+                        const allGroupActive = groupItems.every(gi => selectedPermissions.has(gi.key));
 
-              <div className="space-y-2.5">
-                {DEPARTMENT_PERMISSIONS.finance.map((item) => {
-                  const active = selectedPermissions.has(item.key);
-                  return (
-                    <div
-                      key={item.key}
-                      onClick={() => togglePermission(item.key)}
-                      className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-200 cursor-pointer select-none ${
-                        active
-                          ? 'bg-emerald-500/10 border-emerald-500/40 text-slate-200 shadow-sm'
-                          : 'bg-slate-900/40 border-slate-800/60 text-slate-400 hover:border-slate-700'
-                      }`}
-                    >
-                      <span className="text-xs font-semibold leading-relaxed pr-3">{item.label}</span>
+                        return (
+                          <div key={groupName} className="space-y-2 border border-slate-850/80 bg-slate-900/30 p-3 rounded-xl">
+                            <div className="flex items-center justify-between border-b border-slate-800/60 pb-2">
+                              <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-300">
+                                {groupName}
+                              </h4>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const next = new Set(selectedPermissions);
+                                  if (allGroupActive) {
+                                    groupItems.forEach(gi => next.delete(gi.key));
+                                  } else {
+                                    groupItems.forEach(gi => next.add(gi.key));
+                                  }
+                                  setSelectedPermissions(next);
+                                }}
+                                className="text-[9px] font-semibold text-slate-400 hover:text-amber-400 transition-colors cursor-pointer"
+                              >
+                                {allGroupActive ? 'Deselect All' : 'Select All'}
+                              </button>
+                            </div>
 
-                      {/* Interactive Toggle Switch */}
-                      <div className={`relative shrink-0 w-9 h-5 rounded-full transition-colors duration-200 ease-in-out p-0.5 ${
-                        active ? 'bg-emerald-500 shadow-md shadow-emerald-500/30' : 'bg-slate-800 border border-slate-700/60'
-                      }`}>
-                        <div className={`w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${
-                          active ? 'translate-x-4' : 'translate-x-0'
-                        }`} />
-                      </div>
+                            <div className="space-y-2 pt-1">
+                              {groupItems.map((item) => {
+                                const active = selectedPermissions.has(item.key);
+                                return (
+                                  <div
+                                    key={item.key}
+                                    onClick={() => togglePermission(item.key)}
+                                    className={`flex items-start justify-between p-2.5 rounded-xl border transition-all duration-200 cursor-pointer select-none ${
+                                      active
+                                        ? colorClasses.activeBg
+                                        : 'bg-slate-900/40 border-slate-800/60 text-slate-400 hover:border-slate-700 hover:bg-slate-900/70'
+                                    }`}
+                                  >
+                                    <div className="pr-2 space-y-0.5">
+                                      <p className="text-xs font-semibold leading-tight text-slate-200">{item.label}</p>
+                                      <p className="text-[10px] text-slate-500 leading-snug">{item.description}</p>
+                                    </div>
+
+                                    {/* Interactive Toggle Switch */}
+                                    <div className={`relative shrink-0 w-8 h-4.5 rounded-full transition-colors duration-200 ease-in-out p-0.5 mt-0.5 ${
+                                      active ? colorClasses.activeToggle : 'bg-slate-800 border border-slate-700/60'
+                                    }`}>
+                                      <div className={`w-3.5 h-3.5 rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${
+                                        active ? 'translate-x-3.5' : 'translate-x-0'
+                                      }`} />
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Operations Department */}
-            <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h3 className="font-bold text-purple-400 text-sm uppercase tracking-wider flex items-center gap-2">
-                  <Building className="w-4 h-4" />
-                  Operations Department
-                </h3>
-                <span className="text-[10px] bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded-full font-mono font-bold">8 Levels</span>
-              </div>
-
-              <div className="space-y-2.5">
-                {DEPARTMENT_PERMISSIONS.ops.map((item) => {
-                  const active = selectedPermissions.has(item.key);
-                  return (
-                    <div
-                      key={item.key}
-                      onClick={() => togglePermission(item.key)}
-                      className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-200 cursor-pointer select-none ${
-                        active
-                          ? 'bg-purple-500/10 border-purple-500/40 text-slate-200 shadow-sm'
-                          : 'bg-slate-900/40 border-slate-800/60 text-slate-400 hover:border-slate-700'
-                      }`}
-                    >
-                      <span className="text-xs font-semibold leading-relaxed pr-3">{item.label}</span>
-
-                      {/* Interactive Toggle Switch */}
-                      <div className={`relative shrink-0 w-9 h-5 rounded-full transition-colors duration-200 ease-in-out p-0.5 ${
-                        active ? 'bg-purple-500 shadow-md shadow-purple-500/30' : 'bg-slate-800 border border-slate-700/60'
-                      }`}>
-                        <div className={`w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${
-                          active ? 'translate-x-4' : 'translate-x-0'
-                        }`} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+                  </div>
+                </div>
+              );
+            })}
 
           </div>
         </div>
@@ -297,3 +298,4 @@ export default function AccessControlManager({ currentUser, users, onPermissions
     </div>
   );
 }
+

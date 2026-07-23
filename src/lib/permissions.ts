@@ -1,37 +1,65 @@
-export const DEPARTMENT_PERMISSIONS = {
+export interface PermissionItem {
+  key: string;
+  label: string;
+  group: string;
+  description: string;
+}
+
+export const DEPARTMENT_PERMISSIONS: {
+  sales: PermissionItem[];
+  finance: PermissionItem[];
+  ops: PermissionItem[];
+} = {
   sales: [
-    { key: 'sales:lead_add', label: '1. Add new Lead' },
-    { key: 'sales:lead_import', label: '2. Import Bulk Leads' },
-    { key: 'sales:lead_assign', label: '3. Assign Leads to Sales Team (only to members in team & below in hierarchy)' },
-    { key: 'sales:lead_view_all', label: '4. View All Leads in the system' },
-    { key: 'sales:stage_change', label: '5. Change Calling stages' },
-    { key: 'sales:designation_change', label: '6. Change designation of members under them' },
-    { key: 'sales:attendance_view', label: '7. View Attendance of members under them' },
-    { key: 'sales:lead_track', label: '8. Track lead journey' },
-    { key: 'sales:analytics_view', label: '9. View Team analytics (his own & below in hierarchy)' },
-    { key: 'sales:order_punch', label: '10. Filling order punching form' },
-    { key: 'sales:meeting_book', label: '11. Book Meeting' },
-    { key: 'sales:meeting_done', label: '12. Meeting done' },
-    { key: 'sales:finance_assign', label: '13. Assign Finance member' },
+    // Lead Capture & Pipeline
+    { key: 'sales:lead_add', label: 'Add New Lead', group: 'Lead Capture & Pipeline', description: 'Create and register new customer leads manually.' },
+    { key: 'sales:lead_import', label: 'Import Bulk Leads', group: 'Lead Capture & Pipeline', description: 'Upload CSV/Excel spreadsheets to import leads.' },
+    { key: 'sales:lead_assign', label: 'Assign Leads to Sales Team', group: 'Lead Capture & Pipeline', description: 'Assign or reassign leads to sales team members.' },
+    { key: 'sales:lead_view_all', label: 'View All System Leads', group: 'Lead Capture & Pipeline', description: 'Access all company leads bypassing hierarchy restriction.' },
+
+    // Calling & Meetings
+    { key: 'sales:stage_change', label: 'Change Calling & Lead Stages', group: 'Calling & Customer Meetings', description: 'Update lead calling stages and follow-up status.' },
+    { key: 'sales:meeting_book', label: 'Book Customer Meeting', group: 'Calling & Customer Meetings', description: 'Schedule site visits and executive meetings.' },
+    { key: 'sales:meeting_done', label: 'Mark Meeting Done & Audio', group: 'Calling & Customer Meetings', description: 'Complete meetings, log audio recordings & locations.' },
+    { key: 'sales:lead_track', label: 'Track Lead Audit Journey', group: 'Calling & Customer Meetings', description: 'Inspect detailed lead history and status change logs.' },
+
+    // Orders & Handoff
+    { key: 'sales:order_punch', label: 'Fill Order Punching Form', group: 'Order Punching & Handoff', description: 'Punch system size, valuation, and payment terms.' },
+    { key: 'sales:finance_assign', label: 'Assign Finance Member', group: 'Order Punching & Handoff', description: 'Hand over punched orders to Finance team members.' },
+
+    // Supervision & Analytics
+    { key: 'sales:designation_change', label: 'Change Subordinate Designations', group: 'Supervision & Analytics', description: 'Modify designations of team members below in hierarchy.' },
+    { key: 'sales:attendance_view', label: 'View Subordinate Attendance', group: 'Supervision & Analytics', description: 'Inspect check-in/out logs for sales team members.' },
+    { key: 'sales:analytics_view', label: 'View Sales Team Analytics', group: 'Supervision & Analytics', description: 'Access sales performance charts and reporting.' },
   ],
   finance: [
-    { key: 'finance:order_verify_reject', label: '1. Verify the orders / Reject the orders' },
-    { key: 'finance:order_assign', label: '2. Assign the orders (only in team & lower in hierarchy)' },
-    { key: 'finance:ledger_record', label: '3. Maintain Ledger: Record Payment' },
-    { key: 'finance:ledger_delete', label: '4. Maintain Ledger: Delete Payment' },
-    { key: 'finance:designation_change', label: '5. Change designation of members under them' },
-    { key: 'finance:attendance_view', label: '6. View Attendance of members under them' },
-    { key: 'finance:analytics_view', label: '7. View Team analytics (his own & below in hierarchy)' },
-    { key: 'finance:ops_assign', label: '8. Assign Operations Member' },
+    // Verification & Assignment
+    { key: 'finance:order_verify_reject', label: 'Verify & Reject Submitted Orders', group: 'Order Verification & Handoff', description: 'Approve or reject down-payments and submitted orders.' },
+    { key: 'finance:order_assign', label: 'Assign Orders in Finance', group: 'Order Verification & Handoff', description: 'Assign finance orders to department executives.' },
+    { key: 'finance:ops_assign', label: 'Assign Operations Member', group: 'Order Verification & Handoff', description: 'Hand over verified orders to Operations for installation.' },
+
+    // Ledger & Payments
+    { key: 'finance:ledger_record', label: 'Record Ledger Payments & Slips', group: 'Ledger & Payments', description: 'Add payment receipts, transaction reference numbers.' },
+    { key: 'finance:ledger_delete', label: 'Delete Ledger Payment Entries', group: 'Ledger & Payments', description: 'Remove or discard invalid payment ledger records.' },
+
+    // Supervision & Analytics
+    { key: 'finance:designation_change', label: 'Change Subordinate Designations', group: 'Supervision & Analytics', description: 'Modify designations of finance team members.' },
+    { key: 'finance:attendance_view', label: 'View Subordinate Attendance', group: 'Supervision & Analytics', description: 'Inspect attendance logs for finance staff.' },
+    { key: 'finance:analytics_view', label: 'View Financial Reports & Audits', group: 'Supervision & Analytics', description: 'Access cash flow, audit logs, and financial stats.' },
   ],
   ops: [
-    { key: 'ops:delivery_manage', label: '1. Manage Delivery' },
-    { key: 'ops:installation_manage', label: '2. Manage Installation' },
-    { key: 'ops:meter_manage', label: '3. Manage Meter Installation' },
-    { key: 'ops:commission_manage', label: '4. Manage Plant Commission' },
-    { key: 'ops:designation_change', label: '5. Change designation of members under them' },
-    { key: 'ops:attendance_view', label: '6. View Attendance of members under them' },
-    { key: 'ops:analytics_view', label: '7. View Team analytics (his own & below in hierarchy)' },
-    { key: 'ops:subsidy_manage', label: '8. Manage Subsidy Application' },
+    // Fulfillment & Execution
+    { key: 'ops:delivery_manage', label: 'Manage Material Dispatch & Delivery', group: 'Fulfillment & Installation', description: 'Log equipment dispatch dates and delivery status.' },
+    { key: 'ops:installation_manage', label: 'Manage Installation & Site Photos', group: 'Fulfillment & Installation', description: 'Log installation progress and upload site pictures.' },
+    { key: 'ops:meter_manage', label: 'Manage Net Metering & DISCOM', group: 'Fulfillment & Installation', description: 'Track bi-directional meter installation & DISCOM paperwork.' },
+    { key: 'ops:commission_manage', label: 'Manage Plant Commissioning', group: 'Fulfillment & Installation', description: 'Mark solar plant commissioning and grid synchronization.' },
+    { key: 'ops:subsidy_manage', label: 'Manage Subsidy Applications', group: 'Fulfillment & Installation', description: 'Process government solar subsidy documentation.' },
+
+    // Supervision & Analytics
+    { key: 'ops:designation_change', label: 'Change Subordinate Designations', group: 'Supervision & Analytics', description: 'Modify designations of operations team members.' },
+    { key: 'ops:attendance_view', label: 'View Subordinate Attendance', group: 'Supervision & Analytics', description: 'Inspect attendance logs for field & ops staff.' },
+    { key: 'ops:analytics_view', label: 'View Operations Analytics', group: 'Supervision & Analytics', description: 'Access project completion metrics and timelines.' },
   ]
 };
+
+

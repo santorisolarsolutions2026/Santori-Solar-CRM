@@ -180,39 +180,67 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const hasPermission = (permission: string) => {
     if (!user) return false;
     const baseRole = user.role.includes(':') ? user.role.split(':')[0] : user.role;
-    if (baseRole === 'admin' || baseRole === 'director') return true;
+    if (baseRole === 'admin' || baseRole === 'director' || user.department?.name === 'IT') return true;
 
     const userPerms = user.permissions || [];
-    
-    const finalPerms = [...userPerms];
+    const cleanPerms = userPerms.map(p => p.replace(/^CUSTOM:/, '').trim());
+    const finalPerms = new Set<string>(cleanPerms);
 
-    // If user has manage_calling_stages or book_meeting, they implicitly get change_status for backwards compatibility
-    if (
-      (finalPerms.includes('leads:manage_calling_stages') || 
-       finalPerms.includes('leads:book_meeting')) && 
-      !finalPerms.includes('leads:change_status')
-    ) {
-      finalPerms.push('leads:change_status');
+    const clientMapping: Record<string, string[]> = {
+      'leads:create': ['sales:lead_add'],
+      'sales:lead_add': ['leads:create'],
+      'leads:import': ['sales:lead_import'],
+      'sales:lead_import': ['leads:import'],
+      'leads:assign': ['sales:lead_assign'],
+      'sales:lead_assign': ['leads:assign'],
+      'leads:view_all': ['sales:lead_view_all'],
+      'sales:lead_view_all': ['leads:view_all'],
+      'leads:change_status': ['sales:stage_change', 'leads:manage_calling_stages'],
+      'sales:stage_change': ['leads:change_status'],
+      'attendance:view': ['sales:attendance_view', 'finance:attendance_view', 'ops:attendance_view'],
+      'leads:track': ['sales:lead_track'],
+      'sales:lead_track': ['leads:track'],
+      'reports:view': ['sales:analytics_view', 'finance:analytics_view', 'ops:analytics_view'],
+      'orders:create': ['sales:order_punch'],
+      'sales:order_punch': ['orders:create'],
+      'leads:book_meeting': ['sales:meeting_book'],
+      'sales:meeting_book': ['leads:book_meeting'],
+      'leads:meeting_done': ['sales:meeting_done', 'meetings:complete'],
+      'sales:meeting_done': ['leads:meeting_done', 'meetings:complete'],
+      'orders:assign_finance': ['sales:finance_assign', 'finance:order_assign'],
+      'orders:verify': ['finance:order_verify_reject'],
+      'finance:order_verify_reject': ['orders:verify'],
+      'orders:finance_access': ['finance:order_verify_reject', 'finance:order_assign', 'finance:ledger_record', 'finance:ops_assign'],
+      'finance:manage_ledger': ['finance:ledger_record'],
+      'orders:assign_ops': ['finance:ops_assign'],
+      'orders:operations': ['ops:delivery_manage', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:subsidy_manage', 'ops:update_stages'],
+      'ops:update_stages': ['ops:delivery_manage', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:subsidy_manage'],
+    };
+
+    if (finalPerms.has(permission)) return true;
+
+    const mapped = clientMapping[permission];
+    if (mapped && mapped.some(m => finalPerms.has(m))) {
+      return true;
     }
 
-    // Implicit page permissions mapping to mirror backend behaviour
-    const hasAnyLeadPermission = [
-      'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:track', 'leads:assign', 'leads:delete', 'leads:view_sales_pipeline',
-      'leads:manage_calling_stages', 'leads:book_meeting'
-    ].some(p => finalPerms.includes(p));
-
-    const hasAnyOrderPermission = [
-      'orders:create', 'orders:verify', 'orders:operations', 'orders:view_all', 'orders:submit_installation', 'finance:manage_ledger', 'ops:update_stages', 'ops:upload_drawings'
-    ].some(p => finalPerms.includes(p));
-
-    if (hasAnyLeadPermission && !finalPerms.includes('leads:view')) {
-      finalPerms.push('leads:view');
-    }
-    if (hasAnyOrderPermission && !finalPerms.includes('orders:view')) {
-      finalPerms.push('orders:view');
+    // Page level implicit checks
+    if (permission === 'leads:view') {
+      const hasAnyLead = ['sales:lead_add', 'sales:lead_import', 'sales:stage_change', 'sales:lead_view_all', 'sales:lead_track', 'sales:lead_assign', 'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:track', 'leads:assign', 'leads:view_sales_pipeline', 'leads:book_meeting', 'leads:meeting_done'].some(p => finalPerms.has(p));
+      if (hasAnyLead) return true;
     }
 
-    return finalPerms.includes(permission);
+    if (permission === 'orders:view') {
+      const hasAnyOrder = ['sales:order_punch', 'finance:order_verify_reject', 'finance:order_assign', 'finance:ledger_record', 'finance:ops_assign', 'ops:delivery_manage', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:subsidy_manage', 'orders:create', 'orders:verify', 'orders:operations', 'orders:finance_access', 'orders:view_all', 'orders:submit_installation', 'finance:manage_ledger', 'ops:update_stages', 'ops:upload_drawings'].some(p => finalPerms.has(p));
+      if (hasAnyOrder) return true;
+    }
+
+    if (permission === 'reports:view') {
+      const hasAnyReport = ['sales:analytics_view', 'finance:analytics_view', 'ops:analytics_view', 'reports:view', 'reports:view_financials'].some(p => finalPerms.has(p));
+      if (hasAnyReport) return true;
+    }
+
+    return false;
   };
 
 

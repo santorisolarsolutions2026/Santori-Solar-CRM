@@ -117,15 +117,14 @@ export function getDefaultPermissionsForRole(role: string): string[] {
   }
 }
 
-export async function getUserPermissions(userId: number): Promise<string[]> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      role: true,
-      permissions: true,
-      department: { select: { name: true } }
-    }
-  });
+export interface UserPermissionsInput {
+  role: string;
+  permissions?: string | null;
+  department?: { name: string } | null;
+  designation?: { permissions?: string | null } | null;
+}
+
+export function resolveUserPermissions(user: UserPermissionsInput): string[] {
   if (!user) return [];
 
   const baseRole = user.role.includes(':') ? user.role.split(':')[0] : user.role;
@@ -133,81 +132,146 @@ export async function getUserPermissions(userId: number): Promise<string[]> {
 
   if (baseRole === 'admin' || baseRole === 'director' || user.department?.name === 'IT') {
     basePermissions = getDefaultPermissionsForRole('admin');
-  } else if (user.permissions && user.permissions.startsWith('CUSTOM:')) {
-    const permContent = user.permissions.replace('CUSTOM:', '').trim();
-    basePermissions = permContent ? permContent.split(',').map(p => p.trim()) : [];
   } else if (user.permissions && user.permissions.trim()) {
-    basePermissions = user.permissions.split(',').map(p => p.trim());
+    const permString = user.permissions.replace(/^CUSTOM:/, '').trim();
+    basePermissions = permString ? permString.split(',').map(p => p.trim()).filter(Boolean) : [];
+  } else if (user.designation?.permissions && user.designation.permissions.trim()) {
+    const permString = user.designation.permissions.replace(/^CUSTOM:/, '').trim();
+    basePermissions = permString ? permString.split(',').map(p => p.trim()).filter(Boolean) : [];
   } else {
     basePermissions = getDefaultPermissionsForRole(user.role);
   }
 
-  const finalPermissions = [...basePermissions];
+  const finalPermissions = new Set<string>(basePermissions);
 
-  // Auto-map new custom keys to legacy permissions for seamless backward compatibility
+  // Bi-directional mapping between Custom Access keys and functional keys
   const mapping: Record<string, string[]> = {
+    // Sales / PSA
     'sales:lead_add': ['leads:create'],
+    'leads:create': ['sales:lead_add'],
+
     'sales:lead_import': ['leads:import'],
+    'leads:import': ['sales:lead_import'],
+
     'sales:lead_assign': ['leads:assign'],
+    'leads:assign': ['sales:lead_assign'],
+
     'sales:lead_view_all': ['leads:view_all'],
+    'leads:view_all': ['sales:lead_view_all'],
+
     'sales:stage_change': ['leads:change_status', 'leads:manage_calling_stages'],
+    'leads:change_status': ['sales:stage_change'],
+    'leads:manage_calling_stages': ['sales:stage_change'],
+
     'sales:designation_change': ['team:change_designation', 'team:manage'],
+    'team:change_designation': ['sales:designation_change'],
+
     'sales:attendance_view': ['attendance:view'],
+    'attendance:view': ['sales:attendance_view'],
+
     'sales:lead_track': ['leads:track'],
+    'leads:track': ['sales:lead_track'],
+
     'sales:analytics_view': ['reports:view', 'reports:view_financials'],
+    'reports:view': ['sales:analytics_view'],
+
     'sales:order_punch': ['orders:create', 'orders:submit_installation'],
+    'orders:create': ['sales:order_punch', 'orders:submit_installation'],
+
     'sales:meeting_book': ['leads:book_meeting', 'leads:change_status'],
-    'sales:meeting_done': ['leads:meeting_done', 'leads:change_status'],
-    'sales:finance_assign': ['orders:assign_finance'],
+    'leads:book_meeting': ['sales:meeting_book'],
+
+    'sales:meeting_done': ['leads:meeting_done', 'meetings:complete', 'leads:change_status'],
+    'leads:meeting_done': ['sales:meeting_done'],
+    'meetings:complete': ['sales:meeting_done'],
+
+    'sales:finance_assign': ['orders:assign_finance', 'orders:submit_finance'],
+    'orders:assign_finance': ['sales:finance_assign'],
+
+    // Finance
     'finance:order_verify_reject': ['orders:verify', 'orders:finance_access'],
+    'orders:verify': ['finance:order_verify_reject', 'orders:finance_access'],
+
     'finance:order_assign': ['orders:assign_finance', 'orders:finance_access'],
+
     'finance:ledger_record': ['finance:manage_ledger', 'orders:finance_access'],
-    'finance:ledger_delete': ['finance:manage_ledger', 'finance:delete_ledger'],
+    'finance:manage_ledger': ['finance:ledger_record', 'orders:finance_access'],
+
+    'finance:ledger_delete': ['finance:delete_ledger', 'finance:manage_ledger'],
+
     'finance:designation_change': ['team:change_designation', 'team:manage'],
+
     'finance:attendance_view': ['attendance:view'],
+
     'finance:analytics_view': ['reports:view', 'reports:view_financials'],
+
     'finance:ops_assign': ['orders:assign_ops', 'orders:finance_access'],
-    'ops:delivery_manage': ['orders:operations', 'ops:update_stages'],
-    'ops:installation_manage': ['orders:operations', 'ops:update_stages'],
-    'ops:meter_manage': ['orders:operations', 'ops:update_stages'],
-    'ops:commission_manage': ['orders:operations', 'ops:update_stages'],
+    'orders:assign_ops': ['finance:ops_assign'],
+
+    // Operations
+    'ops:delivery_manage': ['orders:operations', 'ops:update_stages', 'orders:submit_installation'],
+    'ops:installation_manage': ['orders:operations', 'ops:update_stages', 'orders:submit_installation'],
+    'ops:meter_manage': ['orders:operations', 'ops:update_stages', 'orders:submit_installation'],
+    'ops:commission_manage': ['orders:operations', 'ops:update_stages', 'orders:submit_installation'],
+    'ops:subsidy_manage': ['orders:operations', 'ops:update_stages', 'orders:submit_installation'],
+    'ops:update_stages': ['orders:operations', 'ops:delivery_manage', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:subsidy_manage', 'orders:submit_installation'],
+    'orders:operations': ['ops:update_stages', 'orders:submit_installation'],
+
     'ops:designation_change': ['team:change_designation', 'team:manage'],
     'ops:attendance_view': ['attendance:view'],
     'ops:analytics_view': ['reports:view'],
-    'ops:subsidy_manage': ['orders:operations', 'ops:update_stages'],
+    'ops:upload_drawings': ['orders:operations'],
   };
 
-  for (const [newKey, legacyKeys] of Object.entries(mapping)) {
-    if (finalPermissions.includes(newKey)) {
-      for (const legacyKey of legacyKeys) {
-        if (!finalPermissions.includes(legacyKey)) {
-          finalPermissions.push(legacyKey);
-        }
+  for (const perm of Array.from(finalPermissions)) {
+    const mapped = mapping[perm];
+    if (mapped) {
+      for (const m of mapped) {
+        finalPermissions.add(m);
       }
     }
   }
 
-  // Implicit page permissions mapping to ensure existing checks ('leads:view', 'orders:view') do not break
-  const hasAnyLeadPermission = [
+  // Implicit page level permissions
+  const leadPerms = [
     'sales:lead_add', 'sales:lead_import', 'sales:stage_change', 'sales:lead_view_all', 'sales:lead_track', 'sales:lead_assign',
-    'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:track', 'leads:assign'
-  ].some(p => finalPermissions.includes(p));
-
-  if (hasAnyLeadPermission && !finalPermissions.includes('leads:view')) {
-    finalPermissions.push('leads:view');
+    'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:track', 'leads:assign', 'leads:view_sales_pipeline', 'leads:book_meeting', 'leads:meeting_done'
+  ];
+  if (leadPerms.some(p => finalPermissions.has(p))) {
+    finalPermissions.add('leads:view');
   }
 
-  const hasAnyOrderPermission = [
+  const orderPerms = [
     'sales:order_punch', 'finance:order_verify_reject', 'finance:order_assign', 'finance:ledger_record', 'finance:ops_assign',
     'ops:delivery_manage', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:subsidy_manage',
-    'orders:create', 'orders:verify', 'orders:operations', 'orders:finance_access', 'orders:view_all'
-  ].some(p => finalPermissions.includes(p));
-
-  if (hasAnyOrderPermission && !finalPermissions.includes('orders:view')) {
-    finalPermissions.push('orders:view');
+    'orders:create', 'orders:verify', 'orders:operations', 'orders:finance_access', 'orders:view_all', 'orders:submit_installation', 'finance:manage_ledger', 'ops:update_stages', 'ops:upload_drawings'
+  ];
+  if (orderPerms.some(p => finalPermissions.has(p))) {
+    finalPermissions.add('orders:view');
   }
 
-  return finalPermissions;
+  const reportPerms = [
+    'sales:analytics_view', 'finance:analytics_view', 'ops:analytics_view', 'reports:view', 'reports:view_financials'
+  ];
+  if (reportPerms.some(p => finalPermissions.has(p))) {
+    finalPermissions.add('reports:view');
+  }
+
+  return Array.from(finalPermissions);
+}
+
+export async function getUserPermissions(userId: number): Promise<string[]> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      role: true,
+      permissions: true,
+      department: { select: { name: true } },
+      designation: { select: { permissions: true } }
+    }
+  });
+  if (!user) return [];
+  return resolveUserPermissions(user);
 }
 
 export async function getUserSession(userId: number): Promise<{ role: string; permissions: string[]; department?: { name: string } | null }> {
@@ -216,49 +280,13 @@ export async function getUserSession(userId: number): Promise<{ role: string; pe
     select: {
       role: true,
       permissions: true,
-      department: { select: { name: true } }
+      department: { select: { name: true } },
+      designation: { select: { permissions: true } }
     }
   });
   if (!user) return { role: '', permissions: [] };
 
-  const baseRole = user.role.includes(':') ? user.role.split(':')[0] : user.role;
-  let basePermissions: string[] = [];
-
-  if (baseRole === 'admin' || baseRole === 'director' || user.department?.name === 'IT') {
-    basePermissions = getDefaultPermissionsForRole('admin');
-  } else {
-    basePermissions = user.permissions && user.permissions.trim()
-      ? user.permissions.split(',').map(p => p.trim())
-      : getDefaultPermissionsForRole(user.role);
-  }
-
-  const finalPermissions = [...basePermissions];
-
-  const hasAnyLeadPermission = [
-    'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:track', 'leads:assign', 'leads:delete', 'leads:view_sales_pipeline'
-  ].some(p => finalPermissions.includes(p));
-
-  if (hasAnyLeadPermission && !finalPermissions.includes('leads:view')) {
-    finalPermissions.push('leads:view');
-  }
-
-  const hasAnyOrderPermission = [
-    'orders:create', 'orders:verify', 'orders:operations', 'orders:finance_access', 'orders:view_all', 'orders:submit_installation', 'finance:manage_ledger', 'ops:update_stages', 'ops:upload_drawings',
-    'orders:submit_finance', 'orders:assign_finance', 'orders:assign_ops'
-  ].some(p => finalPermissions.includes(p));
-
-  if (hasAnyOrderPermission && !finalPermissions.includes('orders:view')) {
-    finalPermissions.push('orders:view');
-  }
-
-  if (
-    (finalPermissions.includes('orders:operations') || 
-     finalPermissions.includes('orders:submit_finance') || 
-     finalPermissions.includes('orders:assign_finance')) && 
-    !finalPermissions.includes('orders:submit_installation')
-  ) {
-    finalPermissions.push('orders:submit_installation');
-  }
+  const finalPermissions = resolveUserPermissions(user);
 
   return {
     role: user.role,
@@ -266,3 +294,4 @@ export async function getUserSession(userId: number): Promise<{ role: string; pe
     department: user.department
   };
 }
+

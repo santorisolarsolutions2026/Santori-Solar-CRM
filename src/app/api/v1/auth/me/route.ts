@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getAuthenticatedUser, getDefaultPermissionsForRole } from '@/lib/auth';
+import { getAuthenticatedUser, resolveUserPermissions } from '@/lib/auth';
 
 export async function GET(req: Request) {
   try {
@@ -31,7 +31,7 @@ export async function GET(req: Request) {
         departmentId: true,
         teamId: true,
         department: { select: { id: true, name: true } },
-        designation: { select: { id: true, name: true, level: true } }
+        designation: { select: { id: true, name: true, level: true, permissions: true } }
       },
     });
 
@@ -42,12 +42,7 @@ export async function GET(req: Request) {
       );
     }
 
-    const baseRole = user.role.includes(':') ? user.role.split(':')[0] : user.role;
-    const permissionsList = baseRole === 'admin' || baseRole === 'director' || user.department?.name === 'IT'
-      ? getDefaultPermissionsForRole('admin')
-      : user.permissions && user.permissions.trim()
-        ? user.permissions.split(',').map((p: string) => p.trim())
-        : getDefaultPermissionsForRole(user.role);
+    const permissionsList = resolveUserPermissions(user);
 
     return NextResponse.json({
       success: true,
