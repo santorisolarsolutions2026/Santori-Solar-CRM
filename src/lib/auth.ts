@@ -156,6 +156,9 @@ export function resolveUserPermissions(user: UserPermissionsInput): string[] {
     'sales:lead_assign': ['leads:assign'],
     'leads:assign': ['sales:lead_assign'],
 
+    'sales:lead_delete': ['leads:delete'],
+    'leads:delete': ['sales:lead_delete'],
+
     'sales:lead_view_all': ['leads:view_all'],
     'leads:view_all': ['sales:lead_view_all'],
 

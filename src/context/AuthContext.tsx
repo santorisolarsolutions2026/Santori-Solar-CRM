@@ -193,6 +193,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       'sales:lead_import': ['leads:import'],
       'leads:assign': ['sales:lead_assign'],
       'sales:lead_assign': ['leads:assign'],
+      'leads:delete': ['sales:lead_delete'],
+      'sales:lead_delete': ['leads:delete'],
       'leads:view_all': ['sales:lead_view_all'],
       'sales:lead_view_all': ['leads:view_all'],
       'leads:change_status': ['sales:stage_change', 'leads:manage_calling_stages'],

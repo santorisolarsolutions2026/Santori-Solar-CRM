@@ -186,6 +186,7 @@ export async function PATCH(
       'sales:lead_add': 'PSA',
       'sales:lead_import': 'PSA',
       'sales:lead_assign': 'Sales',
+      'sales:lead_delete': 'Sales',
       'sales:lead_view_all': 'Sales',
       'sales:stage_change': 'PSA',
       'sales:designation_change': 'Sales',

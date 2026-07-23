@@ -78,9 +78,13 @@ export async function GET(req: Request) {
         OR: [
           { assignedConsultantId: { in: allowedIds } },
           { assignedTlId: { in: allowedIds } },
-          { assignedManagerId: { in: allowedIds } },
           { createdById: userPayload.id },
-          { assignedTlId: null, assignedConsultantId: null }, // view unassigned leads
+          {
+            assignedConsultantId: null,
+            assignedTlId: null,
+            assignedManagerId: null,
+            createdById: { in: allowedIds }
+          }, // view unassigned leads created by user or user's reporting hierarchy
           {
             order: {
               status: 'draft',

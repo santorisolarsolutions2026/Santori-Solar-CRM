@@ -481,42 +481,39 @@ export default function NewLeadPage() {
             </div>
           </div>
 
-          {/* Optional Initial Assignments (Admins or authorized team members can assign) */}
+          {/* Initial Lead Member Allocation (Optional) */}
           <div className="space-y-4 border-t border-slate-800/80 pt-6">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400">Team Allocation</h3>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400">Assign Member (Optional)</h3>
               {!(hasPermission('leads:assign') || user?.role === 'admin' || user?.role === 'director' || user?.role?.startsWith('admin:')) && (
-                <span className="text-[10px] text-slate-500 italic">🔒 Team allocation restricted</span>
+                <span className="text-[10px] text-slate-500 italic">🔒 Member assignment restricted</span>
               )}
             </div>
 
             {(hasPermission('leads:assign') || user?.role === 'admin' || user?.role === 'director' || user?.role?.startsWith('admin:')) ? (
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                  Assign Sales or PSA Operator
+                  Assigned Team Member
                 </label>
                 <select
                   value={selectedAssigneeId}
                   onChange={(e) => handleSelectAssignee(e.target.value)}
-                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-350 text-xs focus:ring-amber-500"
+                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-350 text-xs focus:ring-amber-500 cursor-pointer"
                 >
-                  <option value="">Select Member</option>
-                  {employees.filter((emp) => {
-                    const deptName = (emp.department?.name || '').toLowerCase();
-                    const roleLower = (emp.role || '').toLowerCase();
-                    const isSalesOrPsaDept = deptName.includes('sales') || deptName.includes('marketing') || deptName.includes('psa');
-                    const isSalesOrPsaRole = roleLower.includes('sales') || roleLower.includes('psa') || roleLower.includes('consultant');
-                    return isSalesOrPsaDept || isSalesOrPsaRole;
-                  }).map((emp) => (
+                  <option value="">-- Unassigned (Visible only to Creator & Hierarchy) --</option>
+                  {employees.map((emp) => (
                     <option key={emp.id} value={emp.id}>
                       {emp.name} ({emp.department?.name || 'Shared'} - {emp.designation?.name || emp.role.toUpperCase()})
                     </option>
                   ))}
                 </select>
+                <p className="text-[10px] text-slate-500 mt-1">
+                  If left unassigned, this lead will only be visible to you (the creator) and supervisors above you in hierarchy.
+                </p>
               </div>
             ) : (
               <div className="p-3 bg-slate-950/40 border border-slate-900 rounded-lg text-slate-400 text-xs italic">
-                You do not have custom permission to manually assign team members to leads. Lead will be registered in your default pool.
+                You do not have permission to manually assign team members to leads. Lead will be registered unassigned and visible to you and your supervisors.
               </div>
             )}
           </div>
