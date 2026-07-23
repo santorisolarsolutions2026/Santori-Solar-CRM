@@ -13,6 +13,7 @@ export const DEPARTMENT_PERMISSIONS: {
   sales: [
     // Lead Capture & Pipeline
     { key: 'sales:lead_add', label: 'Add New Lead', group: 'Lead Capture & Pipeline', description: 'Create and register new customer leads manually.' },
+    { key: 'sales:lead_edit', label: 'Edit Customer Lead Info', group: 'Lead Capture & Pipeline', description: 'Modify customer name, contact details, load capacity & address.' },
     { key: 'sales:lead_import', label: 'Import Bulk Leads', group: 'Lead Capture & Pipeline', description: 'Upload CSV/Excel spreadsheets to import leads.' },
     { key: 'sales:lead_assign', label: 'Assign Leads to Sales Team', group: 'Lead Capture & Pipeline', description: 'Assign or reassign leads to sales team members.' },
     { key: 'sales:lead_delete', label: 'Delete Customer Leads', group: 'Lead Capture & Pipeline', description: 'Permanently remove or delete customer leads from the system.' },

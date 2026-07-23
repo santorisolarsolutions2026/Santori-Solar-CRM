@@ -184,6 +184,7 @@ export async function PATCH(
     const ALL_PERMISSIONS_MAP: Record<string, string> = {
       // Sales / PSA
       'sales:lead_add': 'PSA',
+      'sales:lead_edit': 'PSA',
       'sales:lead_import': 'PSA',
       'sales:lead_assign': 'Sales',
       'sales:lead_delete': 'Sales',

@@ -189,6 +189,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const clientMapping: Record<string, string[]> = {
       'leads:create': ['sales:lead_add'],
       'sales:lead_add': ['leads:create'],
+      'leads:edit': ['sales:lead_edit'],
+      'sales:lead_edit': ['leads:edit'],
       'leads:import': ['sales:lead_import'],
       'sales:lead_import': ['leads:import'],
       'leads:assign': ['sales:lead_assign'],

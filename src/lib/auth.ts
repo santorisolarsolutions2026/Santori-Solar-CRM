@@ -150,6 +150,9 @@ export function resolveUserPermissions(user: UserPermissionsInput): string[] {
     'sales:lead_add': ['leads:create'],
     'leads:create': ['sales:lead_add'],
 
+    'sales:lead_edit': ['leads:edit'],
+    'leads:edit': ['sales:lead_edit'],
+
     'sales:lead_import': ['leads:import'],
     'leads:import': ['sales:lead_import'],
 
