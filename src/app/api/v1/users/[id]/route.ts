@@ -182,6 +182,20 @@ export async function PATCH(
     }
 
     const ALL_PERMISSIONS_MAP: Record<string, string> = {
+      // Sales / PSA
+      'sales:lead_add': 'PSA',
+      'sales:lead_import': 'PSA',
+      'sales:lead_assign': 'Sales',
+      'sales:lead_view_all': 'Sales',
+      'sales:stage_change': 'PSA',
+      'sales:designation_change': 'Sales',
+      'sales:attendance_view': 'Sales',
+      'sales:lead_track': 'PSA',
+      'sales:analytics_view': 'Sales',
+      'sales:order_punch': 'Sales',
+      'sales:meeting_book': 'PSA',
+      'sales:meeting_done': 'PSA',
+      'sales:finance_assign': 'Sales',
       'leads:create': 'PSA',
       'leads:import': 'PSA',
       'leads:manage_calling_stages': 'PSA',
@@ -194,14 +208,36 @@ export async function PATCH(
       'orders:submit_finance': 'Sales',
       'orders:assign_finance': 'Sales',
       'leads:view_sales_pipeline': 'Sales',
+
+      // Finance
+      'finance:order_verify_reject': 'Finance',
+      'finance:order_assign': 'Finance',
+      'finance:ledger_record': 'Finance',
+      'finance:ledger_delete': 'Finance',
+      'finance:designation_change': 'Finance',
+      'finance:attendance_view': 'Finance',
+      'finance:analytics_view': 'Finance',
+      'finance:ops_assign': 'Finance',
       'orders:finance_access': 'Finance',
       'orders:verify': 'Finance',
       'orders:assign_ops': 'Finance',
       'finance:manage_ledger': 'Finance',
       'reports:view_financials': 'Finance',
+
+      // Operations
+      'ops:delivery_manage': 'Operations',
+      'ops:installation_manage': 'Operations',
+      'ops:meter_manage': 'Operations',
+      'ops:commission_manage': 'Operations',
+      'ops:designation_change': 'Operations',
+      'ops:attendance_view': 'Operations',
+      'ops:analytics_view': 'Operations',
+      'ops:subsidy_manage': 'Operations',
       'orders:operations': 'Operations',
       'ops:update_stages': 'Operations',
       'ops:upload_drawings': 'Operations',
+
+      // IT
       'team:view': 'IT',
       'attendance:view': 'IT',
       'team:manage': 'IT',
@@ -210,7 +246,8 @@ export async function PATCH(
     };
 
     if (permissions !== undefined) {
-      const cleanNewPerms = permissions.split(',').map((p: string) => p.trim()).filter((p: string) => p !== 'none');
+      const rawPermStr = String(permissions).replace(/^CUSTOM:/, '');
+      const cleanNewPerms = rawPermStr.split(',').map((p: string) => p.trim()).filter((p: string) => p !== '' && p !== 'none');
       const targetDeptIdForCheck = departmentId !== undefined ? (departmentId ? parseInt(departmentId, 10) : null) : user.departmentId;
       let isTargetIT = false;
       if (targetDeptIdForCheck) {
@@ -238,8 +275,9 @@ export async function PATCH(
         });
         const deptName = currentUserDetail?.department?.name?.toLowerCase().trim() || '';
 
-        const existingPermissions = user.permissions && user.permissions.trim()
-          ? user.permissions.split(',').map(p => p.trim()).filter(p => p !== 'none')
+        const rawExisting = (user.permissions || '').replace(/^CUSTOM:/, '');
+        const existingPermissions = rawExisting.trim()
+          ? rawExisting.split(',').map(p => p.trim()).filter(p => p !== '' && p !== 'none')
           : [];
 
         const allKeys = new Set([...existingPermissions, ...cleanNewPerms]);
