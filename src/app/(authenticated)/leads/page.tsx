@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { LeadTrackingTimeline } from '@/components/LeadTrackingTimeline';
+import { getLeadAssignedDisplay } from '@/lib/hierarchy';
 
 interface Lead {
   id: number;
@@ -1306,21 +1307,16 @@ export default function LeadsPage() {
                         </div>
                       </td>
                       <td className="py-3.5 px-4 font-medium text-slate-300 w-40">
-                        {lead.consultant?.name ? (
-                          <Link href={`/team?userId=${lead.consultant.id}`} className="hover:text-amber-400 hover:underline">
-                            {lead.consultant.name}
-                          </Link>
-                        ) : lead.tl?.name ? (
-                          <Link href={`/team?userId=${lead.tl.id}`} className="hover:text-amber-400 hover:underline">
-                            {lead.tl.name} <span className="text-[10px] text-slate-500 font-semibold">(TL)</span>
-                          </Link>
-                        ) : lead.manager?.name ? (
-                          <Link href={`/team?userId=${lead.manager.id}`} className="hover:text-amber-400 hover:underline">
-                            {lead.manager.name} <span className="text-[10px] text-slate-500 font-semibold">(Mgr)</span>
-                          </Link>
-                        ) : (
-                          <span className="text-slate-500 text-xs italic">Unassigned</span>
-                        )}
+                        {(() => {
+                          const assigned = getLeadAssignedDisplay(lead, user);
+                          return assigned ? (
+                            <Link href={`/team?userId=${assigned.id}`} className="hover:text-amber-400 hover:underline">
+                              {assigned.name}
+                            </Link>
+                          ) : (
+                            <span className="text-slate-500 text-xs italic">Unassigned</span>
+                          );
+                        })()}
                       </td>
                       <td className="py-3.5 px-4 text-center w-32">
                         <div className="flex items-center justify-center gap-2">

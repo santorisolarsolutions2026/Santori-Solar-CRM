@@ -217,8 +217,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       'orders:finance_access': ['finance:order_verify_reject', 'finance:order_assign', 'finance:ledger_record', 'finance:ops_assign'],
       'finance:manage_ledger': ['finance:ledger_record'],
       'orders:assign_ops': ['finance:ops_assign'],
-      'orders:operations': ['ops:delivery_manage', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:subsidy_manage', 'ops:update_stages'],
-      'ops:update_stages': ['ops:delivery_manage', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:subsidy_manage'],
+      'orders:operations': ['ops:delivery_manage', 'ops:delivered_orders', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:subsidy_manage', 'ops:update_stages'],
+      'ops:update_stages': ['ops:delivery_manage', 'ops:delivered_orders', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:subsidy_manage'],
     };
 
     if (finalPerms.has(permission)) return true;
@@ -235,7 +235,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (permission === 'orders:view') {
-      const hasAnyOrder = ['sales:order_punch', 'finance:order_verify_reject', 'finance:order_assign', 'finance:ledger_record', 'finance:ops_assign', 'ops:delivery_manage', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:subsidy_manage', 'orders:create', 'orders:verify', 'orders:operations', 'orders:finance_access', 'orders:view_all', 'orders:submit_installation', 'finance:manage_ledger', 'ops:update_stages', 'ops:upload_drawings'].some(p => finalPerms.has(p));
+      const hasAnyOrder = ['sales:order_punch', 'finance:order_verify_reject', 'finance:order_assign', 'finance:ledger_record', 'finance:ops_assign', 'ops:delivery_manage', 'ops:delivered_orders', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:subsidy_manage', 'orders:create', 'orders:verify', 'orders:operations', 'orders:finance_access', 'orders:view_all', 'orders:submit_installation', 'finance:manage_ledger', 'ops:update_stages', 'ops:upload_drawings'].some(p => finalPerms.has(p));
       if (hasAnyOrder) return true;
     }
 

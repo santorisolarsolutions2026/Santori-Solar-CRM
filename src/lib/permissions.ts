@@ -52,6 +52,7 @@ export const DEPARTMENT_PERMISSIONS: {
   ops: [
     // Fulfillment & Execution
     { key: 'ops:delivery_manage', label: 'Manage Material Dispatch & Delivery', group: 'Fulfillment & Installation', description: 'Log equipment dispatch dates and delivery status.' },
+    { key: 'ops:delivered_orders', label: 'Show Delivered Orders', group: 'Fulfillment & Installation', description: 'Access and view delivered orders in operations pipeline.' },
     { key: 'ops:installation_manage', label: 'Manage Installation & Site Photos', group: 'Fulfillment & Installation', description: 'Log installation progress and upload site pictures.' },
     { key: 'ops:meter_manage', label: 'Manage Net Metering & DISCOM', group: 'Fulfillment & Installation', description: 'Track bi-directional meter installation & DISCOM paperwork.' },
     { key: 'ops:commission_manage', label: 'Manage Plant Commissioning', group: 'Fulfillment & Installation', description: 'Mark solar plant commissioning and grid synchronization.' },

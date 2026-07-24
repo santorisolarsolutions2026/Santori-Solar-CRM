@@ -219,6 +219,12 @@ const ALL_PERMISSIONS = [
     description: 'Allows uploading structural drawings and commissioning documents directly into the order vault.',
     category: 'Operations'
   },
+  {
+    key: 'ops:delivered_orders',
+    label: 'Operations: Show Delivered Orders',
+    description: 'Allows viewing and managing delivered orders in Operations.',
+    category: 'Operations'
+  },
 
   // IT Level
   {
@@ -312,7 +318,7 @@ function getLocalDefaultPermissionsForRole(role: string): string[] {
         'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:track',
         'orders:create', 'orders:submit_installation', 'leads:view_sales_pipeline',
         'orders:finance_access', 'orders:verify', 'finance:manage_ledger', 'reports:view_financials',
-        'orders:operations', 'ops:update_stages', 'ops:upload_drawings',
+        'orders:operations', 'ops:update_stages', 'ops:upload_drawings', 'ops:delivered_orders',
         'team:view', 'attendance:view', 'team:manage', 'logs:view', 'leads:view_all', 'leads:delete'
       ];
     case 'sales_head':
@@ -333,7 +339,7 @@ function getLocalDefaultPermissionsForRole(role: string): string[] {
       ];
     case 'operations':
       return [
-        'orders:operations', 'ops:update_stages', 'ops:upload_drawings'
+        'orders:operations', 'ops:update_stages', 'ops:upload_drawings', 'ops:delivered_orders'
       ];
     case 'tl':
       return [

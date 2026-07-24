@@ -83,7 +83,7 @@ export function getDefaultPermissionsForRole(role: string): string[] {
       return [
         'sales:lead_add', 'sales:lead_import', 'sales:lead_assign', 'sales:lead_view_all', 'sales:stage_change', 'sales:designation_change', 'sales:attendance_view', 'sales:lead_track', 'sales:analytics_view', 'sales:order_punch', 'sales:meeting_book', 'sales:meeting_done', 'sales:finance_assign',
         'finance:order_verify_reject', 'finance:order_assign', 'finance:ledger_record', 'finance:ledger_delete', 'finance:designation_change', 'finance:attendance_view', 'finance:analytics_view', 'finance:ops_assign',
-        'ops:delivery_manage', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:designation_change', 'ops:attendance_view', 'ops:analytics_view', 'ops:subsidy_manage',
+        'ops:delivery_manage', 'ops:delivered_orders', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:designation_change', 'ops:attendance_view', 'ops:analytics_view', 'ops:subsidy_manage',
         'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:track',
         'orders:create', 'orders:submit_installation', 'leads:view_sales_pipeline',
         'orders:finance_access', 'orders:verify', 'finance:manage_ledger', 'reports:view_financials',
@@ -107,7 +107,7 @@ export function getDefaultPermissionsForRole(role: string): string[] {
       ];
     case 'operations':
       return [
-        'ops:delivery_manage', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:designation_change', 'ops:attendance_view', 'ops:analytics_view', 'ops:subsidy_manage',
+        'ops:delivery_manage', 'ops:delivered_orders', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:designation_change', 'ops:attendance_view', 'ops:analytics_view', 'ops:subsidy_manage',
         'orders:operations', 'ops:update_stages', 'ops:upload_drawings', 'team:view', 'attendance:view'
       ];
     default:
@@ -216,6 +216,7 @@ export function resolveUserPermissions(user: UserPermissionsInput): string[] {
 
     // Operations
     'ops:delivery_manage': ['orders:operations', 'ops:update_stages', 'orders:submit_installation'],
+    'ops:delivered_orders': ['orders:operations', 'ops:update_stages', 'orders:submit_installation'],
     'ops:installation_manage': ['orders:operations', 'ops:update_stages', 'orders:submit_installation'],
     'ops:meter_manage': ['orders:operations', 'ops:update_stages', 'orders:submit_installation'],
     'ops:commission_manage': ['orders:operations', 'ops:update_stages', 'orders:submit_installation'],
@@ -249,7 +250,7 @@ export function resolveUserPermissions(user: UserPermissionsInput): string[] {
 
   const orderPerms = [
     'sales:order_punch', 'finance:order_verify_reject', 'finance:order_assign', 'finance:ledger_record', 'finance:ops_assign',
-    'ops:delivery_manage', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:subsidy_manage',
+    'ops:delivery_manage', 'ops:delivered_orders', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:subsidy_manage',
     'orders:create', 'orders:verify', 'orders:operations', 'orders:finance_access', 'orders:view_all', 'orders:submit_installation', 'finance:manage_ledger', 'ops:update_stages', 'ops:upload_drawings'
   ];
   if (orderPerms.some(p => finalPermissions.has(p))) {

@@ -228,6 +228,7 @@ export async function PATCH(
 
       // Operations
       'ops:delivery_manage': 'Operations',
+      'ops:delivered_orders': 'Operations',
       'ops:installation_manage': 'Operations',
       'ops:meter_manage': 'Operations',
       'ops:commission_manage': 'Operations',

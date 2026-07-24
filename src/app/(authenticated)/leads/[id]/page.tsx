@@ -43,6 +43,7 @@ import Link from 'next/link';
 import { BeautifulAudioPlayer } from '@/components/BeautifulAudioPlayer';
 import { MeetingLocationDisplay } from '@/components/MeetingLocationDisplay';
 import { LeadTrackingTimeline } from '@/components/LeadTrackingTimeline';
+import { getLeadAssignedDisplay } from '@/lib/hierarchy';
 
 interface Lead {
   id: number;
@@ -1977,45 +1978,19 @@ export default function LeadDetailPage({
                         <p className="text-sm text-white mt-1.5">{lead.pinCode} - {lead.city}, {lead.state}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Assigned Team Hierarchy</p>
-                        <div className="text-xs text-slate-400 mt-1.5 space-y-1 bg-slate-950/40 p-2.5 rounded-lg border border-slate-800/40">
-                          <div>
-                            Manager:{' '}
-                            <strong>
-                              {lead.manager ? (
-                                <Link href={`/team?userId=${lead.manager.id}`} className="text-amber-400 hover:underline">
-                                  {lead.manager.name}
-                                </Link>
-                              ) : (
-                                'Unassigned'
-                              )}
-                            </strong>
-                          </div>
-                          <div>
-                            TL:{' '}
-                            <strong>
-                              {lead.tl ? (
-                                <Link href={`/team?userId=${lead.tl.id}`} className="text-amber-400 hover:underline">
-                                  {lead.tl.name}
-                                </Link>
-                              ) : (
-                                'Unassigned'
-                              )}
-                            </strong>
-                          </div>
-                          <div>
-                            Consultant:{' '}
-                            <strong>
-                              {lead.consultant ? (
-                                <Link href={`/team?userId=${lead.consultant.id}`} className="text-amber-400 hover:underline">
-                                  {lead.consultant.name}
-                                </Link>
-                              ) : (
-                                'Unassigned'
-                              )}
-                            </strong>
-                          </div>
-                        </div>
+                        <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Assigned To</p>
+                        <p className="text-sm font-bold text-amber-400 mt-1.5">
+                          {(() => {
+                            const assigned = getLeadAssignedDisplay(lead, user);
+                            return assigned ? (
+                              <Link href={`/team?userId=${assigned.id}`} className="hover:underline">
+                                {assigned.name}
+                              </Link>
+                            ) : (
+                              <span className="text-slate-500 font-normal italic">Unassigned</span>
+                            );
+                          })()}
+                        </p>
                       </div>
 
                       {lead.otherData && (() => {
@@ -2108,27 +2083,7 @@ export default function LeadDetailPage({
                               )}
                             </div>
 
-                            {/* Currently assigned hierarchy summary */}
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-900 text-xs">
-                              <div className="bg-slate-900/50 border border-slate-850 p-2.5 rounded-xl">
-                                <span className="text-[9px] uppercase font-bold text-slate-500 block mb-0.5">Assigned Member</span>
-                                <span className="font-bold text-amber-400">
-                                  {lead.consultant ? lead.consultant.name : (lead.tl ? lead.tl.name : (lead.manager ? lead.manager.name : 'Unassigned'))}
-                                </span>
-                              </div>
-                              <div className="bg-slate-900/50 border border-slate-850 p-2.5 rounded-xl">
-                                <span className="text-[9px] uppercase font-bold text-slate-500 block mb-0.5">Supervisor (TL)</span>
-                                <span className="font-semibold text-slate-300">
-                                  {lead.tl ? lead.tl.name : 'Auto-resolved / None'}
-                                </span>
-                              </div>
-                              <div className="bg-slate-900/50 border border-slate-850 p-2.5 rounded-xl">
-                                <span className="text-[9px] uppercase font-bold text-slate-500 block mb-0.5">Department Head (Manager)</span>
-                                <span className="font-semibold text-slate-300">
-                                  {lead.manager ? lead.manager.name : 'Auto-resolved / None'}
-                                </span>
-                              </div>
-                            </div>
+
                           </div>
                         </div>
                       )}
