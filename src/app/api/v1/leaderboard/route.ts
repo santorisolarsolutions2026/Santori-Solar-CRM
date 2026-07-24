@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/auth';
+import { getSubordinateIds } from '@/lib/hierarchy';
 
 export async function GET(req: Request) {
   try {
@@ -12,16 +13,20 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const timeframe = searchParams.get('timeframe') || 'month'; // week | month | all
     const department = searchParams.get('department') || 'all'; // all | sales | finance | operations
+    const startStr = searchParams.get('startDate');
+    const endStr = searchParams.get('endDate');
 
-    // Determine date filter based on timeframe
+    // Determine date filter
     let dateFilter: any = undefined;
-    const now = new Date();
-    if (timeframe === 'week') {
+    if (startStr && endStr) {
+      dateFilter = { gte: new Date(`${startStr}T00:00:00`), lte: new Date(`${endStr}T23:59:59.999`) };
+    } else if (timeframe === 'week') {
       const oneWeekAgo = new Date();
-      oneWeekAgo.setDate(now.getDate() - 7);
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
       oneWeekAgo.setHours(0, 0, 0, 0);
       dateFilter = { gte: oneWeekAgo };
     } else if (timeframe === 'month') {
+      const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       startOfMonth.setHours(0, 0, 0, 0);
       dateFilter = { gte: startOfMonth };
@@ -64,82 +69,65 @@ export async function GET(req: Request) {
     const wMeetingsBooked = parseInt(searchParams.get('wMeetingsBooked') || '10', 10);
     const wMeetingsConducted = parseInt(searchParams.get('wMeetingsConducted') || '20', 10);
     const wSalesClosed = parseInt(searchParams.get('wSalesClosed') || '50', 10);
-    const wSalesTl = parseInt(searchParams.get('wSalesTl') || '15', 10);
-    const wSalesManager = parseInt(searchParams.get('wSalesManager') || '10', 10);
     const wFinanceVerified = parseInt(searchParams.get('wFinanceVerified') || '30', 10);
     const wPaymentsRecorded = parseInt(searchParams.get('wPaymentsRecorded') || '20', 10);
-    const wDocsUploaded = parseInt(searchParams.get('wDocsUploaded') || '10', 10);
     const wOpsMilestones = parseInt(searchParams.get('wOpsMilestones') || '25', 10);
 
     const leaderboardPromises = users.map(async (user) => {
-      // 1. Leads Created
+      const subordinates = await getSubordinateIds(user.id);
+      const teamUserIds = [user.id, ...subordinates];
+
+      // 1. Leads Created by user/team
       const leadsCreatedCount = await prisma.lead.count({
         where: {
-          createdById: user.id,
+          createdById: { in: teamUserIds },
           ...(dateFilter ? { createdAt: dateFilter } : {}),
         },
       });
 
-      // 2. Nurturing Updates / Remark Logged (Follow-ups, general logs, excluding key stage conversions to avoid double-counting)
+      // 2. Nurturing Updates / Stage Logs
       const logsCount = await prisma.leadActivityLog.count({
         where: {
-          userId: user.id,
-          toStatus: { notIn: [8, 9, 13] }, // exclude meeting booking/completion & order submission
+          userId: { in: teamUserIds },
+          fromStatus: { not: null },
           ...(dateFilter ? { createdAt: dateFilter } : {}),
         },
       });
 
-      // 3. Meetings Booked (status changed to 8)
-      const meetingsBookedCount = await prisma.leadActivityLog.count({
+      // 3. Meetings Booked
+      const meetingsBookedCount = await prisma.meetingBooking.count({
         where: {
-          userId: user.id,
-          toStatus: 8,
+          assignedExecutiveId: { in: teamUserIds },
           ...(dateFilter ? { createdAt: dateFilter } : {}),
         },
       });
 
-      // 4. Meetings Conducted (assignedExecutiveId and meetingEndedAt is not null)
+      // 4. Meetings Conducted / Recorded
       const meetingsConductedCount = await prisma.meetingBooking.count({
         where: {
-          assignedExecutiveId: user.id,
-          meetingEndedAt: { not: null },
+          assignedExecutiveId: { in: teamUserIds },
+          OR: [
+            { meetingStartedAt: { not: null } },
+            { meetingEndedAt: { not: null } },
+            { audioRecordingPath: { not: null } }
+          ],
           ...(dateFilter ? { createdAt: dateFilter } : {}),
         },
       });
 
-      // 5. Sales Closings & Overrides
-      // A sale done is Lead status = 13 (Sale Done)
-      const salesAsConsultant = await prisma.lead.count({
+      // 5. Sales Done (Lead status = 13 OR log transition to 13 by team)
+      const salesClosedCount = await prisma.leadActivityLog.count({
         where: {
-          assignedConsultantId: user.id,
-          status: 13,
+          userId: { in: teamUserIds },
+          toStatus: 13,
           ...(dateFilter ? { createdAt: dateFilter } : {}),
         },
       });
 
-      const salesAsTl = await prisma.lead.count({
-        where: {
-          assignedTlId: user.id,
-          assignedConsultantId: { not: user.id }, // prevent double counting if they are the consultant
-          status: 13,
-          ...(dateFilter ? { createdAt: dateFilter } : {}),
-        },
-      });
-
-      const salesAsManager = await prisma.lead.count({
-        where: {
-          assignedManagerId: user.id,
-          assignedTlId: { not: user.id },
-          assignedConsultantId: { not: user.id },
-          status: 13,
-          ...(dateFilter ? { createdAt: dateFilter } : {}),
-        },
-      });
-
-      // 6. Finance Order Verified (Order processed by finance)
+      // 6. Finance Order Verified
       const financeVerifiedCount = await prisma.order.count({
         where: {
-          financeProcessedById: user.id,
+          financeProcessedById: { in: teamUserIds },
           status: { in: ['finance_verified', 'ops_assigned', 'completed'] },
           ...(dateFilter ? { createdAt: dateFilter } : {}),
         },
@@ -148,43 +136,40 @@ export async function GET(req: Request) {
       // 7. Payments Recorded
       const paymentsRecordedCount = await prisma.payment.count({
         where: {
-          recordedById: user.id,
+          recordedById: { in: teamUserIds },
+          isDiscarded: false,
           ...(dateFilter ? { createdAt: dateFilter } : {}),
         },
       });
 
-      // 8. Documents Uploaded
-      const docsUploadedCount = await prisma.orderDocument.count({
+      // 8. Operations Milestones (Deliveries, Installations, Commissioning)
+      const opsMilestonesCount = await prisma.order.count({
         where: {
-          uploadedById: user.id,
-          ...(dateFilter ? { createdAt: dateFilter } : {}),
+          AND: [
+            {
+              OR: [
+                { assignedOpsId: { in: teamUserIds } },
+                { lead: { OR: [{ assignedConsultantId: { in: teamUserIds } }, { assignedTlId: { in: teamUserIds } }, { assignedManagerId: { in: teamUserIds } }] } }
+              ],
+            },
+            {
+              OR: [{ isDelivered: true }, { isInstalled: true }, { isCommissioned: true }],
+            },
+          ],
+          ...(dateFilter ? { updatedAt: dateFilter } : {}),
         },
       });
 
-      // 9. Operations Milestone Progressed
-      // Count self-transitions at Stage 13 (Installation progress, commissioning, etc.)
-      const opsStageUpdatesCount = await prisma.leadActivityLog.count({
-        where: {
-          userId: user.id,
-          fromStatus: 13,
-          toStatus: 13,
-          ...(dateFilter ? { createdAt: dateFilter } : {}),
-        },
-      });
-
-      // Calculate total points based on Point Allocation Matrix
-      const points = 
-        (leadsCreatedCount * wLeadsCreated) +
-        (logsCount * wLogs) +
-        (meetingsBookedCount * wMeetingsBooked) +
-        (meetingsConductedCount * wMeetingsConducted) +
-        (salesAsConsultant * wSalesClosed) +
-        (salesAsTl * wSalesTl) +
-        (salesAsManager * wSalesManager) +
-        (financeVerifiedCount * wFinanceVerified) +
-        (paymentsRecordedCount * wPaymentsRecorded) +
-        (docsUploadedCount * wDocsUploaded) +
-        (opsStageUpdatesCount * wOpsMilestones);
+      // Calculate total points
+      const points =
+        leadsCreatedCount * wLeadsCreated +
+        logsCount * wLogs +
+        meetingsBookedCount * wMeetingsBooked +
+        meetingsConductedCount * wMeetingsConducted +
+        salesClosedCount * wSalesClosed +
+        financeVerifiedCount * wFinanceVerified +
+        paymentsRecordedCount * wPaymentsRecorded +
+        opsMilestonesCount * wOpsMilestones;
 
       return {
         id: user.id,
@@ -198,14 +183,11 @@ export async function GET(req: Request) {
           followUps: logsCount,
           meetingsBooked: meetingsBookedCount,
           meetingsConducted: meetingsConductedCount,
-          salesClosed: salesAsConsultant,
-          salesSupervisedTl: salesAsTl,
-          salesSupervisedManager: salesAsManager,
+          salesClosed: salesClosedCount,
           financeVerified: financeVerifiedCount,
           paymentsRecorded: paymentsRecordedCount,
-          documentsUploaded: docsUploadedCount,
-          opsMilestones: opsStageUpdatesCount,
-        }
+          opsMilestones: opsMilestonesCount,
+        },
       };
     });
 

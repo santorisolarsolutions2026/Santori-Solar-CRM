@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
+import { getSubordinateIds } from '@/lib/hierarchy';
 
 export async function GET(req: Request) {
   try {
@@ -10,7 +11,7 @@ export async function GET(req: Request) {
     }
 
     const userPermissions = await getUserPermissions(userPayload.id);
-    const hasAccess = userPermissions.includes('reports:view') || userPayload.role === 'admin';
+    const hasAccess = userPermissions.includes('reports:view') || userPayload.role === 'admin' || userPayload.role === 'director';
     if (!hasAccess) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view employee audit logs.' }, { status: 403 });
     }
@@ -21,18 +22,16 @@ export async function GET(req: Request) {
     const startTimeStr = url.searchParams.get('startTime') || '00:00';
     const endTimeStr = url.searchParams.get('endTime') || '23:59';
 
-    let dateRangeFilter: any = {};
+    let dateRangeFilter: any = null;
     if (startStr && endStr) {
       const sDate = new Date(`${startStr}T${startTimeStr}:00`);
       const eDate = new Date(`${endStr}T${endTimeStr}:59.999`);
       dateRangeFilter = { gte: sDate, lte: eDate };
     }
 
-    // Fetch active employees
+    // Fetch active employees with department and designation
     const employees = await prisma.user.findMany({
-      where: {
-        isActive: true,
-      },
+      where: { isActive: true },
       include: {
         department: { select: { name: true } },
         designation: { select: { name: true, level: true } }
@@ -40,39 +39,48 @@ export async function GET(req: Request) {
       orderBy: { name: 'asc' },
     });
 
-    // Build conditional where clauses for date ranges
-    const meetingsWhere = startStr && endStr ? { createdAt: dateRangeFilter } : {};
-    const ordersWhere = startStr && endStr ? { createdAt: dateRangeFilter } : {};
-    const logsWhere = startStr && endStr ? { createdAt: dateRangeFilter } : {};
-    const paymentsWhere = startStr && endStr ? { createdAt: dateRangeFilter } : {};
+    // Build sub-ordinate mapping for all users
+    const userHierarchyMap = new Map<number, number[]>();
+    await Promise.all(
+      employees.map(async (emp) => {
+        const subs = await getSubordinateIds(emp.id);
+        userHierarchyMap.set(emp.id, [emp.id, ...subs]);
+      })
+    );
 
-    // Fetch all records for mapping
-    const [leads, meetings, orders, logs, payments] = await Promise.all([
-      prisma.lead.findMany({
+    // Build date filters for queries
+    const logDateFilter = dateRangeFilter ? { createdAt: dateRangeFilter } : {};
+    const meetingDateFilter = dateRangeFilter ? { createdAt: dateRangeFilter } : {};
+    const orderDateFilter = dateRangeFilter ? { createdAt: dateRangeFilter } : {};
+    const paymentDateFilter = dateRangeFilter ? { createdAt: dateRangeFilter } : {};
+
+    // Fetch master dataset for calculation
+    const [allLogs, allMeetings, allOrders, allPayments] = await Promise.all([
+      prisma.leadActivityLog.findMany({
+        where: logDateFilter,
         select: {
           id: true,
-          leadCode: true,
-          customerName: true,
-          status: true,
-          createdById: true,
-          assignedConsultantId: true,
-          assignedTlId: true,
-          assignedManagerId: true,
+          leadId: true,
+          userId: true,
+          fromStatus: true,
+          toStatus: true,
           createdAt: true,
         }
       }),
       prisma.meetingBooking.findMany({
-        where: meetingsWhere,
+        where: meetingDateFilter,
         select: {
           id: true,
           leadId: true,
           assignedExecutiveId: true,
           meetingStartedAt: true,
           meetingEndedAt: true,
+          audioRecordingPath: true,
+          createdAt: true,
         }
       }),
       prisma.order.findMany({
-        where: ordersWhere,
+        where: orderDateFilter,
         select: {
           id: true,
           leadId: true,
@@ -80,238 +88,202 @@ export async function GET(req: Request) {
           totalValue: true,
           submittedById: true,
           financeProcessedById: true,
-          createdAt: true,
+          assignedFinanceId: true,
+          assignedOpsId: true,
           isDelivered: true,
+          actualDeliveryAt: true,
           isInstalled: true,
-          isCommissioned: true
-        }
-      }),
-      prisma.leadActivityLog.findMany({
-        where: logsWhere,
-        select: {
-          leadId: true,
-          userId: true,
+          actualInstallationAt: true,
+          isCommissioned: true,
+          actualCommissionedAt: true,
+          isSubsidyApplied: true,
+          actualSubsidyAppliedAt: true,
+          createdAt: true,
+          lead: {
+            select: {
+              assignedConsultantId: true,
+              assignedTlId: true,
+              assignedManagerId: true,
+              status: true,
+            }
+          }
         }
       }),
       prisma.payment.findMany({
-        where: paymentsWhere,
+        where: paymentDateFilter,
         select: {
           id: true,
           recordedById: true,
-          amount: true
+          amount: true,
+          isDiscarded: true,
+          createdAt: true,
         }
       })
     ]);
 
-    // Build fast lookups / indexes
-    const userLogMap = new Map<number, Set<number>>();
-    logs.forEach(l => {
-      if (!userLogMap.has(l.userId)) {
-        userLogMap.set(l.userId, new Set());
-      }
-      userLogMap.get(l.userId)!.add(l.leadId);
-    });
+    // Compute metrics for each employee (including subordinate aggregation)
+    const processedEmployees = employees.map((emp) => {
+      const teamUserIds = new Set(userHierarchyMap.get(emp.id) || [emp.id]);
+      const isSupervisor = teamUserIds.size > 1;
 
-    const leadOrderMap = new Map<number, typeof orders[0]>();
-    orders.forEach(o => {
-      leadOrderMap.set(o.leadId, o);
-    });
+      // 1. Sales: Number of Leads Worked Upon (distinct leads where a stage change was executed by employee or subordinates)
+      const teamStageLogs = allLogs.filter((l) => teamUserIds.has(l.userId) && l.fromStatus !== l.toStatus);
+      const workedLeadIds = new Set(teamStageLogs.map((l) => l.leadId));
+      const leadsWorked = workedLeadIds.size;
 
-    // Calculate metrics for each employee
-    const processedEmployees = employees.map(emp => {
-      const uId = emp.id;
-      const loggedLeads = userLogMap.get(uId) || new Set<number>();
+      // 2. Sales: Number of Meetings Booked
+      const teamMeetingsBooked = allMeetings.filter((m) => teamUserIds.has(m.assignedExecutiveId));
+      const meetingsBooked = teamMeetingsBooked.length;
 
-      // Filter leads they worked on
-      const empLeads = leads.filter(lead => {
-        // If date range is specified, lead is "worked on" if created or log-acted in that timeframe
-        if (startStr && endStr) {
-          const createdInTime = lead.createdAt >= dateRangeFilter.gte && lead.createdAt <= dateRangeFilter.lte;
-          return createdInTime || loggedLeads.has(lead.id);
-        }
-        return (
-          lead.createdById === uId ||
-          lead.assignedConsultantId === uId ||
-          lead.assignedTlId === uId ||
-          lead.assignedManagerId === uId ||
-          loggedLeads.has(lead.id)
-        );
-      });
+      // 3. Sales: Number of Meetings Recorded (meeting with startedAt, endedAt, or audio recording)
+      const teamMeetingsRecorded = teamMeetingsBooked.filter(
+        (m) => m.meetingStartedAt !== null || m.meetingEndedAt !== null || !!m.audioRecordingPath
+      );
+      const meetingsRecorded = teamMeetingsRecorded.length;
 
-      // Meetings Booked:
-      // Meetings where they were executive OR lead was created/assigned to them
-      const empMeetings = meetings.filter(m => {
-        if (m.assignedExecutiveId === uId) return true;
-        const lead = leads.find(l => l.id === m.leadId);
-        if (!lead) return false;
-        return (
-          lead.createdById === uId ||
-          lead.assignedConsultantId === uId ||
-          lead.assignedTlId === uId ||
-          lead.assignedManagerId === uId
-        );
-      });
+      // 4. Sales: Number of Sales Done (Lead status = 13 OR log transition to status 13 by team)
+      const teamSaleLogs = allLogs.filter((l) => teamUserIds.has(l.userId) && l.toStatus === 13);
+      const saleLeadIdsFromLogs = new Set(teamSaleLogs.map((l) => l.leadId));
+      const teamSaleOrders = allOrders.filter(
+        (o) =>
+          (o.lead?.assignedConsultantId && teamUserIds.has(o.lead.assignedConsultantId)) ||
+          (o.lead?.assignedTlId && teamUserIds.has(o.lead.assignedTlId)) ||
+          (o.lead?.assignedManagerId && teamUserIds.has(o.lead.assignedManagerId)) ||
+          teamUserIds.has(o.submittedById) ||
+          saleLeadIdsFromLogs.has(o.leadId)
+      );
+      const salesDoneLeads = new Set([
+        ...Array.from(saleLeadIdsFromLogs),
+        ...teamSaleOrders.filter((o) => o.lead?.status === 13).map((o) => o.leadId),
+      ]);
+      const salesDone = salesDoneLeads.size;
 
-      // Meetings Converted (Sale Done / status >= 6 / has verified/submitted order)
-      const empConvertedLeads = empLeads.filter(lead => {
-        const order = leadOrderMap.get(lead.id);
-        const hasOrder = order !== undefined && order.status !== 'draft';
-        return lead.status >= 6 || hasOrder;
-      });
+      // 5. Sales: Number of Orders Punched
+      const teamOrdersPunched = allOrders.filter((o) => teamUserIds.has(o.submittedById));
+      const ordersPunched = teamOrdersPunched.length;
+      const ordersPunchedValue = teamOrdersPunched.reduce((sum, o) => sum + (o.totalValue || 0), 0);
 
-      // Orders Punched
-      const empOrdersPunched = orders.filter(o => {
-        if (o.submittedById === uId) return true;
-        const lead = leads.find(l => l.id === o.leadId);
-        if (!lead) return false;
-        return (
-          lead.assignedConsultantId === uId ||
-          lead.assignedTlId === uId ||
-          lead.assignedManagerId === uId
-        );
-      });
-      const ordersPunchedValue = empOrdersPunched.reduce((sum, o) => sum + (o.totalValue || 0), 0);
+      // 6. Sales: Sale Conversion Rate (Sales Done / Meetings Recorded)
+      const saleConversionRate =
+        meetingsRecorded > 0
+          ? Math.round((salesDone / meetingsRecorded) * 100)
+          : salesDone > 0
+          ? 100
+          : 0;
 
-      // Orders Verified
-      const empOrdersVerified = orders.filter(o => {
-        if (o.status === 'draft' || o.status === 'submitted') return false;
-        if (o.financeProcessedById === uId) return true;
-        const lead = leads.find(l => l.id === o.leadId);
-        if (!lead) return false;
-        return (
-          lead.assignedConsultantId === uId ||
-          lead.assignedTlId === uId ||
-          lead.assignedManagerId === uId
-        );
-      });
-      const ordersVerifiedValue = empOrdersVerified.reduce((sum, o) => sum + (o.totalValue || 0), 0);
+      // --- Finance Metrics ---
+      // 1. Number of Orders Verified
+      const teamOrdersVerified = allOrders.filter(
+        (o) =>
+          (o.financeProcessedById && teamUserIds.has(o.financeProcessedById)) ||
+          (o.assignedFinanceId && teamUserIds.has(o.assignedFinanceId) && !['draft', 'submitted'].includes(o.status))
+      );
+      const ordersVerified = teamOrdersVerified.length;
+      const ordersVerifiedValue = teamOrdersVerified.reduce((sum, o) => sum + (o.totalValue || 0), 0);
 
-      const empMeetingsDone = empMeetings.filter(m => {
-        const hasTimestamps = m.meetingStartedAt !== null || m.meetingEndedAt !== null;
-        const lead = leads.find(l => l.id === m.leadId);
-        return hasTimestamps || (lead && (lead.status === 9 || lead.status === 13));
-      });
+      // 2. Number of Ledger Activities & Payments
+      const teamPayments = allPayments.filter((p) => teamUserIds.has(p.recordedById));
+      const ledgerActivities = teamPayments.length;
+      const validPayments = teamPayments.filter((p) => !p.isDiscarded);
+      const paymentsAmount = validPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+      const discardedPaymentsCount = teamPayments.filter((p) => p.isDiscarded).length;
 
-      const empMeetingsCancelled = empMeetings.filter(m => {
-        const lead = leads.find(l => l.id === m.leadId);
-        return m.meetingStartedAt === null && lead && ![8, 9, 13].includes(lead.status);
-      });
+      // --- Operations Metrics ---
+      // 1. Number of Deliveries
+      const teamDeliveries = allOrders.filter(
+        (o) => o.isDelivered && ((o.assignedOpsId && teamUserIds.has(o.assignedOpsId)) || (o.lead?.assignedConsultantId && teamUserIds.has(o.lead.assignedConsultantId)))
+      );
+      const deliveriesCompleted = teamDeliveries.length;
 
-      // Operations columns: Delivery Done, Installation done, Plants Commissioned
-      const empDeliveries = orders.filter(o => {
-        if (!o.isDelivered) return false;
-        const lead = leads.find(l => l.id === o.leadId);
-        if (!lead) return false;
-        return (
-          lead.assignedConsultantId === uId ||
-          lead.assignedTlId === uId ||
-          lead.assignedManagerId === uId
-        );
-      });
+      // 2. Number of Installations
+      const teamInstallations = allOrders.filter(
+        (o) => o.isInstalled && ((o.assignedOpsId && teamUserIds.has(o.assignedOpsId)) || (o.lead?.assignedConsultantId && teamUserIds.has(o.lead.assignedConsultantId)))
+      );
+      const installationsCompleted = teamInstallations.length;
 
-      const empInstallations = orders.filter(o => {
-        if (!o.isInstalled) return false;
-        const lead = leads.find(l => l.id === o.leadId);
-        if (!lead) return false;
-        return (
-          lead.assignedConsultantId === uId ||
-          lead.assignedTlId === uId ||
-          lead.assignedManagerId === uId
-        );
-      });
+      // 3. Number of Plants Commissioned
+      const teamCommissioned = allOrders.filter(
+        (o) => o.isCommissioned && ((o.assignedOpsId && teamUserIds.has(o.assignedOpsId)) || (o.lead?.assignedConsultantId && teamUserIds.has(o.lead.assignedConsultantId)))
+      );
+      const commissionedCompleted = teamCommissioned.length;
 
-      const empCommissioned = orders.filter(o => {
-        if (!o.isCommissioned) return false;
-        const lead = leads.find(l => l.id === o.leadId);
-        if (!lead) return false;
-        return (
-          lead.assignedConsultantId === uId ||
-          lead.assignedTlId === uId ||
-          lead.assignedManagerId === uId
-        );
-      });
-
-      // Finance columns: ledgerActivities
-      const empLedgerActivities = payments.filter(p => p.recordedById === uId);
-
-      const leadsWorked = empLeads.length;
-      const meetingsBooked = empMeetings.length;
-      const meetingsConverted = empConvertedLeads.length;
-      const conversionRate = meetingsBooked > 0 
-        ? Math.round((meetingsConverted / meetingsBooked) * 100) 
-        : (leadsWorked > 0 ? Math.round((meetingsConverted / leadsWorked) * 100) : 0);
+      // 4. Number of Subsidies Applied
+      const teamSubsidies = allOrders.filter(
+        (o) => o.isSubsidyApplied && ((o.assignedOpsId && teamUserIds.has(o.assignedOpsId)) || (o.lead?.assignedConsultantId && teamUserIds.has(o.lead.assignedConsultantId)))
+      );
+      const subsidiesApplied = teamSubsidies.length;
 
       return {
         id: emp.id,
         name: emp.name,
         email: emp.email,
         department: emp.department?.name || 'Unassigned',
-        designation: emp.designation?.name || 'Employee',
+        designation: emp.designation?.name || emp.role.toUpperCase(),
         role: emp.role,
+        isSupervisor,
+        teamSize: teamUserIds.size,
         metrics: {
+          // Sales metrics
           leadsWorked,
           meetingsBooked,
-          meetingsDone: empMeetingsDone.length,
-          meetingsCancelled: empMeetingsCancelled.length,
-          meetingsConverted,
-          conversionRate,
-          ordersPunched: empOrdersPunched.length,
+          meetingsRecorded,
+          salesDone,
+          ordersPunched,
           ordersPunchedValue,
-          ordersVerified: empOrdersVerified.length,
+          saleConversionRate,
+          // Finance metrics
+          ordersVerified,
           ordersVerifiedValue,
-          ledgerActivities: empLedgerActivities.length,
-          deliveriesCompleted: empDeliveries.length,
-          installationsCompleted: empInstallations.length,
-          commissionedCompleted: empCommissioned.length
-        }
+          ledgerActivities,
+          paymentsAmount,
+          discardedPaymentsCount,
+          // Operations metrics
+          deliveriesCompleted,
+          installationsCompleted,
+          commissionedCompleted,
+          subsidiesApplied,
+        },
       };
     });
 
-    // Group by Department
+    // Group employees by Department
     const departments: Record<string, typeof processedEmployees> = {
-      'PSA': [],
-      'Sales': [],
-      'Finance': [],
-      'Operations': [],
-      'IT': [],
-      'Managers': [],
-      'Unassigned': []
+      Sales: [],
+      Finance: [],
+      Operations: [],
+      Management: [],
+      Other: [],
     };
 
-    processedEmployees.forEach(emp => {
-      const isManagerOrTlOrHead = 
-        emp.role === 'manager' || 
-        emp.role === 'tl' || 
-        emp.role === 'sales_head' ||
-        emp.designation.includes('Manager') || 
-        emp.designation.includes('TL') || 
-        emp.designation.includes('Head') ||
-        emp.designation.includes('Director');
+    processedEmployees.forEach((emp) => {
+      const roleLower = emp.role.toLowerCase();
+      const deptLower = emp.department.toLowerCase();
 
-      if (isManagerOrTlOrHead) {
-        departments['Managers'].push(emp);
-      }
-
-      const dept = emp.department;
-      if (dept === 'Sales') {
-        const isPsa = emp.designation.includes('PSA') || emp.role.includes('psa');
-        if (isPsa) {
-          departments['PSA'].push(emp);
-        } else {
-          departments['Sales'].push(emp);
-        }
-      } else if (departments[dept]) {
-        departments[dept].push(emp);
+      if (
+        roleLower === 'admin' ||
+        roleLower === 'director' ||
+        roleLower === 'sales_head' ||
+        roleLower === 'manager' ||
+        roleLower === 'tl'
+      ) {
+        departments['Management'].push(emp);
+      } else if (deptLower.includes('sales') || roleLower.includes('sales') || roleLower.includes('consultant') || roleLower.includes('psa')) {
+        departments['Sales'].push(emp);
+      } else if (deptLower.includes('finance') || roleLower.includes('finance')) {
+        departments['Finance'].push(emp);
+      } else if (deptLower.includes('operations') || roleLower.includes('ops')) {
+        departments['Operations'].push(emp);
       } else {
-        departments['Unassigned'].push(emp);
+        departments['Other'].push(emp);
       }
     });
 
     return NextResponse.json({
       success: true,
       data: {
-        departments
-      }
+        departments,
+        totalEmployees: processedEmployees.length,
+      },
     });
   } catch (error: any) {
     console.error('Employee audit API error:', error);
