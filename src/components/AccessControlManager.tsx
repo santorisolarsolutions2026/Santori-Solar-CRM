@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Lock, CheckCircle2, User, Building, AlertCircle, Save, Loader2 } from 'lucide-react';
 import { DEPARTMENT_PERMISSIONS } from '@/lib/permissions';
+import UserSelect from '@/components/UserSelect';
 
 interface UserItem {
   id: number;
@@ -128,18 +129,21 @@ export default function AccessControlManager({ currentUser, users, onPermissions
       {/* Select Team Member */}
       <div>
         <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Select Team Member to Configure Permissions</label>
-        <select
-          value={selectedUserId || ''}
-          onChange={(e) => setSelectedUserId(e.target.value ? Number(e.target.value) : null)}
-          className="w-full md:w-1/2 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-amber-500/50 cursor-pointer"
-        >
-          <option value="">-- Choose a Team Member --</option>
-          {users.map(u => (
-            <option key={u.id} value={u.id}>
-              {u.name} ({u.role} - {u.department?.name || 'No Dept'})
-            </option>
-          ))}
-        </select>
+        <div className="w-full md:w-1/2">
+          <UserSelect
+            users={users.map(u => ({
+              id: u.id,
+              name: u.name,
+              email: u.email,
+              role: u.role,
+              department: u.department?.name,
+              designation: u.designation?.name,
+            }))}
+            value={selectedUserId}
+            onChange={(val) => setSelectedUserId(val ? Number(val) : null)}
+            placeholder="-- Select Team Member --"
+          />
+        </div>
       </div>
 
       {selectedUser && (

@@ -8,6 +8,7 @@ export interface UserOption {
   name: string;
   email?: string;
   role?: string;
+  department?: string | { name: string };
   designation?: string | { name: string };
   photograph?: string | null;
 }
@@ -40,11 +41,13 @@ export default function UserSelect({
   const filteredUsers = users.filter((u) => {
     const term = search.toLowerCase();
     const desName = typeof u.designation === 'object' ? u.designation?.name : u.designation;
+    const deptName = typeof u.department === 'object' ? u.department?.name : u.department;
     return (
       u.name.toLowerCase().includes(term) ||
       (u.email && u.email.toLowerCase().includes(term)) ||
       (u.role && u.role.toLowerCase().includes(term)) ||
-      (desName && desName.toLowerCase().includes(term))
+      (desName && desName.toLowerCase().includes(term)) ||
+      (deptName && deptName.toLowerCase().includes(term))
     );
   });
 
@@ -60,10 +63,19 @@ export default function UserSelect({
   }, []);
 
   const getDesignationText = (u: UserOption) => {
-    if (typeof u.designation === 'object' && u.designation?.name) return u.designation.name;
-    if (typeof u.designation === 'string' && u.designation) return u.designation;
-    if (u.role) return u.role.toUpperCase();
-    return 'Staff';
+    let des = '';
+    if (typeof u.designation === 'object' && u.designation?.name) des = u.designation.name;
+    else if (typeof u.designation === 'string' && u.designation) des = u.designation;
+    else if (u.role) des = u.role.replace(/_/g, ' ').toUpperCase();
+
+    let dept = '';
+    if (typeof u.department === 'object' && u.department?.name) dept = u.department.name;
+    else if (typeof u.department === 'string' && u.department) dept = u.department;
+
+    if (des && dept && !des.toLowerCase().includes(dept.toLowerCase())) {
+      return `${dept} • ${des}`;
+    }
+    return des || dept || 'Staff';
   };
 
   return (

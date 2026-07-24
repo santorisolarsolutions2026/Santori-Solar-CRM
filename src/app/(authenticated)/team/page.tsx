@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
+import CustomSelect from '@/components/CustomSelect';
 import {
   Users,
   Plus,
@@ -2581,17 +2582,19 @@ export default function TeamManagementPage() {
         </div>
         {(user?.role === 'admin' || user?.role?.startsWith('admin:') || (departmentsList.find(d => d.id === user?.departmentId)?.name?.toLowerCase().trim() === 'it')) && (
           <div className="w-full md:w-60">
-            <select
+            <CustomSelect
+              options={[
+                { value: '', label: 'All Departments' },
+                ...departmentsList.map((dept) => ({
+                  value: String(dept.id),
+                  label: dept.name,
+                })),
+              ]}
               value={selectedDepartmentFilter}
+              onChange={(val) => setSelectedDepartmentFilter(val)}
+              placeholder="All Departments"
               disabled={!!empSearchInput.trim()}
-              onChange={(e) => setSelectedDepartmentFilter(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-950 border border-slate-805 rounded-xl text-slate-300 text-xs focus:ring-amber-500 focus:outline-none disabled:opacity-40"
-            >
-              <option value="">All Departments</option>
-              {departmentsList.map((dept) => (
-                <option key={dept.id} value={String(dept.id)}>{dept.name}</option>
-              ))}
-            </select>
+            />
           </div>
         )}
       </div>
