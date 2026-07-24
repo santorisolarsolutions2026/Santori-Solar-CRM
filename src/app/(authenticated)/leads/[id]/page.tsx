@@ -43,7 +43,7 @@ import Link from 'next/link';
 import { BeautifulAudioPlayer } from '@/components/BeautifulAudioPlayer';
 import { MeetingLocationDisplay } from '@/components/MeetingLocationDisplay';
 import { LeadTrackingTimeline } from '@/components/LeadTrackingTimeline';
-import { getLeadAssignedDisplay } from '@/lib/hierarchy';
+import { getLeadAssignedDisplay } from '@/lib/permissions';
 
 interface Lead {
   id: number;
@@ -1423,6 +1423,10 @@ export default function LeadDetailPage({
   let roleFilteredNextStages = nextStageIds.filter((statusNum) => {
     if (isLeadLocked) return false;
     if (!hasPermission('leads:change_status')) return false;
+    // Transitioning to stage 8 (Meeting Booked) requires meeting booking permission
+    if (statusNum === 8) {
+      return hasPermission('sales:meeting_book') || hasPermission('leads:book_meeting');
+    }
     // Transitioning to stage 13 requires orders:create permission
     if (statusNum === 13) {
       return hasPermission('orders:create');
@@ -3238,50 +3242,48 @@ export default function LeadDetailPage({
                 <div className="sm:col-span-2 border-t border-slate-800/60 pt-3 mt-1">
                   <h4 className="text-[11px] font-bold uppercase text-amber-400 tracking-wider">Reassign to Sales Team</h4>
                 </div>
-                <div>
-                  <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Assign to Sales Manager *</label>
-                  <select
-                    required
-                    value={formBData.assignedManagerId}
-                    onChange={(e) => setFormBData({ ...formBData, assignedManagerId: e.target.value })}
-                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs"
-                  >
-                    <option value="">Select Manager</option>
-                    {salesManagers.map((emp) => (
-                      <option key={emp.id} value={emp.id}>
-                        {emp.name} ({emp.designation?.name || emp.role.toUpperCase()})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Assign to Sales TL *</label>
-                  <select
-                    required
-                    value={formBData.assignedTlId}
-                    onChange={(e) => setFormBData({ ...formBData, assignedTlId: e.target.value })}
-                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs"
-                  >
-                    <option value="">Select Team Leader</option>
-                    {salesTls.map((emp) => (
-                      <option key={emp.id} value={emp.id}>
-                        {emp.name} ({emp.designation?.name || emp.role.toUpperCase()})
-                      </option>
-                    ))}
-                  </select>
-                </div>
                 <div className="sm:col-span-2">
-                  <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Assign to Sales Consultant *</label>
+                  <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Assign to Sales Team Member *</label>
                   <select
                     required
                     value={formBData.assignedExecutiveId}
                     onChange={(e) => setFormBData({ ...formBData, assignedExecutiveId: e.target.value })}
-                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs"
+                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs cursor-pointer"
                   >
-                    <option value="">Select Consultant</option>
-                    {salesConsultants.map((emp) => (
+                    <option value="">-- Select 1 Sales Team Member --</option>
+                    {(() => {
+                      if (!user) return [];
+                      const hasViewAll = user.role === 'admin' || 
+                                         user.role?.startsWith('admin:') || 
+                                         user.department?.name?.toLowerCase().trim() === 'it' ||
+                                         hasPermission('leads:view_all');
+
+                      const salesEmployees = employees.filter((emp) => {
+                        const deptName = (emp.department?.name || '').toLowerCase().trim();
+                        const roleLower = (emp.role || '').toLowerCase().trim();
+                        const isSalesDept = deptName.includes('sales') || deptName.includes('psa') || deptName.includes('marketing');
+                        const isSalesRole = ['sales_head', 'manager', 'tl', 'psa_tl', 'consultant', 'psa'].includes(roleLower) || roleLower.includes('sales') || roleLower.includes('psa');
+                        return isSalesDept || isSalesRole;
+                      });
+
+                      if (hasViewAll) return salesEmployees;
+
+                      const descendants = new Set<number>([user.id]);
+                      const queue: number[] = [user.id];
+                      while (queue.length > 0) {
+                        const currentId = queue.shift()!;
+                        employees.forEach(m => {
+                          if (m.reportsTo === currentId && !descendants.has(m.id)) {
+                            descendants.add(m.id);
+                            queue.push(m.id);
+                          }
+                        });
+                      }
+
+                      return salesEmployees.filter(m => descendants.has(m.id));
+                    })().map((emp) => (
                       <option key={emp.id} value={emp.id}>
-                        {emp.name} ({emp.designation?.name || emp.role.toUpperCase()})
+                        {emp.name} ({emp.department?.name || 'Sales'} - {emp.designation?.name || emp.role.toUpperCase()})
                       </option>
                     ))}
                   </select>

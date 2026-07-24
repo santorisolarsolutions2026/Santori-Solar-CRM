@@ -79,6 +79,8 @@ export async function GET(req: Request) {
           { assignedConsultantId: { in: allowedIds } },
           { assignedTlId: { in: allowedIds } },
           { assignedManagerId: { in: allowedIds } },
+          { createdById: { in: allowedIds } },
+          { activityLogs: { some: { userId: { in: allowedIds } } } },
           {
             order: {
               status: 'draft',

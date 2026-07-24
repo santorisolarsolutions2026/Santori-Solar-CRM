@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { LeadTrackingTimeline } from '@/components/LeadTrackingTimeline';
-import { getLeadAssignedDisplay } from '@/lib/hierarchy';
+import { getLeadAssignedDisplay } from '@/lib/permissions';
 
 interface Lead {
   id: number;

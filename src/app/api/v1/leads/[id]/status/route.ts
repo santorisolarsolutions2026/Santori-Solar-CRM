@@ -94,6 +94,13 @@ export async function POST(
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to change lead status.' }, { status: 403 });
     }
 
+    if (toStatusNum === 8) {
+      const hasBookMeeting = userPermissions.includes('sales:meeting_book') || userPermissions.includes('leads:book_meeting') || userRole === 'admin' || userRole === 'director' || department?.name === 'IT';
+      if (!hasBookMeeting) {
+        return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to book customer meetings.' }, { status: 403 });
+      }
+    }
+
     if (!remark) {
       return NextResponse.json({ success: false, message: 'Remark is mandatory for status change.' }, { status: 400 });
     }
@@ -297,12 +304,42 @@ export async function POST(
       updateData.address = resolvedAddress;
       updateData.pinCode = pinCode;
       updateData.connectionType = connectionType;
-      updateData.assignedConsultantId = parseInt(assignedExecutiveId, 10);
-      if (formB.assignedManagerId) {
-        updateData.assignedManagerId = parseInt(formB.assignedManagerId, 10);
-      }
-      if (formB.assignedTlId) {
-        updateData.assignedTlId = parseInt(formB.assignedTlId, 10);
+
+      const selectedMemberId = parseInt(assignedExecutiveId || formB.assignedMemberId, 10);
+      if (!isNaN(selectedMemberId)) {
+        const assignedMember = await prisma.user.findUnique({
+          where: { id: selectedMemberId },
+          include: { department: true, designation: true },
+        });
+
+        if (assignedMember) {
+          const { getAncestorIds } = await import('@/lib/hierarchy');
+          const ancestorIds = await getAncestorIds(assignedMember.id);
+          const ancestors = await prisma.user.findMany({
+            where: { id: { in: ancestorIds } },
+            include: { department: true, designation: true },
+          });
+
+          const desName = (assignedMember.designation?.name || '').toLowerCase();
+          const roleLower = (assignedMember.role || '').toLowerCase();
+
+          if (desName.includes('manager') || roleLower === 'manager' || roleLower === 'sales_head') {
+            updateData.assignedManagerId = assignedMember.id;
+            updateData.assignedTlId = null;
+            updateData.assignedConsultantId = null;
+          } else if (desName.includes('tl') || desName.includes('team leader') || roleLower === 'tl' || roleLower === 'psa_tl') {
+            updateData.assignedTlId = assignedMember.id;
+            updateData.assignedConsultantId = null;
+            const manager = ancestors.find(a => (a.designation?.name || '').toLowerCase().includes('manager') || a.role === 'manager' || a.role === 'sales_head');
+            if (manager) updateData.assignedManagerId = manager.id;
+          } else {
+            updateData.assignedConsultantId = assignedMember.id;
+            const tl = ancestors.find(a => (a.designation?.name || '').toLowerCase().includes('tl') || (a.designation?.name || '').toLowerCase().includes('team leader') || a.role === 'tl' || a.role === 'psa_tl');
+            if (tl) updateData.assignedTlId = tl.id;
+            const manager = ancestors.find(a => (a.designation?.name || '').toLowerCase().includes('manager') || a.role === 'manager' || a.role === 'sales_head');
+            if (manager) updateData.assignedManagerId = manager.id;
+          }
+        }
       }
     }
 
