@@ -22,6 +22,7 @@ import {
   Trash2,
   Image,
   SlidersHorizontal,
+  PieChart as PieChartIcon,
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -805,10 +806,13 @@ export default function FinancePage() {
 
         const PIE_COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#8B5CF6', '#EF4444', '#EC4899'];
 
+        const totalPaymentSum = pieChartData.reduce((acc, item) => acc + item.value, 0);
+
         return (
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-            <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between">
+          <div className="space-y-4">
+            {/* Top Key Metric Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between shadow-lg">
                 <div>
                   <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Total Order Value</span>
                   <span className="text-xl font-extrabold text-white mt-1 block">₹{totalValue.toLocaleString('en-IN')}</span>
@@ -818,7 +822,7 @@ export default function FinancePage() {
                 </div>
               </div>
 
-              <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between">
+              <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between shadow-lg">
                 <div>
                   <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Payments Collected</span>
                   <span className="text-xl font-extrabold text-emerald-400 mt-1 block">₹{totalCollected.toLocaleString('en-IN')}</span>
@@ -828,7 +832,7 @@ export default function FinancePage() {
                 </div>
               </div>
 
-              <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between">
+              <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between shadow-lg">
                 <div>
                   <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Outstanding Balance</span>
                   <span className="text-xl font-extrabold text-amber-500 mt-1 block">₹{totalOutstanding.toLocaleString('en-IN')}</span>
@@ -839,40 +843,76 @@ export default function FinancePage() {
               </div>
             </div>
 
-            <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between min-h-[90px]">
-              <div className="flex-1 flex flex-col justify-between h-full">
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Payment Methods</span>
-                {pieChartData.length === 0 ? (
-                  <div className="flex-1 flex items-center justify-center text-slate-500 text-[10px] italic pt-1">
-                    No payments verified
-                  </div>
-                ) : (
-                  <div className="flex-1 h-[65px] relative">
+            {/* Payment Methods Breakdown Card */}
+            <div className="p-5 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl shadow-xl space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <PieChartIcon className="w-4 h-4 text-emerald-400" />
+                  <span className="text-xs text-slate-300 font-bold uppercase tracking-wider">Verified Payment Methods Breakdown</span>
+                </div>
+                <span className="text-[10px] text-slate-400 font-mono">
+                  Total Collected: <strong className="text-emerald-400 font-bold">₹{totalPaymentSum.toLocaleString('en-IN')}</strong>
+                </span>
+              </div>
+
+              {pieChartData.length === 0 ? (
+                <div className="py-6 text-center text-slate-500 text-xs italic">
+                  No verified payments recorded in selected timeline
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center pt-1">
+                  {/* Donut Ring Chart */}
+                  <div className="md:col-span-5 h-[160px] relative flex items-center justify-center">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
                           data={pieChartData}
                           cx="50%"
                           cy="50%"
-                          innerRadius={15}
-                          outerRadius={28}
-                          paddingAngle={3}
+                          innerRadius={42}
+                          outerRadius={65}
+                          paddingAngle={4}
                           dataKey="value"
+                          stroke="none"
                         >
                           {pieChartData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                           ))}
                         </Pie>
                         <ChartTooltip
-                          contentStyle={{ backgroundColor: '#111625', border: '1px solid #1f2937', borderRadius: '8px', padding: '4px' }}
-                          itemStyle={{ fontSize: '9px', color: '#fff' }}
-                          formatter={(value: any) => [`₹${Number(value).toLocaleString('en-IN')}`, '']}
+                          contentStyle={{ backgroundColor: '#090b11', border: '1px solid #1f2937', borderRadius: '8px', padding: '8px' }}
+                          itemStyle={{ fontSize: '11px', color: '#fff' }}
+                          formatter={(value: any) => [`₹${Number(value).toLocaleString('en-IN')}`, 'Amount']}
                         />
                       </PieChart>
                     </ResponsiveContainer>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                      <span className="text-[10px] text-slate-400 font-bold uppercase">Methods</span>
+                      <span className="text-xs font-black text-white">{pieChartData.length}</span>
+                    </div>
                   </div>
-                )}
-              </div>
+
+                  {/* Legend Cards with Rupee values & Percentages */}
+                  <div className="md:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {pieChartData.map((item, index) => {
+                      const color = PIE_COLORS[index % PIE_COLORS.length];
+                      const pct = totalPaymentSum > 0 ? Math.round((item.value / totalPaymentSum) * 100) : 0;
+                      return (
+                        <div key={item.name} className="p-2.5 bg-slate-955/80 border border-slate-800/60 rounded-lg flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                            <span className="text-xs text-slate-200 font-bold truncate">{item.name}</span>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <span className="text-xs font-black text-white block">₹{item.value.toLocaleString('en-IN')}</span>
+                            <span className="text-[10px] text-slate-400 font-mono block">{pct}% share</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         );
