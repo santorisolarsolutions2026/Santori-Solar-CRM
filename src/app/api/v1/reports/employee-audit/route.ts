@@ -30,9 +30,26 @@ export async function GET(req: Request) {
       dateRangeFilter = { gte: sDate, lte: eDate };
     }
 
-    // Fetch active employees with department and designation
+    // Check if requesting user is Top Admin / Director / IT
+    const reqUser = await prisma.user.findUnique({
+      where: { id: userPayload.id },
+      select: { role: true, department: { select: { name: true } } }
+    });
+    const isTopAdmin = userPayload.role === 'admin' ||
+                       userPayload.role?.startsWith('admin:') ||
+                       userPayload.role === 'director' ||
+                       reqUser?.department?.name?.toLowerCase().trim() === 'it';
+
+    // Resolve hierarchy for requesting user
+    const requestingUserSubs = await getSubordinateIds(userPayload.id);
+    const allowedHierarchyIds = isTopAdmin ? null : new Set([userPayload.id, ...requestingUserSubs]);
+
+    // Fetch active employees within hierarchy scope
     const employees = await prisma.user.findMany({
-      where: { isActive: true },
+      where: {
+        isActive: true,
+        ...(allowedHierarchyIds ? { id: { in: Array.from(allowedHierarchyIds) } } : {})
+      },
       include: {
         department: { select: { id: true, name: true } },
         designation: { select: { id: true, name: true, level: true } }

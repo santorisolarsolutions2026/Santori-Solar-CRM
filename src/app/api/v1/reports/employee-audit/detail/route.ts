@@ -48,6 +48,24 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, message: 'Invalid userId.' }, { status: 400 });
     }
 
+    // Check if requesting user has access to target userId in reporting hierarchy
+    const reqUser = await prisma.user.findUnique({
+      where: { id: userPayload.id },
+      select: { role: true, department: { select: { name: true } } }
+    });
+    const isTopAdmin = userPayload.role === 'admin' ||
+                       userPayload.role?.startsWith('admin:') ||
+                       userPayload.role === 'director' ||
+                       reqUser?.department?.name?.toLowerCase().trim() === 'it';
+
+    if (!isTopAdmin) {
+      const mySubIds = await getSubordinateIds(userPayload.id);
+      const allowedIds = new Set([userPayload.id, ...mySubIds]);
+      if (!allowedIds.has(userId)) {
+        return NextResponse.json({ success: false, message: 'Forbidden. You can only view audit details for yourself and your team hierarchy.' }, { status: 403 });
+      }
+    }
+
     // Fetch target employee details
     const employee = await prisma.user.findUnique({
       where: { id: userId },

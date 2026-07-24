@@ -39,6 +39,80 @@ interface AuditLog {
   };
 }
 
+const STAGE_NAMES: Record<string, string> = {
+  '1': 'Fresh Lead',
+  '2': 'DNP (No Answer)',
+  '3': 'Follow Up',
+  '4': 'Not Interested',
+  '5': 'Call Later',
+  '6': 'Already Installed',
+  '7': 'Decision Pending',
+  '8': 'Meeting Booked',
+  '9': 'Meeting Done',
+  '10': 'Disconnected',
+  '11': 'Switch Off',
+  '12': "Can't Fit Solar",
+  '13': 'Sale Done',
+};
+
+const formatExecutiveSummary = (log: AuditLog) => {
+  const table = (log.tableName || '').toLowerCase();
+  const field = (log.fieldName || '').toLowerCase();
+  const oldVal = log.oldValue;
+  const newVal = log.newValue;
+
+  if (table.includes('lead')) {
+    if (field === 'status') {
+      const fromSt = STAGE_NAMES[oldVal || ''] || oldVal || 'Initial';
+      const toSt = STAGE_NAMES[newVal || ''] || newVal || 'Updated';
+      return `${log.user.name} promoted Lead #${log.recordId} stage from "${fromSt}" to "${toSt}"`;
+    }
+    if (field.includes('consultant') || field.includes('tl') || field.includes('manager') || field.includes('assign')) {
+      return `${log.user.name} reassigned Lead #${log.recordId} team member ownership`;
+    }
+    return `${log.user.name} updated Lead #${log.recordId} (${log.fieldName})`;
+  }
+
+  if (table.includes('order')) {
+    if (field === 'status') {
+      return `${log.user.name} updated Solar Order #${log.recordId} verification status to "${newVal}"`;
+    }
+    if (field.includes('delivery')) {
+      return `${log.user.name} marked Solar Order #${log.recordId} delivery as ${newVal === 'true' ? 'Completed' : 'Pending'}`;
+    }
+    if (field.includes('install')) {
+      return `${log.user.name} marked Solar Order #${log.recordId} installation as ${newVal === 'true' ? 'Completed' : 'Pending'}`;
+    }
+    if (field.includes('commission')) {
+      return `${log.user.name} marked Solar Order #${log.recordId} plant commissioning as Completed`;
+    }
+    if (field.includes('subsidy')) {
+      return `${log.user.name} updated Order #${log.recordId} government subsidy status to ${newVal === 'true' ? 'Applied' : 'Pending'}`;
+    }
+    return `${log.user.name} modified Solar Order #${log.recordId} (${log.fieldName})`;
+  }
+
+  if (table.includes('user') || table.includes('permission')) {
+    if (field === 'permissions') {
+      return `${log.user.name} configured access control permissions for Employee #${log.recordId}`;
+    }
+    if (field === 'role') {
+      return `${log.user.name} changed Employee #${log.recordId}'s designation/role from "${oldVal}" to "${newVal}"`;
+    }
+    return `${log.user.name} updated Employee #${log.recordId} account info (${log.fieldName})`;
+  }
+
+  if (table.includes('meeting')) {
+    return `${log.user.name} scheduled / updated client meeting record #${log.recordId}`;
+  }
+
+  if (table.includes('payment')) {
+    return `${log.user.name} recorded payment entry #${log.recordId} (Amount: ₹${newVal || oldVal || '0'})`;
+  }
+
+  return `${log.user.name} updated ${log.tableName} #${log.recordId} (${log.fieldName}: ${oldVal || 'None'} → ${newVal || 'None'})`;
+};
+
 export default function AuditLogsPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -302,15 +376,16 @@ export default function AuditLogsPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
+
               <thead>
                 <tr className="border-b border-slate-800 bg-slate-950/40 text-[10px] font-black uppercase text-slate-400 tracking-wider">
                   <th className="py-3.5 px-5">Timestamp</th>
                   <th className="py-3.5 px-5">Operator (Who)</th>
+                  <th className="py-3.5 px-5">Executive Action Summary</th>
                   <th className="py-3.5 px-5">Target (Model)</th>
                   <th className="py-3.5 px-5">Action / Field</th>
                   <th className="py-3.5 px-5">Old State</th>
                   <th className="py-3.5 px-5">New State</th>
-                  <th className="py-3.5 px-5">IP / Net</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-850/50">
@@ -355,6 +430,11 @@ export default function AuditLogsPage() {
                         </div>
                       </td>
 
+                      {/* Executive Action Summary */}
+                      <td className="py-3.5 px-5 font-medium text-amber-300 max-w-xs">
+                        {formatExecutiveSummary(log)}
+                      </td>
+
                       {/* Target Component */}
                       <td className="py-3.5 px-5 whitespace-nowrap">
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-950/60 border border-slate-850 rounded-lg text-white font-mono text-[10px] uppercase font-bold">
@@ -373,18 +453,13 @@ export default function AuditLogsPage() {
                       </td>
 
                       {/* Old State */}
-                      <td className="py-3.5 px-5 min-w-[150px]">
-                        {formatChangeValue(log.oldValue)}
+                      <td className="py-3.5 px-5 min-w-[120px]">
+                        {STAGE_NAMES[log.oldValue || ''] || formatChangeValue(log.oldValue)}
                       </td>
 
                       {/* New State */}
-                      <td className="py-3.5 px-5 min-w-[150px]">
-                        {formatChangeValue(log.newValue)}
-                      </td>
-
-                      {/* IP / Network info */}
-                      <td className="py-3.5 px-5 whitespace-nowrap font-mono text-[10px] text-slate-500">
-                        {log.ip || 'Local / API'}
+                      <td className="py-3.5 px-5 min-w-[120px]">
+                        {STAGE_NAMES[log.newValue || ''] || formatChangeValue(log.newValue)}
                       </td>
                     </tr>
                   );

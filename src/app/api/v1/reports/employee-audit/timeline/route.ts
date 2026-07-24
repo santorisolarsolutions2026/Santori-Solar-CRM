@@ -1,6 +1,23 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/auth';
+import { getSubordinateIds } from '@/lib/hierarchy';
+
+const STAGE_NAMES: Record<number, string> = {
+  1: 'Fresh Lead',
+  2: 'DNP (No Answer)',
+  3: 'Follow Up',
+  4: 'Not Interested',
+  5: 'Call Later',
+  6: 'Already Installed',
+  7: 'Decision Pending',
+  8: 'Meeting Booked',
+  9: 'Meeting Done',
+  10: 'Disconnected',
+  11: 'Switch Off',
+  12: "Can't Fit Solar",
+  13: 'Sale Done',
+};
 
 export async function GET(req: Request) {
   try {
@@ -23,6 +40,24 @@ export async function GET(req: Request) {
     const userId = parseInt(userIdStr, 10);
     if (isNaN(userId)) {
       return NextResponse.json({ success: false, message: 'Invalid userId.' }, { status: 400 });
+    }
+
+    // Hierarchy permission check
+    const reqUser = await prisma.user.findUnique({
+      where: { id: userPayload.id },
+      select: { role: true, department: { select: { name: true } } }
+    });
+    const isTopAdmin = userPayload.role === 'admin' ||
+                       userPayload.role?.startsWith('admin:') ||
+                       userPayload.role === 'director' ||
+                       reqUser?.department?.name?.toLowerCase().trim() === 'it';
+
+    if (!isTopAdmin) {
+      const mySubIds = await getSubordinateIds(userPayload.id);
+      const allowedIds = new Set([userPayload.id, ...mySubIds]);
+      if (!allowedIds.has(userId)) {
+        return NextResponse.json({ success: false, message: 'Forbidden. You can only view timelines for yourself and your team hierarchy.' }, { status: 403 });
+      }
     }
 
     // Set date range filter
@@ -96,8 +131,8 @@ export async function GET(req: Request) {
         id: `check_in_${att.id}`,
         type: 'check_in',
         timestamp: new Date(att.checkIn),
-        title: 'Checked In',
-        description: `Checked in at ${new Date(att.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}. Location: ${att.checkInLocation || 'Unknown'}. Status: ${att.status.toUpperCase()}`,
+        title: 'Work Shift Started (Checked In)',
+        description: `Checked in for work at ${new Date(att.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}. Location: ${att.checkInLocation || 'Office GPS'}. Shift Status: ${att.status.toUpperCase()}`,
         meta: { notes: att.notes }
       });
 
@@ -107,35 +142,36 @@ export async function GET(req: Request) {
           id: `check_out_${att.id}`,
           type: 'check_out',
           timestamp: new Date(att.checkOut),
-          title: 'Checked Out',
-          description: `Checked out at ${new Date(att.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}. Location: ${att.checkOutLocation || 'Unknown'}. Duration: ${att.workDurationMin || 0} minutes.`,
+          title: 'Work Shift Ended (Checked Out)',
+          description: `Checked out at ${new Date(att.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}. Total shift duration: ${Math.round((att.workDurationMin || 0) / 60 * 10) / 10} hours.`,
         });
       }
     });
 
-    // Map Lead logs
+    // Map Lead logs into executive English
     logs.forEach(l => {
-      const fromSt = l.fromStatus;
-      const toSt = l.toStatus;
-      const stageChange = fromSt !== toSt ? ` (Stage Shift: ${fromSt} → ${toSt})` : '';
+      const fromSt = l.fromStatus ? (STAGE_NAMES[l.fromStatus] || `Stage ${l.fromStatus}`) : 'New';
+      const toSt = STAGE_NAMES[l.toStatus] || `Stage ${l.toStatus}`;
+      const stageText = l.fromStatus !== l.toStatus ? ` (Shifted status from "${fromSt}" to "${toSt}")` : ` (${toSt})`;
       events.push({
         id: `log_${l.id}`,
         type: 'log',
         timestamp: new Date(l.createdAt),
-        title: `Updated Lead #${l.lead?.leadCode || 'Unknown'}`,
-        description: `Modified opportunity info for client ${l.lead?.customerName || 'Unknown'}${stageChange}.`,
+        title: `Updated Lead #${l.lead?.leadCode || 'Code'} (${l.lead?.customerName || 'Customer'})`,
+        description: `Logged activity on lead for client ${l.lead?.customerName || 'Customer'}${stageText}.`,
         meta: { remark: l.remark }
       });
     });
 
     // Map meetings
     meetings.forEach(m => {
+      const recorded = m.audioRecordingPath || m.meetingStartedAt || m.meetingEndedAt ? 'Recorded' : 'Scheduled';
       events.push({
         id: `meeting_${m.id}`,
         type: 'meeting',
         timestamp: new Date(m.createdAt),
-        title: `Handled Meeting Booking`,
-        description: `Conducted meeting with client ${m.lead?.customerName || 'Unknown'} (Lead #${m.lead?.leadCode}) scheduled at ${m.meetingDate} ${m.meetingTime}.`,
+        title: `Client Meeting (${recorded})`,
+        description: `Conducted client meeting with ${m.lead?.customerName || 'Customer'} (Lead #${m.lead?.leadCode}) scheduled at ${m.meetingDate || ''} ${m.meetingTime || ''}.`,
         meta: { startedAt: m.meetingStartedAt, endedAt: m.meetingEndedAt }
       });
     });
@@ -147,8 +183,8 @@ export async function GET(req: Request) {
         id: `order_${o.id}`,
         type: 'order',
         timestamp: new Date(o.createdAt),
-        title: isSub ? `Punched Order` : `Processed Order (Finance)`,
-        description: `Managed Solar Order for client ${o.lead?.customerName || 'Unknown'} (Lead #${o.lead?.leadCode}). Deal Value: ₹${(o.totalValue || 0).toLocaleString('en-IN')}. Status: ${o.status.toUpperCase()}`,
+        title: isSub ? `Punched Solar Order` : `Verified Finance Order`,
+        description: `${isSub ? 'Punched new' : 'Verified'} Solar Order for customer ${o.lead?.customerName || 'Client'} (Lead #${o.lead?.leadCode}). Deal Value: ₹${(o.totalValue || 0).toLocaleString('en-IN')}. Current Stage: ${o.status.replace(/_/g, ' ').toUpperCase()}.`,
       });
     });
 
