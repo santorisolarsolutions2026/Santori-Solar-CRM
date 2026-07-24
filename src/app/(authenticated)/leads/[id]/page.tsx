@@ -3026,132 +3026,19 @@ export default function LeadDetailPage({
                           </p>
                         </div>
                         <div>
-                          <button
-                            onClick={() => setShowFinanceModal(true)}
-                            className="py-2.5 px-5 rounded-lg font-bold text-xs shadow-lg transition-all bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 cursor-pointer shadow-emerald-500/10 focus:outline-none"
-                          >
-                            Submit Order for Approval
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Document Vault (with Version History) */}
-                    <div className="mt-8 pt-8 border-t border-slate-800 animate-fade-in">
-                      <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 mb-4 flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-amber-500" />
-                        <span>Document Vault & Version History</span>
-                      </h3>
-
-                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Upload form */}
-                        <div className="bg-slate-950/40 border border-slate-850 p-5 rounded-2xl space-y-4 h-fit">
-                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Upload Document</h4>
-                          
-                          <form onSubmit={async (e) => {
-                            e.preventDefault();
-                            const form = e.currentTarget;
-                            const fd = new FormData(form);
-                            try {
-                              const res = await fetch(`/api/v1/leads/${leadId}/documents`, {
-                                method: 'POST',
-                                body: fd,
-                              });
-                              const data = await res.json();
-                              if (data.success) {
-                                form.reset();
-                                fetchLeadDetails();
-                              } else {
-                                alert(data.message || 'Failed to upload document.');
-                              }
-                            } catch (err) {
-                              console.error(err);
-                              alert('Error uploading document.');
-                            }
-                          }} className="space-y-4">
-                            <div>
-                              <label className="block text-[10px] font-semibold text-slate-450 uppercase mb-1.5 font-mono">Document Type *</label>
-                              <select name="doc_type" required className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-350 text-xs focus:ring-amber-500 focus:outline-none cursor-pointer">
-                                <option value="">Select doc type...</option>
-                                <option value="quotation">Quotation / Proposal</option>
-                                <option value="site_photo">Site & Layout Photos</option>
-                                <option value="agreement">Signed Customer Agreement</option>
-                                <option value="kyc">KYC Documents (Aadhaar/PAN)</option>
-                                <option value="payment_receipt">Payment Receipt</option>
-                                <option value="order_punching_form">Order Punching Form</option>
-                                <option value="installation">Installation Report</option>
-                                <option value="commissioning">Plant Commissioning Cert</option>
-                                <option value="subsidy">Government Subsidy Form</option>
-                              </select>
-                            </div>
-                            <div>
-                              <label className="block text-[10px] font-semibold text-slate-455 uppercase mb-1.5 font-mono">Select File * (PDF, PNG, JPG)</label>
-                              <input type="file" name="file" required className="w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-slate-900 file:text-slate-300 file:text-xs file:font-semibold hover:file:bg-slate-850 cursor-pointer" />
-                            </div>
-                            <button type="submit" className="w-full py-2 bg-amber-500 hover:bg-amber-400 text-slate-955 rounded-xl font-bold text-xs shadow-md transition-all cursor-pointer">
-                              Upload Document Version
+                          {hasPermission('sales:finance_assign') || hasPermission('orders:assign_finance') ? (
+                            <button
+                              onClick={() => setShowFinanceModal(true)}
+                              className="py-2.5 px-5 rounded-lg font-bold text-xs shadow-lg transition-all bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 cursor-pointer shadow-emerald-500/10 focus:outline-none"
+                            >
+                              Submit Order for Approval
                             </button>
-                          </form>
-                        </div>
-
-                        {/* List & History */}
-                        <div className="lg:col-span-2 space-y-4">
-                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Vault Contents</h4>
-                          {leadDocuments.length === 0 ? (
-                            <p className="text-xs text-slate-500 italic p-6 bg-slate-955/20 border border-slate-850 rounded-2xl text-center">No documents uploaded to this lead yet.</p>
                           ) : (
-                            <div className="space-y-3">
-                              {/* Group leadDocuments by docType and show latest active and history */}
-                              {Array.from(new Set(leadDocuments.map((d) => d.docType))).map((type) => {
-                                const versions = leadDocuments.filter((d) => d.docType === type);
-                                const activeDoc = versions.find((v) => v.isActive) || versions[0];
-
-                                return (
-                                  <div key={type} className="bg-slate-955/20 border border-slate-850 rounded-2xl p-4 space-y-3">
-                                    <div className="flex items-center justify-between gap-4 flex-wrap border-b border-slate-850 pb-2">
-                                      <div>
-                                        <span className="text-xs font-extrabold text-white uppercase tracking-wider">{type.replace('_', ' ')}</span>
-                                        <p className="text-[10px] text-slate-500 mt-0.5">Active Version: v{activeDoc.version} • Uploaded by {activeDoc.uploader?.name}</p>
-                                      </div>
-                                      <a
-                                        href={activeDoc.filePath}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="py-1 px-3 bg-slate-900 border border-slate-800 text-[11px] text-amber-400 hover:text-amber-300 hover:border-slate-700 rounded-lg font-bold flex items-center gap-1.5 transition-all"
-                                      >
-                                        <Download className="w-3.5 h-3.5" />
-                                        <span>Download v{activeDoc.version}</span>
-                                      </a>
-                                    </div>
-
-                                    {/* History dropdown */}
-                                    {versions.length > 1 && (
-                                      <details className="group">
-                                        <summary className="text-[10px] font-bold text-slate-450 hover:text-white uppercase tracking-widest cursor-pointer list-none flex items-center gap-1">
-                                          <span>▶ View Version History ({versions.length} versions)</span>
-                                        </summary>
-                                        <div className="mt-2 space-y-1.5 pl-3 border-l-2 border-slate-850 animate-fade-in">
-                                          {versions.map((v) => (
-                                            <div key={v.id} className="flex justify-between items-center text-[10px] text-slate-400">
-                                              <span>v{v.version}: <span className="font-mono text-slate-500">{v.fileName}</span> ({Math.round(v.fileSize / 1024)} KB)</span>
-                                              <div className="flex gap-2">
-                                                <span>by {v.uploader?.name}</span>
-                                                <span className="text-slate-650">|</span>
-                                                <a href={v.filePath} target="_blank" rel="noopener noreferrer" className="text-amber-400 hover:underline">Download</a>
-                                              </div>
-                                            </div>
-                                          ))}
-                                        </div>
-                                      </details>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
+                            <span className="text-[10px] text-slate-500 italic">🔒 Restricted: Requires 'Assign Finance Member' permission</span>
                           )}
                         </div>
                       </div>
-                    </div>
+                    )}
 
                   </div>
                 )}

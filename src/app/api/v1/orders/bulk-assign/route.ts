@@ -43,7 +43,7 @@ export async function POST(req: Request) {
     }
 
     if (department === 'finance') {
-      const hasFinanceAssignPerm = userPermissions.includes('finance:order_assign') || userPermissions.includes('orders:finance_access') || isITOrAdmin;
+      const hasFinanceAssignPerm = userPermissions.includes('finance:order_assign') || userPermissions.includes('orders:finance_access') || userPermissions.includes('sales:finance_assign') || userPermissions.includes('orders:assign_finance') || isITOrAdmin;
       if (!hasFinanceAssignPerm) {
         return NextResponse.json({ success: false, message: 'Permission denied: finance:order_assign required.' }, { status: 403 });
       }

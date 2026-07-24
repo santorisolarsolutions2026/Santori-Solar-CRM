@@ -31,8 +31,14 @@ export async function POST(
     }
 
     const userPermissions = await getUserPermissions(userPayload.id);
-    if (!userPermissions.includes('orders:create')) {
-      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to submit orders.' }, { status: 403 });
+    const canAssignFinance = userPermissions.includes('sales:finance_assign') || 
+                             userPermissions.includes('orders:assign_finance') || 
+                             userPermissions.includes('orders:submit_finance') ||
+                             userPayload.role === 'admin' ||
+                             userPayload.role === 'director';
+
+    if (!canAssignFinance) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to assign finance member or submit order to Finance.' }, { status: 403 });
     }
 
     const hasViewAll = userPermissions.includes('orders:view_all');
