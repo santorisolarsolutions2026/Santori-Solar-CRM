@@ -3,6 +3,22 @@ import { prisma } from '@/lib/db';
 import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
 import { getSubordinateIds } from '@/lib/hierarchy';
 
+const STAGE_NAMES: Record<number, string> = {
+  1: 'Fresh Lead',
+  2: 'DNP (No Answer)',
+  3: 'Follow Up',
+  4: 'Not Interested',
+  5: 'Call Later',
+  6: 'Already Installed',
+  7: 'Decision Pending',
+  8: 'Meeting Booked',
+  9: 'Meeting Done',
+  10: 'Disconnected',
+  11: 'Switch Off',
+  12: "Can't Fit Solar",
+  13: 'Sale Done',
+};
+
 export async function GET(req: Request) {
   try {
     const userPayload = getAuthenticatedUser(req);
@@ -77,22 +93,26 @@ export async function GET(req: Request) {
         orderBy: { createdAt: 'desc' }
       });
 
-      results = logs.map((log) => ({
-        id: log.id,
-        leadId: log.lead?.id,
-        leadCode: log.lead?.leadCode,
-        customerName: log.lead?.customerName,
-        executedBy: {
-          id: log.user.id,
-          name: log.user.name,
-          role: log.user.role.toUpperCase(),
-          designation: log.user.designation?.name || log.user.role.toUpperCase()
-        },
-        detail1: `Stage transition: Stage ${log.fromStatus || 'New'} → Stage ${log.toStatus}`,
-        detail2: log.remark || `Stage updated for ${log.lead?.customerName || 'Lead'}`,
-        timestamp: log.createdAt,
-        date: new Date(log.createdAt).toLocaleString('en-IN')
-      }));
+      results = logs.map((log) => {
+        const fromName = log.fromStatus ? (STAGE_NAMES[log.fromStatus] || `Stage ${log.fromStatus}`) : 'New';
+        const toName = STAGE_NAMES[log.toStatus] || `Stage ${log.toStatus}`;
+        return {
+          id: log.id,
+          leadId: log.lead?.id,
+          leadCode: log.lead?.leadCode,
+          customerName: log.lead?.customerName,
+          executedBy: {
+            id: log.user.id,
+            name: log.user.name,
+            role: log.user.role.toUpperCase(),
+            designation: log.user.designation?.name || log.user.role.toUpperCase()
+          },
+          detail1: `Stage transition: ${fromName} → ${toName}`,
+          detail2: log.remark || `Stage updated for ${log.lead?.customerName || 'Lead'}`,
+          timestamp: log.createdAt,
+          date: new Date(log.createdAt).toLocaleString('en-IN')
+        };
+      });
     }
 
     // 2. MEETINGS BOOKED

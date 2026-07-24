@@ -640,6 +640,7 @@ export default function ReportsPage() {
                         <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider">
                           <th className="pb-3 px-4 text-left">Employee Name</th>
                           <th className="pb-3 px-4 text-left">Designation</th>
+                          <th className="pb-3 px-4 text-center">Team Members</th>
                           <th className="pb-3 px-4 text-center">Leads Worked</th>
                           <th className="pb-3 px-4 text-center">Meetings Booked</th>
                           <th className="pb-3 px-4 text-center">Meetings Recorded</th>
@@ -653,11 +654,6 @@ export default function ReportsPage() {
                           <tr key={emp.id} className="hover:bg-slate-900/10 transition-colors">
                             <td className="py-3.5 px-4 font-bold text-white flex items-center gap-2">
                               <span>{emp.name}</span>
-                              {emp.isSupervisor && (
-                                <span className="px-1.5 py-0.5 text-[9px] bg-amber-500/10 border border-amber-500/20 text-amber-400 font-mono rounded">
-                                  Team ({emp.teamSize})
-                                </span>
-                              )}
                               <button
                                 type="button"
                                 onClick={() => handleOpenTimelineModal(emp.id, emp.name)}
@@ -668,6 +664,9 @@ export default function ReportsPage() {
                               </button>
                             </td>
                             <td className="py-3.5 px-4 text-slate-400 font-medium text-xs">{emp.designation}</td>
+                            <td className="py-3.5 px-4 text-center font-extrabold font-mono text-amber-400">
+                              {emp.teamSize || 1}
+                            </td>
                             <td className="py-3.5 px-4 text-center">
                               <button
                                 onClick={() => handleOpenDetailsModal(emp.id, 'leads_worked')}
@@ -725,6 +724,7 @@ export default function ReportsPage() {
                         <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider">
                           <th className="pb-3 px-4 text-left">Employee Name</th>
                           <th className="pb-3 px-4 text-left">Designation</th>
+                          <th className="pb-3 px-4 text-center">Team Members</th>
                           <th className="pb-3 px-4 text-center">Orders Verified</th>
                           <th className="pb-3 px-4 text-center">Ledger Activities</th>
                           <th className="pb-3 px-4 text-center">Payments Handled</th>
@@ -736,11 +736,6 @@ export default function ReportsPage() {
                           <tr key={emp.id} className="hover:bg-slate-900/10 transition-colors">
                             <td className="py-3.5 px-4 font-bold text-white flex items-center gap-2">
                               <span>{emp.name}</span>
-                              {emp.isSupervisor && (
-                                <span className="px-1.5 py-0.5 text-[9px] bg-amber-500/10 border border-amber-500/20 text-amber-400 font-mono rounded">
-                                  Team ({emp.teamSize})
-                                </span>
-                              )}
                               <button
                                 type="button"
                                 onClick={() => handleOpenTimelineModal(emp.id, emp.name)}
@@ -750,6 +745,9 @@ export default function ReportsPage() {
                               </button>
                             </td>
                             <td className="py-3.5 px-4 text-slate-400 font-medium text-xs">{emp.designation}</td>
+                            <td className="py-3.5 px-4 text-center font-extrabold font-mono text-amber-400">
+                              {emp.teamSize || 1}
+                            </td>
                             <td className="py-3.5 px-4 text-center">
                               <button
                                 onClick={() => handleOpenDetailsModal(emp.id, 'orders_verified')}
@@ -786,6 +784,7 @@ export default function ReportsPage() {
                         <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider">
                           <th className="pb-3 px-4 text-left">Employee Name</th>
                           <th className="pb-3 px-4 text-left">Designation</th>
+                          <th className="pb-3 px-4 text-center">Team Members</th>
                           <th className="pb-3 px-4 text-center">Deliveries</th>
                           <th className="pb-3 px-4 text-center">Installations</th>
                           <th className="pb-3 px-4 text-center">Plants Commissioned</th>
@@ -797,11 +796,6 @@ export default function ReportsPage() {
                           <tr key={emp.id} className="hover:bg-slate-900/10 transition-colors">
                             <td className="py-3.5 px-4 font-bold text-white flex items-center gap-2">
                               <span>{emp.name}</span>
-                              {emp.isSupervisor && (
-                                <span className="px-1.5 py-0.5 text-[9px] bg-amber-500/10 border border-amber-500/20 text-amber-400 font-mono rounded">
-                                  Team ({emp.teamSize})
-                                </span>
-                              )}
                               <button
                                 type="button"
                                 onClick={() => handleOpenTimelineModal(emp.id, emp.name)}
@@ -811,6 +805,9 @@ export default function ReportsPage() {
                               </button>
                             </td>
                             <td className="py-3.5 px-4 text-slate-400 font-medium text-xs">{emp.designation}</td>
+                            <td className="py-3.5 px-4 text-center font-extrabold font-mono text-amber-400">
+                              {emp.teamSize || 1}
+                            </td>
                             <td className="py-3.5 px-4 text-center">
                               <button
                                 onClick={() => handleOpenDetailsModal(emp.id, 'deliveries_completed')}
@@ -856,6 +853,7 @@ export default function ReportsPage() {
                       <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider">
                         <th className="pb-3 px-4 text-left">Employee Name</th>
                         <th className="pb-3 px-4 text-left">Designation</th>
+                        <th className="pb-3 px-4 text-center">Team Members</th>
                         <th className="pb-3 px-4 text-center">Leads Worked</th>
                         <th className="pb-3 px-4 text-center">Actions Logged</th>
                       </tr>
@@ -874,6 +872,9 @@ export default function ReportsPage() {
                             </button>
                           </td>
                           <td className="py-3.5 px-4 text-slate-400 font-medium text-xs">{emp.designation}</td>
+                          <td className="py-3.5 px-4 text-center font-extrabold font-mono text-amber-400">
+                            {emp.teamSize || 1}
+                          </td>
                           <td className="py-3.5 px-4 text-center">
                             <button
                               onClick={() => handleOpenDetailsModal(emp.id, 'leads_worked')}
