@@ -1427,6 +1427,10 @@ export default function LeadDetailPage({
     if (statusNum === 8) {
       return hasPermission('sales:meeting_book') || hasPermission('leads:book_meeting');
     }
+    // Transitioning to stage 9 (Meeting Done) requires meeting done permission
+    if (statusNum === 9) {
+      return hasPermission('sales:meeting_done') || hasPermission('leads:meeting_done');
+    }
     // Transitioning to stage 13 requires orders:create permission
     if (statusNum === 13) {
       return hasPermission('orders:create');
@@ -2365,7 +2369,7 @@ export default function LeadDetailPage({
                                     This will request microphone and location permissions to log coordinates and record meeting audio.
                                   </p>
                                 </div>
-                                {hasPermission('orders:create') ? (
+                                {hasPermission('sales:meeting_done') || hasPermission('leads:meeting_done') || hasPermission('orders:create') ? (
                                   <button
                                     type="button"
                                     disabled={isStartingMeeting}
@@ -2401,7 +2405,7 @@ export default function LeadDetailPage({
                                   </div>
                                 </div>
                                 <div className="flex flex-col sm:flex-row flex-wrap gap-3 items-center w-full">
-                                  {hasPermission('orders:create') ? (
+                                  {hasPermission('sales:meeting_done') || hasPermission('leads:meeting_done') || hasPermission('orders:create') ? (
                                     <>
                                       {isRecording ? (
                                         <button
