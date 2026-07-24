@@ -591,7 +591,7 @@ export default function AuthenticatedLayout({
           name: 'Completed Orders',
           path: '/orders/completed',
           icon: PackageCheck,
-          permission: null,
+          permission: 'ops:delivered_orders',
         },
       ]
     },

@@ -49,6 +49,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'No assignment or status changes specified.' }, { status: 400 });
     }
 
+    const isAdmin = ['admin', 'director'].includes(userPayload.role) || userPayload.role?.startsWith('admin:');
+    if (!isAdmin) {
+      const { getSubordinateIds } = await import('@/lib/hierarchy');
+      const subordinateIds = await getSubordinateIds(userPayload.id);
+
+      const targetIds = [updateData.assignedManagerId, updateData.assignedTlId, updateData.assignedConsultantId].filter(id => id !== undefined && id !== null);
+      for (const tid of targetIds) {
+        if (!subordinateIds.includes(tid)) {
+          return NextResponse.json({
+            success: false,
+            message: 'Forbidden. You can only bulk assign leads to team members strictly lower in your hierarchy tree.'
+          }, { status: 403 });
+        }
+      }
+    }
+
     // Fetch leads to inspect their current statuses and assignments
     const leads = await prisma.lead.findMany({
       where: { id: { in: leadIds } },

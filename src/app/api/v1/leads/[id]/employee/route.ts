@@ -87,6 +87,19 @@ export async function POST(
       return NextResponse.json({ success: false, message: 'Employee not found.' }, { status: 404 });
     }
 
+    const isAdmin = ['admin', 'director'].includes(userPayload.role) || userPayload.role?.startsWith('admin:');
+    if (!isAdmin) {
+      const { getSubordinateIds } = await import('@/lib/hierarchy');
+      const subordinateIds = await getSubordinateIds(userPayload.id);
+
+      if (!subordinateIds.includes(empId)) {
+        return NextResponse.json({
+          success: false,
+          message: 'Forbidden. You can only assign leads to team members strictly lower in your hierarchy tree.'
+        }, { status: 403 });
+      }
+    }
+
     // Deactivate previous active employee assignments for this lead
     await prisma.employeeAssignment.updateMany({
       where: { leadId, isActive: true },

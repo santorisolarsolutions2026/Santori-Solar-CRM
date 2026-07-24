@@ -2058,9 +2058,10 @@ export default function LeadDetailPage({
                                     return isSalesDept || isSalesRole;
                                   });
 
-                                  if (hasViewAll) return salesEmployees;
+                                  const isTopAdmin = user.role === 'admin' || user.role?.startsWith('admin:') || user.role === 'director' || user.department?.name?.toLowerCase().trim() === 'it';
+                                  if (isTopAdmin) return salesEmployees;
 
-                                  const descendants = new Set<number>([user.id]);
+                                  const descendants = new Set<number>();
                                   const queue: number[] = [user.id];
                                   while (queue.length > 0) {
                                     const currentId = queue.shift()!;
@@ -3253,10 +3254,10 @@ export default function LeadDetailPage({
                     <option value="">-- Select 1 Sales Team Member --</option>
                     {(() => {
                       if (!user) return [];
-                      const hasViewAll = user.role === 'admin' || 
+                      const isTopAdmin = user.role === 'admin' || 
                                          user.role?.startsWith('admin:') || 
-                                         user.department?.name?.toLowerCase().trim() === 'it' ||
-                                         hasPermission('leads:view_all');
+                                         user.role === 'director' ||
+                                         user.department?.name?.toLowerCase().trim() === 'it';
 
                       const salesEmployees = employees.filter((emp) => {
                         const deptName = (emp.department?.name || '').toLowerCase().trim();
@@ -3266,9 +3267,9 @@ export default function LeadDetailPage({
                         return isSalesDept || isSalesRole;
                       });
 
-                      if (hasViewAll) return salesEmployees;
+                      if (isTopAdmin) return salesEmployees;
 
-                      const descendants = new Set<number>([user.id]);
+                      const descendants = new Set<number>();
                       const queue: number[] = [user.id];
                       while (queue.length > 0) {
                         const currentId = queue.shift()!;

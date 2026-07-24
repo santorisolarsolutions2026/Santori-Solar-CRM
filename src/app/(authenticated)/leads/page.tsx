@@ -1674,71 +1674,97 @@ export default function LeadsPage() {
             </div>
 
             <form onSubmit={handleBulkAssignSubmit} className="p-6 space-y-4">
-              {/* Select Manager */}
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                  Assigned Manager
-                </label>
-                <select
-                  value={bulkManagerId}
-                  onChange={(e) => setBulkManagerId(e.target.value)}
-                  className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500 focus:outline-none"
-                >
-                  <option value="UNCHANGED">-- Keep Unchanged --</option>
-                  <option value="UNASSIGN">❌ Unassign Manager</option>
-                  {teamMembers.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name} ({m.role})
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {(() => {
+                const isTopAdmin = user?.role === 'admin' || user?.role?.startsWith('admin:') || user?.role === 'director' || user?.department?.name?.toLowerCase().trim() === 'it';
+                const assignableMembers = (() => {
+                  if (!user) return [];
+                  if (isTopAdmin) return teamMembers;
 
-              {/* Select Team Leader */}
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                  Assigned Team Leader (TL)
-                </label>
-                <select
-                  value={bulkTlId}
-                  onChange={(e) => setBulkTlId(e.target.value)}
-                  className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500 focus:outline-none"
-                >
-                  <option value="UNCHANGED">-- Keep Unchanged --</option>
-                  <option value="UNASSIGN">❌ Unassign Team Leader</option>
-                  {teamMembers.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name} ({m.role})
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  const descendants = new Set<number>();
+                  const queue: number[] = [user.id];
+                  while (queue.length > 0) {
+                    const currentId = queue.shift()!;
+                    teamMembers.forEach((m: any) => {
+                      if (m.reportsTo === currentId && !descendants.has(m.id)) {
+                        descendants.add(m.id);
+                        queue.push(m.id);
+                      }
+                    });
+                  }
 
-              {/* Select Consultant */}
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                  Assigned Consultant / PSA
-                </label>
-                <select
-                  value={bulkConsultantId}
-                  onChange={(e) => setBulkConsultantId(e.target.value)}
-                  className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500 focus:outline-none"
-                >
-                  <option value="UNCHANGED">-- Keep Unchanged --</option>
-                  <option value="UNASSIGN">❌ Unassign Consultant</option>
-                  {teamMembers.filter((m: any) => {
-                    const deptName = (m.department?.name || '').toLowerCase().trim();
-                    const roleLower = (m.role || '').toLowerCase().trim();
-                    const isSalesDept = deptName.includes('sales') || deptName.includes('psa') || deptName.includes('marketing');
-                    const isSalesRole = ['sales_head', 'manager', 'tl', 'psa_tl', 'consultant', 'psa'].includes(roleLower) || roleLower.includes('sales') || roleLower.includes('psa');
-                    return isSalesDept || isSalesRole;
-                  }).map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name} ({m.role})
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  return teamMembers.filter((m: any) => descendants.has(m.id));
+                })();
+
+                return (
+                  <>
+                    {/* Select Manager */}
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                        Assigned Manager
+                      </label>
+                      <select
+                        value={bulkManagerId}
+                        onChange={(e) => setBulkManagerId(e.target.value)}
+                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500 focus:outline-none"
+                      >
+                        <option value="UNCHANGED">-- Keep Unchanged --</option>
+                        <option value="UNASSIGN">❌ Unassign Manager</option>
+                        {assignableMembers.map((m: any) => (
+                          <option key={m.id} value={m.id}>
+                            {m.name} ({m.role})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Select Team Leader */}
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                        Assigned Team Leader (TL)
+                      </label>
+                      <select
+                        value={bulkTlId}
+                        onChange={(e) => setBulkTlId(e.target.value)}
+                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500 focus:outline-none"
+                      >
+                        <option value="UNCHANGED">-- Keep Unchanged --</option>
+                        <option value="UNASSIGN">❌ Unassign Team Leader</option>
+                        {assignableMembers.map((m: any) => (
+                          <option key={m.id} value={m.id}>
+                            {m.name} ({m.role})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Select Consultant */}
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                        Assigned Consultant / PSA
+                      </label>
+                      <select
+                        value={bulkConsultantId}
+                        onChange={(e) => setBulkConsultantId(e.target.value)}
+                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500 focus:outline-none"
+                      >
+                        <option value="UNCHANGED">-- Keep Unchanged --</option>
+                        <option value="UNASSIGN">❌ Unassign Consultant</option>
+                        {assignableMembers.filter((m: any) => {
+                          const deptName = (m.department?.name || '').toLowerCase().trim();
+                          const roleLower = (m.role || '').toLowerCase().trim();
+                          const isSalesDept = deptName.includes('sales') || deptName.includes('psa') || deptName.includes('marketing');
+                          const isSalesRole = ['sales_head', 'manager', 'tl', 'psa_tl', 'consultant', 'psa'].includes(roleLower) || roleLower.includes('sales') || roleLower.includes('psa');
+                          return isSalesDept || isSalesRole;
+                        }).map((m: any) => (
+                          <option key={m.id} value={m.id}>
+                            {m.name} ({m.role})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </>
+                );
+              })()}
 
               <div className="pt-4 border-t border-slate-800 flex justify-end gap-3">
                 <button

@@ -21,6 +21,12 @@ export async function GET(req: Request) {
     const clientType = searchParams.get('clientType');
 
     const userPermissions = await getUserPermissions(userPayload.id);
+    const hasDeliveredPerm = userPermissions.includes('ops:delivered_orders') || userPayload.role === 'admin' || userPayload.role === 'director';
+
+    if (!hasDeliveredPerm) {
+      return NextResponse.json({ success: false, message: 'Forbidden. Custom access level permission (Show Delivered Orders) is required to view completed orders.' }, { status: 403 });
+    }
+
     const isITOrAdmin = userPayload.role === 'admin' || userPayload.role === 'director' || userPermissions.includes('leads:view_all') || userPermissions.includes('orders:view_all');
 
     // Hierarchy filter calculation

@@ -217,18 +217,17 @@ export async function PATCH(
     }
 
     // Validate target assignee is in the user's subordinate hierarchy (unless Admin / View All)
-    const isAdmin = ['admin', 'director'].includes(baseRole) || (userPayload as any).department?.name === 'IT' || userPermissions.includes('leads:view_all');
+    const isAdmin = ['admin', 'director'].includes(baseRole) || (userPayload as any).department?.name === 'IT';
     if (!isAdmin && isChangingAssignment && assignedConsultantId && assignedConsultantId !== 'unassigned') {
       const targetId = parseInt(assignedConsultantId, 10);
       if (!isNaN(targetId)) {
         const { getSubordinateIds } = await import('@/lib/hierarchy');
         const subordinateIds = await getSubordinateIds(userPayload.id);
-        const allowedAssigneeIds = [userPayload.id, ...subordinateIds];
 
-        if (!allowedAssigneeIds.includes(targetId)) {
+        if (!subordinateIds.includes(targetId)) {
           return NextResponse.json({
             success: false,
-            message: 'Forbidden. You can only assign leads to yourself or team members below you in hierarchy.'
+            message: 'Forbidden. You can only assign leads to team members strictly below you in your hierarchy tree.'
           }, { status: 403 });
         }
       }
