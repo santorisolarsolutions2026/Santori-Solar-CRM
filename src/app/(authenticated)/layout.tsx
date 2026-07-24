@@ -759,41 +759,26 @@ export default function AuthenticatedLayout({
         </nav>
 
         {/* Leaderboard Sidebar Card (Desktop) */}
-        <div className="mx-4 mb-4 p-3 bg-slate-900/60 border border-slate-800/80 rounded-xl space-y-2 shrink-0">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-              <Trophy className="w-3.5 h-3.5 text-yellow-400" /> Standings
-            </span>
-            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Monthly</span>
-          </div>
-          
-          <div className="space-y-1.5">
-            {topPerformers.map((perf, idx) => (
-              <div key={perf.id} className="flex items-center justify-between text-[11px] py-1 border-b border-slate-850/30 last:border-0">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className={`w-4.5 h-4.5 rounded flex items-center justify-center font-extrabold text-[9px] shrink-0 ${
-                    idx === 0 ? 'bg-yellow-500/20 text-yellow-450 border border-yellow-500/30' :
-                    idx === 1 ? 'bg-slate-400/20 text-slate-300 border border-slate-400/20' :
-                    'bg-amber-700/20 text-amber-550 border border-amber-700/20'
-                  }`}>
-                    {idx + 1}
-                  </span>
-                  <span className="text-slate-300 truncate font-semibold">{perf.name}</span>
-                </div>
-                <span className="font-bold text-amber-400 shrink-0">{perf.points} pts</span>
-              </div>
-            ))}
-            {topPerformers.length === 0 && (
-              <p className="text-[10px] text-slate-550 text-center py-1">No standing data</p>
-            )}
-          </div>
-
+        <div className="mx-4 mb-4 shrink-0">
           <button
             type="button"
             onClick={() => setLeaderboardOpen(true)}
-            className="w-full mt-1.5 py-1 px-3 bg-slate-950 hover:bg-slate-855 border border-slate-800 text-slate-400 hover:text-white rounded-lg font-bold text-[10px] transition-all cursor-pointer text-center"
+            className="w-full p-3 bg-gradient-to-r from-slate-900/90 to-amber-950/20 hover:from-slate-900 hover:to-amber-950/40 border border-slate-800 hover:border-amber-500/40 rounded-xl transition-all cursor-pointer group text-left shadow-md flex items-center justify-between"
           >
-            View Leaderboard
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform">
+                <Trophy className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-slate-200 block group-hover:text-amber-400 transition-colors">
+                  Santori Standings
+                </span>
+                <span className="text-[10px] text-slate-400 block font-medium">
+                  Click to view team standings
+                </span>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-amber-400 transition-colors" />
           </button>
         </div>
 
@@ -941,44 +926,29 @@ export default function AuthenticatedLayout({
             </nav>
 
             {/* Leaderboard Sidebar Card (Mobile) */}
-            <div className="mx-4 mb-4 p-3 bg-slate-900/60 border border-slate-800/80 rounded-xl space-y-2 shrink-0">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                  <Trophy className="w-3.5 h-3.5 text-yellow-400" /> Standings
-                </span>
-                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Monthly</span>
-              </div>
-              
-              <div className="space-y-1.5">
-                {topPerformers.map((perf, idx) => (
-                  <div key={perf.id} className="flex items-center justify-between text-[11px] py-1 border-b border-slate-850/30 last:border-0">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className={`w-4.5 h-4.5 rounded flex items-center justify-center font-extrabold text-[9px] shrink-0 ${
-                        idx === 0 ? 'bg-yellow-500/20 text-yellow-450 border border-yellow-500/30' :
-                        idx === 1 ? 'bg-slate-400/20 text-slate-300 border border-slate-400/20' :
-                        'bg-amber-700/20 text-amber-550 border border-amber-700/20'
-                      }`}>
-                        {idx + 1}
-                      </span>
-                      <span className="text-slate-300 truncate font-semibold">{perf.name}</span>
-                    </div>
-                    <span className="font-bold text-amber-400 shrink-0">{perf.points} pts</span>
-                  </div>
-                ))}
-                {topPerformers.length === 0 && (
-                  <p className="text-[10px] text-slate-555 text-center py-1">No standing data</p>
-                )}
-              </div>
-
+            <div className="mx-4 mb-4 shrink-0">
               <button
                 type="button"
                 onClick={() => {
                   setSidebarOpen(false);
                   setLeaderboardOpen(true);
                 }}
-                className="w-full mt-1.5 py-1 px-3 bg-slate-950 hover:bg-slate-850 border border-slate-800 text-slate-400 hover:text-white rounded-lg font-bold text-[10px] transition-all cursor-pointer text-center"
+                className="w-full p-3 bg-gradient-to-r from-slate-900/90 to-amber-950/20 hover:from-slate-900 hover:to-amber-950/40 border border-slate-800 hover:border-amber-500/40 rounded-xl transition-all cursor-pointer group text-left shadow-md flex items-center justify-between"
               >
-                View Leaderboard
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform">
+                    <Trophy className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-slate-200 block group-hover:text-amber-400 transition-colors">
+                      Santori Standings
+                    </span>
+                    <span className="text-[10px] text-slate-400 block font-medium">
+                      Click to view team standings
+                    </span>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-amber-400 transition-colors" />
               </button>
             </div>
 

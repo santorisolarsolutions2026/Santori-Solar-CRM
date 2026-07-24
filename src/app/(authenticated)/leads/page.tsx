@@ -28,6 +28,7 @@ import {
   Truck,
 } from 'lucide-react';
 import Link from 'next/link';
+import UserSelect from '@/components/UserSelect';
 import { LeadTrackingTimeline } from '@/components/LeadTrackingTimeline';
 import { getLeadAssignedDisplay } from '@/lib/permissions';
 
@@ -1702,19 +1703,12 @@ export default function LeadsPage() {
                       <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
                         Assigned Manager
                       </label>
-                      <select
-                        value={bulkManagerId}
-                        onChange={(e) => setBulkManagerId(e.target.value)}
-                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500 focus:outline-none"
-                      >
-                        <option value="UNCHANGED">-- Keep Unchanged --</option>
-                        <option value="UNASSIGN">❌ Unassign Manager</option>
-                        {assignableMembers.map((m: any) => (
-                          <option key={m.id} value={m.id}>
-                            {m.name} ({m.role})
-                          </option>
-                        ))}
-                      </select>
+                      <UserSelect
+                        users={assignableMembers}
+                        value={bulkManagerId === 'UNCHANGED' || bulkManagerId === 'UNASSIGN' ? null : bulkManagerId}
+                        onChange={(val) => setBulkManagerId(val ? String(val) : 'UNASSIGN')}
+                        placeholder="-- Select Manager --"
+                      />
                     </div>
 
                     {/* Select Team Leader */}
@@ -1722,19 +1716,12 @@ export default function LeadsPage() {
                       <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
                         Assigned Team Leader (TL)
                       </label>
-                      <select
-                        value={bulkTlId}
-                        onChange={(e) => setBulkTlId(e.target.value)}
-                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500 focus:outline-none"
-                      >
-                        <option value="UNCHANGED">-- Keep Unchanged --</option>
-                        <option value="UNASSIGN">❌ Unassign Team Leader</option>
-                        {assignableMembers.map((m: any) => (
-                          <option key={m.id} value={m.id}>
-                            {m.name} ({m.role})
-                          </option>
-                        ))}
-                      </select>
+                      <UserSelect
+                        users={assignableMembers}
+                        value={bulkTlId === 'UNCHANGED' || bulkTlId === 'UNASSIGN' ? null : bulkTlId}
+                        onChange={(val) => setBulkTlId(val ? String(val) : 'UNASSIGN')}
+                        placeholder="-- Select Team Leader --"
+                      />
                     </div>
 
                     {/* Select Consultant */}
@@ -1742,25 +1729,18 @@ export default function LeadsPage() {
                       <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
                         Assigned Consultant / PSA
                       </label>
-                      <select
-                        value={bulkConsultantId}
-                        onChange={(e) => setBulkConsultantId(e.target.value)}
-                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500 focus:outline-none"
-                      >
-                        <option value="UNCHANGED">-- Keep Unchanged --</option>
-                        <option value="UNASSIGN">❌ Unassign Consultant</option>
-                        {assignableMembers.filter((m: any) => {
+                      <UserSelect
+                        users={assignableMembers.filter((m: any) => {
                           const deptName = (m.department?.name || '').toLowerCase().trim();
                           const roleLower = (m.role || '').toLowerCase().trim();
                           const isSalesDept = deptName.includes('sales') || deptName.includes('psa') || deptName.includes('marketing');
                           const isSalesRole = ['sales_head', 'manager', 'tl', 'psa_tl', 'consultant', 'psa'].includes(roleLower) || roleLower.includes('sales') || roleLower.includes('psa');
                           return isSalesDept || isSalesRole;
-                        }).map((m: any) => (
-                          <option key={m.id} value={m.id}>
-                            {m.name} ({m.role})
-                          </option>
-                        ))}
-                      </select>
+                        })}
+                        value={bulkConsultantId === 'UNCHANGED' || bulkConsultantId === 'UNASSIGN' ? null : bulkConsultantId}
+                        onChange={(val) => setBulkConsultantId(val ? String(val) : 'UNASSIGN')}
+                        placeholder="-- Select Consultant --"
+                      />
                     </div>
                   </>
                 );

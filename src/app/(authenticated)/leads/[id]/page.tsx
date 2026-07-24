@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
+import UserSelect from '@/components/UserSelect';
 import {
   Sun,
   ArrowLeft,
@@ -3232,25 +3233,18 @@ export default function LeadDetailPage({
 
               <div>
                 <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Assign Finance Operator *</label>
-                <select
-                  required
-                  value={financeConsultantId || financeTlId || financeManagerId}
-                  onChange={(e) => handleSelectFinanceAssignee(e.target.value)}
-                  className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
-                >
-                  <option value="">Select Finance Member</option>
-                  {employees.filter((emp) => {
+                <UserSelect
+                  users={employees.filter((emp) => {
                     const deptName = (emp.department?.name || '').toLowerCase();
                     const roleLower = (emp.role || '').toLowerCase();
                     const isFinanceDept = deptName.includes('finance');
                     const isFinanceRole = roleLower.includes('finance');
                     return isFinanceDept || isFinanceRole;
-                  }).map((emp) => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.name} ({emp.department?.name || 'Finance'} - {emp.designation?.name || emp.role.toUpperCase()})
-                    </option>
-                  ))}
-                </select>
+                  })}
+                  value={financeConsultantId || financeTlId || financeManagerId}
+                  onChange={(val) => handleSelectFinanceAssignee(val ? String(val) : '')}
+                  placeholder="Select Finance Member"
+                />
               </div>
 
               <div className="flex gap-3 border-t border-slate-800/80 pt-4 justify-end">

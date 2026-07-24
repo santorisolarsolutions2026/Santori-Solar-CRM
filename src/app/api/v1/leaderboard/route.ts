@@ -13,6 +13,8 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const timeframe = searchParams.get('timeframe') || 'month'; // week | month | all
     const department = searchParams.get('department') || 'all'; // all | sales | finance | operations
+    const designationFilter = searchParams.get('designation') || 'all'; // designation name or id
+    const metricFilter = searchParams.get('metric') || 'auto'; // salesClosed | meetingsConducted | ordersVerified | opsMilestones | auto
     const startStr = searchParams.get('startDate');
     const endStr = searchParams.get('endDate');
 
@@ -48,45 +50,46 @@ export async function GET(req: Request) {
       rolesToFetch = [...salesRoles, ...financeRoles, ...operationsRoles];
     }
 
-    // Fetch active users in these roles
+    // Build user query filter
+    const userWhere: any = {
+      isActive: true,
+      role: { in: rolesToFetch },
+    };
+
+    if (designationFilter !== 'all') {
+      if (!isNaN(parseInt(designationFilter, 10))) {
+        userWhere.designationId = parseInt(designationFilter, 10);
+      } else {
+        userWhere.designation = {
+          name: { contains: designationFilter, mode: 'insensitive' },
+        };
+      }
+    }
+
+    // Fetch active users with designation & department
     const users = await prisma.user.findMany({
-      where: {
-        isActive: true,
-        role: { in: rolesToFetch },
-      },
+      where: userWhere,
       select: {
         id: true,
         name: true,
         email: true,
         role: true,
         photograph: true,
+        designation: {
+          select: { id: true, name: true }
+        },
+        department: {
+          select: { id: true, name: true }
+        }
       },
     });
-
-    // Read weights from query parameters or default
-    const wLeadsCreated = parseInt(searchParams.get('wLeadsCreated') || '5', 10);
-    const wLogs = parseInt(searchParams.get('wLogs') || '2', 10);
-    const wMeetingsBooked = parseInt(searchParams.get('wMeetingsBooked') || '10', 10);
-    const wMeetingsConducted = parseInt(searchParams.get('wMeetingsConducted') || '20', 10);
-    const wSalesClosed = parseInt(searchParams.get('wSalesClosed') || '50', 10);
-    const wFinanceVerified = parseInt(searchParams.get('wFinanceVerified') || '30', 10);
-    const wPaymentsRecorded = parseInt(searchParams.get('wPaymentsRecorded') || '20', 10);
-    const wOpsMilestones = parseInt(searchParams.get('wOpsMilestones') || '25', 10);
 
     const leaderboardPromises = users.map(async (user) => {
       const subordinates = await getSubordinateIds(user.id);
       const teamUserIds = [user.id, ...subordinates];
 
-      // 1. Leads Created by user/team
-      const leadsCreatedCount = await prisma.lead.count({
-        where: {
-          createdById: { in: teamUserIds },
-          ...(dateFilter ? { createdAt: dateFilter } : {}),
-        },
-      });
-
-      // 2. Nurturing Updates / Stage Logs
-      const logsCount = await prisma.leadActivityLog.count({
+      // 1. Leads Worked / Updated by user/team
+      const leadsWorkedCount = await prisma.leadActivityLog.count({
         where: {
           userId: { in: teamUserIds },
           fromStatus: { not: null },
@@ -94,7 +97,7 @@ export async function GET(req: Request) {
         },
       });
 
-      // 3. Meetings Booked
+      // 2. Meetings Booked
       const meetingsBookedCount = await prisma.meetingBooking.count({
         where: {
           assignedExecutiveId: { in: teamUserIds },
@@ -102,7 +105,7 @@ export async function GET(req: Request) {
         },
       });
 
-      // 4. Meetings Conducted / Recorded
+      // 3. Meetings Conducted / Recorded
       const meetingsConductedCount = await prisma.meetingBooking.count({
         where: {
           assignedExecutiveId: { in: teamUserIds },
@@ -115,7 +118,7 @@ export async function GET(req: Request) {
         },
       });
 
-      // 5. Sales Done (Lead status = 13 OR log transition to 13 by team)
+      // 4. Sales Closed / Done (Stage 13)
       const salesClosedCount = await prisma.leadActivityLog.count({
         where: {
           userId: { in: teamUserIds },
@@ -124,7 +127,15 @@ export async function GET(req: Request) {
         },
       });
 
-      // 6. Finance Order Verified
+      // 5. Orders Punched
+      const ordersPunchedCount = await prisma.order.count({
+        where: {
+          submittedById: { in: teamUserIds },
+          ...(dateFilter ? { createdAt: dateFilter } : {}),
+        },
+      });
+
+      // 6. Finance Orders Verified
       const financeVerifiedCount = await prisma.order.count({
         where: {
           financeProcessedById: { in: teamUserIds },
@@ -133,16 +144,32 @@ export async function GET(req: Request) {
         },
       });
 
-      // 7. Payments Recorded
-      const paymentsRecordedCount = await prisma.payment.count({
+      // 7. Ledger Activities
+      const ledgerActivitiesCount = await prisma.leadActivityLog.count({
         where: {
-          recordedById: { in: teamUserIds },
-          isDiscarded: false,
+          userId: { in: teamUserIds },
+          lead: { order: { financeProcessedById: { in: teamUserIds } } },
           ...(dateFilter ? { createdAt: dateFilter } : {}),
         },
       });
 
       // 8. Operations Milestones (Deliveries, Installations, Commissioning)
+      const deliveriesCount = await prisma.order.count({
+        where: {
+          assignedOpsId: { in: teamUserIds },
+          isDelivered: true,
+          ...(dateFilter ? { updatedAt: dateFilter } : {}),
+        },
+      });
+
+      const installationsCount = await prisma.order.count({
+        where: {
+          assignedOpsId: { in: teamUserIds },
+          isInstalled: true,
+          ...(dateFilter ? { updatedAt: dateFilter } : {}),
+        },
+      });
+
       const opsMilestonesCount = await prisma.order.count({
         where: {
           AND: [
@@ -160,16 +187,29 @@ export async function GET(req: Request) {
         },
       });
 
-      // Calculate total points
-      const points =
-        leadsCreatedCount * wLeadsCreated +
-        logsCount * wLogs +
-        meetingsBookedCount * wMeetingsBooked +
-        meetingsConductedCount * wMeetingsConducted +
-        salesClosedCount * wSalesClosed +
-        financeVerifiedCount * wFinanceVerified +
-        paymentsRecordedCount * wPaymentsRecorded +
-        opsMilestonesCount * wOpsMilestones;
+      // Determine primary metric value for ranking based on department or selection
+      let primaryWorkValue = 0;
+      let primaryMetricLabel = 'Sales Closed';
+
+      if (metricFilter === 'salesClosed' || (metricFilter === 'auto' && (department === 'sales' || department === 'all'))) {
+        primaryWorkValue = salesClosedCount;
+        primaryMetricLabel = 'Sales Closed';
+      } else if (metricFilter === 'meetingsConducted') {
+        primaryWorkValue = meetingsConductedCount;
+        primaryMetricLabel = 'Meetings Recorded';
+      } else if (metricFilter === 'ordersVerified' || (metricFilter === 'auto' && department === 'finance')) {
+        primaryWorkValue = financeVerifiedCount;
+        primaryMetricLabel = 'Orders Verified';
+      } else if (metricFilter === 'opsMilestones' || (metricFilter === 'auto' && department === 'operations')) {
+        primaryWorkValue = opsMilestonesCount;
+        primaryMetricLabel = 'Ops Milestones';
+      } else if (metricFilter === 'leadsWorked') {
+        primaryWorkValue = leadsWorkedCount;
+        primaryMetricLabel = 'Leads Worked';
+      } else {
+        primaryWorkValue = salesClosedCount;
+        primaryMetricLabel = 'Sales Closed';
+      }
 
       return {
         id: user.id,
@@ -177,15 +217,21 @@ export async function GET(req: Request) {
         email: user.email,
         role: user.role,
         photograph: user.photograph,
-        points,
+        designation: user.designation?.name || user.role.toUpperCase(),
+        department: user.department?.name || 'Sales',
+        teamSize: teamUserIds.length,
+        primaryWorkValue,
+        primaryMetricLabel,
         breakdown: {
-          leadsCreated: leadsCreatedCount,
-          followUps: logsCount,
-          meetingsBooked: meetingsBookedCount,
-          meetingsConducted: meetingsConductedCount,
           salesClosed: salesClosedCount,
+          meetingsConducted: meetingsConductedCount,
+          meetingsBooked: meetingsBookedCount,
+          leadsWorked: leadsWorkedCount,
+          ordersPunched: ordersPunchedCount,
           financeVerified: financeVerifiedCount,
-          paymentsRecorded: paymentsRecordedCount,
+          ledgerActivities: ledgerActivitiesCount,
+          deliveriesCompleted: deliveriesCount,
+          installationsCompleted: installationsCount,
           opsMilestones: opsMilestonesCount,
         },
       };
@@ -193,17 +239,27 @@ export async function GET(req: Request) {
 
     const leaderboardData = await Promise.all(leaderboardPromises);
 
-    // Sort by points descending, then by name alphabetically
+    // Sort by primary work value descending, secondary by meetingsConducted/leadsWorked, then name
     leaderboardData.sort((a, b) => {
-      if (b.points !== a.points) {
-        return b.points - a.points;
+      if (b.primaryWorkValue !== a.primaryWorkValue) {
+        return b.primaryWorkValue - a.primaryWorkValue;
+      }
+      if (b.breakdown.meetingsConducted !== a.breakdown.meetingsConducted) {
+        return b.breakdown.meetingsConducted - a.breakdown.meetingsConducted;
       }
       return a.name.localeCompare(b.name);
+    });
+
+    // Also fetch available designations list for filter dropdown
+    const availableDesignations = await prisma.designation.findMany({
+      select: { id: true, name: true, departmentId: true },
+      orderBy: { name: 'asc' }
     });
 
     return NextResponse.json({
       success: true,
       data: leaderboardData,
+      designations: availableDesignations,
     });
   } catch (error: any) {
     console.error('Leaderboard API error:', error);
