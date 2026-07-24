@@ -120,12 +120,13 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true);
 
   const [activeReportTab, setActiveReportTab] = useState<'pipeline' | 'employee'>('pipeline');
-  const [activeDeptTab, setActiveDeptTab] = useState<'Sales' | 'Finance' | 'Operations' | 'Management' | 'Other'>('Sales');
+  const [activeDeptTab, setActiveDeptTab] = useState<'Sales' | 'Finance' | 'Operations' | 'Other'>('Sales');
+  const [filterDesignation, setFilterDesignation] = useState<string>('all');
   const [filterStartDate, setFilterStartDate] = useState<string>('');
   const [filterEndDate, setFilterEndDate] = useState<string>('');
   const [filterStartTime, setFilterStartTime] = useState<string>('00:00');
   const [filterEndTime, setFilterEndTime] = useState<string>('23:59');
-  const [auditData, setAuditData] = useState<{ departments: Record<string, any[]> } | null>(null);
+  const [auditData, setAuditData] = useState<{ departments: Record<string, any[]>; designations?: string[] } | null>(null);
   const [auditLoading, setAuditLoading] = useState(false);
 
   // States for the interactive employee audit modal
@@ -223,9 +224,9 @@ export default function ReportsPage() {
   const fetchAuditData = async () => {
     setAuditLoading(true);
     try {
-      let url = `/api/v1/reports/employee-audit`;
+      let url = `/api/v1/reports/employee-audit?designation=${encodeURIComponent(filterDesignation)}`;
       if (filterStartDate && filterEndDate) {
-        url += `?startDate=${filterStartDate}&endDate=${filterEndDate}&startTime=${filterStartTime}&endTime=${filterEndTime}`;
+        url += `&startDate=${filterStartDate}&endDate=${filterEndDate}&startTime=${filterStartTime}&endTime=${filterEndTime}`;
       }
       const res = await fetch(url);
       const data = await res.json();
@@ -243,7 +244,7 @@ export default function ReportsPage() {
     if (user && activeReportTab === 'employee') {
       fetchAuditData();
     }
-  }, [user, activeReportTab, filterStartDate, filterEndDate, filterStartTime, filterEndTime]);
+  }, [user, activeReportTab, filterDesignation, filterStartDate, filterEndDate, filterStartTime, filterEndTime]);
 
   const fetchModalData = async (empId: number, type: string) => {
     setModalLoading(true);
@@ -512,6 +513,23 @@ export default function ReportsPage() {
             </div>
             
             <div className="flex flex-wrap items-center gap-3 text-xs">
+              {/* Designation Filter */}
+              <div className="flex items-center gap-2">
+                <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Designation:</span>
+                <select
+                  value={filterDesignation}
+                  onChange={(e) => setFilterDesignation(e.target.value)}
+                  className="bg-slate-950 border border-slate-800 text-slate-200 px-3 py-1.5 rounded-lg focus:ring-amber-500 focus:outline-none cursor-pointer text-xs"
+                >
+                  <option value="all">All Designations</option>
+                  {(auditData?.designations || []).map((des) => (
+                    <option key={des} value={des}>
+                      {des}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="flex items-center gap-2">
                 <span className="text-slate-500 font-semibold">Start:</span>
                 <input
@@ -542,13 +560,14 @@ export default function ReportsPage() {
                   className="bg-slate-950 border border-slate-800 text-slate-300 px-2 py-1.5 rounded-lg focus:ring-amber-500 focus:outline-none cursor-pointer font-mono"
                 />
               </div>
-              {(filterStartDate || filterEndDate) && (
+              {(filterStartDate || filterEndDate || filterDesignation !== 'all') && (
                 <button
                   onClick={() => {
                     setFilterStartDate('');
                     setFilterEndDate('');
                     setFilterStartTime('00:00');
                     setFilterEndTime('23:59');
+                    setFilterDesignation('all');
                   }}
                   className="py-1.5 px-3 bg-slate-900 border border-slate-800 text-slate-400 hover:text-white rounded-lg transition-colors cursor-pointer"
                 >
@@ -560,7 +579,7 @@ export default function ReportsPage() {
 
           {/* Department Tab Buttons */}
           <div className="flex gap-2 border-b border-slate-800 bg-slate-955/20 p-1.5 rounded-xl overflow-x-auto whitespace-nowrap scrollbar-none">
-            {(['Sales', 'Finance', 'Operations', 'Management', 'Other'] as const).map((dept) => {
+            {(['Sales', 'Finance', 'Operations', 'Other'] as const).map((dept) => {
               const isActive = activeDeptTab === (dept as any);
               const count = auditData?.departments?.[dept]?.length || 0;
               return (
@@ -573,7 +592,7 @@ export default function ReportsPage() {
                       : 'bg-transparent border border-transparent text-slate-400 hover:text-white hover:bg-slate-900/40'
                   }`}
                 >
-                  <span>{dept} {dept === 'Management' ? 'Hierarchy' : 'Department'}</span>
+                  <span>{dept} Department</span>
                   <span className={`px-1.5 py-0.5 rounded text-[10px] ${
                     isActive ? 'bg-slate-955/20 text-slate-955' : 'bg-slate-900 text-slate-455'
                   }`}>
@@ -823,71 +842,6 @@ export default function ReportsPage() {
                               >
                                 {emp.metrics.subsidiesApplied}
                               </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  );
-                }
-
-                if (activeDeptTab === 'Management') {
-                  return (
-                    <table className="w-full text-left border-collapse min-w-[900px]">
-                      <thead>
-                        <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                          <th className="pb-3 px-4 text-left">Supervisor / Manager</th>
-                          <th className="pb-3 px-4 text-left">Designation</th>
-                          <th className="pb-3 px-4 text-center">Team Size</th>
-                          <th className="pb-3 px-4 text-center">Team Leads Worked</th>
-                          <th className="pb-3 px-4 text-center">Team Meetings Recorded</th>
-                          <th className="pb-3 px-4 text-center">Team Sales Done</th>
-                          <th className="pb-3 px-4 text-center">Team Conversion Rate</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-800/40 text-sm">
-                        {employeesList.map((emp: any) => (
-                          <tr key={emp.id} className="hover:bg-slate-900/10 transition-colors">
-                            <td className="py-3.5 px-4 font-bold text-white flex items-center gap-2">
-                              <span>{emp.name}</span>
-                              <button
-                                type="button"
-                                onClick={() => handleOpenTimelineModal(emp.id, emp.name)}
-                                className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-amber-400 transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium ml-auto"
-                              >
-                                <Calendar className="w-3 h-3 text-amber-500" /> Timeline
-                              </button>
-                            </td>
-                            <td className="py-3.5 px-4 text-slate-400 font-medium text-xs">{emp.designation}</td>
-                            <td className="py-3.5 px-4 text-center font-mono text-amber-400 font-bold">
-                              {emp.teamSize} members
-                            </td>
-                            <td className="py-3.5 px-4 text-center">
-                              <button
-                                onClick={() => handleOpenDetailsModal(emp.id, 'leads_worked')}
-                                className="font-extrabold text-amber-400 hover:text-amber-300 hover:underline outline-none cursor-pointer"
-                              >
-                                {emp.metrics.leadsWorked}
-                              </button>
-                            </td>
-                            <td className="py-3.5 px-4 text-center">
-                              <button
-                                onClick={() => handleOpenDetailsModal(emp.id, 'meetings_recorded')}
-                                className="font-extrabold text-sky-400 hover:text-sky-300 hover:underline outline-none cursor-pointer"
-                              >
-                                {emp.metrics.meetingsRecorded}
-                              </button>
-                            </td>
-                            <td className="py-3.5 px-4 text-center">
-                              <button
-                                onClick={() => handleOpenDetailsModal(emp.id, 'sales_done')}
-                                className="font-extrabold text-emerald-400 hover:text-emerald-300 hover:underline outline-none cursor-pointer"
-                              >
-                                {emp.metrics.salesDone}
-                              </button>
-                            </td>
-                            <td className="py-3.5 px-4 text-center font-extrabold font-mono text-amber-400">
-                              {emp.metrics.saleConversionRate}%
                             </td>
                           </tr>
                         ))}

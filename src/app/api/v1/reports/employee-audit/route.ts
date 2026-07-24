@@ -21,6 +21,7 @@ export async function GET(req: Request) {
     const endStr = url.searchParams.get('endDate');
     const startTimeStr = url.searchParams.get('startTime') || '00:00';
     const endTimeStr = url.searchParams.get('endTime') || '23:59';
+    const designationFilter = url.searchParams.get('designation') || 'all';
 
     let dateRangeFilter: any = null;
     if (startStr && endStr) {
@@ -33,8 +34,8 @@ export async function GET(req: Request) {
     const employees = await prisma.user.findMany({
       where: { isActive: true },
       include: {
-        department: { select: { name: true } },
-        designation: { select: { name: true, level: true } }
+        department: { select: { id: true, name: true } },
+        designation: { select: { id: true, name: true, level: true } }
       },
       orderBy: { name: 'asc' },
     });
@@ -98,13 +99,11 @@ export async function GET(req: Request) {
           actualCommissionedAt: true,
           isSubsidyApplied: true,
           actualSubsidyAppliedAt: true,
-          createdAt: true,
           lead: {
             select: {
               assignedConsultantId: true,
               assignedTlId: true,
               assignedManagerId: true,
-              status: true,
             }
           }
         }
@@ -113,82 +112,71 @@ export async function GET(req: Request) {
         where: paymentDateFilter,
         select: {
           id: true,
-          recordedById: true,
           amount: true,
+          recordedById: true,
           isDiscarded: true,
           createdAt: true,
         }
       })
     ]);
 
-    // Compute metrics for each employee (including subordinate aggregation)
+    // Process metric calculation per employee + team hierarchy
     const processedEmployees = employees.map((emp) => {
-      const teamUserIds = new Set(userHierarchyMap.get(emp.id) || [emp.id]);
-      const isSupervisor = teamUserIds.size > 1;
+      const teamUserIdsArr = userHierarchyMap.get(emp.id) || [emp.id];
+      const teamUserIds = new Set(teamUserIdsArr);
+      const isSupervisor = teamUserIdsArr.length > 1;
 
-      // 1. Sales: Number of Leads Worked Upon (distinct leads where a stage change was executed by employee or subordinates)
-      const teamStageLogs = allLogs.filter((l) => teamUserIds.has(l.userId) && l.fromStatus !== l.toStatus);
-      const workedLeadIds = new Set(teamStageLogs.map((l) => l.leadId));
-      const leadsWorked = workedLeadIds.size;
+      // --- SALES METRICS ---
+      // 1. Number of Leads Worked Upon
+      const teamLogs = allLogs.filter((log) => teamUserIds.has(log.userId) && log.fromStatus !== null);
+      const uniqueLeadsWorked = new Set(teamLogs.map((l) => l.leadId));
+      const leadsWorked = uniqueLeadsWorked.size;
 
-      // 2. Sales: Number of Meetings Booked
-      const teamMeetingsBooked = allMeetings.filter((m) => teamUserIds.has(m.assignedExecutiveId));
+      // 2. Number of Meetings Booked
+      const teamMeetingsBooked = allMeetings.filter((m) => m.assignedExecutiveId && teamUserIds.has(m.assignedExecutiveId));
       const meetingsBooked = teamMeetingsBooked.length;
 
-      // 3. Sales: Number of Meetings Recorded (meeting with startedAt, endedAt, or audio recording)
-      const teamMeetingsRecorded = teamMeetingsBooked.filter(
-        (m) => m.meetingStartedAt !== null || m.meetingEndedAt !== null || !!m.audioRecordingPath
+      // 3. Number of Meetings Recorded
+      const teamMeetingsRecorded = allMeetings.filter(
+        (m) => m.assignedExecutiveId && teamUserIds.has(m.assignedExecutiveId) && (m.meetingStartedAt || m.meetingEndedAt || m.audioRecordingPath)
       );
       const meetingsRecorded = teamMeetingsRecorded.length;
 
-      // 4. Sales: Number of Sales Done (Lead status = 13 OR log transition to status 13 by team)
-      const teamSaleLogs = allLogs.filter((l) => teamUserIds.has(l.userId) && l.toStatus === 13);
-      const saleLeadIdsFromLogs = new Set(teamSaleLogs.map((l) => l.leadId));
-      const teamSaleOrders = allOrders.filter(
-        (o) =>
-          (o.lead?.assignedConsultantId && teamUserIds.has(o.lead.assignedConsultantId)) ||
-          (o.lead?.assignedTlId && teamUserIds.has(o.lead.assignedTlId)) ||
-          (o.lead?.assignedManagerId && teamUserIds.has(o.lead.assignedManagerId)) ||
-          teamUserIds.has(o.submittedById) ||
-          saleLeadIdsFromLogs.has(o.leadId)
-      );
-      const salesDoneLeads = new Set([
-        ...Array.from(saleLeadIdsFromLogs),
-        ...teamSaleOrders.filter((o) => o.lead?.status === 13).map((o) => o.leadId),
-      ]);
-      const salesDone = salesDoneLeads.size;
+      // 4. Number of Sales Done (Stage 13)
+      const teamSalesLogs = teamLogs.filter((l) => l.toStatus === 13);
+      const uniqueSalesLeads = new Set(teamSalesLogs.map((l) => l.leadId));
+      const salesDone = uniqueSalesLeads.size;
 
-      // 5. Sales: Number of Orders Punched
-      const teamOrdersPunched = allOrders.filter((o) => teamUserIds.has(o.submittedById));
-      const ordersPunched = teamOrdersPunched.length;
-      const ordersPunchedValue = teamOrdersPunched.reduce((sum, o) => sum + (o.totalValue || 0), 0);
+      // 5. Number of Orders Punched
+      const teamPunchedOrders = allOrders.filter((o) => teamUserIds.has(o.submittedById));
+      const ordersPunched = teamPunchedOrders.length;
+      const ordersPunchedValue = teamPunchedOrders.reduce((sum, o) => sum + (o.totalValue || 0), 0);
 
-      // 6. Sales: Sale Conversion Rate (Sales Done / Meetings Recorded)
-      const saleConversionRate =
-        meetingsRecorded > 0
-          ? Math.round((salesDone / meetingsRecorded) * 100)
-          : salesDone > 0
-          ? 100
-          : 0;
+      // 6. Sale Conversion Rate (%)
+      const saleConversionRate = meetingsRecorded > 0 ? Math.round((salesDone / meetingsRecorded) * 100) : (salesDone > 0 ? 100 : 0);
 
-      // --- Finance Metrics ---
+      // --- FINANCE METRICS ---
       // 1. Number of Orders Verified
-      const teamOrdersVerified = allOrders.filter(
-        (o) =>
-          (o.financeProcessedById && teamUserIds.has(o.financeProcessedById)) ||
-          (o.assignedFinanceId && teamUserIds.has(o.assignedFinanceId) && !['draft', 'submitted'].includes(o.status))
+      const teamVerifiedOrders = allOrders.filter(
+        (o) => o.financeProcessedById && teamUserIds.has(o.financeProcessedById) && ['finance_verified', 'ops_assigned', 'completed'].includes(o.status)
       );
-      const ordersVerified = teamOrdersVerified.length;
-      const ordersVerifiedValue = teamOrdersVerified.reduce((sum, o) => sum + (o.totalValue || 0), 0);
+      const ordersVerified = teamVerifiedOrders.length;
+      const ordersVerifiedValue = teamVerifiedOrders.reduce((sum, o) => sum + (o.totalValue || 0), 0);
 
-      // 2. Number of Ledger Activities & Payments
-      const teamPayments = allPayments.filter((p) => teamUserIds.has(p.recordedById));
-      const ledgerActivities = teamPayments.length;
-      const validPayments = teamPayments.filter((p) => !p.isDiscarded);
-      const paymentsAmount = validPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
-      const discardedPaymentsCount = teamPayments.filter((p) => p.isDiscarded).length;
+      // 2. Number of Ledger Activities
+      const ledgerActivities = teamLogs.filter((l) => {
+        const ord = allOrders.find((o) => o.leadId === l.leadId);
+        return ord && ord.financeProcessedById && teamUserIds.has(ord.financeProcessedById);
+      }).length;
 
-      // --- Operations Metrics ---
+      // 3. Total Payments Amount Handled
+      const teamPayments = allPayments.filter((p) => teamUserIds.has(p.recordedById) && !p.isDiscarded);
+      const paymentsAmount = teamPayments.reduce((sum, p) => sum + p.amount, 0);
+
+      // 4. Discarded Payments Count
+      const discardedPaymentsCount = allPayments.filter((p) => teamUserIds.has(p.recordedById) && p.isDiscarded).length;
+
+      // --- OPERATIONS METRICS ---
       // 1. Number of Deliveries
       const teamDeliveries = allOrders.filter(
         (o) => o.isDelivered && ((o.assignedOpsId && teamUserIds.has(o.assignedOpsId)) || (o.lead?.assignedConsultantId && teamUserIds.has(o.lead.assignedConsultantId)))
@@ -217,13 +205,12 @@ export async function GET(req: Request) {
         id: emp.id,
         name: emp.name,
         email: emp.email,
-        department: emp.department?.name || 'Unassigned',
+        department: emp.department?.name || 'Sales',
         designation: emp.designation?.name || emp.role.toUpperCase(),
         role: emp.role,
         isSupervisor,
         teamSize: teamUserIds.size,
         metrics: {
-          // Sales metrics
           leadsWorked,
           meetingsBooked,
           meetingsRecorded,
@@ -231,13 +218,11 @@ export async function GET(req: Request) {
           ordersPunched,
           ordersPunchedValue,
           saleConversionRate,
-          // Finance metrics
           ordersVerified,
           ordersVerifiedValue,
           ledgerActivities,
           paymentsAmount,
           discardedPaymentsCount,
-          // Operations metrics
           deliveriesCompleted,
           installationsCompleted,
           commissionedCompleted,
@@ -246,43 +231,48 @@ export async function GET(req: Request) {
       };
     });
 
-    // Group employees by Department
+    // Optional designation filter
+    let filteredEmployees = processedEmployees;
+    if (designationFilter !== 'all') {
+      filteredEmployees = processedEmployees.filter(
+        (emp) => emp.designation.toLowerCase() === designationFilter.toLowerCase()
+      );
+    }
+
+    // Group employees by true Department (Sales, Finance, Operations, Other)
     const departments: Record<string, typeof processedEmployees> = {
       Sales: [],
       Finance: [],
       Operations: [],
-      Management: [],
       Other: [],
     };
 
-    processedEmployees.forEach((emp) => {
-      const roleLower = emp.role.toLowerCase();
-      const deptLower = emp.department.toLowerCase();
+    filteredEmployees.forEach((emp) => {
+      const deptLower = (emp.department || '').toLowerCase();
+      const roleLower = (emp.role || '').toLowerCase();
 
-      if (
-        roleLower === 'admin' ||
-        roleLower === 'director' ||
-        roleLower === 'sales_head' ||
-        roleLower === 'manager' ||
-        roleLower === 'tl'
-      ) {
-        departments['Management'].push(emp);
-      } else if (deptLower.includes('sales') || roleLower.includes('sales') || roleLower.includes('consultant') || roleLower.includes('psa')) {
-        departments['Sales'].push(emp);
-      } else if (deptLower.includes('finance') || roleLower.includes('finance')) {
+      if (deptLower.includes('finance') || roleLower.includes('finance')) {
         departments['Finance'].push(emp);
       } else if (deptLower.includes('operations') || roleLower.includes('ops')) {
         departments['Operations'].push(emp);
+      } else if (deptLower.includes('sales') || roleLower.includes('sales') || roleLower.includes('consultant') || roleLower.includes('psa') || roleLower.includes('manager') || roleLower.includes('tl') || roleLower.includes('head') || roleLower.includes('admin')) {
+        departments['Sales'].push(emp);
       } else {
         departments['Other'].push(emp);
       }
     });
 
+    // Extract unique designation names for UI filter dropdown
+    const availableDesignations = Array.from(
+      new Set(processedEmployees.map((e) => e.designation))
+    ).sort();
+
     return NextResponse.json({
       success: true,
       data: {
         departments,
-        totalEmployees: processedEmployees.length,
+        designations: availableDesignations,
+        totalEmployees: filteredEmployees.length,
       },
     });
   } catch (error: any) {
