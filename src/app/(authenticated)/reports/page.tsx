@@ -28,22 +28,26 @@ const PipelineBarChart = dynamic(
   }
 );
 import {
-  Sun,
+  BarChart2,
+  TrendingUp,
+  Download,
+  Users,
+  CheckCircle,
+  Clock,
+  Zap,
+  IndianRupee,
+  Layers,
+  ChevronRight,
+  Filter,
   FileSpreadsheet,
   FileText,
-  LineChart as LineChartIcon,
-  Calendar,
-  Users,
-  Compass,
-  ArrowUpRight,
-  ChevronRight,
-  AlertCircle,
-  ShieldAlert,
-  Loader2,
-  Layers,
+  Sun,
   X,
-  Activity,
+  Loader2,
+  Calendar,
+  AlertCircle,
 } from 'lucide-react';
+import CustomSelect from '@/components/CustomSelect';
 
 interface OverviewStats {
   totalLeads: number;
@@ -516,18 +520,20 @@ export default function ReportsPage() {
               {/* Designation Filter */}
               <div className="flex items-center gap-2">
                 <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Designation:</span>
-                <select
-                  value={filterDesignation}
-                  onChange={(e) => setFilterDesignation(e.target.value)}
-                  className="bg-slate-950 border border-slate-800 text-slate-200 px-3 py-1.5 rounded-lg focus:ring-amber-500 focus:outline-none cursor-pointer text-xs"
-                >
-                  <option value="all">All Designations</option>
-                  {(auditData?.designations || []).map((des) => (
-                    <option key={des} value={des}>
-                      {des}
-                    </option>
-                  ))}
-                </select>
+                <div className="w-48">
+                  <CustomSelect
+                    options={[
+                      { value: 'all', label: 'All Designations' },
+                      ...(auditData?.designations || []).map((des) => ({
+                        value: des,
+                        label: des,
+                      })),
+                    ]}
+                    value={filterDesignation}
+                    onChange={(val) => setFilterDesignation(val)}
+                    placeholder="All Designations"
+                  />
+                </div>
               </div>
 
               <div className="flex items-center gap-2">

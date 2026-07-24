@@ -2041,50 +2041,41 @@ export default function LeadDetailPage({
                             </p>
 
                             <div className="flex flex-col sm:flex-row items-center gap-3 pt-1">
-                              <select
-                                disabled={assigningMember}
-                                value={lead.assignedConsultantId || lead.assignedTlId || lead.assignedManagerId || ''}
-                                onChange={(e) => handleSingleMemberAssign(e.target.value)}
-                                className="w-full sm:flex-1 px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 focus:outline-none cursor-pointer"
-                              >
-                                <option value="">-- Select Sales Member --</option>
-                                {(() => {
-                                  if (!user) return [];
-                                  const hasViewAll = user.role === 'admin' || 
-                                                     user.role?.startsWith('admin:') || 
-                                                     user.department?.name?.toLowerCase().trim() === 'it' ||
-                                                     hasPermission('leads:view_all');
-
-                                  const salesEmployees = employees.filter((emp) => {
-                                    const deptName = (emp.department?.name || '').toLowerCase().trim();
-                                    const roleLower = (emp.role || '').toLowerCase().trim();
-                                    const isSalesDept = deptName.includes('sales') || deptName.includes('psa') || deptName.includes('marketing');
-                                    const isSalesRole = ['sales_head', 'manager', 'tl', 'psa_tl', 'consultant', 'psa'].includes(roleLower) || roleLower.includes('sales') || roleLower.includes('psa');
-                                    return isSalesDept || isSalesRole;
-                                  });
-
-                                  const isTopAdmin = user.role === 'admin' || user.role?.startsWith('admin:') || user.role === 'director' || user.department?.name?.toLowerCase().trim() === 'it';
-                                  if (isTopAdmin) return salesEmployees;
-
-                                  const descendants = new Set<number>();
-                                  const queue: number[] = [user.id];
-                                  while (queue.length > 0) {
-                                    const currentId = queue.shift()!;
-                                    employees.forEach(m => {
-                                      if (m.reportsTo === currentId && !descendants.has(m.id)) {
-                                        descendants.add(m.id);
-                                        queue.push(m.id);
-                                      }
+                              <div className="w-full sm:flex-1">
+                                <UserSelect
+                                  users={(() => {
+                                    if (!user) return [];
+                                    const salesEmployees = employees.filter((emp) => {
+                                      const deptName = (emp.department?.name || '').toLowerCase().trim();
+                                      const roleLower = (emp.role || '').toLowerCase().trim();
+                                      const isSalesDept = deptName.includes('sales') || deptName.includes('psa') || deptName.includes('marketing');
+                                      const isSalesRole = ['sales_head', 'manager', 'tl', 'psa_tl', 'consultant', 'psa'].includes(roleLower) || roleLower.includes('sales') || roleLower.includes('psa');
+                                      return isSalesDept || isSalesRole;
                                     });
-                                  }
 
-                                  return salesEmployees.filter(m => descendants.has(m.id));
-                                })().map((emp) => (
-                                  <option key={emp.id} value={emp.id}>
-                                    {emp.name} ({emp.department?.name || 'Sales'} - {emp.designation?.name || emp.role.toUpperCase()})
-                                  </option>
-                                ))}
-                              </select>
+                                    const isTopAdmin = user.role === 'admin' || user.role?.startsWith('admin:') || user.role === 'director' || user.department?.name?.toLowerCase().trim() === 'it';
+                                    if (isTopAdmin) return salesEmployees;
+
+                                    const descendants = new Set<number>();
+                                    const queue: number[] = [user.id];
+                                    while (queue.length > 0) {
+                                      const currentId = queue.shift()!;
+                                      employees.forEach(m => {
+                                        if (m.reportsTo === currentId && !descendants.has(m.id)) {
+                                          descendants.add(m.id);
+                                          queue.push(m.id);
+                                        }
+                                      });
+                                    }
+
+                                    return salesEmployees.filter(m => descendants.has(m.id));
+                                  })()}
+                                  value={lead.assignedConsultantId || lead.assignedTlId || lead.assignedManagerId || null}
+                                  onChange={(val) => handleSingleMemberAssign(val ? String(val) : '')}
+                                  placeholder="-- Select Sales Member --"
+                                  disabled={assigningMember}
+                                />
+                              </div>
                               {assigningMember && (
                                 <div className="flex items-center gap-2 text-xs text-amber-400 font-semibold shrink-0">
                                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -3137,14 +3128,8 @@ export default function LeadDetailPage({
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Assign to Sales Team Member *</label>
-                  <select
-                    required
-                    value={formBData.assignedExecutiveId}
-                    onChange={(e) => setFormBData({ ...formBData, assignedExecutiveId: e.target.value })}
-                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs cursor-pointer"
-                  >
-                    <option value="">-- Select 1 Sales Team Member --</option>
-                    {(() => {
+                  <UserSelect
+                    users={(() => {
                       if (!user) return [];
                       const isTopAdmin = user.role === 'admin' || 
                                          user.role?.startsWith('admin:') || 
@@ -3174,12 +3159,11 @@ export default function LeadDetailPage({
                       }
 
                       return salesEmployees.filter(m => descendants.has(m.id));
-                    })().map((emp) => (
-                      <option key={emp.id} value={emp.id}>
-                        {emp.name} ({emp.department?.name || 'Sales'} - {emp.designation?.name || emp.role.toUpperCase()})
-                      </option>
-                    ))}
-                  </select>
+                    })()}
+                    value={formBData.assignedExecutiveId}
+                    onChange={(val) => setFormBData({ ...formBData, assignedExecutiveId: val ? String(val) : '' })}
+                    placeholder="-- Select 1 Sales Team Member --"
+                  />
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Special Executive Instructions</label>

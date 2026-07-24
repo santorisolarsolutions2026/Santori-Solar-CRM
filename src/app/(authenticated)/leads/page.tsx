@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import UserSelect from '@/components/UserSelect';
+import CustomSelect from '@/components/CustomSelect';
 import { LeadTrackingTimeline } from '@/components/LeadTrackingTimeline';
 import { getLeadAssignedDisplay } from '@/lib/permissions';
 
@@ -997,18 +998,23 @@ export default function LeadsPage() {
 
           <div className="flex flex-wrap items-center gap-3 w-full md:w-auto shrink-0 justify-end">
             {/* Quick Stage Select */}
-            <select
-              value={statusFilter}
-              onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-              className="px-3 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 text-xs cursor-pointer min-w-[160px]"
-            >
-              <option value="">All Pipeline Stages</option>
-              {Object.entries(STAGE_BADGES).map(([id, badge]) => (
-                <option key={id} value={id}>
-                  {badge.name}
-                </option>
-              ))}
-            </select>
+            <div className="w-48">
+              <CustomSelect
+                options={[
+                  { value: '', label: 'All Pipeline Stages' },
+                  ...Object.entries(STAGE_BADGES).map(([id, badge]) => ({
+                    value: id,
+                    label: badge.name,
+                  })),
+                ]}
+                value={statusFilter}
+                onChange={(val) => {
+                  setStatusFilter(val);
+                  setPage(1);
+                }}
+                placeholder="All Pipeline Stages"
+              />
+            </div>
 
             {/* Amazon / Flipkart Detailed Filter Trigger Button */}
             <button
@@ -2114,50 +2120,35 @@ export default function LeadsPage() {
 
                       <div>
                         <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Assigned Consultant</label>
-                        <select
+                        <UserSelect
+                          users={consultants}
                           value={consultantFilter}
-                          onChange={(e) => { setConsultantFilter(e.target.value); setPage(1); }}
+                          onChange={(val) => { setConsultantFilter(val ? String(val) : ''); setPage(1); }}
+                          placeholder="All Consultants"
                           disabled={unassignedFilter}
-                          className={`block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500 ${unassignedFilter ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                        >
-                          <option value="">All Consultants</option>
-                          <option value="unassigned">Unassigned (None)</option>
-                          {consultants.map((c) => (
-                            <option key={c.id} value={c.id}>{c.name}</option>
-                          ))}
-                        </select>
+                        />
                       </div>
 
                       <div>
                         <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Assigned Team Leader (TL)</label>
-                        <select
+                        <UserSelect
+                          users={teamMembers.filter(m => ['tl', 'psa_tl'].includes(m.role))}
                           value={tlFilter}
-                          onChange={(e) => { setTlFilter(e.target.value); setPage(1); }}
+                          onChange={(val) => { setTlFilter(val ? String(val) : ''); setPage(1); }}
+                          placeholder="All Team Leaders"
                           disabled={unassignedFilter}
-                          className={`block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500 ${unassignedFilter ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                        >
-                          <option value="">All Team Leaders</option>
-                          <option value="unassigned">Unassigned (None)</option>
-                          {teamMembers.filter(m => ['tl', 'psa_tl'].includes(m.role)).map((m) => (
-                            <option key={m.id} value={m.id}>{m.name} ({m.role})</option>
-                          ))}
-                        </select>
+                        />
                       </div>
 
                       <div>
                         <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Assigned Manager</label>
-                        <select
+                        <UserSelect
+                          users={teamMembers.filter(m => ['manager', 'sales_head', 'admin', 'director'].includes(m.role))}
                           value={managerFilter}
-                          onChange={(e) => { setManagerFilter(e.target.value); setPage(1); }}
+                          onChange={(val) => { setManagerFilter(val ? String(val) : ''); setPage(1); }}
+                          placeholder="All Managers"
                           disabled={unassignedFilter}
-                          className={`block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500 ${unassignedFilter ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                        >
-                          <option value="">All Managers</option>
-                          <option value="unassigned">Unassigned (None)</option>
-                          {teamMembers.filter(m => ['manager', 'sales_head', 'admin', 'director'].includes(m.role)).map((m) => (
-                            <option key={m.id} value={m.id}>{m.name} ({m.role})</option>
-                          ))}
-                        </select>
+                        />
                       </div>
                     </div>
                   </div>
