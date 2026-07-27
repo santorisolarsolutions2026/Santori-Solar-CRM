@@ -546,7 +546,7 @@ export default function AuthenticatedLayout({
     return (
       <div className="min-h-screen bg-[#090b11] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <Sun className="w-12 h-12 text-amber-500 animate-spin" />
+          <Sun className="w-12 h-12 text-blue-600 dark:text-blue-400 animate-spin" />
           <p className="text-slate-400 text-sm font-semibold tracking-wider uppercase">Loading SolarCRM...</p>
         </div>
       </div>
@@ -651,7 +651,7 @@ export default function AuthenticatedLayout({
     admin: { label: 'Admin', color: 'bg-red-500/10 text-red-400 border-red-500/20' },
     director: { label: 'Director', color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' },
     sales_head: { label: 'Sales Head', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
-    finance: { label: 'Finance Manager', color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+    finance: { label: 'Finance Manager', color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' },
     operations: { label: 'Operations Manager', color: 'bg-pink-500/10 text-pink-400 border-pink-500/20' },
     psa_tl: { label: 'PSA Team Leader', color: 'bg-sky-500/10 text-sky-400 border-sky-500/20' },
     psa: { label: 'PSA Consultant', color: 'bg-orange-500/10 text-orange-400 border-orange-500/20' },
@@ -677,7 +677,7 @@ export default function AuthenticatedLayout({
               />
             </div>
             <span className="text-xl font-extrabold text-white tracking-wide">
-              Solar<span className="text-amber-400">CRM</span>
+              Solar<span className="text-blue-600 dark:text-blue-400">CRM</span>
             </span>
           </Link>
         </div>
@@ -698,7 +698,7 @@ export default function AuthenticatedLayout({
                 }}
               />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700/80 flex items-center justify-center text-amber-400 shrink-0">
+              <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700/80 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
                 <User className="w-4 h-4" />
               </div>
             )}
@@ -742,11 +742,11 @@ export default function AuthenticatedLayout({
                           href={item.path}
                           className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all group ${
                             isActive
-                              ? 'bg-amber-500/10 text-amber-400 border-l-2 border-amber-500 pl-2.5 font-bold shadow-inner'
-                              : 'text-slate-400 hover:text-white hover:bg-slate-905/40'
+                              ? 'bg-blue-650 dark:bg-blue-500/10 text-white dark:text-blue-400 border-l-2 border-blue-600 dark:border-blue-500 pl-2.5 font-bold shadow-inner'
+                              : 'text-slate-400 hover:text-white hover:bg-slate-900/40'
                           }`}
                         >
-                          <Icon className={`w-4 h-4 transition-transform group-hover:scale-105 duration-200 ${isActive ? 'text-amber-400' : 'text-slate-455 group-hover:text-slate-205'}`} />
+                          <Icon className={`w-4 h-4 transition-transform group-hover:scale-105 duration-200 ${isActive ? 'text-white dark:text-blue-400' : 'text-slate-500 group-hover:text-slate-200'}`} />
                           <span>{item.name}</span>
                         </Link>
                       );
@@ -763,22 +763,22 @@ export default function AuthenticatedLayout({
           <button
             type="button"
             onClick={() => setLeaderboardOpen(true)}
-            className="w-full p-3 bg-gradient-to-r from-slate-900/90 to-amber-950/20 hover:from-slate-900 hover:to-amber-950/40 border border-slate-800 hover:border-amber-500/40 rounded-xl transition-all cursor-pointer group text-left shadow-md flex items-center justify-between"
+            className="w-full p-3 bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 rounded-xl transition-all cursor-pointer group text-left shadow-md flex items-center justify-between"
           >
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform">
+              <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:scale-105 transition-transform">
                 <Trophy className="w-4 h-4" />
               </div>
               <div>
-                <span className="text-xs font-bold text-slate-200 block group-hover:text-amber-400 transition-colors">
+                <span className="text-xs font-bold text-slate-205 block group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                   Santori Standings
                 </span>
-                <span className="text-[10px] text-slate-400 block font-medium">
+                <span className="text-[10px] text-slate-450 block font-medium">
                   Click to view team standings
                 </span>
               </div>
             </div>
-            <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-amber-400 transition-colors" />
+            <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
           </button>
         </div>
 
@@ -808,7 +808,7 @@ export default function AuthenticatedLayout({
                   />
                 </div>
                 <span className="text-xl font-extrabold text-white tracking-wide">
-                  Solar<span className="text-amber-400">CRM</span>
+                  Solar<span className="text-blue-600 dark:text-blue-400">CRM</span>
                 </span>
               </Link>
               <button onClick={() => setSidebarOpen(false)} className="text-slate-400 hover:text-white">
@@ -834,7 +834,7 @@ export default function AuthenticatedLayout({
                     }}
                   />
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700/80 flex items-center justify-center text-amber-400 shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700/80 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
                     <User className="w-4 h-4" />
                   </div>
                 )}
@@ -852,9 +852,9 @@ export default function AuthenticatedLayout({
             <div className="mx-4 mb-4 p-3 bg-slate-900/80 border border-slate-800 rounded-xl space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-amber-400" /> Attendance
+                  <Clock className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Attendance
                 </span>
-                <span className="text-[9px] font-bold text-amber-400 uppercase">
+                <span className="text-[9px] font-bold text-blue-600 dark:text-blue-400 uppercase">
                   {!todayAttendance ? 'Not Checked In' : todayAttendance.checkOut ? 'Completed' : 'Checked In'}
                 </span>
               </div>
@@ -863,7 +863,7 @@ export default function AuthenticatedLayout({
                   type="button"
                   onClick={() => { setSidebarOpen(false); handleQuickCheckIn(); }}
                   disabled={attendanceActionLoading}
-                  className="w-full py-1.5 px-3 bg-amber-500 text-slate-950 rounded-lg font-bold text-xs"
+                  className="w-full py-1.5 px-3 bg-blue-600 text-white rounded-lg font-bold text-xs"
                 >
                   Check In
                 </button>
@@ -905,15 +905,15 @@ export default function AuthenticatedLayout({
                           return (
                             <Link
                               key={item.path}
-                              href={item.path}
                               onClick={() => setSidebarOpen(false)}
+                              href={item.path}
                               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all group ${
                                 isActive
-                                  ? 'bg-amber-500/10 text-amber-400 border-l-2 border-amber-500 pl-2.5 font-bold shadow-inner'
-                                  : 'text-slate-400 hover:text-white hover:bg-slate-905/40'
+                                  ? 'bg-blue-650 dark:bg-blue-500/10 text-white dark:text-blue-400 border-l-2 border-blue-600 dark:border-blue-500 pl-2.5 font-bold shadow-inner'
+                                  : 'text-slate-400 hover:text-white hover:bg-slate-900/40'
                               }`}
                             >
-                              <Icon className={`w-4 h-4 transition-transform group-hover:scale-105 duration-200 ${isActive ? 'text-amber-400' : 'text-slate-455 group-hover:text-slate-205'}`} />
+                              <Icon className={`w-4 h-4 transition-transform group-hover:scale-105 duration-200 ${isActive ? 'text-white dark:text-blue-400' : 'text-slate-500 group-hover:text-slate-200'}`} />
                               <span>{item.name}</span>
                             </Link>
                           );
@@ -933,22 +933,22 @@ export default function AuthenticatedLayout({
                   setSidebarOpen(false);
                   setLeaderboardOpen(true);
                 }}
-                className="w-full p-3 bg-gradient-to-r from-slate-900/90 to-amber-950/20 hover:from-slate-900 hover:to-amber-950/40 border border-slate-800 hover:border-amber-500/40 rounded-xl transition-all cursor-pointer group text-left shadow-md flex items-center justify-between"
+                className="w-full p-3 bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 rounded-xl transition-all cursor-pointer group text-left shadow-md flex items-center justify-between"
               >
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform">
+                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:scale-105 transition-transform">
                     <Trophy className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-slate-200 block group-hover:text-amber-400 transition-colors">
+                    <span className="text-xs font-bold text-slate-205 block group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                       Santori Standings
                     </span>
-                    <span className="text-[10px] text-slate-400 block font-medium">
+                    <span className="text-[10px] text-slate-450 block font-medium">
                       Click to view team standings
                     </span>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-amber-400 transition-colors" />
+                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
               </button>
             </div>
 
@@ -986,12 +986,12 @@ export default function AuthenticatedLayout({
             <button
               type="button"
               onClick={() => setIssuesDrawerOpen(true)}
-              className="p-2 rounded-lg bg-slate-900/80 border border-slate-800 text-slate-400 hover:text-red-400 transition-all cursor-pointer relative focus:outline-none"
+              className="p-2 rounded-lg bg-slate-900/80 border border-slate-800 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all cursor-pointer relative focus:outline-none"
               title="View Flagged/Unresolved Issues"
             >
-              <Flag className="w-4 h-4 text-red-500 fill-red-500/10" />
+              <Flag className="w-4 h-4 text-blue-600 dark:text-blue-400 fill-blue-500/10" />
               {unresolvedIssues.length > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-550 text-[9px] font-extrabold text-white font-sans animate-pulse">
+                <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[9px] font-extrabold text-white font-sans animate-pulse">
                   {unresolvedIssues.length}
                 </span>
               )}
@@ -1004,14 +1004,14 @@ export default function AuthenticatedLayout({
                 title="Daily Attendance Status"
                 className="py-1.5 px-3 rounded-lg bg-slate-900/80 border border-slate-800 text-slate-400 hover:text-white transition-all relative focus:outline-none cursor-pointer flex items-center gap-2 text-xs font-semibold"
               >
-                <Clock className="w-4 h-4 text-amber-400" />
+                <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 <span className="hidden sm:inline">Attendance:</span>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider flex items-center gap-1 ${
                   !todayAttendance 
                     ? 'bg-slate-800 text-slate-400 border-slate-700' 
                     : todayAttendance.checkOut 
-                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
-                      : 'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse'
+                      ? 'bg-emerald-500/10 text-emerald-650 dark:text-emerald-400 border-emerald-500/20' 
+                      : 'bg-blue-500/10 text-blue-650 dark:text-blue-400 border-blue-500/20 animate-pulse'
                 }`}>
                   {!todayAttendance ? '⚪ Pending' : todayAttendance.checkOut ? '✅ Completed' : '🟢 Active'}
                 </span>
@@ -1022,7 +1022,7 @@ export default function AuthenticatedLayout({
                 <div className="absolute right-0 mt-3 w-72 bg-[#111625] border border-slate-800 rounded-xl shadow-2xl z-50 p-4 space-y-3 animate-fade-in-down">
                   <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
                     <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-amber-400" />
+                      <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                       <span className="text-xs font-bold text-slate-200">Daily Attendance</span>
                     </div>
                   </div>
@@ -1045,7 +1045,7 @@ export default function AuthenticatedLayout({
                       ) : (
                         <div className="flex justify-between">
                           <span>Active duration:</span>
-                          <span className="font-mono font-semibold text-amber-450">
+                          <span className="font-mono font-semibold text-blue-600 dark:text-blue-400">
                             Active Now
                           </span>
                         </div>
@@ -1065,7 +1065,7 @@ export default function AuthenticatedLayout({
                         setAttendanceDropdownOpen(false);
                       }}
                       disabled={attendanceActionLoading}
-                      className="w-full py-2 px-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md shadow-amber-500/10 flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                      className="w-full py-2 px-3 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs shadow-md shadow-blue-500/10 flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
                     >
                       {attendanceActionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserCheck className="w-3.5 h-3.5" />}
                       <span>Check In Now</span>
@@ -1099,7 +1099,7 @@ export default function AuthenticatedLayout({
               className="p-2 rounded-lg bg-slate-900/80 border border-slate-800 text-slate-400 hover:text-white transition-all relative focus:outline-none cursor-pointer flex items-center justify-center"
             >
               {theme === 'dark' ? (
-                <Sun className="w-5 h-5 text-amber-400" />
+                <Sun className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               ) : (
                 <Moon className="w-5 h-5 text-indigo-500" />
               )}
@@ -1121,13 +1121,13 @@ export default function AuthenticatedLayout({
 
               {/* Dropdown Menu */}
               {notifDropdownOpen && (
-                <div className="absolute right-0 mt-3 w-80 bg-[#111625] border border-slate-800 rounded-xl shadow-2xl z-50 overflow-hidden animate-fade-in-down">
-                  <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/30">
+                <div className="absolute right-0 mt-3 w-80 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl z-50 overflow-hidden animate-fade-in-down">
+                  <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/20">
                     <span className="text-xs font-bold text-white tracking-wider uppercase">Notifications</span>
                     {unreadCount > 0 && (
                       <button
                         onClick={handleMarkAllRead}
-                        className="text-[10px] text-amber-400 hover:text-amber-300 font-semibold"
+                        className="text-[10px] text-blue-600 dark:text-blue-400 hover:underline font-semibold"
                       >
                         Mark all as read
                       </button>
@@ -1143,8 +1143,8 @@ export default function AuthenticatedLayout({
                         <div
                           key={notif.id}
                           onClick={() => handleNotifClick(notif)}
-                          className={`p-4 hover:bg-slate-900/60 cursor-pointer transition-colors ${
-                            !notif.isRead ? 'bg-amber-500/[0.03]' : ''
+                          className={`p-4 hover:bg-slate-800/40 dark:hover:bg-slate-800/20 active:bg-slate-700/30 dark:active:bg-slate-800/40 cursor-pointer transition-colors ${
+                            !notif.isRead ? 'bg-blue-500/[0.04] dark:bg-blue-500/[0.02]' : ''
                           }`}
                         >
                           <div className="flex items-start gap-2.5">
@@ -1153,7 +1153,7 @@ export default function AuthenticatedLayout({
                               {notif.type === 'sale_done' && <TrendingUp className="w-4 h-4 text-emerald-400" />}
                               {notif.type === 'unreachable_lead' && <AlertTriangle className="w-4 h-4 text-red-400" />}
                               {['lead_assigned', 'order_submitted', 'order_verified', 'order_rejected'].includes(notif.type) && (
-                                <ChevronRight className="w-4 h-4 text-amber-400" />
+                                <ChevronRight className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
@@ -1194,7 +1194,7 @@ export default function AuthenticatedLayout({
                   }}
                 />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700/80 flex items-center justify-center text-amber-400 shrink-0">
+                <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700/80 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
                   <User className="w-4 h-4" />
                 </div>
               )}
@@ -1241,13 +1241,13 @@ export default function AuthenticatedLayout({
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full bg-slate-900 flex items-center justify-center text-amber-400">
+                      <div className="w-full h-full bg-slate-900 flex items-center justify-center text-blue-600 dark:text-blue-400">
                         <User className="w-8 h-8" />
                       </div>
                     )}
                     {uploadingEditPhoto && (
                       <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
-                        <Loader2 className="w-4 h-4 text-amber-500 animate-spin" />
+                        <Loader2 className="w-4 h-4 text-blue-500 dark:text-blue-400 animate-spin" />
                       </div>
                     )}
                   </div>
@@ -1281,7 +1281,7 @@ export default function AuthenticatedLayout({
                           required
                           value={editName}
                           onChange={(e) => setEditName(e.target.value)}
-                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
                         />
                       ) : (
                         <span className="text-white text-xs font-semibold block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg opacity-70 truncate" title={user.name}>
@@ -1297,7 +1297,7 @@ export default function AuthenticatedLayout({
                           required
                           value={editEmployeeId}
                           onChange={(e) => setEditEmployeeId(e.target.value)}
-                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none font-mono"
+                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none font-mono"
                         />
                       ) : (
                         <span className="text-white text-xs font-mono block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg opacity-70 truncate" title={user.employeeId || 'Not Set'}>
@@ -1313,7 +1313,7 @@ export default function AuthenticatedLayout({
                           required
                           value={editEmail}
                           onChange={(e) => setEditEmail(e.target.value)}
-                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none font-mono"
+                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none font-mono"
                         />
                       ) : (
                         <span className="text-slate-300 text-xs font-mono block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg opacity-70 truncate" title={user.email}>
@@ -1343,7 +1343,7 @@ export default function AuthenticatedLayout({
                       value={editPhone}
                       onChange={(e) => setEditPhone(e.target.value)}
                       placeholder="Update mobile number"
-                      className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                      className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -1360,7 +1360,7 @@ export default function AuthenticatedLayout({
                 <button
                   type="submit"
                   disabled={updatingProfile}
-                  className="py-2 px-5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer"
+                  className="py-2 px-5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer"
                 >
                   {updatingProfile ? (
                     <>
@@ -1383,7 +1383,7 @@ export default function AuthenticatedLayout({
           <div className="w-full max-w-lg bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
             <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
                   <Flame className="w-4.5 h-4.5" />
                 </div>
                 <div>
@@ -1402,7 +1402,7 @@ export default function AuthenticatedLayout({
                   key={alert.id}
                   className="p-3 bg-slate-900/30 border border-slate-800 rounded-xl flex items-start gap-3 hover:border-slate-700 transition-colors"
                 >
-                  <div className="text-xs font-mono font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded shrink-0">
+                  <div className="text-xs font-mono font-bold text-blue-600 dark:text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-1 rounded shrink-0">
                     {alert.time}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -1412,7 +1412,7 @@ export default function AuthenticatedLayout({
                   <Link
                     href={`/leads/${alert.leadId}`}
                     onClick={() => setShowTodayAlertModal(false)}
-                    className="text-[10px] text-amber-400 hover:text-amber-300 font-bold self-center px-2 py-1 rounded hover:bg-slate-900 transition-colors"
+                    className="text-[10px] text-blue-600 dark:text-blue-400 hover:text-blue-600 dark:text-blue-400 font-bold self-center px-2 py-1 rounded hover:bg-slate-900 transition-colors"
                   >
                     View Lead
                   </Link>
@@ -1424,7 +1424,7 @@ export default function AuthenticatedLayout({
               <button
                 type="button"
                 onClick={() => setShowTodayAlertModal(false)}
-                className="py-2 px-5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md cursor-pointer"
+                className="py-2 px-5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs shadow-md cursor-pointer"
               >
                 Acknowledge & Continue
               </button>
@@ -1443,7 +1443,7 @@ export default function AuthenticatedLayout({
             <div className="shrink-0 mt-0.5">
               {toast.type === 'success' && <CheckCircle className="w-5 h-5 text-emerald-400" />}
               {toast.type === 'error' && <XCircle className="w-5 h-5 text-rose-400" />}
-              {toast.type === 'info' && <Info className="w-5 h-5 text-amber-400" />}
+              {toast.type === 'info' && <Info className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-white leading-normal">
@@ -1497,7 +1497,7 @@ export default function AuthenticatedLayout({
                     confirmModal.onConfirm();
                     setConfirmModal(null);
                   }}
-                  className="px-4 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-slate-950 font-bold rounded-lg transition-all text-xs cursor-pointer shadow-lg shadow-amber-500/10"
+                  className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white font-bold rounded-lg transition-all text-xs cursor-pointer shadow-lg shadow-blue-500/10"
                 >
                   Confirm
                 </button>
@@ -1513,47 +1513,47 @@ export default function AuthenticatedLayout({
       {/* Flagged Issues Slide Drawer */}
       {issuesDrawerOpen && (
         <div className="fixed inset-0 z-50 flex justify-end bg-black/70 backdrop-blur-sm animate-fade-in font-sans">
-          <div className="w-full sm:w-[480px] h-full bg-[#0d111d] border-l border-slate-855 shadow-2xl flex flex-col transform transition-transform duration-300 ease-out translate-x-0 animate-slide-in-right">
+          <div className="w-full sm:w-[480px] h-full bg-slate-900 border-l border-slate-800 shadow-2xl flex flex-col transform transition-transform duration-300 ease-out translate-x-0 animate-slide-in-right">
             {/* Header */}
-            <div className="p-6 border-b border-slate-850 bg-[#121826] relative overflow-hidden flex items-center justify-between">
-              <div className="absolute -top-12 -left-12 w-32 h-32 bg-red-500/5 rounded-full blur-3xl pointer-events-none" />
+            <div className="p-6 border-b border-slate-800 bg-slate-900 relative overflow-hidden flex items-center justify-between">
+              <div className="absolute -top-12 -left-12 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shadow-lg shadow-red-500/10">
-                  <Flag className="w-5 h-5 text-white font-bold fill-white/20" />
+                <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-lg shadow-blue-500/10">
+                  <Flag className="w-5 h-5 fill-blue-500/10" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white tracking-wide flex items-center gap-1.5 font-sans">
-                    Flagged Issues <span className="text-[10px] bg-red-500/25 border border-red-500/30 px-2 py-0.5 rounded-full text-red-400 font-bold animate-pulse">{unresolvedIssues.length}</span>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-wide flex items-center gap-1.5 font-sans">
+                    Flagged Issues <span className="text-[10px] bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-full text-blue-600 dark:text-blue-400 font-bold animate-pulse">{unresolvedIssues.length}</span>
                   </h3>
-                  <p className="text-[11px] text-slate-400">Leads with unresolved critical issues</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Leads with unresolved critical issues</p>
                 </div>
               </div>
               <button 
                 type="button"
                 onClick={() => setIssuesDrawerOpen(false)} 
-                className="w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-all cursor-pointer outline-none"
+                className="w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-500 hover:text-slate-700 dark:hover:text-white transition-all cursor-pointer outline-none"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Body */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-900">
               {issuesLoading ? (
                 <div className="flex flex-col items-center justify-center py-20 text-slate-500 text-xs italic gap-2">
-                  <Loader2 className="w-6 h-6 animate-spin text-red-500" />
+                  <Loader2 className="w-6 h-6 animate-spin text-blue-600 dark:text-blue-400" />
                   <span>Loading flagged pipeline opportunities...</span>
                 </div>
               ) : unresolvedIssues.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 text-slate-500 text-xs italic text-center space-y-1">
                   <Check className="w-8 h-8 text-emerald-500 mb-1" />
-                  <p className="font-bold text-slate-350">Pipeline is Clean!</p>
-                  <p className="text-[10px] text-slate-500">No active leads are currently flagged with issues.</p>
+                  <p className="font-bold text-slate-700 dark:text-slate-350">Pipeline is Clean!</p>
+                  <p className="text-[10px] text-slate-550 dark:text-slate-500">No active leads are currently flagged with issues.</p>
                 </div>
               ) : (
                 <div className="space-y-3.5">
                   {unresolvedIssues.map((lead: any) => (
-                    <div key={lead.id} className="bg-slate-900/30 border border-slate-850 hover:border-slate-800 p-4 rounded-xl space-y-2.5 transition-colors relative overflow-hidden group">
+                    <div key={lead.id} className="bg-slate-900/40 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800/60 hover:border-slate-300 dark:hover:border-slate-700 p-4 rounded-xl space-y-2.5 transition-colors relative overflow-hidden group">
                       {/* Left border highlighting issue state */}
                       <div className="absolute top-0 bottom-0 left-0 w-1 bg-red-500" />
                       
@@ -1562,24 +1562,24 @@ export default function AuthenticatedLayout({
                           <a 
                             href={`/leads/${lead.id}`} 
                             onClick={() => setIssuesDrawerOpen(false)}
-                            className="text-xs font-bold text-white hover:underline flex items-center gap-1.5"
+                            className="text-xs font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 hover:underline flex items-center gap-1.5"
                           >
-                            <span className="text-amber-400 font-bold hover:underline">#{lead.leadCode}</span>
-                            <span className="text-slate-200 font-semibold">{lead.customerName}</span>
+                            <span className="text-blue-600 dark:text-blue-400 font-bold hover:underline">#{lead.leadCode}</span>
+                            <span className="text-slate-900 dark:text-slate-250 font-semibold">{lead.customerName}</span>
                           </a>
-                          <span className="text-[10px] text-slate-500 font-mono mt-0.5 block">{lead.city || 'Unknown Location'}</span>
+                          <span className="text-[10px] text-slate-500 mt-0.5 block">{lead.city || 'Unknown Location'}</span>
                         </div>
-                        <span className="px-2 py-0.5 rounded text-[8px] uppercase tracking-wider font-extrabold bg-red-500/10 text-red-400 border border-red-500/15 shrink-0">
+                        <span className="px-2 py-0.5 rounded text-[8px] uppercase tracking-wider font-extrabold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/15 shrink-0">
                           {lead.issueType}
                         </span>
                       </div>
 
-                      <div className="bg-slate-950/60 border border-slate-900 px-3 py-2 rounded-lg text-xs pl-1.5">
-                        <span className="text-slate-300 block text-[11px] leading-relaxed">{lead.issueDescription}</span>
+                      <div className="bg-slate-955/10 dark:bg-slate-955/60 border border-slate-200 dark:border-slate-900 px-3 py-2 rounded-lg text-xs">
+                        <span className="text-slate-700 dark:text-slate-300 block text-[11px] leading-relaxed">{lead.issueDescription}</span>
                       </div>
 
-                      <div className="flex justify-between items-center text-[10px] text-slate-550 pt-1 border-t border-slate-900/40 pl-1.5">
-                        <span>Cons: <strong className="text-slate-400">{lead.consultantName}</strong></span>
+                      <div className="flex justify-between items-center text-[10px] text-slate-500 pt-1 border-t border-slate-200 dark:border-slate-900/40 pl-1.5">
+                        <span>Cons: <strong className="text-slate-700 dark:text-slate-400">{lead.consultantName}</strong></span>
                         <span className="font-mono">{new Date(lead.updatedAt).toLocaleDateString()}</span>
                       </div>
                     </div>
@@ -1589,11 +1589,11 @@ export default function AuthenticatedLayout({
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-slate-850 bg-[#121826]/30 text-right">
+            <div className="p-4 border-t border-slate-800 bg-slate-900/40 dark:bg-[#121826]/30 text-right">
               <button
                 type="button"
                 onClick={() => setIssuesDrawerOpen(false)}
-                className="w-full py-2 bg-slate-900 border border-slate-850 text-slate-355 hover:text-white rounded-lg font-bold text-xs transition-all cursor-pointer outline-none"
+                className="w-full py-2 bg-slate-900 hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white rounded-lg font-bold text-xs transition-all cursor-pointer outline-none"
               >
                 Close Drawer
               </button>

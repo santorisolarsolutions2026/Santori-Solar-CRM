@@ -70,10 +70,10 @@ const ROLE_LABELS: Record<string, { label: string; class: string }> = {
   admin: { label: 'Admin', class: 'bg-red-500/10 text-red-400 border-red-500/20' },
   director: { label: 'Director', class: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' },
   sales_head: { label: 'Sales Head', class: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
-  finance: { label: 'Finance Manager', class: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+  finance: { label: 'Finance Manager', class: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' },
   operations: { label: 'Operations Manager', class: 'bg-pink-500/10 text-pink-400 border-pink-500/20' },
   psa_tl: { label: 'PSA Team Leader', class: 'bg-sky-500/10 text-sky-400 border-sky-500/20' },
-  psa: { label: 'PSA Consultant', class: 'bg-orange-500/10 text-orange-400 border-orange-500/20' },
+  psa: { label: 'PSA Consultant', class: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20' },
   tl: { label: 'Sales Team Leader', class: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
   consultant: { label: 'Sales Consultant', class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
 };
@@ -368,11 +368,11 @@ const STAGE_BADGES: Record<number, { name: string; class: string }> = {
   0: { name: 'Uninitiated', class: 'bg-stone-550/15 text-stone-400 border-stone-500/20 font-bold' },
   1: { name: 'Fresh Lead', class: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
   2: { name: 'DNP', class: 'bg-slate-500/10 text-slate-400 border-slate-500/20' },
-  3: { name: 'Follow Up', class: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+  3: { name: 'Follow Up', class: 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20' },
   4: { name: 'Not Interested', class: 'bg-red-800/10 text-red-400 border-red-800/20' },
   5: { name: 'Call Later', class: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
   6: { name: 'Already Installed', class: 'bg-slate-800/20 text-slate-500 border-slate-800/30' },
-  7: { name: 'Decision Pending', class: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
+  7: { name: 'Decision Pending', class: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' },
   8: { name: 'Meeting Booked', class: 'bg-teal-500/10 text-teal-400 border-teal-500/20' },
   9: { name: 'Meeting Done', class: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
   10: { name: 'Disconnected', class: 'bg-slate-600/15 text-slate-400 border-slate-600/20' },
@@ -413,7 +413,7 @@ const getLevelColor = (level: number) => {
     case 0: return 'from-red-500 to-rose-600 shadow-red-500/10 border-red-500/20';
     case 1: return 'from-indigo-500 to-blue-600 shadow-indigo-500/10 border-indigo-500/20';
     case 2: return 'from-purple-500 to-fuchsia-600 shadow-purple-500/10 border-purple-500/20';
-    case 3: return 'from-amber-500 to-yellow-600 shadow-amber-500/10 border-amber-500/20';
+    case 3: return 'from-blue-500 to-indigo-600 shadow-blue-500/10 border-blue-500/20';
     case 4: return 'from-cyan-500 to-sky-600 shadow-cyan-500/10 border-cyan-500/20';
     case 5: return 'from-emerald-500 to-teal-600 shadow-emerald-500/10 border-emerald-500/20';
     default: return 'from-slate-500 to-slate-600 shadow-slate-500/10 border-slate-500/20';
@@ -425,7 +425,7 @@ const getLevelBorderColor = (level: number) => {
     case 0: return 'border-red-500/70 shadow-red-500/10';
     case 1: return 'border-indigo-500/70 shadow-indigo-500/10';
     case 2: return 'border-purple-500/70 shadow-purple-500/10';
-    case 3: return 'border-amber-500/70 shadow-amber-500/10';
+    case 3: return 'border-blue-500/70 shadow-blue-500/10';
     case 4: return 'border-cyan-500/70 shadow-cyan-500/10';
     case 5: return 'border-emerald-500/70 shadow-emerald-500/10';
     default: return 'border-slate-700 shadow-slate-500/5';
@@ -457,7 +457,7 @@ const HierarchyTreeNodeComponent = ({
       {/* Node Card */}
       <div 
         onClick={() => onSelectNode(node.id)}
-        className="group relative flex flex-col gap-2.5 p-3.5 bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/40 rounded-xl transition-all duration-300 cursor-pointer shadow-lg w-64 transform hover:-translate-y-0.5 hover:shadow-amber-500/5"
+        className="group relative flex flex-col gap-2.5 p-3.5 bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-blue-500/40 rounded-xl transition-all duration-300 cursor-pointer shadow-lg w-64 transform hover:-translate-y-0.5 hover:shadow-blue-500/[0.04]"
       >
         <div className="flex items-center gap-3">
           {/* Avatar with hierarchy level border color indicator */}
@@ -479,7 +479,7 @@ const HierarchyTreeNodeComponent = ({
                 e.stopPropagation(); // Prevent focusing tree
                 onOpenDetails(node.member);
               }}
-              className="text-xs font-bold text-white hover:text-amber-400 leading-none mb-1 text-left truncate w-full cursor-pointer hover:underline block"
+              className="text-xs font-bold text-white hover:text-blue-600 dark:hover:text-blue-400 leading-none mb-1 text-left truncate w-full cursor-pointer hover:underline block"
               title="Click to view details"
             >
               {node.name}
@@ -506,7 +506,7 @@ const HierarchyTreeNodeComponent = ({
             <select
               value={node.member.reportsTo || ''}
               onChange={(e) => onSupervisorChange(node.id, e.target.value)}
-              className="w-full text-[10px] py-1 px-2 bg-slate-955 border border-slate-800 rounded-lg text-slate-350 focus:outline-none focus:ring-1 focus:ring-amber-500/50 cursor-pointer font-sans"
+              className="w-full text-[10px] py-1 px-2 bg-slate-955 border border-slate-800 rounded-lg text-slate-350 focus:outline-none focus:ring-1 focus:ring-blue-500/50 cursor-pointer font-sans"
             >
               <option value="">No Supervisor (Admin)</option>
               {eligibleSupervisors.map(sup => (
@@ -520,7 +520,7 @@ const HierarchyTreeNodeComponent = ({
 
         {/* Focus badge helper */}
         <div className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          <span className="text-[7px] font-bold text-amber-500 uppercase tracking-widest bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+          <span className="text-[7px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20">
             Focus
           </span>
         </div>
@@ -750,7 +750,7 @@ const DesignationTreeNodeComponent = ({
       {/* Node Card */}
       <div 
         onClick={() => onEdit?.(node)}
-        className="group relative flex flex-col gap-2.5 p-3.5 bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/40 rounded-xl transition-all duration-300 cursor-pointer shadow-lg w-64 transform hover:-translate-y-0.5 hover:shadow-amber-500/5"
+        className="group relative flex flex-col gap-2.5 p-3.5 bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-blue-500/40 rounded-xl transition-all duration-300 cursor-pointer shadow-lg w-64 transform hover:-translate-y-0.5 hover:shadow-blue-500/[0.04]"
       >
         <div className="flex items-center gap-3">
           {/* Level indicators as color badge */}
@@ -763,7 +763,7 @@ const DesignationTreeNodeComponent = ({
 
           {/* Info */}
           <div className="min-w-0 flex-1">
-            <h4 className="text-xs font-extrabold text-white leading-none mb-1 group-hover:text-amber-450 transition-colors truncate">
+            <h4 className="text-xs font-extrabold text-white leading-none mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
               {node.name}
             </h4>
             <div className="flex items-center gap-1.5 flex-wrap mt-1">
@@ -771,7 +771,7 @@ const DesignationTreeNodeComponent = ({
                 {node.departmentName}
               </span>
               <span className="text-slate-700 text-[10px]">•</span>
-              <span className="text-[8px] bg-amber-500/5 border border-amber-500/10 text-amber-400/80 px-1.5 py-0.5 rounded font-bold font-mono">
+              <span className="text-[8px] bg-blue-500/5 border border-blue-500/10 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded font-bold font-mono">
                 {node.defaultPermissionsCount} Defaults
               </span>
             </div>
@@ -780,7 +780,7 @@ const DesignationTreeNodeComponent = ({
 
         {/* Edit details hover tip */}
         <div className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          <span className="text-[7px] font-bold text-amber-500 uppercase tracking-widest bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+          <span className="text-[7px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20">
             Edit
           </span>
         </div>
@@ -1208,15 +1208,15 @@ export default function TeamManagementPage() {
                   setDragOverNodeId(null);
                   handleDrop(e, m.id, team.id);
                 }}
-                className={`flex items-center justify-between gap-3 p-2 bg-slate-950/40 hover:bg-slate-950/70 border rounded-xl transition-all duration-200 cursor-grab active:cursor-grabbing ${
+                className={`flex items-center justify-between gap-3 p-2 bg-slate-950/40 hover:bg-slate-955/70 border rounded-xl transition-all duration-200 cursor-grab active:cursor-grabbing ${
                   isDragOver
-                    ? 'border-amber-500 bg-amber-500/10 shadow-lg shadow-amber-500/10 scale-[1.01]'
+                    ? 'border-blue-500 bg-blue-500/10 shadow-lg shadow-blue-500/10 scale-[1.01]'
                     : 'border-slate-850 hover:border-slate-800'
                 }`}
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className={`w-1 h-6 rounded-full shrink-0 ${
-                    level === 0 ? 'bg-amber-500' :
+                    level === 0 ? 'bg-blue-600' :
                     level === 1 ? 'bg-cyan-500' :
                     level === 2 ? 'bg-indigo-500' : 'bg-slate-750'
                   }`} />
@@ -1231,7 +1231,7 @@ export default function TeamManagementPage() {
                       {level > 0 && m.reportsTo && (
                         <>
                           <span className="text-slate-700 text-[8px]">•</span>
-                          <span className="text-[8px] text-amber-500/70 font-semibold" title={`Supervisor: ID ${m.reportsTo}`}>
+                          <span className="text-[8px] text-blue-600/70 dark:text-blue-400/70 font-semibold" title={`Supervisor: ID ${m.reportsTo}`}>
                             Reports to: {users.find((u: any) => u.id === m.reportsTo)?.name || `ID ${m.reportsTo}`}
                           </span>
                         </>
@@ -1300,7 +1300,7 @@ export default function TeamManagementPage() {
                     level === 0 ? 'bg-red-500' :
                     level === 1 ? 'bg-indigo-500' :
                     level === 2 ? 'bg-purple-500' :
-                    level === 3 ? 'bg-amber-500' :
+                    level === 3 ? 'bg-blue-600' :
                     level === 4 ? 'bg-cyan-500' : 'bg-emerald-500'
                   }`} />
                   <div className="w-8 h-8 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center text-slate-350 font-extrabold text-xs uppercase shadow-inner shrink-0">
@@ -2407,7 +2407,7 @@ export default function TeamManagementPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#090b11] flex items-center justify-center">
-        <Sun className="w-12 h-12 text-amber-500 animate-spin" />
+        <Loader2 className="w-12 h-12 text-blue-600 dark:text-blue-400 animate-spin" />
       </div>
     );
   }
@@ -2491,7 +2491,7 @@ export default function TeamManagementPage() {
             <button
               type="button"
               onClick={() => setShowAddModal(true)}
-              className="py-2.5 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-955 rounded-lg font-bold text-xs shadow-lg shadow-amber-500/10 flex items-center gap-1.5 transition-all w-fit cursor-pointer border border-transparent"
+              className="py-2.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs shadow-lg shadow-blue-500/10 flex items-center gap-1.5 transition-all w-fit cursor-pointer border border-transparent"
             >
               <Plus className="w-4 h-4" />
               <span>Add Team Member</span>
@@ -2506,7 +2506,7 @@ export default function TeamManagementPage() {
           onClick={() => setActiveTab('members')}
           className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
             activeTab === 'members'
-              ? 'bg-amber-500 text-slate-955 shadow-md shadow-amber-500/10'
+              ? 'bg-blue-600 text-white shadow-md shadow-blue-500/10'
               : 'text-slate-400 hover:text-white hover:bg-slate-900/30'
           }`}
         >
@@ -2518,7 +2518,7 @@ export default function TeamManagementPage() {
           }}
           className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
             activeTab === 'hierarchy'
-              ? 'bg-amber-500 text-slate-955 shadow-md shadow-amber-500/10'
+              ? 'bg-blue-600 text-white shadow-md shadow-blue-500/10'
               : 'text-slate-400 hover:text-white hover:bg-slate-900/30'
           }`}
         >
@@ -2529,7 +2529,7 @@ export default function TeamManagementPage() {
             onClick={() => setActiveTab('permissions')}
             className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
               activeTab === 'permissions'
-                ? 'bg-amber-500 text-slate-955 shadow-md shadow-amber-500/10'
+                ? 'bg-blue-600 text-white shadow-md shadow-blue-500/10'
                 : 'text-slate-400 hover:text-white hover:bg-slate-900/30'
             }`}
           >
@@ -2566,7 +2566,7 @@ export default function TeamManagementPage() {
             disabled={!!empSearchInput.trim()}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={empSearchInput.trim() ? "Clear Employee ID lookup to search by name..." : "Search by name, email, or employee ID..."}
-            className="w-full pl-9 pr-4 py-2 bg-slate-950/80 border border-slate-805 rounded-xl text-white placeholder-slate-505 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/50 disabled:opacity-40"
+            className="w-full pl-9 pr-4 py-2 bg-slate-955/80 border border-slate-805 rounded-xl text-white placeholder-slate-550 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:opacity-40"
           />
           <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
         </div>
@@ -2576,7 +2576,7 @@ export default function TeamManagementPage() {
             value={empSearchInput}
             onChange={(e) => setEmpSearchInput(e.target.value)}
             placeholder="Exact Employee ID Lookup (EMP-101)..."
-            className="w-full pl-9 pr-4 py-2.5 bg-slate-950/80 border border-slate-805 rounded-xl text-white placeholder-slate-505 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/50 font-mono tracking-wide"
+            className="w-full pl-9 pr-4 py-2.5 bg-slate-955/80 border border-slate-805 rounded-xl text-white placeholder-slate-550 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50 font-mono tracking-wide"
           />
           <Search className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
         </div>
@@ -2603,7 +2603,7 @@ export default function TeamManagementPage() {
       {isAdminOrDirectorOrSalesHead && selectedUserIds.length > 0 && (
         <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex items-center justify-between shadow-xl animate-fade-in">
           <div className="flex items-center gap-3">
-            <span className="w-6 h-6 rounded-full bg-amber-500 text-slate-950 font-bold text-xs flex items-center justify-center font-mono">
+            <span className="w-6 h-6 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center font-mono">
               {selectedUserIds.length}
             </span>
             <span className="text-xs font-semibold text-slate-200">Team Member(s) Selected</span>
@@ -2621,7 +2621,7 @@ export default function TeamManagementPage() {
             <button
               onClick={() => handleBulkAction('deactivate')}
               disabled={bulkActionLoading}
-              className="py-1.5 px-3 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-400 font-bold text-xs rounded-lg flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+              className="py-1.5 px-3 bg-slate-800 hover:bg-slate-750 border border-slate-700 text-slate-300 font-bold text-xs rounded-lg flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
             >
               <UserX className="w-3.5 h-3.5" />
               <span>Deactivate</span>
@@ -2650,7 +2650,7 @@ export default function TeamManagementPage() {
                       type="checkbox"
                       onChange={handleSelectAll}
                       checked={displayedMembers.length > 0 && displayedMembers.filter(m => m.id !== user?.id).length > 0 && displayedMembers.filter(m => m.id !== user?.id).every(m => selectedUserIds.includes(m.id))}
-                      className="rounded border-slate-700 bg-slate-900 text-amber-500 focus:ring-amber-500/40 cursor-pointer"
+                      className="rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-blue-500/40 cursor-pointer"
                     />
                   </th>
                 )}
@@ -2688,7 +2688,7 @@ export default function TeamManagementPage() {
                       key={member.id}
                       className={`hover:bg-slate-900/10 transition-colors ${
                         !member.isActive ? 'opacity-50' : ''
-                      } ${selectedUserIds.includes(member.id) ? 'bg-amber-500/5' : ''}`}
+                      } ${selectedUserIds.includes(member.id) ? 'bg-blue-500/5' : ''}`}
                     >
                       {isAdminOrDirectorOrSalesHead && (
                         <td className="py-4 px-3 text-center w-10">
@@ -2697,7 +2697,7 @@ export default function TeamManagementPage() {
                               type="checkbox"
                               checked={selectedUserIds.includes(member.id)}
                               onChange={() => handleSelectUser(member.id)}
-                              className="rounded border-slate-700 bg-slate-900 text-amber-500 focus:ring-amber-500/40 cursor-pointer"
+                              className="rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-blue-500/40 cursor-pointer"
                             />
                           )}
                         </td>
@@ -2714,23 +2714,23 @@ export default function TeamManagementPage() {
                             }}
                           />
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-amber-400 mx-auto shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-blue-600 mx-auto shrink-0">
                             <User className="w-4 h-4" />
                           </div>
                         )}
                       </td>
 
                       {/* Full Name Column */}
-                      <td className="py-4 px-4 font-bold text-white w-48">
+                      <td className="py-4 px-4 font-bold text-slate-900 dark:text-white w-48">
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleOpenProfile(member)}
-                            className="hover:text-amber-400 text-left font-bold text-white transition-colors cursor-pointer"
+                            className="hover:text-blue-600 dark:hover:text-blue-400 text-left font-bold text-slate-900 dark:text-white transition-colors cursor-pointer"
                           >
                             {member.name}
                           </button>
                           {member.id === user?.id && (
-                            <span className="text-[8px] bg-amber-500/20 text-amber-400 border border-amber-500/20 rounded px-1.5 font-extrabold uppercase">
+                            <span className="text-[8px] bg-blue-600/20 text-blue-600 border border-blue-600/20 rounded px-1.5 font-extrabold uppercase">
                               You
                             </span>
                           )}
@@ -2791,7 +2791,7 @@ export default function TeamManagementPage() {
                               className="p-1.5 rounded-lg border bg-slate-900 hover:bg-slate-850 text-slate-400 hover:text-white border-slate-805 hover:border-slate-700 transition-all cursor-pointer flex items-center justify-center"
                               title="Edit Clan & Supervisor"
                             >
-                              <Users className="w-4 h-4 text-amber-500" />
+                              <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                             </button>
                           )}
 
@@ -2964,7 +2964,7 @@ export default function TeamManagementPage() {
                   value={treeSearchQuery}
                   onChange={(e) => setTreeSearchQuery(e.target.value)}
                   placeholder="Search and focus on employee..."
-                  className="w-full pl-9 pr-4 py-2 bg-slate-955 border border-slate-800 rounded-xl text-white placeholder-slate-500 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                  className="w-full pl-9 pr-4 py-2 bg-slate-955 border border-slate-800 rounded-xl text-white placeholder-slate-500 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                 />
                 <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
                 {treeSearchQuery && (
@@ -3041,7 +3041,7 @@ export default function TeamManagementPage() {
                 className="p-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 cursor-pointer transition-all hover:bg-slate-850"
                 title={isTreeFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}
               >
-                {isTreeFullScreen ? <Minimize2 className="w-3.5 h-3.5 text-amber-500" /> : <Maximize2 className="w-3.5 h-3.5" />}
+                {isTreeFullScreen ? <Minimize2 className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> : <Maximize2 className="w-3.5 h-3.5" />}
               </button>
             </div>
           </div>
@@ -3053,7 +3053,7 @@ export default function TeamManagementPage() {
               <button 
                 type="button"
                 onClick={() => setFocusedNodeId(null)}
-                className="hover:text-amber-500 hover:underline cursor-pointer font-bold text-slate-300 font-sans"
+                className="hover:text-blue-600 dark:text-blue-400 hover:underline cursor-pointer font-bold text-slate-300 font-sans"
               >
                 All Employees
               </button>
@@ -3066,8 +3066,8 @@ export default function TeamManagementPage() {
                       type="button"
                       onClick={() => setFocusedNodeId(ancestor.id)}
                       disabled={isLast}
-                      className={`font-semibold hover:text-amber-450 hover:underline cursor-pointer transition-all ${
-                        isLast ? 'text-amber-400 font-bold hover:no-underline pointer-events-none' : 'text-slate-400'
+                      className={`font-semibold hover:text-blue-600 dark:hover:text-blue-400 hover:underline cursor-pointer transition-all ${
+                        isLast ? 'text-blue-600 dark:text-blue-400 font-bold hover:no-underline pointer-events-none' : 'text-slate-400'
                       }`}
                     >
                       {ancestor.name}
@@ -3164,7 +3164,7 @@ export default function TeamManagementPage() {
                   value={newTeamName}
                   onChange={(e) => setNewTeamName(e.target.value)}
                   placeholder="e.g. PSA Tigers, Sales Challengers..."
-                  className="w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                  className="w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                 />
               </div>
               <div>
@@ -3173,7 +3173,7 @@ export default function TeamManagementPage() {
                   required
                   value={newTeamDeptId}
                   onChange={(e) => setNewTeamDeptId(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-xl text-slate-350 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                  className="w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-xl text-slate-350 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                 >
                   <option value="">Select a department...</option>
                   {departmentsList.map((d) => (
@@ -3192,7 +3192,7 @@ export default function TeamManagementPage() {
               </button>
               <button
                 type="submit"
-                className="py-2 px-5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-955 rounded-xl font-bold text-xs shadow-md shadow-amber-500/10 cursor-pointer"
+                className="py-2 px-5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-xl font-bold text-xs shadow-md shadow-blue-500/10 cursor-pointer"
               >
                 Create Team
               </button>
@@ -3226,7 +3226,7 @@ export default function TeamManagementPage() {
                 <select
                   value={newTeamAssignmentId}
                   onChange={(e) => setNewTeamAssignmentId(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-xl text-slate-350 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                  className="w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-xl text-slate-350 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                 >
                   <option value="">No Clan / Unassigned</option>
                   {teamsList.map((t) => (
@@ -3240,7 +3240,7 @@ export default function TeamManagementPage() {
                 <select
                   value={newSupervisorId}
                   onChange={(e) => setNewSupervisorId(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-955 border border-slate-805 rounded-xl text-slate-350 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                  className="w-full px-3 py-2 bg-slate-955 border border-slate-805 rounded-xl text-slate-350 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                 >
                   <option value="">No Supervisor / Reports directly to Head</option>
                   {members
@@ -3274,7 +3274,7 @@ export default function TeamManagementPage() {
               <button
                 type="submit"
                 disabled={savingReporting}
-                className="py-2 px-5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-955 rounded-xl font-bold text-xs shadow-md shadow-amber-500/10 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                className="py-2 px-5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-xl font-bold text-xs shadow-md shadow-blue-500/10 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 {savingReporting ? (
                   <>
@@ -3320,7 +3320,7 @@ export default function TeamManagementPage() {
                   )}
                   {uploadingAddPhoto && (
                     <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
-                      <Loader2 className="w-4 h-4 text-amber-500 animate-spin" />
+                      <Loader2 className="w-4 h-4 text-blue-600 dark:text-blue-400 animate-spin" />
                     </div>
                   )}
                 </div>
@@ -3356,7 +3356,7 @@ export default function TeamManagementPage() {
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                     placeholder="e.g. Ramesh Singh"
-                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -3369,7 +3369,7 @@ export default function TeamManagementPage() {
                     value={form.employeeId}
                     onChange={(e) => setForm({ ...form, employeeId: e.target.value })}
                     placeholder="e.g. EMP-1002"
-                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -3382,7 +3382,7 @@ export default function TeamManagementPage() {
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
                     placeholder="e.g. ramesh@solarcrm.com"
-                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -3395,7 +3395,7 @@ export default function TeamManagementPage() {
                     value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: e.target.value })}
                     placeholder="Contact number"
-                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
                 <div className="col-span-1 sm:col-span-2">
@@ -3408,7 +3408,7 @@ export default function TeamManagementPage() {
                     value={form.address}
                     onChange={(e) => setForm({ ...form, address: e.target.value })}
                     placeholder="Complete residential address"
-                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none resize-none"
+                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none resize-none"
                   />
                 </div>
                 <div>
@@ -3418,7 +3418,7 @@ export default function TeamManagementPage() {
                   <select
                     value={form.departmentId}
                     onChange={(e) => setForm({ ...form, departmentId: e.target.value })}
-                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500"
+                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-blue-500"
                   >
                     <option value="">No Department / Shared</option>
                     {departmentsList.map((dept) => (
@@ -3433,7 +3433,7 @@ export default function TeamManagementPage() {
                   <select
                     value={form.designationId}
                     onChange={(e) => setForm({ ...form, designationId: e.target.value })}
-                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500"
+                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-blue-500"
                   >
                     <option value="">Select Designation...</option>
                     {(() => {
@@ -3464,7 +3464,7 @@ export default function TeamManagementPage() {
                     value={form.password}
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
                     placeholder="••••••••"
-                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -3472,7 +3472,7 @@ export default function TeamManagementPage() {
                   <select
                     value={form.reportsTo}
                     onChange={(e) => setForm({ ...form, reportsTo: e.target.value })}
-                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500"
+                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-blue-500"
                   >
                     <option value="">No Supervisor (Reports to Admin)</option>
                     {(() => {
@@ -3515,7 +3515,7 @@ export default function TeamManagementPage() {
                     required
                     value={form.joiningDate}
                     onChange={(e) => setForm({ ...form, joiningDate: e.target.value })}
-                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500"
+                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-blue-500"
                   />
                 </div>
               </div>
@@ -3531,7 +3531,7 @@ export default function TeamManagementPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="py-2 px-5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer"
+                  className="py-2 px-5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer"
                 >
                   {submitting ? (
                     <>
@@ -3585,13 +3585,13 @@ export default function TeamManagementPage() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full bg-slate-900 flex items-center justify-center font-bold text-lg text-amber-500">
+                        <div className="w-full h-full bg-slate-900 flex items-center justify-center font-bold text-lg text-blue-600 dark:text-blue-400">
                           {selectedMember.name.substring(0, 2).toUpperCase()}
                         </div>
                       )}
                       {uploadingEditPhoto && (
                         <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
-                          <Loader2 className="w-4 h-4 text-amber-500 animate-spin" />
+                          <Loader2 className="w-4 h-4 text-blue-600 dark:text-blue-400 animate-spin" />
                         </div>
                       )}
                     </div>
@@ -3625,7 +3625,7 @@ export default function TeamManagementPage() {
                             required
                             value={editName}
                             onChange={(e) => setEditName(e.target.value)}
-                            className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                            className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
                           />
                         ) : (
                           <span className="text-white text-xs font-semibold block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg opacity-70 truncate" title={selectedMember.name}>
@@ -3641,7 +3641,7 @@ export default function TeamManagementPage() {
                             required
                             value={editEmployeeId}
                             onChange={(e) => setEditEmployeeId(e.target.value)}
-                            className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none font-mono"
+                            className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none font-mono"
                           />
                         ) : (
                           <span className="text-white text-xs font-mono block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg opacity-70 truncate" title={selectedMember.employeeId || 'Not Set'}>
@@ -3657,7 +3657,7 @@ export default function TeamManagementPage() {
                             required
                             value={editEmail}
                             onChange={(e) => setEditEmail(e.target.value)}
-                            className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none font-mono"
+                            className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none font-mono"
                           />
                         ) : (
                           <span className="text-slate-300 text-xs font-mono block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg opacity-70 truncate" title={selectedMember.email}>
@@ -3687,7 +3687,7 @@ export default function TeamManagementPage() {
                         value={editPhone}
                         onChange={(e) => setEditPhone(e.target.value)}
                         placeholder="Update mobile number"
-                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
                       />
                     </div>
                   </div>
@@ -3704,7 +3704,7 @@ export default function TeamManagementPage() {
                   <button
                     type="submit"
                     disabled={updatingProfile}
-                    className="py-2 px-5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer"
+                    className="py-2 px-5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer"
                   >
                     {updatingProfile ? (
                       <>
@@ -3737,13 +3737,13 @@ export default function TeamManagementPage() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full bg-slate-900 flex items-center justify-center font-bold text-lg text-amber-500">
+                        <div className="w-full h-full bg-slate-900 flex items-center justify-center font-bold text-lg text-blue-600 dark:text-blue-400">
                           {editMemberForm.name.substring(0, 2).toUpperCase()}
                         </div>
                       )}
                       {uploadingEditMemberPhoto && (
                         <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
-                          <Loader2 className="w-4 h-4 text-amber-500 animate-spin" />
+                          <Loader2 className="w-4 h-4 text-blue-600 dark:text-blue-400 animate-spin" />
                         </div>
                       )}
                     </div>
@@ -3777,7 +3777,7 @@ export default function TeamManagementPage() {
                         required
                         value={editMemberForm.name}
                         onChange={(e) => setEditMemberForm({ ...editMemberForm, name: e.target.value })}
-                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
                       />
                     </div>
                     <div>
@@ -3789,7 +3789,7 @@ export default function TeamManagementPage() {
                         required
                         value={editMemberForm.employeeId}
                         onChange={(e) => setEditMemberForm({ ...editMemberForm, employeeId: e.target.value })}
-                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
                       />
                     </div>
                     <div>
@@ -3801,7 +3801,7 @@ export default function TeamManagementPage() {
                         required
                         value={editMemberForm.email}
                         onChange={(e) => setEditMemberForm({ ...editMemberForm, email: e.target.value })}
-                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
                       />
                     </div>
                     <div>
@@ -3813,7 +3813,7 @@ export default function TeamManagementPage() {
                         required
                         value={editMemberForm.phone}
                         onChange={(e) => setEditMemberForm({ ...editMemberForm, phone: e.target.value })}
-                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
                       />
                     </div>
                     <div className="col-span-1 sm:col-span-2">
@@ -3826,7 +3826,7 @@ export default function TeamManagementPage() {
                         value={editMemberForm.address}
                         onChange={(e) => setEditMemberForm({ ...editMemberForm, address: e.target.value })}
                         placeholder="Complete residential address"
-                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none resize-none"
+                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none resize-none"
                       />
                     </div>
                     <div>
@@ -3836,7 +3836,7 @@ export default function TeamManagementPage() {
                         placeholder="Leave blank to keep current"
                         value={editMemberPassword}
                         onChange={(e) => setEditMemberPassword(e.target.value)}
-                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
                       />
                     </div>
                     {canEditPermissionsAndRole && (
@@ -3847,7 +3847,7 @@ export default function TeamManagementPage() {
                             value={editMemberForm.departmentId}
                             disabled={selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:')}
                             onChange={(e) => setEditMemberForm({ ...editMemberForm, departmentId: e.target.value })}
-                            className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500 focus:outline-none disabled:opacity-50"
+                            className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-blue-500 focus:outline-none disabled:opacity-50"
                           >
                             <option value="">No Department / Shared</option>
                             {departmentsList.map((dept) => (
@@ -3872,7 +3872,7 @@ export default function TeamManagementPage() {
                               }
                             }}
 
-                            className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500 focus:outline-none disabled:opacity-50"
+                            className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-blue-500 focus:outline-none disabled:opacity-50"
                           >
                             <option value="">Select Designation...</option>
                             {(() => {
@@ -3899,7 +3899,7 @@ export default function TeamManagementPage() {
                       <select
                         value={editMemberForm.reportsTo}
                         onChange={(e) => setEditMemberForm({ ...editMemberForm, reportsTo: e.target.value })}
-                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500 focus:outline-none"
+                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-blue-500 focus:outline-none"
                       >
                         <option value="">No Supervisor (Reports to Admin)</option>
                         {(() => {
@@ -3943,7 +3943,7 @@ export default function TeamManagementPage() {
                         required
                         value={editMemberForm.joiningDate}
                         onChange={(e) => setEditMemberForm({ ...editMemberForm, joiningDate: e.target.value })}
-                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500 focus:outline-none"
+                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-blue-500 focus:outline-none"
                       />
                     </div>
                     {canEditPermissionsAndRole && (
@@ -3954,7 +3954,7 @@ export default function TeamManagementPage() {
                           disabled={selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:')}
                           checked={editMemberForm.isActive}
                           onChange={(e) => setEditMemberForm({ ...editMemberForm, isActive: e.target.checked })}
-                          className="w-4 h-4 text-amber-500 bg-slate-950 border-slate-800 rounded focus:ring-amber-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-4 h-4 text-blue-600 dark:text-blue-400 bg-slate-950 border-slate-800 rounded focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                         />
                         <label htmlFor="edit-member-active" className="text-xs font-bold uppercase text-slate-400 cursor-pointer select-none flex items-center gap-1.5">
                           <span>Account Active Status</span>
@@ -3968,7 +3968,7 @@ export default function TeamManagementPage() {
 
                   {/* Access Logs */}
                   <div className="border-t border-slate-800 pt-4 space-y-4">
-                    <h5 className="text-[10px] font-bold uppercase tracking-wider text-amber-500">Access Logs</h5>
+                    <h5 className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Access Logs</h5>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="p-3 bg-slate-950/40 border border-slate-900 rounded-lg">
                         <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1.5">Last Login Session</span>
@@ -4034,7 +4034,7 @@ export default function TeamManagementPage() {
                     <button
                       type="submit"
                       disabled={updatingMember}
-                      className="py-2 px-5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer"
+                      className="py-2 px-5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer"
                     >
                       {updatingMember ? (
                         <>
@@ -4061,7 +4061,7 @@ export default function TeamManagementPage() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full bg-slate-850 flex items-center justify-center text-amber-400">
+                      <div className="w-full h-full bg-slate-850 flex items-center justify-center text-blue-600 dark:text-blue-400">
                         <User className="w-8 h-8" />
                       </div>
                     )}
@@ -4136,7 +4136,7 @@ export default function TeamManagementPage() {
                 {/* Activity Timing & Geolocation Logs (Admin, Director, Sales Head only) */}
                 {isAdminOrDirectorOrSalesHead && (
                   <div className="border-t border-slate-800 pt-4 space-y-4">
-                    <h5 className="text-[10px] font-bold uppercase tracking-wider text-amber-500">Access Logs</h5>
+                    <h5 className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Access Logs</h5>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {/* Last Login Info */}
                       <div className="p-3 bg-slate-950/40 border border-slate-900 rounded-lg">
@@ -4214,7 +4214,7 @@ export default function TeamManagementPage() {
                   Activity Audit Logs
                 </h3>
                 <p className="text-[11px] text-slate-500 mt-1">
-                  Viewing daily transitions for <span className="text-amber-400 font-bold">{logsMember.name}</span> ({getRoleLabel(logsMember.role)})
+                  Viewing daily transitions for <span className="text-blue-600 dark:text-blue-400 font-bold">{logsMember.name}</span> ({getRoleLabel(logsMember.role)})
                 </p>
               </div>
               <button onClick={() => setShowLogsModal(false)} className="text-slate-400 hover:text-white cursor-pointer">
@@ -4235,7 +4235,7 @@ export default function TeamManagementPage() {
                     value={logsDate}
                     max={getTodayLocalDateStr()}
                     onChange={handleLogsDateChange}
-                    className="block w-full sm:w-auto px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    className="block w-full sm:w-auto px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                   <button
                     onClick={() => {
@@ -4253,7 +4253,7 @@ export default function TeamManagementPage() {
               {/* Logs Timeline Display */}
               {logsLoading ? (
                 <div className="py-12 flex flex-col items-center gap-3">
-                  <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+                  <Loader2 className="w-8 h-8 text-blue-600 dark:text-blue-400 animate-spin" />
                   <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Loading activities...</p>
                 </div>
               ) : logsList.length === 0 ? (
@@ -4275,7 +4275,7 @@ export default function TeamManagementPage() {
                     return (
                       <div key={log.id} className="relative group">
                         {/* Timeline Node Point */}
-                        <div className="absolute -left-[31px] top-1.5 w-3 h-3 rounded-full bg-amber-500 border-2 border-[#111625]" />
+                        <div className="absolute -left-[31px] top-1.5 w-3 h-3 rounded-full bg-blue-600 border-2 border-[#111625]" />
                         
                         <div className="bg-slate-950/30 border border-slate-900 rounded-xl p-4 space-y-2 hover:border-slate-800 transition-all">
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -4286,7 +4286,7 @@ export default function TeamManagementPage() {
                                 href={`/leads/${log.lead.id}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-amber-400 hover:underline font-bold"
+                                className="text-blue-600 dark:text-blue-400 hover:underline font-bold"
                               >
                                 {log.lead.customerName} (#{log.lead.leadCode})
                               </a>
@@ -4343,7 +4343,7 @@ export default function TeamManagementPage() {
             <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex flex-col gap-4">
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2.5">
-                  <SlidersHorizontal className="w-5 h-5 text-amber-500" />
+                  <SlidersHorizontal className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                   <div>
                     <h3 className="text-sm font-bold uppercase tracking-wider text-white">Organization Hierarchy & Custom Designations</h3>
                     <p className="text-[11px] text-slate-400">Configure hierarchy levels, designate departments, and view the visual reporting structure.</p>
@@ -4359,7 +4359,7 @@ export default function TeamManagementPage() {
                   type="button"
                   onClick={() => setModalTab('designations')}
                   className={`pb-2 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                    modalTab === 'designations' ? 'border-b-2 border-amber-500 text-white' : 'text-slate-400 hover:text-slate-200'
+                    modalTab === 'designations' ? 'border-b-2 border-blue-500 text-white' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
                   Designations & Levels
@@ -4368,7 +4368,7 @@ export default function TeamManagementPage() {
                   type="button"
                   onClick={() => setModalTab('orgTree')}
                   className={`pb-2 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                    modalTab === 'orgTree' ? 'border-b-2 border-amber-500 text-white' : 'text-slate-400 hover:text-slate-200'
+                    modalTab === 'orgTree' ? 'border-b-2 border-blue-500 text-white' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
                   Visual Org Tree 🌳
@@ -4395,7 +4395,7 @@ export default function TeamManagementPage() {
                         type="button"
                         onClick={() => setDesignationsViewMode('level')}
                         className={`px-2 py-1 rounded-md text-[9px] font-bold uppercase transition-all cursor-pointer ${
-                          designationsViewMode === 'level' ? 'bg-amber-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+                          designationsViewMode === 'level' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
                         }`}
                       >
                         Group By Level
@@ -4404,7 +4404,7 @@ export default function TeamManagementPage() {
                         type="button"
                         onClick={() => setDesignationsViewMode('department')}
                         className={`px-2 py-1 rounded-md text-[9px] font-bold uppercase transition-all cursor-pointer ${
-                          designationsViewMode === 'department' ? 'bg-amber-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+                          designationsViewMode === 'department' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
                         }`}
                       >
                         Group By Dept
@@ -4418,7 +4418,7 @@ export default function TeamManagementPage() {
                         { level: 0, label: 'Level 0: Admin 👑', color: 'border-red-500/20 text-red-400 bg-red-500/5' },
                         { level: 1, label: 'Level 1: Department Heads 👔', color: 'border-indigo-500/20 text-indigo-400 bg-indigo-500/5' },
                         { level: 2, label: 'Level 2: Senior Managers 📈', color: 'border-purple-500/20 text-purple-400 bg-purple-500/5' },
-                        { level: 3, label: 'Level 3: Managers 🏢', color: 'border-amber-500/20 text-amber-400 bg-amber-500/5' },
+                        { level: 3, label: 'Level 3: Managers 🏢', color: 'border-blue-500/20 text-blue-600 dark:text-blue-400 bg-blue-500/5' },
                         { level: 4, label: 'Level 4: Team Leaders (TL) 👥', color: 'border-cyan-500/20 text-cyan-400 bg-cyan-500/5' },
                         { level: 5, label: 'Level 5: Consultants 🛠️', color: 'border-emerald-500/20 text-emerald-400 bg-emerald-500/5' },
                         { level: 6, label: 'Level 6: PSA Consultants 📞', color: 'border-pink-500/20 text-pink-400 bg-pink-500/5' },
@@ -4454,7 +4454,7 @@ export default function TeamManagementPage() {
                         { id: null, name: 'Shared / General Admin 🌐', color: 'border-red-500/20 text-red-400 bg-red-500/5' },
                         ...departmentsList.map(dept => {
                           const deptColors: { [key: string]: string } = {
-                            'sales': 'border-amber-500/20 text-amber-400 bg-amber-500/5',
+                            'sales': 'border-blue-500/20 text-blue-600 dark:text-blue-400 bg-blue-500/5',
                             'finance': 'border-purple-500/20 text-purple-400 bg-purple-500/5',
                             'operations': 'border-indigo-500/20 text-indigo-400 bg-indigo-500/5',
                             'it': 'border-cyan-500/20 text-cyan-400 bg-cyan-500/5',
@@ -4482,7 +4482,7 @@ export default function TeamManagementPage() {
                                   return (
                                     <span key={d.id} className="text-[10px] bg-slate-950 border border-slate-800 px-2.5 py-1.5 rounded-lg text-white font-semibold flex items-center gap-1.5 shadow-sm">
                                       <span>{d.name}</span>
-                                      <span className="text-[8px] bg-slate-900 text-amber-400 px-1 rounded font-extrabold uppercase tracking-wider">Level {d.level}</span>
+                                      <span className="text-[8px] bg-slate-900 text-blue-600 dark:text-blue-400 px-1 rounded font-extrabold uppercase tracking-wider">Level {d.level}</span>
                                     </span>
                                   );
                                 })
@@ -4512,7 +4512,7 @@ export default function TeamManagementPage() {
                           value={designationName}
                           onChange={(e) => setDesignationName(e.target.value)}
                           placeholder="e.g. Regional Manager, Senior Advisor"
-                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
                         />
                       </div>
 
@@ -4521,7 +4521,7 @@ export default function TeamManagementPage() {
                         <select
                           value={designationLevel}
                           onChange={(e) => setDesignationLevel(Number(e.target.value))}
-                          className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                          className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
                         >
                           <option value={0}>Level 0: Admin</option>
                           <option value={1}>Level 1: Head</option>
@@ -4538,7 +4538,7 @@ export default function TeamManagementPage() {
                         <select
                           value={designationDeptId}
                           onChange={(e) => setDesignationDeptId(e.target.value)}
-                          className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                          className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
                         >
                           <option value="">Shared / No Department</option>
                           {departmentsList.map((d) => (
@@ -4576,7 +4576,7 @@ export default function TeamManagementPage() {
                                 onClick={() => setSelectedDesignationPermissionCategory(cat.key)}
                                 className={`flex items-center gap-1 px-2 py-1 border rounded-md text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
                                   isActive
-                                    ? 'bg-amber-500/10 border-amber-500/40 text-amber-400 font-extrabold'
+                                    ? 'bg-blue-500/10 border-blue-500/40 text-blue-600 dark:text-blue-400 font-extrabold'
                                     : 'bg-transparent border-transparent text-slate-450 hover:text-slate-200'
                                 }`}
                               >
@@ -4599,7 +4599,7 @@ export default function TeamManagementPage() {
                                 key={perm.key} 
                                 className={`flex items-start gap-2.5 p-2 rounded-lg border select-none cursor-pointer transition-all duration-200 ${
                                   isChecked 
-                                    ? 'bg-amber-500/[0.01] border-amber-500/25 shadow-sm shadow-amber-500/5'
+                                    ? 'bg-blue-600/[0.01] border-blue-500/25 shadow-sm shadow-blue-500/[0.04]'
                                     : 'bg-slate-950/20 border-slate-900/60 hover:border-slate-800 hover:bg-slate-900/10'
                                 }`}
                               >
@@ -4629,7 +4629,7 @@ export default function TeamManagementPage() {
                                   />
                                   <div className={`w-7 h-4 rounded-full transition-colors duration-200 ease-in-out ${
                                     isChecked 
-                                      ? 'bg-amber-500' 
+                                      ? 'bg-blue-600' 
                                       : 'bg-slate-800 border border-slate-700/60'
                                   }`} />
                                   <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${
@@ -4671,7 +4671,7 @@ export default function TeamManagementPage() {
                         )}
                         <button
                           type="submit"
-                          className="py-1.5 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 rounded-lg font-bold text-xs shadow-md"
+                          className="py-1.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-650 text-slate-950 rounded-lg font-bold text-xs shadow-md"
                         >
                           {editingDesignation ? 'Save Designation' : 'Create Designation'}
                         </button>
@@ -4702,7 +4702,7 @@ export default function TeamManagementPage() {
                                   setDesignationPermissions(d.permissions ? d.permissions.split(',').map((p: any) => p.trim()) : []);
 
                                 }}
-                                className="p-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-amber-400 transition-all border border-transparent cursor-pointer"
+                                className="p-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-blue-600 dark:text-blue-400 transition-all border border-transparent cursor-pointer"
                               >
                                 <SlidersHorizontal className="w-3.5 h-3.5" />
                               </button>
@@ -4783,7 +4783,7 @@ export default function TeamManagementPage() {
                         className="p-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 cursor-pointer transition-all hover:bg-slate-850"
                         title={isDesigTreeFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}
                       >
-                        {isDesigTreeFullScreen ? <Minimize2 className="w-3.5 h-3.5 text-amber-500" /> : <Maximize2 className="w-3.5 h-3.5" />}
+                        {isDesigTreeFullScreen ? <Minimize2 className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> : <Maximize2 className="w-3.5 h-3.5" />}
                       </button>
                     </div>
                   </div>
@@ -4880,7 +4880,7 @@ const MyTeamAddMemberForm = ({
           required
           value={selectedCandidateId}
           onChange={(e) => setSelectedCandidateId(e.target.value)}
-          className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-350 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+          className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-350 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50"
         >
           <option value="">Choose candidate...</option>
           {candidates.map(c => (
@@ -4894,7 +4894,7 @@ const MyTeamAddMemberForm = ({
         <select
           value={selectedSupId}
           onChange={(e) => setSelectedSupId(e.target.value)}
-          className="w-full px-3 py-2 bg-slate-950 border border-slate-805 rounded-xl text-slate-350 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+          className="w-full px-3 py-2 bg-slate-950 border border-slate-805 rounded-xl text-slate-350 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50"
         >
           <option value="">Reports directly to Head</option>
           {myTeam.users.map((u: any) => (
@@ -4905,7 +4905,7 @@ const MyTeamAddMemberForm = ({
 
       <button
         type="submit"
-        className="w-full py-2 bg-amber-500 hover:bg-amber-400 text-slate-955 rounded-xl font-bold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-1 border border-transparent"
+        className="w-full py-2 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-xl font-bold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-1 border border-transparent"
       >
         <Plus className="w-3.5 h-3.5" />
         <span>Add to Clan</span>

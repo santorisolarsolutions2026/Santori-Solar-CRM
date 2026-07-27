@@ -273,8 +273,6 @@ export default function NewLeadPage() {
 
       {/* Main card */}
       <div className="bg-[#111625] border border-slate-800 rounded-xl p-6 shadow-xl relative overflow-hidden">
-        <div className="absolute top-[-20%] right-[-5%] w-[40%] h-[150%] rounded-full bg-amber-500/5 blur-[80px] pointer-events-none" />
-
         <form onSubmit={handleSubmit} className="space-y-6 relative">
           {/* Customer name and phone */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -288,7 +286,7 @@ export default function NewLeadPage() {
                 value={form.customerName}
                 onChange={(e) => setForm({ ...form, customerName: e.target.value })}
                 placeholder="e.g. Rajesh Singhania"
-                className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:border-blue-500 focus:outline-none"
               />
             </div>
             <div>
@@ -303,11 +301,11 @@ export default function NewLeadPage() {
                   onChange={(e) => setForm({ ...form, mobile: e.target.value })}
                   onBlur={handlePhoneBlur}
                   placeholder="10-digit number"
-                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none font-mono"
+                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:border-blue-500 focus:outline-none font-mono"
                 />
                 {checkingDuplicate && (
                   <span className="absolute right-3 top-2.5">
-                    <Loader2 className="w-4 h-4 text-amber-500 animate-spin" />
+                    <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
                   </span>
                 )}
               </div>
@@ -348,7 +346,7 @@ export default function NewLeadPage() {
                 value={form.mobileAlt}
                 onChange={(e) => setForm({ ...form, mobileAlt: e.target.value })}
                 placeholder="Alternate phone"
-                className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 font-mono"
+                className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:border-blue-500 focus:outline-none font-mono"
               />
             </div>
             <div>
@@ -358,7 +356,7 @@ export default function NewLeadPage() {
               <select
                 value={form.leadSource}
                 onChange={(e) => setForm({ ...form, leadSource: e.target.value })}
-                className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500"
+                className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-300 text-xs focus:border-blue-500 focus:outline-none"
               >
                 <option value="whatsapp">WhatsApp</option>
                 <option value="cold_call">Cold Call</option>
@@ -379,7 +377,7 @@ export default function NewLeadPage() {
               <select
                 value={form.connectionType}
                 onChange={(e) => setForm({ ...form, connectionType: e.target.value })}
-                className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-amber-500"
+                className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-300 text-xs focus:border-blue-500 focus:outline-none"
               >
                 <option value="residential">Residential</option>
                 <option value="commercial">Commercial</option>
@@ -396,7 +394,7 @@ export default function NewLeadPage() {
                 value={form.sanctionedLoadKw}
                 onChange={(e) => setForm({ ...form, sanctionedLoadKw: e.target.value })}
                 placeholder="kW from electricity bill"
-                className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500"
+                className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:border-blue-500 focus:outline-none"
               />
             </div>
           </div>
@@ -412,7 +410,7 @@ export default function NewLeadPage() {
                 value={form.discomName}
                 onChange={(e) => setForm({ ...form, discomName: e.target.value })}
                 placeholder="e.g. UPPCL"
-                className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500"
+                className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:border-blue-500 focus:outline-none"
               />
             </div>
             <div>
@@ -424,14 +422,14 @@ export default function NewLeadPage() {
                 value={form.connectionNumber}
                 onChange={(e) => setForm({ ...form, connectionNumber: e.target.value })}
                 placeholder="Consumer/Connection Number"
-                className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 font-mono"
+                className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:border-blue-500 focus:outline-none font-mono"
               />
             </div>
           </div>
 
           {/* Address details */}
           <div className="space-y-4 border-t border-slate-800/80 pt-6">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400">Site Location Details</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-100">Site Location Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="md:col-span-3">
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
@@ -441,7 +439,7 @@ export default function NewLeadPage() {
                   value={form.address}
                   onChange={(e) => setForm({ ...form, address: e.target.value })}
                   placeholder="House number, flat, apartment, street address details..."
-                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs h-16 focus:ring-amber-500 focus:outline-none"
+                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs h-16 focus:border-blue-500 focus:outline-none"
                 />
               </div>
               <div>
@@ -453,7 +451,7 @@ export default function NewLeadPage() {
                   value={form.pinCode}
                   onChange={handlePincodeChange}
                   placeholder="6-digit pincode"
-                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 font-mono"
+                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:border-blue-500 focus:outline-none font-mono"
                 />
               </div>
               <div>
@@ -464,7 +462,7 @@ export default function NewLeadPage() {
                   type="text"
                   value={form.city}
                   onChange={(e) => setForm({ ...form, city: e.target.value })}
-                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500"
+                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:border-blue-500 focus:outline-none"
                 />
               </div>
               <div>
@@ -475,7 +473,7 @@ export default function NewLeadPage() {
                   type="text"
                   value={form.state}
                   onChange={(e) => setForm({ ...form, state: e.target.value })}
-                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-850 rounded-lg text-white text-xs focus:ring-amber-500"
+                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-850 rounded-lg text-white text-xs focus:border-blue-500 focus:outline-none"
                 />
               </div>
             </div>
@@ -490,7 +488,7 @@ export default function NewLeadPage() {
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
               placeholder="Initial details about client requirements..."
-              className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs h-20 focus:ring-amber-500 focus:outline-none"
+              className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs h-20 focus:border-blue-500 focus:outline-none"
             />
           </div>
 
@@ -499,16 +497,16 @@ export default function NewLeadPage() {
             <button
               type="submit"
               disabled={loading}
-              className="py-3 px-6 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-lg shadow-amber-500/10 disabled:opacity-50 flex items-center gap-2"
+              className="py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs shadow-lg shadow-blue-500/10 disabled:opacity-50 flex items-center gap-2"
             >
               {loading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" style={{ color: '#ffffff' }} />
                   <span>Creating Lead Opportunity...</span>
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-4 h-4" />
+                  <Sparkles className="w-4 h-4" style={{ color: '#ffffff' }} />
                   <span>Register Lead Opportunity</span>
                 </>
               )}

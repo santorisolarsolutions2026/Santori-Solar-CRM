@@ -77,7 +77,6 @@ export default function UserSelect({
     }
     return des || dept || 'Staff';
   };
-
   return (
     <div ref={containerRef} className={`relative w-full ${className}`}>
       {/* Trigger Button */}
@@ -89,18 +88,18 @@ export default function UserSelect({
           disabled
             ? 'bg-slate-900/40 border-slate-800 text-slate-500 cursor-not-allowed'
             : isOpen
-            ? 'bg-slate-950 border-amber-500 ring-1 ring-amber-500/30 text-white'
-            : 'bg-slate-950/80 hover:bg-slate-900 border-slate-800 text-slate-200'
+            ? 'bg-slate-900 border-blue-500 ring-1 ring-blue-500/30 text-slate-200'
+            : 'bg-slate-900 hover:bg-slate-900/80 border-slate-800 text-slate-200'
         }`}
       >
         <div className="flex items-center gap-2 min-w-0">
           {selectedUser ? (
             <>
-              <div className="w-5 h-5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-400 font-bold text-[10px] flex items-center justify-center shrink-0 uppercase">
+              <div className="w-5 h-5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 font-bold text-[10px] flex items-center justify-center shrink-0 uppercase">
                 {selectedUser.name.charAt(0)}
               </div>
-              <span className="font-semibold text-white truncate">{selectedUser.name}</span>
-              <span className="text-[9px] bg-slate-900 border border-slate-800 text-amber-400/90 px-1.5 py-0.2 rounded font-mono truncate hidden sm:inline-block">
+              <span className="font-semibold text-slate-200 truncate">{selectedUser.name}</span>
+              <span className="text-[9px] bg-slate-900 border border-slate-800 text-blue-600 dark:text-blue-400 px-1.5 py-0.2 rounded font-mono truncate hidden sm:inline-block">
                 {getDesignationText(selectedUser)}
               </span>
             </>
@@ -128,9 +127,9 @@ export default function UserSelect({
 
       {/* Dropdown Popup */}
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-[#111625] border border-slate-800 rounded-xl shadow-2xl overflow-hidden animate-fade-in">
+        <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden animate-fade-in">
           {/* Search Header */}
-          <div className="p-2 border-b border-slate-800 bg-slate-955/60 relative">
+          <div className="p-2 border-b border-slate-800 bg-slate-905/60 relative">
             <Search className="w-3.5 h-3.5 text-slate-500 absolute left-4 top-3.5" />
             <input
               type="text"
@@ -138,7 +137,7 @@ export default function UserSelect({
               placeholder="Search by name, role..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-800 focus:border-amber-500 focus:outline-none rounded-lg text-xs text-white placeholder-slate-500"
+              className="w-full pl-8 pr-3 py-1.5 bg-slate-900 border border-slate-800 focus:border-blue-500 focus:outline-none rounded-lg text-xs text-slate-200 placeholder-slate-500"
             />
           </div>
 
@@ -164,25 +163,25 @@ export default function UserSelect({
                     }}
                     className={`w-full p-2 text-left rounded-lg transition-colors flex items-center justify-between gap-2 cursor-pointer ${
                       isSelected
-                        ? 'bg-amber-500/10 text-white font-bold border border-amber-500/20'
-                        : 'hover:bg-slate-900/80 text-slate-300'
+                        ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold border border-blue-500/20'
+                        : 'hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-blue-450 text-slate-600 dark:text-slate-300'
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-6 h-6 rounded-full bg-slate-900 border border-slate-800 text-amber-400 font-bold text-[10px] flex items-center justify-center shrink-0 uppercase">
+                      <div className="w-6 h-6 rounded-full bg-slate-900 border border-slate-800 text-blue-600 dark:text-blue-400 font-bold text-[10px] flex items-center justify-center shrink-0 uppercase">
                         {u.name.charAt(0)}
                       </div>
                       <div className="min-w-0">
-                        <span className="text-xs font-semibold block truncate">{u.name}</span>
-                        {u.email && <span className="text-[10px] text-slate-500 block truncate">{u.email}</span>}
+                        <span className="text-xs font-semibold block truncate text-slate-700 dark:text-slate-250">{u.name}</span>
+                        {u.email && <span className="text-[10px] text-slate-550 dark:text-slate-500 block truncate">{u.email}</span>}
                       </div>
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0">
-                      <span className="text-[9px] bg-slate-900 border border-slate-800 text-amber-400/90 px-1.5 py-0.5 rounded font-mono">
+                      <span className="text-[9px] bg-slate-900 border border-slate-800 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded font-mono">
                         {des}
                       </span>
-                      {isSelected && <Check className="w-3.5 h-3.5 text-amber-400" />}
+                      {isSelected && <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-450" />}
                     </div>
                   </button>
                 );

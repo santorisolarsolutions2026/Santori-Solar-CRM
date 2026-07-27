@@ -64,11 +64,11 @@ const STAGE_BADGES: Record<number, { name: string; class: string }> = {
   0: { name: 'Uninitiated', class: 'bg-stone-550/15 text-stone-400 border-stone-500/20 font-bold' },
   1: { name: 'Fresh Lead', class: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
   2: { name: 'DNP', class: 'bg-slate-500/10 text-slate-400 border-slate-500/20' },
-  3: { name: 'Follow Up', class: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+  3: { name: 'Follow Up', class: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' },
   4: { name: 'Not Interested', class: 'bg-red-800/10 text-red-400 border-red-800/20' },
   5: { name: 'Call Later', class: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
   6: { name: 'Already Installed', class: 'bg-slate-800/20 text-slate-500 border-slate-800/30' },
-  7: { name: 'Decision Pending', class: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
+  7: { name: 'Decision Pending', class: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' },
   8: { name: 'Meeting Booked', class: 'bg-teal-500/10 text-teal-400 border-teal-500/20' },
   9: { name: 'Meeting Done', class: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
   10: { name: 'Disconnected', class: 'bg-slate-600/15 text-slate-400 border-slate-600/20' },
@@ -133,7 +133,7 @@ export default function LeadsPage() {
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
       </div>
     );
   }
@@ -972,7 +972,7 @@ export default function LeadsPage() {
           {hasPermission('leads:create') && (
             <Link
               href="/leads/new"
-              className="py-2.5 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-lg shadow-amber-500/10 flex items-center gap-1.5 transition-all w-fit"
+              className="py-2.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs shadow-lg shadow-blue-500/10 flex items-center gap-1.5 transition-all w-fit"
             >
               <Plus className="w-4 h-4" />
               <span>Add New Lead</span>
@@ -991,7 +991,7 @@ export default function LeadsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search Customer Name / Mobile / Lead Code..."
-              className="block w-full pl-9 pr-4 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 text-xs transition-all shadow-inner"
+              className="block w-full pl-9 pr-4 py-2.5 bg-slate-955/60 border border-slate-800 rounded-xl text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-600 text-xs transition-all shadow-inner"
             />
             <Search className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
           </div>
@@ -1020,12 +1020,12 @@ export default function LeadsPage() {
             <button
               type="button"
               onClick={() => setShowDetailedFilterModal(true)}
-              className="py-2.5 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-xl font-bold text-xs shadow-md flex items-center gap-2 transition-all cursor-pointer"
+              className="py-2.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-xl font-bold text-xs shadow-md flex items-center gap-2 transition-all cursor-pointer"
             >
               <SlidersHorizontal className="w-4 h-4" />
               <span>Filters</span>
               {getActiveFilterCount() > 0 && (
-                <span className="bg-slate-950 text-amber-400 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full border border-amber-400/30">
+                <span className="bg-slate-955 text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded-full border border-white/20">
                   {getActiveFilterCount()}
                 </span>
               )}
@@ -1036,7 +1036,7 @@ export default function LeadsPage() {
               <button
                 type="button"
                 onClick={handleClearFilters}
-                className="py-2.5 px-3 bg-slate-950 border border-slate-850 hover:bg-slate-900 text-slate-400 hover:text-white rounded-xl text-xs transition-all cursor-pointer"
+                className="py-2.5 px-3 bg-slate-955 border border-slate-850 hover:bg-slate-900 text-slate-400 hover:text-white rounded-xl text-xs transition-all cursor-pointer"
               >
                 Reset All
               </button>
@@ -1048,10 +1048,10 @@ export default function LeadsPage() {
         {getActiveFilterCount() > 0 && (
           <div className="pt-3 border-t border-slate-850 flex flex-wrap items-center gap-2 text-xs">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
-              <Filter className="w-3 h-3 text-amber-500" /> Active Filters:
+              <Filter className="w-3 h-3 text-blue-600 dark:text-blue-450" /> Active Filters:
             </span>
             {statusFilter && statusFilter.split(',').map(st => (
-              <span key={`st-${st}`} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[11px] font-semibold">
+              <span key={`st-${st}`} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-[11px] font-semibold">
                 Stage: {STAGE_BADGES[Number(st)]?.name || st}
                 <X 
                   className="w-3 h-3 cursor-pointer hover:text-white ml-0.5" 
@@ -1063,7 +1063,7 @@ export default function LeadsPage() {
               </span>
             ))}
             {connectionFilter && connectionFilter.split(',').map(ct => (
-              <span key={`ct-${ct}`} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[11px] font-semibold capitalize">
+              <span key={`ct-${ct}`} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-450 text-[11px] font-semibold capitalize">
                 Type: {ct}
                 <X className="w-3 h-3 cursor-pointer hover:text-white ml-0.5" onClick={() => setConnectionFilter(connectionFilter.split(',').filter(s => s !== ct).join(','))} />
               </span>
@@ -1075,25 +1075,25 @@ export default function LeadsPage() {
               </span>
             ))}
             {cityFilter && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-semibold">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-455 text-[11px] font-semibold">
                 City: {cityFilter}
                 <X className="w-3 h-3 cursor-pointer hover:text-white ml-0.5" onClick={() => setCityFilter('')} />
               </span>
             )}
             {stateFilter && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-semibold">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-455 text-[11px] font-semibold">
                 State: {stateFilter}
                 <X className="w-3 h-3 cursor-pointer hover:text-white ml-0.5" onClick={() => setStateFilter('')} />
               </span>
             )}
             {consultantFilter && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[11px] font-semibold">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-[11px] font-semibold">
                 Consultant Assigned
                 <X className="w-3 h-3 cursor-pointer hover:text-white ml-0.5" onClick={() => setConsultantFilter('')} />
               </span>
             )}
             {tlFilter && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-500/10 border border-teal-500/20 text-teal-300 text-[11px] font-semibold">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-500/10 border border-teal-500/20 text-teal-400 text-[11px] font-semibold">
                 TL Assigned
                 <X className="w-3 h-3 cursor-pointer hover:text-white ml-0.5" onClick={() => setTlFilter('')} />
               </span>
@@ -1124,7 +1124,7 @@ export default function LeadsPage() {
       {selectedIds.length > 0 && (
         <div className="bg-slate-900/60 border border-slate-800/80 rounded-xl p-4 flex items-center justify-between shadow-lg">
           <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping" />
+            <div className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-ping" />
             <span className="text-xs font-semibold text-slate-200">
               <strong>{selectedIds.length}</strong> leads selected {selectedIds.length === total ? "(all matching leads across pages)" : ""}
             </span>
@@ -1134,7 +1134,7 @@ export default function LeadsPage() {
               <>
                 <button
                   onClick={() => setShowBulkAssignModal(true)}
-                  className="py-2 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer font-sans"
+                  className="py-2 px-4 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer font-sans"
                 >
                   <UserCheck className="w-3.5 h-3.5" />
                   <span>Assign Member</span>
@@ -1184,11 +1184,11 @@ export default function LeadsPage() {
                 placeholder="Enter count (e.g. 100)..."
                 value={customSelectVal}
                 onChange={(e) => setCustomSelectVal(e.target.value)}
-                className="w-40 px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-l-lg text-slate-200 focus:outline-none focus:ring-1 focus:ring-amber-500 text-xs"
+                className="w-40 px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-l-lg text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
               />
               <button
                 type="submit"
-                className="py-1.5 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-r-lg text-xs font-bold transition-all cursor-pointer shadow-md"
+                className="py-1.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-r-lg text-xs font-bold transition-all cursor-pointer shadow-md"
               >
                 Select & Show All
               </button>
@@ -1215,7 +1215,7 @@ export default function LeadsPage() {
                     type="checkbox"
                     checked={leads.length > 0 && leads.map(l => l.id).every((id) => selectedIds.includes(id))}
                     onChange={handleSelectAllToggle}
-                    className="w-4 h-4 rounded border-slate-800 bg-slate-950 text-amber-500 focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                    className="w-4 h-4 rounded border-slate-800 bg-slate-950 text-blue-600 dark:text-blue-400 focus:ring-0 focus:ring-offset-0 cursor-pointer"
                   />
                 </th>
                 <th className="py-4 px-4 w-28">Lead ID</th>
@@ -1264,14 +1264,14 @@ export default function LeadsPage() {
                         lead.isUnreachable ? 'bg-red-500/[0.01] border-l-2 border-l-red-500' : ''
                       } ${
                         !lead.isActive ? 'opacity-70 border-l-2 border-l-slate-650 bg-slate-900/[0.08]' : ''
-                      } ${selectedIds.includes(lead.id) ? 'bg-amber-500/[0.02]' : ''}`}
+                      } ${selectedIds.includes(lead.id) ? 'bg-blue-600/[0.02]' : ''}`}
                     >
                       <td className="py-3.5 px-4 text-center w-12">
                         <input
                           type="checkbox"
                           checked={selectedIds.includes(lead.id)}
                           onChange={() => handleSelectToggle(lead.id)}
-                          className="w-4 h-4 rounded border-slate-800 bg-slate-950 text-amber-500 focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                          className="w-4 h-4 rounded border-slate-800 bg-slate-950 text-blue-600 dark:text-blue-400 focus:ring-0 focus:ring-offset-0 cursor-pointer"
                         />
                       </td>
                       <td className="py-3.5 px-4 font-mono font-bold text-xs text-slate-300 w-28">
@@ -1317,7 +1317,7 @@ export default function LeadsPage() {
                         {(() => {
                           const assigned = getLeadAssignedDisplay(lead, user);
                           return assigned ? (
-                            <Link href={`/team?userId=${assigned.id}`} className="hover:text-amber-400 hover:underline">
+                            <Link href={`/team?userId=${assigned.id}`} className="text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:underline font-semibold">
                               {assigned.name}
                             </Link>
                           ) : (
@@ -1330,7 +1330,7 @@ export default function LeadsPage() {
                           {hasPermission('leads:track') && (
                             <button
                               onClick={() => handleOpenTracker(lead)}
-                              className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 transition-all cursor-pointer"
+                              className="p-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-blue-600 dark:text-blue-450 transition-all cursor-pointer"
                               title="Track Lead Journey"
                             >
                               <Truck className="w-4.5 h-4.5" />
@@ -1407,7 +1407,7 @@ export default function LeadsPage() {
           <div className="w-full max-w-4xl bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-8 animate-fade-in-up">
             <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
               <div className="flex items-center gap-2">
-                <Upload className="w-5 h-5 text-amber-500" />
+                <Upload className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                 <h3 className="text-sm font-bold uppercase tracking-wider text-white">Import Leads from CSV</h3>
               </div>
               <button 
@@ -1430,7 +1430,7 @@ export default function LeadsPage() {
                   <p className="text-[10px] text-slate-500 mt-1 mb-4">
                     Required fields: Customer Name, Contact Number
                   </p>
-                  <label className="cursor-pointer py-2 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 rounded-lg font-bold text-xs shadow-md">
+                  <label className="cursor-pointer py-2 px-4 bg-gradient-to-r from-blue-600 to-indigo-650 text-slate-950 rounded-lg font-bold text-xs shadow-md">
                     Choose CSV File
                     <input
                       type="file"
@@ -1446,7 +1446,7 @@ export default function LeadsPage() {
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-950/40 p-4 border border-slate-850 rounded-xl">
                     <div className="text-xs">
                       <p className="text-slate-400 font-semibold">Selected File: <span className="text-white">{csvFile.name}</span></p>
-                      <p className="text-slate-500 mt-0.5">Detected: <strong className="text-amber-400">{csvRows.length}</strong> records and <strong className="text-amber-400">{csvHeaders.length}</strong> headers.</p>
+                      <p className="text-slate-500 mt-0.5">Detected: <strong className="text-blue-600 dark:text-blue-400">{csvRows.length}</strong> records and <strong className="text-blue-600 dark:text-blue-400">{csvHeaders.length}</strong> headers.</p>
                     </div>
                     <button
                       onClick={() => { setCsvFile(null); setCsvHeaders([]); setCsvRows([]); setImportResult(null); }}
@@ -1462,11 +1462,11 @@ export default function LeadsPage() {
                     <div className="p-6 bg-slate-900/40 border border-slate-800 rounded-xl space-y-4">
                       <div className="flex justify-between items-center text-xs">
                         <span className="text-slate-400 font-medium">{importProgress.statusText}</span>
-                        <span className="text-amber-400 font-extrabold">{importProgress.percent}%</span>
+                        <span className="text-blue-600 dark:text-blue-400 font-extrabold">{importProgress.percent}%</span>
                       </div>
                       <div className="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-900">
                         <div 
-                          className="bg-gradient-to-r from-amber-500 to-yellow-400 h-full transition-all duration-300 ease-out" 
+                          className="bg-gradient-to-r from-blue-600 to-indigo-650 h-full transition-all duration-300 ease-out" 
                           style={{ width: `${importProgress.percent}%` }}
                         ></div>
                       </div>
@@ -1483,7 +1483,7 @@ export default function LeadsPage() {
                         </div>
                         <div className="bg-slate-950/60 p-3 rounded-lg border border-slate-850">
                           <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Skipped</span>
-                          <span className="text-xs font-bold text-amber-500 mt-1 block">{importProgress.skippedCount}</span>
+                          <span className="text-xs font-bold text-blue-600 dark:text-blue-400 mt-1 block">{importProgress.skippedCount}</span>
                         </div>
                       </div>
                     </div>
@@ -1522,7 +1522,7 @@ export default function LeadsPage() {
                             <select
                               value={columnMapping[field.key] || ''}
                               onChange={(e) => setColumnMapping({ ...columnMapping, [field.key]: e.target.value })}
-                              className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none capitalize"
+                              className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none capitalize"
                             >
                               <option value="">-- Ignore / Unmapped --</option>
                               {csvHeaders.map((header) => (
@@ -1594,7 +1594,7 @@ export default function LeadsPage() {
                           </div>
                           <div className="bg-slate-950/40 border border-slate-800 p-2.5 rounded-lg text-center min-w-[80px]">
                             <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Skipped</span>
-                            <span className="text-base font-extrabold text-amber-500">{importResult.skippedCount}</span>
+                            <span className="text-base font-extrabold text-blue-600 dark:text-blue-400">{importResult.skippedCount}</span>
                           </div>
                         </div>
                       </div>
@@ -1612,7 +1612,7 @@ export default function LeadsPage() {
                                   <span className="font-bold text-white">{skipItem.customerName}</span>
                                   <span className="text-slate-500 ml-2 font-mono">{skipItem.mobile}</span>
                                 </div>
-                                <div className="text-amber-400 italic text-[11px] font-medium">
+                                <div className="text-blue-600 dark:text-blue-400 italic text-[11px] font-medium">
                                   {skipItem.reason}
                                 </div>
                               </div>
@@ -1640,7 +1640,7 @@ export default function LeadsPage() {
                     <button
                       type="button"
                       onClick={handleExecuteImport}
-                      className="py-2 px-5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md"
+                      className="py-2 px-5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs shadow-md"
                     >
                       Execute Import ({csvRows.length} Leads)
                     </button>
@@ -1667,7 +1667,7 @@ export default function LeadsPage() {
           <div className="w-full max-w-lg bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
             <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
                   <UserCheck className="w-4 h-4" />
                 </div>
                 <div>
@@ -1763,7 +1763,7 @@ export default function LeadsPage() {
                 <button
                   type="submit"
                   disabled={bulkAssigning}
-                  className="py-2 px-5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-xl font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  className="py-2 px-5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-xl font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
                   {bulkAssigning ? (
                     <>
@@ -1810,7 +1810,7 @@ export default function LeadsPage() {
                 <select
                   value={bulkStage}
                   onChange={(e) => setBulkStage(e.target.value)}
-                  className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500 focus:outline-none"
+                  className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-blue-500 focus:outline-none"
                 >
                   <option value="UNCHANGED">-- Select Target Stage --</option>
                   {Object.entries(STAGE_BADGES).map(([id, badge]) => (
@@ -1859,14 +1859,14 @@ export default function LeadsPage() {
             {/* Modal Header */}
             <div className="p-5 border-b border-slate-800 bg-slate-900/40 flex justify-between items-center shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-450">
                   <SlidersHorizontal className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
                     <span>Filters</span>
                     {getActiveFilterCount() > 0 && (
-                      <span className="bg-amber-500 text-slate-950 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                      <span className="bg-blue-650 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">
                         {getActiveFilterCount()} Active
                       </span>
                     )}
@@ -1882,7 +1882,7 @@ export default function LeadsPage() {
             {/* E-Commerce Two-Column Layout */}
             <div className="flex-1 flex overflow-hidden min-h-[400px]">
               {/* Left Navigation Sidebar Category Tabs */}
-              <div className="w-1/3 max-w-[240px] bg-slate-950/60 border-r border-slate-800/80 p-3 space-y-1 overflow-y-auto shrink-0 select-none">
+              <div className="w-1/3 max-w-[240px] bg-slate-955/60 border-r border-slate-800/80 p-3 space-y-1 overflow-y-auto shrink-0 select-none">
                 {[
                   { id: 'stages', label: 'Pipeline Stages', icon: Layers, count: statusFilter ? statusFilter.split(',').filter(Boolean).length : 0 },
                   { id: 'connection', label: 'Connection Type', icon: Zap, count: connectionFilter ? connectionFilter.split(',').filter(Boolean).length : 0 },
@@ -1899,16 +1899,16 @@ export default function LeadsPage() {
                       onClick={() => setActiveFilterTab(tab.id as any)}
                       className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer text-left ${
                         isActive
-                          ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30 shadow-md'
+                          ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 shadow-md'
                           : 'text-slate-400 hover:bg-slate-900/60 hover:text-slate-200 border border-transparent'
                       }`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <TabIcon className={`w-4 h-4 shrink-0 ${isActive ? 'text-amber-400' : 'text-slate-500'}`} />
+                        <TabIcon className={`w-4 h-4 shrink-0 ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500'}`} />
                         <span className="truncate">{tab.label}</span>
                       </div>
                       {tab.count > 0 && (
-                        <span className="bg-amber-500 text-slate-950 font-bold text-[9px] px-1.5 py-0.25 rounded-full shrink-0">
+                        <span className="bg-blue-600 text-white font-bold text-[9px] px-1.5 py-0.25 rounded-full shrink-0">
                           {tab.count}
                         </span>
                       )}
@@ -1928,7 +1928,7 @@ export default function LeadsPage() {
                         <p className="text-[11px] text-slate-400">Select multiple stages to filter leads.</p>
                       </div>
                       {statusFilter && (
-                        <button onClick={() => setStatusFilter('')} className="text-[11px] text-amber-400 font-semibold hover:underline cursor-pointer">
+                        <button onClick={() => setStatusFilter('')} className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold hover:underline cursor-pointer">
                           Clear Stages
                         </button>
                       )}
@@ -1948,7 +1948,7 @@ export default function LeadsPage() {
                             }}
                             className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer select-none transition-all ${
                               isChecked
-                                ? 'bg-amber-500/[0.06] border-amber-500/40 shadow-sm'
+                                ? 'bg-blue-500/10 border-blue-500/20 shadow-sm'
                                 : 'bg-slate-950/40 border-slate-850 hover:border-slate-800 hover:bg-slate-900/20'
                             }`}
                           >
@@ -1956,7 +1956,7 @@ export default function LeadsPage() {
                               {badge.name}
                             </span>
                             <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${
-                              isChecked ? 'bg-amber-500 border-amber-500 text-slate-950' : 'border-slate-700 bg-slate-900'
+                              isChecked ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-700 bg-slate-900'
                             }`}>
                               {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
                             </div>
@@ -1976,7 +1976,7 @@ export default function LeadsPage() {
                         <p className="text-[11px] text-slate-400">Filter by residential, commercial, or industrial setup.</p>
                       </div>
                       {connectionFilter && (
-                        <button onClick={() => setConnectionFilter('')} className="text-[11px] text-amber-400 font-semibold hover:underline cursor-pointer">
+                        <button onClick={() => setConnectionFilter('')} className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold hover:underline cursor-pointer">
                           Clear Types
                         </button>
                       )}
@@ -2018,7 +2018,7 @@ export default function LeadsPage() {
                         <p className="text-[11px] text-slate-400">Filter leads by where they originated.</p>
                       </div>
                       {sourceFilter && (
-                        <button onClick={() => setSourceFilter('')} className="text-[11px] text-amber-400 font-semibold hover:underline cursor-pointer">
+                        <button onClick={() => setSourceFilter('')} className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold hover:underline cursor-pointer">
                           Clear Sources
                         </button>
                       )}
@@ -2074,7 +2074,7 @@ export default function LeadsPage() {
                           value={cityFilter}
                           onChange={(e) => { setCityFilter(e.target.value); setPage(1); }}
                           placeholder="e.g. Delhi, Jaipur, Mumbai..."
-                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:ring-amber-500"
+                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:ring-blue-500"
                         />
                       </div>
                       <div>
@@ -2084,7 +2084,7 @@ export default function LeadsPage() {
                           value={stateFilter}
                           onChange={(e) => { setStateFilter(e.target.value); setPage(1); }}
                           placeholder="e.g. Rajasthan, Haryana..."
-                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:ring-amber-500"
+                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:ring-blue-500"
                         />
                       </div>
                     </div>
@@ -2100,7 +2100,7 @@ export default function LeadsPage() {
                     </div>
 
                     <div className="space-y-3.5">
-                      <label className="flex items-center gap-2.5 p-3 rounded-xl border border-slate-850 bg-slate-950/40 hover:bg-slate-900/20 cursor-pointer select-none transition-all">
+                      <label className="flex items-center gap-2.5 p-3 rounded-xl border border-slate-850 bg-slate-955/40 hover:bg-slate-900/20 cursor-pointer select-none transition-all">
                         <input
                           type="checkbox"
                           checked={unassignedFilter}
@@ -2113,7 +2113,7 @@ export default function LeadsPage() {
                               setManagerFilter('');
                             }
                           }}
-                          className="w-4 h-4 rounded border-slate-800 bg-slate-950 text-amber-500 focus:ring-0 cursor-pointer"
+                          className="w-4 h-4 rounded border-slate-800 bg-slate-950 text-blue-600 focus:ring-0 cursor-pointer"
                         />
                         <span className="text-xs font-semibold text-slate-200">Show only Unassigned Leads (no coordinators assigned)</span>
                       </label>
@@ -2152,9 +2152,7 @@ export default function LeadsPage() {
                       </div>
                     </div>
                   </div>
-                )}
-
-                {/* 6. CREATED DATES TAB */}
+                )}                {/* 6. CREATED DATES TAB */}
                 {activeFilterTab === 'dates' && (
                   <div className="space-y-4">
                     <div className="border-b border-slate-800 pb-3">
@@ -2169,7 +2167,7 @@ export default function LeadsPage() {
                           type="date"
                           value={dateFromFilter}
                           onChange={(e) => { setDateFromFilter(e.target.value); setPage(1); }}
-                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500"
+                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-blue-500"
                         />
                       </div>
                       <div>
@@ -2178,7 +2176,7 @@ export default function LeadsPage() {
                           type="date"
                           value={dateToFilter}
                           onChange={(e) => { setDateToFilter(e.target.value); setPage(1); }}
-                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-amber-500"
+                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-blue-500"
                         />
                       </div>
                     </div>
@@ -2192,14 +2190,14 @@ export default function LeadsPage() {
               <button
                 type="button"
                 onClick={handleClearFilters}
-                className="py-2.5 px-4 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-400 hover:text-white rounded-xl font-bold text-xs transition-all cursor-pointer"
+                className="py-2.5 px-4 bg-slate-900 hover:bg-slate-855 border border-slate-800 text-slate-400 hover:text-white rounded-xl font-bold text-xs transition-all cursor-pointer"
               >
                 Reset All Filters
               </button>
               <button
                 type="button"
                 onClick={() => setShowDetailedFilterModal(false)}
-                className="py-2.5 px-6 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-xl font-bold text-xs shadow-lg flex items-center gap-1.5 cursor-pointer"
+                className="py-2.5 px-6 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-xl font-bold text-xs shadow-lg flex items-center gap-1.5 cursor-pointer"
               >
                 <Check className="w-4 h-4 stroke-[3]" />
                 <span>Apply & View Leads ({total})</span>
@@ -2215,14 +2213,14 @@ export default function LeadsPage() {
           <div className="w-full max-w-2xl bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]">
             <div className="p-4 border-b border-slate-800 bg-slate-900/40 flex justify-between items-center shrink-0">
               <div className="flex items-center gap-2">
-                <Truck className="w-5 h-5 text-amber-400" />
+                <Truck className="w-5 h-5 text-blue-600 dark:text-blue-450" />
                 <h3 className="text-sm font-bold text-white uppercase tracking-wider">
                   Lead Journey Tracker: {trackingLead.customerName}
                 </h3>
               </div>
               <button
                 onClick={() => setTrackingLead(null)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-850 transition-all cursor-pointer"
+                className="text-slate-405 hover:text-white p-1 rounded-lg hover:bg-slate-850 transition-all cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -2230,7 +2228,7 @@ export default function LeadsPage() {
             <div className="p-5 overflow-y-auto flex-1">
               {trackingLoading ? (
                 <div className="flex flex-col items-center justify-center py-20 space-y-4">
-                  <Loader2 className="w-10 h-10 text-amber-500 animate-spin" />
+                  <Loader2 className="w-10 h-10 text-blue-600 dark:text-blue-400 animate-spin" />
                   <p className="text-xs text-slate-400 font-semibold tracking-wider uppercase font-mono">Loading Lead Journey...</p>
                 </div>
               ) : (
@@ -2240,7 +2238,7 @@ export default function LeadsPage() {
             <div className="p-4 border-t border-slate-800 bg-slate-900/30 flex justify-between items-center shrink-0">
               <Link
                 href={`/leads/${trackingLead.id}`}
-                className="text-xs font-bold text-amber-400 hover:underline flex items-center gap-1"
+                className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
               >
                 <span>Open Full Lead Workspace</span> &rarr;
               </Link>

@@ -114,7 +114,7 @@ export default function FinancePage() {
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
       </div>
     );
   }
@@ -641,7 +641,7 @@ export default function FinancePage() {
             onClick={() => setShowFilters(!showFilters)}
             className={`px-3 py-2 border rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               showFilters || filterDateRange !== 'all' || filterPaymentMethod !== 'all' || filterBalanceStatus !== 'all' || filterMinAmount || filterMaxAmount || filterOrderStatus !== 'all'
-                ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+                ? 'bg-blue-500/10 border-blue-500/30 text-blue-600 dark:text-blue-400'
                 : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-750'
             }`}
           >
@@ -649,7 +649,7 @@ export default function FinancePage() {
             <span className="relative">
               Filters
               {(filterDateRange !== 'all' || filterPaymentMethod !== 'all' || filterBalanceStatus !== 'all' || filterMinAmount || filterMaxAmount || filterOrderStatus !== 'all') && (
-                <span className="absolute -top-1 -right-2 w-1.5 h-1.5 bg-amber-500 rounded-full animate-ping" />
+                <span className="absolute -top-1 -right-2 w-1.5 h-1.5 bg-blue-600 rounded-full animate-ping" />
               )}
             </span>
           </button>
@@ -661,7 +661,7 @@ export default function FinancePage() {
         <div className="p-4 bg-slate-900/40 border border-slate-805 rounded-xl shadow-xl space-y-4">
           <div className="flex justify-between items-center border-b border-slate-800/60 pb-2.5">
             <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-              <SlidersHorizontal className="w-3.5 h-3.5 text-amber-500" />
+              <SlidersHorizontal className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
               <span>Advanced Filters</span>
             </h3>
             <button
@@ -835,9 +835,9 @@ export default function FinancePage() {
               <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between shadow-lg">
                 <div>
                   <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Outstanding Balance</span>
-                  <span className="text-xl font-extrabold text-amber-500 mt-1 block">₹{totalOutstanding.toLocaleString('en-IN')}</span>
+                  <span className="text-xl font-extrabold text-blue-600 dark:text-blue-400 mt-1 block">₹{totalOutstanding.toLocaleString('en-IN')}</span>
                 </div>
-                <div className="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
                   <ArrowDownLeft className="w-5 h-5" />
                 </div>
               </div>
@@ -924,13 +924,13 @@ export default function FinancePage() {
           onClick={() => setActiveTab('pending')}
           className={`px-6 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 ${
             activeTab === 'pending'
-              ? 'border-amber-500 text-amber-400'
+              ? 'border-blue-500 text-blue-600 dark:text-blue-400'
               : 'border-transparent text-slate-400 hover:text-slate-200'
           }`}
         >
           <span>Awaiting Verification</span>
           {pendingOrders.length > 0 && (
-            <span className="bg-amber-500 text-slate-950 text-[10px] px-1.5 py-0.5 rounded-full font-extrabold">
+            <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-extrabold">
               {pendingOrders.length}
             </span>
           )}
@@ -939,7 +939,7 @@ export default function FinancePage() {
           onClick={() => setActiveTab('ledger')}
           className={`px-6 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 ${
             activeTab === 'ledger'
-              ? 'border-amber-500 text-amber-400'
+              ? 'border-blue-500 text-blue-600 dark:text-blue-400'
               : 'border-transparent text-slate-400 hover:text-slate-200'
           }`}
         >
@@ -953,7 +953,7 @@ export default function FinancePage() {
       {/* Content */}
       {loading ? (
         <div className="py-24 flex flex-col items-center justify-center gap-3">
-          <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+          <Loader2 className="w-8 h-8 text-blue-600 dark:text-blue-400 animate-spin" />
           <p className="text-xs text-slate-400">Loading ledger data...</p>
         </div>
       ) : activeTab === 'pending' ? (
@@ -984,25 +984,25 @@ export default function FinancePage() {
                     <tr key={order.id} className="hover:bg-slate-900/30 transition-all text-slate-300">
                       <td className="py-4 px-4 font-mono font-bold text-slate-100">{order.orderCode}</td>
                       <td className="py-4 px-4 font-semibold">
-                        <Link href={`/leads/${order.lead.id}`} className="text-amber-400 hover:underline">
+                        <Link href={`/leads/${order.lead.id}`} className="text-blue-600 dark:text-blue-400 hover:underline">
                           {order.lead.customerName}
                         </Link>
                       </td>
                       <td className="py-4 px-4 font-semibold text-slate-400">{order.systemSizeKw} kW</td>
                       <td className="py-4 px-4 font-extrabold text-white">₹{order.totalValue.toLocaleString('en-IN')}</td>
-                      <td className="py-4 px-4 font-bold text-amber-400">
+                      <td className="py-4 px-4 font-bold text-blue-600 dark:text-blue-400">
                         ₹{order.downPayment.toLocaleString('en-IN')}
                         <span className="block text-[10px] text-slate-500 font-normal">Method: {order.paymentMethod.toUpperCase()}</span>
                       </td>
                       <td className="py-4 px-4 text-slate-400">
-                        <Link href={`/team?userId=${order.submittedBy.id}`} className="text-amber-400 hover:underline font-bold">
+                        <Link href={`/team?userId=${order.submittedBy.id}`} className="text-blue-600 dark:text-blue-400 hover:underline font-bold">
                           {order.submittedBy.name}
                         </Link>
                       </td>
                       <td className="py-4 px-4 text-right">
                         <button
                           onClick={() => { setSelectedOrder(order); setModalMode('verify'); }}
-                          className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1"
+                          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-slate-950 rounded font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1"
                         >
                           <Eye className="w-3.5 h-3.5" />
                           <span>Verify Order</span>
@@ -1044,14 +1044,14 @@ export default function FinancePage() {
                     <tr key={order.id} className="hover:bg-slate-900/30 transition-all text-slate-300">
                       <td className="py-4 px-4 font-mono font-bold text-slate-100">{order.orderCode}</td>
                       <td className="py-4 px-4 font-semibold">
-                        <Link href={`/leads/${order.lead.id}`} className="text-amber-400 hover:underline">
+                        <Link href={`/leads/${order.lead.id}`} className="text-blue-600 dark:text-blue-400 hover:underline">
                           {order.lead.customerName}
                         </Link>
                       </td>
                       <td className="py-4 px-4 font-extrabold text-white">₹{order.totalValue.toLocaleString('en-IN')}</td>
                       <td className="py-4 px-4 font-bold text-slate-400">₹{order.downPayment.toLocaleString('en-IN')}</td>
                       <td className="py-4 px-4 font-extrabold text-emerald-400">₹{order.totalPaid.toLocaleString('en-IN')}</td>
-                      <td className="py-4 px-4 font-extrabold text-amber-500">
+                      <td className="py-4 px-4 font-extrabold text-blue-600 dark:text-blue-400">
                         ₹{order.balanceOutstanding.toLocaleString('en-IN')}
                         {order.balanceOutstanding === 0 && (
                           <span className="inline-block text-[9px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20 ml-2">Paid</span>
@@ -1073,7 +1073,7 @@ export default function FinancePage() {
                           onClick={() => { setSelectedOrder(order); setModalMode('ledger_detail'); }}
                           className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 hover:border-slate-600 text-slate-200 rounded font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1"
                         >
-                          <CreditCard className="w-3.5 h-3.5 text-amber-400" />
+                          <CreditCard className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                           <span>View Ledger</span>
                         </button>
                       </td>
@@ -1099,7 +1099,7 @@ export default function FinancePage() {
                 </h3>
                 <p className="text-[11px] text-slate-400 mt-0.5">
                   Client:{' '}
-                  <Link href={`/leads/${selectedOrder.lead.id}`} className="text-amber-400 hover:underline font-bold">
+                  <Link href={`/leads/${selectedOrder.lead.id}`} className="text-blue-600 dark:text-blue-400 hover:underline font-bold">
                     {selectedOrder.lead.customerName}
                   </Link>{' '}
                   ({selectedOrder.lead.city})
@@ -1124,7 +1124,7 @@ export default function FinancePage() {
                 </div>
                 <div>
                   <span className="text-slate-400 block font-semibold">Down Payment Punched</span>
-                  <span className="text-sm font-bold text-amber-400">₹{selectedOrder.downPayment.toLocaleString('en-IN')}</span>
+                  <span className="text-sm font-bold text-blue-600 dark:text-blue-400">₹{selectedOrder.downPayment.toLocaleString('en-IN')}</span>
                 </div>
                 <div>
                   <span className="text-slate-400 block font-semibold">Total Payments Cleared</span>
@@ -1132,7 +1132,7 @@ export default function FinancePage() {
                 </div>
                 <div>
                   <span className="text-slate-400 block font-semibold">Outstanding Balance</span>
-                  <span className="text-sm font-extrabold text-amber-500">₹{selectedOrder.balanceOutstanding.toLocaleString('en-IN')}</span>
+                  <span className="text-sm font-extrabold text-blue-600 dark:text-blue-400">₹{selectedOrder.balanceOutstanding.toLocaleString('en-IN')}</span>
                 </div>
               </div>
 
@@ -1201,7 +1201,7 @@ export default function FinancePage() {
                                   href={`/api/v1/orders/${selectedOrder.id}/documents/${doc.id}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-[10px] text-amber-400 hover:underline font-bold"
+                                  className="text-[10px] text-blue-600 dark:text-blue-400 hover:underline font-bold"
                                 >
                                   View File
                                 </a>
@@ -1218,7 +1218,7 @@ export default function FinancePage() {
                     <div className="space-y-4">
                       <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-2">Verification Action</h4>
                       
-                      <div className="p-3 bg-amber-500/5 border border-amber-500/10 rounded-lg text-slate-300 text-xs leading-normal">
+                      <div className="p-3 bg-blue-500/5 border border-blue-500/10 rounded-lg text-slate-300 text-xs leading-normal">
                         Please inspect all file uploads, client load capacity, connection numbers, and initial payment methods. 
                         Approving moves this order to **Operations** and records the initial down payment in the active ledger.
                       </div>
@@ -1301,7 +1301,7 @@ export default function FinancePage() {
                                           setEditPaymentReason('');
                                         }}
                                         title="Modify Payment"
-                                        className="text-slate-400 hover:text-amber-400 p-1 hover:bg-slate-800 rounded transition-all cursor-pointer border border-transparent"
+                                        className="text-slate-400 hover:text-blue-600 dark:text-blue-400 p-1 hover:bg-slate-800 rounded transition-all cursor-pointer border border-transparent"
                                       >
                                         <SlidersHorizontal className="w-3.5 h-3.5" />
                                       </button>
@@ -1333,7 +1333,7 @@ export default function FinancePage() {
                                 </p>
                               )}
                               {pmt.changeReason && (
-                                <p className="text-[10px] text-amber-400 italic bg-amber-950/20 border border-amber-900/30 p-2 rounded-lg mt-1.5">
+                                <p className="text-[10px] text-blue-600 dark:text-blue-400 italic bg-blue-950/20 border border-blue-900/30 p-2 rounded-lg mt-1.5">
                                   <strong>Edit Reason:</strong> {pmt.changeReason}
                                 </p>
                               )}
@@ -1344,9 +1344,9 @@ export default function FinancePage() {
                                     href={pmt.receiptUrl || `/api/v1/orders/${selectedOrder.id}/documents/${downpaymentDoc?.id}`} 
                                     target="_blank" 
                                     rel="noopener noreferrer" 
-                                    className="text-[10px] text-amber-400 hover:underline font-bold flex items-center gap-1"
+                                    className="text-[10px] text-blue-600 dark:text-blue-400 hover:underline font-bold flex items-center gap-1"
                                   >
-                                    <FileText className="w-3 h-3 text-amber-400" />
+                                    <FileText className="w-3 h-3 text-blue-600 dark:text-blue-400" />
                                     <span>{pmt.receiptUrl ? 'View Image' : 'View Receipt'}</span>
                                   </a>
                                 </div>
@@ -1356,7 +1356,7 @@ export default function FinancePage() {
                                 <span className="flex items-center gap-1">
                                   <User className="w-2.5 h-2.5 text-slate-500" />
                                   Recorded by{' '}
-                                  <Link href={`/team?userId=${pmt.recordedBy.id}`} className="text-amber-400 hover:underline font-bold">
+                                  <Link href={`/team?userId=${pmt.recordedBy.id}`} className="text-blue-600 dark:text-blue-400 hover:underline font-bold">
                                     {pmt.recordedBy.name}
                                   </Link>
                                 </span>
@@ -1462,9 +1462,9 @@ export default function FinancePage() {
 
                         {/* State 1: Uploading */}
                         {receiptUploading && (
-                          <div className="flex flex-col items-center justify-center p-6 bg-slate-950/60 border border-dashed border-amber-500/40 rounded-xl space-y-2 animate-pulse">
-                            <Loader2 className="w-6 h-6 text-amber-500 animate-spin" />
-                            <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">Receipt is Uploading</span>
+                          <div className="flex flex-col items-center justify-center p-6 bg-slate-950/60 border border-dashed border-blue-500/40 rounded-xl space-y-2 animate-pulse">
+                            <Loader2 className="w-6 h-6 text-blue-600 dark:text-blue-400 animate-spin" />
+                            <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Receipt is Uploading</span>
                           </div>
                         )}
 
@@ -1496,7 +1496,7 @@ export default function FinancePage() {
                                   href={receiptUrl} 
                                   target="_blank" 
                                   rel="noopener noreferrer" 
-                                  className="text-[10px] text-amber-400 hover:text-amber-300 font-bold underline mt-0.5 inline-block"
+                                  className="text-[10px] text-blue-600 dark:text-blue-400 hover:text-blue-600 dark:text-blue-400 font-bold underline mt-0.5 inline-block"
                                 >
                                   View Full Receipt Image
                                 </a>
@@ -1512,10 +1512,10 @@ export default function FinancePage() {
                               type="button"
                               onClick={() => fileInputRef.current?.click()}
                               disabled={selectedOrder.balanceOutstanding === 0}
-                              className="flex flex-col items-center justify-center p-4 bg-slate-950 hover:bg-slate-900 border border-slate-850 hover:border-amber-500/30 rounded-xl space-y-1.5 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed group"
+                              className="flex flex-col items-center justify-center p-4 bg-slate-950 hover:bg-slate-900 border border-slate-850 hover:border-blue-500/30 rounded-xl space-y-1.5 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed group"
                             >
-                              <div className="w-8 h-8 bg-slate-900 border border-slate-800 group-hover:border-amber-500/20 rounded-lg flex items-center justify-center transition-all">
-                                <Upload className="w-4 h-4 text-slate-400 group-hover:text-amber-400 transition-colors" />
+                              <div className="w-8 h-8 bg-slate-900 border border-slate-800 group-hover:border-blue-500/20 rounded-lg flex items-center justify-center transition-all">
+                                <Upload className="w-4 h-4 text-slate-400 group-hover:text-blue-600 dark:text-blue-400 transition-colors" />
                               </div>
                               <span className="text-[10px] font-bold text-slate-300 group-hover:text-white transition-colors">Upload File</span>
                               <span className="text-[8px] text-slate-500">From Device</span>
@@ -1525,10 +1525,10 @@ export default function FinancePage() {
                               type="button"
                               onClick={() => cameraInputRef.current?.click()}
                               disabled={selectedOrder.balanceOutstanding === 0}
-                              className="flex flex-col items-center justify-center p-4 bg-slate-950 hover:bg-slate-900 border border-slate-850 hover:border-amber-500/30 rounded-xl space-y-1.5 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed group"
+                              className="flex flex-col items-center justify-center p-4 bg-slate-950 hover:bg-slate-900 border border-slate-850 hover:border-blue-500/30 rounded-xl space-y-1.5 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed group"
                             >
-                              <div className="w-8 h-8 bg-slate-900 border border-slate-800 group-hover:border-amber-500/20 rounded-lg flex items-center justify-center transition-all">
-                                <Camera className="w-4 h-4 text-slate-400 group-hover:text-amber-400 transition-colors" />
+                              <div className="w-8 h-8 bg-slate-900 border border-slate-800 group-hover:border-blue-500/20 rounded-lg flex items-center justify-center transition-all">
+                                <Camera className="w-4 h-4 text-slate-400 group-hover:text-blue-600 dark:text-blue-400 transition-colors" />
                               </div>
                               <span className="text-[10px] font-bold text-slate-300 group-hover:text-white transition-colors">Take Photo</span>
                               <span className="text-[8px] text-slate-500">Open Camera</span>
@@ -1545,7 +1545,7 @@ export default function FinancePage() {
                         <button
                           type="submit"
                           disabled={paymentRecording || receiptUploading}
-                          className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md shadow-amber-500/10 flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                          className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs shadow-md shadow-blue-500/10 flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
                         >
                           {paymentRecording ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <PlusCircle className="w-3.5 h-3.5" />}
                           <span>Record Receipt</span>
@@ -1588,7 +1588,7 @@ export default function FinancePage() {
                   required
                   value={opsConsultantId || opsTlId || opsManagerId}
                   onChange={(e) => handleSelectOpsAssignee(e.target.value)}
-                  className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                  className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
                 >
                   <option value="">Select Operations Member</option>
                   {employees.filter((emp) => {
@@ -1646,7 +1646,7 @@ export default function FinancePage() {
                   required
                   value={editPaymentAmt}
                   onChange={(e) => setEditPaymentAmt(e.target.value)}
-                  className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                  className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
                 />
               </div>
 
@@ -1656,7 +1656,7 @@ export default function FinancePage() {
                   required
                   value={editPaymentMethod}
                   onChange={(e) => setEditPaymentMethod(e.target.value)}
-                  className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                  className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
                 >
                   {PAYMENT_METHODS.map((m) => (
                     <option key={m.value} value={m.value}>{m.label}</option>
@@ -1671,7 +1671,7 @@ export default function FinancePage() {
                   value={editPaymentRef}
                   onChange={(e) => setEditPaymentRef(e.target.value)}
                   placeholder="e.g. Bank TXN, UPI ID, Cheque number"
-                  className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                  className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
                 />
               </div>
 
@@ -1681,19 +1681,19 @@ export default function FinancePage() {
                   value={editPaymentRemarks}
                   onChange={(e) => setEditPaymentRemarks(e.target.value)}
                   rows={2}
-                  className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none resize-none"
+                  className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none resize-none"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-semibold uppercase text-amber-500 mb-1">Reason for Modification *</label>
+                <label className="block text-[10px] font-semibold uppercase text-blue-600 dark:text-blue-400 mb-1">Reason for Modification *</label>
                 <textarea
                   required
                   value={editPaymentReason}
                   onChange={(e) => setEditPaymentReason(e.target.value)}
                   placeholder="Explain why this payment record is being changed..."
                   rows={2}
-                  className="block w-full px-3 py-2 bg-slate-955 border border-amber-900/40 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none resize-none"
+                  className="block w-full px-3 py-2 bg-slate-955 border border-blue-900/40 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none resize-none"
                 />
               </div>
 
@@ -1707,7 +1707,7 @@ export default function FinancePage() {
                 </button>
                 <button
                   type="submit"
-                  className="py-2 px-5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md"
+                  className="py-2 px-5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs shadow-md"
                 >
                   Save Changes
                 </button>
@@ -1744,7 +1744,7 @@ export default function FinancePage() {
                   onChange={(e) => setDiscardPaymentReason(e.target.value)}
                   placeholder="Provide a mandatory reason why this payment is being discarded..."
                   rows={3}
-                  className="block w-full px-3 py-2 bg-slate-955 border border-rose-900/60 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none resize-none"
+                  className="block w-full px-3 py-2 bg-slate-955 border border-rose-900/60 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none resize-none"
                 />
               </div>
 

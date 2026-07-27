@@ -86,7 +86,7 @@ export async function GET(req: Request) {
           formattedMeetings.push({
             id: `meeting-${m.id}`,
             type: 'meeting',
-            title: 'Meeting Scheduled 📅',
+            title: 'Meeting Scheduled',
             datetime,
             leadId: m.leadId,
             customerName: m.lead.customerName,
@@ -103,7 +103,7 @@ export async function GET(req: Request) {
     const formattedFollowups = followups.map((f) => ({
       id: `followup-${f.id}`,
       type: 'followup',
-      title: 'Follow Up Scheduled 📞',
+      title: 'Follow Up Scheduled',
       datetime: new Date(f.followupAt!),
       leadId: f.id,
       customerName: f.customerName,

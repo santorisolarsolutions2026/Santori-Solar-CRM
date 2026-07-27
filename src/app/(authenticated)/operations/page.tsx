@@ -93,7 +93,7 @@ export default function OperationsPage() {
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
       </div>
     );
   }
@@ -911,7 +911,7 @@ export default function OperationsPage() {
       {/* Grid of cards */}
       {loading ? (
         <div className="py-24 flex flex-col items-center justify-center gap-3">
-          <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+          <Loader2 className="w-8 h-8 text-blue-600 dark:text-blue-400 animate-spin" />
           <p className="text-xs text-slate-400">Loading operations queue...</p>
         </div>
       ) : orders.length === 0 ? (
@@ -932,7 +932,7 @@ export default function OperationsPage() {
                 order.isSubsidyApplied || (order.isCommissioned && !order.subsidyApplicable)
                   ? 'bg-emerald-500' 
                   : order.isCommissioned
-                    ? 'bg-amber-500'
+                    ? 'bg-blue-600'
                     : order.isMeterInstalled
                       ? 'bg-blue-500'
                       : order.isInstalled
@@ -954,7 +954,7 @@ export default function OperationsPage() {
                     order.isSubsidyApplied || (order.isCommissioned && !order.subsidyApplicable)
                       ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                       : order.isCommissioned
-                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                        ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20'
                         : order.isMeterInstalled
                           ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
                           : order.isInstalled
@@ -981,7 +981,7 @@ export default function OperationsPage() {
 
                 {/* Customer Details */}
                 <div>
-                  <h3 className="text-sm font-bold text-white group-hover:text-amber-400 transition-colors">
+                  <h3 className="text-sm font-bold text-white group-hover:text-blue-600 dark:text-blue-400 transition-colors">
                     <Link href={`/leads/${order.lead.id}`} className="hover:underline">
                       {order.lead.customerName}
                     </Link>
@@ -1051,7 +1051,7 @@ export default function OperationsPage() {
                         <span className="text-[10px] text-slate-400">{formatDateTime(order.actualSubsidyAppliedAt).split(',')[0]}</span>
                       </div>
                     ) : (
-                      <div className="p-2 bg-amber-500/[0.04] border border-amber-500/10 rounded text-[10px] text-amber-400 font-semibold text-center animate-pulse">
+                      <div className="p-2 bg-blue-600/[0.04] border border-blue-500/10 rounded text-[10px] text-blue-600 dark:text-blue-400 font-semibold text-center animate-pulse">
                         ⏳ Subsidy Registration Pending
                       </div>
                     )
@@ -1065,7 +1065,7 @@ export default function OperationsPage() {
                   onClick={() => { setSelectedOrder(order); setShowScheduleForm(false); setShowInstallForm(false); setShowActualDeliveryForm(false); setShowActualInstallForm(false); setShowActualMeterForm(false); setShowActualCommissionForm(false); setNewSubsidyAmount(''); }}
                   className="px-4 py-2 bg-slate-900 border border-slate-850 hover:border-slate-700 text-slate-200 rounded-lg font-bold text-[11px] hover:text-white transition-all cursor-pointer flex items-center gap-1.5"
                 >
-                  <Eye className="w-3.5 h-3.5 text-amber-500" />
+                  <Eye className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                   <span>Manage Order</span>
                 </button>
               </div>
@@ -1092,7 +1092,7 @@ export default function OperationsPage() {
               <div className="p-5 border-b border-slate-800/60 bg-slate-900/10 flex justify-between items-center">
                 <div>
                   <h3 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
-                    <Wrench className="w-4 h-4 text-amber-500" />
+                    <Wrench className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                     <span>Operations & Scheduling Panel</span>
                     <span className="text-slate-500 font-mono text-xs font-normal">({selectedOrder.orderCode})</span>
                   </h3>
@@ -1116,7 +1116,7 @@ export default function OperationsPage() {
                     {/* ==================== 1. DELIVERY PHASE ==================== */}
                     <div className="space-y-4">
                       <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-1.5 flex items-center gap-2">
-                        <span className="w-5 h-5 rounded bg-amber-500/10 text-amber-400 flex items-center justify-center font-mono text-[10px]">1</span>
+                        <span className="w-5 h-5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-mono text-[10px]">1</span>
                         <span>Material Delivery Phase</span>
                       </h4>
                       
@@ -1124,7 +1124,7 @@ export default function OperationsPage() {
                         <div>
                           <span className="text-slate-500 block uppercase tracking-wider text-[8px] font-bold">Delivery Status</span>
                           <div className="flex items-center gap-2 mt-1">
-                            <Truck className={`w-4 h-4 ${selectedOrder.isDelivered ? 'text-emerald-400' : selectedOrder.deliveryDate ? 'text-amber-400' : 'text-slate-500'}`} />
+                            <Truck className={`w-4 h-4 ${selectedOrder.isDelivered ? 'text-emerald-400' : selectedOrder.deliveryDate ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500'}`} />
                             <div className="flex flex-col">
                               <span className="text-sm font-bold text-slate-300">
                                 {selectedOrder.isDelivered 
@@ -1147,7 +1147,7 @@ export default function OperationsPage() {
                               onClick={() => { setShowScheduleForm(!showScheduleForm); setShowInstallForm(false); setShowActualDeliveryForm(false); setShowActualCommissionForm(false); }}
                               className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-350 hover:text-white rounded-lg font-bold text-[10px] cursor-pointer flex items-center gap-1 transition-all"
                             >
-                              <Calendar className="w-3.5 h-3.5 text-amber-500" />
+                              <Calendar className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                               <span>{selectedOrder.deliveryDate ? 'Re-schedule' : 'Schedule Delivery'}</span>
                             </button>
                           )}
@@ -1212,7 +1212,7 @@ export default function OperationsPage() {
                             <button
                               type="submit"
                               disabled={schedulingLoading}
-                              className="px-3.5 py-1 bg-amber-500 hover:bg-amber-400 text-slate-955 rounded font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer"
+                              className="px-3.5 py-1 bg-blue-600 hover:bg-blue-500 text-slate-955 rounded font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer"
                             >
                               {schedulingLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                               <span>Confirm Schedule</span>
@@ -1372,7 +1372,7 @@ export default function OperationsPage() {
                     {selectedOrder.isDelivered ? (
                       <div className="space-y-4 pt-2">
                         <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-1.5 flex items-center gap-2">
-                          <span className="w-5 h-5 rounded bg-amber-500/10 text-amber-400 flex items-center justify-center font-mono text-[10px]">2</span>
+                          <span className="w-5 h-5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-mono text-[10px]">2</span>
                           <span>Solar Installation Phase</span>
                         </h4>
                         
@@ -1380,7 +1380,7 @@ export default function OperationsPage() {
                           <div>
                             <span className="text-slate-500 block uppercase tracking-wider text-[8px] font-bold">Installation Status</span>
                             <div className="flex items-center gap-2 mt-1">
-                              <Wrench className={`w-4 h-4 ${selectedOrder.isInstalled ? 'text-emerald-400' : selectedOrder.installationDate ? 'text-amber-400' : 'text-slate-500'}`} />
+                              <Wrench className={`w-4 h-4 ${selectedOrder.isInstalled ? 'text-emerald-400' : selectedOrder.installationDate ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500'}`} />
                               <div className="flex flex-col">
                                 <span className="text-sm font-bold text-slate-200">
                                   {selectedOrder.isInstalled 
@@ -1403,7 +1403,7 @@ export default function OperationsPage() {
                                 onClick={() => { setShowInstallForm(!showInstallForm); setShowScheduleForm(false); setShowActualInstallForm(false); setShowActualCommissionForm(false); }}
                                 className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-350 hover:text-white rounded-lg font-bold text-[10px] cursor-pointer flex items-center gap-1 transition-all"
                               >
-                                <Calendar className="w-3.5 h-3.5 text-amber-500" />
+                                <Calendar className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                                 <span>{selectedOrder.installationDate ? 'Re-schedule' : 'Schedule Installation'}</span>
                               </button>
                             )}
@@ -1468,7 +1468,7 @@ export default function OperationsPage() {
                               <button
                                 type="submit"
                                 disabled={installLoading}
-                                className="px-3.5 py-1 bg-amber-500 hover:bg-amber-400 text-slate-955 rounded font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer"
+                                className="px-3.5 py-1 bg-blue-600 hover:bg-blue-500 text-slate-955 rounded font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer"
                               >
                                 {installLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                                 <span>Confirm Schedule</span>
@@ -1633,7 +1633,7 @@ export default function OperationsPage() {
                     {selectedOrder.isInstalled ? (
                       <div className="space-y-4 pt-2">
                         <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-1.5 flex items-center gap-2">
-                          <span className="w-5 h-5 rounded bg-amber-500/10 text-amber-400 flex items-center justify-center font-mono text-[10px]">3</span>
+                          <span className="w-5 h-5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-mono text-[10px]">3</span>
                           <span>Net Metering Phase</span>
                         </h4>
 
@@ -1834,7 +1834,7 @@ export default function OperationsPage() {
                     {selectedOrder.isMeterInstalled ? (
                       <div className="space-y-4 pt-2">
                         <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-1.5 flex items-center gap-2">
-                          <span className="w-5 h-5 rounded bg-amber-500/10 text-amber-400 flex items-center justify-center font-mono text-[10px]">4</span>
+                          <span className="w-5 h-5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-mono text-[10px]">4</span>
                           <span>Plant Commissioning Phase</span>
                         </h4>
 
@@ -1842,7 +1842,7 @@ export default function OperationsPage() {
                           <div>
                             <span className="text-slate-555 block uppercase tracking-wider text-[8px] font-bold">Commissioning Status</span>
                             <div className="flex items-center gap-2 mt-1">
-                              <Zap className={`w-4 h-4 ${selectedOrder.isCommissioned ? 'text-emerald-400' : 'text-amber-500 animate-pulse'}`} />
+                              <Zap className={`w-4 h-4 ${selectedOrder.isCommissioned ? 'text-emerald-400' : 'text-blue-600 dark:text-blue-400 animate-pulse'}`} />
                               <div className="flex flex-col">
                                 <span className="text-sm font-bold text-slate-200">
                                   {selectedOrder.isCommissioned 
@@ -2030,7 +2030,7 @@ export default function OperationsPage() {
                     {selectedOrder.isCommissioned ? (
                       <div className="space-y-4 pt-2">
                         <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-1.5 flex items-center gap-2">
-                          <span className="w-5 h-5 rounded bg-amber-500/10 text-amber-400 flex items-center justify-center font-mono text-[10px]">5</span>
+                          <span className="w-5 h-5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-mono text-[10px]">5</span>
                           <span>Government Subsidy Stage</span>
                         </h4>
                         {selectedOrder.isSubsidyApplied ? (
@@ -2144,7 +2144,7 @@ export default function OperationsPage() {
                         <div>
                           <span className="text-[10px] text-slate-500 font-bold block uppercase tracking-wider">Customer Name</span>
                           <span className="font-semibold text-slate-200">
-                            <Link href={`/leads/${selectedOrder.lead.id}`} className="text-amber-400 hover:underline">
+                            <Link href={`/leads/${selectedOrder.lead.id}`} className="text-blue-600 dark:text-blue-400 hover:underline">
                               {selectedOrder.lead.customerName}
                             </Link>
                           </span>
@@ -2157,7 +2157,7 @@ export default function OperationsPage() {
                         </div>
                         <div>
                           <span className="text-[10px] text-slate-500 font-bold block uppercase tracking-wider">Mobile Number</span>
-                          <a href={`tel:${selectedOrder.lead.mobile}`} className="text-amber-400 font-bold hover:underline block mt-0.5">
+                          <a href={`tel:${selectedOrder.lead.mobile}`} className="text-blue-600 dark:text-blue-400 font-bold hover:underline block mt-0.5">
                             {selectedOrder.lead.mobile}
                           </a>
                         </div>
@@ -2195,7 +2195,7 @@ export default function OperationsPage() {
                             </div>
                             <div className="flex justify-between border-t border-slate-800/60 pt-1.5 text-[11px]">
                               <span className="text-slate-300 font-semibold">Remaining Balance:</span>
-                              <span className={`font-mono font-bold ${balanceOutstanding <= 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                              <span className={`font-mono font-bold ${balanceOutstanding <= 0 ? 'text-emerald-400' : 'text-blue-600 dark:text-blue-400'}`}>
                                 ₹{balanceOutstanding.toLocaleString('en-IN')}
                               </span>
                             </div>
@@ -2314,7 +2314,7 @@ export default function OperationsPage() {
                           }}
                           className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-semibold cursor-pointer transition-all hover:bg-slate-800 ${
                             isSelected 
-                              ? 'bg-amber-500 text-slate-950 font-bold hover:bg-amber-400' 
+                              ? 'bg-blue-600 text-white font-bold hover:bg-blue-500' 
                               : 'text-slate-350 hover:text-white'
                           }`}
                         >
@@ -2335,7 +2335,7 @@ export default function OperationsPage() {
                       customPicker.onChange(dateStr);
                       setCustomPicker(prev => ({ ...prev, isOpen: false }));
                     }}
-                    className="text-[10px] text-amber-500 hover:text-amber-400 font-bold cursor-pointer"
+                    className="text-[10px] text-blue-600 dark:text-blue-400 hover:text-blue-600 dark:text-blue-400 font-bold cursor-pointer"
                   >
                     Today
                   </button>
@@ -2365,7 +2365,7 @@ export default function OperationsPage() {
                           type="button"
                           onClick={() => setSelectedHour(h)}
                           className={`w-full text-center py-0.5 text-xs cursor-pointer hover:bg-slate-800 ${
-                            selectedHour === h ? 'text-amber-500 font-bold bg-slate-850' : 'text-slate-350 hover:text-white'
+                            selectedHour === h ? 'text-blue-600 dark:text-blue-400 font-bold bg-slate-850' : 'text-slate-350 hover:text-white'
                           }`}
                         >
                           {h}
@@ -2383,7 +2383,7 @@ export default function OperationsPage() {
                           type="button"
                           onClick={() => setSelectedMinute(m)}
                           className={`w-full text-center py-0.5 text-xs cursor-pointer hover:bg-slate-800 ${
-                            selectedMinute === m ? 'text-amber-500 font-bold bg-slate-850' : 'text-slate-350 hover:text-white'
+                            selectedMinute === m ? 'text-blue-600 dark:text-blue-400 font-bold bg-slate-850' : 'text-slate-350 hover:text-white'
                           }`}
                         >
                           {m}
@@ -2407,7 +2407,7 @@ export default function OperationsPage() {
                       customPicker.onChange(`${selectedHour}:${selectedMinute}`);
                       setCustomPicker(prev => ({ ...prev, isOpen: false }));
                     }}
-                    className="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded text-[10px] cursor-pointer"
+                    className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-slate-950 font-bold rounded text-[10px] cursor-pointer"
                   >
                     Confirm
                   </button>
@@ -2431,7 +2431,7 @@ export default function OperationsPage() {
                   <X className="w-6 h-6" />
                 </div>
               ) : (
-                <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-400">
+                <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
                   <Info className="w-6 h-6" />
                 </div>
               )}
@@ -2455,7 +2455,7 @@ export default function OperationsPage() {
                     ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-emerald-500/10'
                     : customAlert.type === 'error'
                     ? 'bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white shadow-rose-500/10'
-                    : 'bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-slate-950 shadow-amber-500/10'
+                    : 'bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white shadow-blue-500/10'
                 }`}
               >
                 Dismiss
@@ -2566,7 +2566,7 @@ export default function OperationsPage() {
                   <button
                     type="button"
                     onClick={capturePhoto}
-                    className="w-2/3 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md shadow-amber-500/10 flex items-center justify-center gap-1.5"
+                    className="w-2/3 py-2 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md shadow-blue-500/10 flex items-center justify-center gap-1.5"
                   >
                     <Camera className="w-4 h-4" />
                     <span>Capture Photo</span>

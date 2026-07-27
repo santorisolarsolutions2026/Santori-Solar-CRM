@@ -402,15 +402,15 @@ export default function AttendancePage() {
             Completed
           </span>
         );
-      } else if (record.status === 'half_day') {
+       } else if (record.status === 'half_day') {
         return (
-          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-orange-500/10 text-orange-400 border-orange-500/20 uppercase tracking-wider">
+          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-blue-500/10 text-blue-600 dark:text-blue-400 dark:text-blue-400 border-blue-500/20 uppercase tracking-wider">
             Half Day ⚠️
           </span>
         );
       } else {
         return (
-          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-amber-500/10 text-amber-400 border-amber-500/20 uppercase tracking-wider animate-pulse">
+          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 uppercase tracking-wider animate-pulse">
             Active
           </span>
         );
@@ -447,7 +447,7 @@ export default function AttendancePage() {
   if (!hasAttendanceAccess) {
     return (
       <div className="p-12 text-center bg-[#111625] border border-slate-800 rounded-2xl max-w-xl mx-auto my-12 space-y-4 shadow-xl">
-        <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mx-auto">
+        <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 mx-auto">
           <Clock className="w-6 h-6" />
         </div>
         <h2 className="text-base font-bold text-white uppercase tracking-wider">Attendance Access Restricted</h2>
@@ -464,7 +464,7 @@ export default function AttendancePage() {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-white tracking-wide flex items-center gap-2.5">
-            <Clock className="w-6 h-6 text-amber-400" />
+            <Clock className="w-6 h-6 text-blue-600 dark:text-blue-450" />
             <span>Team Member Attendance & Work Hours</span>
           </h1>
           <p className="text-xs text-slate-400 mt-1">
@@ -481,48 +481,48 @@ export default function AttendancePage() {
               }}
               className="py-2.5 px-4 bg-slate-900 border border-slate-800 text-slate-350 hover:text-white rounded-2xl font-bold text-xs flex items-center gap-1.5 cursor-pointer hover:border-slate-700 transition-all font-sans"
             >
-              <Calendar className="w-4 h-4 text-amber-500" />
+              <Calendar className="w-4 h-4 text-blue-600" />
               <span>Manage Holidays</span>
             </button>
           )}
 
           {/* Quick Personal Action Box */}
           <div className="p-3.5 bg-gradient-to-r from-slate-900 via-[#131b2e] to-slate-900 border border-slate-800 rounded-2xl flex items-center gap-4 shadow-lg shrink-0">
-          <div className="text-right">
-            <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block">Today's Status</span>
-            <span className={`text-xs font-bold font-mono ${
-              !todayAttendance ? 'text-slate-400' : todayAttendance.checkOut ? 'text-emerald-400' : 'text-amber-400'
-            }`}>
-              {!todayAttendance ? 'Not Checked In' : todayAttendance.checkOut ? 'Day Completed ✓' : 'Checked In'}
-            </span>
-          </div>
-
-          {!todayAttendance ? (
-            <button
-              onClick={handleCheckIn}
-              disabled={actionLoading}
-              className="py-2 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-xl font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all"
-            >
-              {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCheck className="w-4 h-4" />}
-              <span>Check In Now</span>
-            </button>
-          ) : !todayAttendance.checkOut ? (
-            <button
-              onClick={handleCheckOut}
-              disabled={actionLoading}
-              className="py-2 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all"
-            >
-              {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
-              <span>Check Out</span>
-            </button>
-          ) : (
-            <div className="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-[11px] font-bold text-emerald-400 font-mono">
-              {Math.floor((todayAttendance.workDurationMin || 0) / 60)}h {(todayAttendance.workDurationMin || 0) % 60}m Worked
+            <div className="text-right">
+              <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block">Today's Status</span>
+              <span className={`text-xs font-bold font-mono ${
+                !todayAttendance ? 'text-slate-400' : todayAttendance.checkOut ? 'text-emerald-400' : 'text-blue-600 dark:text-blue-400'
+              }`}>
+                {!todayAttendance ? 'Not Checked In' : todayAttendance.checkOut ? 'Day Completed ✓' : 'Checked In'}
+              </span>
             </div>
-          )}
+
+            {!todayAttendance ? (
+              <button
+                onClick={handleCheckIn}
+                disabled={actionLoading}
+                className="py-2 px-4 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-xl font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all"
+              >
+                {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCheck className="w-4 h-4" />}
+                <span>Check In Now</span>
+              </button>
+            ) : !todayAttendance.checkOut ? (
+              <button
+                onClick={handleCheckOut}
+                disabled={actionLoading}
+                className="py-2 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all"
+              >
+                {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
+                <span>Check Out</span>
+              </button>
+            ) : (
+              <div className="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-[11px] font-bold text-emerald-400 font-mono">
+                {Math.floor((todayAttendance.workDurationMin || 0) / 60)}h {(todayAttendance.workDurationMin || 0) % 60}m Worked
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -539,9 +539,9 @@ export default function AttendancePage() {
         <div className="p-5 bg-[#111625] border border-slate-800 rounded-2xl flex items-center justify-between">
           <div>
             <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block">Checked In (Active)</span>
-            <span className="text-xl font-extrabold text-amber-400 mt-1 block font-mono">{checkedInCount}</span>
+            <span className="text-xl font-extrabold text-blue-600 dark:text-blue-400 mt-1 block font-mono">{checkedInCount}</span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+          <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
             <UserCheck className="w-5 h-5" />
           </div>
         </div>
@@ -562,7 +562,7 @@ export default function AttendancePage() {
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
           {activeTab !== 'monthly' && (
             <div className="flex items-center gap-2 bg-slate-950/60 border border-slate-800 px-3 py-2 rounded-xl text-xs text-slate-300">
-              <Calendar className="w-4 h-4 text-amber-400 shrink-0" />
+              <Calendar className="w-4 h-4 text-blue-650 dark:text-blue-400 shrink-0" />
               <input
                 type="date"
                 value={selectedDate}
@@ -572,13 +572,13 @@ export default function AttendancePage() {
             </div>
           )}
 
-          <div className="flex bg-slate-950/60 border border-slate-800 p-1 rounded-xl">
+          <div className="flex bg-slate-955/60 border border-slate-800 p-1 rounded-xl">
             {isSupervisor && (
               <button
                 type="button"
                 onClick={() => setActiveTab('team')}
                 className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  activeTab === 'team' ? 'bg-amber-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+                  activeTab === 'team' ? 'bg-blue-600 text-white shadow' : 'text-slate-450 hover:text-white'
                 }`}
               >
                 Team Roster
@@ -588,7 +588,7 @@ export default function AttendancePage() {
               type="button"
               onClick={() => setActiveTab('personal')}
               className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'personal' ? 'bg-amber-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+                activeTab === 'personal' ? 'bg-blue-600 text-white shadow' : 'text-slate-450 hover:text-white'
               }`}
             >
               My Log
@@ -597,7 +597,7 @@ export default function AttendancePage() {
               type="button"
               onClick={() => setActiveTab('monthly')}
               className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'monthly' ? 'bg-amber-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+                activeTab === 'monthly' ? 'bg-blue-600 text-white shadow' : 'text-slate-450 hover:text-white'
               }`}
             >
               Monthly History
@@ -612,7 +612,7 @@ export default function AttendancePage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search team member name or ID..."
-              className="block w-full pl-9 pr-3 py-2 bg-slate-950/60 border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-xs"
+              className="block w-full pl-9 pr-3 py-2 bg-slate-955/60 border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-xs"
             />
             <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
           </div>
@@ -681,7 +681,7 @@ export default function AttendancePage() {
       <div className="bg-[#111625] border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
         {loading ? (
           <div className="p-12 text-center text-slate-400 flex flex-col items-center gap-3">
-            <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
+            <Loader2 className="w-6 h-6 animate-spin text-blue-600 dark:text-blue-400" />
             <span className="text-xs font-semibold">Loading daily attendance records...</span>
           </div>
         ) : activeTab === 'team' ? (
@@ -717,7 +717,7 @@ export default function AttendancePage() {
                               onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
                             />
                           ) : (
-                            <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700/80 flex items-center justify-center text-amber-400 shrink-0">
+                            <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700/80 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
                               <User className="w-5 h-5" />
                             </div>
                           )}
@@ -726,7 +726,7 @@ export default function AttendancePage() {
                             <div className="flex items-center gap-2 mt-0.5">
                               <span className="text-[10px] text-slate-400 capitalize">{member.role}</span>
                               {member.employeeId && (
-                                <span className="text-[9px] font-mono text-amber-400/80 bg-amber-950/20 px-1.5 py-0.25 rounded border border-amber-900/30">
+                                <span className="text-[9px] font-mono text-blue-600 dark:text-blue-400 bg-blue-500/10 px-1.5 py-0.25 rounded border border-blue-500/20">
                                   {member.employeeId}
                                 </span>
                               )}
@@ -769,8 +769,8 @@ export default function AttendancePage() {
                             <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Completed
                           </span>
                         ) : (
-                          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full border bg-amber-500/10 text-amber-400 border-amber-500/20 uppercase tracking-wider flex items-center gap-1 w-fit animate-pulse" title="Currently Checked In">
-                            <UserCheck className="w-3 h-3 text-amber-400" /> Active
+                          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full border bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 uppercase tracking-wider flex items-center gap-1 w-fit animate-pulse" title="Currently Checked In">
+                            <UserCheck className="w-3 h-3 text-blue-600 dark:text-blue-450" /> Active
                           </span>
                         )}
                       </td>
@@ -817,7 +817,7 @@ export default function AttendancePage() {
                       <td className="py-3.5 px-4 text-slate-300">
                         {att.checkOut ? new Date(att.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
                       </td>
-                      <td className="py-3.5 px-4 text-amber-400 font-bold">
+                      <td className="py-3.5 px-4 text-blue-650 dark:text-blue-400 font-bold">
                         {att.workDurationMin ? `${Math.floor(att.workDurationMin / 60)}h ${att.workDurationMin % 60}m` : '-'}
                       </td>
                       <td className="py-3.5 px-4 font-sans">
@@ -850,9 +850,9 @@ export default function AttendancePage() {
               <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl flex items-center justify-between">
                 <div>
                   <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block">Total Work Hours</span>
-                  <span className="text-lg font-extrabold text-amber-400 mt-1 block font-mono">{totalWorkHoursStr}</span>
+                  <span className="text-lg font-extrabold text-blue-600 dark:text-blue-400 mt-1 block font-mono">{totalWorkHoursStr}</span>
                 </div>
-                <div className="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                <div className="w-9 h-9 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
                   <Clock className="w-5 h-5" />
                 </div>
               </div>
@@ -881,7 +881,7 @@ export default function AttendancePage() {
             {/* Monthly Calendar Tabular List */}
             {monthlyLoading ? (
               <div className="p-12 text-center text-slate-400 flex flex-col items-center gap-3">
-                <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
+                <Loader2 className="w-6 h-6 animate-spin text-blue-600 dark:text-blue-400" />
                 <span className="text-xs font-semibold">Loading monthly logs...</span>
               </div>
             ) : (
@@ -912,7 +912,7 @@ export default function AttendancePage() {
                       const weekdayDisplay = dayDate.toLocaleDateString('default', { weekday: 'short', timeZone: 'UTC' });
 
                       return (
-                        <tr key={dayStr} className={`hover:bg-slate-900/30 transition-all ${isToday ? 'bg-amber-500/5' : ''}`}>
+                        <tr key={dayStr} className={`hover:bg-slate-900/30 transition-all ${isToday ? 'bg-blue-500/[0.04]' : ''}`}>
                           <td className="py-3 px-5 font-sans">
                             <span className="font-bold text-white block">{dateDisplay}</span>
                             <span className="text-[10px] text-slate-500 font-medium">{weekdayDisplay}</span>
@@ -949,7 +949,7 @@ export default function AttendancePage() {
                               <span className="text-slate-655 font-normal">-</span>
                             )}
                           </td>
-                          <td className="py-3 px-4 text-amber-400 font-bold">
+                          <td className="py-3 px-4 text-blue-650 dark:text-blue-400 font-bold">
                             {record && record.workDurationMin ? (
                               `${Math.floor(record.workDurationMin / 60)}h ${record.workDurationMin % 60}m`
                             ) : record && !record.checkOut ? (
@@ -968,7 +968,7 @@ export default function AttendancePage() {
                                   </span>
                                 )}
                                 {record.notes && (
-                                  <span className="text-amber-450 italic text-[11px]">
+                                  <span className="text-blue-600 dark:text-blue-450 italic text-[11px]">
                                     &ldquo;{record.notes}&rdquo;
                                   </span>
                                 )}
@@ -994,7 +994,7 @@ export default function AttendancePage() {
           <div className="w-full max-w-2xl bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-8 flex flex-col max-h-[85vh] animate-fade-in-up">
             <div className="p-5 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
               <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-amber-500" />
+                <Calendar className="w-5 h-5 text-blue-600" />
                 <h3 className="text-sm font-bold uppercase tracking-wider text-white">Manage Gazetted Holidays</h3>
               </div>
               <button type="button" onClick={() => setShowHolidayModal(false)} className="text-slate-400 hover:text-white cursor-pointer border border-transparent">
@@ -1013,7 +1013,7 @@ export default function AttendancePage() {
                     value={newHolidayName}
                     onChange={(e) => setNewHolidayName(e.target.value)}
                     placeholder="e.g. Independence Day, Diwali"
-                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -1024,11 +1024,11 @@ export default function AttendancePage() {
                       required
                       value={newHolidayDate}
                       onChange={(e) => setNewHolidayDate(e.target.value)}
-                      className="block flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none"
+                      className="block flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
                     />
                     <button
                       type="submit"
-                      className="py-2 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg font-bold text-xs shadow-md transition-all cursor-pointer shrink-0 border border-transparent"
+                      className="py-2 px-4 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs shadow-md transition-all cursor-pointer shrink-0 border border-transparent"
                     >
                       Add
                     </button>
@@ -1082,7 +1082,7 @@ export default function AttendancePage() {
           <div className="w-full max-w-md bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
             <div className="p-5 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
               <div className="flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-amber-500" />
+                <ShieldCheck className="w-5 h-5 text-blue-600" />
                 <h3 className="text-sm font-bold uppercase tracking-wider text-white">Override Attendance Status</h3>
               </div>
               <button type="button" onClick={() => setShowOverrideModal(false)} className="text-slate-400 hover:text-white cursor-pointer border border-transparent">
@@ -1092,7 +1092,7 @@ export default function AttendancePage() {
 
             <form onSubmit={handleOverrideSubmit}>
               <div className="p-6 space-y-4">
-                <div className="bg-amber-500/5 border border-amber-500/10 rounded-xl p-3.5 text-xs text-amber-400/90 leading-relaxed font-sans">
+                <div className="bg-blue-500/5 border border-blue-500/10 rounded-xl p-3.5 text-xs text-blue-600 dark:text-blue-400 leading-relaxed font-sans">
                   You are overriding attendance for:
                   <strong className="text-white block font-sans mt-1">Date: {overrideDate}</strong>
                   <strong className="text-white block font-sans">Employee: {employees.find(e => e.id === overrideUserId)?.name || `ID #${overrideUserId}`}</strong>
@@ -1103,7 +1103,7 @@ export default function AttendancePage() {
                   <select
                     value={overrideStatus}
                     onChange={(e) => setOverrideStatus(e.target.value)}
-                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:ring-amber-500 focus:outline-none"
+                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:ring-blue-500 focus:outline-none"
                   >
                     <option value="present">Present (Completed)</option>
                     <option value="half_day">Half Day</option>
@@ -1123,7 +1123,7 @@ export default function AttendancePage() {
                 </button>
                 <button
                   type="submit"
-                  className="py-2 px-5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-xl font-bold text-xs shadow-md transition-all cursor-pointer border border-transparent"
+                  className="py-2 px-5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-xl font-bold text-xs shadow-md transition-all cursor-pointer border border-transparent"
                 >
                   Confirm Override
                 </button>

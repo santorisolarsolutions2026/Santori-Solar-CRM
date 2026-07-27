@@ -25,17 +25,17 @@ export function TrendLineChart({ trend }: TrendLineChartProps) {
   return (
     <ResponsiveContainer width="100%" height="100%">
       <LineChart data={trend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
-        <XAxis dataKey="date" stroke="#6b7280" fontSize={10} tickLine={false} />
-        <YAxis stroke="#6b7280" fontSize={10} tickLine={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
+        <XAxis dataKey="date" stroke="var(--text-muted)" fontSize={10} tickLine={false} />
+        <YAxis stroke="var(--text-muted)" fontSize={10} tickLine={false} />
         <Tooltip
-          contentStyle={{ backgroundColor: '#111625', border: '1px solid #1f2937', borderRadius: '8px' }}
-          labelStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}
-          itemStyle={{ fontSize: '12px' }}
+          contentStyle={{ backgroundColor: 'var(--bg-card-solid)', border: '1px solid var(--border-color)', borderRadius: '8px' }}
+          labelStyle={{ color: 'var(--text-primary)', fontSize: '12px', fontWeight: 'bold' }}
+          itemStyle={{ fontSize: '12px', color: 'var(--text-secondary)' }}
           cursor={false}
         />
         <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
-        <Line type="monotone" name="Leads Created" dataKey="created" stroke="#3B82F6" strokeWidth={2.5} activeDot={{ r: 6 }} dot={false} />
+        <Line type="monotone" name="Leads Created" dataKey="created" stroke="var(--accent-color)" strokeWidth={2.5} activeDot={{ r: 6 }} dot={false} />
         <Line type="monotone" name="Sales Completed" dataKey="closed" stroke="#10B981" strokeWidth={2.5} dot={false} />
       </LineChart>
     </ResponsiveContainer>
@@ -67,9 +67,9 @@ export function LeadSourcePieChart({ leadSourceData, colors }: LeadSourcePieChar
           ))}
         </Pie>
         <Tooltip
-          contentStyle={{ backgroundColor: '#111625', border: '1px solid #1f2937', borderRadius: '8px' }}
-          labelStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}
-          itemStyle={{ fontSize: '12px' }}
+          contentStyle={{ backgroundColor: 'var(--bg-card-solid)', border: '1px solid var(--border-color)', borderRadius: '8px' }}
+          labelStyle={{ color: 'var(--text-primary)', fontSize: '12px', fontWeight: 'bold' }}
+          itemStyle={{ fontSize: '12px', color: 'var(--text-secondary)' }}
         />
       </PieChart>
     </ResponsiveContainer>
@@ -84,16 +84,16 @@ export function PipelineBarChart({ pipelineBarData }: PipelineBarChartProps) {
   return (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={pipelineBarData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
-        <XAxis dataKey="name" stroke="#6b7280" fontSize={8} tickLine={false} />
-        <YAxis stroke="#6b7280" fontSize={10} tickLine={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
+        <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={8} tickLine={false} />
+        <YAxis stroke="var(--text-muted)" fontSize={10} tickLine={false} />
         <Tooltip
-          contentStyle={{ backgroundColor: '#111625', border: '1px solid #1f2937', borderRadius: '8px' }}
-          labelStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}
-          itemStyle={{ fontSize: '12px' }}
+          contentStyle={{ backgroundColor: 'var(--bg-card-solid)', border: '1px solid var(--border-color)', borderRadius: '8px' }}
+          labelStyle={{ color: 'var(--text-primary)', fontSize: '12px', fontWeight: 'bold' }}
+          itemStyle={{ fontSize: '12px', color: 'var(--text-secondary)' }}
           cursor={false}
         />
-        <Bar dataKey="Leads" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="Leads" fill="var(--accent-color)" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );

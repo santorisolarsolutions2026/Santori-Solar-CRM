@@ -107,7 +107,7 @@ export default function CompletedOrdersPage() {
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
       </div>
     );
   }
@@ -191,7 +191,7 @@ export default function CompletedOrdersPage() {
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-blue-600 dark:text-blue-400 animate-spin" />
       </div>
     );
   }
@@ -219,7 +219,7 @@ export default function CompletedOrdersPage() {
           </div>
           <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl text-center">
             <span className="text-[10px] text-slate-400 uppercase font-mono block">Installed Capacity</span>
-            <span className="text-lg font-bold text-amber-400">{totalKwInstalled.toFixed(1)} kW</span>
+            <span className="text-lg font-bold text-blue-600 dark:text-blue-400">{totalKwInstalled.toFixed(1)} kW</span>
           </div>
           <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl text-center">
             <span className="text-[10px] text-slate-400 uppercase font-mono block">Total Value</span>
@@ -236,7 +236,7 @@ export default function CompletedOrdersPage() {
             <button
               onClick={() => setScope('team')}
               className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
-                scope === 'team' ? 'bg-amber-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+                scope === 'team' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
               }`}
             >
               My Team's Orders
@@ -244,7 +244,7 @@ export default function CompletedOrdersPage() {
             <button
               onClick={() => setScope('my')}
               className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
-                scope === 'my' ? 'bg-amber-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+                scope === 'my' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
               }`}
             >
               My Assigned
@@ -253,7 +253,7 @@ export default function CompletedOrdersPage() {
               <button
                 onClick={() => setScope('all')}
                 className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
-                  scope === 'all' ? 'bg-amber-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+                  scope === 'all' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
                 }`}
               >
                 All System Orders
@@ -269,7 +269,7 @@ export default function CompletedOrdersPage() {
                 placeholder="Search by Code, Customer Name, Mobile, City..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500/50"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50"
               />
             </div>
             <button
@@ -288,7 +288,7 @@ export default function CompletedOrdersPage() {
             <select
               value={selectedMemberFilter}
               onChange={(e) => setSelectedMemberFilter(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-300 focus:outline-none focus:border-amber-500/50"
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-300 focus:outline-none focus:border-blue-500/50"
             >
               <option value="">All Team Members</option>
               {teamMembers.map(m => (
@@ -303,7 +303,7 @@ export default function CompletedOrdersPage() {
             <select
               value={clientType}
               onChange={(e) => setClientType(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-300 focus:outline-none focus:border-amber-500/50"
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-300 focus:outline-none focus:border-blue-500/50"
             >
               <option value="all">All System Types</option>
               <option value="on_grid">On-Grid Solar</option>
@@ -319,7 +319,7 @@ export default function CompletedOrdersPage() {
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-300 focus:outline-none focus:border-amber-500/50"
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-300 focus:outline-none focus:border-blue-500/50"
             />
           </div>
 
@@ -330,7 +330,7 @@ export default function CompletedOrdersPage() {
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-300 focus:outline-none focus:border-amber-500/50"
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-300 focus:outline-none focus:border-blue-500/50"
             />
           </div>
         </div>
@@ -340,7 +340,7 @@ export default function CompletedOrdersPage() {
       <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
         {loading ? (
           <div className="p-12 text-center text-slate-400 flex flex-col items-center gap-3">
-            <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+            <Loader2 className="w-8 h-8 text-blue-600 dark:text-blue-400 animate-spin" />
             <p className="text-sm font-medium">Loading completed orders...</p>
           </div>
         ) : orders.length === 0 ? (
@@ -367,14 +367,14 @@ export default function CompletedOrdersPage() {
                 {orders.map(order => (
                   <tr key={order.id} className="hover:bg-slate-850/50 transition-colors">
                     <td className="p-4">
-                      <div className="font-bold text-amber-400 font-mono">{order.orderCode}</div>
+                      <div className="font-bold text-blue-600 dark:text-blue-400 font-mono">{order.orderCode}</div>
                       <div className="text-[10px] text-slate-500 font-mono">Lead: {order.lead.leadCode}</div>
                     </td>
                     <td className="p-4">
                       <div className="font-semibold text-white">{order.lead.customerName}</div>
                       <div className="text-[11px] text-slate-400">{order.lead.mobile} • {order.lead.city}</div>
                     </td>
-                    <td className="p-4 font-mono font-bold text-amber-300">
+                    <td className="p-4 font-mono font-bold text-blue-600 dark:text-blue-400">
                       {order.systemSizeKw} kW
                       <span className="block text-[10px] text-slate-400 font-normal uppercase">{order.clientType.replace('_', '-')}</span>
                     </td>
@@ -393,7 +393,7 @@ export default function CompletedOrdersPage() {
                     <td className="p-4 text-right">
                       <button
                         onClick={() => setSelectedOrder(order)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 font-semibold rounded-xl text-xs transition-all cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 border border-blue-500/30 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 font-semibold rounded-xl text-xs transition-all cursor-pointer"
                       >
                         <Eye className="w-3.5 h-3.5" />
                         Full Details
@@ -435,7 +435,7 @@ export default function CompletedOrdersPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
               {/* Customer Info */}
               <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
-                <h4 className="font-bold text-amber-400 uppercase font-mono text-[10px]">Customer & Site Info</h4>
+                <h4 className="font-bold text-blue-600 dark:text-blue-400 uppercase font-mono text-[10px]">Customer & Site Info</h4>
                 <div className="text-white font-semibold">{selectedOrder.lead.customerName}</div>
                 <div className="text-slate-400">Phone: {selectedOrder.lead.mobile}</div>
                 <div className="text-slate-400">Address: {selectedOrder.lead.address}, {selectedOrder.lead.city}, {selectedOrder.lead.state} - {selectedOrder.lead.pinCode}</div>
@@ -444,7 +444,7 @@ export default function CompletedOrdersPage() {
 
               {/* System Info */}
               <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
-                <h4 className="font-bold text-amber-400 uppercase font-mono text-[10px]">Solar System Specification</h4>
+                <h4 className="font-bold text-blue-600 dark:text-blue-400 uppercase font-mono text-[10px]">Solar System Specification</h4>
                 <div className="text-white font-semibold">{selectedOrder.systemSizeKw} kW Solar Plant</div>
                 <div className="text-slate-400">Type: {selectedOrder.clientType.replace('_', ' ').toUpperCase()}</div>
                 <div className="text-slate-400">Connection #: {selectedOrder.connectionNumber}</div>
@@ -453,7 +453,7 @@ export default function CompletedOrdersPage() {
 
               {/* Stakeholders */}
               <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
-                <h4 className="font-bold text-amber-400 uppercase font-mono text-[10px]">Department Handlers</h4>
+                <h4 className="font-bold text-blue-600 dark:text-blue-400 uppercase font-mono text-[10px]">Department Handlers</h4>
                 <div className="text-slate-300"><span className="text-slate-500">Sales Member:</span> {selectedOrder.submittedBy?.name || '-'}</div>
                 <div className="text-slate-300"><span className="text-slate-500">Finance Member:</span> {selectedOrder.assignedFinance?.name || selectedOrder.financeProcessedBy?.name || '-'}</div>
                 <div className="text-slate-300"><span className="text-slate-500">Operations Member:</span> {selectedOrder.assignedOps?.name || '-'}</div>

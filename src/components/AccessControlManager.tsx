@@ -45,7 +45,7 @@ export default function AccessControlManager({ currentUser, users, onPermissions
   if (!isITOrAdmin) {
     return (
       <div className="p-6 bg-slate-900 border border-slate-800 rounded-xl text-center">
-        <Lock className="w-10 h-10 text-amber-500 mx-auto mb-3" />
+        <Lock className="w-10 h-10 text-blue-600 dark:text-blue-400 mx-auto mb-3" />
         <h3 className="text-lg font-bold text-white mb-1">Restricted Access</h3>
         <p className="text-sm text-slate-400">Only IT department members or Administrators can modify custom access level permissions.</p>
       </div>
@@ -96,8 +96,8 @@ export default function AccessControlManager({ currentUser, users, onPermissions
     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
       <div className="flex items-center justify-between border-b border-slate-800 pb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl">
-            <ShieldCheck className="w-6 h-6 text-amber-400" />
+          <div className="p-2.5 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+            <ShieldCheck className="w-6 h-6 text-blue-600 dark:text-blue-400" />
           </div>
           <div>
             <h2 className="text-xl font-bold text-white">Custom Access Level Manager</h2>
@@ -109,7 +109,7 @@ export default function AccessControlManager({ currentUser, users, onPermissions
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl transition-all shadow-lg disabled:opacity-50 cursor-pointer text-xs"
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white font-bold rounded-xl transition-all shadow-lg disabled:opacity-50 cursor-pointer text-xs border border-transparent"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Save Access Levels
@@ -151,7 +151,7 @@ export default function AccessControlManager({ currentUser, users, onPermissions
           <div className="bg-slate-950/60 border border-slate-850 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
             <div>
               <span className="text-xs text-slate-400 font-mono uppercase">Configuring User</span>
-              <h4 className="text-lg font-bold text-amber-400">{selectedUser.name}</h4>
+              <h4 className="text-lg font-bold text-blue-600 dark:text-blue-400">{selectedUser.name}</h4>
               <p className="text-xs text-slate-400">{selectedUser.email} • {selectedUser.department?.name || 'Department Unassigned'} • {selectedUser.designation?.name || selectedUser.role}</p>
             </div>
             <div className="flex gap-2">
@@ -251,7 +251,7 @@ export default function AccessControlManager({ currentUser, users, onPermissions
                                   }
                                   setSelectedPermissions(next);
                                 }}
-                                className="text-[9px] font-semibold text-slate-400 hover:text-amber-400 transition-colors cursor-pointer"
+                                className="text-[9px] font-semibold text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
                               >
                                 {allGroupActive ? 'Deselect All' : 'Select All'}
                               </button>

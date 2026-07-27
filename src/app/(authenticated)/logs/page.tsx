@@ -187,7 +187,7 @@ export default function AuditLogsPage() {
   if (authLoading) {
     return (
       <div className="min-h-screen bg-[#090b11] flex items-center justify-center">
-        <RefreshCw className="w-10 h-10 text-amber-500 animate-spin" />
+        <RefreshCw className="w-10 h-10 text-blue-600 dark:text-blue-400 animate-spin" />
       </div>
     );
   }
@@ -215,7 +215,7 @@ export default function AuditLogsPage() {
           </p>
           <button
             onClick={() => router.push('/dashboard')}
-            className="w-full py-2.5 bg-slate-900 hover:bg-slate-850 text-amber-500 hover:text-amber-400 border border-slate-800 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer"
+            className="w-full py-2.5 bg-slate-900 hover:bg-slate-850 text-blue-600 dark:text-blue-400 hover:text-blue-600 dark:text-blue-400 border border-slate-800 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer"
           >
             Return to Dashboard
           </button>
@@ -248,7 +248,7 @@ export default function AuditLogsPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-850">
         <div>
-          <div className="flex items-center gap-2 text-amber-500 text-xs font-bold uppercase tracking-wider mb-1">
+          <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider mb-1">
             <Terminal className="w-3.5 h-3.5" />
             <span>Admin Console</span>
           </div>
@@ -261,7 +261,7 @@ export default function AuditLogsPage() {
           onClick={() => fetchLogs(page)}
           className="flex items-center gap-1.5 px-3 py-2 bg-slate-900 hover:bg-slate-850 text-slate-300 hover:text-white border border-slate-800 rounded-lg text-xs font-bold transition-all cursor-pointer self-end sm:self-auto"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-amber-500' : ''}`} />
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-blue-600 dark:text-blue-400' : ''}`} />
           <span>Refresh Feed</span>
         </button>
       </div>
@@ -269,7 +269,7 @@ export default function AuditLogsPage() {
       {/* Advanced Filters */}
       <div className="bg-[#111625]/60 border border-slate-800/80 rounded-2xl p-5 shadow-xl backdrop-blur-sm space-y-4">
         <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
-          <Filter className="w-3.5 h-3.5 text-amber-500" />
+          <Filter className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
           <span>Search & Filters</span>
         </div>
         
@@ -284,7 +284,7 @@ export default function AuditLogsPage() {
                 placeholder="Search name or email..."
                 value={searchUser}
                 onChange={(e) => setSearchUser(e.target.value)}
-                className="w-full pl-8 pr-3 py-2 bg-slate-950/80 border border-slate-850 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none placeholder:text-slate-600"
+                className="w-full pl-8 pr-3 py-2 bg-slate-950/80 border border-slate-850 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none placeholder:text-slate-600"
               />
             </div>
           </div>
@@ -295,7 +295,7 @@ export default function AuditLogsPage() {
             <select
               value={selectedTable}
               onChange={(e) => setSelectedTable(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-950/80 border border-slate-850 rounded-lg text-slate-300 text-xs focus:ring-amber-500 focus:outline-none"
+              className="w-full px-3 py-2 bg-slate-950/80 border border-slate-850 rounded-lg text-slate-300 text-xs focus:ring-blue-500 focus:outline-none"
             >
               <option value="">All Tables</option>
               <option value="User">User Accounts</option>
@@ -316,7 +316,7 @@ export default function AuditLogsPage() {
               placeholder="e.g. CREATE, role, isActive..."
               value={selectedAction}
               onChange={(e) => setSelectedAction(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-950/80 border border-slate-850 rounded-lg text-white text-xs focus:ring-amber-500 focus:outline-none placeholder:text-slate-600"
+              className="w-full px-3 py-2 bg-slate-950/80 border border-slate-850 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none placeholder:text-slate-600"
             />
           </div>
 
@@ -327,7 +327,7 @@ export default function AuditLogsPage() {
               type="datetime-local"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-950/80 border border-slate-850 rounded-lg text-slate-350 text-xs focus:ring-amber-500 focus:outline-none"
+              className="w-full px-3 py-2 bg-slate-950/80 border border-slate-850 rounded-lg text-slate-350 text-xs focus:ring-blue-500 focus:outline-none"
             />
           </div>
 
@@ -338,7 +338,7 @@ export default function AuditLogsPage() {
               type="datetime-local"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-950/80 border border-slate-850 rounded-lg text-slate-355 text-xs focus:ring-amber-500 focus:outline-none"
+              className="w-full px-3 py-2 bg-slate-950/80 border border-slate-850 rounded-lg text-slate-355 text-xs focus:ring-blue-500 focus:outline-none"
             />
           </div>
         </div>
@@ -352,7 +352,7 @@ export default function AuditLogsPage() {
           </button>
           <button
             onClick={() => fetchLogs(1)}
-            className="px-5 py-2 bg-amber-500 hover:bg-amber-450 text-slate-955 rounded-lg text-xs font-extrabold shadow-lg shadow-amber-500/10 transition-all cursor-pointer uppercase tracking-wider"
+            className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-slate-955 rounded-lg text-xs font-extrabold shadow-lg shadow-blue-500/10 transition-all cursor-pointer uppercase tracking-wider"
           >
             Apply Filters
           </button>
@@ -363,7 +363,7 @@ export default function AuditLogsPage() {
       <div className="bg-[#111625]/60 border border-slate-800/80 rounded-2xl shadow-xl overflow-hidden backdrop-blur-sm">
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center gap-3">
-            <RefreshCw className="w-8 h-8 text-amber-500 animate-spin" />
+            <RefreshCw className="w-8 h-8 text-blue-600 dark:text-blue-400 animate-spin" />
             <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Retrieving Logs...</span>
           </div>
         ) : logs.length === 0 ? (
@@ -417,13 +417,13 @@ export default function AuditLogsPage() {
                       {/* Operator */}
                       <td className="py-3.5 px-5 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-amber-500 shrink-0 font-extrabold text-[11px]">
+                          <div className="w-7 h-7 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 font-extrabold text-[11px]">
                             {log.user.name.charAt(0).toUpperCase()}
                           </div>
                           <div className="flex flex-col">
                             <span className="font-bold text-white">{log.user.name}</span>
                             <span className="text-[10px] text-slate-500">{log.user.email}</span>
-                            <span className="text-[9px] text-amber-400 font-extrabold uppercase tracking-widest mt-0.5">
+                            <span className="text-[9px] text-blue-600 dark:text-blue-400 font-extrabold uppercase tracking-widest mt-0.5">
                               {dept} ({log.user.role.includes(':') ? log.user.role.split(':')[1] : log.user.role})
                             </span>
                           </div>
@@ -431,7 +431,7 @@ export default function AuditLogsPage() {
                       </td>
 
                       {/* Executive Action Summary */}
-                      <td className="py-3.5 px-5 font-medium text-amber-300 max-w-xs">
+                      <td className="py-3.5 px-5 font-medium text-blue-600 dark:text-blue-400 max-w-xs">
                         {formatExecutiveSummary(log)}
                       </td>
 
@@ -440,13 +440,13 @@ export default function AuditLogsPage() {
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-950/60 border border-slate-850 rounded-lg text-white font-mono text-[10px] uppercase font-bold">
                           <Database className="w-3 h-3 text-slate-500" />
                           {log.tableName}
-                          <span className="text-amber-500 font-normal">#{log.recordId}</span>
+                          <span className="text-blue-600 dark:text-blue-400 font-normal">#{log.recordId}</span>
                         </span>
                       </td>
 
                       {/* Action / Field */}
                       <td className="py-3.5 px-5 whitespace-nowrap">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono text-[10px] font-bold uppercase tracking-wider">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 font-mono text-[10px] font-bold uppercase tracking-wider">
                           <Activity className="w-2.5 h-2.5 shrink-0" />
                           {log.fieldName}
                         </span>
@@ -484,7 +484,7 @@ export default function AuditLogsPage() {
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <span className="text-xs font-extrabold text-slate-300 px-2 uppercase tracking-wide">
-                Page <span className="text-amber-500">{page}</span> of {totalPages}
+                Page <span className="text-blue-600 dark:text-blue-400">{page}</span> of {totalPages}
               </span>
               <button
                 onClick={() => fetchLogs(page + 1)}

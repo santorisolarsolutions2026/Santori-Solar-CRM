@@ -48,7 +48,7 @@ export default function CustomSelect({
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full px-3 py-2 bg-slate-950/80 border border-slate-800 hover:border-slate-700 rounded-xl text-xs text-left font-medium text-slate-200 transition-all flex items-center justify-between gap-2 shadow-inner focus:outline-none focus:ring-2 focus:ring-amber-500/40 ${
+        className={`w-full px-3 py-2 bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-xl text-xs text-left font-medium text-slate-200 transition-all flex items-center justify-between gap-2 shadow-inner focus:outline-none focus:ring-2 focus:ring-blue-500/40 ${
           disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
         }`}
       >
@@ -64,11 +64,11 @@ export default function CustomSelect({
             <span className="text-slate-500 truncate">{placeholder}</span>
           )}
         </span>
-        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180 text-amber-400' : ''}`} />
+        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180 text-blue-600 dark:text-blue-450' : ''}`} />
       </button>
 
       {isOpen && !disabled && (
-        <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-[#111625] border border-slate-800 rounded-xl shadow-2xl overflow-hidden py-1 max-h-60 overflow-y-auto backdrop-blur-md animate-fade-in-up">
+        <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden py-1 max-h-60 overflow-y-auto backdrop-blur-md animate-fade-in-up">
           {options.map((opt) => {
             const isSelected = String(opt.value) === String(value);
             return (
@@ -80,7 +80,7 @@ export default function CustomSelect({
                 }}
                 className={`px-3 py-2 text-xs flex items-center justify-between cursor-pointer transition-colors ${
                   isSelected
-                    ? 'bg-amber-500/15 text-amber-400 font-bold border-l-2 border-amber-500'
+                    ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold border-l-2 border-blue-600'
                     : 'text-slate-300 hover:bg-slate-800/60 hover:text-white'
                 }`}
               >
@@ -90,7 +90,7 @@ export default function CustomSelect({
                   )}
                   <span className="truncate">{opt.label}</span>
                 </div>
-                {isSelected && <Check className="w-3.5 h-3.5 text-amber-400 shrink-0 ml-2" />}
+                {isSelected && <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-450 shrink-0 ml-2" />}
               </div>
             );
           })}
