@@ -87,7 +87,7 @@ export async function POST(
     }
 
     const { role: userRole, permissions: userPermissions, department } = await getUserSession(userPayload.id);
-    const hasChangeStatus = userPermissions.includes('leads:change_status');
+    const hasChangeStatus = userPermissions.includes('leads:change_status') || userPermissions.includes('sales:stage_change') || ['admin', 'director'].includes(userRole) || department?.name === 'IT';
     const isInstallationUpdate = toStatusNum === 13 && lead.status === 13 && userPermissions.includes('orders:submit_installation');
 
     if (!hasChangeStatus && !isInstallationUpdate) {

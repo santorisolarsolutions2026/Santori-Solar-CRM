@@ -97,8 +97,8 @@ export function getDefaultPermissionsForRole(role: string): string[] {
     case 'consultant':
     case 'psa':
       return [
-        'sales:lead_add', 'sales:lead_assign', 'sales:stage_change', 'sales:designation_change', 'sales:attendance_view', 'sales:analytics_view', 'sales:order_punch', 'sales:meeting_book', 'sales:meeting_done', 'sales:finance_assign',
-        'leads:create', 'leads:edit', 'leads:change_status', 'orders:create', 'leads:view_sales_pipeline', 'team:view', 'attendance:view'
+        'sales:lead_add', 'sales:lead_assign', 'sales:designation_change', 'sales:attendance_view', 'sales:analytics_view', 'sales:order_punch', 'sales:meeting_book', 'sales:meeting_done', 'sales:finance_assign',
+        'leads:create', 'leads:edit', 'orders:create', 'leads:view_sales_pipeline', 'team:view', 'attendance:view'
       ];
     case 'finance':
       return [
