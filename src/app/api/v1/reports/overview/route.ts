@@ -24,19 +24,8 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view reports.' }, { status: 403 });
     }
 
-    const leadWhere: any = {};
-    if (userPayload.role !== 'admin' && userPayload.role !== 'director') {
-      const { getSubordinateIds, getAncestorIds } = await import('@/lib/hierarchy');
-      const subIds = await getSubordinateIds(userPayload.id);
-      const ancestorIds = await getAncestorIds(userPayload.id);
-      const allowedIds = [userPayload.id, ...subIds, ...ancestorIds];
-      leadWhere.OR = [
-        { assignedConsultantId: { in: allowedIds } },
-        { assignedTlId: { in: allowedIds } },
-        { assignedManagerId: { in: allowedIds } },
-        { createdById: userPayload.id },
-      ];
-    }
+    const { getLeadVisibilityCondition } = await import('@/lib/hierarchy');
+    const leadWhere = await getLeadVisibilityCondition(userPayload.id, userRole, userPermissions);
 
     const startOfMonth = new Date();
     startOfMonth.setDate(1);

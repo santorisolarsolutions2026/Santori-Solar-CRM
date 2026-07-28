@@ -69,27 +69,8 @@ export async function GET(req: Request) {
 
     // 1. Role-based visibility enforcement
     if (!hasViewAll) {
-      const { getSubordinateIds } = await import('@/lib/hierarchy');
-      const subordinateIds = await getSubordinateIds(userPayload.id);
-      // Allowed IDs include ONLY the user and their subordinates (everyone below them in hierarchy)
-      const allowedIds = [userPayload.id, ...subordinateIds];
-
-      const hierarchyCondition: Prisma.LeadWhereInput = {
-        OR: [
-          { assignedConsultantId: { in: allowedIds } },
-          { assignedTlId: { in: allowedIds } },
-          { assignedManagerId: { in: allowedIds } },
-          { createdById: { in: allowedIds } },
-          { activityLogs: { some: { userId: { in: allowedIds } } } },
-          {
-            order: {
-              status: 'draft',
-              rejectionReason: { not: null },
-              submittedById: userPayload.id,
-            }
-          }
-        ]
-      };
+      const { getLeadVisibilityCondition } = await import('@/lib/hierarchy');
+      const hierarchyCondition = await getLeadVisibilityCondition(userPayload.id, userRole, userPermissions);
 
       if (baseRole === 'finance') {
         // Finance sees only leads at Stage 13+ (Sale Done) by default AND hierarchy matches

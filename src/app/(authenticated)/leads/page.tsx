@@ -426,6 +426,15 @@ export default function LeadsPage() {
       alert('Please select at least one team role to assign or unassign.');
       return;
     }
+    const confirm1 = window.confirm(
+      `Confirmation 1 of 2:\nAre you sure you want to assign ${selectedIds.length} selected lead(s)?`
+    );
+    if (!confirm1) return;
+
+    const confirm2 = window.confirm(
+      `⚠️ WARNING (Confirmation 2 of 2):\n\nIf the selected assignee is NOT below you in your direct line of hierarchy, these assigned lead(s) will DISAPPEAR from your lead pipeline view immediately once assigned.\n\nAre you completely sure you want to proceed with this assignment?`
+    );
+    if (!confirm2) return;
 
     try {
       setBulkAssigning(true);

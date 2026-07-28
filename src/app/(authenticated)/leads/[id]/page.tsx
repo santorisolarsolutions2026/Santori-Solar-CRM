@@ -684,6 +684,22 @@ export default function LeadDetailPage({
 
   const handleSingleMemberAssign = async (memberIdStr: string) => {
     if (!leadId) return;
+
+    if (memberIdStr && memberIdStr !== 'unassigned') {
+      const selectedMemberObj = teamMembersList.find((m: any) => String(m.id) === String(memberIdStr));
+      const targetName = selectedMemberObj?.name || `ID ${memberIdStr}`;
+
+      const confirm1 = window.confirm(
+        `Confirmation 1 of 2:\nAre you sure you want to assign Lead #${lead?.leadCode || leadId} (${lead?.customerName || ''}) to ${targetName}?`
+      );
+      if (!confirm1) return;
+
+      const confirm2 = window.confirm(
+        `⚠️ WARNING (Confirmation 2 of 2):\n\nIf ${targetName} is NOT below you in your direct line of hierarchy, this lead will DISAPPEAR from your lead pipeline view immediately once assigned.\n\nAre you completely sure you want to proceed with this assignment?`
+      );
+      if (!confirm2) return;
+    }
+
     setAssigningMember(true);
     try {
       const payload = memberIdStr && memberIdStr !== 'unassigned'

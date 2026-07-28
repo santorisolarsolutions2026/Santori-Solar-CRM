@@ -21,20 +21,10 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view reports.' }, { status: 403 });
     }
 
-    // System-wide pipeline metrics (constant for all authenticated users)
-    const leadWhere: any = {};
-    if (userPayload.role !== 'admin' && userPayload.role !== 'director') {
-      const { getSubordinateIds, getAncestorIds } = await import('@/lib/hierarchy');
-      const subIds = await getSubordinateIds(userPayload.id);
-      const ancestorIds = await getAncestorIds(userPayload.id);
-      const allowedIds = [userPayload.id, ...subIds, ...ancestorIds];
-      leadWhere.OR = [
-        { assignedConsultantId: { in: allowedIds } },
-        { assignedTlId: { in: allowedIds } },
-        { assignedManagerId: { in: allowedIds } },
-        { createdById: userPayload.id },
-      ];
-    }
+    const { getUserSession } = await import('@/lib/auth');
+    const { userRole } = await getUserSession(userPayload.id);
+    const { getLeadVisibilityCondition } = await import('@/lib/hierarchy');
+    const leadWhere = await getLeadVisibilityCondition(userPayload.id, userRole, userPermissions);
 
     // Group by status and count
     const stagesCounts = await prisma.lead.groupBy({

@@ -72,5 +72,60 @@ export async function getAncestorIds(userId: number): Promise<number[]> {
   return result;
 }
 
+/**
+ * Generates the unified Prisma LeadWhereInput filter for lead visibility across the app:
+ * 1. Admin, Director, or users with 'leads:view_all' see all leads.
+ * 2. If a lead is ASSIGNED: it is visible ONLY to the assigned employee and everyone ABOVE them in the hierarchy (where assignee is in allowedIds = [userId, ...subordinateIds]).
+ * 3. If a lead is UNASSIGNED: it is visible ONLY to the creator (and supervisors above creator, where creator is in allowedIds = [userId, ...subordinateIds]).
+ */
+export async function getLeadVisibilityCondition(
+  userId: number,
+  role: string,
+  userPermissions: string[]
+) {
+  const baseRole = role.includes(':') ? role.split(':')[0] : role;
+  const isAdminOrDirector = ['admin', 'director'].includes(baseRole) || role.startsWith('admin:');
+  const hasViewAll = userPermissions.includes('leads:view_all') || isAdminOrDirector;
+
+  if (hasViewAll) {
+    return {};
+  }
+
+  const subordinateIds = await getSubordinateIds(userId);
+  const allowedIds = [userId, ...subordinateIds];
+
+  const isUnassigned = {
+    assignedConsultantId: null,
+    assignedTlId: null,
+    assignedManagerId: null,
+  };
+
+  return {
+    OR: [
+      // 1. Assigned to user or anyone below user in hierarchy
+      { assignedConsultantId: { in: allowedIds } },
+      { assignedTlId: { in: allowedIds } },
+      { assignedManagerId: { in: allowedIds } },
+
+      // 2. Unassigned lead created by user or anyone below user in hierarchy
+      {
+        AND: [
+          isUnassigned,
+          { createdById: { in: allowedIds } }
+        ]
+      },
+
+      // 3. Draft order rejection fallback for submitter
+      {
+        order: {
+          status: 'draft',
+          rejectionReason: { not: null },
+          submittedById: userId,
+        }
+      }
+    ]
+  };
+}
+
 
 

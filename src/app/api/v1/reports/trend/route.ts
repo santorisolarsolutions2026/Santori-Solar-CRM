@@ -21,16 +21,10 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view reports.' }, { status: 403 });
     }
 
-    // System-wide trend metrics (constant for all authenticated users)
-    const leadWhere: any = {};
-    if (userPayload.role !== 'admin' && userPayload.role !== 'director') {
-      leadWhere.OR = [
-        { assignedManagerId: userPayload.id },
-        { assignedTlId: userPayload.id },
-        { assignedConsultantId: userPayload.id },
-        { createdById: userPayload.id },
-      ];
-    }
+    const { getUserSession } = await import('@/lib/auth');
+    const { userRole } = await getUserSession(userPayload.id);
+    const { getLeadVisibilityCondition } = await import('@/lib/hierarchy');
+    const leadWhere = await getLeadVisibilityCondition(userPayload.id, userRole, userPermissions);
 
     // Batch daily queries concurrently using Promise.all
     const trendPromises = [];
