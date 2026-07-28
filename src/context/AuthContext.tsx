@@ -64,7 +64,7 @@ interface User {
   isActive: boolean;
   joiningDate?: string | null;
   photograph?: string | null;
-  permissions?: string[];
+  permissions?: string[] | string | null;
   departmentId?: number | null;
   teamId?: number | null;
   department?: { id: number; name: string } | null;
@@ -182,8 +182,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const baseRole = user.role.includes(':') ? user.role.split(':')[0] : user.role;
     if (baseRole === 'admin' || baseRole === 'director' || user.department?.name === 'IT') return true;
 
-    const userPerms = user.permissions || [];
-    const cleanPerms = userPerms.map(p => p.replace(/^CUSTOM:/, '').trim());
+    const rawPerms = user.permissions;
+    let userPerms: string[] = [];
+    if (Array.isArray(rawPerms)) {
+      userPerms = rawPerms;
+    } else if (typeof rawPerms === 'string') {
+      userPerms = (rawPerms as string).split(',');
+    }
+    const cleanPerms = userPerms.map(p => String(p).replace(/^CUSTOM:/, '').trim()).filter(p => p !== '' && p !== 'none');
     const finalPerms = new Set<string>(cleanPerms);
 
     const clientMapping: Record<string, string[]> = {

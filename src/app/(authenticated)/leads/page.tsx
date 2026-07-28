@@ -738,6 +738,10 @@ export default function LeadsPage() {
 
   // Execute CSV Import (Client-side Chunking)
   const handleExecuteImport = async () => {
+    if (!hasPermission('leads:import') && !hasPermission('sales:lead_import')) {
+      alert("Forbidden. You do not have permission to import bulk leads.");
+      return;
+    }
     if (csvRows.length === 0) return;
 
     if (!columnMapping.customerName || !columnMapping.mobile) {
@@ -960,7 +964,7 @@ export default function LeadsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {hasPermission('leads:import') && (
+          {(hasPermission('leads:import') || hasPermission('sales:lead_import')) && (
             <button
               onClick={() => setShowImportModal(true)}
               className="py-2.5 px-4 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-900 dark:text-white rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
