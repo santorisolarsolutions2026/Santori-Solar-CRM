@@ -1,8 +1,8 @@
 import jwt from 'jsonwebtoken';
 import { prisma } from './db';
-import { DEPARTMENT_PERMISSIONS } from './permissions';
+import { DEPARTMENT_PERMISSIONS, getDefaultPermissionsForRole } from './permissions';
 
-export { DEPARTMENT_PERMISSIONS };
+export { DEPARTMENT_PERMISSIONS, getDefaultPermissionsForRole };
 
 const JWT_SECRET = process.env.JWT_SECRET || 'solarcrm-super-secret-key-2026';
 
@@ -70,51 +70,6 @@ export function getAuthenticatedUser(req: Request): UserJWTPayload | null {
 // Check permission helper
 export function hasPermission(userRole: string, allowedRoles: string[]): boolean {
   return allowedRoles.includes(userRole);
-}
-
-
-
-export function getDefaultPermissionsForRole(role: string): string[] {
-  const baseRole = role.includes(':') ? role.split(':')[0] : role;
-  switch (baseRole) {
-    case 'admin':
-    case 'director':
-    case 'it':
-      return [
-        'sales:lead_add', 'sales:lead_import', 'sales:lead_assign', 'sales:lead_view_all', 'sales:stage_change', 'sales:designation_change', 'sales:attendance_view', 'sales:lead_track', 'sales:analytics_view', 'sales:order_punch', 'sales:meeting_book', 'sales:meeting_done', 'sales:finance_assign',
-        'finance:order_verify_reject', 'finance:order_assign', 'finance:ledger_record', 'finance:ledger_delete', 'finance:designation_change', 'finance:attendance_view', 'finance:analytics_view', 'finance:ops_assign',
-        'ops:delivery_manage', 'ops:delivered_orders', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:designation_change', 'ops:attendance_view', 'ops:analytics_view', 'ops:subsidy_manage',
-        'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:track',
-        'orders:create', 'orders:submit_installation', 'leads:view_sales_pipeline',
-        'orders:finance_access', 'orders:verify', 'finance:manage_ledger', 'reports:view_financials',
-        'orders:operations', 'ops:update_stages', 'ops:upload_drawings',
-        'team:view', 'attendance:view', 'team:manage', 'logs:view', 'leads:view_all', 'leads:delete', 'permissions:manage'
-      ];
-    case 'sales_head':
-    case 'manager':
-    case 'tl':
-    case 'psa_tl':
-    case 'consultant':
-    case 'psa':
-      return [
-        'sales:lead_add', 'sales:lead_assign', 'sales:designation_change', 'sales:attendance_view', 'sales:analytics_view', 'sales:order_punch', 'sales:meeting_book', 'sales:meeting_done', 'sales:finance_assign',
-        'leads:create', 'leads:edit', 'orders:create', 'leads:view_sales_pipeline', 'team:view', 'attendance:view'
-      ];
-    case 'finance':
-      return [
-        'finance:order_verify_reject', 'finance:order_assign', 'finance:ledger_record', 'finance:ledger_delete', 'finance:designation_change', 'finance:attendance_view', 'finance:analytics_view', 'finance:ops_assign',
-        'orders:finance_access', 'orders:verify', 'finance:manage_ledger', 'reports:view_financials', 'team:view', 'attendance:view'
-      ];
-    case 'operations':
-      return [
-        'ops:delivery_manage', 'ops:delivered_orders', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:designation_change', 'ops:attendance_view', 'ops:analytics_view', 'ops:subsidy_manage',
-        'orders:operations', 'ops:update_stages', 'ops:upload_drawings', 'team:view', 'attendance:view'
-      ];
-    default:
-      return [
-        'sales:lead_add', 'sales:stage_change', 'sales:lead_track', 'leads:create', 'leads:change_status'
-      ];
-  }
 }
 
 export interface UserPermissionsInput {

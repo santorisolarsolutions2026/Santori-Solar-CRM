@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Lock, CheckCircle2, User, Building, AlertCircle, Save, Loader2 } from 'lucide-react';
-import { DEPARTMENT_PERMISSIONS } from '@/lib/permissions';
+import { DEPARTMENT_PERMISSIONS, getDefaultPermissionsForRole } from '@/lib/permissions';
 import UserSelect from '@/components/UserSelect';
 
 interface UserItem {
@@ -37,7 +37,6 @@ export default function AccessControlManager({ currentUser, users, onPermissions
         const permsArray = cleanPerms ? cleanPerms.split(',').map(p => p.trim()).filter(p => p !== '' && p !== 'none') : [];
         setSelectedPermissions(new Set(permsArray));
       } else {
-        const { getDefaultPermissionsForRole } = require('@/lib/auth');
         const baseRole = selectedUser.role.includes(':') ? selectedUser.role.split(':')[0] : selectedUser.role;
         const defaultPerms = getDefaultPermissionsForRole(baseRole);
         setSelectedPermissions(new Set(defaultPerms));
