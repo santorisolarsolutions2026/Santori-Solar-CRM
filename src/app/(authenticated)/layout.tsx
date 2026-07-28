@@ -38,6 +38,7 @@ import {
   Check,
   Database,
   PackageCheck,
+  Shield,
 } from 'lucide-react';
 import Link from 'next/link';
 import LeaderboardDrawer from '@/components/LeaderboardDrawer';
@@ -625,6 +626,12 @@ export default function AuthenticatedLayout({
           permission: 'reports:view',
         },
         {
+          name: 'Permissions Control',
+          path: '/permissions',
+          icon: Shield,
+          permission: 'admin:manage_permissions',
+        },
+        {
           name: 'System Logs',
           path: '/logs',
           icon: Database,
@@ -633,6 +640,7 @@ export default function AuthenticatedLayout({
       ]
     }
   ];
+
 
   const isCurrentUserAdmin = user?.role === 'admin' || user?.role?.startsWith('admin:');
   const isITUser = user?.department?.name === 'IT';

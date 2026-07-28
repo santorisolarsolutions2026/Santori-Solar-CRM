@@ -55,6 +55,7 @@ export async function GET(req: Request) {
 
     const userPermissions = await getUserPermissions(userPayload.id);
     const hasAttendancePerm = userPermissions.some(p => [
+      'admin:view_attendance',
       'attendance:view',
       'sales:attendance_view',
       'finance:attendance_view',

@@ -18,6 +18,9 @@ const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log('Clearing database...');
+  await prisma.operationHistory.deleteMany();
+  await prisma.operationStage.deleteMany();
+  await prisma.permission.deleteMany();
   await prisma.activity.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.orderDocument.deleteMany();
@@ -36,6 +39,55 @@ async function main() {
   await prisma.team.deleteMany();
   await prisma.designation.deleteMany();
   await prisma.department.deleteMany();
+
+  console.log('Seeding permissions...');
+  const permissionsList = [
+    // Sales Access Levels
+    { code: 'sales:add_lead', name: 'Add New Lead', module: 'sales', description: 'Create and register new customer leads manually.' },
+    { code: 'sales:import_bulk_leads', name: 'Import Bulk Leads', module: 'sales', description: 'Upload CSV/Excel spreadsheets to import bulk leads.' },
+    { code: 'sales:assign_leads', name: 'Assign Leads', module: 'sales', description: 'Assign or reassign leads to subordinate team members.' },
+    { code: 'sales:view_all_leads', name: 'View All Leads', module: 'sales', description: 'Access all company leads bypassing hierarchy restriction.' },
+    { code: 'sales:edit_lead', name: 'Edit Lead Details', module: 'sales', description: 'Modify customer contact details, load capacity & address.' },
+    { code: 'sales:change_pipeline_stage', name: 'Change Pipeline Stages', module: 'sales', description: 'Update lead calling stage and schedule meetings.' },
+    { code: 'sales:record_meeting', name: 'Record Meetings', module: 'sales', description: 'Log meeting outcome, GPS location, and audio recording.' },
+    { code: 'sales:fill_order_form', name: 'Fill Order Punching Form & Submit', module: 'sales', description: 'Punch system size, valuation, payment terms and handoff to Finance.' },
+    { code: 'sales:view_track_journey', name: 'View Track Journey', module: 'sales', description: 'View complete timestamped journey timeline of a lead.' },
+
+    // Finance Access Levels
+    { code: 'finance:view_all_orders', name: 'View All Orders', module: 'finance', description: 'Access and view all pending submitted orders in Finance.' },
+    { code: 'finance:assign_orders', name: 'Assign Orders', module: 'finance', description: 'Assign order verifications to subordinate finance employees.' },
+    { code: 'finance:verify_orders', name: 'Verify Orders', module: 'finance', description: 'Verify or reject down-payments and submitted orders.' },
+    { code: 'finance:maintain_ledgers', name: 'Maintain Ledgers', module: 'finance', description: 'Add, edit, delete payment ledger transactions and history.' },
+
+    // Operations Access Levels
+    { code: 'operations:view_all_orders', name: 'View All Orders', module: 'operations', description: 'Access and view all verified orders in Operations.' },
+    { code: 'operations:assign_orders', name: 'Assign Orders', module: 'operations', description: 'Assign operations execution to subordinate team members.' },
+    { code: 'operations:manage_stages', name: 'Manage Operations Stages', module: 'operations', description: 'Progress configurable operations stages (Site Visit, Installation, etc.).' },
+
+    // Administration Access Levels
+    { code: 'admin:view_attendance', name: 'View Attendance', module: 'admin', description: 'Inspect check-in/out logs for subordinate employees.' },
+    { code: 'admin:change_subordinate_designation', name: 'Change Subordinate Designation', module: 'admin', description: 'Modify titles and designations of subordinate team members.' },
+    { code: 'admin:view_analytics', name: 'View Team Analytics', module: 'admin', description: 'Access audit logs, employee performance, and company reports.' },
+    { code: 'admin:manage_permissions', name: 'Manage Permissions', module: 'admin', description: 'Grant or revoke custom permissions for any employee.' },
+  ];
+
+  for (const perm of permissionsList) {
+    await prisma.permission.create({ data: perm });
+  }
+
+  console.log('Seeding operation stages...');
+  const opsStagesList = [
+    { code: 'site_visit', name: 'Site Visit', displayOrder: 1, description: 'Technician conducts physical site feasibility assessment.' },
+    { code: 'documentation', name: 'Documentation', displayOrder: 2, description: 'DISCOM & net metering paperwork collection.' },
+    { code: 'approval', name: 'Approval', displayOrder: 3, description: 'Sanction load & government subsidy approval.' },
+    { code: 'installation', name: 'Installation', displayOrder: 4, description: 'Physical mounting of solar panels & inverter wiring.' },
+    { code: 'testing', name: 'Testing', displayOrder: 5, description: 'Quality checks, earthing test & DISCOM meter installation.' },
+    { code: 'completed', name: 'Completed', displayOrder: 6, description: 'Grid synchronization & plant commissioning complete.' },
+  ];
+
+  for (const stg of opsStagesList) {
+    await prisma.operationStage.create({ data: stg });
+  }
 
   console.log('Seeding departments...');
   const psaDept = await prisma.department.create({ data: { name: 'PSA' } });

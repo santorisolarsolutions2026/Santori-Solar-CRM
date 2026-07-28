@@ -66,6 +66,7 @@ model User {
   verifiedOrders       Order[]             @relation("VerifiedOrders")
   assignedFinanceOrders Order[]            @relation("AssignedFinanceOrders")
   assignedOpsOrders    Order[]             @relation("AssignedOpsOrders")
+  opsStageUpdates      OperationHistory[]  @relation("OpsStageUpdater")
   uploadedDocuments    OrderDocument[]
   notifications        Notification[]
   attendances          Attendance[]
@@ -158,7 +159,7 @@ model MeetingBooking {
   notes                String?
   createdAt            DateTime            @default(now())
 
-  // New fields for Start/End Meeting, Location & Audio Recording
+  // Fields for Start/End Meeting, Location & Audio Recording & Outcome locking
   meetingLatitude      Float?
   meetingLongitude     Float?
   meetingCity          String?
@@ -168,6 +169,8 @@ model MeetingBooking {
   meetingDurationSec   Int?
   meetingStartedAt     DateTime?
   meetingEndedAt       DateTime?
+  outcome              String?             // Sale Done | Follow Up | Not Interested
+  isLocked             Boolean             @default(false)
 
   // Relations
   lead                 Lead                @relation(fields: [leadId], references: [id], onDelete: Cascade)
@@ -223,6 +226,7 @@ model Order {
   documents            OrderDocument[]
   installationImages   InstallationImage[]
   payments             Payment[]
+  operationHistories   OperationHistory[]
 }
 
 model InstallationImage {
@@ -418,17 +422,62 @@ model LeadDocument {
 }
 
 model AuditLog {
-  id         Int      @id @default(autoincrement())
-  leadId     Int?
-  lead       Lead?    @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  tableName  String
-  recordId   Int
-  fieldName  String
-  oldValue   String?
-  newValue   String?
-  userId     Int
-  user       User     @relation(fields: [userId], references: [id])
-  createdAt  DateTime @default(now())
-  ip         String?
+  id           Int      @id @default(autoincrement())
+  leadId       Int?
+  lead         Lead?    @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  tableName    String
+  recordId     Int
+  fieldName    String
+  oldValue     String?
+  newValue     String?
+  userId       Int
+  user         User     @relation(fields: [userId], references: [id])
+  employeeName String?
+  employeeCode String?
+  module       String?  // sales | finance | operations | admin
+  action       String?  // Action performed
+  deviceInfo   String?  // User Agent or device details
+  ip           String?
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([module])
+  @@index([tableName])
 }
+
+model Permission {
+  id          Int      @id @default(autoincrement())
+  code        String   @unique
+  name        String
+  module      String   // sales | finance | operations | admin
+  description String?
+  createdAt   DateTime @default(now())
+}
+
+model OperationStage {
+  id           Int                @id @default(autoincrement())
+  code         String             @unique
+  name         String
+  displayOrder Int                @default(1)
+  description  String?
+  isActive     Boolean            @default(true)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  histories    OperationHistory[]
+}
+
+model OperationHistory {
+  id          Int             @id @default(autoincrement())
+  orderId     Int
+  order       Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  stageId     Int?
+  stage       OperationStage? @relation(fields: [stageId], references: [id], onDelete: SetNull)
+  stageName   String
+  updatedById Int
+  updatedBy   User            @relation("OpsStageUpdater", fields: [updatedById], references: [id])
+  notes       String?
+  createdAt   DateTime        @default(now())
+}
+
+
 
