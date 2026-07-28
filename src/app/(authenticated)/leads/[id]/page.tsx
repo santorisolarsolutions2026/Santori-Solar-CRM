@@ -2399,7 +2399,7 @@ export default function LeadDetailPage({
                         </div>
 
                         {/* Interactive Meeting Controls for Active Lead Meeting */}
-                        {lead.status === 8 && index === 0 && (
+                        {canRecordMeeting && lead.status === 8 && index === 0 && (
                           <div className="border-t border-slate-800/80 pt-4 space-y-4">
                             <h5 className="text-[11px] font-bold text-slate-700 dark:text-slate-350 uppercase tracking-wide">
                               Live Meeting Tracker
@@ -2413,23 +2413,19 @@ export default function LeadDetailPage({
                                     This will request microphone and location permissions to log coordinates and record meeting audio.
                                   </p>
                                 </div>
-                                {canRecordMeeting ? (
-                                  <button
-                                    type="button"
-                                    disabled={isStartingMeeting}
-                                    onClick={() => handleStartMeeting(meet.id)}
-                                    className="w-full sm:w-auto py-2.5 px-5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-blue-500/10 disabled:opacity-50 transition-all cursor-pointer"
-                                  >
-                                    {isStartingMeeting ? (
-                                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                    ) : (
-                                      <Mic className="w-3.5 h-3.5" />
-                                    )}
-                                    <span>Start Meeting</span>
-                                  </button>
-                                ) : (
-                                  <span className="text-[10px] text-slate-500 italic">🔒 Meeting recording restricted</span>
-                                )}
+                                <button
+                                  type="button"
+                                  disabled={isStartingMeeting}
+                                  onClick={() => handleStartMeeting(meet.id)}
+                                  className="w-full sm:w-auto py-2.5 px-5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-blue-500/10 disabled:opacity-50 transition-all cursor-pointer"
+                                >
+                                  {isStartingMeeting ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  ) : (
+                                    <Mic className="w-3.5 h-3.5" />
+                                  )}
+                                  <span>Start Meeting</span>
+                                </button>
                               </div>
                             ) : !meet.meetingEndedAt ? (
                               <div className="p-4 bg-slate-950/45 border border-slate-850 rounded-xl space-y-4">
