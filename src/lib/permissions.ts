@@ -22,6 +22,7 @@ export const DEPARTMENT_PERMISSIONS: {
     // Calling & Meetings
     { key: 'sales:stage_change', label: 'Change Calling & Lead Stages', group: 'Calling & Customer Meetings', description: 'Update lead calling stages and follow-up status.' },
     { key: 'sales:meeting_book', label: 'Book Customer Meeting', group: 'Calling & Customer Meetings', description: 'Schedule site visits and executive meetings.' },
+    { key: 'sales:assign_team', label: 'Assign Sales Team Member', group: 'Calling & Customer Meetings', description: 'Assign sales consultant / team member after meeting is booked or in lead workspace.' },
     { key: 'sales:meeting_done', label: 'Mark Meeting Done & Audio', group: 'Calling & Customer Meetings', description: 'Complete meetings, log audio recordings & locations.' },
     { key: 'sales:lead_track', label: 'Track Lead Audit Journey', group: 'Calling & Customer Meetings', description: 'Inspect detailed lead history and status change logs.' },
 

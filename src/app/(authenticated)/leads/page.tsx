@@ -32,6 +32,7 @@ import UserSelect from '@/components/UserSelect';
 import CustomSelect from '@/components/CustomSelect';
 import { LeadTrackingTimeline } from '@/components/LeadTrackingTimeline';
 import { getLeadAssignedDisplay } from '@/lib/permissions';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 interface Lead {
   id: number;
@@ -207,14 +208,13 @@ export default function LeadsPage() {
 
   // Bulk Reassignment States
   const [showBulkAssignModal, setShowBulkAssignModal] = useState(false);
-  const [bulkManagerId, setBulkManagerId] = useState<string>('UNCHANGED');
-  const [bulkTlId, setBulkTlId] = useState<string>('UNCHANGED');
-  const [bulkConsultantId, setBulkConsultantId] = useState<string>('UNCHANGED');
-  const [bulkAssigning, setBulkAssigning] = useState(false);
-
-  // Bulk Stage States
   const [showBulkStageModal, setShowBulkStageModal] = useState(false);
-  const [bulkStage, setBulkStage] = useState<string>('UNCHANGED');
+  const [bulkManagerId, setBulkManagerId] = useState('UNCHANGED');
+  const [bulkTlId, setBulkTlId] = useState('UNCHANGED');
+  const [bulkConsultantId, setBulkConsultantId] = useState('UNCHANGED');
+  const [bulkStage, setBulkStage] = useState('UNCHANGED');
+  const [bulkAssigning, setBulkAssigning] = useState(false);
+  const [bulkConfirmModal, setBulkConfirmModal] = useState<{ isOpen: boolean; step: 1 | 2 } | null>(null);
 
   const handleArbitrarySelectSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -418,7 +418,7 @@ export default function LeadsPage() {
     fetchTeamMembers();
   }, []);
 
-  const handleBulkAssignSubmit = async (e: React.FormEvent) => {
+  const handleBulkAssignSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedIds.length === 0) return;
 
@@ -426,16 +426,11 @@ export default function LeadsPage() {
       alert('Please select at least one team role to assign or unassign.');
       return;
     }
-    const confirm1 = window.confirm(
-      `Confirmation 1 of 2:\nAre you sure you want to assign ${selectedIds.length} selected lead(s)?`
-    );
-    if (!confirm1) return;
 
-    const confirm2 = window.confirm(
-      `⚠️ WARNING (Confirmation 2 of 2):\n\nIf the selected assignee is NOT below you in your direct line of hierarchy, these assigned lead(s) will DISAPPEAR from your lead pipeline view immediately once assigned.\n\nAre you completely sure you want to proceed with this assignment?`
-    );
-    if (!confirm2) return;
+    setBulkConfirmModal({ isOpen: true, step: 1 });
+  };
 
+  const executeBulkAssign = async () => {
     try {
       setBulkAssigning(true);
       const payload: any = { leadIds: selectedIds };
@@ -2264,6 +2259,36 @@ export default function LeadsPage() {
             </div>
           </div>
         </div>
+      )}
+      {bulkConfirmModal && (
+        <ConfirmationModal
+          isOpen={bulkConfirmModal.isOpen}
+          step={bulkConfirmModal.step}
+          totalSteps={2}
+          title={bulkConfirmModal.step === 1 ? "Bulk Assign Leads" : "Pipeline Visibility Warning"}
+          message={
+            bulkConfirmModal.step === 1
+              ? `Are you sure you want to reassign ${selectedIds.length} selected lead(s) to the chosen team role(s)?`
+              : `If the selected assignee is NOT below you in your direct line of hierarchy, these ${selectedIds.length} assigned lead(s) will DISAPPEAR from your lead pipeline view immediately.`
+          }
+          subMessage={
+            bulkConfirmModal.step === 1
+              ? "This action will update team assignment across all selected leads."
+              : "Are you completely sure you want to proceed with this bulk assignment?"
+          }
+          type={bulkConfirmModal.step === 2 ? "warning" : "info"}
+          confirmText={bulkConfirmModal.step === 1 ? "Proceed to Step 2 →" : "Yes, Confirm Assignment"}
+          cancelText={bulkConfirmModal.step === 2 ? "Go Back" : "Cancel"}
+          onClose={() => setBulkConfirmModal(null)}
+          onConfirm={() => {
+            if (bulkConfirmModal.step === 1) {
+              setBulkConfirmModal({ ...bulkConfirmModal, step: 2 });
+            } else {
+              setBulkConfirmModal(null);
+              executeBulkAssign();
+            }
+          }}
+        />
       )}
     </div>
   );

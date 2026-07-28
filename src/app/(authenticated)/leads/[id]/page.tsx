@@ -43,6 +43,7 @@ import {
 import Link from 'next/link';
 import { BeautifulAudioPlayer } from '@/components/BeautifulAudioPlayer';
 import { MeetingLocationDisplay } from '@/components/MeetingLocationDisplay';
+import ConfirmationModal from '@/components/ConfirmationModal';
 import { LeadTrackingTimeline } from '@/components/LeadTrackingTimeline';
 import { getLeadAssignedDisplay } from '@/lib/permissions';
 
@@ -231,6 +232,14 @@ export default function LeadDetailPage({
   const [assigningEmployee, setAssigningEmployee] = useState(false);
   const [assigningTeam, setAssigningTeam] = useState(false);
   const [assigningMember, setAssigningMember] = useState(false);
+  const [showPostMeetingAssignModal, setShowPostMeetingAssignModal] = useState(false);
+  const [postMeetingSelectedEmpId, setPostMeetingSelectedEmpId] = useState('');
+  const [assignConfirmModal, setAssignConfirmModal] = useState<{
+    isOpen: boolean;
+    step: 1 | 2;
+    memberIdStr: string;
+    targetName: string;
+  } | null>(null);
 
   // Camera Modal States
   const [cameraModal, setCameraModal] = useState<{
@@ -682,24 +691,27 @@ export default function LeadDetailPage({
     }
   };
 
-  const handleSingleMemberAssign = async (memberIdStr: string) => {
+  const handleSingleMemberAssign = (memberIdStr: string) => {
     if (!leadId) return;
 
     if (memberIdStr && memberIdStr !== 'unassigned') {
       const selectedMemberObj = employees.find((m: any) => String(m.id) === String(memberIdStr));
       const targetName = selectedMemberObj?.name || `ID ${memberIdStr}`;
 
-      const confirm1 = window.confirm(
-        `Confirmation 1 of 2:\nAre you sure you want to assign Lead #${lead?.leadCode || leadId} (${lead?.customerName || ''}) to ${targetName}?`
-      );
-      if (!confirm1) return;
-
-      const confirm2 = window.confirm(
-        `⚠️ WARNING (Confirmation 2 of 2):\n\nIf ${targetName} is NOT below you in your direct line of hierarchy, this lead will DISAPPEAR from your lead pipeline view immediately once assigned.\n\nAre you completely sure you want to proceed with this assignment?`
-      );
-      if (!confirm2) return;
+      setAssignConfirmModal({
+        isOpen: true,
+        step: 1,
+        memberIdStr,
+        targetName,
+      });
+      return;
     }
 
+    executeMemberAssign(memberIdStr);
+  };
+
+  const executeMemberAssign = async (memberIdStr: string) => {
+    if (!leadId) return;
     setAssigningMember(true);
     try {
       const payload = memberIdStr && memberIdStr !== 'unassigned'
@@ -954,17 +966,12 @@ export default function LeadDetailPage({
   const handleFormBSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const finalExecutiveId = formBData.assignedExecutiveId || lead?.consultant?.id?.toString() || user?.id?.toString() || '';
       const finalConnectionType = formBData.connectionType || lead?.connectionType || 'residential';
-
-      if (!finalExecutiveId) {
-        alert('No executive could be assigned. Please ensure a consultant is assigned to the lead or you are logged in.');
-        return;
-      }
+      const fallbackExecId = lead?.consultant?.id?.toString() || user?.id?.toString() || '';
 
       const payload = {
         ...formBData,
-        assignedExecutiveId: finalExecutiveId,
+        assignedExecutiveId: fallbackExecId,
         connectionType: finalConnectionType,
       };
 
@@ -988,7 +995,21 @@ export default function LeadDetailPage({
         }
         fetchLeadDetails();
         setActiveTab('meeting');
-        alert('Meeting booked successfully.');
+
+        // Check if user has permission to assign sales team member
+        const userBaseRole = user?.role ? (user.role.includes(':') ? user.role.split(':')[0] : user.role) : '';
+        const canAssignSalesTeam = 
+          hasPermission('sales:assign_team') || 
+          hasPermission('sales:lead_assign') || 
+          hasPermission('leads:assign') || 
+          ['admin', 'director'].includes(userBaseRole) ||
+          user?.department?.name === 'IT';
+
+        if (canAssignSalesTeam) {
+          setShowPostMeetingAssignModal(true);
+        } else {
+          alert('Meeting booked successfully! Sales team assignment is restricted to authorized supervisors.');
+        }
       } else {
         alert(data.message || 'Failed to book meeting.');
       }
@@ -3138,49 +3159,6 @@ export default function LeadDetailPage({
                     className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs"
                   />
                 </div>
-                {/* Sales Team allocation selectors */}
-                <div className="sm:col-span-2 border-t border-slate-800/60 pt-3 mt-1">
-                  <h4 className="text-[11px] font-bold uppercase text-slate-100 tracking-wider">Reassign to Sales Team</h4>
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Assign to Sales Team Member *</label>
-                  <UserSelect
-                    users={(() => {
-                      if (!user) return [];
-                      const isTopAdmin = user.role === 'admin' || 
-                                         user.role?.startsWith('admin:') || 
-                                         user.role === 'director' ||
-                                         user.department?.name?.toLowerCase().trim() === 'it';
-
-                      const salesEmployees = employees.filter((emp) => {
-                        const deptName = (emp.department?.name || '').toLowerCase().trim();
-                        const roleLower = (emp.role || '').toLowerCase().trim();
-                        const isSalesDept = deptName.includes('sales') || deptName.includes('psa') || deptName.includes('marketing');
-                        const isSalesRole = ['sales_head', 'manager', 'tl', 'psa_tl', 'consultant', 'psa'].includes(roleLower) || roleLower.includes('sales') || roleLower.includes('psa');
-                        return isSalesDept || isSalesRole;
-                      });
-
-                      if (isTopAdmin) return salesEmployees;
-
-                      const descendants = new Set<number>();
-                      const queue: number[] = [user.id];
-                      while (queue.length > 0) {
-                        const currentId = queue.shift()!;
-                        employees.forEach(m => {
-                          if (m.reportsTo === currentId && !descendants.has(m.id)) {
-                            descendants.add(m.id);
-                            queue.push(m.id);
-                          }
-                        });
-                      }
-
-                      return salesEmployees.filter(m => descendants.has(m.id));
-                    })()}
-                    value={formBData.assignedExecutiveId}
-                    onChange={(val) => setFormBData({ ...formBData, assignedExecutiveId: val ? String(val) : '' })}
-                    placeholder="-- Select 1 Sales Team Member --"
-                  />
-                </div>
                 <div className="sm:col-span-2">
                   <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Special Executive Instructions</label>
                   <textarea
@@ -3473,6 +3451,152 @@ export default function LeadDetailPage({
             </div>
           </div>
         </div>
+      )}
+      {/* Separate Post-Meeting Sales Team Assign Modal */}
+      {showPostMeetingAssignModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="w-full max-w-lg bg-[#111625] border border-blue-500/30 rounded-2xl shadow-2xl overflow-hidden transform animate-fade-in-up">
+            <div className="px-6 py-4 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-emerald-500/20 border border-emerald-500/30 rounded-xl">
+                  <UserCheck className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    Meeting Booked Successfully
+                  </span>
+                  <h3 className="text-sm font-bold text-white tracking-wide mt-0.5">Assign Sales Team Member</h3>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPostMeetingAssignModal(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-all cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl flex items-center justify-between text-xs">
+                <div>
+                  <span className="text-slate-400 text-[10px] font-semibold uppercase block">Lead</span>
+                  <span className="font-mono font-bold text-blue-400">{lead?.leadCode}</span>
+                  {lead?.customerName && <span className="text-slate-300 ml-1.5">({lead.customerName})</span>}
+                </div>
+                <div>
+                  <span className="text-slate-400 text-[10px] font-semibold uppercase block">Current Status</span>
+                  <span className="font-bold text-emerald-400">Stage 8: Meeting Booked</span>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-200">
+                  Select Sales Team Member to Assign *
+                </label>
+                <UserSelect
+                  users={(() => {
+                    if (!user) return [];
+                    const isTopAdmin = user.role === 'admin' || 
+                                       user.role?.startsWith('admin:') || 
+                                       user.role === 'director' ||
+                                       user.department?.name?.toLowerCase().trim() === 'it';
+
+                    const salesEmployees = employees.filter((emp) => {
+                      const deptName = (emp.department?.name || '').toLowerCase().trim();
+                      const roleLower = (emp.role || '').toLowerCase().trim();
+                      const isSalesDept = deptName.includes('sales') || deptName.includes('psa') || deptName.includes('marketing');
+                      const isSalesRole = ['sales_head', 'manager', 'tl', 'psa_tl', 'consultant', 'psa'].includes(roleLower) || roleLower.includes('sales') || roleLower.includes('psa');
+                      return isSalesDept || isSalesRole;
+                    });
+
+                    if (isTopAdmin) return salesEmployees;
+
+                    const descendants = new Set<number>();
+                    const queue: number[] = [user.id];
+                    while (queue.length > 0) {
+                      const currentId = queue.shift()!;
+                      employees.forEach(m => {
+                        if (m.reportsTo === currentId && !descendants.has(m.id)) {
+                          descendants.add(m.id);
+                          queue.push(m.id);
+                        }
+                      });
+                    }
+
+                    return salesEmployees.filter(m => descendants.has(m.id));
+                  })()}
+                  value={postMeetingSelectedEmpId}
+                  onChange={(val) => setPostMeetingSelectedEmpId(val ? String(val) : '')}
+                  placeholder="-- Select 1 Sales Team Member --"
+                />
+              </div>
+
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                Assigning a sales member allows them to conduct the site meeting, log recordings, and punch customer orders.
+              </p>
+            </div>
+
+            <div className="px-6 py-4 border-t border-slate-800 bg-slate-900/40 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowPostMeetingAssignModal(false)}
+                className="py-2 px-4 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-white rounded-xl text-xs font-semibold transition-all cursor-pointer"
+              >
+                Skip for Now
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!postMeetingSelectedEmpId) {
+                    alert('Please select a sales team member to assign.');
+                    return;
+                  }
+                  setShowPostMeetingAssignModal(false);
+                  handleSingleMemberAssign(postMeetingSelectedEmpId);
+                }}
+                className="py-2 px-5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-blue-500/20 cursor-pointer"
+              >
+                Assign Sales Member →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {assignConfirmModal && (
+        <ConfirmationModal
+          isOpen={assignConfirmModal.isOpen}
+          step={assignConfirmModal.step}
+          totalSteps={2}
+          title={assignConfirmModal.step === 1 ? "Assign Lead to Team Member" : "Pipeline Visibility Warning"}
+          leadCode={lead?.leadCode}
+          customerName={lead?.customerName}
+          assigneeName={assignConfirmModal.targetName}
+          message={
+            assignConfirmModal.step === 1
+              ? `Are you sure you want to assign Lead #${lead?.leadCode || leadId} (${lead?.customerName || ''}) to ${assignConfirmModal.targetName}?`
+              : `If ${assignConfirmModal.targetName} is NOT below you in your direct line of hierarchy, this lead will DISAPPEAR from your lead pipeline view immediately once assigned.`
+          }
+          subMessage={
+            assignConfirmModal.step === 1
+              ? "This will update the lead assignment and send a notification to the assignee."
+              : "Are you completely sure you want to proceed with this assignment?"
+          }
+          type={assignConfirmModal.step === 2 ? "warning" : "info"}
+          confirmText={assignConfirmModal.step === 1 ? "Proceed to Step 2 →" : "Yes, Confirm Assignment"}
+          cancelText={assignConfirmModal.step === 2 ? "Go Back" : "Cancel"}
+          onClose={() => setAssignConfirmModal(null)}
+          onConfirm={() => {
+            if (assignConfirmModal.step === 1) {
+              setAssignConfirmModal({ ...assignConfirmModal, step: 2 });
+            } else {
+              const idToAssign = assignConfirmModal.memberIdStr;
+              setAssignConfirmModal(null);
+              executeMemberAssign(idToAssign);
+            }
+          }}
+        />
       )}
     </div>
   );

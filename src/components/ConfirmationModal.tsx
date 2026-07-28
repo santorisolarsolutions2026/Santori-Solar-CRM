@@ -1,0 +1,161 @@
+'use client';
+
+import React from 'react';
+import { AlertTriangle, UserCheck, ShieldAlert, CheckCircle2, X } from 'lucide-react';
+
+export interface ConfirmationModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  step?: 1 | 2;
+  totalSteps?: number;
+  title: string;
+  message: string;
+  subMessage?: string;
+  assigneeName?: string;
+  leadCode?: string;
+  customerName?: string;
+  confirmText?: string;
+  cancelText?: string;
+  type?: 'warning' | 'info' | 'danger';
+}
+
+export default function ConfirmationModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  step = 1,
+  totalSteps = 2,
+  title,
+  message,
+  subMessage,
+  assigneeName,
+  leadCode,
+  customerName,
+  confirmText,
+  cancelText,
+  type = 'info',
+}: ConfirmationModalProps) {
+  if (!isOpen) return null;
+
+  const isWarning = type === 'warning' || step === 2;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-fade-in">
+      <div
+        className={`w-full max-w-lg bg-[#111625] border ${
+          isWarning ? 'border-amber-500/40 shadow-amber-500/10' : 'border-blue-500/30 shadow-blue-500/10'
+        } rounded-2xl shadow-2xl overflow-hidden transition-all transform animate-fade-in-up`}
+      >
+        {/* Header Bar */}
+        <div
+          className={`px-6 py-4 border-b ${
+            isWarning ? 'border-amber-500/20 bg-amber-500/10' : 'border-slate-800 bg-slate-900/50'
+          } flex items-center justify-between`}
+        >
+          <div className="flex items-center gap-2.5">
+            {isWarning ? (
+              <div className="p-2 bg-amber-500/20 border border-amber-500/30 rounded-xl">
+                <AlertTriangle className="w-5 h-5 text-amber-400 animate-pulse" />
+              </div>
+            ) : (
+              <div className="p-2 bg-blue-500/20 border border-blue-500/30 rounded-xl">
+                <UserCheck className="w-5 h-5 text-blue-400" />
+              </div>
+            )}
+            <div>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                    isWarning
+                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                      : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                  }`}
+                >
+                  Step {step} of {totalSteps}
+                </span>
+              </div>
+              <h3 className="text-sm font-bold text-white tracking-wide mt-0.5">{title}</h3>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-all cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Content Body */}
+        <div className="p-6 space-y-4">
+          {/* Target Lead & Assignee Pill if available */}
+          {(leadCode || assigneeName || customerName) && (
+            <div className="p-3.5 bg-slate-950/80 border border-slate-800/80 rounded-xl flex flex-wrap items-center justify-between gap-2 text-xs">
+              {leadCode && (
+                <div>
+                  <span className="text-slate-400 text-[10px] font-semibold uppercase block">Lead</span>
+                  <span className="font-mono font-bold text-blue-400">{leadCode}</span>
+                  {customerName && <span className="text-slate-300 ml-1.5">({customerName})</span>}
+                </div>
+              )}
+              {assigneeName && (
+                <div>
+                  <span className="text-slate-400 text-[10px] font-semibold uppercase block">Assignee</span>
+                  <span className="font-bold text-emerald-400">{assigneeName}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Main Message */}
+          <div className="space-y-2">
+            <p className="text-xs text-slate-200 leading-relaxed">{message}</p>
+            {subMessage && (
+              <p className={`text-xs font-medium leading-relaxed ${isWarning ? 'text-amber-300 font-semibold' : 'text-slate-400'}`}>
+                {subMessage}
+              </p>
+            )}
+          </div>
+
+          {/* Warning Banner Callout if step 2 */}
+          {isWarning && (
+            <div className="p-3.5 bg-amber-950/40 border border-amber-800/60 rounded-xl flex items-start gap-3 text-amber-200 text-xs">
+              <ShieldAlert className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <span className="font-bold text-amber-300 block">Hierarchy Visibility Rule</span>
+                <p className="text-[11px] text-amber-200/90 leading-tight">
+                  Leads assigned to members outside your direct subordinate hierarchy will disappear from your personal pipeline view immediately upon assignment.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer Actions */}
+        <div className="px-6 py-4 border-t border-slate-800 bg-slate-900/40 flex items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="py-2 px-4 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white rounded-xl text-xs font-semibold transition-all cursor-pointer"
+          >
+            {cancelText || (step === 2 ? 'Go Back' : 'Cancel')}
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className={`py-2 px-5 rounded-xl text-xs font-bold transition-all shadow-lg flex items-center gap-1.5 cursor-pointer ${
+              isWarning
+                ? 'bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-550 text-white shadow-amber-500/20'
+                : 'bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white shadow-blue-500/20'
+            }`}
+          >
+            <CheckCircle2 className="w-4 h-4" />
+            <span>{confirmText || (step === 1 ? 'Proceed to Step 2 →' : 'Yes, Confirm Assignment')}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
