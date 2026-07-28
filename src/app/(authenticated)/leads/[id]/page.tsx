@@ -1459,6 +1459,33 @@ export default function LeadDetailPage({
 
   // Helper variables to govern lead edit locks
   const baseRole = user?.role ? (user.role.includes(':') ? user.role.split(':')[0] : user.role) : '';
+  const canViewLeadDetails = 
+    hasPermission('sales:lead_details_view') || 
+    hasPermission('leads:view_details') || 
+    ['admin', 'director'].includes(baseRole) || 
+    user?.department?.name === 'IT';
+
+  if (!canViewLeadDetails) {
+    return (
+      <div className="max-w-4xl mx-auto my-12 p-8 bg-[#111625] border border-red-500/30 rounded-2xl text-center space-y-4 shadow-2xl">
+        <div className="w-14 h-14 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center justify-center mx-auto text-red-400">
+          <Lock className="w-7 h-7" />
+        </div>
+        <h2 className="text-xl font-bold text-white tracking-wide">Lead Workspace Access Restricted</h2>
+        <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+          You do not have permission to view full customer lead details, journey logs, meeting details, or order documents.
+        </p>
+        <div className="pt-2">
+          <Link
+            href="/leads"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all"
+          >
+            &larr; Back to Leads Pipeline
+          </Link>
+        </div>
+      </div>
+    );
+  }
   const isPsaUser = baseRole === 'psa';
   const isSalesUser = ['consultant', 'tl', 'manager'].includes(baseRole) && !user?.role.includes('finance') && !user?.role.includes('operations') && !user?.role.includes('admin') && !user?.role.includes('it');
   

@@ -1266,6 +1266,17 @@ export default function LeadsPage() {
                         ) {
                           return;
                         }
+                        const userBaseRole = user?.role ? (user.role.includes(':') ? user.role.split(':')[0] : user.role) : '';
+                        const canViewLeadDetails = 
+                          hasPermission('sales:lead_details_view') || 
+                          hasPermission('leads:view_details') || 
+                          ['admin', 'director'].includes(userBaseRole) || 
+                          user?.department?.name === 'IT';
+
+                        if (!canViewLeadDetails) {
+                          alert('Access Restricted: You do not have permission to view detailed lead information.');
+                          return;
+                        }
                         window.location.href = `/leads/${lead.id}`;
                       }}
                       className={`hover:bg-slate-900/30 transition-all cursor-pointer ${

@@ -205,6 +205,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       'sales:lead_delete': ['leads:delete'],
       'leads:view_all': ['sales:lead_view_all'],
       'sales:lead_view_all': ['leads:view_all'],
+      'leads:view_details': ['sales:lead_details_view'],
+      'sales:lead_details_view': ['leads:view_details'],
       'leads:change_status': ['sales:stage_change', 'leads:manage_calling_stages'],
       'sales:stage_change': ['leads:change_status'],
       'attendance:view': ['sales:attendance_view', 'finance:attendance_view', 'ops:attendance_view'],

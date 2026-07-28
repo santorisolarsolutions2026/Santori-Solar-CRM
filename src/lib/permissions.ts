@@ -18,6 +18,7 @@ export const DEPARTMENT_PERMISSIONS: {
     { key: 'sales:lead_assign', label: 'Assign the leads', group: 'Lead Capture & Pipeline', description: 'Assign or reassign leads to department members.' },
     { key: 'sales:lead_delete', label: 'Delete Customer Leads', group: 'Lead Capture & Pipeline', description: 'Permanently remove or delete customer leads from the system.' },
     { key: 'sales:lead_view_all', label: 'View All System Leads', group: 'Lead Capture & Pipeline', description: 'Access all company leads bypassing hierarchy restriction.' },
+    { key: 'sales:lead_details_view', label: 'Show Lead Details', group: 'Lead Capture & Pipeline', description: 'Access full lead details workspace including journey history, meeting details, order punching details, and uploaded documents.' },
 
     // Calling & Meetings
     { key: 'sales:stage_change', label: 'Change Calling & Lead Stages', group: 'Calling & Customer Meetings', description: 'Update lead calling stages and follow-up status.' },
