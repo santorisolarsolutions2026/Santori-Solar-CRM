@@ -32,9 +32,16 @@ export default function AccessControlManager({ currentUser, users, onPermissions
   useEffect(() => {
     if (selectedUser) {
       const rawPerms = selectedUser.permissions || '';
-      const cleanPerms = rawPerms.startsWith('CUSTOM:') ? rawPerms.replace('CUSTOM:', '') : rawPerms;
-      const permsArray = cleanPerms ? cleanPerms.split(',').map(p => p.trim()) : [];
-      setSelectedPermissions(new Set(permsArray));
+      if (typeof rawPerms === 'string' && rawPerms.startsWith('CUSTOM:')) {
+        const cleanPerms = rawPerms.replace('CUSTOM:', '');
+        const permsArray = cleanPerms ? cleanPerms.split(',').map(p => p.trim()).filter(p => p !== '' && p !== 'none') : [];
+        setSelectedPermissions(new Set(permsArray));
+      } else {
+        const { getDefaultPermissionsForRole } = require('@/lib/auth');
+        const baseRole = selectedUser.role.includes(':') ? selectedUser.role.split(':')[0] : selectedUser.role;
+        const defaultPerms = getDefaultPermissionsForRole(baseRole);
+        setSelectedPermissions(new Set(defaultPerms));
+      }
     } else {
       setSelectedPermissions(new Set());
     }
