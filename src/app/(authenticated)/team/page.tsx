@@ -67,7 +67,7 @@ interface TeamMember {
 }
 
 const ROLE_LABELS: Record<string, { label: string; class: string }> = {
-  admin: { label: 'Admin', class: 'bg-red-500/10 text-red-400 border-red-500/20' },
+  admin: { label: 'Admin', class: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' },
   director: { label: 'Director', class: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' },
   sales_head: { label: 'Sales Head', class: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
   finance: { label: 'Finance Manager', class: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' },
@@ -409,27 +409,11 @@ interface TreeNode {
 }
 
 const getLevelColor = (level: number) => {
-  switch (level) {
-    case 0: return 'from-red-500 to-rose-600 shadow-red-500/10 border-red-500/20';
-    case 1: return 'from-indigo-500 to-blue-600 shadow-indigo-500/10 border-indigo-500/20';
-    case 2: return 'from-purple-500 to-fuchsia-600 shadow-purple-500/10 border-purple-500/20';
-    case 3: return 'from-blue-500 to-indigo-600 shadow-blue-500/10 border-blue-500/20';
-    case 4: return 'from-cyan-500 to-sky-600 shadow-cyan-500/10 border-cyan-500/20';
-    case 5: return 'from-emerald-500 to-teal-600 shadow-emerald-500/10 border-emerald-500/20';
-    default: return 'from-slate-500 to-slate-600 shadow-slate-500/10 border-slate-500/20';
-  }
+  return 'from-blue-500 to-indigo-600 shadow-blue-500/10 border-blue-500/20';
 };
 
 const getLevelBorderColor = (level: number) => {
-  switch (level) {
-    case 0: return 'border-red-500/70 shadow-red-500/10';
-    case 1: return 'border-indigo-500/70 shadow-indigo-500/10';
-    case 2: return 'border-purple-500/70 shadow-purple-500/10';
-    case 3: return 'border-blue-500/70 shadow-blue-500/10';
-    case 4: return 'border-cyan-500/70 shadow-cyan-500/10';
-    case 5: return 'border-emerald-500/70 shadow-emerald-500/10';
-    default: return 'border-slate-700 shadow-slate-500/5';
-  }
+  return 'border-blue-500/70 shadow-blue-500/10';
 };
 
 
@@ -4415,13 +4399,13 @@ export default function TeamManagementPage() {
                   {designationsViewMode === 'level' ? (
                     <div className="space-y-3.5">
                       {[
-                        { level: 0, label: 'Level 0: Admin 👑', color: 'border-red-500/20 text-red-400 bg-red-500/5' },
-                        { level: 1, label: 'Level 1: Department Heads 👔', color: 'border-indigo-500/20 text-indigo-400 bg-indigo-500/5' },
-                        { level: 2, label: 'Level 2: Senior Managers 📈', color: 'border-purple-500/20 text-purple-400 bg-purple-500/5' },
+                        { level: 0, label: 'Level 0: Admin 👑', color: 'border-blue-500/20 text-blue-400 bg-blue-500/5' },
+                        { level: 1, label: 'Level 1: Department Heads 👔', color: 'border-blue-500/20 text-blue-400 bg-blue-500/5' },
+                        { level: 2, label: 'Level 2: Senior Managers 📈', color: 'border-blue-500/20 text-blue-400 bg-blue-500/5' },
                         { level: 3, label: 'Level 3: Managers 🏢', color: 'border-blue-500/20 text-blue-600 dark:text-blue-400 bg-blue-500/5' },
-                        { level: 4, label: 'Level 4: Team Leaders (TL) 👥', color: 'border-cyan-500/20 text-cyan-400 bg-cyan-500/5' },
-                        { level: 5, label: 'Level 5: Consultants 🛠️', color: 'border-emerald-500/20 text-emerald-400 bg-emerald-500/5' },
-                        { level: 6, label: 'Level 6: PSA Consultants 📞', color: 'border-pink-500/20 text-pink-400 bg-pink-500/5' },
+                        { level: 4, label: 'Level 4: Team Leaders (TL) 👥', color: 'border-blue-500/20 text-blue-400 bg-blue-500/5' },
+                        { level: 5, label: 'Level 5: Consultants 🛠️', color: 'border-blue-500/20 text-blue-400 bg-blue-500/5' },
+                        { level: 6, label: 'Level 6: PSA Consultants 📞', color: 'border-blue-500/20 text-blue-400 bg-blue-500/5' },
                       ].map((levelItem) => {
                         const levelDesigs = designationsList.filter(d => d.level === levelItem.level);
                         return (

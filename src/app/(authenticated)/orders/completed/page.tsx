@@ -202,8 +202,8 @@ export default function CompletedOrdersPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-6">
         <div>
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
-              <PackageCheck className="w-7 h-7 text-emerald-400" />
+            <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl">
+              <PackageCheck className="w-7 h-7 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
               <h1 className="text-2xl md:text-3xl font-extrabold text-white">Completed Orders Portal</h1>
@@ -274,7 +274,7 @@ export default function CompletedOrdersPage() {
             </div>
             <button
               type="submit"
-              className="px-3.5 py-2 bg-slate-800 hover:bg-slate-750 text-white text-xs font-semibold rounded-xl cursor-pointer transition-all"
+              className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl cursor-pointer transition-all shadow-sm active:bg-blue-800"
             >
               Search
             </button>
@@ -353,7 +353,7 @@ export default function CompletedOrdersPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-950/80 border-b border-slate-800 text-[11px] font-mono uppercase text-slate-400">
+                <tr className="table-header-row text-[11px] font-mono uppercase text-slate-500 dark:text-slate-400">
                   <th className="p-4">Order Code / Lead</th>
                   <th className="p-4">Customer Details</th>
                   <th className="p-4">System Size</th>

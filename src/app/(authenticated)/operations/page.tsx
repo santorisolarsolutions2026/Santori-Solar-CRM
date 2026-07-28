@@ -930,7 +930,7 @@ export default function OperationsPage() {
               {/* Decorative top indicator */}
               <div className={`absolute top-0 left-0 w-full h-[3px] ${
                 order.isSubsidyApplied || (order.isCommissioned && !order.subsidyApplicable)
-                  ? 'bg-emerald-500' 
+                  ? 'bg-blue-600' 
                   : order.isCommissioned
                     ? 'bg-blue-600'
                     : order.isMeterInstalled
@@ -952,7 +952,7 @@ export default function OperationsPage() {
                   
                   <span className={`text-[9px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${
                     order.isSubsidyApplied || (order.isCommissioned && !order.subsidyApplicable)
-                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                      ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20'
                       : order.isCommissioned
                         ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20'
                         : order.isMeterInstalled
@@ -995,8 +995,8 @@ export default function OperationsPage() {
                 {/* Status summaries depending on phase */}
                 <div className="space-y-2">
                   {order.isDelivered ? (
-                    <div className="p-2 bg-emerald-950/20 border border-emerald-900/30 rounded-lg text-xs flex justify-between items-center">
-                      <span className="text-emerald-400 font-semibold text-[10px]">Materials Delivered</span>
+                    <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg text-xs flex justify-between items-center">
+                      <span className="text-blue-650 dark:text-blue-400 font-semibold text-[10px]">Materials Delivered</span>
                       <span className="text-[10px] text-slate-400">{formatDateTime(order.actualDeliveryAt).split(',')[0]}</span>
                     </div>
                   ) : order.deliveryDate ? (
@@ -1011,8 +1011,8 @@ export default function OperationsPage() {
 
                   {order.isDelivered && (
                     order.isInstalled ? (
-                      <div className="p-2 bg-emerald-950/20 border border-emerald-900/30 rounded-lg text-xs flex justify-between items-center">
-                        <span className="text-emerald-400 font-semibold text-[10px]">Solar Installed</span>
+                      <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg text-xs flex justify-between items-center">
+                        <span className="text-blue-650 dark:text-blue-400 font-semibold text-[10px]">Solar Installed</span>
                         <span className="text-[10px] text-slate-400">{formatDateTime(order.actualInstallationAt).split(',')[0]}</span>
                       </div>
                     ) : order.installationDate ? (
@@ -1028,8 +1028,8 @@ export default function OperationsPage() {
 
                   {order.isInstalled && (
                     order.isMeterInstalled ? (
-                      <div className="p-2 bg-emerald-950/20 border border-emerald-900/30 rounded-lg text-xs flex justify-between items-center">
-                        <span className="text-emerald-400 font-semibold text-[10px]">Net Meter Installed</span>
+                      <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg text-xs flex justify-between items-center">
+                        <span className="text-blue-650 dark:text-blue-400 font-semibold text-[10px]">Net Meter Installed</span>
                         <span className="text-[10px] text-slate-400">{formatDateTime(order.actualMeterInstalledAt).split(',')[0]}</span>
                       </div>
                     ) : null
@@ -1037,8 +1037,8 @@ export default function OperationsPage() {
 
                   {order.isMeterInstalled && (
                     order.isCommissioned ? (
-                      <div className="p-2 bg-emerald-950/20 border border-emerald-900/30 rounded-lg text-xs flex justify-between items-center">
-                        <span className="text-emerald-400 font-semibold text-[10px]">Plant Commissioned</span>
+                      <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg text-xs flex justify-between items-center">
+                        <span className="text-blue-650 dark:text-blue-400 font-semibold text-[10px]">Plant Commissioned</span>
                         <span className="text-[10px] text-slate-400">{formatDateTime(order.actualCommissionedAt).split(',')[0]}</span>
                       </div>
                     ) : null
@@ -1046,8 +1046,8 @@ export default function OperationsPage() {
 
                   {order.isCommissioned && order.subsidyApplicable && (
                     order.isSubsidyApplied ? (
-                      <div className="p-2 bg-emerald-950/25 border border-emerald-900/30 rounded-lg text-xs flex justify-between items-center">
-                        <span className="text-emerald-400 font-bold text-[10px]">Subsidy Applied</span>
+                      <div className="p-2 bg-blue-500/15 border border-blue-500/20 rounded-lg text-xs flex justify-between items-center">
+                        <span className="text-blue-650 dark:text-blue-400 font-bold text-[10px]">Subsidy Applied</span>
                         <span className="text-[10px] text-slate-400">{formatDateTime(order.actualSubsidyAppliedAt).split(',')[0]}</span>
                       </div>
                     ) : (
@@ -2423,7 +2423,7 @@ export default function OperationsPage() {
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-2xl max-w-sm w-full space-y-4 text-center animate-fade-in-up">
             <div className="flex justify-center">
               {customAlert.type === 'success' ? (
-                <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+                <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
                   <CheckCircle className="w-6 h-6" />
                 </div>
               ) : customAlert.type === 'error' ? (
@@ -2452,7 +2452,7 @@ export default function OperationsPage() {
                 onClick={() => setCustomAlert(prev => ({ ...prev, isOpen: false }))}
                 className={`w-full py-2 rounded-lg font-bold text-xs cursor-pointer shadow-md transition-all ${
                   customAlert.type === 'success'
-                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-emerald-500/10'
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white shadow-blue-500/10'
                     : customAlert.type === 'error'
                     ? 'bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white shadow-rose-500/10'
                     : 'bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white shadow-blue-500/10'
@@ -2549,7 +2549,7 @@ export default function OperationsPage() {
                   <button
                     type="button"
                     onClick={confirmPhoto}
-                    className="w-1/2 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md shadow-emerald-500/10"
+                    className="w-1/2 py-2 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md shadow-blue-500/10"
                   >
                     Use Photo
                   </button>

@@ -152,9 +152,9 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
             value={currentTime}
             onChange={handleSeekChange}
             disabled={isLoading}
-            className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500 focus:outline-none disabled:opacity-50"
+            className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-600 focus:outline-none disabled:opacity-50"
             style={{
-              background: `linear-gradient(to right, #f59e0b 0%, #f59e0b ${(currentTime / (duration || 1)) * 100}%, #1e293b ${(currentTime / (duration || 1)) * 100}%, #1e293b 100%)`,
+              background: `linear-gradient(to right, #2563eb 0%, #2563eb ${(currentTime / (duration || 1)) * 100}%, #1e293b ${(currentTime / (duration || 1)) * 100}%, #1e293b 100%)`,
             }}
           />
         </div>
@@ -172,7 +172,7 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
             type="button"
             onClick={togglePlay}
             disabled={!src}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-tr from-amber-600 to-amber-400 text-white font-semibold shadow-lg hover:shadow-amber-500/20 active:scale-95 transition-all hover:scale-105 disabled:opacity-50 flex-shrink-0"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-tr from-blue-700 to-blue-500 text-white font-semibold shadow-lg hover:shadow-blue-500/20 active:scale-95 transition-all hover:scale-105 disabled:opacity-50 flex-shrink-0"
           >
             {isLoading ? (
               <Loader2 className="w-5 h-5 animate-spin text-white" />
@@ -214,7 +214,7 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
             {isMuted || volume === 0 ? (
               <VolumeX className="w-4 h-4 text-rose-400" />
             ) : (
-              <Volume2 className="w-4 h-4 text-emerald-400" />
+              <Volume2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             )}
           </button>
 
@@ -225,9 +225,9 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
             step="0.05"
             value={isMuted ? 0 : volume}
             onChange={handleVolumeChange}
-            className="w-16 sm:w-20 md:w-24 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500 focus:outline-none"
+            className="w-16 sm:w-20 md:w-24 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-600 focus:outline-none"
             style={{
-              background: `linear-gradient(to right, #10b981 0%, #10b981 ${(isMuted ? 0 : volume) * 100}%, #1e293b ${(isMuted ? 0 : volume) * 100}%, #1e293b 100%)`,
+              background: `linear-gradient(to right, #2563eb 0%, #2563eb ${(isMuted ? 0 : volume) * 100}%, #1e293b ${(isMuted ? 0 : volume) * 100}%, #1e293b 100%)`,
             }}
           />
         </div>

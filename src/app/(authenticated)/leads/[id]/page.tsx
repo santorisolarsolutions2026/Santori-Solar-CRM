@@ -1533,9 +1533,9 @@ export default function LeadDetailPage({
                 
                 <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-xs shrink-0 transition-all duration-300 z-10 ${
                   isActive
-                    ? 'border-blue-600 bg-blue-500/10 text-blue-600 dark:text-blue-450 ring-4 ring-blue-500/15 scale-105'
+                    ? 'border-blue-600 bg-blue-500/10 text-blue-600 dark:text-blue-455 ring-4 ring-blue-500/15 scale-105'
                     : isCompleted
-                      ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400'
+                      ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
                       : 'border-slate-800 bg-slate-950 text-slate-500'
                 }`}>
                   {isCompleted ? '✓' : idx + 1}
@@ -1543,7 +1543,7 @@ export default function LeadDetailPage({
 
                 <div className="min-w-0">
                   <p className={`text-[11px] font-extrabold uppercase tracking-wider ${
-                    isActive ? 'text-blue-600 dark:text-blue-400' : isCompleted ? 'text-emerald-400' : 'text-slate-400'
+                    isActive ? 'text-blue-600 dark:text-blue-400' : isCompleted ? 'text-blue-650 dark:text-blue-450' : 'text-slate-400'
                   }`}>
                     {step.label}
                   </p>
@@ -3021,7 +3021,7 @@ export default function LeadDetailPage({
                           {hasPermission('sales:finance_assign') || hasPermission('orders:assign_finance') ? (
                             <button
                               onClick={() => setShowFinanceModal(true)}
-                              className="py-2.5 px-5 rounded-lg font-bold text-xs shadow-lg transition-all bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 cursor-pointer shadow-emerald-500/10 focus:outline-none"
+                              className="py-2.5 px-5 rounded-lg font-bold text-xs shadow-lg transition-all bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white cursor-pointer shadow-blue-500/10 focus:outline-none"
                             >
                               Submit Order for Approval
                             </button>
@@ -3241,7 +3241,7 @@ export default function LeadDetailPage({
                 </button>
                 <button
                   type="submit"
-                  className="py-2 px-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 rounded-lg font-bold text-xs shadow-md"
+                  className="py-2 px-5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs shadow-md cursor-pointer"
                 >
                   Submit Order to Finance
                 </button>
@@ -3430,7 +3430,7 @@ export default function LeadDetailPage({
                   <button
                     type="button"
                     onClick={confirmPhoto}
-                    className="w-1/2 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md shadow-emerald-500/10"
+                    className="w-1/2 py-2 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md shadow-blue-500/10"
                   >
                     Use Photo
                   </button>

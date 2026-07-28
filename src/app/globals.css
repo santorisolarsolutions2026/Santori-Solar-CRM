@@ -556,8 +556,7 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
   transform: scale(1.1);
 }
 
-/* Global style override for form inputs, selects, and textareas to ensure light/dark mode compatibility */
-input:not([type="submit"]):not([type="button"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+input:not([type="submit"]):not([type="button"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(.glass-input-premium),
 select,
 textarea {
   background-color: var(--bg-input) !important;
@@ -566,7 +565,7 @@ textarea {
 }
 
 /* Customize placeholder colors */
-input::placeholder,
+input:not(.glass-input-premium)::placeholder,
 textarea::placeholder {
   color: var(--text-muted) !important;
 }
@@ -727,4 +726,94 @@ button.bg-yellow-500:hover,
 .hover\:border-amber-400:hover,
 .hover\:border-yellow-400:hover {
   border-color: var(--accent-color) !important;
+}
+
+/* Premium Glassmorphic overrides for Login Page - LIGHT theme */
+.glass-card-premium {
+  background-color: rgba(255, 255, 255, 0.35) !important;
+  backdrop-filter: blur(28px) !important;
+  -webkit-backdrop-filter: blur(28px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.55) !important;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.08), 
+              inset 0 1px 1px rgba(255, 255, 255, 0.3) !important;
+}
+
+.light .glass-card-premium {
+  background-color: rgba(255, 255, 255, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+}
+
+.glass-card-premium h1 {
+  color: #0f172a !important; /* dark slate text */
+}
+
+.glass-card-premium label {
+  color: #334155 !important; /* slate-700 text */
+}
+
+.glass-card-premium span {
+  color: #475569 !important; /* slate-600 text */
+}
+
+.glass-card-premium p {
+  color: #334155 !important; /* slate-700 text */
+}
+
+.glass-card-premium input.glass-input-premium {
+  background-color: rgba(255, 255, 255, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+  color: #0f172a !important; /* dark slate text */
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+}
+
+.light .glass-card-premium input.glass-input-premium {
+  background-color: rgba(255, 255, 255, 0.45) !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  color: #0f172a !important;
+}
+
+.glass-card-premium input.glass-input-premium:focus {
+  background-color: rgba(255, 255, 255, 0.75) !important;
+  border-color: #2563eb !important; /* blue-600 */
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15) !important;
+  color: #0f172a !important;
+}
+
+.glass-card-premium input.glass-input-premium::placeholder {
+  color: rgba(15, 23, 42, 0.5) !important;
+}
+
+/* Specific webkit autofill override for light-theme inputs */
+.glass-card-premium input.glass-input-premium:-webkit-autofill,
+.glass-card-premium input.glass-input-premium:-webkit-autofill:hover,
+.glass-card-premium input.glass-input-premium:-webkit-autofill:focus,
+.glass-card-premium input.glass-input-premium:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.5) inset !important;
+  -webkit-text-fill-color: #0f172a !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Custom Table Header Row to respect active theme over OS media query preferences */
+.table-header-row {
+  background-color: var(--bg-sidebar) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+.light .table-header-row {
+  background-color: #f1f5f9 !important; /* light slate gray matching table design */
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+/* Designation / Role badge in dropdowns and select lists */
+.designation-badge {
+  background-color: rgba(14, 165, 233, 0.1) !important; /* 10% opacity sky blue in dark mode */
+  border: 1px solid rgba(14, 165, 233, 0.2) !important;
+  color: #38bdf8 !important; /* sky blue text */
+}
+
+.light .designation-badge {
+  background-color: rgba(37, 99, 235, 0.08) !important; /* 8% opacity royal blue in light mode */
+  border: 1px solid rgba(37, 99, 235, 0.15) !important;
+  color: #2563eb !important; /* royal blue text */
 }

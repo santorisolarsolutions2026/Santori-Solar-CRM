@@ -141,6 +141,7 @@ export default function AuthenticatedLayout({
     onConfirm: () => void;
     onCancel: () => void;
   } | null>(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const addToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
     const id = Math.random().toString(36).substring(2, 9);
@@ -648,7 +649,7 @@ export default function AuthenticatedLayout({
   }).filter(group => group.items.length > 0);
 
   const roleLabels: Record<string, { label: string; color: string }> = {
-    admin: { label: 'Admin', color: 'bg-red-500/10 text-red-400 border-red-500/20' },
+    admin: { label: 'Admin', color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' },
     director: { label: 'Director', color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' },
     sales_head: { label: 'Sales Head', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
     finance: { label: 'Finance Manager', color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' },
@@ -725,9 +726,9 @@ export default function AuthenticatedLayout({
                 >
                   <span>{group.title}</span>
                   {isExpanded ? (
-                    <ChevronDown className="w-3 h-3 text-slate-505" />
+                    <ChevronDown className="w-3 h-3 text-slate-500" />
                   ) : (
-                    <ChevronRight className="w-3 h-3 text-slate-505" />
+                    <ChevronRight className="w-3 h-3 text-slate-500" />
                   )}
                 </button>
 
@@ -785,8 +786,8 @@ export default function AuthenticatedLayout({
         {/* Logout */}
         <div className="p-4 border-t border-slate-800">
           <button
-            onClick={logout}
-            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-slate-900/60 hover:bg-red-950/20 text-slate-400 hover:text-red-400 border border-slate-800 hover:border-red-900/30 transition-all font-semibold text-sm"
+            onClick={() => setShowLogoutConfirm(true)}
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-slate-900/60 hover:bg-red-950/20 text-slate-400 hover:text-red-400 border border-slate-800 hover:border-red-900/30 transition-all font-semibold text-sm cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
             <span>Logout</span>
@@ -891,9 +892,9 @@ export default function AuthenticatedLayout({
                     >
                       <span>{group.title}</span>
                       {isExpanded ? (
-                        <ChevronDown className="w-3 h-3 text-slate-505" />
+                        <ChevronDown className="w-3 h-3 text-slate-500" />
                       ) : (
-                        <ChevronRight className="w-3 h-3 text-slate-505" />
+                        <ChevronRight className="w-3 h-3 text-slate-500" />
                       )}
                     </button>
 
@@ -954,8 +955,8 @@ export default function AuthenticatedLayout({
 
             <div className="p-4 border-t border-slate-800">
               <button
-                onClick={logout}
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-slate-900/60 hover:bg-red-950/20 text-slate-400 hover:text-red-400 border border-slate-800 hover:border-red-900/30 transition-all font-semibold text-sm"
+                onClick={() => setShowLogoutConfirm(true)}
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-slate-900/60 hover:bg-red-950/20 text-slate-400 hover:text-red-400 border border-slate-800 hover:border-red-900/30 transition-all font-semibold text-sm cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Logout</span>
@@ -1500,6 +1501,47 @@ export default function AuthenticatedLayout({
                   className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white font-bold rounded-lg transition-all text-xs cursor-pointer shadow-lg shadow-blue-500/10"
                 >
                   Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="w-full max-w-sm bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div className="p-5 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-white">Logout Confirmation</h3>
+              <button
+                onClick={() => setShowLogoutConfirm(false)}
+                className="text-slate-400 hover:text-white cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-5 space-y-5">
+              <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                Are you sure you want to log out of the company portal?
+              </p>
+              <div className="flex justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="px-4 py-2 bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-lg text-slate-300 hover:text-white transition-all font-semibold text-[11px] cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowLogoutConfirm(false);
+                    logout();
+                  }}
+                  className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white font-bold rounded-lg transition-all text-[11px] cursor-pointer shadow-lg shadow-blue-500/10"
+                >
+                  Logout
                 </button>
               </div>
             </div>

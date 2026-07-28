@@ -8,8 +8,15 @@ export default function Typewriter({ texts }: { texts: string[] }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [typingSpeed, setTypingSpeed] = useState(150);
 
+  const textsRef = React.useRef(texts);
   useEffect(() => {
-    const fullText = texts[currentTextIndex];
+    textsRef.current = texts;
+  }, [texts]);
+
+  useEffect(() => {
+    const list = textsRef.current;
+    if (!list || list.length === 0) return;
+    const fullText = list[currentTextIndex % list.length];
     
     const handleTyping = () => {
       if (!isDeleting) {
@@ -29,7 +36,7 @@ export default function Typewriter({ texts }: { texts: string[] }) {
 
         if (currentText === '') {
           setIsDeleting(false);
-          setCurrentTextIndex((prev) => (prev + 1) % texts.length);
+          setCurrentTextIndex((prev) => (prev + 1) % list.length);
           setTypingSpeed(500); // Pause before typing the next word
         }
       }
@@ -37,14 +44,14 @@ export default function Typewriter({ texts }: { texts: string[] }) {
 
     const timer = setTimeout(handleTyping, typingSpeed);
     return () => clearTimeout(timer);
-  }, [currentText, isDeleting, currentTextIndex, texts, typingSpeed]);
+  }, [currentText, isDeleting, currentTextIndex, typingSpeed]);
 
   return (
     <span className="relative inline-block whitespace-nowrap">
-      <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-amber-300 to-yellow-500">
-        {currentText}
+      <span className="text-blue-500 dark:text-blue-400 font-extrabold">
+        {currentText || "\u00A0"}
       </span>
-      <span className="absolute -right-2 top-0 bottom-0 w-0.5 bg-yellow-400 animate-pulse" />
+      <span className="absolute -right-2 top-0 bottom-0 w-0.5 bg-blue-500 dark:bg-blue-400 animate-pulse" />
     </span>
   );
 }
