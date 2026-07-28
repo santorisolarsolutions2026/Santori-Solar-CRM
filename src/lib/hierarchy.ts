@@ -38,16 +38,6 @@ export async function getSubordinateIds(userId: number): Promise<number[]> {
 }
 
 /**
- * Checks if targetUserId is a direct or indirect subordinate of supervisorId.
- * Admin/Director role override can be handled separately.
- */
-export async function isSubordinate(supervisorId: number, targetUserId: number): Promise<boolean> {
-  if (supervisorId === targetUserId) return true; // Self assignment allowed unless explicitly restricted
-  const subIds = await getSubordinateIds(supervisorId);
-  return subIds.includes(targetUserId);
-}
-
-/**
  * Recursively fetches all ancestor user IDs (direct and indirect supervisors) up to the root.
  * This runs in a single database round-trip by fetching active users and traversing in memory.
  */

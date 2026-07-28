@@ -64,9 +64,9 @@ export async function POST(
     }
 
     const userPermissions = await getUserPermissions(userPayload.id);
-    const hasAssignPerm = userPermissions.includes('sales:assign_leads') || userPermissions.includes('leads:assign') || ['admin', 'director'].includes(userPayload.role);
-    if (!hasAssignPerm) {
-      return NextResponse.json({ success: false, message: 'Forbidden. You do not possess the Assign Leads (sales:assign_leads) permission.' }, { status: 403 });
+    const isManagerOrTl = ['admin', 'director', 'sales_head', 'manager', 'tl', 'psa_tl'].includes(userPayload.role);
+    if (!isManagerOrTl && !userPermissions.includes('leads:assign')) {
+      return NextResponse.json({ success: false, message: 'Forbidden. Only managers or TLs can assign employees.' }, { status: 403 });
     }
 
     const body = await req.json();

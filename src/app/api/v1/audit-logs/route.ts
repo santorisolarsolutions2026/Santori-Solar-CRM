@@ -9,14 +9,13 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
-    const { role: loggedInRole, department: loggedInUserDept, permissions: userPermissions } = await getUserSession(userPayload.id);
+    const { role: loggedInRole, department: loggedInUserDept } = await getUserSession(userPayload.id);
     const loggedInBaseRole = loggedInRole.includes(':') ? loggedInRole.split(':')[0] : loggedInRole;
-    const isEditingUserAdmin = loggedInBaseRole === 'admin' || loggedInBaseRole === 'director';
+    const isEditingUserAdmin = loggedInBaseRole === 'admin';
     const isEditingUserIT = loggedInUserDept?.name === 'IT';
-    const hasAnalyticsPerm = userPermissions.includes('admin:view_analytics') || userPermissions.includes('reports:view') || userPermissions.includes('logs:view');
 
-    if (!isEditingUserAdmin && !isEditingUserIT && !hasAnalyticsPerm) {
-      return NextResponse.json({ success: false, message: 'Forbidden. Access restricted to authorized personnel.' }, { status: 403 });
+    if (!isEditingUserAdmin && !isEditingUserIT) {
+      return NextResponse.json({ success: false, message: 'Forbidden. Access restricted to IT and Admins.' }, { status: 403 });
     }
 
     const url = new URL(req.url);
@@ -24,12 +23,12 @@ export async function GET(req: Request) {
     const endDate = url.searchParams.get('endDate');
     const searchUser = url.searchParams.get('searchUser');
     const tableName = url.searchParams.get('tableName');
-    const moduleFilter = url.searchParams.get('module');
     const action = url.searchParams.get('action');
     const page = parseInt(url.searchParams.get('page') || '1', 10);
     const limit = parseInt(url.searchParams.get('limit') || '50', 10);
 
     const skip = (page - 1) * limit;
+
     const where: any = {};
 
     if (startDate) {
@@ -45,24 +44,24 @@ export async function GET(req: Request) {
       };
     }
     if (tableName) {
-      where.tableName = { equals: tableName, mode: 'insensitive' };
-    }
-    if (moduleFilter) {
-      where.module = { equals: moduleFilter, mode: 'insensitive' };
+      where.tableName = {
+        equals: tableName,
+        mode: 'insensitive',
+      };
     }
     if (action) {
-      where.OR = [
-        { action: { contains: action, mode: 'insensitive' } },
-        { fieldName: { contains: action, mode: 'insensitive' } },
-      ];
+      where.fieldName = {
+        equals: action,
+        mode: 'insensitive',
+      };
     }
     if (searchUser) {
-      where.OR = [
-        { employeeName: { contains: searchUser, mode: 'insensitive' } },
-        { employeeCode: { contains: searchUser, mode: 'insensitive' } },
-        { user: { name: { contains: searchUser, mode: 'insensitive' } } },
-        { user: { email: { contains: searchUser, mode: 'insensitive' } } },
-      ];
+      where.user = {
+        OR: [
+          { name: { contains: searchUser, mode: 'insensitive' } },
+          { email: { contains: searchUser, mode: 'insensitive' } },
+        ]
+      };
     }
 
     const [logs, total] = await prisma.$transaction([
@@ -74,13 +73,18 @@ export async function GET(req: Request) {
               id: true,
               name: true,
               email: true,
-              employeeId: true,
               role: true,
-              department: { select: { name: true } }
+              department: {
+                select: {
+                  name: true
+                }
+              }
             }
           }
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: {
+          createdAt: 'desc',
+        },
         skip,
         take: limit,
       }),
@@ -105,4 +109,3 @@ export async function GET(req: Request) {
     );
   }
 }
-
