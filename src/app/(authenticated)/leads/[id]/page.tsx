@@ -2433,6 +2433,41 @@ export default function LeadDetailPage({
                               </p>
                             </div>
                           )}
+                          
+                          {/* Assigned Sales Team Member Info & Assignment Button */}
+                          <div className="sm:col-span-2 pt-3 border-t border-slate-800/80 flex items-center justify-between flex-wrap gap-3">
+                            <div>
+                              <span className="text-slate-500 uppercase tracking-wider font-semibold text-[10px] block">
+                                Assigned Sales Executive
+                              </span>
+                              {lead.consultant || lead.tl || lead.manager ? (
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                                  <span className="text-xs font-bold text-white">
+                                    {getLeadAssignedDisplay(lead, user)?.name || lead.consultant?.name || lead.tl?.name || lead.manager?.name} ({getLeadAssignedDisplay(lead, user)?.role || 'Sales'})
+                                  </span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="w-2 h-2 rounded-full bg-amber-400" />
+                                  <span className="text-xs text-amber-300 italic font-medium">
+                                    Unassigned (No Sales Member Assigned)
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+
+                            {canAssignSalesTeam && (
+                              <button
+                                type="button"
+                                onClick={() => setShowPostMeetingAssignModal(true)}
+                                className="py-1.5 px-3.5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer shrink-0"
+                              >
+                                <UserCheck className="w-3.5 h-3.5" />
+                                <span>{hasAssignedSalesMember ? 'Reassign Sales Team' : 'Assign Sales Team'}</span>
+                              </button>
+                            )}
+                          </div>
                         </div>
 
                         {/* Interactive Meeting Controls for Active Lead Meeting */}

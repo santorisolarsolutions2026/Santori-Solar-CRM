@@ -968,7 +968,7 @@ export default function LeadsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {(hasPermission('leads:import') || hasPermission('sales:lead_import')) && (
+          {(hasPermission('sales:lead_import') || hasPermission('leads:import')) && (
             <button
               onClick={() => setShowImportModal(true)}
               className="py-2.5 px-4 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-900 dark:text-white rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
@@ -1421,7 +1421,7 @@ export default function LeadsPage() {
       </div>
 
       {/* CSV IMPORT MODAL */}
-      {showImportModal && (
+      {showImportModal && (hasPermission('sales:lead_import') || hasPermission('leads:import')) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4 overflow-y-auto">
           <div className="w-full max-w-4xl bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-8 animate-fade-in-up">
             <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">

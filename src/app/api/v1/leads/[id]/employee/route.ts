@@ -92,7 +92,7 @@ export async function POST(
       const { getSubordinateIds } = await import('@/lib/hierarchy');
       const subordinateIds = await getSubordinateIds(userPayload.id);
 
-      if (!subordinateIds.includes(empId)) {
+      if (empId !== userPayload.id && !subordinateIds.includes(empId)) {
         return NextResponse.json({
           success: false,
           message: 'Forbidden. You can only assign leads to team members strictly lower in your hierarchy tree.'
