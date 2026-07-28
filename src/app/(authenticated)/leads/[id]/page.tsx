@@ -1251,12 +1251,19 @@ export default function LeadDetailPage({
     };
   }, [isRecording]);
 
+  const baseRole = user?.role ? (user.role.includes(':') ? user.role.split(':')[0] : user.role) : '';
   const canTrackJourney = hasPermission('sales:lead_track') || hasPermission('leads:track');
   const canRecordMeeting = hasPermission('sales:meeting_done') || hasPermission('leads:meeting_done');
+  const canAssignSalesTeam = hasPermission('sales:assign_team') || hasPermission('sales:lead_assign') || hasPermission('leads:assign') || ['admin', 'director'].includes(baseRole) || user?.department?.name === 'IT';
+  const hasAssignedSalesMember = !!(lead?.assignedConsultantId || lead?.assignedTlId || lead?.assignedManagerId || lead?.consultant?.id || lead?.tl?.id || lead?.manager?.id);
 
   const handleStartMeeting = async (meetingId: number) => {
     if (!canRecordMeeting) {
       alert('Forbidden. You do not have permission to start or record meetings.');
+      return;
+    }
+    if (!hasAssignedSalesMember) {
+      alert('Forbidden. A sales team member must be assigned to this lead before starting or recording the meeting.');
       return;
     }
     setIsStartingMeeting(true);
@@ -1341,6 +1348,10 @@ export default function LeadDetailPage({
   const handleStartRecordingOnly = async (meetingId: number) => {
     if (!canRecordMeeting) {
       alert('Forbidden. You do not have permission to start or record meetings.');
+      return;
+    }
+    if (!hasAssignedSalesMember) {
+      alert('Forbidden. A sales team member must be assigned to this lead before starting or recording the meeting.');
       return;
     }
     let stream: MediaStream;
@@ -1458,7 +1469,6 @@ export default function LeadDetailPage({
   const isOrderFormDisabled = !hasPermission('orders:create') || isOrderFormLocked;
 
   // Helper variables to govern lead edit locks
-  const baseRole = user?.role ? (user.role.includes(':') ? user.role.split(':')[0] : user.role) : '';
   const canViewLeadDetails = 
     hasPermission('sales:lead_details_view') || 
     hasPermission('leads:view_details') || 
@@ -2432,28 +2442,51 @@ export default function LeadDetailPage({
                               Live Meeting Tracker
                             </h5>
                             
-                            {!meet.meetingStartedAt ? (
-                              <div className="p-4 bg-slate-955/45 border border-slate-855 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
-                                <div className="text-left">
-                                  <span className="text-xs font-bold text-white block">Ready to start the site visit?</span>
-                                  <p className="text-[10px] text-slate-400 mt-0.5">
-                                    This will request microphone and location permissions to log coordinates and record meeting audio.
-                                  </p>
-                                </div>
-                                <button
-                                  type="button"
-                                  disabled={isStartingMeeting}
-                                  onClick={() => handleStartMeeting(meet.id)}
-                                  className="w-full sm:w-auto py-2.5 px-5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-blue-500/10 disabled:opacity-50 transition-all cursor-pointer"
-                                >
-                                  {isStartingMeeting ? (
-                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                  ) : (
-                                    <Mic className="w-3.5 h-3.5" />
+                             {!meet.meetingStartedAt ? (
+                              !hasAssignedSalesMember ? (
+                                <div className="p-4 bg-amber-950/30 border border-amber-800/50 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                                  <div className="text-left space-y-0.5">
+                                    <span className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                                      <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 animate-pulse" />
+                                      <span>Sales Team Member Assignment Required</span>
+                                    </span>
+                                    <p className="text-[11px] text-amber-200/80">
+                                      A sales team member must be assigned to this lead before the site meeting can be started or audio recorded.
+                                    </p>
+                                  </div>
+                                  {canAssignSalesTeam && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setShowPostMeetingAssignModal(true)}
+                                      className="w-full sm:w-auto py-2 px-4 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-550 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-amber-500/10 cursor-pointer shrink-0"
+                                    >
+                                      Assign Sales Member →
+                                    </button>
                                   )}
-                                  <span>Start Meeting</span>
-                                </button>
-                              </div>
+                                </div>
+                              ) : (
+                                <div className="p-4 bg-slate-955/45 border border-slate-855 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                                  <div className="text-left">
+                                    <span className="text-xs font-bold text-white block">Ready to start the site visit?</span>
+                                    <p className="text-[10px] text-slate-400 mt-0.5">
+                                      This will request microphone and location permissions to log coordinates and record meeting audio.
+                                    </p>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    disabled={isStartingMeeting}
+                                    onClick={() => handleStartMeeting(meet.id)}
+                                    className="w-full sm:w-auto py-2.5 px-5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-blue-500/10 disabled:opacity-50 transition-all cursor-pointer"
+                                  >
+                                    {isStartingMeeting ? (
+                                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    ) : (
+                                      <Mic className="w-3.5 h-3.5" />
+                                    )}
+                                    <span>Start Meeting</span>
+                                  </button>
+                                </div>
+                              )
                             ) : !meet.meetingEndedAt ? (
                               <div className="p-4 bg-slate-950/45 border border-slate-850 rounded-xl space-y-4">
                                 <div className="flex items-center justify-between flex-wrap gap-3">

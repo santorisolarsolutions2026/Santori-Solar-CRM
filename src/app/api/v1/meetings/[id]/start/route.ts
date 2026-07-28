@@ -30,6 +30,16 @@ export async function POST(
       return NextResponse.json({ success: false, message: 'Meeting not found.' }, { status: 404 });
     }
 
+    const lead = meeting.lead;
+    const hasAssignedSalesMember = !!(lead.assignedConsultantId || lead.assignedTlId || lead.assignedManagerId);
+
+    if (!hasAssignedSalesMember) {
+      return NextResponse.json({
+        success: false,
+        message: 'Forbidden. A sales team member must be assigned to this lead before the meeting can be started.'
+      }, { status: 400 });
+    }
+
     let city: string | null = null;
     let locality: string | null = null;
     let pinCode: string | null = null;

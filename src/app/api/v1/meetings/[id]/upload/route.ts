@@ -36,6 +36,16 @@ export async function POST(
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to record meetings or upload meeting audio.' }, { status: 403 });
     }
 
+    const lead = await prisma.lead.findUnique({ where: { id: meeting.leadId } });
+    const hasAssignedSalesMember = !!(lead?.assignedConsultantId || lead?.assignedTlId || lead?.assignedManagerId);
+
+    if (!hasAssignedSalesMember) {
+      return NextResponse.json({
+        success: false,
+        message: 'Forbidden. A sales team member must be assigned to this lead before audio recording can be uploaded.'
+      }, { status: 400 });
+    }
+
     const formData = await req.formData();
     const file = formData.get('file') as File;
     const durationStr = formData.get('duration') as string | null;
