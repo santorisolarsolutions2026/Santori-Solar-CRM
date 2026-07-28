@@ -1335,7 +1335,7 @@ export default function LeadsPage() {
                       </td>
                       <td className="py-3.5 px-4 text-center w-32">
                         <div className="flex items-center justify-center gap-2">
-                          {hasPermission('leads:track') && (
+                          {(hasPermission('sales:lead_track') || hasPermission('leads:track')) && (
                             <button
                               onClick={() => handleOpenTracker(lead)}
                               className="p-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-blue-600 dark:text-blue-450 transition-all cursor-pointer"

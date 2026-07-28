@@ -27,6 +27,15 @@ export async function POST(
       return NextResponse.json({ success: false, message: 'Meeting not found.' }, { status: 404 });
     }
 
+    const { getUserSession } = await import('@/lib/auth');
+    const { role: userRole, permissions: userPermissions, department } = await getUserSession(userPayload.id);
+    const baseRole = userRole.includes(':') ? userRole.split(':')[0] : userRole;
+    const canRecordMeeting = userPermissions.includes('sales:meeting_done') || userPermissions.includes('leads:meeting_done') || ['admin', 'director'].includes(baseRole) || department?.name === 'IT';
+
+    if (!canRecordMeeting) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to record meetings or upload meeting audio.' }, { status: 403 });
+    }
+
     const formData = await req.formData();
     const file = formData.get('file') as File;
     const durationStr = formData.get('duration') as string | null;

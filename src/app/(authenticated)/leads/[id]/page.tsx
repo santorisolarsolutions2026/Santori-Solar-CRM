@@ -1251,7 +1251,14 @@ export default function LeadDetailPage({
     };
   }, [isRecording]);
 
+  const canTrackJourney = hasPermission('sales:lead_track') || hasPermission('leads:track');
+  const canRecordMeeting = hasPermission('sales:meeting_done') || hasPermission('leads:meeting_done');
+
   const handleStartMeeting = async (meetingId: number) => {
+    if (!canRecordMeeting) {
+      alert('Forbidden. You do not have permission to start or record meetings.');
+      return;
+    }
     setIsStartingMeeting(true);
     let lat: number | null = null;
     let lng: number | null = null;
@@ -1332,6 +1339,10 @@ export default function LeadDetailPage({
   };
 
   const handleStartRecordingOnly = async (meetingId: number) => {
+    if (!canRecordMeeting) {
+      alert('Forbidden. You do not have permission to start or record meetings.');
+      return;
+    }
     let stream: MediaStream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -1689,7 +1700,7 @@ export default function LeadDetailPage({
                 <span>Action</span>
               </button>
             )}
-              {hasPermission('leads:track') && (
+              {canTrackJourney && (
                 <button
                   onClick={() => setActiveTab('track')}
                   className={`px-5 py-4 border-b-2 transition-all flex items-center justify-center gap-2 shrink-0 ${
@@ -1933,38 +1944,42 @@ export default function LeadDetailPage({
               )}
 
               {/* TRACK TAB */}
-              {activeTab === 'track' && lead && (
-                <div className="space-y-4">
-                  {user?.role === 'admin' && !(lead.status === 13 || (lead.order && lead.order.status !== 'draft')) && (
-                    <div className="flex justify-end">
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          if (!window.confirm('Are you sure you want to permanently clear the lead tracking journey logs? This will leave a clean slate.')) {
-                            return;
-                          }
-                          try {
-                            const res = await fetch(`/api/v1/leads/${lead.id}/journey`, {
-                              method: 'DELETE'
-                            });
-                            const data = await res.json();
-                            alert(data.message);
-                            if (data.success) {
-                              fetchLeadDetails();
+              {activeTab === 'track' && (
+                canTrackJourney ? (
+                  <div>
+                    {user?.role === 'admin' && (
+                      <div className="flex justify-end mb-4">
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (!confirm('Are you sure you want to wipe tracking journey history for this lead?')) return;
+                            try {
+                              const res = await fetch(`/api/v1/leads/${leadId}/wipe-tracking`, { method: 'POST' });
+                              const data = await res.json();
+                              alert(data.message);
+                              if (data.success) {
+                                fetchLeadDetails();
+                              }
+                            } catch (err) {
+                              console.error(err);
+                              alert('Failed to clear lead tracking journey history.');
                             }
-                          } catch (err) {
-                            console.error(err);
-                            alert('Failed to clear lead tracking journey history.');
-                          }
-                        }}
-                        className="py-1.5 px-3 bg-red-950/20 border border-red-900/30 hover:bg-red-950/40 text-red-400 hover:text-red-300 rounded-lg text-xs font-medium transition-all cursor-pointer font-sans"
-                      >
-                        Wipe Tracking Journey History
-                      </button>
-                    </div>
-                  )}
-                  <LeadTrackingTimeline lead={lead} />
-                </div>
+                          }}
+                          className="py-1.5 px-3 bg-red-950/20 border border-red-900/30 hover:bg-red-950/40 text-red-400 hover:text-red-300 rounded-lg text-xs font-medium transition-all cursor-pointer font-sans"
+                        >
+                          Wipe Tracking Journey History
+                        </button>
+                      </div>
+                    )}
+                    <LeadTrackingTimeline lead={lead} />
+                  </div>
+                ) : (
+                  <div className="p-6 bg-slate-900 border border-slate-800 rounded-xl text-center">
+                    <Lock className="w-10 h-10 text-blue-600 dark:text-blue-400 mx-auto mb-3" />
+                    <h3 className="text-sm font-bold text-white mb-1">Restricted Access</h3>
+                    <p className="text-xs text-slate-400">You do not have permission to view the lead tracking journey history.</p>
+                  </div>
+                )
               )}
 
               {/* 1. INFO TAB */}
@@ -2398,7 +2413,7 @@ export default function LeadDetailPage({
                                     This will request microphone and location permissions to log coordinates and record meeting audio.
                                   </p>
                                 </div>
-                                {hasPermission('sales:meeting_done') || hasPermission('leads:meeting_done') || hasPermission('orders:create') ? (
+                                {canRecordMeeting ? (
                                   <button
                                     type="button"
                                     disabled={isStartingMeeting}
@@ -2413,7 +2428,7 @@ export default function LeadDetailPage({
                                     <span>Start Meeting</span>
                                   </button>
                                 ) : (
-                                  <span className="text-[10px] text-slate-500 italic">🔒 Restricted to Sales team</span>
+                                  <span className="text-[10px] text-slate-500 italic">🔒 Meeting recording restricted</span>
                                 )}
                               </div>
                             ) : !meet.meetingEndedAt ? (
@@ -2434,7 +2449,7 @@ export default function LeadDetailPage({
                                   </div>
                                 </div>
                                 <div className="flex flex-col sm:flex-row flex-wrap gap-3 items-center w-full">
-                                  {hasPermission('sales:meeting_done') || hasPermission('leads:meeting_done') || hasPermission('orders:create') ? (
+                                  {canRecordMeeting ? (
                                     <>
                                       {isRecording ? (
                                         <button
