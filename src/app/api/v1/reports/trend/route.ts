@@ -22,7 +22,7 @@ export async function GET(req: Request) {
     }
 
     const { getUserSession } = await import('@/lib/auth');
-    const { userRole } = await getUserSession(userPayload.id);
+    const { role: userRole } = await getUserSession(userPayload.id);
     const { getLeadVisibilityCondition } = await import('@/lib/hierarchy');
     const leadWhere = await getLeadVisibilityCondition(userPayload.id, userRole, userPermissions);
 

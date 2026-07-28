@@ -686,7 +686,7 @@ export default function LeadDetailPage({
     if (!leadId) return;
 
     if (memberIdStr && memberIdStr !== 'unassigned') {
-      const selectedMemberObj = teamMembersList.find((m: any) => String(m.id) === String(memberIdStr));
+      const selectedMemberObj = employees.find((m: any) => String(m.id) === String(memberIdStr));
       const targetName = selectedMemberObj?.name || `ID ${memberIdStr}`;
 
       const confirm1 = window.confirm(
