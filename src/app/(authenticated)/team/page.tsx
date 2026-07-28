@@ -3418,16 +3418,9 @@ export default function TeamManagementPage() {
                   >
                     <option value="">Select Designation...</option>
                     {(() => {
-                      const itDeptId = departmentsList.find(d => d.name.toLowerCase().trim() === 'it')?.id;
                       const selectedDeptId = form.departmentId ? parseInt(form.departmentId, 10) : null;
                       return designationsList
                         .filter((des) => !form.departmentId || des.departmentId === null || des.departmentId === selectedDeptId)
-                        .filter((des) => {
-                          if (itDeptId && selectedDeptId === itDeptId) {
-                            return des.name.toLowerCase().trim() === 'it head';
-                          }
-                          return true;
-                        })
                         .map((des) => (
                           <option key={des.id} value={des.id}>{des.name}</option>
                         ));
@@ -3857,16 +3850,9 @@ export default function TeamManagementPage() {
                           >
                             <option value="">Select Designation...</option>
                             {(() => {
-                              const itDeptId = departmentsList.find(d => d.name.toLowerCase().trim() === 'it')?.id;
                               const selectedDeptId = editMemberForm.departmentId ? parseInt(editMemberForm.departmentId, 10) : null;
                               return designationsList
                                 .filter((des) => !editMemberForm.departmentId || des.departmentId === null || des.departmentId === selectedDeptId)
-                                .filter((des) => {
-                                  if (itDeptId && selectedDeptId === itDeptId) {
-                                      return des.name.toLowerCase().trim() === 'it head';
-                                  }
-                                  return true;
-                                })
                                 .map((des) => (
                                   <option key={des.id} value={des.id}>{des.name}</option>
                                 ));
