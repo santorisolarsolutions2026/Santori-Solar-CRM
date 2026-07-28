@@ -1915,11 +1915,8 @@ export default function TeamManagementPage() {
       const res = await fetch('/api/v1/users', { cache: 'no-store' });
       const data = await res.json();
       if (data.success && data.data) {
-        // Supervisors must be admin, director, sales_head, manager, tl, or psa_tl
-        const filtered = data.data.filter((u: any) => {
-          const baseRole = u.role.includes(':') ? u.role.split(':')[0] : u.role;
-          return ['admin', 'director', 'sales_head', 'manager', 'tl', 'psa_tl'].includes(baseRole);
-        });
+        // Supervisors can be any active user (department filtering & hierarchy levels are handled in dropdown renderer)
+        const filtered = data.data.filter((u: any) => u.isActive);
         setManagersAndTls(filtered);
       }
     } catch (err) {
