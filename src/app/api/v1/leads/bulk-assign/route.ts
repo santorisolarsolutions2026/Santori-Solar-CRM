@@ -11,6 +11,7 @@ export async function POST(req: Request) {
 
     const userPermissions = await getUserPermissions(userPayload.id);
     const canAssign = userPermissions.includes('leads:assign') || 
+                      userPermissions.includes('sales:lead_assign') || 
                       ['admin', 'director'].includes(userPayload.role);
 
     if (!canAssign) {

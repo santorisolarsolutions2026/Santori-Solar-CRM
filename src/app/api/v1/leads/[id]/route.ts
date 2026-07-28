@@ -210,7 +210,7 @@ export async function PATCH(
     // Check assignment permission if modifying team assignment fields
     const isChangingAssignment = assignedTlId !== undefined || assignedConsultantId !== undefined || assignedManagerId !== undefined;
     if (isChangingAssignment) {
-      const canAssign = userPermissions.includes('leads:assign') || ['admin', 'director'].includes(baseRole);
+      const canAssign = userPermissions.includes('leads:assign') || userPermissions.includes('sales:lead_assign') || ['admin', 'director'].includes(baseRole);
       if (!canAssign) {
         return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to assign or reassign leads.' }, { status: 403 });
       }

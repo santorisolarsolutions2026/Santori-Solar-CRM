@@ -69,10 +69,10 @@ export async function GET(req: Request) {
 
     // 1. Role-based visibility enforcement
     if (!hasViewAll) {
-      const { getSubordinateIds, getAncestorIds } = await import('@/lib/hierarchy');
+      const { getSubordinateIds } = await import('@/lib/hierarchy');
       const subordinateIds = await getSubordinateIds(userPayload.id);
-      const ancestorIds = await getAncestorIds(userPayload.id);
-      const allowedIds = [userPayload.id, ...subordinateIds, ...ancestorIds];
+      // Allowed IDs include ONLY the user and their subordinates (everyone below them in hierarchy)
+      const allowedIds = [userPayload.id, ...subordinateIds];
 
       const hierarchyCondition: Prisma.LeadWhereInput = {
         OR: [
@@ -408,7 +408,7 @@ export async function POST(req: Request) {
     }
 
     // Enforce team assignment permission on lead creation
-    const canAssign = userPermissions.includes('leads:assign') || ['admin', 'director'].includes(baseRole);
+    const canAssign = userPermissions.includes('leads:assign') || userPermissions.includes('sales:lead_assign') || ['admin', 'director'].includes(baseRole);
     if (!canAssign && (assignedConsultantId || assignedTlId || assignedManagerId)) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to assign team members to leads.' }, { status: 403 });
     }
@@ -418,8 +418,22 @@ export async function POST(req: Request) {
     let finalTlId = (assignedTlId && !isNaN(parseInt(assignedTlId, 10))) ? parseInt(assignedTlId, 10) : null;
     let finalManagerId = (assignedManagerId && !isNaN(parseInt(assignedManagerId, 10))) ? parseInt(assignedManagerId, 10) : null;
 
-    // If no assignment was explicitly sent, fall back to creator's TL/Manager if applicable
-    if (!finalConsultantId && !finalTlId && !finalManagerId) {
+    // Check if creator is PSA
+    const userDetailForPSA = await prisma.user.findUnique({
+      where: { id: userPayload.id },
+      select: { designation: { select: { name: true } }, department: { select: { name: true } } }
+    });
+    const creatorDept = userDetailForPSA?.department?.name?.toUpperCase() || '';
+    const creatorDes = userDetailForPSA?.designation?.name?.toUpperCase() || '';
+    const isPSA = ['psa', 'psa_tl'].includes(baseRole) || creatorDept === 'PSA' || creatorDes.includes('PSA');
+
+    // Rule 1: If a lead is added by a PSA, it will stay unassigned
+    if (isPSA) {
+      finalConsultantId = null;
+      finalTlId = null;
+      finalManagerId = null;
+    } else if (!finalConsultantId && !finalTlId && !finalManagerId) {
+      // If no assignment was explicitly sent, fall back to creator's TL/Manager if applicable
       finalTlId = tlId;
       finalManagerId = managerId;
     }
