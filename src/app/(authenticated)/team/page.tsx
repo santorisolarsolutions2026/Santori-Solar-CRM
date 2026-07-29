@@ -2541,7 +2541,10 @@ export default function TeamManagementPage() {
             department: m.department,
             designation: m.designation,
           }))}
-          onPermissionsUpdated={fetchTeam}
+          onPermissionsUpdated={async () => {
+            await fetchTeam();
+            if (refreshUser) await refreshUser();
+          }}
         />
       )}
 

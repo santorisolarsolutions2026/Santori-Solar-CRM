@@ -270,63 +270,6 @@ export async function PATCH(
           }, { status: 400 });
         }
       }
-
-      if (!isEditingUserAdmin) {
-        const currentUserDetail = await prisma.user.findUnique({
-          where: { id: userPayload.id },
-          include: { department: true }
-        });
-        const deptName = currentUserDetail?.department?.name?.toLowerCase().trim() || '';
-
-        const rawExisting = (user.permissions || '').replace(/^CUSTOM:/, '');
-        const existingPermissions = rawExisting.trim()
-          ? rawExisting.split(',').map(p => p.trim()).filter(p => p !== '' && p !== 'none')
-          : [];
-
-        const allKeys = new Set([...existingPermissions, ...cleanNewPerms]);
-        for (const key of allKeys) {
-          const wasChecked = existingPermissions.includes(key);
-          const isCheckedNow = cleanNewPerms.includes(key);
-          if (wasChecked !== isCheckedNow) {
-            const category = ALL_PERMISSIONS_MAP[key] || 'Other';
-            
-            if (deptName === 'sales') {
-              if (category !== 'PSA' && category !== 'Sales') {
-                return NextResponse.json({
-                  success: false,
-                  message: 'Forbidden. Sales department supervisors can only modify Sales and PSA permissions.'
-                }, { status: 403 });
-              }
-            } else if (deptName === 'finance') {
-              if (category !== 'Finance') {
-                return NextResponse.json({
-                  success: false,
-                  message: 'Forbidden. Finance department supervisors can only modify Finance permissions.'
-                }, { status: 403 });
-              }
-            } else if (deptName === 'operations') {
-              if (category !== 'Operations') {
-                return NextResponse.json({
-                  success: false,
-                  message: 'Forbidden. Operations department supervisors can only modify Operations permissions.'
-                }, { status: 403 });
-              }
-            } else if (deptName === 'it') {
-              if (category !== 'IT') {
-                return NextResponse.json({
-                  success: false,
-                  message: 'Forbidden. IT department supervisors can only modify IT permissions.'
-                }, { status: 403 });
-              }
-            } else {
-              return NextResponse.json({
-                success: false,
-                message: `Forbidden. You do not have permissions to modify ${category} permissions.`
-              }, { status: 403 });
-            }
-          }
-        }
-      }
     }
 
     const isTargetAdmin = user.role.toLowerCase() === 'admin' || user.role.toLowerCase().startsWith('admin:');

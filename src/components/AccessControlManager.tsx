@@ -86,6 +86,9 @@ export default function AccessControlManager({ currentUser, users, onPermissions
 
       const data = await res.json();
       if (res.ok && data.success) {
+        if (selectedUser) {
+          selectedUser.permissions = customPermPayload;
+        }
         setMessage({ type: 'success', text: 'Custom access levels saved successfully!' });
         if (onPermissionsUpdated) onPermissionsUpdated();
       } else {

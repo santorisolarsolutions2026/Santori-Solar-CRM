@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db';
-import { signToken } from '@/lib/auth';
+import { signToken, resolveUserPermissions } from '@/lib/auth';
 
 export async function POST(req: Request) {
   try {
@@ -14,10 +14,26 @@ export async function POST(req: Request) {
       );
     }
 
-
-
     const user = await prisma.user.findUnique({
       where: { email },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        employeeId: true,
+        role: true,
+        permissions: true,
+        reportsTo: true,
+        isActive: true,
+        passwordHash: true,
+        joiningDate: true,
+        photograph: true,
+        departmentId: true,
+        teamId: true,
+        department: { select: { id: true, name: true } },
+        designation: { select: { id: true, name: true, level: true, permissions: true } }
+      },
     });
 
     if (!user) {
@@ -36,8 +52,6 @@ export async function POST(req: Request) {
 
     const passwordMatch = await bcrypt.compare(password, user.passwordHash);
     if (!passwordMatch) {
-      // Note: The specification mentions locking after 5 failures, but for simplicity
-      // we return a standard invalid credentials message. 
       return NextResponse.json(
         { success: false, message: 'Invalid credentials.' },
         { status: 401 }
@@ -61,16 +75,16 @@ export async function POST(req: Request) {
       role: user.role,
     });
 
+    const permissionsList = resolveUserPermissions(user);
+    const { passwordHash: _, ...userWithoutPassword } = user;
+
     const response = NextResponse.json({
       success: true,
       data: {
         token,
         user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          employeeId: user.employeeId,
+          ...userWithoutPassword,
+          permissions: permissionsList,
         },
       },
       message: 'Login successful',
