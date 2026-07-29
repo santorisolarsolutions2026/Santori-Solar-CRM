@@ -3230,7 +3230,12 @@ export default function TeamManagementPage() {
                 >
                   <option value="">No Supervisor / Reports directly to Head</option>
                   {members
-                    .filter((m) => m.id !== editingReportingUser.id)
+                    .filter((m) => {
+                      if (m.id === editingReportingUser.id) return false;
+                      const isAdmin = m.role === 'admin' || m.department?.name === 'Admin';
+                      const isSameDept = editingReportingUser.departmentId && String(m.departmentId) === String(editingReportingUser.departmentId);
+                      return isAdmin || isSameDept;
+                    })
                     .map((m) => (
                       <option key={m.id} value={m.id}>{m.name} {m.department?.name ? `(${m.department.name})` : ''}</option>
                     ))}
@@ -3391,7 +3396,7 @@ export default function TeamManagementPage() {
                   </label>
                   <select
                     value={form.departmentId}
-                    onChange={(e) => setForm({ ...form, departmentId: e.target.value })}
+                    onChange={(e) => setForm({ ...form, departmentId: e.target.value, reportsTo: '' })}
                     className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-blue-500"
                   >
                     <option value="">No Department / Shared</option>
@@ -3434,11 +3439,18 @@ export default function TeamManagementPage() {
                     className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-blue-500"
                   >
                     <option value="">No Supervisor (Reports to Admin)</option>
-                    {members.map((sup) => (
-                      <option key={sup.id} value={sup.id}>
-                        {sup.name} {sup.department?.name ? `(${sup.department.name})` : ''}
-                      </option>
-                    ))}
+                    {members
+                      .filter((sup) => {
+                        const isAdmin = sup.role === 'admin' || sup.department?.name === 'Admin';
+                        const selectedDeptId = form.departmentId;
+                        const isSameDept = selectedDeptId && String(sup.departmentId) === String(selectedDeptId);
+                        return isAdmin || isSameDept;
+                      })
+                      .map((sup) => (
+                        <option key={sup.id} value={sup.id}>
+                          {sup.name} {sup.department?.name ? `(${sup.department.name})` : ''}
+                        </option>
+                      ))}
                   </select>
                 </div>
                 <div>
@@ -3811,7 +3823,13 @@ export default function TeamManagementPage() {
                       >
                         <option value="">No Supervisor (Reports to Admin)</option>
                         {members
-                          .filter((sup) => sup.id !== selectedMember.id)
+                          .filter((sup) => {
+                            if (sup.id === selectedMember.id) return false;
+                            const isAdmin = sup.role === 'admin' || sup.department?.name === 'Admin';
+                            const selectedDeptId = editMemberForm.departmentId;
+                            const isSameDept = selectedDeptId && String(sup.departmentId) === String(selectedDeptId);
+                            return isAdmin || isSameDept;
+                          })
                           .map((sup) => (
                             <option key={sup.id} value={sup.id}>
                               {sup.name} {sup.department?.name ? `(${sup.department.name})` : ''}
