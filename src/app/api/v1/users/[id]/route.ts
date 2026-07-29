@@ -427,7 +427,7 @@ export async function PATCH(
     if (joiningDate !== undefined) updateData.joiningDate = joiningDate ? new Date(joiningDate) : null;
     if (photograph !== undefined) updateData.photograph = photograph;
     if (departmentId !== undefined) updateData.departmentId = departmentId ? parseInt(departmentId, 10) : null;
-    if (designationId !== undefined) updateData.designationId = designationId ? parseInt(designationId, 10) : null;
+    if (rawDesName || designationId !== undefined) updateData.designationId = targetDesId;
 
     if (password !== undefined && password !== null) {
       if (!isAdminOrDirectorOrSalesHead) {

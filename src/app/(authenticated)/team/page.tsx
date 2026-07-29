@@ -1995,7 +1995,8 @@ export default function TeamManagementPage() {
         isActive: member.isActive,
         departmentId: (member as any).departmentId ? String((member as any).departmentId) : '',
         designationId: (member as any).designationId ? String((member as any).designationId) : '',
-      });
+        designationText: (member as any).designation?.name || '',
+      } as any);
       setEditMemberPhotoPreviewUrl('');
       setUpdateMemberError('');
     }
@@ -2188,6 +2189,7 @@ export default function TeamManagementPage() {
         isActive: editMemberForm.isActive,
         departmentId: editMemberForm.departmentId ? parseInt(editMemberForm.departmentId, 10) : null,
         designationId: editMemberForm.designationId ? parseInt(editMemberForm.designationId, 10) : null,
+        designationText: (editMemberForm as any).designationText !== undefined ? (editMemberForm as any).designationText : undefined,
       };
 
       if (editMemberPassword.trim()) {
@@ -2709,7 +2711,27 @@ export default function TeamManagementPage() {
                       {/* Designation/Role Column */}
                       <td className="py-4 px-4 w-40">
                         <span className={`inline-block text-[9px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${roleConfig.class}`}>
-                          {member.designation?.name || roleConfig.label}
+                          {(() => {
+                            const desName = member.designation?.name?.trim();
+                            const deptName = member.department?.name?.trim();
+
+                            if (desName) {
+                              if (deptName && !desName.toLowerCase().startsWith(deptName.toLowerCase())) {
+                                return `${deptName} ${desName}`;
+                              }
+                              return desName;
+                            }
+
+                            if (deptName && member.role) {
+                              const rawRoleLabel = getRoleLabel(member.role);
+                              if (!rawRoleLabel.toLowerCase().startsWith(deptName.toLowerCase())) {
+                                return `${deptName} ${rawRoleLabel}`;
+                              }
+                              return rawRoleLabel;
+                            }
+
+                            return member.designation?.name || roleConfig.label;
+                          })()}
                         </span>
                       </td>
                       <td className="py-4 px-4 text-slate-400 w-40">
