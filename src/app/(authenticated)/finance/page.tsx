@@ -111,6 +111,10 @@ const DOC_TYPES: Record<string, string> = {
 export default function FinancePage() {
   const { user, loading: authLoading, hasPermission } = useAuth();
 
+  const canVerifyOrder = hasPermission('orders:verify') || hasPermission('finance:order_verify_reject') || user?.role === 'admin' || user?.role === 'director' || user?.department?.name === 'IT';
+  const canMaintainLedger = hasPermission('finance:ledger_record') || hasPermission('finance:manage_ledger') || user?.role === 'admin' || user?.role === 'director' || user?.department?.name === 'IT';
+  const canAssignFinance = hasPermission('finance:order_assign') || hasPermission('sales:finance_assign') || hasPermission('orders:assign_finance') || user?.role === 'admin' || user?.role === 'director' || user?.department?.name === 'IT';
+
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -1005,7 +1009,7 @@ export default function FinancePage() {
                           className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-slate-950 rounded font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1"
                         >
                           <Eye className="w-3.5 h-3.5" />
-                          <span>Verify Order</span>
+                          <span>{canVerifyOrder ? 'Verify Order' : 'View Details'}</span>
                         </button>
                       </td>
                     </tr>
@@ -1234,26 +1238,32 @@ export default function FinancePage() {
                       </div>
                     </div>
 
-                    <div className="flex gap-3 mt-6">
-                      <button
-                        type="button"
-                        onClick={() => handleVerifyOrder(false)}
-                        disabled={actionLoading}
-                        className="flex-1 py-2.5 bg-rose-950/20 hover:bg-rose-950/40 text-rose-400 border border-rose-900/30 rounded-lg font-bold text-xs shadow-md transition-all cursor-pointer disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
-                      >
-                        {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />}
-                        <span>Reject Order</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowOpsModal(true)}
-                        disabled={actionLoading}
-                        className="flex-1 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg font-bold text-xs shadow-md shadow-emerald-500/10 transition-all cursor-pointer disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
-                      >
-                        {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
-                        <span>Approve & Verify</span>
-                      </button>
-                    </div>
+                    {canVerifyOrder ? (
+                      <div className="flex gap-3 mt-6">
+                        <button
+                          type="button"
+                          onClick={() => handleVerifyOrder(false)}
+                          disabled={actionLoading}
+                          className="flex-1 py-2.5 bg-rose-950/20 hover:bg-rose-950/40 text-rose-400 border border-rose-900/30 rounded-lg font-bold text-xs shadow-md transition-all cursor-pointer disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
+                        >
+                          {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />}
+                          <span>Reject Order</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowOpsModal(true)}
+                          disabled={actionLoading}
+                          className="flex-1 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg font-bold text-xs shadow-md shadow-emerald-500/10 transition-all cursor-pointer disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
+                        >
+                          {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
+                          <span>Approve & Verify</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="p-3.5 mt-6 bg-slate-950/60 border border-slate-800 rounded-lg text-center">
+                        <span className="text-[11px] text-slate-500 italic">🔒 Restricted: Requires 'Verify Order' permission to approve or reject</span>
+                      </div>
+                    )}
                   </div>
 
                 </div>
@@ -1288,7 +1298,7 @@ export default function FinancePage() {
                                   <span className="font-mono text-[9px] bg-slate-950 border border-slate-850 px-2 py-0.5 rounded text-slate-400 capitalize">
                                     {METHOD_LABELS[pmt.paymentMethod] || pmt.paymentMethod}
                                   </span>
-                                  {!pmt.isDiscarded && hasPermission('orders:verify') && (
+                                  {!pmt.isDiscarded && canMaintainLedger && (
                                     <div className="flex items-center gap-1">
                                       <button
                                         type="button"
@@ -1379,180 +1389,186 @@ export default function FinancePage() {
                   </div>
 
                   {/* Record Payment Form: 2 columns */}
-                  <div className="md:col-span-2 bg-slate-900/20 p-4 border border-slate-850 rounded-xl">
-                    <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-2 mb-4">Record Payment Receipt</h4>
-                    
-                    <form onSubmit={handleRecordPayment} className="space-y-4">
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Receipt Amount *</label>
-                        <div className="relative">
-                          <input
-                            type="number"
-                            required
-                            min="1"
-                            step="any"
-                            placeholder="Amount in INR"
-                            value={newPaymentAmount}
-                            onChange={(e) => setNewPaymentAmount(e.target.value)}
-                            disabled={selectedOrder.balanceOutstanding === 0}
-                            className="w-full pl-8 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700 placeholder-slate-600 font-extrabold"
-                          />
-                          <span className="absolute left-3 top-2 text-slate-500 font-bold">₹</span>
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Payment Method *</label>
-                        <select
-                          value={newPaymentMethod}
-                          onChange={(e) => setNewPaymentMethod(e.target.value)}
-                          disabled={selectedOrder.balanceOutstanding === 0}
-                          className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700 capitalize"
-                        >
-                          {PAYMENT_METHODS.map((m) => (
-                            <option key={m.value} value={m.value}>{m.label}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Transaction Ref / Cheque No.</label>
-                        <input
-                          type="text"
-                          placeholder="Ref ID, Cheque No, Bank Details"
-                          value={newPaymentRef}
-                          onChange={(e) => setNewPaymentRef(e.target.value)}
-                          disabled={selectedOrder.balanceOutstanding === 0}
-                          className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700 placeholder-slate-600 font-mono"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Remarks / Note</label>
-                        <textarea
-                          placeholder="e.g. 2nd Milestone payment, Loan Disbursal part, etc."
-                          value={newPaymentRemarks}
-                          onChange={(e) => setNewPaymentRemarks(e.target.value)}
-                          disabled={selectedOrder.balanceOutstanding === 0}
-                          className="w-full h-20 p-3 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700 placeholder-slate-600"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Receipt Image</label>
-                        
-                        {/* Hidden file inputs */}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          ref={fileInputRef}
-                          onChange={handleReceiptFileChange}
-                          disabled={selectedOrder.balanceOutstanding === 0 || receiptUploading}
-                          className="hidden"
-                        />
-                        <input
-                          type="file"
-                          accept="image/*"
-                          capture="environment"
-                          ref={cameraInputRef}
-                          onChange={handleReceiptFileChange}
-                          disabled={selectedOrder.balanceOutstanding === 0 || receiptUploading}
-                          className="hidden"
-                        />
-
-                        {/* State 1: Uploading */}
-                        {receiptUploading && (
-                          <div className="flex flex-col items-center justify-center p-6 bg-slate-950/60 border border-dashed border-blue-500/40 rounded-xl space-y-2 animate-pulse">
-                            <Loader2 className="w-6 h-6 text-blue-600 dark:text-blue-400 animate-spin" />
-                            <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Receipt is Uploading</span>
+                  {canMaintainLedger ? (
+                    <div className="md:col-span-2 bg-slate-900/20 p-4 border border-slate-850 rounded-xl">
+                      <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-2 mb-4">Record Payment Receipt</h4>
+                      
+                      <form onSubmit={handleRecordPayment} className="space-y-4">
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Receipt Amount *</label>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              required
+                              min="1"
+                              step="any"
+                              placeholder="Amount in INR"
+                              value={newPaymentAmount}
+                              onChange={(e) => setNewPaymentAmount(e.target.value)}
+                              disabled={selectedOrder.balanceOutstanding === 0}
+                              className="w-full pl-8 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700 placeholder-slate-600 font-extrabold"
+                            />
+                            <span className="absolute left-3 top-2 text-slate-500 font-bold">₹</span>
                           </div>
-                        )}
+                        </div>
 
-                        {/* State 2: Uploaded (Success Preview) */}
-                        {!receiptUploading && receiptUrl && (
-                          <div className="p-3 bg-slate-950 border border-emerald-500/30 rounded-xl space-y-3 relative group overflow-hidden">
-                            <div className="absolute top-2 right-2 z-10">
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Payment Method *</label>
+                          <select
+                            value={newPaymentMethod}
+                            onChange={(e) => setNewPaymentMethod(e.target.value)}
+                            disabled={selectedOrder.balanceOutstanding === 0}
+                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700 capitalize"
+                          >
+                            {PAYMENT_METHODS.map((m) => (
+                              <option key={m.value} value={m.value}>{m.label}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Transaction Ref / Cheque No.</label>
+                          <input
+                            type="text"
+                            placeholder="Ref ID, Cheque No, Bank Details"
+                            value={newPaymentRef}
+                            onChange={(e) => setNewPaymentRef(e.target.value)}
+                            disabled={selectedOrder.balanceOutstanding === 0}
+                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700 placeholder-slate-600 font-mono"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Remarks / Note</label>
+                          <textarea
+                            placeholder="e.g. 2nd Milestone payment, Loan Disbursal part, etc."
+                            value={newPaymentRemarks}
+                            onChange={(e) => setNewPaymentRemarks(e.target.value)}
+                            disabled={selectedOrder.balanceOutstanding === 0}
+                            className="w-full h-20 p-3 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700 placeholder-slate-600"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Receipt Image</label>
+                          
+                          {/* Hidden file inputs */}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            ref={fileInputRef}
+                            onChange={handleReceiptFileChange}
+                            disabled={selectedOrder.balanceOutstanding === 0 || receiptUploading}
+                            className="hidden"
+                          />
+                          <input
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            ref={cameraInputRef}
+                            onChange={handleReceiptFileChange}
+                            disabled={selectedOrder.balanceOutstanding === 0 || receiptUploading}
+                            className="hidden"
+                          />
+
+                          {/* State 1: Uploading */}
+                          {receiptUploading && (
+                            <div className="flex flex-col items-center justify-center p-6 bg-slate-950/60 border border-dashed border-blue-500/40 rounded-xl space-y-2 animate-pulse">
+                              <Loader2 className="w-6 h-6 text-blue-600 dark:text-blue-400 animate-spin" />
+                              <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Receipt is Uploading</span>
+                            </div>
+                          )}
+
+                          {/* State 2: Uploaded (Success Preview) */}
+                          {!receiptUploading && receiptUrl && (
+                            <div className="p-3 bg-slate-950 border border-emerald-500/30 rounded-xl space-y-3 relative group overflow-hidden">
+                              <div className="absolute top-2 right-2 z-10">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setReceiptUrl('');
+                                    setReceiptFile(null);
+                                  }}
+                                  className="p-1.5 bg-rose-500/10 border border-rose-500/20 text-rose-450 hover:bg-rose-500/25 rounded-lg transition-all cursor-pointer"
+                                  title="Remove Receipt"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 bg-slate-900 border border-slate-800 rounded-lg flex items-center justify-center overflow-hidden bg-cover bg-center" style={{ backgroundImage: `url(${receiptUrl})` }}>
+                                  {!receiptUrl && <Image className="w-5 h-5 text-slate-500" />}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[11px] font-bold text-emerald-400 truncate flex items-center gap-1">
+                                    <span>✓ Uploaded Successfully</span>
+                                  </p>
+                                  <a 
+                                    href={receiptUrl} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="text-[10px] text-blue-600 dark:text-blue-400 hover:text-blue-600 dark:text-blue-400 font-bold underline mt-0.5 inline-block"
+                                  >
+                                    View Full Receipt Image
+                                  </a>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* State 3: Ready to Upload (Empty Form) */}
+                          {!receiptUploading && !receiptUrl && (
+                            <div className="grid grid-cols-2 gap-3">
                               <button
                                 type="button"
-                                onClick={() => {
-                                  setReceiptUrl('');
-                                  setReceiptFile(null);
-                                }}
-                                className="p-1.5 bg-rose-500/10 border border-rose-500/20 text-rose-450 hover:bg-rose-500/25 rounded-lg transition-all cursor-pointer"
-                                title="Remove Receipt"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={selectedOrder.balanceOutstanding === 0}
+                                className="flex flex-col items-center justify-center p-4 bg-slate-950 hover:bg-slate-900 border border-slate-850 hover:border-blue-500/30 rounded-xl space-y-1.5 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed group"
                               >
-                                <Trash2 className="w-3.5 h-3.5" />
+                                <div className="w-8 h-8 bg-slate-900 border border-slate-800 group-hover:border-blue-500/20 rounded-lg flex items-center justify-center transition-all">
+                                  <Upload className="w-4 h-4 text-slate-400 group-hover:text-blue-600 dark:text-blue-400 transition-colors" />
+                                </div>
+                                <span className="text-[10px] font-bold text-slate-300 group-hover:text-white transition-colors">Upload File</span>
+                                <span className="text-[8px] text-slate-500">From Device</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => cameraInputRef.current?.click()}
+                                disabled={selectedOrder.balanceOutstanding === 0}
+                                className="flex flex-col items-center justify-center p-4 bg-slate-950 hover:bg-slate-900 border border-slate-850 hover:border-blue-500/30 rounded-xl space-y-1.5 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed group"
+                              >
+                                <div className="w-8 h-8 bg-slate-900 border border-slate-800 group-hover:border-blue-500/20 rounded-lg flex items-center justify-center transition-all">
+                                  <Camera className="w-4 h-4 text-slate-400 group-hover:text-blue-600 dark:text-blue-400 transition-colors" />
+                                </div>
+                                <span className="text-[10px] font-bold text-slate-300 group-hover:text-white transition-colors">Take Photo</span>
+                                <span className="text-[8px] text-slate-500">Open Camera</span>
                               </button>
                             </div>
-                            <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 bg-slate-900 border border-slate-800 rounded-lg flex items-center justify-center overflow-hidden bg-cover bg-center" style={{ backgroundImage: `url(${receiptUrl})` }}>
-                                {!receiptUrl && <Image className="w-5 h-5 text-slate-500" />}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-[11px] font-bold text-emerald-400 truncate flex items-center gap-1">
-                                  <span>✓ Uploaded Successfully</span>
-                                </p>
-                                <a 
-                                  href={receiptUrl} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer" 
-                                  className="text-[10px] text-blue-600 dark:text-blue-400 hover:text-blue-600 dark:text-blue-400 font-bold underline mt-0.5 inline-block"
-                                >
-                                  View Full Receipt Image
-                                </a>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* State 3: Ready to Upload (Empty Form) */}
-                        {!receiptUploading && !receiptUrl && (
-                          <div className="grid grid-cols-2 gap-3">
-                            <button
-                              type="button"
-                              onClick={() => fileInputRef.current?.click()}
-                              disabled={selectedOrder.balanceOutstanding === 0}
-                              className="flex flex-col items-center justify-center p-4 bg-slate-950 hover:bg-slate-900 border border-slate-850 hover:border-blue-500/30 rounded-xl space-y-1.5 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed group"
-                            >
-                              <div className="w-8 h-8 bg-slate-900 border border-slate-800 group-hover:border-blue-500/20 rounded-lg flex items-center justify-center transition-all">
-                                <Upload className="w-4 h-4 text-slate-400 group-hover:text-blue-600 dark:text-blue-400 transition-colors" />
-                              </div>
-                              <span className="text-[10px] font-bold text-slate-300 group-hover:text-white transition-colors">Upload File</span>
-                              <span className="text-[8px] text-slate-500">From Device</span>
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => cameraInputRef.current?.click()}
-                              disabled={selectedOrder.balanceOutstanding === 0}
-                              className="flex flex-col items-center justify-center p-4 bg-slate-950 hover:bg-slate-900 border border-slate-850 hover:border-blue-500/30 rounded-xl space-y-1.5 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed group"
-                            >
-                              <div className="w-8 h-8 bg-slate-900 border border-slate-800 group-hover:border-blue-500/20 rounded-lg flex items-center justify-center transition-all">
-                                <Camera className="w-4 h-4 text-slate-400 group-hover:text-blue-600 dark:text-blue-400 transition-colors" />
-                              </div>
-                              <span className="text-[10px] font-bold text-slate-300 group-hover:text-white transition-colors">Take Photo</span>
-                              <span className="text-[8px] text-slate-500">Open Camera</span>
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      {selectedOrder.balanceOutstanding === 0 ? (
-                        <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs rounded-lg font-bold text-center">
-                          ✓ This ledger has been fully cleared.
+                          )}
                         </div>
-                      ) : (
-                        <button
-                          type="submit"
-                          disabled={paymentRecording || receiptUploading}
-                          className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs shadow-md shadow-blue-500/10 flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
-                        >
-                          {paymentRecording ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <PlusCircle className="w-3.5 h-3.5" />}
-                          <span>Record Receipt</span>
-                        </button>
-                      )}
-                    </form>
-                  </div>
+
+                        {selectedOrder.balanceOutstanding === 0 ? (
+                          <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs rounded-lg font-bold text-center">
+                            ✓ This ledger has been fully cleared.
+                          </div>
+                        ) : (
+                          <button
+                            type="submit"
+                            disabled={paymentRecording || receiptUploading}
+                            className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs shadow-md shadow-blue-500/10 flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                          >
+                            {paymentRecording ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <PlusCircle className="w-3.5 h-3.5" />}
+                            <span>Record Receipt</span>
+                          </button>
+                        )}
+                      </form>
+                    </div>
+                  ) : (
+                    <div className="md:col-span-2 bg-slate-900/20 p-6 border border-slate-850 rounded-xl flex items-center justify-center text-center">
+                      <p className="text-[11px] text-slate-500 italic">🔒 Maintaining ledger is restricted: You do not have permission to record or modify payments.</p>
+                    </div>
+                  )}
 
                 </div>
               )}
