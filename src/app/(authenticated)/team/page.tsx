@@ -1909,6 +1909,31 @@ export default function TeamManagementPage() {
     }
   };
 
+  // Helper to determine if a candidate is eligible to be a supervisor (Same department, Sales<->PSA cross-assignment, or Admin)
+  const isEligibleSupervisor = (sup: TeamMember, targetDeptId?: string | number | null, targetUserId?: number | null) => {
+    if (targetUserId && sup.id === targetUserId) return false;
+    
+    // Admin is always eligible
+    if (sup.role === 'admin' || sup.department?.name === 'Admin') return true;
+    
+    if (!targetDeptId) return false;
+    
+    const targetDeptObj = departmentsList.find(d => String(d.id) === String(targetDeptId));
+    const targetDeptName = targetDeptObj?.name || '';
+    const supDeptName = sup.department?.name || '';
+    
+    // Exact department match
+    if (String(sup.departmentId) === String(targetDeptId)) return true;
+    
+    // Combined Sales & PSA domain match: PSA <-> Sales
+    const isSalesOrPSA = (name: string) => name === 'Sales' || name === 'PSA';
+    if (isSalesOrPSA(targetDeptName) && isSalesOrPSA(supDeptName)) {
+      return true;
+    }
+    
+    return false;
+  };
+
   // Fetch managers & TLs to populate reportsTo dropdown
   const fetchSupervisors = async () => {
     try {
@@ -3230,12 +3255,7 @@ export default function TeamManagementPage() {
                 >
                   <option value="">No Supervisor / Reports directly to Head</option>
                   {members
-                    .filter((m) => {
-                      if (m.id === editingReportingUser.id) return false;
-                      const isAdmin = m.role === 'admin' || m.department?.name === 'Admin';
-                      const isSameDept = editingReportingUser.departmentId && String(m.departmentId) === String(editingReportingUser.departmentId);
-                      return isAdmin || isSameDept;
-                    })
+                    .filter((m) => isEligibleSupervisor(m, editingReportingUser.departmentId, editingReportingUser.id))
                     .map((m) => (
                       <option key={m.id} value={m.id}>{m.name} {m.department?.name ? `(${m.department.name})` : ''}</option>
                     ))}
@@ -3440,12 +3460,7 @@ export default function TeamManagementPage() {
                   >
                     <option value="">No Supervisor (Reports to Admin)</option>
                     {members
-                      .filter((sup) => {
-                        const isAdmin = sup.role === 'admin' || sup.department?.name === 'Admin';
-                        const selectedDeptId = form.departmentId;
-                        const isSameDept = selectedDeptId && String(sup.departmentId) === String(selectedDeptId);
-                        return isAdmin || isSameDept;
-                      })
+                      .filter((sup) => isEligibleSupervisor(sup, form.departmentId))
                       .map((sup) => (
                         <option key={sup.id} value={sup.id}>
                           {sup.name} {sup.department?.name ? `(${sup.department.name})` : ''}
@@ -3823,13 +3838,7 @@ export default function TeamManagementPage() {
                       >
                         <option value="">No Supervisor (Reports to Admin)</option>
                         {members
-                          .filter((sup) => {
-                            if (sup.id === selectedMember.id) return false;
-                            const isAdmin = sup.role === 'admin' || sup.department?.name === 'Admin';
-                            const selectedDeptId = editMemberForm.departmentId;
-                            const isSameDept = selectedDeptId && String(sup.departmentId) === String(selectedDeptId);
-                            return isAdmin || isSameDept;
-                          })
+                          .filter((sup) => isEligibleSupervisor(sup, editMemberForm.departmentId, selectedMember.id))
                           .map((sup) => (
                             <option key={sup.id} value={sup.id}>
                               {sup.name} {sup.department?.name ? `(${sup.department.name})` : ''}
