@@ -1470,8 +1470,23 @@ export default function LeadDetailPage({
 
   // Helper variables to govern lead edit locks
   const canViewLeadDetails = 
-    hasPermission('sales:lead_details_view') || 
-    hasPermission('leads:view_details') || 
+    hasPermission('sales:lead_edit') || 
+    hasPermission('leads:edit') || 
+    hasPermission('sales:lead_add') || 
+    hasPermission('leads:create') || 
+    hasPermission('sales:stage_change') || 
+    hasPermission('leads:change_status') || 
+    hasPermission('sales:meeting_done') || 
+    hasPermission('leads:meeting_done') || 
+    hasPermission('sales:order_punch') || 
+    hasPermission('orders:create') || 
+    hasPermission('sales:lead_track') || 
+    hasPermission('leads:track') || 
+    hasPermission('sales:lead_assign') || 
+    hasPermission('leads:assign') || 
+    hasPermission('sales:lead_view_all') || 
+    hasPermission('leads:view_all') || 
+    hasPermission('leads:view') ||
     ['admin', 'director'].includes(baseRole) || 
     user?.department?.name === 'IT';
 
