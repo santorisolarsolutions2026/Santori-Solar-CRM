@@ -9,6 +9,7 @@ export const DEPARTMENT_PERMISSIONS: {
   sales: PermissionItem[];
   finance: PermissionItem[];
   ops: PermissionItem[];
+  admin: PermissionItem[];
 } = {
   sales: [
     { key: 'sales:lead_add', label: 'Add New Lead', group: 'Sales Chronological Workflow', description: '1. Create and register new customer leads manually into Uninitiated status.' },
@@ -31,6 +32,11 @@ export const DEPARTMENT_PERMISSIONS: {
     { key: 'ops:view_all_orders', label: 'View All Orders', group: 'Operations Chronological Workflow', description: '1. View all verified orders in the operations queue.' },
     { key: 'ops:order_assign', label: 'Assign Orders', group: 'Operations Chronological Workflow', description: '2. Assign verified orders to operations team members down the hierarchy.' },
     { key: 'ops:update_stages', label: 'Manage Operations Stages', group: 'Operations Chronological Workflow', description: '3. Manage and progress all operations execution stages (material dispatch, installation, site photos, net metering, commissioning & subsidy).' },
+  ],
+  admin: [
+    { key: 'admin:attendance_view', label: 'View Attendance', group: 'Administration & Supervision', description: 'View check-in & check-out attendance logs of everyone down the hierarchy.' },
+    { key: 'admin:designation_change', label: 'Change Subordinate Designation', group: 'Administration & Supervision', description: 'Modify designations of team members below in line of hierarchy.' },
+    { key: 'admin:analytics_view', label: 'View Team Analytics', group: 'Administration & Supervision', description: 'Access employee audit logs, team analytics & performance metrics.' },
   ]
 };
 

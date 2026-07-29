@@ -164,7 +164,7 @@ export default function AccessControlManager({ currentUser, users, onPermissions
               <button
                 type="button"
                 onClick={() => {
-                  const allKeys = [...DEPARTMENT_PERMISSIONS.sales, ...DEPARTMENT_PERMISSIONS.finance, ...DEPARTMENT_PERMISSIONS.ops].map(p => p.key);
+                  const allKeys = [...DEPARTMENT_PERMISSIONS.sales, ...DEPARTMENT_PERMISSIONS.finance, ...DEPARTMENT_PERMISSIONS.ops, ...DEPARTMENT_PERMISSIONS.admin].map(p => p.key);
                   setSelectedPermissions(new Set(allKeys));
                 }}
                 className="px-3 py-1.5 bg-slate-800 hover:bg-slate-750 text-slate-300 text-xs font-medium rounded-lg cursor-pointer transition-all"
@@ -182,13 +182,14 @@ export default function AccessControlManager({ currentUser, users, onPermissions
           </div>
 
           {/* Department Permission Sections Grouped by Category */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
 
             {/* Helper function to render grouped department permissions */}
             {([
               { title: 'PSA & Sales Department', deptKey: 'sales', color: 'blue', icon: User, items: DEPARTMENT_PERMISSIONS.sales },
               { title: 'Finance Department', deptKey: 'finance', color: 'emerald', icon: Building, items: DEPARTMENT_PERMISSIONS.finance },
               { title: 'Operations Department', deptKey: 'ops', color: 'purple', icon: Building, items: DEPARTMENT_PERMISSIONS.ops },
+              { title: 'Administration & Supervision', deptKey: 'admin', color: 'amber', icon: ShieldCheck, items: DEPARTMENT_PERMISSIONS.admin },
             ] as const).map(({ title, deptKey, color, icon: DeptIcon, items }) => {
               const activeCount = items.filter(i => selectedPermissions.has(i.key)).length;
               
@@ -220,6 +221,13 @@ export default function AccessControlManager({ currentUser, users, onPermissions
                   subHeader: 'text-purple-400/90 border-purple-500/20 bg-purple-950/20',
                   activeBg: 'bg-purple-500/10 border-purple-500/40 text-slate-200',
                   activeToggle: 'bg-purple-500 shadow-purple-500/30',
+                },
+                amber: {
+                  headerText: 'text-amber-400',
+                  badge: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+                  subHeader: 'text-amber-400/90 border-amber-500/20 bg-amber-950/20',
+                  activeBg: 'bg-amber-500/10 border-amber-500/40 text-slate-200',
+                  activeToggle: 'bg-amber-500 shadow-amber-500/30',
                 },
               }[color];
 
