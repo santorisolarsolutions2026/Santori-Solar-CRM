@@ -2453,21 +2453,6 @@ export default function TeamManagementPage() {
           </p>
         </div>
         <div className="flex gap-2 flex-wrap items-center">
-          {activeTab === 'members' && user?.role === 'admin' && (
-            <button
-              onClick={() => {
-                setEditingDesignation(null);
-                setDesignationName('');
-                setDesignationLevel(5);
-                setDesignationDeptId('');
-                setShowHierarchyModal(true);
-              }}
-              className="py-2.5 px-4 bg-gradient-to-r from-blue-650 to-indigo-650 hover:from-blue-600 hover:to-indigo-600 text-white rounded-lg font-bold text-xs shadow-lg flex items-center gap-1.5 transition-all w-fit cursor-pointer font-sans border border-transparent"
-            >
-              <SlidersHorizontal className="w-4 h-4" />
-              <span>Org Hierarchy</span>
-            </button>
-          )}
           {activeTab === 'members' && isAdminOrDirectorOrSalesHead && (
             <button
               type="button"
@@ -2492,18 +2477,6 @@ export default function TeamManagementPage() {
           }`}
         >
           Members Directory
-        </button>
-        <button
-          onClick={() => {
-            setActiveTab('hierarchy');
-          }}
-          className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
-            activeTab === 'hierarchy'
-              ? 'bg-blue-600 text-white shadow-md shadow-blue-500/10'
-              : 'text-slate-400 hover:text-white hover:bg-slate-900/30'
-          }`}
-        >
-          Hierarchy Tree
         </button>
         {(user?.role === 'admin' || user?.role === 'director' || user?.department?.name === 'IT') && (
           <button
@@ -3225,21 +3198,9 @@ export default function TeamManagementPage() {
                 >
                   <option value="">No Supervisor / Reports directly to Head</option>
                   {members
-                    .filter((m) => {
-                      if (m.id === editingReportingUser.id) return false;
-                      const targetLevel = editingReportingUser.designation?.level ?? 99;
-                      const supLevel = m.designation?.level ?? 99;
-                      
-                      // Level 1 Department Head reports to Admin (Level 0)
-                      if (targetLevel === 1) {
-                        return m.role === 'admin' || supLevel === 0;
-                      }
-                      
-                      // Level > 1 reports to same department and higher in hierarchy
-                      return m.departmentId === editingReportingUser.departmentId && supLevel < targetLevel && supLevel > 0;
-                    })
+                    .filter((m) => m.id !== editingReportingUser.id)
                     .map((m) => (
-                      <option key={m.id} value={m.id}>{m.name} ({m.designation?.name || m.role})</option>
+                      <option key={m.id} value={m.id}>{m.name} {m.department?.name ? `(${m.department.name})` : ''}</option>
                     ))}
                 </select>
               </div>
@@ -3411,21 +3372,13 @@ export default function TeamManagementPage() {
                   <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
                     Designation
                   </label>
-                  <select
-                    value={form.designationId}
-                    onChange={(e) => setForm({ ...form, designationId: e.target.value })}
-                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-blue-500"
-                  >
-                    <option value="">Select Designation...</option>
-                    {(() => {
-                      const selectedDeptId = form.departmentId ? parseInt(form.departmentId, 10) : null;
-                      return designationsList
-                        .filter((des) => !form.departmentId || des.departmentId === null || des.departmentId === selectedDeptId)
-                        .map((des) => (
-                          <option key={des.id} value={des.id}>{des.name}</option>
-                        ));
-                    })()}
-                  </select>
+                  <input
+                    type="text"
+                    value={(form as any).designationText || ''}
+                    onChange={(e) => setForm({ ...form, designationText: e.target.value } as any)}
+                    placeholder="e.g. Sales Executive, Operations Lead"
+                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
+                  />
                 </div>
 
                 <div>
@@ -3449,35 +3402,11 @@ export default function TeamManagementPage() {
                     className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-blue-500"
                   >
                     <option value="">No Supervisor (Reports to Admin)</option>
-                    {(() => {
-                      const selectedDes = designationsList.find((d) => d.id === parseInt(form.designationId, 10));
-                      const selectedLevel = selectedDes ? selectedDes.level : 7;
-                      const selectedDeptId = form.departmentId ? parseInt(form.departmentId, 10) : null;
-                      
-                      const eligibleSupervisors = managersAndTls.filter((sup) => {
-                        const supLevel = sup.designation?.level ?? 0;
-                        
-                        // Level 1 Department Head reports to Admin (Level 0)
-                        if (selectedLevel === 1) {
-                          return supLevel === 0 || sup.role === 'admin';
-                        }
-                        
-                        // Level > 1 must report to someone in same department who is higher in hierarchy
-                        if (selectedLevel > 1) {
-                          const isSameDept = sup.departmentId === selectedDeptId;
-                          const isHigherHierarchy = supLevel < selectedLevel && supLevel > 0;
-                          return isSameDept && isHigherHierarchy;
-                        }
-                        
-                        return false;
-                      });
-
-                      return eligibleSupervisors.map((sup) => (
-                        <option key={sup.id} value={sup.id}>
-                          {sup.name} ({sup.designation?.name || 'Supervisor'})
-                        </option>
-                      ));
-                    })()}
+                    {members.map((sup) => (
+                      <option key={sup.id} value={sup.id}>
+                        {sup.name} {sup.department?.name ? `(${sup.department.name})` : ''}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div>
@@ -3831,33 +3760,13 @@ export default function TeamManagementPage() {
                         </div>
                         <div>
                           <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Designation</label>
-                          <select
-                            value={editMemberForm.designationId}
-                            disabled={selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:')}
-                            onChange={(e) => {
-                              const desId = e.target.value;
-                              setEditMemberForm({ ...editMemberForm, designationId: desId });
-                              const selectedDesObj = designationsList.find(d => d.id === parseInt(desId, 10));
-                              if (selectedDesObj) {
-                                const newPerms = selectedDesObj.permissions 
-                                  ? selectedDesObj.permissions.split(',').map((p: any) => p.trim()) 
-                                  : [];
-                                setEditMemberPermissions(newPerms);
-                              }
-                            }}
-
-                            className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-blue-500 focus:outline-none disabled:opacity-50"
-                          >
-                            <option value="">Select Designation...</option>
-                            {(() => {
-                              const selectedDeptId = editMemberForm.departmentId ? parseInt(editMemberForm.departmentId, 10) : null;
-                              return designationsList
-                                .filter((des) => !editMemberForm.departmentId || des.departmentId === null || des.departmentId === selectedDeptId)
-                                .map((des) => (
-                                  <option key={des.id} value={des.id}>{des.name}</option>
-                                ));
-                            })()}
-                          </select>
+                          <input
+                            type="text"
+                            value={(editMemberForm as any).designationText !== undefined ? (editMemberForm as any).designationText : (selectedMember.designation?.name || '')}
+                            onChange={(e) => setEditMemberForm({ ...editMemberForm, designationText: e.target.value } as any)}
+                            placeholder="e.g. Sales Executive, Operations Lead"
+                            className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
+                          />
                         </div>
                       </>
                     )}
@@ -3869,36 +3778,13 @@ export default function TeamManagementPage() {
                         className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-blue-500 focus:outline-none"
                       >
                         <option value="">No Supervisor (Reports to Admin)</option>
-                        {(() => {
-                          const selectedDes = designationsList.find((d) => d.id === parseInt(editMemberForm.designationId, 10));
-                          const selectedLevel = selectedDes ? selectedDes.level : 7;
-                          const selectedDeptId = editMemberForm.departmentId ? parseInt(editMemberForm.departmentId, 10) : null;
-                          
-                          const eligibleSupervisors = managersAndTls.filter((sup) => {
-                            if (sup.id === selectedMember.id) return false;
-                            const supLevel = sup.designation?.level ?? 0;
-                            
-                            // Level 1 Department Head reports to Admin (Level 0)
-                            if (selectedLevel === 1) {
-                              return supLevel === 0 || sup.role === 'admin';
-                            }
-                            
-                            // Level > 1 must report to someone in same department who is higher in hierarchy
-                            if (selectedLevel > 1) {
-                              const isSameDept = sup.departmentId === selectedDeptId;
-                              const isHigherHierarchy = supLevel < selectedLevel && supLevel > 0;
-                              return isSameDept && isHigherHierarchy;
-                            }
-                            
-                            return false;
-                          });
-
-                          return eligibleSupervisors.map((sup) => (
+                        {members
+                          .filter((sup) => sup.id !== selectedMember.id)
+                          .map((sup) => (
                             <option key={sup.id} value={sup.id}>
-                              {sup.name} ({sup.designation?.name || 'Supervisor'})
+                              {sup.name} {sup.department?.name ? `(${sup.department.name})` : ''}
                             </option>
-                          ));
-                        })()}
+                          ))}
                       </select>
                     </div>
                     <div>

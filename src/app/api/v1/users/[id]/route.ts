@@ -395,122 +395,24 @@ export async function PATCH(
     let derivedRole = role;
     let derivedPermissions = permissions;
 
-    const targetDesId = designationId !== undefined ? (designationId ? parseInt(designationId, 10) : null) : user.designationId;
+    const { designationText, designationName } = body;
+    let targetDesId = designationId !== undefined ? (designationId ? parseInt(designationId, 10) : null) : user.designationId;
     const targetDeptId = departmentId !== undefined ? (departmentId ? parseInt(departmentId, 10) : null) : user.departmentId;
 
-    if (designationId !== undefined || departmentId !== undefined) {
-      if (targetDesId) {
-        const designation = await prisma.designation.findUnique({ where: { id: targetDesId } });
-        if (!designation) {
-          return NextResponse.json({ success: false, message: 'Invalid designation selected.' }, { status: 400 });
-        }
-
-        let departmentName = '';
-        if (targetDeptId) {
-          const department = await prisma.department.findUnique({ where: { id: targetDeptId } });
-          if (department) {
-            departmentName = department.name;
-          }
-        }
-
-        // Derive role
-        let roleName = 'consultant';
-        if (designation.name === 'Admin' || designation.level === 0) {
-          roleName = 'admin';
-        } else if (departmentName === 'Finance') {
-          roleName = 'finance';
-        } else if (departmentName === 'Operations') {
-          roleName = 'operations';
-        } else if (departmentName === 'IT') {
-          if (designation.level === 1) {
-            roleName = 'director';
-          } else if (designation.level === 2 || designation.level === 3) {
-            roleName = 'manager';
-          } else if (designation.level === 4) {
-            roleName = 'tl';
-          } else {
-            roleName = 'consultant';
-          }
-        } else if (departmentName === 'Sales') {
-          if (designation.name.includes('Head') || designation.level === 1) {
-            roleName = 'sales_head';
-          } else if (designation.name.includes('PSA Senior Manager') || designation.name.includes('PSA Manager') || designation.level === 2 || designation.level === 3) {
-            roleName = 'manager';
-          } else if (designation.name === 'PSA TL' || (designation.level === 4 && designation.name.includes('PSA'))) {
-            roleName = 'psa_tl';
-          } else if (designation.name === 'TL' || designation.level === 4) {
-            roleName = 'tl';
-          } else if (designation.name === 'PSA Consultant' || designation.level === 6) {
-            roleName = 'psa';
-          } else if (designation.name === 'Consultant' || designation.level === 5) {
-            roleName = 'consultant';
-          }
-        } else {
-          if (designation.level === 1 || designation.level === 2) {
-            roleName = 'director';
-          } else if (designation.level === 3) {
-            roleName = 'manager';
-          } else if (designation.level === 4) {
-            roleName = 'tl';
-          } else {
-            roleName = 'consultant';
-          }
-        }
-        derivedRole = roleName;
-
-        if (derivedPermissions === undefined) {
-          if (derivedRole !== user.role) {
-            const { getDefaultPermissionsForRole } = await import('@/lib/auth');
-            derivedPermissions = getDefaultPermissionsForRole(derivedRole).join(',');
-          }
-        }
+    const rawDesName = (designationText || designationName || '').trim();
+    if (rawDesName) {
+      let des = await prisma.designation.findFirst({ where: { name: rawDesName } });
+      if (!des) {
+        des = await prisma.designation.create({
+          data: { name: rawDesName, level: 5, departmentId: targetDeptId }
+        });
       }
+      targetDesId = des.id;
     }
-
-    // Reports To Hierarchical Validation on Update
-    const finalDesId = targetDesId || user.designationId;
-    const finalDeptId = targetDeptId;
-    
-    let activeDesignation = null;
-    if (finalDesId) {
-      activeDesignation = await prisma.designation.findUnique({ where: { id: finalDesId } });
-    }
-    const currentLevel = activeDesignation?.level ?? 99;
 
     const finalReportsTo = reportsTo !== undefined ? (reportsTo ? parseInt(reportsTo, 10) : null) : user.reportsTo;
-
-    if (currentLevel > 1 && !finalReportsTo) {
-      return NextResponse.json({ success: false, message: 'Supervisor (Reports To) is required for this designation.' }, { status: 400 });
-    }
-
-    if (finalReportsTo) {
-      if (finalReportsTo === userId) {
-        return NextResponse.json({ success: false, message: 'User cannot report to themselves.' }, { status: 400 });
-      }
-      const supervisorUser = await prisma.user.findUnique({
-        where: { id: finalReportsTo },
-        include: { designation: true }
-      });
-      if (!supervisorUser) {
-        return NextResponse.json({ success: false, message: 'Supervisor not found.' }, { status: 400 });
-      }
-
-      const supLevel = supervisorUser.designation?.level ?? 0;
-
-      // Admin (level 0) is supervisor of Department Heads (level 1)
-      if (supLevel === 0 || supervisorUser.role === 'admin') {
-        if (currentLevel !== 1) {
-          return NextResponse.json({ success: false, message: 'Only Department Heads (Level 1) can report to the Admin.' }, { status: 400 });
-        }
-      } else {
-        // Must be in same department and higher in hierarchy (lower level number)
-        if (supervisorUser.departmentId !== finalDeptId) {
-          return NextResponse.json({ success: false, message: 'Supervisor must belong to the same department.' }, { status: 400 });
-        }
-        if (supLevel >= currentLevel) {
-          return NextResponse.json({ success: false, message: 'Supervisor must be above the employee in the hierarchy.' }, { status: 400 });
-        }
-      }
+    if (finalReportsTo && finalReportsTo === userId) {
+      return NextResponse.json({ success: false, message: 'User cannot report to themselves.' }, { status: 400 });
     }
 
 

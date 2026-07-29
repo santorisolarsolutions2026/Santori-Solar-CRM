@@ -149,21 +149,13 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { name, email, phone, address, employeeId, password, reportsTo, joiningDate, photograph, permissions, departmentId, designationId } = body;
+    const { name, email, phone, address, employeeId, password, reportsTo, joiningDate, photograph, permissions, departmentId, designationId, designationText, designationName } = body;
 
-    if (!name || !email || !employeeId || !password || !phone || !address || !designationId) {
-      return NextResponse.json({ success: false, message: 'Missing required user fields (Name, Email, Employee ID, Password, Phone, Address, and Designation are required).' }, { status: 400 });
+    if (!name || !email || !employeeId || !password || !phone || !address) {
+      return NextResponse.json({ success: false, message: 'Missing required user fields (Name, Email, Employee ID, Password, Phone, and Address are required).' }, { status: 400 });
     }
 
     const empIdTrim = String(employeeId).trim();
-
-    // Derive role and default permissions
-    let role = 'consultant';
-    const desId = parseInt(designationId, 10);
-    const designation = await prisma.designation.findUnique({ where: { id: desId } });
-    if (!designation) {
-      return NextResponse.json({ success: false, message: 'Invalid designation selected.' }, { status: 400 });
-    }
 
     let departmentName = '';
     let deptId: number | null = null;
@@ -175,80 +167,30 @@ export async function POST(req: Request) {
       }
     }
 
-    if (designation.name === 'Admin' || designation.level === 0) {
-      role = 'admin';
-    } else if (departmentName === 'Finance') {
+    // Find or create designation if typed text or name provided
+    let desId: number | null = designationId ? parseInt(designationId, 10) : null;
+    const rawDesName = (designationText || designationName || '').trim();
+    if (rawDesName) {
+      let des = await prisma.designation.findFirst({ where: { name: rawDesName } });
+      if (!des) {
+        des = await prisma.designation.create({
+          data: { name: rawDesName, level: 5, departmentId: deptId }
+        });
+      }
+      desId = des.id;
+    }
+
+    let role = 'consultant';
+    if (departmentName === 'Finance') {
       role = 'finance';
     } else if (departmentName === 'Operations') {
       role = 'operations';
-    } else if (departmentName === 'IT') {
-      if (designation.level === 1) {
-        role = 'director';
-      } else if (designation.level === 2 || designation.level === 3) {
-        role = 'manager';
-      } else if (designation.level === 4) {
-        role = 'tl';
-      } else {
-        role = 'consultant';
-      }
     } else if (departmentName === 'Sales') {
-      if (designation.name.includes('Head') || designation.level === 1) {
-        role = 'sales_head';
-      } else if (designation.name.includes('PSA Senior Manager') || designation.name.includes('PSA Manager') || designation.level === 2 || designation.level === 3) {
-        role = 'manager';
-      } else if (designation.name === 'PSA TL' || (designation.level === 4 && designation.name.includes('PSA'))) {
-        role = 'psa_tl';
-      } else if (designation.name === 'TL' || designation.level === 4) {
-        role = 'tl';
-      } else if (designation.name === 'PSA Consultant' || designation.level === 6) {
-        role = 'psa';
-      } else if (designation.name === 'Consultant' || designation.level === 5) {
-        role = 'consultant';
-      }
-    } else {
-      if (designation.level === 1 || designation.level === 2) {
-        role = 'director';
-      } else if (designation.level === 3) {
-        role = 'manager';
-      } else if (designation.level === 4) {
-        role = 'tl';
-      } else {
-        role = 'consultant';
-      }
-    }
-
-    // Reports To Hierarchical Validation
-    const currentLevel = designation.level;
-    if (currentLevel > 1 && !reportsTo) {
-      return NextResponse.json({ success: false, message: 'Supervisor (Reports To) is required for this designation.' }, { status: 400 });
-    }
-
-    if (reportsTo) {
-      const reportsToId = parseInt(reportsTo, 10);
-      const supervisorUser = await prisma.user.findUnique({
-        where: { id: reportsToId },
-        include: { designation: true }
-      });
-      if (!supervisorUser) {
-        return NextResponse.json({ success: false, message: 'Supervisor not found.' }, { status: 400 });
-      }
-
-      const supLevel = supervisorUser.designation?.level ?? 0;
-
-      // Admin (level 0) is supervisor of Department Heads (level 1)
-      if (supLevel === 0 || supervisorUser.role === 'admin') {
-        if (currentLevel !== 1) {
-          return NextResponse.json({ success: false, message: 'Only Department Heads (Level 1) can report to the Admin.' }, { status: 400 });
-        }
-      } else {
-        // Must be in same department and higher in hierarchy (lower level number)
-        if (supervisorUser.departmentId !== deptId) {
-          return NextResponse.json({ success: false, message: 'Supervisor must belong to the same department.' }, { status: 400 });
-        }
-        if (supLevel >= currentLevel) {
-          return NextResponse.json({ success: false, message: 'Supervisor must be above the employee in the hierarchy.' }, { status: 400 });
-        }
-      }
+      role = 'consultant';
+    } else if (departmentName === 'PSA') {
+      role = 'psa';
+    } else if (departmentName === 'Admin') {
+      role = 'admin';
     }
 
 
@@ -302,7 +244,7 @@ export async function POST(req: Request) {
     const passwordHash = await bcrypt.hash(password, 10);
 
     const { getDefaultPermissionsForRole } = await import('@/lib/auth');
-    const finalPermissions = permissions || designation.permissions || getDefaultPermissionsForRole(role).join(',');
+    const finalPermissions = permissions || getDefaultPermissionsForRole(role).join(',');
 
 
     const newUser = await prisma.user.create({

@@ -38,42 +38,32 @@ async function main() {
   await prisma.department.deleteMany();
 
   console.log('Seeding departments...');
-  const psaDept = await prisma.department.create({ data: { name: 'PSA' } });
-  const salesDept = await prisma.department.create({ data: { name: 'Sales' } });
-  const financeDept = await prisma.department.create({ data: { name: 'Finance' } });
-  const opsDept = await prisma.department.create({ data: { name: 'Operations' } });
-  const itDept = await prisma.department.create({ data: { name: 'IT' } });
-  const hrDept = await prisma.department.create({ data: { name: 'HR' } });
   const adminDept = await prisma.department.create({ data: { name: 'Admin' } });
+  const salesDept = await prisma.department.create({ data: { name: 'Sales' } });
+  const opsDept = await prisma.department.create({ data: { name: 'Operations' } });
+  const psaDept = await prisma.department.create({ data: { name: 'PSA' } });
+  const financeDept = await prisma.department.create({ data: { name: 'Finance' } });
 
   console.log('Seeding teams...');
-  const psaTeamA = await prisma.team.create({ data: { name: 'PSA Team A', departmentId: psaDept.id } });
-  const psaTeamB = await prisma.team.create({ data: { name: 'PSA Team B', departmentId: psaDept.id } });
   const salesTeamA = await prisma.team.create({ data: { name: 'Sales Team A', departmentId: salesDept.id } });
-  const salesTeamB = await prisma.team.create({ data: { name: 'Sales Team B', departmentId: salesDept.id } });
-  const financeTeamA = await prisma.team.create({ data: { name: 'Finance Team A', departmentId: financeDept.id } });
   const opsTeamA = await prisma.team.create({ data: { name: 'Operations Team A', departmentId: opsDept.id } });
+  const psaTeamA = await prisma.team.create({ data: { name: 'PSA Team A', departmentId: psaDept.id } });
 
   console.log('Seeding designations...');
   const adminDes = await prisma.designation.create({ data: { name: 'Admin', level: 1 } });
   const headDes = await prisma.designation.create({ data: { name: 'Head', level: 2 } });
-  const srManagerDes = await prisma.designation.create({ data: { name: 'Senior Manager', level: 3 } });
-  const managerDes = await prisma.designation.create({ data: { name: 'Manager', level: 4 } });
-  const tlDes = await prisma.designation.create({ data: { name: 'Team Leader', level: 5 } });
-  const consultantDes = await prisma.designation.create({ data: { name: 'Consultant', level: 6 } });
-  const financeOfficerDes = await prisma.designation.create({ data: { name: 'Finance Officer', level: 6, departmentId: financeDept.id } });
-  const opsEngineerDes = await prisma.designation.create({ data: { name: 'Operations Engineer', level: 6, departmentId: opsDept.id } });
-  const psaExecDes = await prisma.designation.create({ data: { name: 'PSA Executive', level: 6, departmentId: psaDept.id } });
-  const itDes = await prisma.designation.create({ data: { name: 'IT Specialist', level: 6, departmentId: itDept.id } });
+  const consultantDes = await prisma.designation.create({ data: { name: 'Consultant', level: 5 } });
+  const psaExecDes = await prisma.designation.create({ data: { name: 'PSA Executive', level: 5, departmentId: psaDept.id } });
+  const opsConsultantDes = await prisma.designation.create({ data: { name: 'Operations Consultant', level: 5, departmentId: opsDept.id } });
 
-  console.log('Seeding users with hierarchy...');
+  console.log('Seeding specific company team members...');
   const passwordHash = await bcrypt.hash('Password123', 10);
 
-  // 1. Admin
-  const admin = await prisma.user.create({
+  // 1. Deepak Pandey - Admin
+  const deepakPandey = await prisma.user.create({
     data: {
-      name: 'Deepak Sir',
-      email: 'admin@solarcrm.com',
+      name: 'Deepak Pandey',
+      email: 'deepak.pandey@solarcrm.com',
       phone: '9876543210',
       passwordHash,
       role: 'admin',
@@ -83,181 +73,167 @@ async function main() {
     },
   });
 
-  // 2. Heads
-  const salesHead = await prisma.user.create({
+  // Alias admin account for convenience
+  await prisma.user.create({
     data: {
-      name: 'Rajesh Kumar',
-      email: 'saleshead@solarcrm.com',
+      name: 'Deepak Pandey (Admin Alias)',
+      email: 'admin@solarcrm.com',
       phone: '9876543211',
       passwordHash,
-      role: 'sales_head',
-      reportsTo: admin.id,
+      role: 'admin',
       isActive: true,
-      departmentId: salesDept.id,
-      designationId: headDes.id,
-      teamId: salesTeamA.id,
+      departmentId: adminDept.id,
+      designationId: adminDes.id,
     },
   });
 
-  const psaHead = await prisma.user.create({
+  // 2. Sarvesh Chaubey - Sales Head
+  const sarveshChaubey = await prisma.user.create({
     data: {
-      name: 'Neha Gupta',
-      email: 'psahead@solarcrm.com',
-      phone: '9876543215',
-      passwordHash,
-      role: 'psa_tl', // Head role mapped to TL
-      reportsTo: admin.id,
-      isActive: true,
-      departmentId: psaDept.id,
-      designationId: headDes.id,
-      teamId: psaTeamA.id,
-    },
-  });
-
-  // 3. Manager
-  const salesManager = await prisma.user.create({
-    data: {
-      name: 'Amit Sharma',
-      email: 'manager1@solarcrm.com',
+      name: 'Sarvesh Chaubey',
+      email: 'sarvesh.chaubey@solarcrm.com',
       phone: '9876543212',
       passwordHash,
-      role: 'manager',
-      reportsTo: salesHead.id,
+      role: 'sales_head',
+      reportsTo: deepakPandey.id,
       isActive: true,
       departmentId: salesDept.id,
-      designationId: managerDes.id,
+      designationId: headDes.id,
       teamId: salesTeamA.id,
     },
   });
 
-  // 4. Team Leaders
-  const salesTL = await prisma.user.create({
+  // 3. Sachin Pandey - Operations Head
+  const sachinPandey = await prisma.user.create({
     data: {
-      name: 'Vikram Singh',
-      email: 'tl1@solarcrm.com',
-      phone: '9876543214',
-      passwordHash,
-      role: 'tl',
-      reportsTo: salesManager.id,
-      isActive: true,
-      departmentId: salesDept.id,
-      designationId: tlDes.id,
-      teamId: salesTeamA.id,
-    },
-  });
-
-  const psaTL = await prisma.user.create({
-    data: {
-      name: 'Priya Patel',
-      email: 'tl2@solarcrm.com',
+      name: 'Sachin Pandey',
+      email: 'sachin.pandey@solarcrm.com',
       phone: '9876543213',
       passwordHash,
-      role: 'psa_tl',
-      reportsTo: psaHead.id,
-      isActive: true,
-      departmentId: psaDept.id,
-      designationId: tlDes.id,
-      teamId: psaTeamA.id,
-    },
-  });
-
-  // 5. Consultants & Executives
-  const salesConsultant1 = await prisma.user.create({
-    data: {
-      name: 'Siddharth Verma',
-      email: 'consultant1@solarcrm.com',
-      phone: '9876543216',
-      passwordHash,
-      role: 'consultant',
-      reportsTo: salesTL.id,
-      isActive: true,
-      departmentId: salesDept.id,
-      designationId: consultantDes.id,
-      teamId: salesTeamA.id,
-    },
-  });
-
-  const salesConsultant2 = await prisma.user.create({
-    data: {
-      name: 'Rohan Mehta',
-      email: 'consultant2@solarcrm.com',
-      phone: '9876543217',
-      passwordHash,
-      role: 'consultant',
-      reportsTo: salesTL.id,
-      isActive: true,
-      departmentId: salesDept.id,
-      designationId: consultantDes.id,
-      teamId: salesTeamA.id,
-    },
-  });
-
-  const psaExecutive1 = await prisma.user.create({
-    data: {
-      name: 'Anjali Desai',
-      email: 'consultant3@solarcrm.com',
-      phone: '9876543218',
-      passwordHash,
-      role: 'psa',
-      reportsTo: psaTL.id,
-      isActive: true,
-      departmentId: psaDept.id,
-      designationId: psaExecDes.id,
-      teamId: psaTeamA.id,
-    },
-  });
-
-  const psaExecutive2 = await prisma.user.create({
-    data: {
-      name: 'Karan Malhotra',
-      email: 'consultant4@solarcrm.com',
-      phone: '9876543219',
-      passwordHash,
-      role: 'psa',
-      reportsTo: psaTL.id,
-      isActive: true,
-      departmentId: psaDept.id,
-      designationId: psaExecDes.id,
-      teamId: psaTeamA.id,
-    },
-  });
-
-  // 6. Finance
-  const financeUser = await prisma.user.create({
-    data: {
-      name: 'Sanjay Shah',
-      email: 'finance@solarcrm.com',
-      phone: '9876543222',
-      passwordHash,
-      role: 'finance',
-      reportsTo: admin.id,
-      isActive: true,
-      departmentId: financeDept.id,
-      designationId: financeOfficerDes.id,
-      teamId: financeTeamA.id,
-    },
-  });
-
-  // 7. Operations
-  const opsUser = await prisma.user.create({
-    data: {
-      name: 'Vijay Yadav',
-      email: 'ops@solarcrm.com',
-      phone: '9876543223',
-      passwordHash,
       role: 'operations',
-      reportsTo: admin.id,
+      reportsTo: deepakPandey.id,
       isActive: true,
       departmentId: opsDept.id,
-      designationId: opsEngineerDes.id,
+      designationId: headDes.id,
       teamId: opsTeamA.id,
     },
   });
 
-  console.log('Seeding mock leads and workflow logs...');
+  // 4. Rudra Sahani - Sales Consultant
+  const rudraSahani = await prisma.user.create({
+    data: {
+      name: 'Rudra Sahani',
+      email: 'rudra.sahani@solarcrm.com',
+      phone: '9876543214',
+      passwordHash,
+      role: 'consultant',
+      reportsTo: sarveshChaubey.id,
+      isActive: true,
+      departmentId: salesDept.id,
+      designationId: consultantDes.id,
+      teamId: salesTeamA.id,
+    },
+  });
+
+  // 5. Rishi Shilpkar - Sales Consultant
+  const rishiShilpkar = await prisma.user.create({
+    data: {
+      name: 'Rishi Shilpkar',
+      email: 'rishi.shilpkar@solarcrm.com',
+      phone: '9876543215',
+      passwordHash,
+      role: 'consultant',
+      reportsTo: sarveshChaubey.id,
+      isActive: true,
+      departmentId: salesDept.id,
+      designationId: consultantDes.id,
+      teamId: salesTeamA.id,
+    },
+  });
+
+  // 6. Amit Singh - Sales Consultant
+  const amitSingh = await prisma.user.create({
+    data: {
+      name: 'Amit Singh',
+      email: 'amit.singh@solarcrm.com',
+      phone: '9876543216',
+      passwordHash,
+      role: 'consultant',
+      reportsTo: sarveshChaubey.id,
+      isActive: true,
+      departmentId: salesDept.id,
+      designationId: consultantDes.id,
+      teamId: salesTeamA.id,
+    },
+  });
+
+  // 7. Rishab Mishra - Sales Consultant
+  const rishabMishra = await prisma.user.create({
+    data: {
+      name: 'Rishab Mishra',
+      email: 'rishab.mishra@solarcrm.com',
+      phone: '9876543217',
+      passwordHash,
+      role: 'consultant',
+      reportsTo: sarveshChaubey.id,
+      isActive: true,
+      departmentId: salesDept.id,
+      designationId: consultantDes.id,
+      teamId: salesTeamA.id,
+    },
+  });
+
+  // 8. Diksha Dubey - PSA
+  const dikshaDubey = await prisma.user.create({
+    data: {
+      name: 'Diksha Dubey',
+      email: 'diksha.dubey@solarcrm.com',
+      phone: '9876543218',
+      passwordHash,
+      role: 'psa',
+      reportsTo: sarveshChaubey.id,
+      isActive: true,
+      departmentId: psaDept.id,
+      designationId: psaExecDes.id,
+      teamId: psaTeamA.id,
+    },
+  });
+
+  // 9. Jyoti Kumari - PSA
+  const jyotiKumari = await prisma.user.create({
+    data: {
+      name: 'Jyoti Kumari',
+      email: 'jyoti.kumari@solarcrm.com',
+      phone: '9876543219',
+      passwordHash,
+      role: 'psa',
+      reportsTo: sarveshChaubey.id,
+      isActive: true,
+      departmentId: psaDept.id,
+      designationId: psaExecDes.id,
+      teamId: psaTeamA.id,
+    },
+  });
+
+  // 10. Rohit Rai - Operations Consultant
+  const rohitRai = await prisma.user.create({
+    data: {
+      name: 'Rohit Rai',
+      email: 'rohit.rai@solarcrm.com',
+      phone: '9876543220',
+      passwordHash,
+      role: 'operations',
+      reportsTo: sachinPandey.id,
+      isActive: true,
+      departmentId: opsDept.id,
+      designationId: opsConsultantDes.id,
+      teamId: opsTeamA.id,
+    },
+  });
+
+  console.log('Seeding sample leads and workflow links...');
   const makeLeadCode = (num: number) => `SL-${String(num).padStart(5, '0')}`;
 
-  // Helper to create mandatory stage tasks for a lead
   const seedMandatoryTasks = async (leadId: number) => {
     const salesTasks = [
       { taskName: 'Meeting Done', stageNum: 9 },
@@ -279,7 +255,7 @@ async function main() {
     }
   };
 
-  // Lead 1: Fresh PSA Lead (PSA assigned)
+  // Lead 1: Fresh PSA Lead (Diksha Dubey)
   const lead1 = await prisma.lead.create({
     data: {
       leadCode: makeLeadCode(1),
@@ -292,28 +268,20 @@ async function main() {
       city: 'Navi Mumbai',
       state: 'Maharashtra',
       leadSource: 'google_ad',
-      status: 1, // Fresh Lead
-      createdById: admin.id,
+      status: 1,
+      createdById: deepakPandey.id,
       assignedTeamId: psaTeamA.id,
     }
   });
   await seedMandatoryTasks(lead1.id);
   await prisma.leadTeamAssignment.create({
-    data: { leadId: lead1.id, teamId: psaTeamA.id, assignedById: admin.id }
+    data: { leadId: lead1.id, teamId: psaTeamA.id, assignedById: deepakPandey.id }
   });
   await prisma.employeeAssignment.create({
-    data: { leadId: lead1.id, employeeId: psaExecutive1.id, assignedById: psaTL.id, priority: 'medium' }
-  });
-  await prisma.activity.create({
-    data: {
-      employeeId: admin.id,
-      leadId: lead1.id,
-      activityType: 'LEAD_CREATED',
-      metadata: JSON.stringify({ remark: 'Lead created under PSA Team A.' })
-    }
+    data: { leadId: lead1.id, employeeId: dikshaDubey.id, assignedById: sarveshChaubey.id, priority: 'medium' }
   });
 
-  // Lead 2: Sales Department Lead (Meeting Booked)
+  // Lead 2: Meeting Booked (Rudra Sahani)
   const lead2 = await prisma.lead.create({
     data: {
       leadCode: makeLeadCode(2),
@@ -326,17 +294,17 @@ async function main() {
       city: 'New Delhi',
       state: 'Delhi',
       leadSource: 'whatsapp',
-      status: 8, // Meeting Booked
-      createdById: admin.id,
+      status: 8,
+      createdById: deepakPandey.id,
       assignedTeamId: salesTeamA.id,
     }
   });
   await seedMandatoryTasks(lead2.id);
   await prisma.leadTeamAssignment.create({
-    data: { leadId: lead2.id, teamId: salesTeamA.id, assignedById: admin.id }
+    data: { leadId: lead2.id, teamId: salesTeamA.id, assignedById: deepakPandey.id }
   });
   await prisma.employeeAssignment.create({
-    data: { leadId: lead2.id, employeeId: salesConsultant1.id, assignedById: salesTL.id, priority: 'high' }
+    data: { leadId: lead2.id, employeeId: rudraSahani.id, assignedById: sarveshChaubey.id, priority: 'high' }
   });
   await prisma.meetingBooking.create({
     data: {
@@ -348,19 +316,12 @@ async function main() {
       meetingTime: '02:00 PM',
       avgMonthlyBill: 4500.0,
       connectionType: 'residential',
-      assignedExecutiveId: salesConsultant1.id,
+      assignedExecutiveId: rudraSahani.id,
       notes: 'Customer wants a premium on-grid proposal.',
     }
   });
-  await prisma.activity.create({
-    data: {
-      employeeId: salesConsultant1.id,
-      leadId: lead2.id,
-      activityType: 'MEETING_BOOKED',
-    }
-  });
 
-  // Lead 3: Finance Verification (Sale Closed)
+  // Lead 3: Order Submitted (Rishi Shilpkar)
   const lead3 = await prisma.lead.create({
     data: {
       leadCode: makeLeadCode(3),
@@ -373,27 +334,19 @@ async function main() {
       city: 'Hyderabad',
       state: 'Telangana',
       leadSource: 'referral',
-      status: 13, // Sale Done
-      createdById: admin.id,
-      assignedTeamId: financeTeamA.id,
+      status: 13,
+      createdById: deepakPandey.id,
+      assignedTeamId: salesTeamA.id,
     }
   });
   await seedMandatoryTasks(lead3.id);
-  // Complete the mandatory tasks for lead 3 to allow progression to Finance
   await prisma.leadTask.updateMany({
     where: { leadId: lead3.id },
     data: { isCompleted: true }
   });
-  await prisma.leadTeamAssignment.create({
-    data: { leadId: lead3.id, teamId: salesTeamA.id, assignedById: admin.id }
-  });
-  await prisma.leadTeamAssignment.create({
-    data: { leadId: lead3.id, teamId: financeTeamA.id, assignedById: admin.id }
-  });
   await prisma.employeeAssignment.create({
-    data: { leadId: lead3.id, employeeId: financeUser.id, assignedById: admin.id, priority: 'high' }
+    data: { leadId: lead3.id, employeeId: rishiShilpkar.id, assignedById: sarveshChaubey.id, priority: 'high' }
   });
-  // Create submitted order
   await prisma.order.create({
     data: {
       leadId: lead3.id,
@@ -408,19 +361,12 @@ async function main() {
       clientType: 'on_grid',
       subsidyApplicable: true,
       subsidyAmount: 50000.0,
-      submittedById: salesConsultant1.id,
+      submittedById: rishiShilpkar.id,
       status: 'submitted',
     }
   });
-  await prisma.activity.create({
-    data: {
-      employeeId: salesConsultant1.id,
-      leadId: lead3.id,
-      activityType: 'SALE_DONE',
-    }
-  });
 
-  // Lead 4: Operations Department (Installation in progress)
+  // Lead 4: Operations Installation (Rohit Rai & Sachin Pandey)
   const lead4 = await prisma.lead.create({
     data: {
       leadCode: makeLeadCode(4),
@@ -434,7 +380,7 @@ async function main() {
       state: 'Rajasthan',
       leadSource: 'cold_call',
       status: 13,
-      createdById: admin.id,
+      createdById: deepakPandey.id,
       assignedTeamId: opsTeamA.id,
     }
   });
@@ -443,19 +389,9 @@ async function main() {
     where: { leadId: lead4.id },
     data: { isCompleted: true }
   });
-  await prisma.leadTeamAssignment.create({
-    data: { leadId: lead4.id, teamId: salesTeamA.id, assignedById: admin.id }
-  });
-  await prisma.leadTeamAssignment.create({
-    data: { leadId: lead4.id, teamId: financeTeamA.id, assignedById: admin.id }
-  });
-  await prisma.leadTeamAssignment.create({
-    data: { leadId: lead4.id, teamId: opsTeamA.id, assignedById: admin.id }
-  });
   await prisma.employeeAssignment.create({
-    data: { leadId: lead4.id, employeeId: opsUser.id, assignedById: admin.id, priority: 'high' }
+    data: { leadId: lead4.id, employeeId: rohitRai.id, assignedById: sachinPandey.id, priority: 'high' }
   });
-  // Create verified order
   await prisma.order.create({
     data: {
       leadId: lead4.id,
@@ -470,23 +406,16 @@ async function main() {
       financeProvider: 'SBI Solar',
       clientType: 'on_grid',
       subsidyApplicable: false,
-      submittedById: salesConsultant2.id,
-      financeProcessedById: financeUser.id,
+      submittedById: amitSingh.id,
+      financeProcessedById: sachinPandey.id,
       status: 'finance_verified',
-      opsStage: 2, // Installation in progress
+      opsStage: 2,
       installationDate: new Date().toISOString().split('T')[0],
       installationTime: '10:00 AM',
     }
   });
-  await prisma.activity.create({
-    data: {
-      employeeId: opsUser.id,
-      leadId: lead4.id,
-      activityType: 'INSTALLATION_IN_PROGRESS',
-    }
-  });
 
-  console.log('Seed completed successfully!');
+  console.log('Database successfully seeded with specific company team roster!');
 }
 
 main()
@@ -496,4 +425,5 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
+    await pool.end();
   });
