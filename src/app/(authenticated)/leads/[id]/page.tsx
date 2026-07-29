@@ -399,30 +399,32 @@ export default function LeadDetailPage({
   const [formCFollowUpAt, setFormCFollowUpAt] = useState('');
   const [formCRemark, setFormCRemark] = useState('');
 
-  // Helper to check if employee belongs to Sales & Marketing / Sales department
-  const isSalesOrAdmin = (emp: any) => {
+  // Helper to check if employee belongs to Sales & Marketing department and is NOT in a PSA role
+  const isSalesNonPsaOrAdmin = (emp: any) => {
     const deptName = emp.department?.name || '';
-    const isSales = deptName === 'Sales' || deptName === 'Sales & Marketing' || deptName === 'PSA';
+    const isSales = deptName === 'Sales' || deptName === 'Sales & Marketing';
+    const desName = emp.designation?.name || '';
+    const isPsa = desName.includes('PSA');
     const isAdmin = emp.role === 'admin' || emp.designation?.name === 'Admin';
-    return isSales || isAdmin;
+    return (isSales && !isPsa) || isAdmin;
   };
 
   const salesManagers = employees.filter((emp) => {
-    if (!isSalesOrAdmin(emp)) return false;
+    if (!isSalesNonPsaOrAdmin(emp)) return false;
     const desName = emp.designation?.name || '';
     return desName.includes('Manager') || desName.includes('Head') || desName.includes('Admin') || emp.role === 'admin';
   });
 
   const salesTls = employees.filter((emp) => {
-    if (!isSalesOrAdmin(emp)) return false;
+    if (!isSalesNonPsaOrAdmin(emp)) return false;
     const desName = emp.designation?.name || '';
     return desName.includes('TL') || desName.includes('Team Leader') || desName.includes('Manager') || desName.includes('Head') || desName.includes('Admin') || emp.role === 'admin';
   });
 
   const salesConsultants = employees.filter((emp) => {
-    if (!isSalesOrAdmin(emp)) return false;
+    if (!isSalesNonPsaOrAdmin(emp)) return false;
     const desName = emp.designation?.name || '';
-    return desName.includes('Consultant') || desName.includes('PSA') || desName.includes('TL') || desName.includes('Team Leader') || desName.includes('Manager') || desName.includes('Head') || desName.includes('Admin') || emp.role === 'admin';
+    return desName.includes('Consultant') || desName.includes('TL') || desName.includes('Team Leader') || desName.includes('Manager') || desName.includes('Head') || desName.includes('Admin') || emp.role === 'admin';
   });
 
   // Helper to check if employee belongs to Finance department
@@ -1509,10 +1511,12 @@ export default function LeadDetailPage({
       </div>
     );
   }
-  const isSalesUser = ['consultant', 'tl', 'manager', 'psa', 'psa_tl'].includes(baseRole) && !user?.role.includes('finance') && !user?.role.includes('operations') && !user?.role.includes('admin') && !user?.role.includes('it');
+  const isPsaUser = baseRole === 'psa';
+  const isSalesUser = ['consultant', 'tl', 'manager'].includes(baseRole) && !user?.role.includes('finance') && !user?.role.includes('operations') && !user?.role.includes('admin') && !user?.role.includes('it');
   
+  const isPsaLocked = isPsaUser && [8, 9, 13].includes(lead.status);
   const isSalesLocked = isSalesUser && lead.order && lead.order.status !== 'draft';
-  const isLeadLocked = isSalesLocked;
+  const isLeadLocked = isPsaLocked || isSalesLocked;
 
   // Calculate dynamic allowed transitions for select input
   const nextStageIds = ALLOWED_TRANSITIONS[lead.status] || [];
@@ -1579,15 +1583,16 @@ export default function LeadDetailPage({
     const task = leadTasks.find(t => t.taskName === taskName);
     if (!task) return false;
     
-    if (task.stageNum <= 7 || task.stageNum === 8 || task.stageNum === 9 || task.stageNum === 14) return userDept === 'Sales' || userDept === 'Sales & Marketing' || userDept === 'PSA';
+    if (task.stageNum <= 7) return userDept === 'PSA';
+    if (task.stageNum === 8 || task.stageNum === 9 || task.stageNum === 14) return userDept === 'Sales';
 
     return false;
   };
 
   const currentStep = (() => {
     if (!lead) return 0;
-    if ([1, 2, 3, 5, 7, 10, 11].includes(lead.status)) return 0; // Sales Calling
-    if ([8, 9, 14].includes(lead.status)) return 1; // Sales Visit
+    if ([1, 2, 3, 5, 7, 10, 11].includes(lead.status)) return 0; // PSA
+    if ([8, 9, 14].includes(lead.status)) return 1; // Sales
     if (lead.status === 13) {
       if (lead.order?.status === 'submitted') return 2; // Finance
       if (['finance_verified', 'ops_assigned', 'completed'].includes(lead.order?.status || '')) {
@@ -1599,7 +1604,7 @@ export default function LeadDetailPage({
   })();
 
   const steps = [
-    { label: 'Sales Calling', desc: 'Calling & Appointment' },
+    { label: 'PSA Calling', desc: 'Calling & Appointment' },
     { label: 'Sales Visit', desc: 'Audit & Deal Close' },
     { label: 'Finance Verify', desc: 'Docs & Payments' },
     { label: 'Ops Install', desc: 'Solar Commissioning' },
@@ -2037,7 +2042,9 @@ export default function LeadDetailPage({
                       <Lock className="w-5 h-5 shrink-0" />
                       <div>
                         <strong className="text-white font-bold block mb-0.5">Lead Details Locked</strong>
-                        This lead's details are locked for Sales editing because the order has been submitted to Finance.
+                        {isPsaLocked
+                          ? "This lead's details are locked for PSA editing because a meeting has been booked. They will unlock if the sales team schedules a follow-up or calls later."
+                          : "This lead's details are locked for Sales editing because the order has been submitted to Finance."}
                       </div>
                     </div>
                   )}
