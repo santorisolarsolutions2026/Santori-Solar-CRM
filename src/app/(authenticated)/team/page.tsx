@@ -2478,6 +2478,16 @@ export default function TeamManagementPage() {
         >
           Members Directory
         </button>
+        <button
+          onClick={() => setActiveTab('hierarchy')}
+          className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
+            activeTab === 'hierarchy'
+              ? 'bg-blue-600 text-white shadow-md shadow-blue-500/10'
+              : 'text-slate-400 hover:text-white hover:bg-slate-900/30'
+          }`}
+        >
+          Hierarchy Tree
+        </button>
         {(user?.role === 'admin' || user?.role === 'director' || user?.department?.name === 'IT') && (
           <button
             onClick={() => setActiveTab('permissions')}
