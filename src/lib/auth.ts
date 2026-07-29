@@ -155,39 +155,18 @@ export function resolveUserPermissions(user: UserPermissionsInput): string[] {
     'orders:assign_finance': ['sales:finance_assign'],
 
     // Finance
-    'finance:order_verify_reject': ['orders:verify', 'orders:finance_access'],
-    'orders:verify': ['finance:order_verify_reject', 'orders:finance_access'],
-
+    'finance:view_all_orders': ['orders:view_all', 'orders:finance_access'],
     'finance:order_assign': ['orders:assign_finance', 'orders:finance_access'],
-
-    'finance:ledger_record': ['finance:manage_ledger', 'orders:finance_access'],
+    'finance:order_verify_reject': ['orders:verify', 'orders:finance_access', 'orders:assign_ops'],
+    'orders:verify': ['finance:order_verify_reject', 'orders:finance_access'],
+    'finance:ledger_record': ['finance:manage_ledger', 'orders:finance_access', 'finance:delete_ledger'],
     'finance:manage_ledger': ['finance:ledger_record', 'orders:finance_access'],
 
-    'finance:ledger_delete': ['finance:delete_ledger', 'finance:manage_ledger'],
-
-    'finance:designation_change': ['team:change_designation', 'team:manage'],
-
-    'finance:attendance_view': ['attendance:view'],
-
-    'finance:analytics_view': ['reports:view', 'reports:view_financials'],
-
-    'finance:ops_assign': ['orders:assign_ops', 'orders:finance_access'],
-    'orders:assign_ops': ['finance:ops_assign'],
-
     // Operations
-    'ops:delivery_manage': ['orders:operations', 'ops:update_stages', 'orders:submit_installation'],
-    'ops:delivered_orders': ['orders:operations', 'ops:update_stages', 'orders:submit_installation'],
-    'ops:installation_manage': ['orders:operations', 'ops:update_stages', 'orders:submit_installation'],
-    'ops:meter_manage': ['orders:operations', 'ops:update_stages', 'orders:submit_installation'],
-    'ops:commission_manage': ['orders:operations', 'ops:update_stages', 'orders:submit_installation'],
-    'ops:subsidy_manage': ['orders:operations', 'ops:update_stages', 'orders:submit_installation'],
-    'ops:update_stages': ['orders:operations', 'ops:delivery_manage', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:subsidy_manage', 'orders:submit_installation'],
+    'ops:view_all_orders': ['orders:view_all', 'orders:operations'],
+    'ops:order_assign': ['orders:assign_ops', 'orders:operations'],
+    'ops:update_stages': ['orders:operations', 'ops:delivery_manage', 'ops:delivered_orders', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:subsidy_manage', 'orders:submit_installation'],
     'orders:operations': ['ops:update_stages', 'orders:submit_installation'],
-
-    'ops:designation_change': ['team:change_designation', 'team:manage'],
-    'ops:attendance_view': ['attendance:view'],
-    'ops:analytics_view': ['reports:view'],
-    'ops:upload_drawings': ['orders:operations'],
   };
 
   for (const perm of Array.from(finalPermissions)) {
@@ -209,8 +188,8 @@ export function resolveUserPermissions(user: UserPermissionsInput): string[] {
   }
 
   const orderPerms = [
-    'sales:order_punch', 'finance:order_verify_reject', 'finance:order_assign', 'finance:ledger_record', 'finance:ops_assign',
-    'ops:delivery_manage', 'ops:delivered_orders', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:subsidy_manage',
+    'sales:order_punch', 'finance:view_all_orders', 'finance:order_verify_reject', 'finance:order_assign', 'finance:ledger_record', 'finance:ops_assign',
+    'ops:view_all_orders', 'ops:order_assign', 'ops:delivery_manage', 'ops:delivered_orders', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:subsidy_manage',
     'orders:create', 'orders:verify', 'orders:operations', 'orders:finance_access', 'orders:view_all', 'orders:submit_installation', 'finance:manage_ledger', 'ops:update_stages', 'ops:upload_drawings'
   ];
   if (orderPerms.some(p => finalPermissions.has(p))) {

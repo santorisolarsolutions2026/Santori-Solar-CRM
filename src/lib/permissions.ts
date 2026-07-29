@@ -22,33 +22,15 @@ export const DEPARTMENT_PERMISSIONS: {
     { key: 'sales:lead_track', label: 'View Track Journey', group: 'Sales Chronological Workflow', description: '9. Inspect full timestamped audit timeline for lead progression.' },
   ],
   finance: [
-    // Verification & Assignment
-    { key: 'finance:order_verify_reject', label: 'Verify & Reject Submitted Orders', group: 'Order Verification & Handoff', description: 'Approve or reject down-payments and submitted orders.' },
-    { key: 'finance:order_assign', label: 'Assign Orders in Finance', group: 'Order Verification & Handoff', description: 'Assign finance orders to department executives.' },
-    { key: 'finance:ops_assign', label: 'Assign Operations Member', group: 'Order Verification & Handoff', description: 'Hand over verified orders to Operations for installation.' },
-
-    // Ledger & Payments
-    { key: 'finance:ledger_record', label: 'Record Ledger Payments & Slips', group: 'Ledger & Payments', description: 'Add payment receipts, transaction reference numbers.' },
-    { key: 'finance:ledger_delete', label: 'Delete Ledger Payment Entries', group: 'Ledger & Payments', description: 'Remove or discard invalid payment ledger records.' },
-
-    // Supervision & Analytics
-    { key: 'finance:designation_change', label: 'Change Subordinate Designations', group: 'Supervision & Analytics', description: 'Modify designations of finance team members.' },
-    { key: 'finance:attendance_view', label: 'View Subordinate Attendance', group: 'Supervision & Analytics', description: 'Inspect attendance logs for finance staff.' },
-    { key: 'finance:analytics_view', label: 'View Financial Reports & Audits', group: 'Supervision & Analytics', description: 'Access cash flow, audit logs, and financial stats.' },
+    { key: 'finance:view_all_orders', label: 'View All Orders', group: 'Finance Chronological Workflow', description: '1. View all submitted orders in the finance queue.' },
+    { key: 'finance:order_assign', label: 'Assign Orders', group: 'Finance Chronological Workflow', description: '2. Assign pending orders to finance team members in line of hierarchy.' },
+    { key: 'finance:order_verify_reject', label: 'Verify Orders', group: 'Finance Chronological Workflow', description: '3. Verify or reject submitted orders and advance verified orders to Operations.' },
+    { key: 'finance:ledger_record', label: 'Maintain Ledgers', group: 'Finance Chronological Workflow', description: '4. Add or delete payment ledger transactions and maintain financial records.' },
   ],
   ops: [
-    // Fulfillment & Execution
-    { key: 'ops:delivery_manage', label: 'Manage Material Dispatch & Delivery', group: 'Fulfillment & Installation', description: 'Log equipment dispatch dates and delivery status.' },
-    { key: 'ops:delivered_orders', label: 'Show Delivered Orders', group: 'Fulfillment & Installation', description: 'Access and view delivered orders in operations pipeline.' },
-    { key: 'ops:installation_manage', label: 'Manage Installation & Site Photos', group: 'Fulfillment & Installation', description: 'Log installation progress and upload site pictures.' },
-    { key: 'ops:meter_manage', label: 'Manage Net Metering & DISCOM', group: 'Fulfillment & Installation', description: 'Track bi-directional meter installation & DISCOM paperwork.' },
-    { key: 'ops:commission_manage', label: 'Manage Plant Commissioning', group: 'Fulfillment & Installation', description: 'Mark solar plant commissioning and grid synchronization.' },
-    { key: 'ops:subsidy_manage', label: 'Manage Subsidy Applications', group: 'Fulfillment & Installation', description: 'Process government solar subsidy documentation.' },
-
-    // Supervision & Analytics
-    { key: 'ops:designation_change', label: 'Change Subordinate Designations', group: 'Supervision & Analytics', description: 'Modify designations of operations team members.' },
-    { key: 'ops:attendance_view', label: 'View Subordinate Attendance', group: 'Supervision & Analytics', description: 'Inspect attendance logs for field & ops staff.' },
-    { key: 'ops:analytics_view', label: 'View Operations Analytics', group: 'Supervision & Analytics', description: 'Access project completion metrics and timelines.' },
+    { key: 'ops:view_all_orders', label: 'View All Orders', group: 'Operations Chronological Workflow', description: '1. View all verified orders in the operations queue.' },
+    { key: 'ops:order_assign', label: 'Assign Orders', group: 'Operations Chronological Workflow', description: '2. Assign verified orders to operations team members down the hierarchy.' },
+    { key: 'ops:update_stages', label: 'Manage Operations Stages', group: 'Operations Chronological Workflow', description: '3. Manage and progress all operations execution stages (material dispatch, installation, site photos, net metering, commissioning & subsidy).' },
   ]
 };
 
