@@ -628,11 +628,8 @@ const getVisibleMembers = (currentUser: any, allMembers: TeamMember[]): TeamMemb
     const currentId = queue.shift()!;
     allMembers.forEach(m => {
       if (m.reportsTo === currentId && !descendants.has(m.id)) {
-        // Subordinate must be in the same department (or current user is shared)
-        if (currentUser.departmentId === null || m.departmentId === currentUser.departmentId) {
-          descendants.add(m.id);
-          queue.push(m.id);
-        }
+        descendants.add(m.id);
+        queue.push(m.id);
       }
     });
   }
@@ -2904,9 +2901,6 @@ export default function TeamManagementPage() {
         if (!user) return false;
         if (user.role === 'admin' || user.role?.startsWith('admin:')) return true;
 
-        // Non-admin can only modify/view subordinates within their own department
-        if (user.departmentId !== targetMember.departmentId) return false;
-
         let currentId = targetMember.reportsTo;
         const visited = new Set<number>();
         while (currentId !== null && !visited.has(currentId)) {
@@ -2918,23 +2912,19 @@ export default function TeamManagementPage() {
         return false;
       };
 
-      // Inline list of eligible supervisors: must be same department and higher hierarchy designation
+      // Inline list of eligible supervisors: admins or higher hierarchy designation across any department
       const eligibleSupervisorsFn = (targetMember: TeamMember): TeamMember[] => {
         const targetLevel = targetMember.designation?.level ?? 99;
-        const targetDeptId = targetMember.departmentId;
 
-        return filteredMembers.filter((sup) => {
+        return members.filter((sup) => {
           if (sup.id === targetMember.id) return false;
           const supLevel = sup.designation?.level ?? 0;
+          const isSupAdmin = sup.role === 'admin' || sup.role?.startsWith('admin:');
           
-          if (targetLevel === 1) {
-            return supLevel === 0 || sup.role === 'admin';
-          }
-          
+          if (isSupAdmin || supLevel === 0) return true;
+
           if (targetLevel > 1) {
-            const isSameDept = sup.departmentId === targetDeptId;
-            const isHigherHierarchy = supLevel < targetLevel && supLevel > 0;
-            return isSameDept && isHigherHierarchy;
+            return supLevel < targetLevel && supLevel > 0;
           }
           
           return false;

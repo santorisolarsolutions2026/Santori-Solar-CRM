@@ -105,7 +105,7 @@ export async function POST(
       return NextResponse.json({ success: false, message: 'Remark is mandatory for status change.' }, { status: 400 });
     }
 
-    // Verify Department Ownership
+    // Verify Department Ownership / Hierarchy Ownership
     const userDeptName = department?.name || '';
     const leadOrder = await prisma.order.findFirst({ where: { leadId } });
     const leadDeptName = getLeadDepartment(lead.status, leadOrder?.status || null);
@@ -113,10 +113,17 @@ export async function POST(
     const isDeptMember = userDeptName === leadDeptName || (userDeptName === 'Sales' && leadDeptName === 'PSA') || (userDeptName === 'PSA' && leadDeptName === 'Sales');
     const isAdminOrIt = ['admin', 'director'].includes(userPayload.role) || userDeptName === 'IT' || userDeptName === 'Admin';
 
-    if (!isDeptMember && !isAdminOrIt) {
+    const { getSubordinateIds } = await import('@/lib/hierarchy');
+    const subordinateIds = await getSubordinateIds(userPayload.id);
+    const allowedHierarchyIds = [userPayload.id, ...subordinateIds];
+    const isAssignedToHierarchy = [lead.assignedConsultantId, lead.assignedTlId, lead.assignedManagerId, lead.createdById]
+      .filter(Boolean)
+      .some(id => allowedHierarchyIds.includes(id!));
+
+    if (!isDeptMember && !isAdminOrIt && !isAssignedToHierarchy) {
       return NextResponse.json({
         success: false,
-        message: `Forbidden. Only members of the ${leadDeptName} department can update this lead right now.`
+        message: `Forbidden. Only members of the ${leadDeptName} department or supervisors in the reporting hierarchy can update this lead right now.`
       }, { status: 403 });
     }
 
