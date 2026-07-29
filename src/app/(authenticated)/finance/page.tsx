@@ -23,6 +23,11 @@ import {
   Image,
   SlidersHorizontal,
   PieChart as PieChartIcon,
+  UsersRound,
+  ChevronDown,
+  Phone,
+  MapPin,
+  Hash,
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -168,6 +173,15 @@ export default function FinancePage() {
   const [opsTlId, setOpsTlId] = useState('');
   const [opsConsultantId, setOpsConsultantId] = useState('');
 
+  // Bulk assign states
+  const [selectedOrderIds, setSelectedOrderIds] = useState<number[]>([]);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [assignTargetUserId, setAssignTargetUserId] = useState('');
+  const [assignLoading, setAssignLoading] = useState(false);
+
+  // Lead info popover
+  const [leadInfoOrder, setLeadInfoOrder] = useState<Order | null>(null);
+
   // Helper to check if employee belongs to Operations department
   const isOpsOrAdmin = (emp: any) => {
     const deptName = emp.department?.name || '';
@@ -297,6 +311,76 @@ export default function FinancePage() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     fetchLedgerData();
+  };
+
+  // Get subordinate IDs from employees list for current user (client-side hierarchy traversal)
+  const getClientSubordinateIds = (userId: number): number[] => {
+    const result: number[] = [];
+    const queue = [userId];
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      for (const emp of employees) {
+        if (emp.reportsTo === current && !result.includes(emp.id)) {
+          result.push(emp.id);
+          queue.push(emp.id);
+        }
+      }
+    }
+    return result;
+  };
+
+  const financeSubordinates = user ? employees.filter((emp) => {
+    if (!user) return false;
+    const subIds = getClientSubordinateIds(user.id);
+    return subIds.includes(emp.id) && emp.isActive;
+  }) : [];
+
+  // Toggle single order selection
+  const toggleOrderSelection = (orderId: number) => {
+    setSelectedOrderIds(prev =>
+      prev.includes(orderId) ? prev.filter(id => id !== orderId) : [...prev, orderId]
+    );
+  };
+
+  // Toggle all pending orders selection
+  const toggleAllPendingOrders = () => {
+    if (selectedOrderIds.length === pendingOrders.length) {
+      setSelectedOrderIds([]);
+    } else {
+      setSelectedOrderIds(pendingOrders.map(o => o.id));
+    }
+  };
+
+  // Bulk assign handler
+  const handleBulkAssign = async () => {
+    if (!assignTargetUserId || selectedOrderIds.length === 0) return;
+    setAssignLoading(true);
+    try {
+      const res = await fetch('/api/v1/orders/bulk-assign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderIds: selectedOrderIds,
+          targetUserId: assignTargetUserId,
+          department: 'finance',
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(data.message || 'Orders assigned successfully!');
+        setSelectedOrderIds([]);
+        setShowAssignModal(false);
+        setAssignTargetUserId('');
+        fetchLedgerData();
+      } else {
+        alert(data.message || 'Failed to assign orders.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error assigning orders.');
+    } finally {
+      setAssignLoading(false);
+    }
   };
 
   // Verify/Reject action
@@ -969,53 +1053,142 @@ export default function FinancePage() {
             <p className="text-xs text-slate-500 mt-1">Incoming orders punched by the sales team will appear here for review.</p>
           </div>
         ) : (
-          <div className="bg-[#111625] border border-slate-800 rounded-xl overflow-hidden shadow-xl">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="border-b border-slate-800 bg-slate-900/40 text-slate-400 font-semibold">
-                    <th className="py-4 px-4">Order Code</th>
-                    <th className="py-4 px-4">Client Name</th>
-                    <th className="py-4 px-4">System Size</th>
-                    <th className="py-4 px-4">Total Contract Value</th>
-                    <th className="py-4 px-4">Down Payment</th>
-                    <th className="py-4 px-4">Submitted By</th>
-                    <th className="py-4 px-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/60">
-                  {pendingOrders.map((order) => (
-                    <tr key={order.id} className="hover:bg-slate-900/30 transition-all text-slate-300">
-                      <td className="py-4 px-4 font-mono font-bold text-slate-100">{order.orderCode}</td>
-                      <td className="py-4 px-4 font-semibold">
-                        <Link href={`/leads/${order.lead.id}`} className="text-blue-600 dark:text-blue-400 hover:underline">
-                          {order.lead.customerName}
-                        </Link>
-                      </td>
-                      <td className="py-4 px-4 font-semibold text-slate-400">{order.systemSizeKw} kW</td>
-                      <td className="py-4 px-4 font-extrabold text-white">₹{order.totalValue.toLocaleString('en-IN')}</td>
-                      <td className="py-4 px-4 font-bold text-blue-600 dark:text-blue-400">
-                        ₹{order.downPayment.toLocaleString('en-IN')}
-                        <span className="block text-[10px] text-slate-500 font-normal">Method: {order.paymentMethod.toUpperCase()}</span>
-                      </td>
-                      <td className="py-4 px-4 text-slate-400">
-                        <Link href={`/team?userId=${order.submittedBy.id}`} className="text-blue-600 dark:text-blue-400 hover:underline font-bold">
-                          {order.submittedBy.name}
-                        </Link>
-                      </td>
-                      <td className="py-4 px-4 text-right">
-                        <button
-                          onClick={() => { setSelectedOrder(order); setModalMode('verify'); }}
-                          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-slate-950 rounded font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>{canVerifyOrder ? 'Verify Order' : 'View Details'}</span>
-                        </button>
-                      </td>
+          <div className="space-y-3">
+            {/* Bulk assign toolbar */}
+            {canAssignFinance && selectedOrderIds.length > 0 && (
+              <div className="flex items-center justify-between p-3 bg-blue-500/5 border border-blue-500/20 rounded-xl animate-fade-in-up">
+                <span className="text-xs font-bold text-blue-400">
+                  {selectedOrderIds.length} order{selectedOrderIds.length > 1 ? 's' : ''} selected
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setSelectedOrderIds([])}
+                    className="px-3 py-1.5 bg-slate-900 border border-slate-700 text-slate-300 rounded font-bold text-[11px] transition-all cursor-pointer"
+                  >
+                    Clear
+                  </button>
+                  <button
+                    onClick={() => setShowAssignModal(true)}
+                    className="px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-md shadow-blue-500/10"
+                  >
+                    <UsersRound className="w-3.5 h-3.5" />
+                    <span>Assign Finance Member</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="bg-[#111625] border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-800 bg-slate-900/40 text-slate-400 font-semibold">
+                      {canAssignFinance && (
+                        <th className="py-4 px-3 w-10">
+                          <input
+                            type="checkbox"
+                            checked={pendingOrders.length > 0 && selectedOrderIds.length === pendingOrders.length}
+                            onChange={toggleAllPendingOrders}
+                            className="accent-blue-500 w-3.5 h-3.5 cursor-pointer"
+                          />
+                        </th>
+                      )}
+                      <th className="py-4 px-4">Order Code</th>
+                      <th className="py-4 px-4">Client Name</th>
+                      <th className="py-4 px-4">System Size</th>
+                      <th className="py-4 px-4">Total Contract Value</th>
+                      <th className="py-4 px-4">Down Payment</th>
+                      <th className="py-4 px-4">Submitted By</th>
+                      {(canVerifyOrder || canMaintainLedger) && <th className="py-4 px-4 text-right">Actions</th>}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {pendingOrders.map((order) => (
+                      <tr key={order.id} className={`hover:bg-slate-900/30 transition-all text-slate-300 ${selectedOrderIds.includes(order.id) ? 'bg-blue-500/5' : ''}`}>
+                        {canAssignFinance && (
+                          <td className="py-4 px-3">
+                            <input
+                              type="checkbox"
+                              checked={selectedOrderIds.includes(order.id)}
+                              onChange={() => toggleOrderSelection(order.id)}
+                              className="accent-blue-500 w-3.5 h-3.5 cursor-pointer"
+                            />
+                          </td>
+                        )}
+                        <td className="py-4 px-4 font-mono font-bold text-slate-100">{order.orderCode}</td>
+                        <td className="py-4 px-4 font-semibold relative">
+                          <button
+                            type="button"
+                            onClick={() => setLeadInfoOrder(leadInfoOrder?.id === order.id ? null : order)}
+                            className="text-blue-400 hover:underline cursor-pointer text-left"
+                          >
+                            {order.lead.customerName}
+                          </button>
+                          {/* Lead Info Popover */}
+                          {leadInfoOrder?.id === order.id && (
+                            <div className="absolute z-30 top-full left-0 mt-1 w-72 bg-[#0d1017] border border-slate-700 rounded-xl shadow-2xl p-4 space-y-2.5 animate-fade-in-up">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Lead Details</span>
+                                <button type="button" onClick={() => setLeadInfoOrder(null)} className="text-slate-500 hover:text-white cursor-pointer">
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                              <div className="space-y-1.5">
+                                <div className="flex items-center gap-2 text-xs">
+                                  <User className="w-3.5 h-3.5 text-slate-500" />
+                                  <span className="font-bold text-white">{order.lead.customerName}</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-xs">
+                                  <Hash className="w-3.5 h-3.5 text-slate-500" />
+                                  <span className="text-slate-300 font-mono">{order.lead.leadCode}</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-xs">
+                                  <Phone className="w-3.5 h-3.5 text-slate-500" />
+                                  <a href={`tel:${order.lead.mobile}`} className="text-blue-400 hover:underline font-semibold">{order.lead.mobile}</a>
+                                </div>
+                                <div className="flex items-center gap-2 text-xs">
+                                  <MapPin className="w-3.5 h-3.5 text-slate-500" />
+                                  <span className="text-slate-300">{order.lead.city}</span>
+                                </div>
+                              </div>
+                              <Link
+                                href={`/leads/${order.lead.id}`}
+                                className="block w-full text-center py-1.5 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-lg text-[10px] font-bold hover:bg-blue-500/20 transition-all mt-2"
+                              >
+                                Open Full Lead →
+                              </Link>
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-4 px-4 font-semibold text-slate-400">{order.systemSizeKw} kW</td>
+                        <td className="py-4 px-4 font-extrabold text-white">₹{order.totalValue.toLocaleString('en-IN')}</td>
+                        <td className="py-4 px-4 font-bold text-blue-600 dark:text-blue-400">
+                          ₹{order.downPayment.toLocaleString('en-IN')}
+                          <span className="block text-[10px] text-slate-500 font-normal">Method: {order.paymentMethod.toUpperCase()}</span>
+                        </td>
+                        <td className="py-4 px-4 text-slate-400">
+                          <Link href={`/team?userId=${order.submittedBy.id}`} className="text-blue-600 dark:text-blue-400 hover:underline font-bold">
+                            {order.submittedBy.name}
+                          </Link>
+                        </td>
+                        {(canVerifyOrder || canMaintainLedger) && (
+                          <td className="py-4 px-4 text-right">
+                            {canVerifyOrder && (
+                              <button
+                                onClick={() => { setSelectedOrder(order); setModalMode('verify'); }}
+                                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-slate-950 rounded font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>Verify Order</span>
+                              </button>
+                            )}
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )
@@ -1047,10 +1220,49 @@ export default function FinancePage() {
                   {verifiedOrders.map((order) => (
                     <tr key={order.id} className="hover:bg-slate-900/30 transition-all text-slate-300">
                       <td className="py-4 px-4 font-mono font-bold text-slate-100">{order.orderCode}</td>
-                      <td className="py-4 px-4 font-semibold">
-                        <Link href={`/leads/${order.lead.id}`} className="text-blue-600 dark:text-blue-400 hover:underline">
+                      <td className="py-4 px-4 font-semibold relative">
+                        <button
+                          type="button"
+                          onClick={() => setLeadInfoOrder(leadInfoOrder?.id === order.id ? null : order)}
+                          className="text-blue-400 hover:underline cursor-pointer text-left"
+                        >
                           {order.lead.customerName}
-                        </Link>
+                        </button>
+                        {/* Lead Info Popover */}
+                        {leadInfoOrder?.id === order.id && (
+                          <div className="absolute z-30 top-full left-0 mt-1 w-72 bg-[#0d1017] border border-slate-700 rounded-xl shadow-2xl p-4 space-y-2.5 animate-fade-in-up">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Lead Details</span>
+                              <button type="button" onClick={() => setLeadInfoOrder(null)} className="text-slate-500 hover:text-white cursor-pointer">
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                            <div className="space-y-1.5">
+                              <div className="flex items-center gap-2 text-xs">
+                                <User className="w-3.5 h-3.5 text-slate-500" />
+                                <span className="font-bold text-white">{order.lead.customerName}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs">
+                                <Hash className="w-3.5 h-3.5 text-slate-500" />
+                                <span className="text-slate-300 font-mono">{order.lead.leadCode}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs">
+                                <Phone className="w-3.5 h-3.5 text-slate-500" />
+                                <a href={`tel:${order.lead.mobile}`} className="text-blue-400 hover:underline font-semibold">{order.lead.mobile}</a>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs">
+                                <MapPin className="w-3.5 h-3.5 text-slate-500" />
+                                <span className="text-slate-300">{order.lead.city}</span>
+                              </div>
+                            </div>
+                            <Link
+                              href={`/leads/${order.lead.id}`}
+                              className="block w-full text-center py-1.5 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-lg text-[10px] font-bold hover:bg-blue-500/20 transition-all mt-2"
+                            >
+                              Open Full Lead →
+                            </Link>
+                          </div>
+                        )}
                       </td>
                       <td className="py-4 px-4 font-extrabold text-white">₹{order.totalValue.toLocaleString('en-IN')}</td>
                       <td className="py-4 px-4 font-bold text-slate-400">₹{order.downPayment.toLocaleString('en-IN')}</td>
@@ -1073,13 +1285,15 @@ export default function FinancePage() {
                         </span>
                       </td>
                       <td className="py-4 px-4 text-right">
-                        <button
-                          onClick={() => { setSelectedOrder(order); setModalMode('ledger_detail'); }}
-                          className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 hover:border-slate-600 text-slate-200 rounded font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1"
-                        >
-                          <CreditCard className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-                          <span>View Ledger</span>
-                        </button>
+                        {canMaintainLedger ? (
+                          <button
+                            onClick={() => { setSelectedOrder(order); setModalMode('ledger_detail'); }}
+                            className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 hover:border-slate-600 text-slate-200 rounded font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1"
+                          >
+                            <CreditCard className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                            <span>View Ledger</span>
+                          </button>
+                        ) : null}
                       </td>
                     </tr>
                   ))}
@@ -1780,6 +1994,65 @@ export default function FinancePage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Assign Finance Member Modal */}
+      {showAssignModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="w-full max-w-lg bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                <UsersRound className="w-4 h-4 text-blue-400" />
+                Assign Finance Team Member
+              </h3>
+              <button onClick={() => { setShowAssignModal(false); setAssignTargetUserId(''); }} className="text-slate-400 hover:text-white cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Assign <strong className="text-white">{selectedOrderIds.length}</strong> selected order{selectedOrderIds.length > 1 ? 's' : ''} to a finance team member in your reporting hierarchy.
+              </p>
+
+              <div>
+                <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Select Team Member *</label>
+                <select
+                  required
+                  value={assignTargetUserId}
+                  onChange={(e) => setAssignTargetUserId(e.target.value)}
+                  className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
+                >
+                  <option value="">Select a team member...</option>
+                  {financeSubordinates.map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.name} ({emp.department?.name || 'N/A'} — {emp.designation?.name || emp.role})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex gap-3 border-t border-slate-800/80 pt-4 justify-end">
+                <button
+                  type="button"
+                  onClick={() => { setShowAssignModal(false); setAssignTargetUserId(''); }}
+                  className="py-2 px-4 bg-slate-900 border border-slate-800 text-slate-400 rounded-lg font-bold text-xs cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleBulkAssign}
+                  disabled={!assignTargetUserId || assignLoading}
+                  className="py-2 px-5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs shadow-md cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
+                >
+                  {assignLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UsersRound className="w-3.5 h-3.5" />}
+                  <span>Confirm Assignment</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
