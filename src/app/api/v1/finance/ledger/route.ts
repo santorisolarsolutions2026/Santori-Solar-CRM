@@ -18,8 +18,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const search = searchParams.get('search') || '';
 
-    // Search query matches order code, connection number, or customer name
-    const where: any = {
+    let where: any = {
       status: { in: ['submitted', 'finance_verified', 'ops_assigned', 'completed'] }
     };
 
@@ -29,6 +28,40 @@ export async function GET(req: Request) {
         { connectionNumber: { contains: search, mode: 'insensitive' } },
         { lead: { customerName: { contains: search, mode: 'insensitive' } } },
       ];
+    }
+
+    const baseRole = userPayload.role;
+    const isAdminOrDirector = ['admin', 'director'].includes(baseRole) || baseRole.startsWith('admin:');
+    const hasViewAll = userPermissions.includes('finance:view_all_orders') || userPermissions.includes('orders:view_all') || isAdminOrDirector;
+
+    if (!hasViewAll) {
+      const { getSubordinateIds } = await import('@/lib/hierarchy');
+      const subordinateIds = await getSubordinateIds(userPayload.id);
+      const allowedIds = [userPayload.id, ...subordinateIds];
+
+      const accessCondition = {
+        OR: [
+          { assignedFinanceId: { in: allowedIds } },
+          { assignedFinanceId: null },
+        ]
+      };
+
+      if (where.OR) {
+        where = {
+          AND: [
+            { status: where.status },
+            { OR: where.OR },
+            accessCondition
+          ]
+        };
+      } else {
+        where = {
+          AND: [
+            where,
+            accessCondition
+          ]
+        };
+      }
     }
 
     const orders = await prisma.order.findMany({

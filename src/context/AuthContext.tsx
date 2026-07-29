@@ -220,13 +220,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       'sales:meeting_done': ['leads:meeting_done', 'meetings:complete'],
 
       // Finance
-      'finance:view_all_orders': ['orders:view_all', 'orders:finance_access'],
+      'finance:view_all_orders': ['orders:view_all'],
       'orders:view_all': ['finance:view_all_orders', 'ops:view_all_orders'],
-      'finance:order_assign': ['orders:assign_finance', 'orders:finance_access'],
+      'finance:order_assign': ['orders:assign_finance'],
       'orders:assign_finance': ['finance:order_assign', 'sales:finance_assign'],
-      'finance:order_verify_reject': ['orders:verify', 'orders:finance_access'],
+      'finance:order_verify_reject': ['orders:verify'],
       'orders:verify': ['finance:order_verify_reject'],
-      'finance:ledger_record': ['finance:manage_ledger', 'orders:finance_access'],
+      'finance:ledger_record': ['finance:manage_ledger'],
       'finance:manage_ledger': ['finance:ledger_record'],
 
       // Operations

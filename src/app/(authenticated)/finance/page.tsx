@@ -342,12 +342,13 @@ export default function FinancePage() {
     );
   };
 
-  // Toggle all pending orders selection
-  const toggleAllPendingOrders = () => {
-    if (selectedOrderIds.length === pendingOrders.length) {
+  // Toggle all orders selection
+  const toggleAllOrders = () => {
+    const currentList = activeTab === 'pending' ? pendingOrders : verifiedOrders;
+    if (selectedOrderIds.length === currentList.length && currentList.length > 0) {
       setSelectedOrderIds([]);
     } else {
-      setSelectedOrderIds(pendingOrders.map(o => o.id));
+      setSelectedOrderIds(currentList.map(o => o.id));
     }
   };
 
@@ -1009,7 +1010,7 @@ export default function FinancePage() {
       {/* Tabs */}
       <div className="flex border-b border-slate-800">
         <button
-          onClick={() => setActiveTab('pending')}
+          onClick={() => { setActiveTab('pending'); setSelectedOrderIds([]); }}
           className={`px-6 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 ${
             activeTab === 'pending'
               ? 'border-blue-500 text-blue-600 dark:text-blue-400'
@@ -1024,7 +1025,7 @@ export default function FinancePage() {
           )}
         </button>
         <button
-          onClick={() => setActiveTab('ledger')}
+          onClick={() => { setActiveTab('ledger'); setSelectedOrderIds([]); }}
           className={`px-6 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 ${
             activeTab === 'ledger'
               ? 'border-blue-500 text-blue-600 dark:text-blue-400'
@@ -1037,6 +1038,30 @@ export default function FinancePage() {
           </span>
         </button>
       </div>
+
+      {/* Bulk assign toolbar */}
+      {canAssignFinance && selectedOrderIds.length > 0 && (
+        <div className="flex items-center justify-between p-3 bg-blue-500/5 border border-blue-500/20 rounded-xl animate-fade-in-up">
+          <span className="text-xs font-bold text-blue-400">
+            {selectedOrderIds.length} order{selectedOrderIds.length > 1 ? 's' : ''} selected
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSelectedOrderIds([])}
+              className="px-3 py-1.5 bg-slate-900 border border-slate-700 text-slate-300 rounded font-bold text-[11px] transition-all cursor-pointer"
+            >
+              Clear
+            </button>
+            <button
+              onClick={() => setShowAssignModal(true)}
+              className="px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-md shadow-blue-500/10"
+            >
+              <UsersRound className="w-3.5 h-3.5" />
+              <span>Assign Finance Member</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Content */}
       {loading ? (
@@ -1054,30 +1079,6 @@ export default function FinancePage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {/* Bulk assign toolbar */}
-            {canAssignFinance && selectedOrderIds.length > 0 && (
-              <div className="flex items-center justify-between p-3 bg-blue-500/5 border border-blue-500/20 rounded-xl animate-fade-in-up">
-                <span className="text-xs font-bold text-blue-400">
-                  {selectedOrderIds.length} order{selectedOrderIds.length > 1 ? 's' : ''} selected
-                </span>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setSelectedOrderIds([])}
-                    className="px-3 py-1.5 bg-slate-900 border border-slate-700 text-slate-300 rounded font-bold text-[11px] transition-all cursor-pointer"
-                  >
-                    Clear
-                  </button>
-                  <button
-                    onClick={() => setShowAssignModal(true)}
-                    className="px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-md shadow-blue-500/10"
-                  >
-                    <UsersRound className="w-3.5 h-3.5" />
-                    <span>Assign Finance Member</span>
-                  </button>
-                </div>
-              </div>
-            )}
-
             <div className="bg-[#111625] border border-slate-800 rounded-xl overflow-hidden shadow-xl">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs">
@@ -1088,7 +1089,7 @@ export default function FinancePage() {
                           <input
                             type="checkbox"
                             checked={pendingOrders.length > 0 && selectedOrderIds.length === pendingOrders.length}
-                            onChange={toggleAllPendingOrders}
+                            onChange={toggleAllOrders}
                             className="accent-blue-500 w-3.5 h-3.5 cursor-pointer"
                           />
                         </th>
@@ -1206,6 +1207,16 @@ export default function FinancePage() {
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="border-b border-slate-800 bg-slate-900/40 text-slate-400 font-semibold">
+                    {canAssignFinance && (
+                      <th className="py-4 px-3 w-10">
+                        <input
+                          type="checkbox"
+                          checked={verifiedOrders.length > 0 && selectedOrderIds.length === verifiedOrders.length}
+                          onChange={toggleAllOrders}
+                          className="accent-blue-500 w-3.5 h-3.5 cursor-pointer"
+                        />
+                      </th>
+                    )}
                     <th className="py-4 px-4">Order Code</th>
                     <th className="py-4 px-4">Client Name</th>
                     <th className="py-4 px-4">Total Value</th>
@@ -1218,7 +1229,17 @@ export default function FinancePage() {
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
                   {verifiedOrders.map((order) => (
-                    <tr key={order.id} className="hover:bg-slate-900/30 transition-all text-slate-300">
+                    <tr key={order.id} className={`hover:bg-slate-900/30 transition-all text-slate-300 ${selectedOrderIds.includes(order.id) ? 'bg-blue-500/5' : ''}`}>
+                      {canAssignFinance && (
+                        <td className="py-4 px-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedOrderIds.includes(order.id)}
+                            onChange={() => toggleOrderSelection(order.id)}
+                            className="accent-blue-500 w-3.5 h-3.5 cursor-pointer"
+                          />
+                        </td>
+                      )}
                       <td className="py-4 px-4 font-mono font-bold text-slate-100">{order.orderCode}</td>
                       <td className="py-4 px-4 font-semibold relative">
                         <button
