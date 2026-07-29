@@ -35,6 +35,8 @@ export default function NewLeadPage() {
   const [showOverride, setShowOverride] = useState(false);
   const [overrideDuplicate, setOverrideDuplicate] = useState(false);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [employees, setEmployees] = useState<any[]>([]);
+  const [selectedAssigneeId, setSelectedAssigneeId] = useState('');
 
   const canAddLead = hasPermission('sales:lead_add') || hasPermission('leads:create');
 
