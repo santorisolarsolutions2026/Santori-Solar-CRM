@@ -34,6 +34,8 @@ export async function POST(
     const canAssignFinance = userPermissions.includes('sales:finance_assign') || 
                              userPermissions.includes('orders:assign_finance') || 
                              userPermissions.includes('orders:submit_finance') ||
+                             userPermissions.includes('sales:order_punch') ||
+                             userPermissions.includes('orders:create') ||
                              userPayload.role === 'admin' ||
                              userPayload.role === 'director';
 

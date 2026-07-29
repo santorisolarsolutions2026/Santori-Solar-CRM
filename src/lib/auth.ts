@@ -144,8 +144,8 @@ export function resolveUserPermissions(user: UserPermissionsInput): string[] {
     'sales:analytics_view': ['reports:view', 'reports:view_financials'],
     'reports:view': ['sales:analytics_view'],
 
-    'sales:order_punch': ['orders:create', 'orders:submit_installation'],
-    'orders:create': ['sales:order_punch', 'orders:submit_installation'],
+    'sales:order_punch': ['orders:create', 'orders:submit_installation', 'sales:finance_assign', 'orders:assign_finance', 'orders:submit_finance'],
+    'orders:create': ['sales:order_punch', 'orders:submit_installation', 'sales:finance_assign', 'orders:assign_finance', 'orders:submit_finance'],
 
     'sales:meeting_book': ['leads:book_meeting', 'leads:change_status'],
     'leads:book_meeting': ['sales:meeting_book'],

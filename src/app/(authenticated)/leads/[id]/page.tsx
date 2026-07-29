@@ -3176,7 +3176,7 @@ export default function LeadDetailPage({
                           </p>
                         </div>
                         <div>
-                          {hasPermission('sales:finance_assign') || hasPermission('orders:assign_finance') ? (
+                          {hasPermission('sales:finance_assign') || hasPermission('orders:assign_finance') || hasPermission('sales:order_punch') || hasPermission('orders:create') ? (
                             <button
                               onClick={() => setShowFinanceModal(true)}
                               className="py-2.5 px-5 rounded-lg font-bold text-xs shadow-lg transition-all bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white cursor-pointer shadow-blue-500/10 focus:outline-none"
