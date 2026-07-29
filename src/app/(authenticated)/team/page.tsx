@@ -93,42 +93,42 @@ export function getRoleClass(role: string): string {
 }
 
 const ALL_PERMISSIONS = [
-  // PSA Level (Pre-Sales)
+  // Sales Level
   {
     key: 'leads:create',
-    label: 'PSA: Add New Lead',
+    label: 'Sales: Add New Lead',
     description: 'Allows registering and adding new customer leads into the system.',
-    category: 'PSA'
+    category: 'Sales'
   },
   {
     key: 'leads:import',
-    label: 'PSA: Import New Leads',
+    label: 'Sales: Import New Leads',
     description: 'Allows importing lists of raw leads from CSV / Excel spreadsheets.',
-    category: 'PSA'
+    category: 'Sales'
   },
   {
     key: 'leads:manage_calling_stages',
-    label: 'PSA: Manage Calling Stages',
+    label: 'Sales: Manage Calling Stages',
     description: 'Allows updating logs and progressing pre-sales call statuses.',
-    category: 'PSA'
+    category: 'Sales'
   },
   {
     key: 'leads:book_meeting',
-    label: 'PSA: Meeting Booking',
+    label: 'Sales: Meeting Booking',
     description: 'Allows scheduling customer meetings and choosing calendar slots.',
-    category: 'PSA'
+    category: 'Sales'
   },
   {
     key: 'leads:track',
-    label: 'PSA: Track logs & Reminders',
+    label: 'Sales: Track logs & Reminders',
     description: 'Allows tracking lead audit logs, reminders, and daily check-ins.',
-    category: 'PSA'
+    category: 'Sales'
   },
   {
     key: 'leads:edit',
-    label: 'PSA: Edit Lead Details',
+    label: 'Sales: Edit Lead Details',
     description: 'Allows editing contact, discom connection load, and other details.',
-    category: 'PSA'
+    category: 'Sales'
   },
 
   // Sales Level

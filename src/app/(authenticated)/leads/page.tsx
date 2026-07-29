@@ -1767,7 +1767,7 @@ export default function LeadsPage() {
                     {/* Select Consultant */}
                     <div>
                       <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                        Assigned Consultant / PSA
+                        Assigned Sales Consultant
                       </label>
                       <UserSelect
                         users={assignableMembers.filter((m: any) => {
