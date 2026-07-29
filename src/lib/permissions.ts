@@ -11,30 +11,15 @@ export const DEPARTMENT_PERMISSIONS: {
   ops: PermissionItem[];
 } = {
   sales: [
-    // Lead Capture & Pipeline
-    { key: 'sales:lead_add', label: 'Add New Lead', group: 'Lead Capture & Pipeline', description: 'Create and register new customer leads manually.' },
-    { key: 'sales:lead_edit', label: 'Edit Customer Lead Info', group: 'Lead Capture & Pipeline', description: 'Modify customer name, contact details, load capacity & address.' },
-    { key: 'sales:lead_import', label: 'Import Bulk Leads', group: 'Lead Capture & Pipeline', description: 'Upload CSV/Excel spreadsheets to import leads.' },
-    { key: 'sales:lead_assign', label: 'Assign the leads', group: 'Lead Capture & Pipeline', description: 'Assign or reassign leads to department members.' },
-    { key: 'sales:lead_delete', label: 'Delete Customer Leads', group: 'Lead Capture & Pipeline', description: 'Permanently remove or delete customer leads from the system.' },
-    { key: 'sales:lead_view_all', label: 'View All System Leads', group: 'Lead Capture & Pipeline', description: 'Access all company leads bypassing hierarchy restriction.' },
-    { key: 'sales:lead_details_view', label: 'Show Lead Details', group: 'Lead Capture & Pipeline', description: 'Access full lead details workspace including journey history, meeting details, order punching details, and uploaded documents.' },
-
-    // Calling & Meetings
-    { key: 'sales:stage_change', label: 'Change Calling & Lead Stages', group: 'Calling & Customer Meetings', description: 'Update lead calling stages and follow-up status.' },
-    { key: 'sales:meeting_book', label: 'Book Customer Meeting', group: 'Calling & Customer Meetings', description: 'Schedule site visits and executive meetings.' },
-    { key: 'sales:assign_team', label: 'Assign Sales Team Member', group: 'Calling & Customer Meetings', description: 'Assign sales consultant / team member after meeting is booked or in lead workspace.' },
-    { key: 'sales:meeting_done', label: 'Mark Meeting Done & Audio', group: 'Calling & Customer Meetings', description: 'Complete meetings, log audio recordings & locations.' },
-    { key: 'sales:lead_track', label: 'Track Lead Audit Journey', group: 'Calling & Customer Meetings', description: 'Inspect detailed lead history and status change logs.' },
-
-    // Orders & Handoff
-    { key: 'sales:order_punch', label: 'Fill Order Punching Form', group: 'Order Punching & Handoff', description: 'Punch system size, valuation, and payment terms.' },
-    { key: 'sales:finance_assign', label: 'Assign Finance Member', group: 'Order Punching & Handoff', description: 'Hand over punched orders to Finance team members.' },
-
-    // Supervision & Analytics
-    { key: 'sales:designation_change', label: 'Change Subordinate Designations', group: 'Supervision & Analytics', description: 'Modify designations of team members below in hierarchy.' },
-    { key: 'sales:attendance_view', label: 'View Subordinate Attendance', group: 'Supervision & Analytics', description: 'Inspect check-in/out logs for sales team members.' },
-    { key: 'sales:analytics_view', label: 'View Sales Team Analytics', group: 'Supervision & Analytics', description: 'Access sales performance charts and reporting.' },
+    { key: 'sales:lead_add', label: 'Add New Lead', group: 'Sales Chronological Workflow', description: '1. Create and register new customer leads manually into Uninitiated status.' },
+    { key: 'sales:lead_import', label: 'Import Bulk Leads', group: 'Sales Chronological Workflow', description: '2. Upload CSV/Excel spreadsheets to import bulk leads.' },
+    { key: 'sales:lead_assign', label: 'Assign Leads', group: 'Sales Chronological Workflow', description: '3. Assign or reassign leads to team members below hierarchy.' },
+    { key: 'sales:lead_view_all', label: 'View All Leads', group: 'Sales Chronological Workflow', description: '4. View all system leads bypassing assignee restrictions.' },
+    { key: 'sales:lead_edit', label: 'Edit Lead Details', group: 'Sales Chronological Workflow', description: '5. Modify customer name, contact details, load capacity & address.' },
+    { key: 'sales:stage_change', label: 'Change Pipeline Stages', group: 'Sales Chronological Workflow', description: '6. Change lead calling stages and book customer meetings.' },
+    { key: 'sales:meeting_done', label: 'Record Meetings', group: 'Sales Chronological Workflow', description: '7. Record meeting audio, GPS location, and outcome (Sale Done, Follow Up, Not Interested).' },
+    { key: 'sales:order_punch', label: 'Fill Order Punching Form & Submit', group: 'Sales Chronological Workflow', description: '8. Fill complete order punching form upon Sale Done and submit to Finance.' },
+    { key: 'sales:lead_track', label: 'View Track Journey', group: 'Sales Chronological Workflow', description: '9. Inspect full timestamped audit timeline for lead progression.' },
   ],
   finance: [
     // Verification & Assignment

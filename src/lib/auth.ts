@@ -125,7 +125,7 @@ export function resolveUserPermissions(user: UserPermissionsInput): string[] {
     'sales:lead_details_view': ['leads:view_details'],
     'leads:view_details': ['sales:lead_details_view'],
 
-    'sales:stage_change': ['leads:change_status', 'leads:manage_calling_stages'],
+    'sales:stage_change': ['leads:change_status', 'leads:manage_calling_stages', 'leads:book_meeting'],
     'leads:change_status': ['sales:stage_change'],
     'leads:manage_calling_stages': ['sales:stage_change'],
 
