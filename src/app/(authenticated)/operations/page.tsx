@@ -28,6 +28,7 @@ import {
   ChevronLeft,
   ChevronRight,
   AlertTriangle,
+  Users,
 } from 'lucide-react';
 
 interface Order {
@@ -115,6 +116,95 @@ export default function OperationsPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+
+  const [employees, setEmployees] = useState<any[]>([]);
+  const [selectedOrderIds, setSelectedOrderIds] = useState<number[]>([]);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [assignTargetUserId, setAssignTargetUserId] = useState('');
+  const [assignLoading, setAssignLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await fetch('/api/v1/users');
+        const data = await res.json();
+        if (data.success) {
+          const activeEmployees = data.data.filter((u: any) => u.isActive);
+          setEmployees(activeEmployees);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    if (user && hasPermission('ops:order_assign')) fetchUsers();
+  }, [user, hasPermission]);
+
+  const getClientSubordinateIds = (userId: number): number[] => {
+    const result: number[] = [];
+    const queue = [userId];
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      for (const emp of employees) {
+        if (emp.reportsTo === current && !result.includes(emp.id)) {
+          result.push(emp.id);
+          queue.push(emp.id);
+        }
+      }
+    }
+    return result;
+  };
+
+  const opsSubordinates = user ? employees.filter((emp) => {
+    if (!user) return false;
+    const subIds = getClientSubordinateIds(user.id);
+    return subIds.includes(emp.id) && emp.isActive;
+  }) : [];
+
+  const toggleOrderSelection = (orderId: number) => {
+    setSelectedOrderIds(prev =>
+      prev.includes(orderId) ? prev.filter(id => id !== orderId) : [...prev, orderId]
+    );
+  };
+
+  const toggleAllOrders = () => {
+    if (selectedOrderIds.length === orders.length) {
+      setSelectedOrderIds([]);
+    } else {
+      setSelectedOrderIds(orders.map(o => o.id));
+    }
+  };
+
+  const handleBulkAssign = async () => {
+    if (!assignTargetUserId || selectedOrderIds.length === 0) return;
+    setAssignLoading(true);
+    try {
+      const res = await fetch('/api/v1/orders/bulk-assign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderIds: selectedOrderIds,
+          targetUserId: assignTargetUserId,
+          department: 'ops',
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(data.message || 'Orders assigned successfully!');
+        setSelectedOrderIds([]);
+        setShowAssignModal(false);
+        setAssignTargetUserId('');
+        fetchOrders(); // re-fetch orders after assignment
+      } else {
+        alert(data.message || 'Failed to assign orders.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('An error occurred during assignment.');
+    } finally {
+      setAssignLoading(false);
+    }
+  };
+
   
   // Selected order details panel/modal
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);

@@ -57,79 +57,7 @@ export async function POST(
         },
       });
 
-      if (approve && (opsManagerId || opsTlId || opsConsultantId)) {
-        const selectedOpsUserId = parseInt(opsConsultantId || opsTlId || opsManagerId, 10);
-        
-        let finalManagerId: number | null = null;
-        let finalTlId: number | null = null;
-        let finalConsultantId: number | null = null;
-        let teamIdToAssign: number | null = null;
 
-        const targetUser = await tx.user.findUnique({
-          where: { id: selectedOpsUserId },
-          select: { id: true, reportsTo: true, teamId: true, designation: { select: { level: true } } }
-        });
-
-        if (targetUser) {
-          teamIdToAssign = targetUser.teamId;
-          const level = targetUser.designation?.level ?? 6;
-          if (level <= 3) {
-            finalManagerId = targetUser.id;
-          } else if (level === 4) {
-            finalTlId = targetUser.id;
-            // auto-resolve Manager
-            if (targetUser.reportsTo) {
-              const mgrUser = await tx.user.findUnique({
-                where: { id: targetUser.reportsTo },
-                select: { id: true }
-              });
-              if (mgrUser) finalManagerId = mgrUser.id;
-            }
-          } else {
-            finalConsultantId = targetUser.id;
-            // auto-resolve TL and Manager
-            if (targetUser.reportsTo) {
-              finalTlId = targetUser.reportsTo;
-              const tlUser = await tx.user.findUnique({
-                where: { id: finalTlId },
-                select: { reportsTo: true }
-              });
-              if (tlUser?.reportsTo) {
-                finalManagerId = tlUser.reportsTo;
-              }
-            }
-          }
-        }
-
-        // Update the Lead fields
-        await tx.lead.update({
-          where: { id: order.leadId },
-          data: {
-            assignedManagerId: finalManagerId,
-            assignedTlId: finalTlId,
-            assignedConsultantId: finalConsultantId,
-            assignedTeamId: teamIdToAssign,
-          },
-        });
-
-        // Only create an EmployeeAssignment for the selected user to keep assignment table clean
-        if (targetUser) {
-          const existingAssign = await tx.employeeAssignment.findFirst({
-            where: { leadId: order.leadId, employeeId: targetUser.id, isActive: true }
-          });
-          if (!existingAssign) {
-            await tx.employeeAssignment.create({
-              data: {
-                leadId: order.leadId,
-                employeeId: targetUser.id,
-                assignedById: userPayload.id,
-                priority: 'medium',
-                isActive: true,
-              }
-            });
-          }
-        }
-      }
 
       if (approve) {
         // Create initial ledger payment entry for the down payment

@@ -37,22 +37,12 @@ export async function GET(req: Request) {
       const ancestorIds = await getAncestorIds(userPayload.id);
       const allowedIds = [userPayload.id, ...subIds, ...ancestorIds];
 
-      const leadConditions: Prisma.LeadWhereInput = {
-        OR: [
-          { assignedConsultantId: { in: allowedIds } },
-          { assignedTlId: { in: allowedIds } },
-          { assignedManagerId: { in: allowedIds } },
-          { createdById: userPayload.id }
-        ]
-      };
-
-      if (userDetail?.teamId) {
-        (leadConditions.OR as any).push({ assignedTeamId: userDetail.teamId });
-      }
-
-      where.lead = leadConditions;
-
       if (baseRole === 'finance') {
+        where.OR = [
+          { assignedFinanceId: { in: allowedIds } },
+          { assignedFinanceId: null }
+        ];
+
         const financeStatuses = ['submitted', 'finance_verified', 'ops_assigned', 'completed'];
         if (status) {
           where.status = financeStatuses.includes(status) ? status : { in: financeStatuses };
@@ -60,6 +50,10 @@ export async function GET(req: Request) {
           where.status = { in: financeStatuses };
         }
       } else if (baseRole === 'operations') {
+        where.OR = [
+          { assignedOpsId: { in: allowedIds } }
+        ];
+
         const opsStatuses = ['finance_verified', 'ops_assigned', 'completed'];
         if (status) {
           where.status = opsStatuses.includes(status) ? status : { in: opsStatuses };
@@ -67,6 +61,20 @@ export async function GET(req: Request) {
           where.status = { in: opsStatuses };
         }
       } else {
+        const leadConditions: Prisma.LeadWhereInput = {
+          OR: [
+            { assignedConsultantId: { in: allowedIds } },
+            { assignedTlId: { in: allowedIds } },
+            { assignedManagerId: { in: allowedIds } },
+            { createdById: userPayload.id }
+          ]
+        };
+
+        if (userDetail?.teamId) {
+          (leadConditions.OR as any).push({ assignedTeamId: userDetail.teamId });
+        }
+        where.lead = leadConditions;
+
         if (status) {
           where.status = status;
         }
