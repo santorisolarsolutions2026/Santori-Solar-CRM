@@ -1466,7 +1466,7 @@ export default function LeadDetailPage({
 
   // Helper variables to govern order form disable state
   const isOrderFormLocked = lead.order?.status !== 'draft';
-  const isOrderFormDisabled = !hasPermission('orders:create') || isOrderFormLocked;
+  const isOrderFormDisabled = (!hasPermission('sales:order_punch') && !hasPermission('orders:create')) || isOrderFormLocked;
 
   // Helper variables to govern lead edit locks
   const canViewLeadDetails = 
@@ -1508,7 +1508,7 @@ export default function LeadDetailPage({
   // Filter by user role permissions (Admin bypassed)
   let roleFilteredNextStages = nextStageIds.filter((statusNum) => {
     if (isLeadLocked) return false;
-    if (!hasPermission('leads:change_status')) return false;
+    if (!hasPermission('sales:stage_change') && !hasPermission('leads:change_status')) return false;
     // Transitioning to stage 8 (Meeting Booked) requires meeting booking permission
     if (statusNum === 8) {
       return hasPermission('sales:meeting_book') || hasPermission('leads:book_meeting');
@@ -1519,7 +1519,7 @@ export default function LeadDetailPage({
     }
     // Transitioning to stage 13 requires orders:create permission
     if (statusNum === 13) {
-      return hasPermission('orders:create');
+      return hasPermission('sales:order_punch') || hasPermission('orders:create');
     }
     return true;
   });

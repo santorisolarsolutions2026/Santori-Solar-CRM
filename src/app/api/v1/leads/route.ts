@@ -311,7 +311,7 @@ export async function POST(req: Request) {
     const { role: userRole, permissions: userPermissions } = await getUserSession(userPayload.id);
     const baseRole = userRole.includes(':') ? userRole.split(':')[0] : userRole;
 
-    if (!userPermissions.includes('leads:create')) {
+    if (!userPermissions.includes('leads:create') && !userPermissions.includes('sales:lead_add')) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to add leads.' }, { status: 403 });
     }
 

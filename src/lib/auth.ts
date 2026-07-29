@@ -167,6 +167,11 @@ export function resolveUserPermissions(user: UserPermissionsInput): string[] {
     'ops:order_assign': ['orders:assign_ops', 'orders:operations'],
     'ops:update_stages': ['orders:operations', 'ops:delivery_manage', 'ops:delivered_orders', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:subsidy_manage', 'orders:submit_installation'],
     'orders:operations': ['ops:update_stages', 'orders:submit_installation'],
+
+    // Administration & Supervision
+    'admin:attendance_view': ['attendance:view', 'sales:attendance_view', 'finance:attendance_view', 'ops:attendance_view'],
+    'admin:designation_change': ['team:change_designation', 'team:manage', 'sales:designation_change', 'finance:designation_change', 'ops:designation_change'],
+    'admin:analytics_view': ['reports:view', 'reports:view_financials', 'sales:analytics_view', 'finance:analytics_view', 'ops:analytics_view'],
   };
 
   for (const perm of Array.from(finalPermissions)) {

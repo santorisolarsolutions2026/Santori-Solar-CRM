@@ -36,10 +36,13 @@ export default function NewLeadPage() {
   const [overrideDuplicate, setOverrideDuplicate] = useState(false);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
 
-  // List of active employees for allocation selectors
-  const [employees, setEmployees] = useState<any[]>([]);
+  const canAddLead = hasPermission('sales:lead_add') || hasPermission('leads:create');
 
-  const [selectedAssigneeId, setSelectedAssigneeId] = useState('');
+  useEffect(() => {
+    if (user && !canAddLead) {
+      router.push('/leads');
+    }
+  }, [user, canAddLead, router]);
 
   useEffect(() => {
     const val = form.assignedConsultantId || form.assignedTlId || form.assignedManagerId;
@@ -254,6 +257,24 @@ export default function NewLeadPage() {
       setLoading(false);
     }
   };
+
+  if (user && !canAddLead) {
+    return (
+      <div className="p-8 text-center bg-[#111625] border border-slate-800 rounded-xl space-y-4 max-w-lg mx-auto mt-12">
+        <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
+        <h2 className="text-lg font-bold text-white">Access Restricted</h2>
+        <p className="text-xs text-slate-400">
+          You do not have custom access permission to add new leads to the pipeline.
+        </p>
+        <Link
+          href="/leads"
+          className="inline-block py-2 px-4 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-semibold text-xs transition-all"
+        >
+          Return to Leads Pipeline
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">

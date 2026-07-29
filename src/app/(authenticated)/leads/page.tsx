@@ -977,7 +977,7 @@ export default function LeadsPage() {
               <span>Import CSV</span>
             </button>
           )}
-          {hasPermission('leads:create') && (
+          {(hasPermission('sales:lead_add') || hasPermission('leads:create')) && (
             <Link
               href="/leads/new"
               className="py-2.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs shadow-lg shadow-blue-500/10 flex items-center gap-1.5 transition-all w-fit"

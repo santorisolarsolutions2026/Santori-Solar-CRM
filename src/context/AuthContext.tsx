@@ -193,6 +193,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const finalPerms = new Set<string>(cleanPerms);
 
     const clientMapping: Record<string, string[]> = {
+      // Sales / PSA
       'leads:create': ['sales:lead_add'],
       'sales:lead_add': ['leads:create'],
       'leads:edit': ['sales:lead_edit'],
@@ -208,25 +209,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       'leads:view_details': ['sales:lead_details_view'],
       'sales:lead_details_view': ['leads:view_details'],
       'leads:change_status': ['sales:stage_change', 'leads:manage_calling_stages'],
-      'sales:stage_change': ['leads:change_status'],
-      'attendance:view': ['sales:attendance_view', 'finance:attendance_view', 'ops:attendance_view'],
+      'sales:stage_change': ['leads:change_status', 'leads:manage_calling_stages', 'leads:book_meeting'],
       'leads:track': ['sales:lead_track'],
       'sales:lead_track': ['leads:track'],
-      'reports:view': ['sales:analytics_view', 'finance:analytics_view', 'ops:analytics_view'],
-      'orders:create': ['sales:order_punch'],
-      'sales:order_punch': ['orders:create'],
-      'leads:book_meeting': ['sales:meeting_book'],
+      'orders:create': ['sales:order_punch', 'orders:submit_installation'],
+      'sales:order_punch': ['orders:create', 'orders:submit_installation'],
+      'leads:book_meeting': ['sales:meeting_book', 'sales:stage_change'],
       'sales:meeting_book': ['leads:book_meeting'],
       'leads:meeting_done': ['sales:meeting_done', 'meetings:complete'],
       'sales:meeting_done': ['leads:meeting_done', 'meetings:complete'],
-      'orders:assign_finance': ['sales:finance_assign', 'finance:order_assign'],
+
+      // Finance
+      'finance:view_all_orders': ['orders:view_all', 'orders:finance_access'],
+      'orders:view_all': ['finance:view_all_orders', 'ops:view_all_orders'],
+      'finance:order_assign': ['orders:assign_finance', 'orders:finance_access'],
+      'orders:assign_finance': ['finance:order_assign', 'sales:finance_assign'],
+      'finance:order_verify_reject': ['orders:verify', 'orders:finance_access'],
       'orders:verify': ['finance:order_verify_reject'],
-      'finance:order_verify_reject': ['orders:verify'],
-      'orders:finance_access': ['finance:order_verify_reject', 'finance:order_assign', 'finance:ledger_record', 'finance:ops_assign'],
+      'finance:ledger_record': ['finance:manage_ledger', 'orders:finance_access'],
       'finance:manage_ledger': ['finance:ledger_record'],
-      'orders:assign_ops': ['finance:ops_assign'],
-      'orders:operations': ['ops:delivery_manage', 'ops:delivered_orders', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:subsidy_manage', 'ops:update_stages'],
-      'ops:update_stages': ['ops:delivery_manage', 'ops:delivered_orders', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:subsidy_manage'],
+
+      // Operations
+      'ops:view_all_orders': ['orders:view_all', 'orders:operations'],
+      'ops:order_assign': ['orders:assign_ops', 'orders:operations'],
+      'orders:assign_ops': ['ops:order_assign'],
+      'ops:update_stages': ['orders:operations', 'ops:delivery_manage', 'ops:delivered_orders', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:subsidy_manage'],
+      'orders:operations': ['ops:update_stages'],
+
+      // Administration & Supervision
+      'admin:attendance_view': ['attendance:view', 'sales:attendance_view', 'finance:attendance_view', 'ops:attendance_view'],
+      'attendance:view': ['admin:attendance_view', 'sales:attendance_view', 'finance:attendance_view', 'ops:attendance_view'],
+      'admin:designation_change': ['team:change_designation', 'sales:designation_change', 'finance:designation_change', 'ops:designation_change'],
+      'team:change_designation': ['admin:designation_change', 'sales:designation_change', 'finance:designation_change', 'ops:designation_change'],
+      'admin:analytics_view': ['reports:view', 'sales:analytics_view', 'finance:analytics_view', 'ops:analytics_view'],
+      'reports:view': ['admin:analytics_view', 'sales:analytics_view', 'finance:analytics_view', 'ops:analytics_view'],
     };
 
     if (finalPerms.has(permission)) return true;
