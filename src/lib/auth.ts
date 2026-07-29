@@ -87,8 +87,11 @@ export function resolveUserPermissions(user: UserPermissionsInput): string[] {
 
   if (baseRole === 'admin' || baseRole === 'director' || user.department?.name === 'IT') {
     basePermissions = getDefaultPermissionsForRole('admin');
-  } else if (typeof user.permissions === 'string' && user.permissions.trim()) {
+  } else if (typeof user.permissions === 'string' && user.permissions.startsWith('CUSTOM:')) {
     const permString = user.permissions.replace(/^CUSTOM:/, '').trim();
+    basePermissions = permString ? permString.split(',').map(p => p.trim()).filter(p => p !== '' && p !== 'none') : [];
+  } else if (typeof user.permissions === 'string' && user.permissions !== null && user.permissions !== undefined && user.permissions.trim() !== '') {
+    const permString = user.permissions.trim();
     basePermissions = permString ? permString.split(',').map(p => p.trim()).filter(p => p !== '' && p !== 'none') : [];
   } else if (Array.isArray(user.permissions)) {
     basePermissions = user.permissions.map(p => String(p).replace(/^CUSTOM:/, '').trim()).filter(p => p !== '' && p !== 'none');

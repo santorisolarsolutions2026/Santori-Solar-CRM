@@ -336,7 +336,15 @@ export async function PATCH(
     }
 
     let derivedRole = role;
-    let derivedPermissions = permissions;
+    let derivedPermissions = permissions !== undefined
+      ? (typeof permissions === 'string' && permissions.startsWith('CUSTOM:')
+          ? permissions
+          : Array.isArray(permissions)
+            ? `CUSTOM:${permissions.map(p => String(p).replace(/^CUSTOM:/, '').trim()).filter(p => p !== '' && p !== 'none').join(',')}`
+            : typeof permissions === 'string'
+              ? `CUSTOM:${permissions.replace(/^CUSTOM:/, '').trim().split(',').map(p => p.trim()).filter(p => p !== '' && p !== 'none').join(',')}`
+              : 'CUSTOM:')
+      : undefined;
 
     const { designationText, designationName } = body;
     let targetDesId = designationId !== undefined ? (designationId ? parseInt(designationId, 10) : null) : user.designationId;
