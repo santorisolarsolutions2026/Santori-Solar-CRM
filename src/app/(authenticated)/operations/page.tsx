@@ -62,6 +62,8 @@ interface Order {
   subsidyApplicable: boolean;
   subsidyAmount: number | null;
   createdAt: string;
+  assignedOpsId?: number | null;
+  assignedOps?: { name: string } | null;
   lead: {
     id: number;
     customerName: string;
@@ -980,6 +982,55 @@ export default function OperationsPage() {
       console.error(err);
     }
   };
+
+
+  // Derived Data
+  const uniqueManagers = Array.from(new Set(orders.map(o => o.assignedOps?.name).filter(Boolean))).map(name => {
+    const order = orders.find(o => o.assignedOps?.name === name);
+    return { id: order?.assignedOpsId, name };
+  });
+
+  const filteredOrders = orders.filter(o => {
+    // 1. Search Filter
+    if (search) {
+      const q = search.toLowerCase();
+      if (!o.orderCode?.toLowerCase().includes(q) && !o.lead.customerName?.toLowerCase().includes(q)) {
+        return false;
+      }
+    }
+    
+    // 2. Manager Filter
+    if (filterManagerId !== 'all') {
+      if (o.assignedOpsId?.toString() !== filterManagerId) return false;
+    }
+    
+    // 3. Stage Filter
+    if (filterStage !== 'all') {
+      if (filterStage === 'delivery_scheduled' && !o.isDelivered && o.deliveryDate) {}
+      else if (filterStage === 'delivered' && o.isDelivered && !o.isInstalled) {}
+      else if (filterStage === 'installation_scheduled' && !o.isInstalled && o.installationDate) {}
+      else if (filterStage === 'installed' && o.isInstalled && !o.isMeterInstalled) {}
+      else if (filterStage === 'meter_installed' && o.isMeterInstalled && !o.isCommissioned) {}
+      else if (filterStage === 'commissioned' && o.isCommissioned && (!o.subsidyApplicable || (o.subsidyApplicable && !o.isSubsidyApplied))) {}
+      else if (filterStage === 'subsidy_applied' && o.isSubsidyApplied) {}
+      else { return false; }
+    }
+    
+    // 4. Date Filter (Order Created At)
+    if (filterDateFrom) {
+      const orderDate = new Date(o.createdAt);
+      const fromDate = new Date(filterDateFrom);
+      if (orderDate < fromDate) return false;
+    }
+    if (filterDateTo) {
+      const orderDate = new Date(o.createdAt);
+      const toDate = new Date(filterDateTo);
+      toDate.setHours(23, 59, 59, 999);
+      if (orderDate > toDate) return false;
+    }
+    
+    return true;
+  });
 
   return (
     <div className="space-y-6">
