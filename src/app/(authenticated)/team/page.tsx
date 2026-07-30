@@ -2653,14 +2653,14 @@ export default function TeamManagementPage() {
                 )}
                 <th className="py-4 px-4 w-20 text-center">Photo</th>
                 <th className="py-4 px-4 w-48">Full Name</th>
-                <th className="py-4 px-4 w-32">Employee ID</th>
+                {!empSearchInput.trim() && <th className="py-4 px-4 w-32">Employee ID</th>}
                 {empSearchInput.trim() && <th className="py-4 px-4 w-32">Working Location</th>}
                 <th className="py-4 px-4 w-40">Designation</th>
-                <th className="py-4 px-4 w-40">Direct Supervisor</th>
-                <th className="py-4 px-4 w-36">Years in the Company</th>
-                <th className="py-4 px-4 w-28 text-center">Leads Closed</th>
+                {!empSearchInput.trim() && <th className="py-4 px-4 w-40">Direct Supervisor</th>}
+                {!empSearchInput.trim() && <th className="py-4 px-4 w-36">Years in the Company</th>}
+                {!empSearchInput.trim() && <th className="py-4 px-4 w-28 text-center">Leads Closed</th>}
                 <th className="py-4 px-4 w-28 text-center">Status</th>
-                <th className="py-4 px-4 w-36 text-center">Control</th>
+                {!empSearchInput.trim() && <th className="py-4 px-4 w-36 text-center">Control</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-sm">
