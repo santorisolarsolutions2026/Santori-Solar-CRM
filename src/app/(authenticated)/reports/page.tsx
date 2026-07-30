@@ -124,7 +124,7 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true);
 
   const [activeReportTab, setActiveReportTab] = useState<'pipeline' | 'employee'>('pipeline');
-  const [activeDeptTab, setActiveDeptTab] = useState<'Sales' | 'Finance' | 'Operations' | 'Other'>('Sales');
+  const [activeDeptTab, setActiveDeptTab] = useState<'Sales' | 'Finance' | 'Operations' | 'PSA' | 'Other'>('Sales');
   const [filterDesignation, setFilterDesignation] = useState<string>('all');
   const [filterStartDate, setFilterStartDate] = useState<string>('');
   const [filterEndDate, setFilterEndDate] = useState<string>('');
@@ -639,7 +639,7 @@ export default function ReportsPage() {
                   );
                 }
 
-                if (activeDeptTab === 'Sales') {
+                if (activeDeptTab === 'Sales' || activeDeptTab === 'PSA') {
                   return (
                     <table className="w-full text-left border-collapse min-w-[950px]">
                       <thead>
@@ -650,9 +650,9 @@ export default function ReportsPage() {
                           <th className="pb-3 px-4 text-center">Leads Worked</th>
                           <th className="pb-3 px-4 text-center">Meetings Booked</th>
                           <th className="pb-3 px-4 text-center">Meetings Recorded</th>
+                          <th className="pb-3 px-4 text-center">Meetings Cancelled</th>
                           <th className="pb-3 px-4 text-center">Sales Done</th>
                           <th className="pb-3 px-4 text-center">Orders Punched</th>
-                          <th className="pb-3 px-4 text-center">Conversion Rate</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-800/40 text-sm">
@@ -699,10 +699,18 @@ export default function ReportsPage() {
                             </td>
                             <td className="py-3.5 px-4 text-center">
                               <button
+                                onClick={() => handleOpenDetailsModal(emp.id, 'meetings_cancelled')}
+                                className="font-extrabold text-red-400 hover:text-red-300 hover:underline outline-none cursor-pointer"
+                              >
+                                {emp.metrics.meetingsCancelled || 0} <span className="text-[10px] font-normal text-slate-500">({emp.metrics.cancellationRate || 0}%)</span>
+                              </button>
+                            </td>
+                            <td className="py-3.5 px-4 text-center">
+                              <button
                                 onClick={() => handleOpenDetailsModal(emp.id, 'sales_done')}
                                 className="font-extrabold text-emerald-400 hover:text-emerald-300 hover:underline outline-none cursor-pointer"
                               >
-                                {emp.metrics.salesDone}
+                                {emp.metrics.salesDone || 0} <span className="text-[10px] font-normal text-slate-500">({emp.metrics.saleConversionRate || 0}%)</span>
                               </button>
                             </td>
                             <td className="py-3.5 px-4 text-center">
@@ -712,9 +720,6 @@ export default function ReportsPage() {
                               >
                                 {emp.metrics.ordersPunched}
                               </button>
-                            </td>
-                            <td className="py-3.5 px-4 text-center font-extrabold font-mono text-blue-600 dark:text-blue-400">
-                              {emp.metrics.saleConversionRate}%
                             </td>
                           </tr>
                         ))}

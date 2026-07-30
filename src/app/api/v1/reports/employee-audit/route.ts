@@ -91,6 +91,7 @@ export async function GET(req: Request) {
           id: true,
           leadId: true,
           assignedExecutiveId: true,
+          bookedById: true,
           meetingStartedAt: true,
           meetingEndedAt: true,
           audioRecordingPath: true,
@@ -150,27 +151,36 @@ export async function GET(req: Request) {
       const leadsWorked = uniqueLeadsWorked.size;
 
       // 2. Number of Meetings Booked
-      const teamMeetingsBooked = allMeetings.filter((m) => m.assignedExecutiveId && teamUserIds.has(m.assignedExecutiveId));
+      const teamMeetingsBooked = allMeetings.filter((m) => m.bookedById && teamUserIds.has(m.bookedById));
       const meetingsBooked = teamMeetingsBooked.length;
 
       // 3. Number of Meetings Recorded
       const teamMeetingsRecorded = allMeetings.filter(
-        (m) => m.assignedExecutiveId && teamUserIds.has(m.assignedExecutiveId) && (m.meetingStartedAt || m.meetingEndedAt || m.audioRecordingPath)
+        (m) => m.bookedById && teamUserIds.has(m.bookedById) && (m.meetingStartedAt || m.meetingEndedAt || m.audioRecordingPath)
       );
       const meetingsRecorded = teamMeetingsRecorded.length;
 
-      // 4. Number of Sales Done (Stage 13)
-      const teamSalesLogs = teamLogs.filter((l) => l.toStatus === 13);
-      const uniqueSalesLeads = new Set(teamSalesLogs.map((l) => l.leadId));
+      // 4. Number of Meetings Cancelled (Stage 14)
+      const teamMeetingsCancelledLogs = teamLogs.filter((l) => l.toStatus === 14);
+      const uniqueCancelledLeads = new Set(teamMeetingsCancelledLogs.map((l) => l.leadId));
+      const meetingsCancelled = uniqueCancelledLeads.size;
+
+      // 5. Number of Sales Done (Stage 13, where meeting was booked by team)
+      // First, get all leads where a meeting was booked by this team
+      const leadsWithTeamMeeting = new Set(teamMeetingsBooked.map(m => m.leadId));
+      // Then see which of those leads eventually reached Sale Done (13) in all logs
+      const saleDoneLogs = allLogs.filter((l) => l.toStatus === 13 && leadsWithTeamMeeting.has(l.leadId));
+      const uniqueSalesLeads = new Set(saleDoneLogs.map((l) => l.leadId));
       const salesDone = uniqueSalesLeads.size;
 
-      // 5. Number of Orders Punched
+      // 6. Number of Orders Punched
       const teamPunchedOrders = allOrders.filter((o) => teamUserIds.has(o.submittedById));
       const ordersPunched = teamPunchedOrders.length;
       const ordersPunchedValue = teamPunchedOrders.reduce((sum, o) => sum + (o.totalValue || 0), 0);
 
-      // 6. Sale Conversion Rate (%)
-      const saleConversionRate = meetingsRecorded > 0 ? Math.round((salesDone / meetingsRecorded) * 100) : (salesDone > 0 ? 100 : 0);
+      // 7. Sale Conversion Rate (%)
+      const saleConversionRate = meetingsBooked > 0 ? Math.round((salesDone / meetingsBooked) * 100) : (salesDone > 0 ? 100 : 0);
+      const cancellationRate = meetingsBooked > 0 ? Math.round((meetingsCancelled / meetingsBooked) * 100) : (meetingsCancelled > 0 ? 100 : 0);
 
       // --- FINANCE METRICS ---
       // 1. Number of Orders Verified
@@ -231,10 +241,12 @@ export async function GET(req: Request) {
           leadsWorked,
           meetingsBooked,
           meetingsRecorded,
+          meetingsCancelled,
           salesDone,
           ordersPunched,
           ordersPunchedValue,
           saleConversionRate,
+          cancellationRate,
           ordersVerified,
           ordersVerifiedValue,
           ledgerActivities,

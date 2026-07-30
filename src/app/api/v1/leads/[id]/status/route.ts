@@ -515,6 +515,7 @@ export async function POST(
         await tx.meetingBooking.create({
           data: {
             leadId,
+            bookedById: userPayload.id,
             ...meetingBookingData,
           },
         });

@@ -17,6 +17,7 @@ const STAGE_NAMES: Record<number, string> = {
   11: 'Switch Off',
   12: "Can't Fit Solar",
   13: 'Sale Done',
+  14: 'Meeting Cancelled',
 };
 
 export async function GET(req: Request) {
@@ -137,11 +138,11 @@ export async function GET(req: Request) {
     else if (type === 'meetings_booked') {
       const meetings = await prisma.meetingBooking.findMany({
         where: {
-          assignedExecutiveId: { in: teamUserIds },
+          bookedById: { in: teamUserIds },
           ...(dateRangeFilter ? { createdAt: dateRangeFilter } : {})
         },
         include: {
-          executive: { select: { id: true, name: true, role: true, designation: { select: { name: true } } } },
+          bookedBy: { select: { id: true, name: true, role: true, designation: { select: { name: true } } } },
           lead: { select: { id: true, leadCode: true, customerName: true } }
         },
         orderBy: { createdAt: 'desc' }
@@ -153,10 +154,10 @@ export async function GET(req: Request) {
         leadCode: m.lead?.leadCode,
         customerName: m.lead?.customerName,
         executedBy: {
-          id: m.executive.id,
-          name: m.executive.name,
-          role: m.executive.role.toUpperCase(),
-          designation: m.executive.designation?.name || m.executive.role.toUpperCase()
+          id: m.bookedBy?.id || m.id,
+          name: m.bookedBy?.name || 'Unknown',
+          role: m.bookedBy?.role.toUpperCase() || 'N/A',
+          designation: m.bookedBy?.designation?.name || m.bookedBy?.role.toUpperCase() || 'N/A'
         },
         detail1: `Meeting scheduled for ${m.meetingDate} at ${m.meetingTime}`,
         detail2: m.meetingCity ? `Location: ${m.meetingCity} (Pin: ${m.meetingPinCode || 'N/A'})` : `Customer avg monthly bill: ₹${m.avgMonthlyBill.toLocaleString('en-IN')}`,
@@ -169,7 +170,7 @@ export async function GET(req: Request) {
     else if (type === 'meetings_recorded') {
       const meetings = await prisma.meetingBooking.findMany({
         where: {
-          assignedExecutiveId: { in: teamUserIds },
+          bookedById: { in: teamUserIds },
           OR: [
             { meetingStartedAt: { not: null } },
             { meetingEndedAt: { not: null } },
@@ -178,6 +179,7 @@ export async function GET(req: Request) {
           ...(dateRangeFilter ? { createdAt: dateRangeFilter } : {})
         },
         include: {
+          bookedBy: { select: { id: true, name: true, role: true, designation: { select: { name: true } } } },
           executive: { select: { id: true, name: true, role: true, designation: { select: { name: true } } } },
           lead: { select: { id: true, leadCode: true, customerName: true } }
         },
@@ -190,10 +192,10 @@ export async function GET(req: Request) {
         leadCode: m.lead?.leadCode,
         customerName: m.lead?.customerName,
         executedBy: {
-          id: m.executive.id,
-          name: m.executive.name,
-          role: m.executive.role.toUpperCase(),
-          designation: m.executive.designation?.name || m.executive.role.toUpperCase()
+          id: m.bookedBy?.id || m.executive?.id,
+          name: m.bookedBy?.name || m.executive?.name,
+          role: m.bookedBy?.role.toUpperCase() || m.executive?.role.toUpperCase(),
+          designation: m.bookedBy?.designation?.name || m.executive?.designation?.name || 'N/A'
         },
         detail1: m.audioRecordingPath ? `Audio recorded & uploaded (${m.meetingDurationSec ? `${Math.floor(m.meetingDurationSec / 60)}m ${m.meetingDurationSec % 60}s` : 'audio file logged'})` : `Site visit commenced & completed`,
         detail2: m.meetingStartedAt ? `Session started at ${new Date(m.meetingStartedAt).toLocaleTimeString('en-IN')}` : `Site visit logged`,
@@ -202,30 +204,29 @@ export async function GET(req: Request) {
       }));
     }
 
-    // 4. SALES DONE
-    else if (type === 'sales_done') {
-      const saleLogs = await prisma.leadActivityLog.findMany({
+    // 4. MEETINGS CANCELLED
+    else if (type === 'meetings_cancelled') {
+      const logs = await prisma.leadActivityLog.findMany({
         where: {
           userId: { in: teamUserIds },
-          toStatus: 13,
+          toStatus: 14,
           ...(dateRangeFilter ? { createdAt: dateRangeFilter } : {})
         },
         include: {
           user: { select: { id: true, name: true, role: true, designation: { select: { name: true } } } },
-          lead: {
-            select: {
-              id: true,
-              leadCode: true,
-              customerName: true,
-              city: true,
-              order: { select: { totalValue: true, systemSizeKw: true } }
-            }
-          }
+          lead: { select: { id: true, leadCode: true, customerName: true, city: true } }
         },
         orderBy: { createdAt: 'desc' }
       });
 
-      results = saleLogs.map((log) => ({
+      const uniqueLeads = new Set();
+      results = logs.filter(log => {
+        if (!uniqueLeads.has(log.leadId)) {
+          uniqueLeads.add(log.leadId);
+          return true;
+        }
+        return false;
+      }).map((log) => ({
         id: log.id,
         leadId: log.lead?.id,
         leadCode: log.lead?.leadCode,
@@ -236,15 +237,60 @@ export async function GET(req: Request) {
           role: log.user.role.toUpperCase(),
           designation: log.user.designation?.name || log.user.role.toUpperCase()
         },
-        detail1: `Sale Done: System size ${log.lead?.order?.systemSizeKw || 'N/A'} kW`,
-        detail2: log.remark || `Customer deal closed successfully`,
-        value: log.lead?.order?.totalValue || 0,
+        detail1: `Meeting Cancelled`,
+        detail2: log.remark || `Lead moved to cancelled status`,
         timestamp: log.createdAt,
         date: new Date(log.createdAt).toLocaleString('en-IN')
       }));
     }
 
-    // 5. ORDERS PUNCHED
+    // 5. SALES DONE
+    else if (type === 'sales_done') {
+      const teamMeetingsBooked = await prisma.meetingBooking.findMany({
+        where: { bookedById: { in: teamUserIds } },
+        select: { leadId: true }
+      });
+      const leadsWithTeamMeeting = teamMeetingsBooked.map(m => m.leadId);
+
+      const logs = await prisma.leadActivityLog.findMany({
+        where: {
+          toStatus: 13,
+          leadId: { in: leadsWithTeamMeeting },
+          ...(dateRangeFilter ? { createdAt: dateRangeFilter } : {})
+        },
+        include: {
+          user: { select: { id: true, name: true, role: true, designation: { select: { name: true } } } },
+          lead: { select: { id: true, leadCode: true, customerName: true, city: true } }
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+
+      const uniqueLeads = new Set();
+      results = logs.filter(log => {
+        if (!uniqueLeads.has(log.leadId)) {
+          uniqueLeads.add(log.leadId);
+          return true;
+        }
+        return false;
+      }).map((log) => ({
+        id: log.id,
+        leadId: log.lead?.id,
+        leadCode: log.lead?.leadCode,
+        customerName: log.lead?.customerName,
+        executedBy: {
+          id: log.user.id,
+          name: log.user.name,
+          role: log.user.role.toUpperCase(),
+          designation: log.user.designation?.name || log.user.role.toUpperCase()
+        },
+        detail1: `Sale Completed (Stage 13)`,
+        detail2: `Meeting was originally booked by this employee's team`,
+        timestamp: log.createdAt,
+        date: new Date(log.createdAt).toLocaleString('en-IN')
+      }));
+    }
+
+    // 6. ORDERS PUNCHED
     else if (type === 'orders_punched') {
       const orders = await prisma.order.findMany({
         where: {

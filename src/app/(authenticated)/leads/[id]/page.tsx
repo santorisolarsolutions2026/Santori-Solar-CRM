@@ -158,7 +158,7 @@ const ALLOWED_TRANSITIONS: Record<number, number[]> = {
   5: [2, 3, 4, 6, 8, 10, 11],
   6: [],
   7: [3, 4, 5, 6, 8],
-  8: [9],
+  8: [9, 14],
   9: [3, 4, 13],
   10: [2, 3, 4, 5, 6, 8],
   11: [2, 3, 4, 5, 6, 8],
@@ -182,6 +182,7 @@ const getStageConfig = (statusNum: number) => {
     11: { name: 'Switch Off', desc: 'Phone is switched off', icon: 'PowerOff', bg: 'bg-slate-700/5', text: 'text-slate-400' },
     12: { name: "Can't Fit Solar", desc: 'Site is infeasible', icon: 'XCircle', bg: 'bg-stone-900/10', text: 'text-stone-400' },
     13: { name: 'Sale Done', desc: 'Convert to order / Form D', icon: 'CheckCircle2', bg: 'bg-emerald-500/5', text: 'text-emerald-400' },
+    14: { name: 'Meeting Cancelled', desc: 'Site visit cancelled', icon: 'XCircle', bg: 'bg-red-900/10', text: 'text-red-500' },
   };
 
   return configs[statusNum] || { name: `Stage ${statusNum}`, desc: 'Pipeline Status', icon: 'Layers', bg: 'bg-slate-900/10', text: 'text-slate-400' };
@@ -374,6 +375,7 @@ export default function LeadDetailPage({
   const [followUpSub, setFollowUpSub] = useState('warm');
   const [followUpTime, setFollowUpTime] = useState('');
   const [disqualifiedReason, setDisqualifiedReason] = useState('Shading Issue');
+  const [cancelledReason, setCancelledReason] = useState('Not Interested');
 
   // Form B (Meeting Booking) modal state
   const [showFormB, setShowFormB] = useState(false);
@@ -940,6 +942,11 @@ export default function LeadDetailPage({
       payload.followup_at = followUpTime;
     } else if (statusNum === 12) {
       payload.sub_status = disqualifiedReason;
+    } else if (statusNum === 14) {
+      payload.sub_status = cancelledReason;
+      
+      // If user selected one of the fallback states, we will transition to that instead.
+      // But the user's requirement asked for the reason to just be logged. So we will pass it as sub_status for now.
     }
 
     try {
@@ -1962,6 +1969,25 @@ export default function LeadDetailPage({
                               <option value="Landlord Refusal">Landlord denied NOC</option>
                               <option value="Too Small">Terrace Area Too Small</option>
                               <option value="Other">Other</option>
+                            </select>
+                          </div>
+                        )}
+
+                        {/* Conditional Fields: Stage 14 (Meeting Cancelled) details */}
+                        {parseInt(newStatus, 10) === 14 && (
+                          <div className="p-3 bg-slate-950/40 border border-slate-850 rounded-lg animate-fade-in">
+                            <label className="block text-[10px] font-semibold text-slate-400 mb-1">Reason for Cancellation</label>
+                            <select
+                              value={cancelledReason}
+                              onChange={(e) => setCancelledReason(e.target.value)}
+                              className="block w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded text-slate-300 text-[11px]"
+                            >
+                              <option value="Not Interested">Not Interested anymore</option>
+                              <option value="Already Installed">Already Installed Solar</option>
+                              <option value="Can't Fit Solar">Can't Fit Solar</option>
+                              <option value="Too Expensive">Too Expensive</option>
+                              <option value="Book Meeting Again">Wants to Book Meeting Again</option>
+                              <option value="Other">Other Reason</option>
                             </select>
                           </div>
                         )}
