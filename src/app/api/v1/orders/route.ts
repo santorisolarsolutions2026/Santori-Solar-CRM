@@ -130,7 +130,6 @@ export async function GET(req: Request) {
         },
         submittedBy: { select: { name: true } },
         financeProcessedBy: { select: { name: true } },
-        assignedOpsId: true,
         assignedOps: { select: { name: true } },
         payments: {
           select: {
