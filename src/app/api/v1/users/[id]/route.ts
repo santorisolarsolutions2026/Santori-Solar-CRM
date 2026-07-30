@@ -368,6 +368,7 @@ export async function PATCH(
 
 
     const updateData: any = {};
+    if (body.workingLocation !== undefined) updateData.workingLocation = body.workingLocation ? String(body.workingLocation).trim() : null;
     if (name !== undefined) updateData.name = name;
     if (email !== undefined) updateData.email = email;
     if (phone !== undefined) updateData.phone = phone;

@@ -57,6 +57,7 @@ interface TeamMember {
   logoutLocation: string | null;
   joiningDate: string | null;
   photograph: string | null;
+  workingLocation?: string | null;
   supervisor?: { id: number; name: string } | null;
   leadsClosed?: number;
   departmentId?: number | null;
@@ -1402,6 +1403,7 @@ export default function TeamManagementPage() {
     phone: '',
     address: '',
     employeeId: '',
+    workingLocation: '',
     role: 'consultant',
     password: '',
     reportsTo: '',
@@ -1451,6 +1453,7 @@ export default function TeamManagementPage() {
 
   // Edit Other Member states (for admin/director/sales_head)
   const [editMemberForm, setEditMemberForm] = useState({
+    workingLocation: '',
     name: '',
     email: '',
     phone: '',
@@ -1793,6 +1796,7 @@ export default function TeamManagementPage() {
       setAddPhotoPreviewUrl('');
     }
     setForm({
+      workingLocation: '',
       name: '',
       email: '',
       phone: '',
@@ -2005,6 +2009,7 @@ export default function TeamManagementPage() {
         setEditMemberPermissions(getLocalDefaultPermissionsForRole(member.role));
       }
       setEditMemberForm({
+        workingLocation: member.workingLocation || '',
         name: member.name,
         email: member.email,
         phone: member.phone || '',
@@ -2200,6 +2205,7 @@ export default function TeamManagementPage() {
         phone: editMemberForm.phone,
         address: editMemberForm.address,
         employeeId: editMemberForm.employeeId,
+        workingLocation: editMemberForm.workingLocation,
         role: finalRole,
         permissions: (() => {
           const cleanPerms = editMemberPermissions.filter((p) => p !== 'none');
@@ -2648,6 +2654,7 @@ export default function TeamManagementPage() {
                 <th className="py-4 px-4 w-20 text-center">Photo</th>
                 <th className="py-4 px-4 w-48">Full Name</th>
                 <th className="py-4 px-4 w-32">Employee ID</th>
+                {empSearchInput.trim() && <th className="py-4 px-4 w-32">Working Location</th>}
                 <th className="py-4 px-4 w-40">Designation</th>
                 <th className="py-4 px-4 w-40">Direct Supervisor</th>
                 <th className="py-4 px-4 w-36">Years in the Company</th>
@@ -2732,6 +2739,7 @@ export default function TeamManagementPage() {
                       <td className="py-4 px-4 font-mono text-xs text-slate-300 w-32">
                         {member.employeeId || <span className="text-slate-600 italic">Not Set</span>}
                       </td>
+                      {empSearchInput.trim() && <td className="py-4 px-4 text-xs text-slate-300 w-32">{member.workingLocation || <span className="text-slate-600 italic">Not Set</span>}</td>}
 
                       {/* Designation/Role Column */}
                       <td className="py-4 px-4 w-40">

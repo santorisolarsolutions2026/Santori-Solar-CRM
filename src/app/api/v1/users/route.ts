@@ -149,7 +149,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { name, email, phone, address, employeeId, password, reportsTo, joiningDate, photograph, permissions, departmentId, designationId, designationText, designationName } = body;
+    const { name, email, phone, address, employeeId, password, reportsTo, joiningDate, photograph, permissions, departmentId, designationId, designationText, designationName, workingLocation } = body;
 
     if (!name || !email || !employeeId || !password || !phone || !address) {
       return NextResponse.json({ success: false, message: 'Missing required user fields (Name, Email, Employee ID, Password, Phone, and Address are required).' }, { status: 400 });
@@ -258,6 +258,7 @@ export async function POST(req: Request) {
         passwordHash,
         reportsTo: reportsTo ? parseInt(reportsTo, 10) : null,
         joiningDate: joiningDate ? new Date(joiningDate) : null,
+        workingLocation: workingLocation ? String(workingLocation).trim() : null,
         photograph: photograph || null,
         permissions: finalPermissions,
         isActive: true,
