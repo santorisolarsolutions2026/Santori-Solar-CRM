@@ -3386,207 +3386,254 @@ export default function TeamManagementPage() {
               </div>
             )}
 
-            <form onSubmit={handleAddSubmit} className="p-6 space-y-4">
-              {/* Photo Upload Area */}
-              <div className="flex items-center gap-4 p-4 bg-slate-900/20 border border-slate-800/80 rounded-xl">
-                <div className="relative w-16 h-16 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center overflow-hidden">
-                  {addPhotoPreviewUrl || form.photograph ? (
-                    <img src={addPhotoPreviewUrl || form.photograph} alt="Preview" className="w-full h-full object-cover" />
-                  ) : (
-                    <User className="w-8 h-8 text-slate-500" />
-                  )}
-                  {uploadingAddPhoto && (
-                    <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
-                      <Loader2 className="w-4 h-4 text-blue-600 dark:text-blue-400 animate-spin" />
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 space-y-1">
-                  <label className="block text-[10px] font-bold uppercase text-slate-400">Profile Photograph</label>
-                  <div className="relative">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      id="add-photo-input"
-                      onChange={handleAddPhotoUpload}
-                      className="hidden"
-                    />
-                    <label
-                      htmlFor="add-photo-input"
-                      className="py-1.5 px-3 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 rounded-lg text-xs font-semibold flex items-center gap-1.5 w-fit cursor-pointer transition-all"
-                    >
-                      <Upload className="w-3.5 h-3.5" />
-                      <span>{form.photograph ? 'Change Photo' : 'Upload Photograph'}</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
-                    Full Name <span className="text-red-500 font-bold ml-0.5">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    placeholder="e.g. Ramesh Singh"
-                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
-                    Employee ID <span className="text-red-500 font-bold ml-0.5">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={form.employeeId}
-                    onChange={(e) => setForm({ ...form, employeeId: e.target.value })}
-                    placeholder="e.g. EMP-1002"
-                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
-                    Email Address <span className="text-red-500 font-bold ml-0.5">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    placeholder="e.g. ramesh@solarcrm.com"
-                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
-                    Contact Number <span className="text-red-500 font-bold ml-0.5">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                    placeholder="Contact number"
-                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
-                  />
-                </div>
-                <div className="col-span-1 sm:col-span-2">
-                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
-                    Full Address <span className="text-red-500 font-bold ml-0.5">*</span>
-                  </label>
-                  <textarea
-                    required
-                    rows={2}
-                    value={form.address}
-                    onChange={(e) => setForm({ ...form, address: e.target.value })}
-                    placeholder="Complete residential address"
-                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none resize-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
-                    Department
-                  </label>
-                  <select
-                    value={form.departmentId}
-                    onChange={(e) => setForm({ ...form, departmentId: e.target.value, reportsTo: '' })}
-                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-blue-500"
-                  >
-                    <option value="">No Department / Shared</option>
-                    {departmentsList.map((dept) => (
-                      <option key={dept.id} value={dept.id}>{dept.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
-                    Designation
-                  </label>
-                  <input
-                    type="text"
-                    value={(form as any).designationText || ''}
-                    onChange={(e) => setForm({ ...form, designationText: e.target.value } as any)}
-                    placeholder="e.g. Sales Executive, Operations Lead"
-                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
-                    Initial Password <span className="text-red-500 font-bold ml-0.5">*</span>
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    value={form.password}
-                    onChange={(e) => setForm({ ...form, password: e.target.value })}
-                    placeholder="••••••••"
-                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Direct Supervisor (Reports To)</label>
-                  <select
-                    value={form.reportsTo}
-                    onChange={(e) => setForm({ ...form, reportsTo: e.target.value })}
-                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-blue-500"
-                  >
-                    <option value="">No Supervisor (Reports to Admin)</option>
-                    {members
-                      .filter((sup) => isEligibleSupervisor(sup, form.departmentId))
-                      .map((sup) => (
-                        <option key={sup.id} value={sup.id}>
-                          {sup.name} {sup.department?.name ? `(${sup.department.name})` : ''}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
-                    Date of Joining <span className="text-red-500 font-bold ml-0.5">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={form.joiningDate}
-                    onChange={(e) => setForm({ ...form, joiningDate: e.target.value })}
-                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-3 border-t border-slate-800/80 pt-4 justify-end">
-                <button
-                  type="button"
-                  onClick={closeAddModal}
-                  className="py-2 px-4 bg-slate-900 border border-slate-800 text-slate-400 rounded-lg font-bold text-xs cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="py-2 px-5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer"
-                >
-                  {submitting ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Registering...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Shield className="w-3.5 h-3.5" />
-                      <span>Register Account</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
+            <form onSubmit={handleAddSubmit} className="max-h-[80vh] overflow-y-auto">
+              
+                            {/* ─── Photo + Identity Section ─── */}
+                            <div className="p-6 space-y-5">
+              
+                              {/* Photo Upload */}
+                              <div className="flex items-center gap-5 p-4 bg-gradient-to-r from-blue-600/5 to-indigo-600/5 border border-blue-600/10 rounded-2xl">
+                                <div className="relative flex-shrink-0">
+                                  <div className="w-20 h-20 rounded-2xl bg-slate-950 border-2 border-slate-800 flex items-center justify-center overflow-hidden shadow-lg">
+                                    {addPhotoPreviewUrl || form.photograph ? (
+                                      <img src={addPhotoPreviewUrl || form.photograph} alt="Preview" className="w-full h-full object-cover" />
+                                    ) : (
+                                      <span className="text-2xl font-extrabold text-slate-600 uppercase select-none">
+                                        {form.name ? form.name.substring(0, 2) : <User className="w-8 h-8 text-slate-600" />}
+                                      </span>
+                                    )}
+                                    {uploadingAddPhoto && (
+                                      <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
+                                        <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex-1 space-y-2">
+                                  <p className="text-xs font-bold text-white">Profile Photograph</p>
+                                  <p className="text-[10px] text-slate-500">Upload a clear photo. Recommended: square, min 200×200px.</p>
+                                  <input type="file" accept="image/*" id="add-photo-input" onChange={handleAddPhotoUpload} className="hidden" />
+                                  <label htmlFor="add-photo-input" className="inline-flex items-center gap-1.5 py-1.5 px-3 bg-slate-900 border border-slate-700 hover:border-blue-600/50 hover:bg-blue-600/5 text-slate-300 hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all">
+                                    <Upload className="w-3.5 h-3.5" />
+                                    <span>{form.photograph ? "Change Photo" : "Upload Photo"}</span>
+                                  </label>
+                                </div>
+                              </div>
+              
+                              {/* Section Label */}
+                              <div className="flex items-center gap-2">
+                                <div className="h-px flex-1 bg-slate-800" />
+                                <span className="text-[9px] font-bold uppercase tracking-widest text-slate-600">Basic Information</span>
+                                <div className="h-px flex-1 bg-slate-800" />
+                              </div>
+              
+                              {/* Row 1: Name + Employee ID */}
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                    Full Name <span className="text-red-500">*</span>
+                                  </label>
+                                  <input
+                                    type="text"
+                                    required
+                                    value={form.name}
+                                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                                    placeholder="e.g. Ramesh Singh"
+                                    className="block w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 focus:border-blue-600/50 rounded-xl text-white text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-600/30 transition-all"
+                                  />
+                                </div>
+                                <div className="space-y-1.5">
+                                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                    Employee ID <span className="text-red-500">*</span>
+                                  </label>
+                                  <input
+                                    type="text"
+                                    required
+                                    value={form.employeeId}
+                                    onChange={(e) => setForm({ ...form, employeeId: e.target.value })}
+                                    placeholder="e.g. SSS-1002"
+                                    className="block w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 focus:border-blue-600/50 rounded-xl text-white text-xs font-mono placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-600/30 transition-all"
+                                  />
+                                </div>
+                              </div>
+              
+                              {/* Row 2: Email + Phone */}
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                    Email Address <span className="text-red-500">*</span>
+                                  </label>
+                                  <input
+                                    type="email"
+                                    required
+                                    value={form.email}
+                                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                                    placeholder="e.g. ramesh@solarcrm.com"
+                                    className="block w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 focus:border-blue-600/50 rounded-xl text-white text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-600/30 transition-all"
+                                  />
+                                </div>
+                                <div className="space-y-1.5">
+                                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                    Contact Number <span className="text-red-500">*</span>
+                                  </label>
+                                  <input
+                                    type="text"
+                                    required
+                                    value={form.phone}
+                                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                                    placeholder="10-digit mobile number"
+                                    className="block w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 focus:border-blue-600/50 rounded-xl text-white text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-600/30 transition-all"
+                                  />
+                                </div>
+                              </div>
+              
+                              {/* Row 3: Working Location (highlighted) */}
+                              <div className="space-y-1.5">
+                                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                                  <svg className="w-3 h-3 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  </svg>
+                                  Working Location
+                                </label>
+                                <input
+                                  type="text"
+                                  value={form.workingLocation}
+                                  onChange={(e) => setForm({ ...form, workingLocation: e.target.value })}
+                                  placeholder="e.g. Varanasi HQ, Remote – Delhi, Lucknow Field"
+                                  className="block w-full px-3.5 py-2.5 bg-slate-950 border border-blue-900/30 focus:border-blue-600/60 rounded-xl text-white text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-600/30 transition-all"
+                                />
+                                <p className="text-[10px] text-slate-600">This will be shown in the Employee ID lookup search results.</p>
+                              </div>
+              
+                              {/* Row 4: Address */}
+                              <div className="space-y-1.5">
+                                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                  Full Residential Address <span className="text-red-500">*</span>
+                                </label>
+                                <textarea
+                                  required
+                                  rows={2}
+                                  value={form.address}
+                                  onChange={(e) => setForm({ ...form, address: e.target.value })}
+                                  placeholder="Complete residential address"
+                                  className="block w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 focus:border-blue-600/50 rounded-xl text-white text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-600/30 transition-all resize-none"
+                                />
+                              </div>
+              
+                              {/* Section Label */}
+                              <div className="flex items-center gap-2">
+                                <div className="h-px flex-1 bg-slate-800" />
+                                <span className="text-[9px] font-bold uppercase tracking-widest text-slate-600">Role & Access</span>
+                                <div className="h-px flex-1 bg-slate-800" />
+                              </div>
+              
+                              {/* Row 5: Department + Designation */}
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Department</label>
+                                  <select
+                                    value={form.departmentId}
+                                    onChange={(e) => setForm({ ...form, departmentId: e.target.value, reportsTo: "" })}
+                                    className="block w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 focus:border-blue-600/50 rounded-xl text-slate-300 text-xs focus:outline-none focus:ring-1 focus:ring-blue-600/30 transition-all"
+                                  >
+                                    <option value="">No Department / Shared</option>
+                                    {departmentsList.map((dept) => (
+                                      <option key={dept.id} value={dept.id}>{dept.name}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div className="space-y-1.5">
+                                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Designation</label>
+                                  <input
+                                    type="text"
+                                    value={(form as any).designationText || ""}
+                                    onChange={(e) => setForm({ ...form, designationText: e.target.value } as any)}
+                                    placeholder="e.g. Sales Executive, Field Officer"
+                                    className="block w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 focus:border-blue-600/50 rounded-xl text-white text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-600/30 transition-all"
+                                  />
+                                </div>
+                              </div>
+              
+                              {/* Row 6: Password + Supervisor */}
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                    Initial Password <span className="text-red-500">*</span>
+                                  </label>
+                                  <input
+                                    type="password"
+                                    required
+                                    value={form.password}
+                                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                                    placeholder="••••••••"
+                                    className="block w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 focus:border-blue-600/50 rounded-xl text-white text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-600/30 transition-all"
+                                  />
+                                </div>
+                                <div className="space-y-1.5">
+                                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Direct Supervisor</label>
+                                  <select
+                                    value={form.reportsTo}
+                                    onChange={(e) => setForm({ ...form, reportsTo: e.target.value })}
+                                    className="block w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 focus:border-blue-600/50 rounded-xl text-slate-300 text-xs focus:outline-none focus:ring-1 focus:ring-blue-600/30 transition-all"
+                                  >
+                                    <option value="">No Supervisor (Reports to Admin)</option>
+                                    {members
+                                      .filter((sup) => isEligibleSupervisor(sup, form.departmentId))
+                                      .map((sup) => (
+                                        <option key={sup.id} value={sup.id}>
+                                          {sup.name} {sup.department?.name ? `(${sup.department.name})` : ""}
+                                        </option>
+                                      ))}
+                                  </select>
+                                </div>
+                              </div>
+              
+                              {/* Row 7: Joining Date */}
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                    Date of Joining <span className="text-red-500">*</span>
+                                  </label>
+                                  <input
+                                    type="date"
+                                    required
+                                    value={form.joiningDate}
+                                    onChange={(e) => setForm({ ...form, joiningDate: e.target.value })}
+                                    className="block w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 focus:border-blue-600/50 rounded-xl text-slate-300 text-xs focus:outline-none focus:ring-1 focus:ring-blue-600/30 transition-all"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+              
+                            {/* Footer Actions */}
+                            <div className="flex gap-3 px-6 py-4 border-t border-slate-800 bg-slate-950/40 justify-end sticky bottom-0">
+                              <button
+                                type="button"
+                                onClick={closeAddModal}
+                                className="py-2 px-5 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white rounded-xl font-bold text-xs cursor-pointer transition-all"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="submit"
+                                disabled={submitting}
+                                className="py-2 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl font-bold text-xs shadow-lg shadow-blue-500/20 flex items-center gap-2 cursor-pointer disabled:opacity-50 transition-all"
+                              >
+                                {submitting ? (
+                                  <>
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    <span>Registering...</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Shield className="w-3.5 h-3.5" />
+                                    <span>Register Account</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          </form>
           </div>
         </div>
       )}
@@ -4099,6 +4146,13 @@ export default function TeamManagementPage() {
                         <span className="text-white">{selectedMember.address || '-'}</span>
                       </div>
                       <div>
+                        <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1 flex items-center gap-1">
+                          <svg className="w-2.5 h-2.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                          Working Location
+                        </span>
+                        <span className="text-white">{selectedMember.workingLocation || <span className="text-slate-600 italic text-[10px]">Not set</span>}</span>
+                      </div>
+                      <div>
                         <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Direct Supervisor</span>
                         <span className="text-white">{selectedMember.supervisor?.name || <span className="text-slate-600 italic">None</span>}</span>
                       </div>
@@ -4126,6 +4180,13 @@ export default function TeamManagementPage() {
                       <div>
                         <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Designation</span>
                         <span className="text-white capitalize">{getRoleLabel(selectedMember.role)}</span>
+                      </div>
+                      <div>
+                        <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1 flex items-center gap-1">
+                          <svg className="w-2.5 h-2.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                          Working Location
+                        </span>
+                        <span className="text-white">{selectedMember.workingLocation || <span className="text-slate-600 italic text-[10px]">Not set</span>}</span>
                       </div>
                       <div className="col-span-2">
                         <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Years in Company</span>
