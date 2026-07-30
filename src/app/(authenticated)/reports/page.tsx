@@ -46,6 +46,9 @@ import {
   Loader2,
   Calendar,
   AlertCircle,
+  Search,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import CustomSelect from '@/components/CustomSelect';
 
@@ -144,6 +147,8 @@ export default function ReportsPage() {
   const [selectedTimelineEmpName, setSelectedTimelineEmpName] = useState('');
   const [timelineEvents, setTimelineEvents] = useState<any[]>([]);
   const [timelineLoading, setTimelineLoading] = useState(false);
+  const [auditSearchQuery, setAuditSearchQuery] = useState('');
+  const [expandedLeadIds, setExpandedLeadIds] = useState<Record<number, boolean>>({});
 
   const fetchTimelineData = async (empId: number) => {
     try {
@@ -942,74 +947,178 @@ export default function ReportsPage() {
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 flex-1 overflow-y-auto min-h-[300px]">
-              {modalLoading && !modalData ? (
-                <div className="flex flex-col items-center justify-center py-20 text-slate-500 text-xs italic gap-2">
-                  <Loader2 className="w-6 h-6 animate-spin text-blue-600 dark:text-blue-400" />
-                  <span>Fetching activity details across team hierarchy...</span>
-                </div>
-              ) : !modalData || !modalData.results || modalData.results.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 text-slate-500 text-xs italic">
-                  <p>No recorded activity items found for this metric in the selected timeframe.</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse min-w-[850px]">
-                    <thead>
-                      <tr className="border-b border-slate-850 text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                        <th className="pb-3 px-3">Date & Time</th>
-                        <th className="pb-3 px-3">Executed By (Who)</th>
-                        <th className="pb-3 px-3">Lead / Client</th>
-                        <th className="pb-3 px-3">Primary Action Details</th>
-                        <th className="pb-3 px-3">Remarks / Outcome</th>
-                        {modalData.results.some((r: any) => r.value !== undefined) && (
-                          <th className="pb-3 px-3 text-right">Value</th>
-                        )}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/40 text-xs text-slate-300">
-                      {modalData.results.map((item: any) => (
-                        <tr key={item.id} className="hover:bg-slate-900/10">
-                          <td className="py-3 px-3 text-slate-400 font-mono whitespace-nowrap">
-                            {item.date || new Date(item.timestamp).toLocaleString('en-IN')}
-                          </td>
-                          <td className="py-3 px-3">
-                            {item.executedBy ? (
-                              <div className="flex flex-col">
-                                <span className="font-bold text-white">{item.executedBy.name}</span>
-                                <span className="text-[9px] text-blue-600 dark:text-blue-400/90 font-mono">{item.executedBy.designation}</span>
-                              </div>
-                            ) : (
-                              <span className="text-slate-500 italic">Self</span>
-                            )}
-                          </td>
-                          <td className="py-3 px-3">
-                            {item.leadId ? (
-                              <a href={`/leads/${item.leadId}`} className="hover:underline text-blue-600 dark:text-blue-400 font-bold block">
-                                {item.customerName || `Lead #${item.leadCode}`}
-                              </a>
-                            ) : (
-                              <span className="text-slate-400">{item.customerName || '-'}</span>
-                            )}
-                            {item.leadCode && <span className="text-[10px] text-slate-500 font-mono block">#{item.leadCode}</span>}
-                          </td>
-                          <td className="py-3 px-3 font-semibold text-slate-200">
-                            {item.detail1}
-                          </td>
-                          <td className="py-3 px-3 text-slate-400 max-w-[280px]">
-                            {item.detail2}
-                          </td>
-                          {modalData.results.some((r: any) => r.value !== undefined) && (
-                            <td className="py-3 px-3 text-right font-extrabold text-white font-mono">
-                              {item.value ? `₹${item.value.toLocaleString('en-IN')}` : '-'}
-                            </td>
-                          )}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+            <div className="p-6 flex-1 overflow-y-auto min-h-[400px]">
+              {modalData?.results && modalData.results.length > 0 && (
+                <div className="mb-6 relative">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                  <input
+                    type="text"
+                    placeholder="Search by Lead Name, ID, or Details..."
+                    value={auditSearchQuery}
+                    onChange={(e) => setAuditSearchQuery(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-9 pr-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500/50"
+                  />
                 </div>
               )}
+
+              {(() => {
+                let filteredResults = modalData?.results || [];
+                if (auditSearchQuery) {
+                  const q = auditSearchQuery.toLowerCase();
+                  filteredResults = filteredResults.filter((item: any) => 
+                    (item.customerName || '').toLowerCase().includes(q) ||
+                    (item.leadCode || '').toLowerCase().includes(q) ||
+                    (item.detail1 || '').toLowerCase().includes(q) ||
+                    (item.detail2 || '').toLowerCase().includes(q)
+                  );
+                }
+
+                if (modalLoading && !modalData) {
+                  return (
+                    <div className="flex flex-col items-center justify-center py-20 text-slate-500 text-xs italic gap-2">
+                      <Loader2 className="w-6 h-6 animate-spin text-blue-600 dark:text-blue-400" />
+                      <span>Fetching activity details across team hierarchy...</span>
+                    </div>
+                  );
+                }
+
+                if (!modalData || filteredResults.length === 0) {
+                  return (
+                    <div className="flex flex-col items-center justify-center py-20 text-slate-500 text-xs italic">
+                      <p>No recorded activity items found for this metric in the selected timeframe (or your search didn't match anything).</p>
+                    </div>
+                  );
+                }
+
+                if (activeDetailType === 'leads_worked') {
+                  const groupedLeads = filteredResults.reduce((acc: any, item: any) => {
+                    if (!item.leadId) return acc;
+                    if (!acc[item.leadId]) {
+                      acc[item.leadId] = {
+                        leadId: item.leadId,
+                        leadCode: item.leadCode,
+                        customerName: item.customerName,
+                        logs: []
+                      };
+                    }
+                    acc[item.leadId].logs.push(item);
+                    return acc;
+                  }, {});
+                  const groupArray = Object.values(groupedLeads);
+                  
+                  return (
+                    <div className="space-y-4">
+                      {groupArray.map((group: any) => (
+                        <div key={group.leadId} className="border border-slate-800 rounded-xl overflow-hidden bg-[#141a2a]">
+                          <button
+                            onClick={() => setExpandedLeadIds(prev => ({ ...prev, [group.leadId]: !prev[group.leadId] }))}
+                            className="w-full flex items-center justify-between p-4 hover:bg-slate-800/30 transition-colors text-left border-b border-transparent focus:outline-none"
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center border border-blue-500/20 shadow-inner">
+                                <span className="text-blue-400 font-bold text-xs">{group.logs.length}</span>
+                              </div>
+                              <div>
+                                <h4 className="text-white font-bold text-sm tracking-wide">{group.customerName || `Lead #${group.leadCode}`}</h4>
+                                <span className="text-[10px] text-slate-500 font-mono block mt-0.5">#{group.leadCode}</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4 text-slate-400 bg-slate-900/60 px-3 py-1.5 rounded-full border border-slate-800/60">
+                              <span className="text-[10px] font-mono font-medium">{group.logs.length} Actions</span>
+                              {expandedLeadIds[group.leadId] ? <ChevronUp className="w-4 h-4 text-blue-400" /> : <ChevronDown className="w-4 h-4" />}
+                            </div>
+                          </button>
+                          
+                          {expandedLeadIds[group.leadId] && (
+                            <div className="border-t border-slate-800 bg-slate-950/40 p-5 shadow-inner">
+                              <div className="relative border-l-2 border-slate-800 ml-4 pl-6 space-y-6">
+                                {group.logs.map((log: any) => (
+                                  <div key={log.id} className="relative group">
+                                    <div className="absolute -left-[33px] top-1.5 w-4 h-4 rounded-full border-[3px] border-blue-500/80 bg-slate-950 ring-4 ring-slate-950 shadow-sm" />
+                                    <div className="bg-slate-900/50 border border-slate-800/60 rounded-xl p-3 hover:border-slate-700 transition-colors">
+                                      <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                                        <span className="text-xs font-bold text-blue-400/90 tracking-wide uppercase">{log.detail1}</span>
+                                        <span className="text-[10px] text-slate-500 font-mono">
+                                          {log.date || new Date(log.timestamp).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                                        </span>
+                                      </div>
+                                      <p className="text-xs text-slate-300 leading-relaxed font-sans">{log.detail2}</p>
+                                      {log.executedBy && (
+                                        <div className="mt-2 text-[10px] bg-slate-950 border border-slate-850 px-2 py-1 rounded inline-flex items-center gap-1">
+                                          <span className="text-slate-500">Executed by:</span> <span className="text-white font-medium">{log.executedBy.name}</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="overflow-x-auto bg-[#141a2a] rounded-xl border border-slate-800 overflow-hidden">
+                    <table className="w-full text-left border-collapse min-w-[850px]">
+                      <thead>
+                        <tr className="border-b border-slate-800 bg-slate-900/40 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                          <th className="py-3 px-4">Date & Time</th>
+                          <th className="py-3 px-4">Executed By (Who)</th>
+                          <th className="py-3 px-4">Lead / Client</th>
+                          <th className="py-3 px-4">Primary Action Details</th>
+                          <th className="py-3 px-4">Remarks / Outcome</th>
+                          {modalData.results.some((r: any) => r.value !== undefined) && (
+                            <th className="py-3 px-4 text-right">Value</th>
+                          )}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/40 text-xs text-slate-300">
+                        {filteredResults.map((item: any) => (
+                          <tr key={item.id} className="hover:bg-slate-900/80 transition-colors group">
+                            <td className="py-3.5 px-4 text-slate-400 font-mono whitespace-nowrap">
+                              {item.date || new Date(item.timestamp).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                            </td>
+                            <td className="py-3.5 px-4">
+                              {item.executedBy ? (
+                                <div className="flex flex-col">
+                                  <span className="font-bold text-white group-hover:text-blue-400 transition-colors">{item.executedBy.name}</span>
+                                  <span className="text-[9px] text-blue-500/70 font-mono mt-0.5">{item.executedBy.designation}</span>
+                                </div>
+                              ) : (
+                                <span className="text-slate-500 italic">Self</span>
+                              )}
+                            </td>
+                            <td className="py-3.5 px-4">
+                              {item.leadId ? (
+                                <a href={`/leads/${item.leadId}`} className="hover:underline text-blue-500 font-bold block transition-colors">
+                                  {item.customerName || `Lead #${item.leadCode}`}
+                                </a>
+                              ) : (
+                                <span className="text-slate-400 font-medium">{item.customerName || '-'}</span>
+                              )}
+                              {item.leadCode && <span className="text-[9px] text-slate-500 font-mono block mt-0.5">#{item.leadCode}</span>}
+                            </td>
+                            <td className="py-3.5 px-4 font-semibold text-slate-200">
+                              {item.detail1}
+                            </td>
+                            <td className="py-3.5 px-4 text-slate-400 max-w-[280px] leading-relaxed">
+                              {item.detail2}
+                            </td>
+                            {modalData.results.some((r: any) => r.value !== undefined) && (
+                              <td className="py-3.5 px-4 text-right font-extrabold text-white font-mono bg-slate-900/20">
+                                {item.value ? `₹${item.value.toLocaleString('en-IN')}` : '-'}
+                              </td>
+                            )}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Modal Footer */}
