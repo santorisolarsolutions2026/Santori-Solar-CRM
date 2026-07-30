@@ -150,6 +150,10 @@ export default function ReportsPage() {
   const [auditSearchQuery, setAuditSearchQuery] = useState('');
   const [expandedLeadIds, setExpandedLeadIds] = useState<Record<number, boolean>>({});
 
+  // Hierarchy modal states
+  const [hierarchyModalData, setHierarchyModalData] = useState<any>(null);
+  const [hierarchyLoading, setHierarchyLoading] = useState(false);
+
   const fetchTimelineData = async (empId: number) => {
     try {
       setTimelineLoading(true);
@@ -163,9 +167,30 @@ export default function ReportsPage() {
         setTimelineEvents(data.data);
       }
     } catch (err) {
-      console.error(err);
+      console.error('Failed to fetch timeline:', err);
     } finally {
       setTimelineLoading(false);
+    }
+  };
+
+  const handleOpenHierarchyModal = async (empId: number) => {
+    try {
+      setHierarchyLoading(true);
+      setHierarchyModalData({ loading: true });
+      const res = await fetch(`/api/v1/reports/employee-audit/hierarchy/${empId}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setHierarchyModalData(data.tree);
+        } else {
+          setHierarchyModalData(null);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch hierarchy:', error);
+      setHierarchyModalData(null);
+    } finally {
+      setHierarchyLoading(false);
     }
   };
 
@@ -888,8 +913,13 @@ export default function ReportsPage() {
                             </button>
                           </td>
                           <td className="py-3.5 px-4 text-slate-400 font-medium text-xs">{emp.designation}</td>
-                          <td className="py-3.5 px-4 text-center font-extrabold font-mono text-blue-600 dark:text-blue-400">
-                            {emp.teamSize || 1}
+                          <td className="py-3.5 px-4 text-center">
+                            <button
+                              onClick={() => handleOpenHierarchyModal(emp.id)}
+                              className="font-extrabold font-mono text-blue-600 dark:text-blue-400 hover:underline outline-none cursor-pointer"
+                            >
+                              {emp.teamSize || 1}
+                            </button>
                           </td>
                           <td className="py-3.5 px-4 text-center">
                             <button
@@ -1217,6 +1247,83 @@ export default function ReportsPage() {
                 className="py-2 px-5 bg-slate-900 border border-slate-800 text-slate-355 hover:text-white rounded-lg font-bold text-xs transition-all cursor-pointer outline-none"
               >
                 Close Timeline
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Team Hierarchy Modal */}
+      {hierarchyModalData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in font-sans">
+          <div className="bg-[#111625] border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-slate-800 flex justify-between items-start gap-4">
+              <div>
+                <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Organizational Structure</span>
+                <h2 className="text-lg font-bold text-white mt-1 flex items-center gap-2">
+                  <span>Team Hierarchy</span>
+                </h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  View the direct and indirect reporting structure.
+                </p>
+              </div>
+              <button
+                onClick={() => setHierarchyModalData(null)}
+                className="p-1.5 rounded-lg border border-slate-800 bg-slate-900/60 text-slate-400 hover:text-white transition-all cursor-pointer outline-none"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 flex-1 overflow-y-auto min-h-[300px]">
+              {hierarchyLoading || hierarchyModalData.loading ? (
+                <div className="flex flex-col items-center justify-center py-20 text-slate-500 text-xs italic gap-2">
+                  <Loader2 className="w-6 h-6 animate-spin text-blue-600 dark:text-blue-400" />
+                  <span>Loading hierarchy tree...</span>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {/* Recursive component to render tree */}
+                  {(() => {
+                    const renderNode = (node: any, level: number = 0) => {
+                      return (
+                        <div key={node.id} className={`pl-${level === 0 ? '0' : '6'} border-l ${level === 0 ? 'border-transparent' : 'border-slate-800'} mt-2`}>
+                          <div className="flex items-center gap-3 p-3 bg-slate-900/40 border border-slate-800/60 rounded-xl relative">
+                            {level > 0 && <div className="absolute -left-6 top-1/2 w-6 border-t border-slate-800"></div>}
+                            <div className="w-10 h-10 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center flex-shrink-0">
+                              <Users className="w-5 h-5 text-blue-400" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-white font-bold text-sm truncate">{node.name}</h4>
+                              <p className="text-[10px] text-slate-500 font-mono truncate">{node.designation} • {node.department}</p>
+                            </div>
+                            <div className="text-[10px] font-bold text-slate-400 bg-slate-950 px-2 py-1 rounded border border-slate-800">
+                              {node.children?.length || 0} Direct
+                            </div>
+                          </div>
+                          {node.children && node.children.length > 0 && (
+                            <div className="ml-4">
+                              {node.children.map((child: any) => renderNode(child, level + 1))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    };
+                    return renderNode(hierarchyModalData);
+                  })()}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-slate-800 bg-slate-955/20 text-right">
+              <button
+                onClick={() => setHierarchyModalData(null)}
+                className="py-2 px-5 bg-slate-900 border border-slate-800 text-slate-355 hover:text-white rounded-lg font-bold text-xs transition-all cursor-pointer outline-none"
+              >
+                Close Tree
               </button>
             </div>
           </div>
