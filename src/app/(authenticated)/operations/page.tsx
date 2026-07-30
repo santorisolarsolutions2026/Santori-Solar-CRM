@@ -990,181 +990,186 @@ export default function OperationsPage() {
           <p className="text-xs text-slate-400 mt-1">Manage delivery, solar structure installation, net meter installation, plant commissioning, subsidies, and track completion logs.</p>
         </div>
         
-        <form onSubmit={handleSearchSubmit} className="relative w-full sm:w-64">
-          <input
-            type="text"
-            placeholder="Search by client or order code..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-slate-200 text-xs focus:outline-none focus:border-slate-700 placeholder-slate-500"
-          />
-          <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
-        </form>
+
       </div>
 
-      {/* Grid of cards */}
+      {/* Filter Bar */}
+      <div className="bg-[#111625] border border-slate-800 rounded-xl p-4 flex flex-wrap gap-4 items-end shadow-lg">
+        <div className="flex-1 min-w-[200px]">
+          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Search Orders</label>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search by client or order code..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-slate-200 text-sm focus:outline-none focus:border-slate-700 placeholder-slate-500"
+            />
+            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+          </div>
+        </div>
+
+        <div className="w-full sm:w-auto min-w-[150px]">
+          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Manager / Assigned To</label>
+          <select
+            value={filterManagerId}
+            onChange={(e) => setFilterManagerId(e.target.value)}
+            className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-slate-200 text-sm focus:outline-none focus:border-slate-700"
+          >
+            <option value="all">All Managers</option>
+            {uniqueManagers.map(m => (
+              <option key={m.id || 'unassigned'} value={m.id || 'unassigned'}>{m.name || 'Unassigned'}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="w-full sm:w-auto min-w-[180px]">
+          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Current Stage</label>
+          <select
+            value={filterStage}
+            onChange={(e) => setFilterStage(e.target.value)}
+            className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-slate-200 text-sm focus:outline-none focus:border-slate-700"
+          >
+            <option value="all">All Stages</option>
+            <option value="delivery_scheduled">Delivery Scheduled</option>
+            <option value="delivered">Materials Delivered</option>
+            <option value="installation_scheduled">Installation Scheduled</option>
+            <option value="installed">Solar Installed</option>
+            <option value="meter_installed">Net Meter Installed</option>
+            <option value="commissioned">Plant Commissioned</option>
+            <option value="subsidy_applied">Subsidy Applied</option>
+          </select>
+        </div>
+
+        <div className="flex gap-4">
+          <div>
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Order Date From</label>
+            <input
+              type="date"
+              value={filterDateFrom}
+              onChange={(e) => setFilterDateFrom(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-slate-200 text-sm focus:outline-none focus:border-slate-700"
+            />
+          </div>
+          <div>
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Order Date To</label>
+            <input
+              type="date"
+              value={filterDateTo}
+              onChange={(e) => setFilterDateTo(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-slate-200 text-sm focus:outline-none focus:border-slate-700"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* List View */}
       {loading ? (
         <div className="py-24 flex flex-col items-center justify-center gap-3">
           <Loader2 className="w-8 h-8 text-blue-600 dark:text-blue-400 animate-spin" />
           <p className="text-xs text-slate-400">Loading operations queue...</p>
         </div>
-      ) : orders.length === 0 ? (
-        <div className="py-16 text-center bg-slate-900/30 border border-slate-800 rounded-xl">
+      ) : filteredOrders.length === 0 ? (
+        <div className="py-16 text-center bg-[#111625] border border-slate-800 rounded-xl shadow-lg">
           <Wrench className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-          <p className="text-slate-300 font-semibold text-sm">No Orders in Operations</p>
-          <p className="text-xs text-slate-500 mt-1">Finance verified orders will appear here for delivery scheduling.</p>
+          <p className="text-slate-300 font-semibold text-sm">No Orders Found</p>
+          <p className="text-xs text-slate-500 mt-1">Try adjusting your filters or search query.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {orders.map((order) => (
-            <div 
-              key={order.id} 
-              className="bg-[#111625] border border-slate-880 rounded-xl p-5 hover:border-slate-700 transition-all flex flex-col justify-between shadow-xl relative overflow-hidden group"
-            >
-              {/* Decorative top indicator */}
-              <div className={`absolute top-0 left-0 w-full h-[3px] ${
-                order.isSubsidyApplied || (order.isCommissioned && !order.subsidyApplicable)
-                  ? 'bg-blue-600' 
-                  : order.isCommissioned
-                    ? 'bg-blue-600'
-                    : order.isMeterInstalled
-                      ? 'bg-blue-500'
-                      : order.isInstalled
-                        ? 'bg-indigo-500'
-                        : order.deliveryDate 
-                          ? 'bg-indigo-500 animate-pulse' 
-                          : 'bg-indigo-500'
-              }`} />
+        <div className="bg-[#111625] border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-900/50 border-b border-slate-800">
+                  <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-slate-400 font-bold">Order Details</th>
+                  <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-slate-400 font-bold">Manager</th>
+                  <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-slate-400 font-bold">Current Stage</th>
+                  <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-slate-400 font-bold">Order Date</th>
+                  <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-slate-400 font-bold text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                {filteredOrders.map((order) => {
+                  let stageText = 'Awaiting Schedule ⏳';
+                  let stageClass = 'bg-slate-800 text-slate-400 border-slate-700';
 
-              <div className="space-y-4">
-                {/* Order code & Status badge */}
-                <div className="flex justify-between items-start">
-                  <div>
-                    <span className="text-[10px] text-slate-500 font-mono block">Order Code</span>
-                    <span className="font-mono font-bold text-white text-xs">{order.orderCode}</span>
-                  </div>
-                  
-                  <span className={`text-[9px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${
-                    order.isSubsidyApplied || (order.isCommissioned && !order.subsidyApplicable)
-                      ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20'
-                      : order.isCommissioned
-                        ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20'
-                        : order.isMeterInstalled
-                          ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                          : order.isInstalled
-                            ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
-                            : order.deliveryDate
-                              ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
-                              : 'bg-indigo-500/10 text-indigo-455 border-indigo-500/20'
-                  }`}>
-                    {order.isSubsidyApplied || (order.isCommissioned && !order.subsidyApplicable)
-                      ? 'Completed ✅' 
-                      : order.isCommissioned 
-                        ? 'Subsidy Pending ⏳' 
-                        : order.isMeterInstalled 
-                          ? 'Commissioning Pending ⚡' 
-                          : order.isInstalled 
-                            ? 'Meter Pending ⚡' 
-                            : order.isDelivered 
-                              ? 'Delivered 🚚' 
-                              : order.deliveryDate 
-                                ? 'Scheduled 🚚' 
-                                : 'Awaiting Schedule ⏳'}
-                  </span>
-                </div>
+                  if (order.isSubsidyApplied || (order.isCommissioned && !order.subsidyApplicable)) {
+                    stageText = 'Completed ✅';
+                    stageClass = 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+                  } else if (order.isCommissioned) {
+                    stageText = 'Subsidy Pending ⏳';
+                    stageClass = 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+                  } else if (order.isMeterInstalled) {
+                    stageText = 'Commissioning Pending ⚡';
+                    stageClass = 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+                  } else if (order.isInstalled) {
+                    stageText = 'Meter Pending ⚡';
+                    stageClass = 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
+                  } else if (order.isDelivered) {
+                    stageText = 'Delivered 🚚';
+                    stageClass = 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
+                  } else if (order.deliveryDate) {
+                    stageText = 'Scheduled 🚚';
+                    stageClass = 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
+                  }
 
-                {/* Customer Details */}
-                <div>
-                  <h3 className="text-sm font-bold text-white group-hover:text-blue-600 dark:text-blue-400 transition-colors">
-                    <Link href={`/leads/${order.lead.id}`} className="hover:underline">
-                      {order.lead.customerName}
-                    </Link>
-                  </h3>
-                  <p className="text-[11px] text-slate-400 flex items-center gap-1 mt-1">
-                    <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                    <span>{order.lead.address}, {order.lead.city}</span>
-                  </p>
-                </div>
-
-                {/* Status summaries depending on phase */}
-                <div className="space-y-2">
-                  {order.isDelivered ? (
-                    <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg text-xs flex justify-between items-center">
-                      <span className="text-blue-650 dark:text-blue-400 font-semibold text-[10px]">Materials Delivered</span>
-                      <span className="text-[10px] text-slate-400">{formatDateTime(order.actualDeliveryAt).split(',')[0]}</span>
-                    </div>
-                  ) : order.deliveryDate ? (
-                    <div className="p-2 bg-slate-905/30 border border-slate-850 rounded-lg text-xs space-y-1">
-                      <span className="text-slate-550 block font-semibold uppercase tracking-wider text-[8px]">Delivery Scheduled</span>
-                      <div className="flex justify-between text-slate-300 text-[10px]">
-                        <span>Date: {order.deliveryDate}</span>
-                        <span>Time: {order.deliveryTime || 'N/A'}</span>
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {order.isDelivered && (
-                    order.isInstalled ? (
-                      <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg text-xs flex justify-between items-center">
-                        <span className="text-blue-650 dark:text-blue-400 font-semibold text-[10px]">Solar Installed</span>
-                        <span className="text-[10px] text-slate-400">{formatDateTime(order.actualInstallationAt).split(',')[0]}</span>
-                      </div>
-                    ) : order.installationDate ? (
-                      <div className="p-2 bg-slate-905/30 border border-slate-850 rounded-lg text-xs space-y-1">
-                        <span className="text-slate-555 block font-semibold uppercase tracking-wider text-[8px]">Installation Scheduled</span>
-                        <div className="flex justify-between text-slate-300 text-[10px]">
-                          <span>Date: {order.installationDate}</span>
-                          <span>Time: {order.installationTime || 'N/A'}</span>
+                  return (
+                    <tr key={order.id} className="hover:bg-slate-900/30 transition-colors group">
+                      <td className="px-5 py-4">
+                        <div className="flex flex-col">
+                          <span className="font-mono font-bold text-white text-xs">{order.orderCode}</span>
+                          <Link href={`/leads/${order.lead.id}`} className="text-sm font-bold text-blue-400 hover:underline mt-1">
+                            {order.lead.customerName}
+                          </Link>
+                          <p className="text-[10px] text-slate-500 flex items-center gap-1 mt-1 truncate max-w-[250px]">
+                            <MapPin className="w-3 h-3" />
+                            <span>{order.lead.address}, {order.lead.city}</span>
+                          </p>
                         </div>
-                      </div>
-                    ) : null
-                  )}
-
-                  {order.isInstalled && (
-                    order.isMeterInstalled ? (
-                      <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg text-xs flex justify-between items-center">
-                        <span className="text-blue-650 dark:text-blue-400 font-semibold text-[10px]">Net Meter Installed</span>
-                        <span className="text-[10px] text-slate-400">{formatDateTime(order.actualMeterInstalledAt).split(',')[0]}</span>
-                      </div>
-                    ) : null
-                  )}
-
-                  {order.isMeterInstalled && (
-                    order.isCommissioned ? (
-                      <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg text-xs flex justify-between items-center">
-                        <span className="text-blue-650 dark:text-blue-400 font-semibold text-[10px]">Plant Commissioned</span>
-                        <span className="text-[10px] text-slate-400">{formatDateTime(order.actualCommissionedAt).split(',')[0]}</span>
-                      </div>
-                    ) : null
-                  )}
-
-                  {order.isCommissioned && order.subsidyApplicable && (
-                    order.isSubsidyApplied ? (
-                      <div className="p-2 bg-blue-500/15 border border-blue-500/20 rounded-lg text-xs flex justify-between items-center">
-                        <span className="text-blue-650 dark:text-blue-400 font-bold text-[10px]">Subsidy Applied</span>
-                        <span className="text-[10px] text-slate-400">{formatDateTime(order.actualSubsidyAppliedAt).split(',')[0]}</span>
-                      </div>
-                    ) : (
-                      <div className="p-2 bg-blue-600/[0.04] border border-blue-500/10 rounded text-[10px] text-blue-600 dark:text-blue-400 font-semibold text-center animate-pulse">
-                        ⏳ Subsidy Registration Pending
-                      </div>
-                    )
-                  )}
-                </div>
-              </div>
-
-              {/* Action Button */}
-              <div className="mt-5 pt-4 border-t border-slate-800/60 flex justify-end">
-                <button
-                  onClick={() => { setSelectedOrder(order); setShowScheduleForm(false); setShowInstallForm(false); setShowActualDeliveryForm(false); setShowActualInstallForm(false); setShowActualMeterForm(false); setShowActualCommissionForm(false); setNewSubsidyAmount(''); }}
-                  className="px-4 py-2 bg-slate-900 border border-slate-850 hover:border-slate-700 text-slate-200 rounded-lg font-bold text-[11px] hover:text-white transition-all cursor-pointer flex items-center gap-1.5"
-                >
-                  <Eye className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-                  <span>Manage Order</span>
-                </button>
-              </div>
-            </div>
-          ))}
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
+                            <User className="w-3 h-3 text-slate-400" />
+                          </div>
+                          <span className="text-xs font-semibold text-slate-300">
+                            {order.assignedOps?.name || 'Unassigned'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4">
+                        <span className={`text-[10px] font-bold px-2.5 py-1 border rounded-full uppercase tracking-wider whitespace-nowrap ${stageClass}`}>
+                          {stageText}
+                        </span>
+                        {order.deliveryDate && !order.isDelivered && (
+                          <div className="text-[10px] text-slate-400 mt-2">
+                            Scheduled: {order.deliveryDate} {order.deliveryTime}
+                          </div>
+                        )}
+                        {order.installationDate && !order.isInstalled && order.isDelivered && (
+                          <div className="text-[10px] text-slate-400 mt-2">
+                            Install: {order.installationDate} {order.installationTime}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-5 py-4 text-xs text-slate-400 font-mono">
+                        {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : ''}
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                        <button
+                          onClick={() => { setSelectedOrder(order); setShowScheduleForm(false); setShowInstallForm(false); setShowActualDeliveryForm(false); setShowActualInstallForm(false); setShowActualMeterForm(false); setShowActualCommissionForm(false); setNewSubsidyAmount(''); }}
+                          className="px-3 py-1.5 bg-slate-900 border border-slate-700 hover:bg-slate-800 text-blue-400 rounded-lg font-bold text-xs transition-all cursor-pointer inline-flex items-center gap-1.5"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>Manage</span>
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
