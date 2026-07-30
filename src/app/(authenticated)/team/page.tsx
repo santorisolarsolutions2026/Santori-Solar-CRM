@@ -3854,70 +3854,87 @@ export default function TeamManagementPage() {
                   </div>
 
                   {/* Member Form Fields */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
-                        Full Name <span className="text-red-500 font-bold ml-0.5">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={editMemberForm.name}
-                        onChange={(e) => setEditMemberForm({ ...editMemberForm, name: e.target.value })}
-                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
-                      />
+                  <div className="space-y-4">
+                    {/* Section: Basic Info */}
+                    <div className="flex items-center gap-2">
+                      <div className="h-px flex-1 bg-slate-800" />
+                      <span className="text-[9px] font-bold uppercase tracking-widest text-slate-600">Basic Information</span>
+                      <div className="h-px flex-1 bg-slate-800" />
                     </div>
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
-                        Employee ID <span className="text-red-500 font-bold ml-0.5">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={editMemberForm.employeeId}
-                        onChange={(e) => setEditMemberForm({ ...editMemberForm, employeeId: e.target.value })}
-                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
-                      />
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          Full Name <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={editMemberForm.name}
+                          onChange={(e) => setEditMemberForm({ ...editMemberForm, name: e.target.value })}
+                          className="block w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 focus:border-blue-600/50 rounded-xl text-white text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-600/30 transition-all"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          Employee ID <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={editMemberForm.employeeId}
+                          onChange={(e) => setEditMemberForm({ ...editMemberForm, employeeId: e.target.value })}
+                          className="block w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 focus:border-blue-600/50 rounded-xl text-white text-xs font-mono placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-600/30 transition-all"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          Email Address <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="email"
+                          required
+                          value={editMemberForm.email}
+                          onChange={(e) => setEditMemberForm({ ...editMemberForm, email: e.target.value })}
+                          className="block w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 focus:border-blue-600/50 rounded-xl text-white text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-600/30 transition-all"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          Contact Number <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={editMemberForm.phone}
+                          onChange={(e) => setEditMemberForm({ ...editMemberForm, phone: e.target.value })}
+                          className="block w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 focus:border-blue-600/50 rounded-xl text-white text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-600/30 transition-all"
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
+
+                    {/* Working Location - highlighted */}
+                    <div className="space-y-1.5">
+                      <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        <svg className="w-3 h-3 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
                         Working Location
                       </label>
                       <input
                         type="text"
                         value={editMemberForm.workingLocation}
                         onChange={(e) => setEditMemberForm({ ...editMemberForm, workingLocation: e.target.value })}
-                        placeholder="e.g. Remote, Delhi HQ, Varanasi Office"
-                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
+                        placeholder="e.g. Varanasi HQ, Remote – Delhi, Lucknow Field"
+                        className="block w-full px-3.5 py-2.5 bg-slate-950 border border-blue-900/30 focus:border-blue-600/60 rounded-xl text-white text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-600/30 transition-all"
                       />
+                      <p className="text-[10px] text-slate-600">Shown in Employee ID lookup search results.</p>
                     </div>
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
-                        Email Address <span className="text-red-500 font-bold ml-0.5">*</span>
-                      </label>
-                      <input
-                        type="email"
-                        required
-                        value={editMemberForm.email}
-                        onChange={(e) => setEditMemberForm({ ...editMemberForm, email: e.target.value })}
-                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
-                        Contact Number <span className="text-red-500 font-bold ml-0.5">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={editMemberForm.phone}
-                        onChange={(e) => setEditMemberForm({ ...editMemberForm, phone: e.target.value })}
-                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
-                      />
-                    </div>
-                    <div className="col-span-1 sm:col-span-2">
-                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
-                        Full Address <span className="text-red-500 font-bold ml-0.5">*</span>
+
+                    <div className="space-y-1.5">
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        Full Address <span className="text-red-500">*</span>
                       </label>
                       <textarea
                         required
@@ -3925,28 +3942,36 @@ export default function TeamManagementPage() {
                         value={editMemberForm.address}
                         onChange={(e) => setEditMemberForm({ ...editMemberForm, address: e.target.value })}
                         placeholder="Complete residential address"
-                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none resize-none"
+                        className="block w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 focus:border-blue-600/50 rounded-xl text-white text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-600/30 transition-all resize-none"
                       />
                     </div>
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Reset Password</label>
-                      <input
-                        type="password"
-                        placeholder="Leave blank to keep current"
-                        value={editMemberPassword}
-                        onChange={(e) => setEditMemberPassword(e.target.value)}
-                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
-                      />
+
+                    {/* Section: Role & Access */}
+                    <div className="flex items-center gap-2">
+                      <div className="h-px flex-1 bg-slate-800" />
+                      <span className="text-[9px] font-bold uppercase tracking-widest text-slate-600">Role & Access</span>
+                      <div className="h-px flex-1 bg-slate-800" />
                     </div>
-                    {canEditPermissionsAndRole && (
-                      <>
-                        <div>
-                          <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Department</label>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Reset Password</label>
+                        <input
+                          type="password"
+                          placeholder="Leave blank to keep current"
+                          value={editMemberPassword}
+                          onChange={(e) => setEditMemberPassword(e.target.value)}
+                          className="block w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 focus:border-blue-600/50 rounded-xl text-white text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-600/30 transition-all"
+                        />
+                      </div>
+                      {canEditPermissionsAndRole && (
+                        <div className="space-y-1.5">
+                          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Department</label>
                           <select
                             value={editMemberForm.departmentId}
                             disabled={selectedMember?.role === 'admin' || selectedMember?.role?.startsWith('admin:')}
                             onChange={(e) => setEditMemberForm({ ...editMemberForm, departmentId: e.target.value })}
-                            className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-blue-500 focus:outline-none disabled:opacity-50"
+                            className="block w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 focus:border-blue-600/50 rounded-xl text-slate-300 text-xs focus:outline-none focus:ring-1 focus:ring-blue-600/30 transition-all disabled:opacity-50"
                           >
                             <option value="">No Department / Shared</option>
                             {departmentsList.map((dept) => (
@@ -3954,49 +3979,52 @@ export default function TeamManagementPage() {
                             ))}
                           </select>
                         </div>
-                        <div>
-                          <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Designation</label>
+                      )}
+                      {canEditPermissionsAndRole && (
+                        <div className="space-y-1.5">
+                          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Designation</label>
                           <input
                             type="text"
                             value={(editMemberForm as any).designationText !== undefined ? (editMemberForm as any).designationText : (selectedMember.designation?.name || '')}
                             onChange={(e) => setEditMemberForm({ ...editMemberForm, designationText: e.target.value } as any)}
                             placeholder="e.g. Sales Executive, Operations Lead"
-                            className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
+                            className="block w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 focus:border-blue-600/50 rounded-xl text-white text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-600/30 transition-all"
                           />
                         </div>
-                      </>
-                    )}
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Direct Supervisor</label>
-                      <select
-                        value={editMemberForm.reportsTo}
-                        onChange={(e) => setEditMemberForm({ ...editMemberForm, reportsTo: e.target.value })}
-                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-blue-500 focus:outline-none"
-                      >
-                        <option value="">No Supervisor (Reports to Admin)</option>
-                        {members
-                          .filter((sup) => isEligibleSupervisor(sup, editMemberForm.departmentId, selectedMember.id))
-                          .map((sup) => (
-                            <option key={sup.id} value={sup.id}>
-                              {sup.name} {sup.department?.name ? `(${sup.department.name})` : ''}
-                            </option>
-                          ))}
-                      </select>
+                      )}
+                      <div className="space-y-1.5">
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Direct Supervisor</label>
+                        <select
+                          value={editMemberForm.reportsTo}
+                          onChange={(e) => setEditMemberForm({ ...editMemberForm, reportsTo: e.target.value })}
+                          className="block w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 focus:border-blue-600/50 rounded-xl text-slate-300 text-xs focus:outline-none focus:ring-1 focus:ring-blue-600/30 transition-all"
+                        >
+                          <option value="">No Supervisor (Reports to Admin)</option>
+                          {members
+                            .filter((sup) => isEligibleSupervisor(sup, editMemberForm.departmentId, selectedMember.id))
+                            .map((sup) => (
+                              <option key={sup.id} value={sup.id}>
+                                {sup.name} {sup.department?.name ? `(${sup.department.name})` : ''}
+                              </option>
+                            ))}
+                        </select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          Date of Joining <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="date"
+                          required
+                          value={editMemberForm.joiningDate}
+                          onChange={(e) => setEditMemberForm({ ...editMemberForm, joiningDate: e.target.value })}
+                          className="block w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 focus:border-blue-600/50 rounded-xl text-slate-300 text-xs focus:outline-none focus:ring-1 focus:ring-blue-600/30 transition-all"
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">
-                        Date of Joining <span className="text-red-500 font-bold ml-0.5">*</span>
-                      </label>
-                      <input
-                        type="date"
-                        required
-                        value={editMemberForm.joiningDate}
-                        onChange={(e) => setEditMemberForm({ ...editMemberForm, joiningDate: e.target.value })}
-                        className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 text-xs focus:ring-blue-500 focus:outline-none"
-                      />
-                    </div>
+
                     {canEditPermissionsAndRole && (
-                      <div className="flex items-center gap-2 mt-4 sm:col-span-2">
+                      <div className="flex items-center gap-2 pt-1">
                         <input
                           type="checkbox"
                           id="edit-member-active"

@@ -45,6 +45,7 @@ export async function GET(
         logoutLocation: true,
         joiningDate: true,
         photograph: true,
+        workingLocation: true,
         departmentId: true,
         designationId: true,
         department: { select: { id: true, name: true } },
