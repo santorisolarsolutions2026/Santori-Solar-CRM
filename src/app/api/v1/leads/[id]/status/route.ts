@@ -11,12 +11,13 @@ const TRANSITIONS: Record<number, { to: number[]; roles: string[] }> = {
   5: { to: [2, 3, 4, 6, 8, 10, 11], roles: ['consultant', 'psa'] },
   6: { to: [], roles: [] }, // terminal
   7: { to: [3, 4, 5, 6, 8], roles: ['consultant', 'tl', 'manager'] },
-  8: { to: [9], roles: ['consultant', 'tl'] },
-  9: { to: [3, 4, 9, 13], roles: ['consultant', 'tl', 'manager'] },
+  8: { to: [9, 14], roles: ['consultant', 'tl'] },
+  9: { to: [3, 4, 9, 13, 14], roles: ['consultant', 'tl', 'manager'] },
   10: { to: [2, 3, 4, 5, 6, 8], roles: ['consultant', 'psa'] },
   11: { to: [2, 3, 4, 5, 6, 8], roles: ['consultant', 'psa'] },
   12: { to: [], roles: [] }, // terminal
   13: { to: [13], roles: ['operations', 'manager', 'admin', 'director', 'sales_head'] }, // terminal but allows installation status self-transition
+  14: { to: [3, 4, 6, 12], roles: ['consultant', 'tl', 'manager'] },
 };
 
 // Helper to generate order code
@@ -82,7 +83,7 @@ export async function POST(
     const { to_status, remark, sub_status, followup_at, formB, formC } = body;
 
     const toStatusNum = parseInt(to_status, 10);
-    if (isNaN(toStatusNum) || toStatusNum < 1 || toStatusNum > 13) {
+    if (isNaN(toStatusNum) || toStatusNum < 1 || toStatusNum > 14) {
       return NextResponse.json({ success: false, message: 'Invalid target status.' }, { status: 400 });
     }
 
@@ -426,6 +427,34 @@ export async function POST(
       }
     }
 
+    // Stage 14 - Meeting Cancelled (Route to targeted stages)
+    let shouldLogMeetingCancelled = false;
+    if (toStatusNum === 14) {
+      shouldLogMeetingCancelled = true;
+      if (sub_status === 'Not Interested') {
+        finalStatusNum = 4;
+        updateData.statusSub = 'Price';
+        updateData.isActive = false;
+      } else if (sub_status === 'Book Meeting Again') {
+        finalStatusNum = 3;
+        updateData.statusSub = 'warm';
+        updateData.followupAt = new Date(); // prompt them to book ASAP
+        updateData.isActive = true;
+      } else if (sub_status === "Can't Fit Solar") {
+        finalStatusNum = 12;
+        updateData.statusSub = 'Other';
+        updateData.isActive = false;
+      } else if (sub_status === 'Already Installed') {
+        finalStatusNum = 6;
+        updateData.isActive = false;
+      } else {
+        // Just keep it 14 if it's 'Other'
+        finalStatusNum = 14;
+        updateData.statusSub = sub_status;
+      }
+      updateData.status = finalStatusNum;
+    }
+
     // 3. Auto-flagging Unreachable Leads
     // Check if new status is DNP (2), call disconnected (10), switch off (11)
     if ([2, 10, 11].includes(finalStatusNum)) {
@@ -460,15 +489,38 @@ export async function POST(
       });
 
       // Create Lead Activity Log
-      await tx.leadActivityLog.create({
-        data: {
-          leadId,
-          userId: userPayload.id,
-          fromStatus: lead.status,
-          toStatus: finalStatusNum,
-          remark,
-        },
-      });
+      if (shouldLogMeetingCancelled && finalStatusNum !== 14) {
+        // First log the cancellation so the audit picks it up
+        await tx.leadActivityLog.create({
+          data: {
+            leadId,
+            userId: userPayload.id,
+            fromStatus: lead.status,
+            toStatus: 14,
+            remark: `Meeting Cancelled: ${remark}`,
+          },
+        });
+        // Then log the target transition
+        await tx.leadActivityLog.create({
+          data: {
+            leadId,
+            userId: userPayload.id,
+            fromStatus: 14,
+            toStatus: finalStatusNum,
+            remark: `Auto-routed to Stage ${finalStatusNum} from Meeting Cancelled`,
+          },
+        });
+      } else {
+        await tx.leadActivityLog.create({
+          data: {
+            leadId,
+            userId: userPayload.id,
+            fromStatus: lead.status,
+            toStatus: finalStatusNum,
+            remark,
+          },
+        });
+      }
 
       // Create Audit Log entry
       await tx.auditLog.create({

@@ -1982,12 +1982,9 @@ export default function LeadDetailPage({
                               onChange={(e) => setCancelledReason(e.target.value)}
                               className="block w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded text-slate-300 text-[11px]"
                             >
-                              <option value="Not Interested">Not Interested anymore</option>
-                              <option value="Already Installed">Already Installed Solar</option>
+                              <option value="Not Interested">Not Interested</option>
+                              <option value="Book Meeting Again">Book Meeting Again</option>
                               <option value="Can't Fit Solar">Can't Fit Solar</option>
-                              <option value="Too Expensive">Too Expensive</option>
-                              <option value="Book Meeting Again">Wants to Book Meeting Again</option>
-                              <option value="Other">Other Reason</option>
                             </select>
                           </div>
                         )}
