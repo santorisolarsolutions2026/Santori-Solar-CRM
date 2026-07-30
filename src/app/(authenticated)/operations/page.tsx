@@ -116,6 +116,10 @@ export default function OperationsPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [filterManagerId, setFilterManagerId] = useState<string>('all');
+  const [filterStage, setFilterStage] = useState<string>('all');
+  const [filterDateFrom, setFilterDateFrom] = useState<string>('');
+  const [filterDateTo, setFilterDateTo] = useState<string>('');
 
   const [employees, setEmployees] = useState<any[]>([]);
   const [selectedOrderIds, setSelectedOrderIds] = useState<number[]>([]);
