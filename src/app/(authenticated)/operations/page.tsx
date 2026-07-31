@@ -176,7 +176,7 @@ export default function OperationsPage() {
     if (selectedOrderIds.length === orders.length) {
       setSelectedOrderIds([]);
     } else {
-      setSelectedOrderIds(orders.map(o => o.id));
+      setSelectedOrderIds(filteredOrders.map(o => o.id));
     }
   };
 

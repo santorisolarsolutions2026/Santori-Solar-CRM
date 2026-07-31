@@ -51,7 +51,8 @@ export async function GET(req: Request) {
         }
       } else if (baseRole === 'operations') {
         where.OR = [
-          { assignedOpsId: { in: allowedIds } }
+          { assignedOpsId: { in: allowedIds } },
+          { assignedOpsId: null }
         ];
 
         const opsStatuses = ['finance_verified', 'ops_assigned', 'completed'];

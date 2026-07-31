@@ -53,7 +53,7 @@ export async function POST(req: Request) {
         data: { assignedFinanceId: Number(targetUserId) }
       });
     } else if (department === 'ops') {
-      const hasOpsAssignPerm = userPermissions.includes('finance:ops_assign') || userPermissions.includes('orders:operations') || isITOrAdmin;
+      const hasOpsAssignPerm = userPermissions.includes('finance:ops_assign') || userPermissions.includes('orders:operations') || userPermissions.includes('ops:order_assign') || isITOrAdmin;
       if (!hasOpsAssignPerm) {
         return NextResponse.json({ success: false, message: 'Permission denied: ops assignment required.' }, { status: 403 });
       }
@@ -61,6 +61,14 @@ export async function POST(req: Request) {
       await prisma.order.updateMany({
         where: { id: { in: orderIds.map(Number) } },
         data: { assignedOpsId: Number(targetUserId) }
+      });
+
+      await prisma.order.updateMany({
+        where: {
+          id: { in: orderIds.map(Number) },
+          status: 'finance_verified'
+        },
+        data: { status: 'ops_assigned' }
       });
     } else {
       return NextResponse.json({ success: false, message: 'Invalid department specified.' }, { status: 400 });
