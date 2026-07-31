@@ -129,6 +129,8 @@ export default function OperationsPage() {
   const [assignTargetUserId, setAssignTargetUserId] = useState('');
   const [assignLoading, setAssignLoading] = useState(false);
 
+  const canAssignOps = user?.role === 'admin' || user?.role === 'director' || user?.department?.name === 'IT' || hasPermission('ops:order_assign') || hasPermission('finance:ops_assign') || hasPermission('orders:operations') || hasPermission('orders:assign');
+
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -142,8 +144,8 @@ export default function OperationsPage() {
         console.error(err);
       }
     };
-    if (user && hasPermission('ops:order_assign')) fetchUsers();
-  }, [user, hasPermission]);
+    fetchUsers();
+  }, []);
 
   const getClientSubordinateIds = (userId: number): number[] => {
     const result: number[] = [];
@@ -160,11 +162,38 @@ export default function OperationsPage() {
     return result;
   };
 
-  const opsSubordinates = user ? employees.filter((emp) => {
-    if (!user) return false;
-    const subIds = getClientSubordinateIds(user.id);
-    return subIds.includes(emp.id) && emp.isActive;
-  }) : [];
+  const isITOrAdmin = user?.role === 'admin' || user?.role === 'director' || user?.department?.name === 'IT';
+  const eligibleAssignees = isITOrAdmin
+    ? employees
+    : user
+      ? employees.filter((emp) => {
+          const subIds = getClientSubordinateIds(user.id);
+          return (subIds.includes(emp.id) || emp.id === user.id) && emp.isActive;
+        })
+      : [];
+
+  const handleSingleAssign = async (orderId: number, targetUserId: string) => {
+    try {
+      const res = await fetch('/api/v1/orders/bulk-assign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderIds: [orderId],
+          targetUserId,
+          department: 'ops',
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchOrders();
+      } else {
+        alert(data.message || 'Failed to assign order.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('An error occurred during assignment.');
+    }
+  };
 
   const toggleOrderSelection = (orderId: number) => {
     setSelectedOrderIds(prev =>
@@ -1127,11 +1156,39 @@ export default function OperationsPage() {
           <p className="text-xs text-slate-500 mt-1">Try adjusting your filters or search query.</p>
         </div>
       ) : (
-        <div className="bg-[#111625] border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
+        <>
+          {/* Bulk Assign Operations Member Bar */}
+          {canAssignOps && selectedOrderIds.length > 0 && (
+            <div className="flex items-center justify-between bg-blue-600/10 border border-blue-600/20 px-4 py-3 rounded-xl mb-4 text-xs">
+              <div className="flex items-center gap-2 text-blue-400 font-bold">
+                <Users className="w-4 h-4" />
+                <span>Selected {selectedOrderIds.length} order{selectedOrderIds.length > 1 ? 's' : ''}</span>
+              </div>
+              <button
+                onClick={() => setShowAssignModal(true)}
+                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white font-bold rounded-lg transition-all shadow-md shadow-blue-500/10 flex items-center gap-1.5 cursor-pointer"
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span>Assign / Reassign Operations Member</span>
+              </button>
+            </div>
+          )}
+
+          <div className="bg-[#111625] border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-900/50 border-b border-slate-800">
+                  {canAssignOps && (
+                    <th className="px-3 py-3 w-10 text-center">
+                      <input
+                        type="checkbox"
+                        checked={filteredOrders.length > 0 && selectedOrderIds.length === filteredOrders.length}
+                        onChange={toggleAllOrders}
+                        className="accent-blue-500 w-3.5 h-3.5 cursor-pointer"
+                      />
+                    </th>
+                  )}
                   <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-slate-400 font-bold">Order Details</th>
                   <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-slate-400 font-bold">Manager</th>
                   <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-slate-400 font-bold">Current Stage</th>
@@ -1165,7 +1222,17 @@ export default function OperationsPage() {
                   }
 
                   return (
-                    <tr key={order.id} className="hover:bg-slate-900/30 transition-colors group">
+                    <tr key={order.id} className={`hover:bg-slate-900/30 transition-colors group ${selectedOrderIds.includes(order.id) ? 'bg-blue-500/5' : ''}`}>
+                      {canAssignOps && (
+                        <td className="px-3 py-4 text-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedOrderIds.includes(order.id)}
+                            onChange={() => toggleOrderSelection(order.id)}
+                            className="accent-blue-500 w-3.5 h-3.5 cursor-pointer"
+                          />
+                        </td>
+                      )}
                       <td className="px-5 py-4">
                         <div className="flex flex-col">
                           <span className="font-mono font-bold text-white text-xs">{order.orderCode}</span>
@@ -1180,12 +1247,27 @@ export default function OperationsPage() {
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
+                          <div className="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700 shrink-0">
                             <User className="w-3 h-3 text-slate-400" />
                           </div>
-                          <span className="text-xs font-semibold text-slate-300">
-                            {order.assignedOps?.name || 'Unassigned'}
-                          </span>
+                          {canAssignOps ? (
+                            <select
+                              value={order.assignedOpsId || ''}
+                              onChange={(e) => handleSingleAssign(order.id, e.target.value)}
+                              className="bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                            >
+                              <option value="">-- Unassigned --</option>
+                              {eligibleAssignees.map((emp) => (
+                                <option key={emp.id} value={emp.id}>
+                                  {emp.name} {emp.id === user?.id ? '(You)' : ''}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span className="text-xs font-semibold text-slate-300">
+                              {order.assignedOps?.name || 'Unassigned'}
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="px-5 py-4">
@@ -1222,6 +1304,7 @@ export default function OperationsPage() {
             </table>
           </div>
         </div>
+        </>
       )}
 
       {/* Selected Order Detail Modal - Widescreen dual column layout */}
@@ -2727,6 +2810,60 @@ export default function OperationsPage() {
           </div>
         </div>
       )}
+
+      {/* Bulk Assign Operations Member Modal */}
+      {showAssignModal && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="w-full max-w-md bg-[#111625] border border-slate-800 rounded-xl shadow-2xl overflow-hidden p-6 animate-fade-in-up space-y-4">
+            <div className="flex justify-between items-center pb-3 border-b border-slate-800">
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider">Assign Operations Member</h3>
+              <button onClick={() => { setShowAssignModal(false); setAssignTargetUserId(''); }} className="text-slate-400 hover:text-white cursor-pointer">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-300">
+              Assign <strong className="text-white">{selectedOrderIds.length}</strong> selected order{selectedOrderIds.length > 1 ? 's' : ''} to an operations member in your reporting hierarchy.
+            </p>
+
+            <div className="space-y-1.5">
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Select Team Member</label>
+              <select
+                value={assignTargetUserId}
+                onChange={(e) => setAssignTargetUserId(e.target.value)}
+                className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
+              >
+                <option value="">-- Choose Team Member --</option>
+                {eligibleAssignees.map((emp) => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.name} {emp.designation?.name ? `(${emp.designation.name})` : ''} {emp.id === user?.id ? '(You)' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => { setShowAssignModal(false); setAssignTargetUserId(''); }}
+                className="px-4 py-2 bg-slate-900 border border-slate-800 text-slate-400 rounded-lg text-xs font-bold hover:text-white transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkAssign}
+                disabled={!assignTargetUserId || assignLoading}
+                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg text-xs font-bold transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shadow-md shadow-blue-500/10"
+              >
+                {assignLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Users className="w-3.5 h-3.5" />}
+                <span>Confirm Assignment</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
