@@ -63,7 +63,7 @@ interface Order {
   subsidyAmount: number | null;
   createdAt: string;
   assignedOpsId?: number | null;
-  assignedOps?: { name: string } | null;
+  assignedOps?: { id?: number; name: string; role?: string; designation?: { name: string } | null } | null;
   lead: {
     id: number;
     customerName: string;
@@ -1090,7 +1090,7 @@ export default function OperationsPage() {
         </div>
 
         <div className="w-full sm:w-auto min-w-[150px]">
-          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Manager / Assigned To</label>
+          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Assigned To</label>
           <select
             value={filterManagerId}
             onChange={(e) => setFilterManagerId(e.target.value)}
@@ -1190,7 +1190,7 @@ export default function OperationsPage() {
                     </th>
                   )}
                   <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-slate-400 font-bold">Order Details</th>
-                  <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-slate-400 font-bold">Manager</th>
+                  <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-slate-400 font-bold">Assigned To</th>
                   <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-slate-400 font-bold">Current Stage</th>
                   <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-slate-400 font-bold">Order Date</th>
                   <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-slate-400 font-bold text-right">Actions</th>
@@ -1250,24 +1250,36 @@ export default function OperationsPage() {
                           <div className="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700 shrink-0">
                             <User className="w-3 h-3 text-slate-400" />
                           </div>
-                          {canAssignOps ? (
-                            <select
-                              value={order.assignedOpsId || ''}
-                              onChange={(e) => handleSingleAssign(order.id, e.target.value)}
-                              className="bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
-                            >
-                              <option value="">-- Unassigned --</option>
-                              {eligibleAssignees.map((emp) => (
-                                <option key={emp.id} value={emp.id}>
-                                  {emp.name} {emp.id === user?.id ? '(You)' : ''}
-                                </option>
-                              ))}
-                            </select>
-                          ) : (
-                            <span className="text-xs font-semibold text-slate-300">
-                              {order.assignedOps?.name || 'Unassigned'}
-                            </span>
-                          )}
+                          <div className="flex flex-col gap-1">
+                            {canAssignOps ? (
+                              <select
+                                value={order.assignedOpsId || ''}
+                                onChange={(e) => handleSingleAssign(order.id, e.target.value)}
+                                className="bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                              >
+                                <option value="">-- Unassigned --</option>
+                                {eligibleAssignees.map((emp) => (
+                                  <option key={emp.id} value={emp.id}>
+                                    {emp.name} {emp.designation?.name ? `(${emp.designation.name})` : emp.role ? `(${emp.role.toUpperCase()})` : ''} {emp.id === user?.id ? '(You)' : ''}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : (
+                              <span className="text-xs font-semibold text-slate-300">
+                                {order.assignedOps?.name || 'Unassigned'}
+                              </span>
+                            )}
+                            {(() => {
+                              const currentAssignee = employees.find(e => e.id === order.assignedOpsId) || (order.assignedOps as any);
+                              const desig = currentAssignee?.designation?.name || currentAssignee?.role;
+                              if (!desig || !order.assignedOpsId) return null;
+                              return (
+                                <span className="inline-block text-[9px] font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-full w-fit uppercase tracking-wider">
+                                  {desig}
+                                </span>
+                              );
+                            })()}
+                          </div>
                         </div>
                       </td>
                       <td className="px-5 py-4">
