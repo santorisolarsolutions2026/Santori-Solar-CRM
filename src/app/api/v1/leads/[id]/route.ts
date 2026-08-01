@@ -399,7 +399,7 @@ export async function DELETE(
 
     // Check permission to delete leads
     const userPermissions = await getUserPermissions(userPayload.id);
-    if (!userPermissions.includes('leads:delete')) {
+    if (!userPermissions.includes('leads:delete') && !userPermissions.includes('sales:lead_delete')) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to delete leads.' }, { status: 403 });
     }
 

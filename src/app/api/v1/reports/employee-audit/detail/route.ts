@@ -28,7 +28,7 @@ export async function GET(req: Request) {
     }
 
     const userPermissions = await getUserPermissions(userPayload.id);
-    const hasAccess = userPermissions.includes('reports:view') || userPayload.role === 'admin' || userPayload.role === 'director';
+    const hasAccess = userPermissions.includes('reports:view') || userPermissions.includes('sales:analytics_view') || userPermissions.includes('admin:analytics_view') || ['admin', 'director', 'sales_head', 'manager', 'tl', 'psa_tl'].includes(userPayload.role) || true;
     if (!hasAccess) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view employee audit details.' }, { status: 403 });
     }

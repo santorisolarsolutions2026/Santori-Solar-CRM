@@ -1491,6 +1491,8 @@ export default function LeadDetailPage({
     hasPermission('leads:track') || 
     hasPermission('sales:lead_assign') || 
     hasPermission('leads:assign') || 
+    hasPermission('sales:lead_delete') || 
+    hasPermission('leads:delete') || 
     hasPermission('sales:lead_view_all') || 
     hasPermission('leads:view_all') || 
     hasPermission('leads:view') ||

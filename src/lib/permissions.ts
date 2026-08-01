@@ -21,6 +21,7 @@ export const DEPARTMENT_PERMISSIONS: {
     { key: 'sales:meeting_done', label: 'Record Meetings', group: 'Sales Chronological Workflow', description: '7. Record meeting audio, GPS location, and outcome (Sale Done, Follow Up, Not Interested).' },
     { key: 'sales:order_punch', label: 'Fill Order Punching Form & Submit', group: 'Sales Chronological Workflow', description: '8. Fill complete order punching form upon Sale Done and submit to Finance.' },
     { key: 'sales:lead_track', label: 'View Track Journey', group: 'Sales Chronological Workflow', description: '9. Inspect full timestamped audit timeline for lead progression.' },
+    { key: 'sales:lead_delete', label: 'Delete Lead', group: 'Sales Chronological Workflow', description: '10. Permanently delete leads or bulk delete leads from the pipeline.' },
   ],
   finance: [
     { key: 'finance:view_all_orders', label: 'View All Orders', group: 'Finance Chronological Workflow', description: '1. View all submitted orders in the finance queue.' },
@@ -111,7 +112,7 @@ export function getDefaultPermissionsForRole(role: string): string[] {
     case 'director':
     case 'it':
       return [
-        'sales:lead_add', 'sales:lead_import', 'sales:lead_assign', 'sales:lead_view_all', 'sales:stage_change', 'sales:designation_change', 'sales:attendance_view', 'sales:lead_track', 'sales:analytics_view', 'sales:order_punch', 'sales:meeting_book', 'sales:meeting_done', 'sales:finance_assign',
+        'sales:lead_add', 'sales:lead_import', 'sales:lead_assign', 'sales:lead_view_all', 'sales:stage_change', 'sales:designation_change', 'sales:attendance_view', 'sales:lead_track', 'sales:analytics_view', 'sales:order_punch', 'sales:meeting_book', 'sales:meeting_done', 'sales:finance_assign', 'sales:lead_delete',
         'finance:order_verify_reject', 'finance:order_assign', 'finance:ledger_record', 'finance:ledger_delete', 'finance:designation_change', 'finance:attendance_view', 'finance:analytics_view', 'finance:ops_assign',
         'ops:delivery_manage', 'ops:delivered_orders', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:designation_change', 'ops:attendance_view', 'ops:analytics_view', 'ops:subsidy_manage',
         'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:track',

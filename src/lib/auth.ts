@@ -188,8 +188,8 @@ export function resolveUserPermissions(user: UserPermissionsInput): string[] {
 
   // Implicit page level permissions
   const leadPerms = [
-    'sales:lead_add', 'sales:lead_import', 'sales:stage_change', 'sales:lead_view_all', 'sales:lead_track', 'sales:lead_assign',
-    'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:track', 'leads:assign', 'leads:view_sales_pipeline', 'leads:book_meeting', 'leads:meeting_done'
+    'sales:lead_add', 'sales:lead_import', 'sales:stage_change', 'sales:lead_view_all', 'sales:lead_track', 'sales:lead_assign', 'sales:lead_delete',
+    'leads:create', 'leads:import', 'leads:edit', 'leads:change_status', 'leads:view_all', 'leads:track', 'leads:assign', 'leads:delete', 'leads:view_sales_pipeline', 'leads:book_meeting', 'leads:meeting_done'
   ];
   if (leadPerms.some(p => finalPermissions.has(p))) {
     finalPermissions.add('leads:view');

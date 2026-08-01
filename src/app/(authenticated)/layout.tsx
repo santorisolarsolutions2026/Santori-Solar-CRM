@@ -612,6 +612,12 @@ export default function AuthenticatedLayout({
           icon: Users,
           permission: null,
         },
+        {
+          name: 'Santori Standings',
+          path: '/standings',
+          icon: Trophy,
+          permission: null,
+        },
       ]
     },
     {
@@ -763,7 +769,7 @@ export default function AuthenticatedLayout({
         <div className="mx-4 mb-4 shrink-0">
           <button
             type="button"
-            onClick={() => setLeaderboardOpen(true)}
+            onClick={() => router.push('/standings')}
             className="w-full p-3 bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 rounded-xl transition-all cursor-pointer group text-left shadow-md flex items-center justify-between"
           >
             <div className="flex items-center gap-2.5">
@@ -932,7 +938,7 @@ export default function AuthenticatedLayout({
                 type="button"
                 onClick={() => {
                   setSidebarOpen(false);
-                  setLeaderboardOpen(true);
+                  router.push('/standings');
                 }}
                 className="w-full p-3 bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 rounded-xl transition-all cursor-pointer group text-left shadow-md flex items-center justify-between"
               >
