@@ -39,6 +39,7 @@ import {
   Camera,
   Users,
   UserCheck,
+  RotateCcw,
 } from 'lucide-react';
 import Link from 'next/link';
 import { BeautifulAudioPlayer } from '@/components/BeautifulAudioPlayer';
@@ -376,6 +377,12 @@ export default function LeadDetailPage({
   const [followUpTime, setFollowUpTime] = useState('');
   const [disqualifiedReason, setDisqualifiedReason] = useState('Shading Issue');
   const [cancelledReason, setCancelledReason] = useState('Not Interested');
+
+  // Revert to Fresh Lead modal states
+  const [showRevertFreshModal, setShowRevertFreshModal] = useState(false);
+  const [revertClearHistory, setRevertClearHistory] = useState(true);
+  const [revertRemark, setRevertRemark] = useState('');
+  const [revertingFresh, setRevertingFresh] = useState(false);
 
   // Form B (Meeting Booking) modal state
   const [showFormB, setShowFormB] = useState(false);
@@ -966,6 +973,46 @@ export default function LeadDetailPage({
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  // Handle Revert to Fresh Lead submit
+  const handleRevertFreshSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!leadId) return;
+    if (!revertRemark.trim()) {
+      alert('Please provide a remark for reverting this lead to Fresh.');
+      return;
+    }
+
+    setRevertingFresh(true);
+    try {
+      const res = await fetch(`/api/v1/leads/${leadId}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to_status: 1,
+          remark: revertRemark,
+          clearHistory: revertClearHistory,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setShowRevertFreshModal(false);
+        setRevertRemark('');
+        fetchLeadDetails();
+        alert(revertClearHistory 
+          ? 'Lead successfully reverted to Fresh Lead! Track journey history cleared.' 
+          : 'Lead successfully reverted to Fresh Lead!');
+      } else {
+        alert(data.message || 'Failed to revert lead.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error reverting lead.');
+    } finally {
+      setRevertingFresh(false);
     }
   };
 
@@ -1700,12 +1747,26 @@ export default function LeadDetailPage({
         </div>
 
         {/* Action controls */}
-        {(hasPermission('leads:edit') || hasPermission('leads:delete')) && (
-          <div className="flex gap-2">
+        {(hasPermission('leads:edit') || hasPermission('leads:delete') || user?.role === 'admin' || user?.role?.startsWith('admin:') || user?.role === 'director') && (
+          <div className="flex gap-2 items-center flex-wrap">
+            {(user?.role === 'admin' || user?.role?.startsWith('admin:') || user?.role === 'director') && lead.status !== 1 && lead.status !== 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setRevertRemark('');
+                  setRevertClearHistory(true);
+                  setShowRevertFreshModal(true);
+                }}
+                className="py-2 px-3.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 transition-all font-semibold text-xs flex items-center gap-1.5 cursor-pointer shadow-md"
+              >
+                <RotateCcw className="w-3.5 h-3.5 text-blue-400" />
+                <span>Revert to Fresh</span>
+              </button>
+            )}
             {!lead.isActive && hasPermission('leads:edit') && (
               <button
                 onClick={() => handleActivateLead(lead.id)}
-                className="py-2 px-4 rounded-lg bg-emerald-950/20 text-emerald-400 hover:text-emerald-300 border border-emerald-900/30 transition-all font-semibold text-xs flex items-center gap-1.5"
+                className="py-2 px-4 rounded-lg bg-emerald-950/20 text-emerald-400 hover:text-emerald-300 border border-emerald-900/30 transition-all font-semibold text-xs flex items-center gap-1.5 cursor-pointer"
               >
                 <Check className="w-4 h-4" />
                 <span>Activate Lead</span>
@@ -1714,7 +1775,7 @@ export default function LeadDetailPage({
             {hasPermission('leads:delete') && (
               <button
                 onClick={() => handleDeleteLead(lead.id)}
-                className="py-2 px-4 rounded-lg bg-red-950/20 text-red-400 hover:text-red-300 border border-red-900/30 transition-all font-semibold text-xs flex items-center gap-1.5"
+                className="py-2 px-4 rounded-lg bg-red-950/20 text-red-400 hover:text-red-300 border border-red-900/30 transition-all font-semibold text-xs flex items-center gap-1.5 cursor-pointer"
               >
                 Delete Lead
               </button>
@@ -3743,6 +3804,96 @@ export default function LeadDetailPage({
             }
           }}
         />
+      )}
+      {/* Revert to Fresh Lead Modal */}
+      {showRevertFreshModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="w-full max-w-md bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div className="p-5 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+                  <RotateCcw className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-white">Revert to Fresh Lead</h3>
+                  <p className="text-[11px] text-slate-400">Reset lead status back to Fresh Lead (Stage 1)</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowRevertFreshModal(false)}
+                className="text-slate-400 hover:text-white cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleRevertFreshSubmit} className="p-5 space-y-4">
+              <div className="p-3 bg-blue-500/5 border border-blue-500/20 rounded-xl text-xs text-slate-300 leading-relaxed">
+                <span className="font-bold text-blue-400">Note:</span> Reverting this lead to Fresh Lead will automatically clear its current sales assignments and return the lead to <span className="font-bold text-white">Unassigned</span>.
+              </div>
+
+              {/* History Deletion Option */}
+              <label className="flex items-start gap-3 p-3 bg-slate-900/80 border border-slate-800 rounded-xl cursor-pointer hover:border-slate-700 transition-all select-none">
+                <input
+                  type="checkbox"
+                  checked={revertClearHistory}
+                  onChange={(e) => setRevertClearHistory(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded border-slate-700 bg-slate-950 text-blue-600 focus:ring-0 cursor-pointer"
+                />
+                <div>
+                  <p className="text-xs font-bold text-white">Clear track journey history</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5 leading-normal">
+                    {revertClearHistory 
+                      ? "Yes — Delete previous activity logs and begin showing only the fresh lead entry in track journey." 
+                      : "No — Preserve previous activity logs in the track journey history."}
+                  </p>
+                </div>
+              </label>
+
+              {/* Mandatory Remark */}
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                  Remark / Reason for Reverting *
+                </label>
+                <textarea
+                  required
+                  value={revertRemark}
+                  onChange={(e) => setRevertRemark(e.target.value)}
+                  placeholder="Enter reason for reverting this lead to Fresh Lead..."
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white h-20 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              {/* Buttons */}
+              <div className="pt-3 border-t border-slate-800/80 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowRevertFreshModal(false)}
+                  className="py-2 px-4 bg-slate-900 border border-slate-800 text-slate-400 rounded-xl font-bold text-xs cursor-pointer hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={revertingFresh}
+                  className="py-2 px-5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-xs cursor-pointer shadow-lg shadow-blue-500/20 flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  {revertingFresh ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: '#ffffff' }} />
+                      <span>Reverting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Confirm Revert to Fresh</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

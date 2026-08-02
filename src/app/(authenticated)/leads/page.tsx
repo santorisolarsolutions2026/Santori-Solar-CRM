@@ -209,9 +209,7 @@ export default function LeadsPage() {
   // Bulk Reassignment States
   const [showBulkAssignModal, setShowBulkAssignModal] = useState(false);
   const [showBulkStageModal, setShowBulkStageModal] = useState(false);
-  const [bulkManagerId, setBulkManagerId] = useState('UNCHANGED');
-  const [bulkTlId, setBulkTlId] = useState('UNCHANGED');
-  const [bulkConsultantId, setBulkConsultantId] = useState('UNCHANGED');
+  const [bulkAssigneeId, setBulkAssigneeId] = useState('UNCHANGED');
   const [bulkStage, setBulkStage] = useState('UNCHANGED');
   const [bulkAssigning, setBulkAssigning] = useState(false);
   const [bulkConfirmModal, setBulkConfirmModal] = useState<{ isOpen: boolean; step: 1 | 2 } | null>(null);
@@ -422,8 +420,8 @@ export default function LeadsPage() {
     e.preventDefault();
     if (selectedIds.length === 0) return;
 
-    if (bulkManagerId === 'UNCHANGED' && bulkTlId === 'UNCHANGED' && bulkConsultantId === 'UNCHANGED') {
-      alert('Please select at least one team role to assign or unassign.');
+    if (bulkAssigneeId === 'UNCHANGED') {
+      alert('Please select a team member to assign.');
       return;
     }
 
@@ -433,17 +431,10 @@ export default function LeadsPage() {
   const executeBulkAssign = async () => {
     try {
       setBulkAssigning(true);
-      const payload: any = { leadIds: selectedIds };
-
-      if (bulkManagerId !== 'UNCHANGED') {
-        payload.assignedManagerId = bulkManagerId === 'UNASSIGN' ? null : Number(bulkManagerId);
-      }
-      if (bulkTlId !== 'UNCHANGED') {
-        payload.assignedTlId = bulkTlId === 'UNASSIGN' ? null : Number(bulkTlId);
-      }
-      if (bulkConsultantId !== 'UNCHANGED') {
-        payload.assignedConsultantId = bulkConsultantId === 'UNASSIGN' ? null : Number(bulkConsultantId);
-      }
+      const payload: any = {
+        leadIds: selectedIds,
+        targetUserId: bulkAssigneeId === 'UNASSIGN' ? null : Number(bulkAssigneeId),
+      };
 
       const res = await fetch('/api/v1/leads/bulk-assign', {
         method: 'POST',
@@ -457,6 +448,7 @@ export default function LeadsPage() {
       if (data.success) {
         setShowBulkAssignModal(false);
         setSelectedIds([]);
+        setBulkAssigneeId('UNCHANGED');
         fetchLeads();
       }
     } catch (err) {
@@ -1707,8 +1699,8 @@ export default function LeadsPage() {
                   <UserCheck className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-white">Bulk Reassign Team</h3>
-                  <p className="text-[11px] text-slate-400">Reassign Manager, TL, or Consultant for {selectedIds.length} selected lead(s).</p>
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-white">Bulk Assign Lead</h3>
+                  <p className="text-[11px] text-slate-400">Assign a single team member for {selectedIds.length} selected lead(s).</p>
                 </div>
               </div>
               <button onClick={() => setShowBulkAssignModal(false)} className="text-slate-400 hover:text-white cursor-pointer">
@@ -1724,6 +1716,7 @@ export default function LeadsPage() {
                   if (isTopAdmin) return teamMembers;
 
                   const descendants = new Set<number>();
+                  descendants.add(user.id);
                   const queue: number[] = [user.id];
                   while (queue.length > 0) {
                     const currentId = queue.shift()!;
@@ -1739,52 +1732,20 @@ export default function LeadsPage() {
                 })();
 
                 return (
-                  <>
-                    {/* Select Manager */}
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                        Assigned Manager
-                      </label>
-                      <UserSelect
-                        users={assignableMembers}
-                        value={bulkManagerId === 'UNCHANGED' || bulkManagerId === 'UNASSIGN' ? null : bulkManagerId}
-                        onChange={(val) => setBulkManagerId(val ? String(val) : 'UNASSIGN')}
-                        placeholder="-- Select Manager --"
-                      />
-                    </div>
-
-                    {/* Select Team Leader */}
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                        Assigned Team Leader (TL)
-                      </label>
-                      <UserSelect
-                        users={assignableMembers}
-                        value={bulkTlId === 'UNCHANGED' || bulkTlId === 'UNASSIGN' ? null : bulkTlId}
-                        onChange={(val) => setBulkTlId(val ? String(val) : 'UNASSIGN')}
-                        placeholder="-- Select Team Leader --"
-                      />
-                    </div>
-
-                    {/* Select Consultant */}
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                        Assigned Consultant / PSA
-                      </label>
-                      <UserSelect
-                        users={assignableMembers.filter((m: any) => {
-                          const deptName = (m.department?.name || '').toLowerCase().trim();
-                          const roleLower = (m.role || '').toLowerCase().trim();
-                          const isSalesDept = deptName.includes('sales') || deptName.includes('psa') || deptName.includes('marketing');
-                          const isSalesRole = ['sales_head', 'manager', 'tl', 'psa_tl', 'consultant', 'psa'].includes(roleLower) || roleLower.includes('sales') || roleLower.includes('psa');
-                          return isSalesDept || isSalesRole;
-                        })}
-                        value={bulkConsultantId === 'UNCHANGED' || bulkConsultantId === 'UNASSIGN' ? null : bulkConsultantId}
-                        onChange={(val) => setBulkConsultantId(val ? String(val) : 'UNASSIGN')}
-                        placeholder="-- Select Consultant --"
-                      />
-                    </div>
-                  </>
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                      Assign Lead To Employee
+                    </label>
+                    <UserSelect
+                      users={assignableMembers}
+                      value={bulkAssigneeId === 'UNCHANGED' || bulkAssigneeId === 'UNASSIGN' ? null : bulkAssigneeId}
+                      onChange={(val) => setBulkAssigneeId(val ? String(val) : 'UNASSIGN')}
+                      placeholder="-- Select Single Team Member --"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-2.5 leading-relaxed bg-slate-900/60 border border-slate-800/80 p-2.5 rounded-lg">
+                      <span className="font-bold text-blue-400">Hierarchy Note:</span> Selecting a team member automatically links their supervisors up the reporting chain. The lead will be visible to the assignee and everyone above them.
+                    </p>
+                  </div>
                 );
               })()}
 

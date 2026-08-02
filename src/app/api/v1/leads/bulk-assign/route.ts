@@ -22,24 +22,38 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { leadIds, assignedManagerId, assignedTlId, assignedConsultantId, status } = body;
+    const { leadIds, assigneeId, targetUserId, assignedManagerId, assignedTlId, assignedConsultantId, status } = body;
 
     if (!Array.isArray(leadIds) || leadIds.length === 0) {
       return NextResponse.json({ success: false, message: 'Please select at least one lead.' }, { status: 400 });
     }
 
+    const singleAssigneeId = assigneeId || targetUserId;
     const updateData: any = {};
 
-    if (assignedManagerId !== undefined) {
-      updateData.assignedManagerId = assignedManagerId === null || assignedManagerId === '' ? null : Number(assignedManagerId);
-    }
-
-    if (assignedTlId !== undefined) {
-      updateData.assignedTlId = assignedTlId === null || assignedTlId === '' ? null : Number(assignedTlId);
-    }
-
-    if (assignedConsultantId !== undefined) {
-      updateData.assignedConsultantId = assignedConsultantId === null || assignedConsultantId === '' ? null : Number(assignedConsultantId);
+    if (singleAssigneeId !== undefined && singleAssigneeId !== 'UNCHANGED') {
+      if (singleAssigneeId === null || singleAssigneeId === '' || singleAssigneeId === 'UNASSIGN') {
+        updateData.assignedManagerId = null;
+        updateData.assignedTlId = null;
+        updateData.assignedConsultantId = null;
+      } else {
+        const targetIdNum = Number(singleAssigneeId);
+        const { resolveHierarchyAssignments } = await import('@/lib/hierarchy');
+        const resolved = await resolveHierarchyAssignments(targetIdNum);
+        updateData.assignedManagerId = resolved.assignedManagerId;
+        updateData.assignedTlId = resolved.assignedTlId;
+        updateData.assignedConsultantId = resolved.assignedConsultantId;
+      }
+    } else {
+      if (assignedManagerId !== undefined) {
+        updateData.assignedManagerId = assignedManagerId === null || assignedManagerId === '' || assignedManagerId === 'UNASSIGN' ? null : Number(assignedManagerId);
+      }
+      if (assignedTlId !== undefined) {
+        updateData.assignedTlId = assignedTlId === null || assignedTlId === '' || assignedTlId === 'UNASSIGN' ? null : Number(assignedTlId);
+      }
+      if (assignedConsultantId !== undefined) {
+        updateData.assignedConsultantId = assignedConsultantId === null || assignedConsultantId === '' || assignedConsultantId === 'UNASSIGN' ? null : Number(assignedConsultantId);
+      }
     }
 
     if (status !== undefined && status !== null && status !== 'UNCHANGED') {
@@ -60,7 +74,7 @@ export async function POST(req: Request) {
         if (tid !== userPayload.id && !subordinateIds.includes(tid)) {
           return NextResponse.json({
             success: false,
-            message: 'Forbidden. You can only bulk assign leads to yourself or team members in your hierarchy tree.'
+            message: 'Forbidden. You can only assign leads to yourself or team members in your hierarchy tree.'
           }, { status: 403 });
         }
       }

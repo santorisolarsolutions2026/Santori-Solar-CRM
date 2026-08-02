@@ -258,6 +258,8 @@ export default function FinancePage() {
   const [filterMinAmount, setFilterMinAmount] = useState('');
   const [filterMaxAmount, setFilterMaxAmount] = useState('');
   const [filterOrderStatus, setFilterOrderStatus] = useState('all'); // all | submitted | finance_verified | ops_assigned | completed
+  const [filterSubmittedBy, setFilterSubmittedBy] = useState('all');
+  const [filterVerifiedBy, setFilterVerifiedBy] = useState('all');
 
   const handleResetFilters = () => {
     setFilterDateRange('all');
@@ -268,6 +270,8 @@ export default function FinancePage() {
     setFilterMinAmount('');
     setFilterMaxAmount('');
     setFilterOrderStatus('all');
+    setFilterSubmittedBy('all');
+    setFilterVerifiedBy('all');
   };
 
   const fetchLedgerData = async () => {
@@ -693,6 +697,16 @@ export default function FinancePage() {
       }
     }
 
+    // 6. Submitted By Filter
+    if (filterSubmittedBy !== 'all') {
+      if (!order.submittedBy || order.submittedBy.id !== parseInt(filterSubmittedBy, 10)) return false;
+    }
+
+    // 7. Verified By Filter
+    if (filterVerifiedBy !== 'all') {
+      if (!order.financeProcessedBy || order.financeProcessedBy.id !== parseInt(filterVerifiedBy, 10)) return false;
+    }
+
     return true;
   });
 
@@ -729,7 +743,7 @@ export default function FinancePage() {
             type="button"
             onClick={() => setShowFilters(!showFilters)}
             className={`px-3 py-2 border rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              showFilters || filterDateRange !== 'all' || filterPaymentMethod !== 'all' || filterBalanceStatus !== 'all' || filterMinAmount || filterMaxAmount || filterOrderStatus !== 'all'
+              showFilters || filterDateRange !== 'all' || filterPaymentMethod !== 'all' || filterBalanceStatus !== 'all' || filterMinAmount || filterMaxAmount || filterOrderStatus !== 'all' || filterSubmittedBy !== 'all' || filterVerifiedBy !== 'all'
                 ? 'bg-blue-500/10 border-blue-500/30 text-blue-600 dark:text-blue-400'
                 : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-750'
             }`}
@@ -737,7 +751,7 @@ export default function FinancePage() {
             <SlidersHorizontal className="w-3.5 h-3.5" />
             <span className="relative">
               Filters
-              {(filterDateRange !== 'all' || filterPaymentMethod !== 'all' || filterBalanceStatus !== 'all' || filterMinAmount || filterMaxAmount || filterOrderStatus !== 'all') && (
+              {(filterDateRange !== 'all' || filterPaymentMethod !== 'all' || filterBalanceStatus !== 'all' || filterMinAmount || filterMaxAmount || filterOrderStatus !== 'all' || filterSubmittedBy !== 'all' || filterVerifiedBy !== 'all') && (
                 <span className="absolute -top-1 -right-2 w-1.5 h-1.5 bg-blue-600 rounded-full animate-ping" />
               )}
             </span>
@@ -762,7 +776,7 @@ export default function FinancePage() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
             {/* Date Range Filter */}
             <div className="space-y-1">
               <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Date Created</label>
@@ -822,6 +836,36 @@ export default function FinancePage() {
                 <option value="finance_verified">Verified</option>
                 <option value="ops_assigned">Scheduled</option>
                 <option value="completed">Completed</option>
+              </select>
+            </div>
+
+            {/* Submitted By Filter */}
+            <div className="space-y-1">
+              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Submitted By</label>
+              <select
+                value={filterSubmittedBy}
+                onChange={(e) => setFilterSubmittedBy(e.target.value)}
+                className="w-full px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700 capitalize"
+              >
+                <option value="all">All Submitters</option>
+                {Array.from(new Map(orders.filter(o => o.submittedBy).map(o => [o.submittedBy.id, o.submittedBy])).values()).map(sub => (
+                  <option key={sub.id} value={sub.id.toString()}>{sub.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Verified By Filter */}
+            <div className="space-y-1">
+              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Verified By</label>
+              <select
+                value={filterVerifiedBy}
+                onChange={(e) => setFilterVerifiedBy(e.target.value)}
+                className="w-full px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700 capitalize"
+              >
+                <option value="all">All Verifiers</option>
+                {Array.from(new Map(orders.filter(o => o.financeProcessedBy).map(o => [o.financeProcessedBy!.id, o.financeProcessedBy!])).values()).map(ver => (
+                  <option key={ver.id} value={ver.id.toString()}>{ver.name}</option>
+                ))}
               </select>
             </div>
           </div>

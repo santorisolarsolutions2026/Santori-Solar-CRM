@@ -127,5 +127,71 @@ export async function getLeadVisibilityCondition(
   };
 }
 
+/**
+ * Automatically resolves the complete reporting hierarchy assignments for a selected target team member ID.
+ * Populates assignedConsultantId, assignedTlId, and assignedManagerId based on targetUser's role and reportsTo chain.
+ */
+export async function resolveHierarchyAssignments(targetUserId: number) {
+  const users = await prisma.user.findMany({
+    where: { isActive: true },
+    select: {
+      id: true,
+      reportsTo: true,
+      role: true,
+      designation: { select: { name: true, level: true } }
+    }
+  });
+
+  const userMap = new Map(users.map(u => [u.id, u]));
+  const target = userMap.get(targetUserId);
+
+  if (!target) {
+    return { assignedManagerId: null, assignedTlId: null, assignedConsultantId: null };
+  }
+
+  let assignedManagerId: number | null = null;
+  let assignedTlId: number | null = null;
+  let assignedConsultantId: number | null = null;
+
+  const desName = target.designation?.name || '';
+  const level = target.designation?.level ?? 6;
+
+  const isManagerType = level <= 3 || desName.includes('Manager') || desName.includes('Head') || target.role === 'admin' || target.role === 'director';
+  const isTlType = !isManagerType && (level === 4 || desName.includes('TL') || desName.includes('Team Leader'));
+
+  if (isManagerType) {
+    assignedManagerId = target.id;
+  } else if (isTlType) {
+    assignedTlId = target.id;
+    if (target.reportsTo) {
+      const boss = userMap.get(target.reportsTo);
+      if (boss) assignedManagerId = boss.id;
+    }
+  } else {
+    // Consultant / Executive / PSA
+    assignedConsultantId = target.id;
+    if (target.reportsTo) {
+      const parent = userMap.get(target.reportsTo);
+      if (parent) {
+        const parentDes = parent.designation?.name || '';
+        const parentLevel = parent.designation?.level ?? 6;
+        const parentIsManager = parentLevel <= 3 || parentDes.includes('Manager') || parentDes.includes('Head') || parent.role === 'admin' || parent.role === 'director';
+
+        if (parentIsManager) {
+          assignedManagerId = parent.id;
+        } else {
+          assignedTlId = parent.id;
+          if (parent.reportsTo) {
+            const grandParent = userMap.get(parent.reportsTo);
+            if (grandParent) assignedManagerId = grandParent.id;
+          }
+        }
+      }
+    }
+  }
+
+  return { assignedManagerId, assignedTlId, assignedConsultantId };
+}
+
 
 

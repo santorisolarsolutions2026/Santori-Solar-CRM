@@ -80,7 +80,7 @@ export async function POST(
     }
 
     const body = await req.json();
-    const { to_status, remark, sub_status, followup_at, formB, formC } = body;
+    const { to_status, remark, sub_status, followup_at, formB, formC, clearHistory } = body;
 
     const toStatusNum = parseInt(to_status, 10);
     if (isNaN(toStatusNum) || toStatusNum < 1 || toStatusNum > 14) {
@@ -88,7 +88,19 @@ export async function POST(
     }
 
     const { role: userRole, permissions: userPermissions, department } = await getUserSession(userPayload.id);
-    const hasChangeStatus = userPermissions.includes('leads:change_status') || userPermissions.includes('sales:stage_change') || ['admin', 'director'].includes(userRole) || department?.name === 'IT';
+
+    // Revert to Fresh Lead (Stage 1) restriction check: Only Admin / Director can perform this action
+    const isUserAdmin = ['admin', 'director'].includes(userPayload.role) || userPayload.role?.startsWith('admin:');
+    if (toStatusNum === 1 && lead.status !== 1 && lead.status !== 0) {
+      if (!isUserAdmin) {
+        return NextResponse.json({
+          success: false,
+          message: 'Forbidden. Reverting a lead to Fresh Lead status can only be performed by an Admin.'
+        }, { status: 403 });
+      }
+    }
+
+    const hasChangeStatus = userPermissions.includes('leads:change_status') || userPermissions.includes('sales:stage_change') || isUserAdmin || department?.name === 'IT';
     const isInstallationUpdate = toStatusNum === 13 && lead.status === 13 && userPermissions.includes('orders:submit_installation');
 
     if (!hasChangeStatus && !isInstallationUpdate) {
@@ -96,7 +108,7 @@ export async function POST(
     }
 
     if (toStatusNum === 8) {
-      const hasBookMeeting = userPermissions.includes('sales:meeting_book') || userPermissions.includes('leads:book_meeting') || userRole === 'admin' || userRole === 'director' || department?.name === 'IT';
+      const hasBookMeeting = userPermissions.includes('sales:meeting_book') || userPermissions.includes('leads:book_meeting') || isUserAdmin || department?.name === 'IT';
       if (!hasBookMeeting) {
         return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to book customer meetings.' }, { status: 403 });
       }
@@ -112,7 +124,7 @@ export async function POST(
     const leadDeptName = getLeadDepartment(lead.status, leadOrder?.status || null);
 
     const isDeptMember = userDeptName === leadDeptName || (userDeptName === 'Sales' && leadDeptName === 'PSA') || (userDeptName === 'PSA' && leadDeptName === 'Sales');
-    const isAdminOrIt = ['admin', 'director'].includes(userPayload.role) || userDeptName === 'IT' || userDeptName === 'Admin';
+    const isAdminOrIt = isUserAdmin || userDeptName === 'IT' || userDeptName === 'Admin';
 
     const { getSubordinateIds } = await import('@/lib/hierarchy');
     const subordinateIds = await getSubordinateIds(userPayload.id);
@@ -127,6 +139,23 @@ export async function POST(
         message: `Forbidden. Only members of the ${leadDeptName} department or supervisors in the reporting hierarchy can update this lead right now.`
       }, { status: 403 });
     }
+
+    // Prepare updates
+    const updateData: any = {
+      status: toStatusNum,
+      updatedAt: new Date(),
+    };
+
+    // When a lead is changed/reverted to Fresh, it automatically becomes UNASSIGNED
+    if (toStatusNum === 1) {
+      updateData.assignedConsultantId = null;
+      updateData.assignedTlId = null;
+      updateData.assignedManagerId = null;
+    }
+
+    let meetingBookingData: any = null;
+    let orderCreationData: any = null;
+    let finalStatusNum = toStatusNum;
 
     // Mandatory Task Rule Verification (Sales to Finance check)
     if (toStatusNum === 13) {
@@ -178,16 +207,6 @@ export async function POST(
         return NextResponse.json({ success: false, message: `Transition from stage ${lead.status} to ${toStatusNum} is not allowed.` }, { status: 400 });
       }
     }
-
-    // Prepare updates
-    const updateData: any = {
-      status: toStatusNum,
-      updatedAt: new Date(),
-    };
-
-    let meetingBookingData: any = null;
-    let orderCreationData: any = null;
-    let finalStatusNum = toStatusNum;
 
     // 2. Specific Form Validations
 
@@ -478,6 +497,13 @@ export async function POST(
 
     // Run DB transaction
     const updatedLead = await prisma.$transaction(async (tx) => {
+      // If reverting to Fresh Lead and clearHistory is requested, wipe previous tracking journey history
+      if (finalStatusNum === 1 && clearHistory === true) {
+        await tx.leadActivityLog.deleteMany({
+          where: { leadId },
+        });
+      }
+
       const res = await tx.lead.update({
         where: { id: leadId },
         data: updateData,
@@ -571,7 +597,16 @@ export async function POST(
             ...meetingBookingData,
           },
         });
+      }
 
+      // Create Order if present
+      if (orderCreationData) {
+        await tx.order.create({
+          data: {
+            leadId,
+            ...orderCreationData,
+          },
+        });
       }
 
       return res;
