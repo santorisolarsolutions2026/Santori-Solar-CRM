@@ -926,6 +926,13 @@ export default function LeadDetailPage({
     const statusNum = parseInt(newStatus, 10);
 
     // Dynamic Popups Interception
+    if (statusNum === 1) {
+      setRevertRemark(statusRemark || '');
+      setRevertClearHistory(true);
+      setShowRevertFreshModal(true);
+      return;
+    }
+
     if (statusNum === 8) {
       setShowFormB(true);
       return;

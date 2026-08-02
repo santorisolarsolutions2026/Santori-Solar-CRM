@@ -147,10 +147,11 @@ export async function POST(
     };
 
     // When a lead is changed/reverted to Fresh, it automatically becomes UNASSIGNED
-    if (toStatusNum === 1) {
+    if (toStatusNum === 1 || toStatusNum === 0) {
       updateData.assignedConsultantId = null;
       updateData.assignedTlId = null;
       updateData.assignedManagerId = null;
+      updateData.assignedTeamId = null;
     }
 
     let meetingBookingData: any = null;
@@ -497,11 +498,24 @@ export async function POST(
 
     // Run DB transaction
     const updatedLead = await prisma.$transaction(async (tx) => {
-      // If reverting to Fresh Lead and clearHistory is requested, wipe previous tracking journey history
-      if (finalStatusNum === 1 && clearHistory === true) {
-        await tx.leadActivityLog.deleteMany({
-          where: { leadId },
+      // If reverting to Fresh Lead (Stage 1 or 0):
+      if (finalStatusNum === 1 || finalStatusNum === 0 || toStatusNum === 1 || toStatusNum === 0) {
+        // Deactivate all active assignments in the EmployeeAssignment table
+        await tx.employeeAssignment.updateMany({
+          where: { leadId, isActive: true },
+          data: { isActive: false },
         });
+
+        // Wipe previous tracking journey history if clearHistory is true/truthy
+        const shouldClear = clearHistory === true || String(clearHistory) === 'true';
+        if (shouldClear) {
+          await tx.leadActivityLog.deleteMany({
+            where: { leadId },
+          });
+          await tx.auditLog.deleteMany({
+            where: { leadId },
+          });
+        }
       }
 
       const res = await tx.lead.update({
