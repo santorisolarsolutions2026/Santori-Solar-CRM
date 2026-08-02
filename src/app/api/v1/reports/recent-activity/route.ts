@@ -21,14 +21,18 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view reports.' }, { status: 403 });
     }
 
-    // System-wide recent activities (constant for all authenticated users)
+    // Employee-specific recent activities
     const leadWhere: any = {};
     if (userPayload.role !== 'admin' && userPayload.role !== 'director') {
+      const { getSubordinateIds } = await import('@/lib/hierarchy');
+      const subIds = await getSubordinateIds(userPayload.id);
+      const allowedIds = [userPayload.id, ...subIds];
       leadWhere.OR = [
-        { assignedManagerId: userPayload.id },
-        { assignedTlId: userPayload.id },
-        { assignedConsultantId: userPayload.id },
-        { createdById: userPayload.id },
+        { assignedManagerId: { in: allowedIds } },
+        { assignedTlId: { in: allowedIds } },
+        { assignedConsultantId: { in: allowedIds } },
+        { assignedPsaId: { in: allowedIds } },
+        { createdById: { in: allowedIds } },
       ];
     }
 

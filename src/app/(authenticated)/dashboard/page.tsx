@@ -355,73 +355,8 @@ export default function DashboardPage() {
         })}
       </div>
 
-      {/* Charts section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Trend line graph */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 lg:col-span-2 shadow-sm">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Sales & Leads Trend (15 Days)</h3>
-            <div className="flex gap-4 text-xs">
-              <span className="flex items-center gap-1.5 text-blue-600 dark:text-blue-455 font-semibold">
-                <span className="w-2.5 h-2.5 bg-blue-600 dark:bg-blue-500 rounded-full" /> Leads Created
-              </span>
-              <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-455 font-semibold">
-                <span className="w-2.5 h-2.5 bg-emerald-600 dark:bg-emerald-500 rounded-full" /> Sales Closed
-              </span>
-            </div>
-          </div>
-          <div className="h-80 w-full">
-            <DashboardChart trend={trend} />
-          </div>
-        </div>
-
-        {/* Lead Acquisition Channels Pie Chart */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm flex flex-col justify-between">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-4">Lead Acquisition Channels</h3>
-          <div className="h-80 w-full flex items-center justify-center">
-            <LeadSourcePieChart leadSourceData={leadSourceData} colors={COLORS} />
-          </div>
-        </div>
-      </div>
-
-      {/* Pipeline & Feed Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Pipeline Stage Distribution Bars */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm flex flex-col justify-between h-[28rem]">
-          <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-4">Pipeline Distribution</h3>
-            <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
-              {pipeline.map((item) => {
-                const stageInfo = STAGE_NAMES[item.stage] || { name: `Stage ${item.stage}`, color: '#fff' };
-                const maxCount = Math.max(...pipeline.map((p) => p.count)) || 1;
-                const percent = (item.count / maxCount) * 100;
-                return (
-                  <div key={item.stage} className="space-y-1">
-                    <div className="flex justify-between text-xs font-semibold">
-                      <span className="text-slate-500 dark:text-slate-400">{stageInfo.name}</span>
-                      <span className="text-slate-900 dark:text-white">{item.count}</span>
-                    </div>
-                    <div className="w-full h-1.5 bg-slate-500/20 rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-500"
-                        style={{ width: `${percent}%`, backgroundColor: stageInfo.color }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-          <div className="pt-4 border-t border-slate-200 dark:border-slate-800 mt-4">
-            <Link
-              href="/leads"
-              className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-bold flex items-center justify-center gap-1"
-            >
-              <span>View Interactive Pipeline Grid</span>
-              <ChevronRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
+      {/* Reminders & Activity Feed Section (Placed right below Leads Data) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Column 1: Upcoming Task Reminders */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm flex flex-col h-[28rem]">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-6 flex items-center gap-2">
@@ -500,7 +435,7 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Column 2: Recent Activity Stream (Unconditional, lg:col-span-1) */}
+        {/* Column 2: Recent Activity Stream */}
         <div className="lg:col-span-1 bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm h-[28rem] flex flex-col">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-6 flex items-center gap-2">
             <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
@@ -516,7 +451,6 @@ export default function DashboardPage() {
                 const stage = STAGE_NAMES[log.toStatus] || { name: `Stage ${log.toStatus}`, color: '#9CA3AF' };
                 return (
                   <div key={log.id} className="relative group">
-                    {/* Timeline bullet dot */}
                     <span 
                       className="absolute -left-[31px] top-1.5 w-2.5 h-2.5 rounded-full border-2 border-slate-900 dark:border-slate-955 transition-transform group-hover:scale-125 animate-pulse" 
                       style={{ backgroundColor: stage.color }} 
@@ -548,10 +482,9 @@ export default function DashboardPage() {
                         <Link href={`/team?userId=${log.user.id}`} className="text-blue-600 dark:text-blue-400 hover:underline font-bold">
                           {log.user.name}
                         </Link>{' '}
-                        ({log.user.role})
                       </p>
                       {log.remark && (
-                        <p className="text-[9.5px] text-slate-500 italic mt-1 leading-relaxed bg-slate-955/20 dark:bg-slate-955/40 px-2 py-1 rounded border border-slate-100 dark:border-slate-800/40 pl-2">
+                        <p className="text-[10px] text-slate-400 dark:text-slate-400 mt-1 italic truncate font-mono bg-slate-955/20 p-1.5 rounded border border-slate-900">
                           "{log.remark}"
                         </p>
                       )}
@@ -560,6 +493,72 @@ export default function DashboardPage() {
                 );
               })
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Charts & Pipeline Distribution Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Trend line graph */}
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 lg:col-span-2 shadow-sm">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Sales & Leads Trend (15 Days)</h3>
+            <div className="flex gap-4 text-xs">
+              <span className="flex items-center gap-1.5 text-blue-600 dark:text-blue-455 font-semibold">
+                <span className="w-2.5 h-2.5 bg-blue-600 dark:bg-blue-500 rounded-full" /> Leads Created
+              </span>
+              <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-455 font-semibold">
+                <span className="w-2.5 h-2.5 bg-emerald-600 dark:bg-emerald-500 rounded-full" /> Sales Closed
+              </span>
+            </div>
+          </div>
+          <div className="h-80 w-full">
+            <DashboardChart trend={trend} />
+          </div>
+        </div>
+
+        {/* Lead Acquisition Channels Pie Chart */}
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm flex flex-col justify-between">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-4">Lead Acquisition Channels</h3>
+          <div className="h-80 w-full flex items-center justify-center">
+            <LeadSourcePieChart leadSourceData={leadSourceData} colors={COLORS} />
+          </div>
+        </div>
+
+        {/* Pipeline Stage Distribution Bars */}
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm flex flex-col justify-between lg:col-span-3 h-[28rem]">
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-4">Pipeline Distribution</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-64 overflow-y-auto pr-1">
+              {pipeline.map((item) => {
+                const stageInfo = STAGE_NAMES[item.stage] || { name: `Stage ${item.stage}`, color: '#fff' };
+                const maxCount = Math.max(...pipeline.map((p) => p.count)) || 1;
+                const percent = (item.count / maxCount) * 100;
+                return (
+                  <div key={item.stage} className="space-y-1 bg-slate-950/40 p-2.5 rounded-lg border border-slate-800/60">
+                    <div className="flex justify-between text-xs font-semibold">
+                      <span className="text-slate-400">{stageInfo.name}</span>
+                      <span className="text-white font-extrabold">{item.count}</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-slate-500/20 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{ width: `${percent}%`, backgroundColor: stageInfo.color }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          <div className="pt-4 border-t border-slate-200 dark:border-slate-800 mt-4">
+            <Link
+              href="/leads"
+              className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-bold flex items-center justify-center gap-1"
+            >
+              <span>View Interactive Pipeline Grid</span>
+              <ChevronRight className="w-4 h-4" />
+            </Link>
           </div>
         </div>
       </div>
