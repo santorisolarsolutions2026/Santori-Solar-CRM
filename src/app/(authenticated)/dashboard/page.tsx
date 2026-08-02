@@ -18,6 +18,9 @@ import {
   Truck,
   Hammer,
   CheckCircle2,
+  Maximize2,
+  Search,
+  X,
 } from 'lucide-react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -102,17 +105,17 @@ interface ActivityLog {
 const STAGE_NAMES: Record<number, { name: string; color: string }> = {
   1: { name: 'Fresh Lead', color: '#3B82F6' },
   2: { name: 'DNP (No Answer)', color: '#94A3B8' },
-  3: { name: 'Follow Up', color: '#0D9488' },         // Teal (Blue-Green match, highly visible)
-  4: { name: 'Not Interested', color: '#EF4444' },    // Soft Red
-  5: { name: 'Call Later', color: '#06B6D4' },        // Cyan (Light blue-green)
-  6: { name: 'Already Installed', color: '#475569' }, // Slate grey instead of #374151
-  7: { name: 'Decision Pending', color: '#6366F1' },  // Indigo
-  8: { name: 'Meeting Booked', color: '#2563EB' },    // Blue
-  9: { name: 'Meeting Done', color: '#10B981' },      // Green
-  10: { name: 'Disconnected', color: '#64748B' },     // Grey
-  11: { name: 'Switch Off', color: '#64748B' },       // Grey
-  12: { name: 'Can\'t Fit Solar', color: '#475569' },  // Slate grey instead of #111827
-  13: { name: 'Sale Done', color: '#10B981' },        // Green (Success highlight)
+  3: { name: 'Follow Up', color: '#0D9488' },
+  4: { name: 'Not Interested', color: '#EF4444' },
+  5: { name: 'Call Later', color: '#06B6D4' },
+  6: { name: 'Already Installed', color: '#475569' },
+  7: { name: 'Decision Pending', color: '#6366F1' },
+  8: { name: 'Meeting Booked', color: '#2563EB' },
+  9: { name: 'Meeting Done', color: '#10B981' },
+  10: { name: 'Disconnected', color: '#64748B' },
+  11: { name: 'Switch Off', color: '#64748B' },
+  12: { name: 'Can\'t Fit Solar', color: '#475569' },
+  13: { name: 'Sale Done', color: '#10B981' },
 };
 
 export default function DashboardPage() {
@@ -124,6 +127,23 @@ export default function DashboardPage() {
   const [activities, setActivities] = useState<ActivityLog[]>([]);
   const [reminders, setReminders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Activity Stream full screen modal state for Admin
+  const [activityModalOpen, setActivityModalOpen] = useState(false);
+  const [activitySearchQuery, setActivitySearchQuery] = useState('');
+
+  const isAdmin = user?.role === 'admin' || user?.role?.startsWith('admin:') || user?.role === 'director';
+
+  const filteredActivities = activities.filter((log) => {
+    if (!activitySearchQuery.trim()) return true;
+    const q = activitySearchQuery.toLowerCase();
+    return (
+      log.lead.customerName.toLowerCase().includes(q) ||
+      log.lead.leadCode.toLowerCase().includes(q) ||
+      log.user.name.toLowerCase().includes(q) ||
+      (log.remark && log.remark.toLowerCase().includes(q))
+    );
+  });
 
   const fetchData = async () => {
     try {
@@ -342,12 +362,12 @@ export default function DashboardPage() {
               className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm hover:shadow-md flex justify-between items-center h-28 transition-all duration-200"
             >
               <div className="flex flex-col justify-between h-full">
-                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider uppercase leading-snug">
+                <span className="text-xs font-semibold text-slate-400 tracking-wider uppercase leading-snug">
                   {card.name}
                 </span>
-                <span className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">{card.value}</span>
+                <span className="text-2xl font-extrabold text-white tracking-tight">{card.value}</span>
               </div>
-              <div className="w-10 h-10 rounded-full flex items-center justify-center bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center bg-blue-500/10 text-blue-400 shrink-0">
                 <Icon className="w-5 h-5" />
               </div>
             </div>
@@ -356,11 +376,11 @@ export default function DashboardPage() {
       </div>
 
       {/* Reminders & Activity Feed Section (Placed right below Leads Data) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className={`grid grid-cols-1 ${isAdmin ? 'lg:grid-cols-2' : ''} gap-6`}>
         {/* Column 1: Upcoming Task Reminders */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm flex flex-col h-[28rem]">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-6 flex items-center gap-2">
-            <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-6 flex items-center gap-2">
+            <Clock className="w-5 h-5 text-blue-500" />
             <span>Upcoming Task Reminders</span>
           </h3>
           {reminders.length === 0 ? (
@@ -368,21 +388,21 @@ export default function DashboardPage() {
               <span>No upcoming tasks scheduled.</span>
             </div>
           ) : (
-            <div className="divide-y divide-slate-100 dark:divide-slate-800/60 overflow-y-auto pr-1 flex-1">
+            <div className="divide-y divide-slate-800/60 overflow-y-auto pr-1 flex-1">
               {reminders.map((rem) => {
                 const isMeeting = rem.type === 'meeting';
                 return (
                   <div
                     key={rem.id}
-                    className="py-3 flex items-start gap-3 transition-colors hover:bg-slate-955/20 dark:hover:bg-slate-950/20 px-2 rounded-lg"
+                    className="py-3 flex items-start gap-3 transition-colors hover:bg-slate-950/40 px-2 rounded-lg"
                   >
                     <div className="mt-0.5 shrink-0">
                       {isMeeting ? (
-                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20">
                           <Calendar className="w-4 h-4" />
                         </div>
                       ) : (
-                        <div className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-400 flex items-center justify-center border border-teal-500/20">
                           <Clock className="w-4 h-4" />
                         </div>
                       )}
@@ -391,10 +411,10 @@ export default function DashboardPage() {
                       <div className="flex justify-between items-start gap-2">
                         <Link
                           href={`/leads/${rem.leadId}`}
-                          className="text-xs font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 truncate"
+                          className="text-xs font-bold text-white hover:text-blue-400 truncate"
                         >
                           {rem.customerName}
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold ml-1.5">
+                          <span className="text-[10px] text-slate-400 font-semibold ml-1.5 font-mono">
                             ({rem.leadCode})
                           </span>
                         </Link>
@@ -410,13 +430,13 @@ export default function DashboardPage() {
                       <div className="flex justify-between items-center mt-1">
                         <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.25 rounded-md border ${
                           isMeeting 
-                            ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' 
-                            : 'bg-teal-500/10 text-teal-750 dark:text-teal-400 border-teal-500/20'
+                            ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' 
+                            : 'bg-teal-500/10 text-teal-400 border-teal-500/20'
                         }`}>
                           {rem.title}
                         </span>
                         
-                        <span className="text-[9px] text-slate-455 dark:text-slate-400 font-bold font-mono">
+                        <span className="text-[9px] text-slate-400 font-bold font-mono">
                           {new Date(rem.datetime).toLocaleDateString('en-IN', {
                             day: 'numeric',
                             month: 'short',
@@ -435,80 +455,94 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Column 2: Recent Activity Stream */}
-        <div className="lg:col-span-1 bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm h-[28rem] flex flex-col">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-6 flex items-center gap-2">
-            <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            <span>Recent Activity Stream</span>
-          </h3>
-          <div className="relative border-l border-slate-200 dark:border-slate-800 ml-4 pl-6 space-y-5 overflow-y-auto pr-1 flex-1 py-1">
-            {activities.length === 0 ? (
-              <div className="py-8 text-center text-slate-500 text-xs">
-                No activity records found.
-              </div>
-            ) : (
-              activities.map((log) => {
-                const stage = STAGE_NAMES[log.toStatus] || { name: `Stage ${log.toStatus}`, color: '#9CA3AF' };
-                return (
-                  <div key={log.id} className="relative group">
-                    <span 
-                      className="absolute -left-[31px] top-1.5 w-2.5 h-2.5 rounded-full border-2 border-slate-900 dark:border-slate-955 transition-transform group-hover:scale-125 animate-pulse" 
-                      style={{ backgroundColor: stage.color }} 
-                    />
-                    <div className="min-w-0">
-                      <div className="flex justify-between items-start gap-2">
-                        <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                          <Link
-                            href={`/leads/${log.lead.id}`}
-                            className="hover:text-blue-600 dark:hover:text-blue-400 hover:underline"
-                          >
-                            {log.lead.customerName}
-                          </Link>
-                          <span className="text-[9.5px] text-slate-500 dark:text-slate-455 font-semibold ml-1.5 font-mono">
-                            ({log.lead.leadCode})
+        {/* Column 2: Recent Activity Stream (Strictly Admin / Director Only) */}
+        {isAdmin && (
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm h-[28rem] flex flex-col">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                <Clock className="w-5 h-5 text-blue-500" />
+                <span>Recent Activity Stream</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setActivityModalOpen(true)}
+                className="p-1.5 rounded-lg bg-slate-950/80 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white transition-all cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold"
+                title="Expand Full Screen Activity Timeline"
+              >
+                <Maximize2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Full Screen</span>
+              </button>
+            </div>
+
+            <div className="relative border-l border-slate-800 ml-4 pl-6 space-y-5 overflow-y-auto pr-1 flex-1 py-1">
+              {activities.length === 0 ? (
+                <div className="py-8 text-center text-slate-500 text-xs italic">
+                  No system activity records found.
+                </div>
+              ) : (
+                activities.slice(0, 15).map((log) => {
+                  const stage = STAGE_NAMES[log.toStatus] || { name: `Stage ${log.toStatus}`, color: '#9CA3AF' };
+                  return (
+                    <div key={log.id} className="relative group">
+                      <span 
+                        className="absolute -left-[31px] top-1.5 w-2.5 h-2.5 rounded-full border-2 border-slate-900 transition-transform group-hover:scale-125 animate-pulse" 
+                        style={{ backgroundColor: stage.color }} 
+                      />
+                      <div className="min-w-0">
+                        <div className="flex justify-between items-start gap-2">
+                          <p className="text-xs font-bold text-white truncate">
+                            <Link
+                              href={`/leads/${log.lead.id}`}
+                              className="hover:text-blue-400 hover:underline"
+                            >
+                              {log.lead.customerName}
+                            </Link>
+                            <span className="text-[9.5px] text-slate-400 font-semibold ml-1.5 font-mono">
+                              ({log.lead.leadCode})
+                            </span>
+                          </p>
+                          <span className="text-[9px] text-slate-400 shrink-0 font-semibold">
+                            {new Date(log.createdAt).toLocaleString('en-IN', {
+                              day: 'numeric',
+                              month: 'short',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
                           </span>
+                        </div>
+                        <p className="text-[10px] text-slate-400 mt-0.5">
+                          Moved to <strong style={{ color: stage.color }} className="font-semibold">{stage.name}</strong> by{' '}
+                          <Link href={`/team?userId=${log.user.id}`} className="text-blue-400 hover:underline font-bold">
+                            {log.user.name}
+                          </Link>
                         </p>
-                        <span className="text-[9px] text-slate-400 dark:text-slate-550 shrink-0 font-semibold">
-                          {new Date(log.createdAt).toLocaleString('en-IN', {
-                            day: 'numeric',
-                            month: 'short',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
+                        {log.remark && (
+                          <p className="text-[10px] text-slate-400 mt-1 italic truncate font-mono bg-slate-950/60 p-1.5 rounded border border-slate-800/80">
+                            "{log.remark}"
+                          </p>
+                        )}
                       </div>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
-                        Moved to <strong style={{ color: stage.color }} className="font-semibold">{stage.name}</strong> by{' '}
-                        <Link href={`/team?userId=${log.user.id}`} className="text-blue-600 dark:text-blue-400 hover:underline font-bold">
-                          {log.user.name}
-                        </Link>{' '}
-                      </p>
-                      {log.remark && (
-                        <p className="text-[10px] text-slate-400 dark:text-slate-400 mt-1 italic truncate font-mono bg-slate-955/20 p-1.5 rounded border border-slate-900">
-                          "{log.remark}"
-                        </p>
-                      )}
                     </div>
-                  </div>
-                );
-              })
-            )}
+                  );
+                })
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Charts & Pipeline Distribution Section */}
+      {/* Charts & Redesigned Pipeline Distribution Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Trend line graph */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 lg:col-span-2 shadow-sm">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Sales & Leads Trend (15 Days)</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Sales & Leads Trend (15 Days)</h3>
             <div className="flex gap-4 text-xs">
-              <span className="flex items-center gap-1.5 text-blue-600 dark:text-blue-455 font-semibold">
-                <span className="w-2.5 h-2.5 bg-blue-600 dark:bg-blue-500 rounded-full" /> Leads Created
+              <span className="flex items-center gap-1.5 text-blue-400 font-semibold">
+                <span className="w-2.5 h-2.5 bg-blue-500 rounded-full" /> Leads Created
               </span>
-              <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-455 font-semibold">
-                <span className="w-2.5 h-2.5 bg-emerald-600 dark:bg-emerald-500 rounded-full" /> Sales Closed
+              <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
+                <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full" /> Sales Closed
               </span>
             </div>
           </div>
@@ -519,49 +553,220 @@ export default function DashboardPage() {
 
         {/* Lead Acquisition Channels Pie Chart */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm flex flex-col justify-between">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-4">Lead Acquisition Channels</h3>
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">Lead Acquisition Channels</h3>
           <div className="h-80 w-full flex items-center justify-center">
             <LeadSourcePieChart leadSourceData={leadSourceData} colors={COLORS} />
           </div>
         </div>
 
-        {/* Pipeline Stage Distribution Bars */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm flex flex-col justify-between lg:col-span-3 h-[28rem]">
+        {/* Redesigned Pipeline Stage Distribution Grid */}
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm flex flex-col justify-between lg:col-span-3">
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-4">Pipeline Distribution</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-64 overflow-y-auto pr-1">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                <Layers className="w-4 h-4 text-blue-500" />
+                <span>Pipeline Stage Distribution</span>
+              </h3>
+              <span className="text-[11px] text-slate-400 font-semibold font-mono">
+                Total Active Leads: <strong className="text-white">{pipeline.reduce((acc, curr) => acc + curr.count, 0)}</strong>
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
               {pipeline.map((item) => {
-                const stageInfo = STAGE_NAMES[item.stage] || { name: `Stage ${item.stage}`, color: '#fff' };
-                const maxCount = Math.max(...pipeline.map((p) => p.count)) || 1;
-                const percent = (item.count / maxCount) * 100;
+                const stageInfo = STAGE_NAMES[item.stage] || { name: `Stage ${item.stage}`, color: '#3B82F6' };
+                const totalLeads = pipeline.reduce((acc, curr) => acc + curr.count, 0) || 1;
+                const percent = Math.round((item.count / totalLeads) * 100);
+                const hasLeads = item.count > 0;
+
                 return (
-                  <div key={item.stage} className="space-y-1 bg-slate-950/40 p-2.5 rounded-lg border border-slate-800/60">
-                    <div className="flex justify-between text-xs font-semibold">
-                      <span className="text-slate-400">{stageInfo.name}</span>
-                      <span className="text-white font-extrabold">{item.count}</span>
+                  <div
+                    key={item.stage}
+                    className={`p-3.5 rounded-xl border transition-all flex flex-col justify-between space-y-2.5 ${
+                      hasLeads
+                        ? 'bg-slate-950/80 border-slate-700/80 shadow-md'
+                        : 'bg-slate-950/30 border-slate-800/40 opacity-70'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 min-w-0 pr-1">
+                        <span
+                          className="w-2.5 h-2.5 rounded-full shrink-0"
+                          style={{ backgroundColor: stageInfo.color }}
+                        />
+                        <span className="text-xs font-bold text-slate-200 truncate" title={stageInfo.name}>
+                          {stageInfo.name}
+                        </span>
+                      </div>
+                      <span
+                        className={`text-xs font-extrabold px-2 py-0.5 rounded-full shrink-0 font-mono ${
+                          hasLeads
+                            ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                            : 'bg-slate-800/50 text-slate-400'
+                        }`}
+                      >
+                        {item.count}
+                      </span>
                     </div>
-                    <div className="w-full h-1.5 bg-slate-500/20 rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-500"
-                        style={{ width: `${percent}%`, backgroundColor: stageInfo.color }}
-                      />
+
+                    <div className="space-y-1">
+                      <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{ width: `${percent}%`, backgroundColor: stageInfo.color }}
+                        />
+                      </div>
+                      <div className="flex justify-between items-center text-[10px] text-slate-400 font-mono">
+                        <span>Share</span>
+                        <span>{percent}%</span>
+                      </div>
                     </div>
                   </div>
                 );
               })}
             </div>
           </div>
-          <div className="pt-4 border-t border-slate-200 dark:border-slate-800 mt-4">
+
+          <div className="pt-4 border-t border-slate-800 mt-6 flex justify-center">
             <Link
               href="/leads"
-              className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-bold flex items-center justify-center gap-1"
+              className="text-xs text-blue-400 hover:text-blue-300 font-bold flex items-center justify-center gap-1.5 group"
             >
-              <span>View Interactive Pipeline Grid</span>
-              <ChevronRight className="w-4 h-4" />
+              <span>View Full Interactive Pipeline Grid</span>
+              <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
             </Link>
           </div>
         </div>
       </div>
+
+      {/* Full-Screen Activity Modal for Admin */}
+      {activityModalOpen && isAdmin && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8 bg-black/80 backdrop-blur-md animate-fade-in font-sans">
+          <div className="bg-[#0f1422] border border-slate-800 rounded-2xl w-full max-w-5xl h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-slate-800 bg-slate-950/60 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20">
+                  <Clock className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white tracking-wide flex items-center gap-2">
+                    <span>Full System Activity Stream</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono">
+                      {activities.length} logs
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-400">Live operational timeline across all teams</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="relative w-64 hidden sm:block">
+                  <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-500" />
+                  <input
+                    type="text"
+                    placeholder="Search logs..."
+                    value={activitySearchQuery}
+                    onChange={(e) => setActivitySearchQuery(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 rounded-lg pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setActivityModalOpen(false)}
+                  className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-all cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-950/40">
+              {filteredActivities.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-slate-500 text-xs italic py-20">
+                  <span>No activity logs matched your search.</span>
+                </div>
+              ) : (
+                <div className="relative border-l-2 border-slate-800 ml-4 pl-6 space-y-6">
+                  {filteredActivities.map((log) => {
+                    const stage = STAGE_NAMES[log.toStatus] || { name: `Stage ${log.toStatus}`, color: '#9CA3AF' };
+                    return (
+                      <div key={log.id} className="relative group">
+                        <span
+                          className="absolute -left-[31px] top-1.5 w-3.5 h-3.5 rounded-full border-2 border-[#0f1422] shadow-md transition-transform group-hover:scale-125"
+                          style={{ backgroundColor: stage.color }}
+                        />
+
+                        <div className="bg-slate-900/80 border border-slate-800/80 rounded-xl p-4 space-y-2 hover:border-slate-700 transition-all">
+                          <div className="flex justify-between items-start gap-3">
+                            <div>
+                              <Link
+                                href={`/leads/${log.lead.id}`}
+                                onClick={() => setActivityModalOpen(false)}
+                                className="text-sm font-bold text-white hover:text-blue-400 hover:underline flex items-center gap-2"
+                              >
+                                <span>{log.lead.customerName}</span>
+                                <span className="text-xs text-slate-400 font-mono font-semibold">({log.lead.leadCode})</span>
+                              </Link>
+                            </div>
+                            <span className="text-xs text-slate-400 font-mono">
+                              {new Date(log.createdAt).toLocaleString('en-IN', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-2 text-xs">
+                            <span className="text-slate-400">Moved to</span>
+                            <span
+                              className="px-2 py-0.5 rounded text-[11px] font-bold border"
+                              style={{
+                                backgroundColor: `${stage.color}15`,
+                                color: stage.color,
+                                borderColor: `${stage.color}30`,
+                              }}
+                            >
+                              {stage.name}
+                            </span>
+                            <span className="text-slate-400">by</span>
+                            <span className="font-bold text-white bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                              {log.user.name} ({log.user.role})
+                            </span>
+                          </div>
+
+                          {log.remark && (
+                            <p className="text-xs text-slate-300 italic font-mono bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/60">
+                              "{log.remark}"
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-slate-800 bg-slate-950/60 flex justify-between items-center text-xs text-slate-400">
+              <span>Showing full activity history for system administrators</span>
+              <button
+                type="button"
+                onClick={() => setActivityModalOpen(false)}
+                className="px-4 py-2 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-white rounded-lg font-bold transition-all cursor-pointer"
+              >
+                Close Full Screen View
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

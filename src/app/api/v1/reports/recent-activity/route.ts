@@ -21,28 +21,18 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view reports.' }, { status: 403 });
     }
 
-    // Employee-specific recent activities
-    const leadWhere: any = {};
-    if (userPayload.role !== 'admin' && userPayload.role !== 'director') {
-      const { getSubordinateIds } = await import('@/lib/hierarchy');
-      const subIds = await getSubordinateIds(userPayload.id);
-      const allowedIds = [userPayload.id, ...subIds];
-      leadWhere.OR = [
-        { assignedManagerId: { in: allowedIds } },
-        { assignedTlId: { in: allowedIds } },
-        { assignedConsultantId: { in: allowedIds } },
-        { assignedPsaId: { in: allowedIds } },
-        { createdById: { in: allowedIds } },
-      ];
+    const isAdmin = userPayload.role === 'admin' || userPayload.role?.startsWith('admin:') || userPayload.role === 'director';
+    if (!isAdmin) {
+      return NextResponse.json({
+        success: true,
+        data: { logs: [] },
+      });
     }
 
-    // Fetch latest 10 activity logs for leads the user is authorized to see
+    // Fetch latest 50 activity logs for Admin review across the entire system
     const logs = await prisma.leadActivityLog.findMany({
-      where: {
-        lead: leadWhere
-      },
       orderBy: { createdAt: 'desc' },
-      take: 10,
+      take: 50,
       include: {
         lead: {
           select: {
