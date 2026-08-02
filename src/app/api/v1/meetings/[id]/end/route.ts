@@ -74,19 +74,6 @@ export async function POST(
         },
       });
 
-      // Create a notification for manager / supervisor about meeting completion
-      if (meeting.lead.assignedManagerId) {
-        await tx.notification.create({
-          data: {
-            userId: meeting.lead.assignedManagerId,
-            type: 'meeting_done',
-            title: `Meeting Done: ${meeting.lead.customerName}`,
-            body: `Consultant ${userPayload.name} finished the site meeting. Duration: ${Math.floor(meetingDurationSec / 60)}m ${meetingDurationSec % 60}s.`,
-            leadId: meeting.leadId,
-          },
-        });
-      }
-
       return { updatedMeeting, updatedLead };
     });
 

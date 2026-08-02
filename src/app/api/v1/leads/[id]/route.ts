@@ -357,19 +357,6 @@ export async function PATCH(
         },
       });
 
-      // Send assignment notification if reassigned
-      if (assignedConsultantId && parseInt(assignedConsultantId, 10) !== lead.assignedConsultantId) {
-        await tx.notification.create({
-          data: {
-            userId: parseInt(assignedConsultantId, 10),
-            type: 'lead_assigned',
-            title: 'Lead reassigned to you',
-            body: `Lead #${lead.leadCode} has been reassigned to you.`,
-            leadId,
-          },
-        });
-      }
-
       return res;
     });
 

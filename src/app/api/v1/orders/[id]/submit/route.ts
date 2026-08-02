@@ -104,24 +104,6 @@ export async function POST(
         },
       });
 
-      // Notify Finance Team members
-      const financeUsers = await tx.user.findMany({
-        where: { role: 'finance', isActive: true },
-        select: { id: true },
-      });
-
-      for (const finUser of financeUsers) {
-        await tx.notification.create({
-          data: {
-            userId: finUser.id,
-            type: 'order_submitted',
-            title: 'New order submitted',
-            body: `New order submitted for processing: Order #${order.orderCode} (${order.lead.customerName})`,
-            leadId: order.leadId,
-          },
-        });
-      }
-
       return res;
     });
 

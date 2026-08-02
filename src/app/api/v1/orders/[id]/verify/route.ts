@@ -102,39 +102,6 @@ export async function POST(
         },
       });
 
-      // Notify submitting consultant
-      await tx.notification.create({
-        data: {
-          userId: order.submittedById,
-          type: approve ? 'order_verified' : 'order_rejected',
-          title: approve ? '🎉 Order verified by Finance!' : '⚠️ Order rejected by Finance',
-          body: approve
-            ? `Your order for ${order.lead.customerName} has been verified.`
-            : `Your order for ${order.lead.customerName} was rejected. Reason: ${remark || 'Check details'}`,
-          leadId: order.leadId,
-        },
-      });
-
-      // If approved, notify Operations Team
-      if (approve) {
-        const opsUsers = await tx.user.findMany({
-          where: { role: 'operations', isActive: true },
-          select: { id: true },
-        });
-
-        for (const opsUser of opsUsers) {
-          await tx.notification.create({
-            data: {
-              userId: opsUser.id,
-              type: 'ops_assigned',
-              title: '🔧 New installation job ready',
-              body: `Order #${order.orderCode} (${order.lead.customerName}) verified and ready for installation planning.`,
-              leadId: order.leadId,
-            },
-          });
-        }
-      }
-
       return res;
     });
 

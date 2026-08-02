@@ -43,7 +43,39 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { notificationId } = body;
+    const { action, title, message, notificationId } = body;
+
+    // Handle Admin News Broadcast to all employees
+    if (action === 'broadcast') {
+      const isAdmin = userPayload.role === 'admin' || userPayload.role?.startsWith('admin:') || userPayload.role === 'director';
+      if (!isAdmin) {
+        return NextResponse.json({ success: false, message: 'Forbidden. Only admins can broadcast news.' }, { status: 403 });
+      }
+
+      if (!title || !message) {
+        return NextResponse.json({ success: false, message: 'News title and message are required.' }, { status: 400 });
+      }
+
+      const activeUsers = await prisma.user.findMany({
+        where: { isActive: true },
+        select: { id: true }
+      });
+
+      await prisma.notification.createMany({
+        data: activeUsers.map(u => ({
+          userId: u.id,
+          title: `📢 ${title.trim()}`,
+          body: message.trim(),
+          type: 'announcement',
+          isRead: false,
+        }))
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: `Broadcast news sent to ${activeUsers.length} employees successfully.`,
+      });
+    }
 
     if (notificationId) {
       // Mark specific notification as read

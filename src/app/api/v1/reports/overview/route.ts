@@ -59,7 +59,6 @@ export async function GET(req: Request) {
           where: {
             ...ordersWhere,
             status: 'finance_verified',
-            createdAt: { gte: startOfMonth }
           }
         }),
         prisma.order.findMany({
@@ -149,21 +148,18 @@ export async function GET(req: Request) {
           where: {
             ...leadWhere,
             status: { in: [8, 9, 13] },
-            createdAt: { gte: startOfMonth },
           },
         }),
         prisma.meetingBooking.count({
           where: {
             lead: leadWhere,
             audioRecordingPath: { not: null },
-            createdAt: { gte: startOfMonth },
           },
         }),
         prisma.lead.count({
           where: {
             ...leadWhere,
             status: 13,
-            createdAt: { gte: startOfMonth },
           },
         }),
         prisma.lead.count({

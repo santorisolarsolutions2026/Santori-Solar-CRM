@@ -505,19 +505,6 @@ export async function POST(req: Request) {
         },
       });
 
-      // Send notification if assigned
-      if (finalConsultantId) {
-        await tx.notification.create({
-          data: {
-            userId: finalConsultantId,
-            type: 'lead_assigned',
-            title: 'New lead assigned',
-            body: `New lead assigned to you: ${customerName} — Lead #${leadCode}`,
-            leadId: newLead.id,
-          },
-        });
-      }
-
       // Add a duplicate link note if overridden by Admin
       if (existingLead && overrideDuplicate && isUserAdmin) {
         await tx.leadActivityLog.create({

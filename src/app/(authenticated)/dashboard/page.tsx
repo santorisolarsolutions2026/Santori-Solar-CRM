@@ -31,6 +31,24 @@ const DashboardChart = dynamic(() => import('@/components/DashboardChart'), {
   ),
 });
 
+const LeadSourcePieChart = dynamic(
+  () => import('@/components/ReportsCharts').then((mod) => mod.LeadSourcePieChart),
+  {
+    ssr: false,
+    loading: () => <div className="h-full w-full bg-slate-950/20 animate-pulse rounded-xl" />,
+  }
+);
+
+const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#0EA5E9', '#14B8A6'];
+
+const leadSourceData = [
+  { name: 'WhatsApp', value: 35 },
+  { name: 'Cold Call', value: 20 },
+  { name: 'Referral', value: 25 },
+  { name: 'Walk-In', value: 10 },
+  { name: 'Google Ads', value: 10 },
+];
+
 interface OverviewStats {
   totalLeads: number;
   activeLeads: number;
@@ -188,7 +206,7 @@ export default function DashboardPage() {
         color: 'from-blue-600/10 to-indigo-600/5 border-blue-500/20 text-blue-400',
       },
       {
-        name: 'Orders Verified (Month)',
+        name: 'Orders Verified (Total)',
         value: stats?.ordersVerified || 0,
         icon: FileCheck,
         color: 'from-emerald-600/10 to-teal-600/5 border-emerald-500/20 text-emerald-400',
@@ -254,19 +272,19 @@ export default function DashboardPage() {
         color: 'from-blue-600/10 to-indigo-600/5 border-blue-500/20 text-blue-400',
       },
       {
-        name: 'Meetings Booked (Month)',
+        name: 'Total Meetings Booked',
         value: stats?.meetingsBookedThisMonth || 0,
         icon: Calendar,
         color: 'from-cyan-600/10 to-blue-600/5 border-cyan-500/20 text-cyan-400',
       },
       {
-        name: 'Meetings Recorded (Month)',
+        name: 'Total Meetings Recorded',
         value: stats?.meetingsDoneThisMonth || 0,
         icon: FileCheck,
         color: 'from-purple-600/10 to-pink-600/5 border-purple-500/20 text-purple-400',
       },
       {
-        name: 'Sales Done (Month)',
+        name: 'Total Sales Closed',
         value: stats?.salesDoneThisMonth || 0,
         icon: TrendingUp,
         color: 'from-emerald-600/10 to-teal-600/5 border-emerald-500/20 text-emerald-400',
@@ -357,11 +375,22 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Pipeline Stage Distribution Bars */}
+        {/* Lead Acquisition Channels Pie Chart */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm flex flex-col justify-between">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-4">Lead Acquisition Channels</h3>
+          <div className="h-80 w-full flex items-center justify-center">
+            <LeadSourcePieChart leadSourceData={leadSourceData} colors={COLORS} />
+          </div>
+        </div>
+      </div>
+
+      {/* Pipeline & Feed Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Pipeline Stage Distribution Bars */}
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm flex flex-col justify-between h-[28rem]">
           <div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-4">Pipeline Distribution</h3>
-            <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+            <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
               {pipeline.map((item) => {
                 const stageInfo = STAGE_NAMES[item.stage] || { name: `Stage ${item.stage}`, color: '#fff' };
                 const maxCount = Math.max(...pipeline.map((p) => p.count)) || 1;
@@ -393,10 +422,6 @@ export default function DashboardPage() {
             </Link>
           </div>
         </div>
-      </div>
-
-      {/* Reminders, Leaderboard and Activity Feed */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Column 1: Upcoming Task Reminders */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm flex flex-col h-[28rem]">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-6 flex items-center gap-2">
@@ -475,51 +500,7 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Column 2: Team Leaderboard (Unconditional) */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm h-[28rem] flex flex-col">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-6 flex items-center gap-2">
-            <UserCheck className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            <span>Consultant Leaderboard</span>
-          </h3>
-          <div className="overflow-y-auto pr-1 flex-1">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse min-w-[500px]">
-                <thead>
-                  <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider sticky top-0 bg-slate-900 pb-3">
-                    <th className="pb-3">Consultant</th>
-                    <th className="pb-3 text-center">Assigned</th>
-                    <th className="pb-3 text-center">Calls</th>
-                    <th className="pb-3 text-center">Meetings</th>
-                    <th className="pb-3 text-center">Sales</th>
-                    <th className="pb-3 text-right">Conv.</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200/65 dark:divide-slate-800/60 text-sm">
-                  {performance.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="py-6 text-center text-slate-500 text-xs">
-                        No team member statistics found.
-                      </td>
-                    </tr>
-                  ) : (
-                    performance.map((member) => (
-                      <tr key={member.id} className="hover:bg-slate-200/40 dark:hover:bg-slate-900/20 transition-colors">
-                        <td className="py-3 font-semibold text-slate-900 dark:text-white truncate max-w-[90px]">{member.name}</td>
-                        <td className="py-3 text-center text-slate-655 dark:text-slate-300">{member.leadsAssigned}</td>
-                        <td className="py-3 text-center text-slate-655 dark:text-slate-300">{member.callsMade}</td>
-                        <td className="py-3 text-center text-slate-655 dark:text-slate-300">{member.meetingsBooked}</td>
-                        <td className="py-3 text-center text-emerald-600 dark:text-emerald-400 font-bold">{member.salesClosed}</td>
-                        <td className="py-3 text-right text-blue-600 dark:text-blue-400 font-extrabold">{member.conversionRate}%</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        {/* Column 3: Recent Activity Stream (Unconditional, lg:col-span-1) */}
+        {/* Column 2: Recent Activity Stream (Unconditional, lg:col-span-1) */}
         <div className="lg:col-span-1 bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm h-[28rem] flex flex-col">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-6 flex items-center gap-2">
             <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />

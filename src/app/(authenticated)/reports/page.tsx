@@ -126,7 +126,7 @@ export default function ReportsPage() {
   const [trend, setTrend] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [activeReportTab, setActiveReportTab] = useState<'pipeline' | 'employee'>('pipeline');
+  const [activeReportTab, setActiveReportTab] = useState<'pipeline' | 'employee'>('employee');
   const [activeDeptTab, setActiveDeptTab] = useState<'Sales' | 'Finance' | 'Operations' | 'PSA' | 'Other'>('Sales');
   const [filterDesignation, setFilterDesignation] = useState<string>('all');
   const [filterStartDate, setFilterStartDate] = useState<string>('');
@@ -397,148 +397,31 @@ export default function ReportsPage() {
       {/* Title & Exporters */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
         <div>
-          <h1 className="text-xl font-bold text-white tracking-wide">Performance Reports & Analytics</h1>
+          <h1 className="text-xl font-bold text-white tracking-wide">Employee Audit</h1>
           <p className="text-xs text-slate-400 mt-1">
-            Analyze team KPIs, sales trends, and download operational spreadsheets.
+            Inspect staff performance metrics, activity logs, and detailed work audit trails.
           </p>
         </div>
         <div className="flex gap-3">
           <button
             onClick={handleExportCSV}
-            className="py-2.5 px-4 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-200 rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all"
+            className="py-2.5 px-4 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-200 rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
           >
             <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
             <span>Export to Excel (CSV)</span>
           </button>
           <button
             onClick={handleExportPDF}
-            className="py-2.5 px-4 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-200 rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all"
+            className="py-2.5 px-4 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-200 rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
           >
             <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-            <span>Print Report (PDF)</span>
+            <span>Print Audit (PDF)</span>
           </button>
         </div>
       </div>
 
-      {/* Tab toggle */}
-      <div className="flex border-b border-slate-800 text-xs font-semibold print:hidden">
-        <button
-          onClick={() => setActiveReportTab('pipeline')}
-          className={`px-5 py-3 border-b-2 transition-all cursor-pointer ${
-            activeReportTab === 'pipeline'
-              ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-600/[0.02]'
-              : 'border-transparent text-slate-400 hover:text-white'
-          }`}
-        >
-          <span>Pipeline Overview</span>
-        </button>
-        {hasPermission('reports:view') && (
-          <button
-            onClick={() => setActiveReportTab('employee')}
-            className={`px-5 py-3 border-b-2 transition-all cursor-pointer ${
-              activeReportTab === 'employee'
-                ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-600/[0.02]'
-                : 'border-transparent text-slate-400 hover:text-white'
-            }`}
-          >
-            <span>Employee Audit</span>
-          </button>
-        )}
-      </div>
-
-      {activeReportTab === 'pipeline' ? (
-        <>
-          {/* Overview stats grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 bg-[#111625] border border-slate-800 rounded-2xl p-5 shadow-xl print:border-black print:text-black">
-            <div className="text-center md:border-r border-slate-800 last:border-0 py-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
-                Total Leads Registered
-              </span>
-              <span className="text-3xl font-extrabold text-white print:text-black">{stats?.totalLeads || 0}</span>
-            </div>
-            <div className="text-center md:border-r border-slate-800 last:border-0 py-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
-                Active Nurturing Pool
-              </span>
-              <span className="text-3xl font-extrabold text-blue-600 dark:text-blue-400 print:text-black">{stats?.activeLeads || 0}</span>
-            </div>
-            <div className="text-center md:border-r border-slate-800 last:border-0 py-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
-                Meetings Converted
-              </span>
-              <span className="text-3xl font-extrabold text-cyan-400 print:text-black">{stats?.meetingsBookedThisMonth || 0}</span>
-            </div>
-            <div className="text-center py-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
-                Closed Conversions %
-              </span>
-              <span className="text-3xl font-extrabold text-emerald-400 print:text-black">{stats?.conversionRate || 0}%</span>
-            </div>
-          </div>
-
-          {/* Print Page Break for print layouts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Trend line graph */}
-            <div className="bg-[#111625] border border-slate-800 rounded-xl p-6 shadow-lg print:border-black">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-6 print:text-black">Daily Conversion trend</h3>
-              <div className="h-72 w-full">
-                <TrendLineChart trend={trend} />
-              </div>
-            </div>
-
-            {/* Lead source analysis */}
-            <div className="bg-[#111625] border border-slate-800 rounded-xl p-6 shadow-lg print:border-black">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-6 print:text-black">Lead Acquisition Channels</h3>
-              <div className="h-72 w-full flex items-center justify-center">
-                <LeadSourcePieChart leadSourceData={leadSourceData} colors={COLORS} />
-              </div>
-            </div>
-
-            {/* Pipeline Stage Bar Chart */}
-            <div className="bg-[#111625] border border-slate-800 rounded-xl p-6 shadow-lg lg:col-span-2 print:border-black">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-6 print:text-black">Lead Pipeline Stage Distribution</h3>
-              <div className="h-72 w-full">
-                <PipelineBarChart pipelineBarData={pipelineBarData} />
-              </div>
-            </div>
-
-            {/* Leaders Table */}
-            {hasPermission('reports:view') && (
-              <div className="bg-[#111625] border border-slate-800 rounded-xl p-6 shadow-lg lg:col-span-2 print:border-black">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-6 print:text-black">Consultant Sales Standings</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse min-w-[850px]">
-                    <thead>
-                      <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                        <th className="pb-3 px-4 w-48 text-left">Consultant Name</th>
-                        <th className="pb-3 px-4 w-32 text-center">Leads Allocated</th>
-                        <th className="pb-3 px-4 w-44 text-center">Nurture Actions Logged</th>
-                        <th className="pb-3 px-4 w-32 text-center">Site Meetings</th>
-                        <th className="pb-3 px-4 w-32 text-center">Sales Closed</th>
-                        <th className="pb-3 px-4 w-32 text-right">Conversion Rate</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/60 text-sm">
-                      {performance.map((member) => (
-                        <tr key={member.id} className="hover:bg-slate-900/10 transition-colors">
-                          <td className="py-3.5 px-4 font-bold text-white print:text-black w-48 text-left">{member.name}</td>
-                          <td className="py-3.5 px-4 text-center text-slate-300 print:text-black w-32">{member.leadsAssigned}</td>
-                          <td className="py-3.5 px-4 text-center text-slate-300 print:text-black w-44">{member.callsMade}</td>
-                          <td className="py-3.5 px-4 text-center text-slate-300 print:text-black w-32">{member.meetingsBooked}</td>
-                          <td className="py-3.5 px-4 text-center text-emerald-400 font-bold print:text-black w-32">{member.salesClosed}</td>
-                          <td className="py-3.5 px-4 text-right text-blue-600 dark:text-blue-400 font-extrabold print:text-black w-32">{member.conversionRate}%</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </div>
-        </>
-      ) : (
-        /* Employee Audit Dashboard */
-        <div className="space-y-6">
+      {/* Employee Audit Dashboard */}
+      <div className="space-y-6">
           {/* Filter Bar with Date Inputs */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#111625] border border-slate-800 rounded-xl p-5 shadow-md">
             <div>
@@ -941,7 +824,6 @@ export default function ReportsPage() {
             </div>
           </div>
         </div>
-      )}
 
       {/* Employee Detail Audit Modal */}
       {selectedAuditEmpId !== null && (
