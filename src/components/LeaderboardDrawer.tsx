@@ -57,7 +57,9 @@ interface LeaderboardDrawerProps {
 }
 
 export default function LeaderboardDrawer({ isOpen, onClose }: LeaderboardDrawerProps) {
-  const [timeframe, setTimeframe] = useState<'week' | 'month' | 'all'>('month');
+  const [timeframe, setTimeframe] = useState<'week' | 'month' | 'all' | 'custom'>('month');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
   const [department, setDepartment] = useState<'all' | 'sales' | 'finance' | 'operations'>('all');
   const [selectedDesignation, setSelectedDesignation] = useState<string>('all');
   const [selectedMetric, setSelectedMetric] = useState<string>('auto');
@@ -76,6 +78,9 @@ export default function LeaderboardDrawer({ isOpen, onClose }: LeaderboardDrawer
       setLoading(true);
       try {
         let url = `/api/v1/leaderboard?timeframe=${timeframe}&department=${department}&designation=${encodeURIComponent(selectedDesignation)}&metric=${selectedMetric}`;
+        if (timeframe === 'custom' && startDate && endDate) {
+          url += `&startDate=${startDate}&endDate=${endDate}`;
+        }
         const res = await fetch(url);
         const result = await res.json();
         if (result.success) {
@@ -92,7 +97,7 @@ export default function LeaderboardDrawer({ isOpen, onClose }: LeaderboardDrawer
     };
 
     fetchLeaderboard();
-  }, [isOpen, timeframe, department, selectedDesignation, selectedMetric]);
+  }, [isOpen, timeframe, department, selectedDesignation, selectedMetric, startDate, endDate]);
 
   // Handle click outside to close
   useEffect(() => {
@@ -168,20 +173,57 @@ export default function LeaderboardDrawer({ isOpen, onClose }: LeaderboardDrawer
         <div className="p-4 bg-slate-950/60 border-b border-slate-800 space-y-3">
           {/* Timeframe Selectors */}
           <div className="flex gap-1.5 p-1 bg-slate-900 rounded-lg border border-slate-800">
-            {(['week', 'month', 'all'] as const).map((t) => (
+            {(['week', 'month', 'all', 'custom'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTimeframe(t)}
-                className={`flex-1 py-1.5 px-3 text-xs font-bold rounded-md uppercase tracking-wider transition-all cursor-pointer ${
+                className={`flex-1 py-1.5 px-2 text-xs font-bold rounded-md uppercase tracking-wider transition-all cursor-pointer ${
                   timeframe === t
                     ? 'bg-blue-600 text-white shadow-md'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                {t === 'week' ? 'Weekly' : t === 'month' ? 'Monthly' : 'All-Time'}
+                {t === 'week' ? 'Weekly' : t === 'month' ? 'Monthly' : t === 'all' ? 'All-Time' : 'Custom'}
               </button>
             ))}
           </div>
+
+          {/* Custom Date Range Picker */}
+          {timeframe === 'custom' && (
+            <div className="flex items-center gap-2 bg-slate-900/90 p-2 rounded-lg border border-slate-800 text-xs">
+              <div className="flex-1 flex items-center gap-1.5">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">From:</span>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 rounded px-2 py-1 text-slate-200 text-xs focus:outline-none cursor-pointer"
+                />
+              </div>
+              <div className="flex-1 flex items-center gap-1.5">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">To:</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 rounded px-2 py-1 text-slate-200 text-xs focus:outline-none cursor-pointer"
+                />
+              </div>
+              {(startDate || endDate) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStartDate('');
+                    setEndDate('');
+                  }}
+                  className="p-1 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                  title="Clear custom dates"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Department Selectors */}
           <div className="flex flex-wrap gap-1.5 items-center">
@@ -349,7 +391,7 @@ export default function LeaderboardDrawer({ isOpen, onClose }: LeaderboardDrawer
                     <div className="px-4 pb-4 pt-2 border-t border-slate-800 bg-slate-950/45 text-[11px] space-y-2">
                       <div className="flex items-center justify-between text-slate-400 font-bold uppercase text-[9px] tracking-wider mb-2">
                         <span className="flex items-center gap-1.5">
-                          <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Actual Work Breakdown ({timeframe === 'week' ? 'Weekly' : timeframe === 'month' ? 'Monthly' : 'All-time'})
+                          <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Actual Work Breakdown ({timeframe === 'week' ? 'Weekly' : timeframe === 'month' ? 'Monthly' : timeframe === 'custom' ? 'Custom Range' : 'All-time'})
                         </span>
                         <span className="text-slate-400 font-mono">{user.department}</span>
                       </div>
