@@ -760,29 +760,7 @@ export default function AuthenticatedLayout({
           })}
         </nav>
 
-        {/* Leaderboard Sidebar Card (Desktop) */}
-        <div className="mx-4 mb-4 shrink-0">
-          <button
-            type="button"
-            onClick={() => setLeaderboardOpen(true)}
-            className="w-full p-3 bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 rounded-xl transition-all cursor-pointer group text-left shadow-md flex items-center justify-between"
-          >
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:scale-105 transition-transform">
-                <Trophy className="w-4 h-4" />
-              </div>
-              <div>
-                <span className="text-xs font-bold text-slate-205 block group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                  Santori Standings
-                </span>
-                <span className="text-[10px] text-slate-450 block font-medium">
-                  Click to view team standings
-                </span>
-              </div>
-            </div>
-            <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
-          </button>
-        </div>
+
 
         {/* Logout */}
         <div className="p-4 border-t border-slate-800">
@@ -927,32 +905,7 @@ export default function AuthenticatedLayout({
               })}
             </nav>
 
-            {/* Leaderboard Sidebar Card (Mobile) */}
-            <div className="mx-4 mb-4 shrink-0">
-              <button
-                type="button"
-                onClick={() => {
-                  setSidebarOpen(false);
-                  setLeaderboardOpen(true);
-                }}
-                className="w-full p-3 bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 rounded-xl transition-all cursor-pointer group text-left shadow-md flex items-center justify-between"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:scale-105 transition-transform">
-                    <Trophy className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="text-xs font-bold text-slate-205 block group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                      Santori Standings
-                    </span>
-                    <span className="text-[10px] text-slate-450 block font-medium">
-                      Click to view team standings
-                    </span>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
-              </button>
-            </div>
+
 
             <div className="p-4 border-t border-slate-800">
               <button

@@ -78,6 +78,8 @@ export async function GET(req: Request) {
         },
         submittedBy: { select: { id: true, name: true } },
         financeProcessedBy: { select: { id: true, name: true } },
+        assignedFinance: { select: { id: true, name: true } },
+        assignedOps: { select: { id: true, name: true } },
         payments: {
           include: {
             recordedBy: { select: { id: true, name: true } }

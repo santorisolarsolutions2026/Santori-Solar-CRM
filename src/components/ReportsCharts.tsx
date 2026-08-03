@@ -48,31 +48,58 @@ interface LeadSourcePieChartProps {
 }
 
 export function LeadSourcePieChart({ leadSourceData, colors }: LeadSourcePieChartProps) {
+  const total = leadSourceData.reduce((acc, curr) => acc + curr.value, 0);
+
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <PieChart>
-        <Pie
-          data={leadSourceData}
-          cx="50%"
-          cy="50%"
-          innerRadius={60}
-          outerRadius={90}
-          paddingAngle={5}
-          dataKey="value"
-          label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
-          labelLine={false}
-        >
-          {leadSourceData.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
-          ))}
-        </Pie>
-        <Tooltip
-          contentStyle={{ backgroundColor: 'var(--bg-card-solid)', border: '1px solid var(--border-color)', borderRadius: '8px' }}
-          labelStyle={{ color: 'var(--text-primary)', fontSize: '12px', fontWeight: 'bold' }}
-          itemStyle={{ fontSize: '12px', color: 'var(--text-secondary)' }}
-        />
-      </PieChart>
-    </ResponsiveContainer>
+    <div className="w-full h-full flex flex-col justify-between space-y-4">
+      <div className="w-full h-44 relative flex items-center justify-center">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={leadSourceData}
+              cx="50%"
+              cy="50%"
+              innerRadius={48}
+              outerRadius={72}
+              paddingAngle={4}
+              dataKey="value"
+              stroke="#0f172a"
+              strokeWidth={2}
+            >
+              {leadSourceData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+              ))}
+            </Pie>
+            <Tooltip
+              contentStyle={{ backgroundColor: '#090b11', border: '1px solid #1f2937', borderRadius: '8px', padding: '8px' }}
+              labelStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}
+              itemStyle={{ fontSize: '12px', color: '#94a3b8' }}
+              formatter={(value: any, name: any) => [`${value} leads (${total > 0 ? ((Number(value) / total) * 100).toFixed(0) : 0}%)`, name]}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total</span>
+          <span className="text-sm font-extrabold text-white">{total}</span>
+        </div>
+      </div>
+
+      {/* Formatted Legend Badges Grid */}
+      <div className="w-full grid grid-cols-2 sm:grid-cols-3 gap-2">
+        {leadSourceData.map((item, index) => {
+          const pct = total > 0 ? ((item.value / total) * 100).toFixed(0) : 0;
+          return (
+            <div key={item.name} className="flex items-center gap-2 p-2 rounded-lg bg-slate-950/50 border border-slate-800/60 min-w-0">
+              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: colors[index % colors.length] }} />
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-semibold text-slate-200 truncate" title={item.name}>{item.name}</p>
+                <p className="text-[10px] text-slate-400 font-mono">{pct}% ({item.value})</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

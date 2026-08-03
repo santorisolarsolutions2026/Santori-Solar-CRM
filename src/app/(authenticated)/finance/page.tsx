@@ -78,6 +78,8 @@ interface Order {
   };
   submittedBy: { id: number; name: string };
   financeProcessedBy: { id: number; name: string } | null;
+  assignedFinance?: { id: number; name: string } | null;
+  assignedOps?: { id: number; name: string } | null;
   payments: Payment[];
   totalPaid: number;
   balanceOutstanding: number;
@@ -1144,6 +1146,7 @@ export default function FinancePage() {
                       <th className="py-4 px-4">Total Contract Value</th>
                       <th className="py-4 px-4">Down Payment</th>
                       <th className="py-4 px-4">Submitted By</th>
+                      <th className="py-4 px-4">Assigned To</th>
                       {(canVerifyOrder || canMaintainLedger) && <th className="py-4 px-4 text-right">Actions</th>}
                     </tr>
                   </thead>
@@ -1216,6 +1219,16 @@ export default function FinancePage() {
                             {order.submittedBy.name}
                           </Link>
                         </td>
+                        <td className="py-4 px-4 font-medium text-slate-300">
+                          {order.assignedFinance ? (
+                            <span className="inline-flex items-center gap-1.5 text-blue-400 font-semibold text-xs">
+                              <User className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                              <span>{order.assignedFinance.name}</span>
+                            </span>
+                          ) : (
+                            <span className="text-slate-600 italic text-xs">Unassigned</span>
+                          )}
+                        </td>
                         {(canVerifyOrder || canMaintainLedger) && (
                           <td className="py-4 px-4 text-right">
                             {canVerifyOrder && (
@@ -1267,6 +1280,7 @@ export default function FinancePage() {
                     <th className="py-4 px-4">Down Payment</th>
                     <th className="py-4 px-4">Total Paid</th>
                     <th className="py-4 px-4">Outstanding Balance</th>
+                    <th className="py-4 px-4">Assigned To</th>
                     <th className="py-4 px-4">Status</th>
                     <th className="py-4 px-4 text-right">Actions</th>
                   </tr>
@@ -1336,6 +1350,26 @@ export default function FinancePage() {
                         ₹{order.balanceOutstanding.toLocaleString('en-IN')}
                         {order.balanceOutstanding === 0 && (
                           <span className="inline-block text-[9px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20 ml-2">Paid</span>
+                        )}
+                      </td>
+                      <td className="py-4 px-4 font-medium text-slate-300">
+                        {order.assignedFinance ? (
+                          <span className="inline-flex items-center gap-1.5 text-blue-400 font-semibold text-xs">
+                            <User className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                            <span>{order.assignedFinance.name}</span>
+                          </span>
+                        ) : order.assignedOps ? (
+                          <span className="inline-flex items-center gap-1.5 text-purple-400 font-semibold text-xs">
+                            <User className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                            <span>{order.assignedOps.name}</span>
+                          </span>
+                        ) : order.submittedBy ? (
+                          <span className="inline-flex items-center gap-1.5 text-slate-400 text-xs">
+                            <User className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                            <span>{order.submittedBy.name}</span>
+                          </span>
+                        ) : (
+                          <span className="text-slate-600 italic text-xs">Unassigned</span>
                         )}
                       </td>
                       <td className="py-4 px-4 capitalize">
