@@ -223,8 +223,8 @@ const ALL_PERMISSIONS = [
   },
   {
     key: 'ops:delivered_orders',
-    label: 'Operations: Show Delivered Orders',
-    description: 'Allows viewing and managing delivered orders in Operations.',
+    label: 'Operations: View Completed Orders',
+    description: 'Allows viewing completed orders in the sidebar navigation and accessing the Completed Orders portal.',
     category: 'Operations'
   },
 
