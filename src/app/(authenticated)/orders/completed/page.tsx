@@ -147,8 +147,9 @@ export default function CompletedOrdersPage() {
     try {
       const res = await fetch('/api/v1/users');
       const data = await res.json();
-      if (data.success && data.users) {
-        setTeamMembers(data.users);
+      const userList = data.data || data.users;
+      if (data.success && Array.isArray(userList)) {
+        setTeamMembers(userList);
       }
     } catch (e) {
       console.error('Failed to fetch team members', e);

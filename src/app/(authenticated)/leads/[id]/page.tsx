@@ -2404,12 +2404,12 @@ export default function LeadDetailPage({
                             onChange={(e) => setEditForm({ ...editForm, leadSource: e.target.value })}
                             className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500"
                           >
+                            <option value="meta">Meta</option>
+                            <option value="discom">Discom</option>
+                            <option value="offline_campaign">Offline Campaign</option>
+                            <option value="inbound">Inbound</option>
                             <option value="whatsapp">WhatsApp</option>
                             <option value="cold_call">Cold Call</option>
-                            <option value="referral">Referral</option>
-                            <option value="walk_in">Walk-In</option>
-                            <option value="google_ad">Google Ad</option>
-                            <option value="other">Other</option>
                           </select>
                         </div>
 
@@ -2761,7 +2761,19 @@ export default function LeadDetailPage({
                               </div>
                               {meet.audioRecordingPath && (
                                 <div className="md:col-span-2">
-                                  <span className="text-slate-500 uppercase tracking-wider font-semibold block mb-2">Recorded Audio</span>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span className="text-slate-500 uppercase tracking-wider font-semibold block">Recorded Audio</span>
+                                    <a
+                                      href={`/api/v1/meetings/${meet.id}/audio`}
+                                      download={`meeting-${meet.id}-audio.webm`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
+                                    >
+                                      <Download className="w-3.5 h-3.5" />
+                                      <span>Download Audio File</span>
+                                    </a>
+                                  </div>
                                   <BeautifulAudioPlayer
                                     src={`/api/v1/meetings/${meet.id}/audio`}
                                     defaultDuration={meet.meetingDurationSec}

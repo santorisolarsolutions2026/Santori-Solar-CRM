@@ -45,11 +45,12 @@ const LeadSourcePieChart = dynamic(
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#0EA5E9', '#14B8A6'];
 
 const leadSourceData = [
-  { name: 'WhatsApp', value: 35 },
-  { name: 'Cold Call', value: 20 },
-  { name: 'Referral', value: 25 },
-  { name: 'Walk-In', value: 10 },
-  { name: 'Google Ads', value: 10 },
+  { name: 'Meta', value: 35 },
+  { name: 'Discom', value: 20 },
+  { name: 'Offline Campaign', value: 15 },
+  { name: 'Inbound', value: 15 },
+  { name: 'WhatsApp', value: 10 },
+  { name: 'Cold Call', value: 5 },
 ];
 
 interface OverviewStats {

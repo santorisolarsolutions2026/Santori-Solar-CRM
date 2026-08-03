@@ -385,11 +385,12 @@ export default function ReportsPage() {
   // Estimate lead source percentages for pie chart based on data
   // (In production this would be grouped from DB, but we can do it on client-side or render a gorgeous mock)
   const leadSourceData = [
-    { name: 'WhatsApp', value: 35 },
-    { name: 'Cold Call', value: 20 },
-    { name: 'Referral', value: 25 },
-    { name: 'Walk-In', value: 10 },
-    { name: 'Google Ads', value: 10 },
+    { name: 'Meta', value: 35 },
+    { name: 'Discom', value: 20 },
+    { name: 'Offline Campaign', value: 15 },
+    { name: 'Inbound', value: 15 },
+    { name: 'WhatsApp', value: 10 },
+    { name: 'Cold Call', value: 5 },
   ];
 
   return (

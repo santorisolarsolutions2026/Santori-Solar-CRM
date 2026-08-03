@@ -20,7 +20,7 @@ export default function NewLeadPage() {
     pinCode: '',
     city: '',
     state: '',
-    leadSource: 'whatsapp',
+    leadSource: 'meta',
     assignedManagerId: '',
     assignedTlId: '',
     assignedConsultantId: '',
@@ -381,12 +381,12 @@ export default function NewLeadPage() {
                 onChange={(e) => setForm({ ...form, leadSource: e.target.value })}
                 className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-300 text-xs focus:border-blue-500 focus:outline-none"
               >
+                <option value="meta">Meta</option>
+                <option value="discom">Discom</option>
+                <option value="offline_campaign">Offline Campaign</option>
+                <option value="inbound">Inbound</option>
                 <option value="whatsapp">WhatsApp</option>
                 <option value="cold_call">Cold Call</option>
-                <option value="referral">Referral</option>
-                <option value="walk_in">Walk-In</option>
-                <option value="google_ad">Google Ad</option>
-                <option value="other">Other</option>
               </select>
             </div>
           </div>

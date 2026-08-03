@@ -2143,12 +2143,12 @@ export default function LeadsPage() {
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       {[
+                        { id: 'meta', name: 'Meta' },
+                        { id: 'discom', name: 'Discom' },
+                        { id: 'offline_campaign', name: 'Offline Campaign' },
+                        { id: 'inbound', name: 'Inbound' },
                         { id: 'whatsapp', name: 'WhatsApp' },
                         { id: 'cold_call', name: 'Cold Call' },
-                        { id: 'referral', name: 'Referral' },
-                        { id: 'walk_in', name: 'Walk-In' },
-                        { id: 'google_ad', name: 'Google Ad' },
-                        { id: 'other', name: 'Other' },
                       ].map((src) => {
                         const isChecked = sourceFilter.split(',').includes(src.id);
                         return (

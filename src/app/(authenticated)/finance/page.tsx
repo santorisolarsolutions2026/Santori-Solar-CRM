@@ -713,10 +713,10 @@ export default function FinancePage() {
   const pendingOrders = filteredOrders.filter(o => o.status === 'submitted');
   const verifiedOrders = filteredOrders.filter(o => o.status !== 'submitted');
 
-  // Stats calculation
-  const totalValue = verifiedOrders.reduce((sum, o) => sum + o.totalValue, 0);
-  const totalCollected = verifiedOrders.reduce((sum, o) => sum + o.totalPaid, 0);
-  const totalOutstanding = verifiedOrders.reduce((sum, o) => sum + o.balanceOutstanding, 0);
+  // Stats calculation (across all orders visible in the portal view)
+  const totalValue = filteredOrders.reduce((sum, o) => sum + o.totalValue, 0);
+  const totalCollected = filteredOrders.reduce((sum, o) => sum + o.totalPaid, 0);
+  const totalOutstanding = filteredOrders.reduce((sum, o) => sum + o.balanceOutstanding, 0);
 
   return (
     <div className="space-y-6">
@@ -922,8 +922,8 @@ export default function FinancePage() {
 
       {/* Analytics Summary */}
       {(() => {
-        // Calculate payment methods breakdown for Pie Chart
-        const methodAmounts = verifiedOrders.reduce((acc: Record<string, number>, order) => {
+        // Calculate payment methods breakdown for Pie Chart across portal orders
+        const methodAmounts = filteredOrders.reduce((acc: Record<string, number>, order) => {
           order.payments.forEach(p => {
             if (p.isDiscarded) return;
             const m = p.paymentMethod || 'other';

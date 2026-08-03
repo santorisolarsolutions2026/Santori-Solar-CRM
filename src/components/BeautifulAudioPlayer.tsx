@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useState, useEffect } from 'react';
-import { Play, Pause, RotateCcw, Volume2, VolumeX, Loader2 } from 'lucide-react';
+import { Play, Pause, RotateCcw, Volume2, VolumeX, Loader2, Download } from 'lucide-react';
 
 interface BeautifulAudioPlayerProps {
   src: string;
@@ -202,6 +202,19 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
           >
             {playbackRate.toFixed(2)}x
           </button>
+
+          {/* Download Audio */}
+          <a
+            href={src}
+            download="meeting-audio-recording.webm"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Download Audio Recording"
+            className="h-8 px-2.5 flex items-center gap-1.5 rounded-lg border border-slate-800 hover:border-slate-700 bg-slate-950/40 text-slate-400 hover:text-white transition-colors flex-shrink-0 text-[10px] font-bold"
+          >
+            <Download className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+            <span className="hidden sm:inline">Download Audio</span>
+          </a>
         </div>
 
         {/* Volume controls */}
