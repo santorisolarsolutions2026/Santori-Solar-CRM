@@ -221,6 +221,9 @@ export function LeadTrackingTimeline({ lead }: LeadTrackingProps) {
         } else if (log.remark.startsWith('Lead added to the system')) {
           eventTitle = 'Lead Registered';
           eventDescription = log.remark;
+        } else if (log.remark.includes('Reverted to Fresh Lead') || log.remark.includes('reverted to Fresh')) {
+          eventTitle = 'Reverted to Fresh Lead';
+          eventDescription = log.remark;
         } else if (log.remark.includes('promoted to Fresh Lead')) {
           eventTitle = 'Lead Promoted to Fresh';
           eventDescription = log.remark;
@@ -236,9 +239,13 @@ export function LeadTrackingTimeline({ lead }: LeadTrackingProps) {
         }
       }
 
-      if (isCreation) {
+      const isRevertLog = log.toStatus === 1 && (log.remark?.includes('Reverted') || log.remark?.includes('reverted') || log.remark?.includes('Fresh'));
+      if (isCreation && !isRevertLog) {
         eventTitle = 'Lead Opportunity Registered';
         eventDescription = log.remark || `Lead #${lead.leadCode} created in system for customer ${lead.customerName}.`;
+      } else if (isRevertLog) {
+        eventTitle = 'Reverted to Fresh Lead';
+        eventDescription = log.remark || 'Lead reverted to Fresh Lead stage.';
       }
 
       events.push({
@@ -249,7 +256,7 @@ export function LeadTrackingTimeline({ lead }: LeadTrackingProps) {
         timestamp: logTime,
         description: eventDescription,
         user: `${log.user.name} (${log.user.role.toUpperCase()})`,
-        badge: isCreation ? 'Registered' : 'Activity',
+        badge: isCreation && !isRevertLog ? 'Registered' : (isRevertLog ? 'Fresh Lead' : 'Activity'),
         toStatus: log.toStatus,
         fromStatusName: fromBadge ? fromBadge.name : null,
         toStatusName: toBadge.name,

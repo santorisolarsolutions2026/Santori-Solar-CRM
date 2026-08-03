@@ -1583,21 +1583,22 @@ export default function LeadDetailPage({
 
   // Calculate dynamic allowed transitions for select input
   const nextStageIds = ALLOWED_TRANSITIONS[lead.status] || [];
-  // Filter by user role permissions (Admin bypassed)
+  const isUserAdmin = ['admin', 'director'].includes(user?.role || '') || user?.role?.startsWith('admin:');
   let roleFilteredNextStages = nextStageIds.filter((statusNum) => {
     if (isLeadLocked) return false;
-    if (!hasPermission('sales:stage_change') && !hasPermission('leads:change_status')) return false;
+    if (statusNum === 1 && !isUserAdmin) return false;
+    if (!hasPermission('sales:stage_change') && !hasPermission('leads:change_status') && !isUserAdmin) return false;
     // Transitioning to stage 8 (Meeting Booked) requires meeting booking permission
     if (statusNum === 8) {
-      return hasPermission('sales:meeting_book') || hasPermission('leads:book_meeting');
+      return hasPermission('sales:meeting_book') || hasPermission('leads:book_meeting') || isUserAdmin;
     }
     // Transitioning to stage 9 (Meeting Done) requires meeting done permission
     if (statusNum === 9) {
-      return hasPermission('sales:meeting_done') || hasPermission('leads:meeting_done');
+      return hasPermission('sales:meeting_done') || hasPermission('leads:meeting_done') || isUserAdmin;
     }
     // Transitioning to stage 13 requires orders:create permission
     if (statusNum === 13) {
-      return hasPermission('sales:order_punch') || hasPermission('orders:create');
+      return hasPermission('sales:order_punch') || hasPermission('orders:create') || isUserAdmin;
     }
     return true;
   });

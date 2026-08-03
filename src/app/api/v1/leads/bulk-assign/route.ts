@@ -65,6 +65,22 @@ export async function POST(req: Request) {
     }
 
     const isAdmin = ['admin', 'director'].includes(userPayload.role) || userPayload.role?.startsWith('admin:');
+
+    if (status !== undefined && status !== null && Number(status) === 1) {
+      if (!isAdmin) {
+        return NextResponse.json({
+          success: false,
+          message: 'Forbidden. Reverting leads to Fresh Lead status can only be performed by an Admin.'
+        }, { status: 403 });
+      }
+
+      // Reverting to Fresh Lead automatically returns the lead to Unassigned
+      updateData.assignedManagerId = null;
+      updateData.assignedTlId = null;
+      updateData.assignedConsultantId = null;
+      updateData.assignedTeamId = null;
+    }
+
     if (!isAdmin) {
       const { getSubordinateIds } = await import('@/lib/hierarchy');
       const subordinateIds = await getSubordinateIds(userPayload.id);
@@ -91,6 +107,27 @@ export async function POST(req: Request) {
       let count = 0;
       const logEntries: any[] = [];
 
+      if (Number(status) === 1) {
+        // Deactivate all active assignments in EmployeeAssignment table for target leads
+        await tx.employeeAssignment.updateMany({
+          where: { leadId: { in: leadIds }, isActive: true },
+          data: { isActive: false },
+        });
+
+        // Wipe previous tracking journey history if clearHistory is true/truthy
+        const shouldClear = body.clearHistory === true || String(body.clearHistory) === 'true';
+        if (shouldClear) {
+          await tx.leadActivityLog.deleteMany({
+            where: { leadId: { in: leadIds } },
+          });
+          await tx.auditLog.deleteMany({
+            where: { leadId: { in: leadIds } },
+          });
+        }
+      }
+
+      const shouldClear = Number(status) === 1 && (body.clearHistory === true || String(body.clearHistory) === 'true');
+
       for (const lead of leads) {
         const finalManagerId = assignedManagerId !== undefined ? (assignedManagerId === null || assignedManagerId === '' ? null : Number(assignedManagerId)) : lead.assignedManagerId;
         const finalTlId = assignedTlId !== undefined ? (assignedTlId === null || assignedTlId === '' ? null : Number(assignedTlId)) : lead.assignedTlId;
@@ -114,11 +151,13 @@ export async function POST(req: Request) {
         logEntries.push({
           leadId: lead.id,
           userId: userPayload.id,
-          fromStatus: lead.status,
+          fromStatus: shouldClear ? null : lead.status,
           toStatus: newStatus,
-          remark: status !== undefined && status !== null && status !== 'UNCHANGED'
-            ? `Bulk updated pipeline status to Stage ${status} (${userPayload.name}).`
-            : `Bulk updated team assignments. Updated fields: ${Object.keys(updateData).join(', ')}.${newStatus === 1 && lead.status === 0 ? ' Status auto-promoted to Fresh Lead.' : ''}`,
+          remark: Number(status) === 1
+            ? `Reverted to Fresh Lead by Admin (${userPayload.name}).${shouldClear ? ' Track journey history cleared.' : ''}`
+            : (status !== undefined && status !== null && status !== 'UNCHANGED'
+              ? `Bulk updated pipeline status to Stage ${status} (${userPayload.name}).`
+              : `Bulk updated team assignments. Updated fields: ${Object.keys(updateData).join(', ')}.${newStatus === 1 && lead.status === 0 ? ' Status auto-promoted to Fresh Lead.' : ''}`),
         });
       }
 

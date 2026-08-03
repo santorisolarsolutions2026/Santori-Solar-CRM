@@ -26,6 +26,7 @@ import {
   Tag,
   Zap,
   Truck,
+  RotateCcw,
 } from 'lucide-react';
 import Link from 'next/link';
 import UserSelect from '@/components/UserSelect';
@@ -213,6 +214,11 @@ export default function LeadsPage() {
   const [bulkStage, setBulkStage] = useState('UNCHANGED');
   const [bulkAssigning, setBulkAssigning] = useState(false);
   const [bulkConfirmModal, setBulkConfirmModal] = useState<{ isOpen: boolean; step: 1 | 2 } | null>(null);
+
+  // Bulk Revert to Fresh States
+  const [showBulkRevertFreshModal, setShowBulkRevertFreshModal] = useState(false);
+  const [bulkRevertClearHistory, setBulkRevertClearHistory] = useState(true);
+  const [bulkRevertRemark, setBulkRevertRemark] = useState('');
 
   const handleArbitrarySelectSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -468,6 +474,13 @@ export default function LeadsPage() {
       return;
     }
 
+    if (Number(bulkStage) === 1) {
+      setShowBulkStageModal(false);
+      setBulkRevertRemark('');
+      setShowBulkRevertFreshModal(true);
+      return;
+    }
+
     try {
       setBulkAssigning(true);
       const payload: any = {
@@ -497,9 +510,11 @@ export default function LeadsPage() {
     }
   };
 
-  const handleBulkRevertNotInterested = async () => {
+  const handleBulkRevertSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (selectedIds.length === 0) return;
-    if (!window.confirm(`Are you sure you want to revert the ${selectedIds.length} selected lead(s) back to "Fresh Lead" stage?`)) {
+    if (!bulkRevertRemark.trim()) {
+      alert('Please provide a remark / reason for reverting selected lead(s) to Fresh.');
       return;
     }
 
@@ -507,7 +522,9 @@ export default function LeadsPage() {
       setBulkAssigning(true);
       const payload: any = {
         leadIds: selectedIds,
-        status: 1 // Stage 1 is Fresh Lead
+        status: 1, // Stage 1 is Fresh Lead
+        clearHistory: bulkRevertClearHistory,
+        remark: bulkRevertRemark,
       };
 
       const res = await fetch('/api/v1/leads/bulk-assign', {
@@ -517,11 +534,14 @@ export default function LeadsPage() {
       });
 
       const data = await res.json();
-      alert(data.message || 'Leads reverted to Fresh Lead successfully.');
-
       if (data.success) {
+        alert(data.message || 'Selected lead(s) successfully reverted to Fresh Lead.');
+        setShowBulkRevertFreshModal(false);
+        setBulkRevertRemark('');
         setSelectedIds([]);
         fetchLeads();
+      } else {
+        alert(data.message || 'Failed to revert selected leads.');
       }
     } catch (err) {
       console.error(err);
@@ -1149,14 +1169,20 @@ export default function LeadsPage() {
                   <SlidersHorizontal className="w-3.5 h-3.5" />
                   <span>Change Stage</span>
                 </button>
-                <button
-                  onClick={handleBulkRevertNotInterested}
-                  className="py-2 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer font-sans"
-                >
-                  <Check className="w-3.5 h-3.5" />
-                  <span>Revert to Fresh</span>
-                </button>
               </>
+            )}
+            {(user?.role === 'admin' || user?.role === 'director' || user?.role?.startsWith('admin:')) && (
+              <button
+                onClick={() => {
+                  setBulkRevertRemark('');
+                  setBulkRevertClearHistory(true);
+                  setShowBulkRevertFreshModal(true);
+                }}
+                className="py-2 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer font-sans"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Revert to Fresh</span>
+              </button>
             )}
             {hasPermission('leads:delete') && (
               <button
@@ -1810,11 +1836,13 @@ export default function LeadsPage() {
                   className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-blue-500 focus:outline-none"
                 >
                   <option value="UNCHANGED">-- Select Target Stage --</option>
-                  {Object.entries(STAGE_BADGES).map(([id, badge]) => (
-                    <option key={id} value={id}>
-                      {badge.name} (Stage {id})
-                    </option>
-                  ))}
+                  {Object.entries(STAGE_BADGES)
+                    .filter(([id]) => id !== '1' || (user?.role === 'admin' || user?.role === 'director' || user?.role?.startsWith('admin:')))
+                    .map(([id, badge]) => (
+                      <option key={id} value={id}>
+                        {badge.name} (Stage {id})
+                      </option>
+                    ))}
                 </select>
               </div>
 
@@ -1839,7 +1867,99 @@ export default function LeadsPage() {
                   ) : (
                     <>
                       <Check className="w-3.5 h-3.5" />
-                      <span>Shift Stage</span>
+                      <span>Apply Stage Change</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Revert to Fresh Lead Modal */}
+      {showBulkRevertFreshModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="w-full max-w-md bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div className="p-5 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+                  <RotateCcw className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-white">Bulk Revert to Fresh Lead</h3>
+                  <p className="text-[11px] text-slate-400">Reset {selectedIds.length} selected lead(s) back to Fresh Lead (Stage 1)</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowBulkRevertFreshModal(false)}
+                className="text-slate-400 hover:text-white cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleBulkRevertSubmit} className="p-5 space-y-4">
+              <div className="p-3 bg-blue-500/5 border border-blue-500/20 rounded-xl text-xs text-slate-300 leading-relaxed">
+                <span className="font-bold text-blue-400">Note:</span> Reverting selected lead(s) to Fresh Lead will automatically clear their current assignments and return them to <span className="font-bold text-white">Unassigned</span>.
+              </div>
+
+              {/* History Deletion Option */}
+              <label className="flex items-start gap-3 p-3 bg-slate-900/80 border border-slate-800 rounded-xl cursor-pointer hover:border-slate-700 transition-all select-none">
+                <input
+                  type="checkbox"
+                  checked={bulkRevertClearHistory}
+                  onChange={(e) => setBulkRevertClearHistory(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded border-slate-700 bg-slate-950 text-blue-600 focus:ring-0 cursor-pointer"
+                />
+                <div>
+                  <p className="text-xs font-bold text-white">Clear track journey history</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5 leading-normal">
+                    {bulkRevertClearHistory 
+                      ? "Yes — Delete previous activity logs and begin showing only the fresh lead entry in track journey for selected leads." 
+                      : "No — Preserve previous activity logs in track journey history for selected leads."}
+                  </p>
+                </div>
+              </label>
+
+              {/* Mandatory Remark */}
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                  Remark / Reason for Reverting *
+                </label>
+                <textarea
+                  required
+                  value={bulkRevertRemark}
+                  onChange={(e) => setBulkRevertRemark(e.target.value)}
+                  placeholder="Enter reason for reverting selected lead(s) to Fresh Lead..."
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white h-20 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              {/* Buttons */}
+              <div className="pt-3 border-t border-slate-800/80 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowBulkRevertFreshModal(false)}
+                  className="py-2 px-4 bg-slate-900 border border-slate-800 text-slate-400 rounded-xl font-bold text-xs cursor-pointer hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={bulkAssigning}
+                  className="py-2 px-5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-xs cursor-pointer shadow-lg shadow-blue-500/20 flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  {bulkAssigning ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                      <span>Reverting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Confirm Revert to Fresh</span>
                     </>
                   )}
                 </button>

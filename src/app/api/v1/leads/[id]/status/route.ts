@@ -91,7 +91,7 @@ export async function POST(
 
     // Revert to Fresh Lead (Stage 1) restriction check: Only Admin / Director can perform this action
     const isUserAdmin = ['admin', 'director'].includes(userPayload.role) || userPayload.role?.startsWith('admin:');
-    if (toStatusNum === 1 && lead.status !== 1 && lead.status !== 0) {
+    if (toStatusNum === 1) {
       if (!isUserAdmin) {
         return NextResponse.json({
           success: false,
@@ -551,11 +551,13 @@ export async function POST(
           },
         });
       } else {
+        const isRevertFresh = (finalStatusNum === 1 || toStatusNum === 1);
+        const shouldClear = isRevertFresh && (clearHistory === true || String(clearHistory) === 'true');
         await tx.leadActivityLog.create({
           data: {
             leadId,
             userId: userPayload.id,
-            fromStatus: lead.status,
+            fromStatus: shouldClear ? null : lead.status,
             toStatus: finalStatusNum,
             remark,
           },
