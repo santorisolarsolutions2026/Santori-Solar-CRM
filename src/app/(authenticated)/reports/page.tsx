@@ -49,6 +49,8 @@ import {
   Search,
   ChevronDown,
   ChevronUp,
+  Award,
+  Sparkles,
 } from 'lucide-react';
 import CustomSelect from '@/components/CustomSelect';
 
@@ -497,6 +499,94 @@ export default function ReportsPage() {
             </div>
           </div>
 
+          {/* KPI Summary Cards for Active Department */}
+          {(() => {
+            const currentDeptList = auditData?.departments?.[activeDeptTab] || [];
+            const staffCount = currentDeptList.length;
+            
+            let totalOutput = 0;
+            let outputLabel = 'Total Output';
+            let topStaff = currentDeptList[0]?.name || '-';
+            let maxVal = 0;
+
+            currentDeptList.forEach((emp: any) => {
+              let score = 0;
+              if (activeDeptTab === 'Sales' || activeDeptTab === 'PSA') {
+                score = emp.metrics?.leadsWorked || 0;
+                totalOutput += score;
+                outputLabel = 'Total Leads Worked';
+              } else if (activeDeptTab === 'Finance') {
+                score = emp.metrics?.ordersVerified || 0;
+                totalOutput += score;
+                outputLabel = 'Orders Verified';
+              } else if (activeDeptTab === 'Operations') {
+                score = emp.metrics?.installationsCompleted || 0;
+                totalOutput += score;
+                outputLabel = 'Installations Completed';
+              } else {
+                score = emp.metrics?.leadsWorked || 0;
+                totalOutput += score;
+                outputLabel = 'Activities Logged';
+              }
+
+              if (score > maxVal) {
+                maxVal = score;
+                topStaff = emp.name;
+              }
+            });
+
+            return (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between shadow-lg">
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Active Staff</span>
+                    <span className="text-xl font-extrabold text-white mt-1 block">{staffCount} <span className="text-xs text-slate-500 font-normal">Members</span></span>
+                  </div>
+                  <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+                    <Users className="w-5 h-5" />
+                  </div>
+                </div>
+
+                <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between shadow-lg">
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">{outputLabel}</span>
+                    <span className="text-xl font-extrabold text-emerald-400 mt-1 block">{totalOutput.toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                    <Award className="w-5 h-5" />
+                  </div>
+                </div>
+
+                <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between shadow-lg">
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Active Department</span>
+                    <span className="text-sm font-bold text-slate-200 mt-1 block flex items-center gap-1.5">
+                      <span className={`w-2 h-2 rounded-full ${
+                        activeDeptTab === 'Sales' ? 'bg-cyan-400' : activeDeptTab === 'Finance' ? 'bg-emerald-400' : activeDeptTab === 'Operations' ? 'bg-purple-400' : 'bg-blue-400'
+                      }`} />
+                      {activeDeptTab}
+                    </span>
+                  </div>
+                  <div className="w-10 h-10 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+                    <Layers className="w-5 h-5" />
+                  </div>
+                </div>
+
+                <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between shadow-lg">
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Top Contributor</span>
+                    <span className="text-xs font-bold text-amber-300 mt-1 block truncate max-w-[130px]" title={topStaff}>
+                      {topStaff}
+                    </span>
+                  </div>
+                  <div className="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Department Tab Buttons */}
           <div className="flex gap-2 border-b border-slate-800 bg-slate-955/20 p-1.5 rounded-xl overflow-x-auto whitespace-nowrap scrollbar-none">
             {(['Sales', 'Finance', 'Operations', 'Other'] as const).map((dept) => {
@@ -508,13 +598,13 @@ export default function ReportsPage() {
                   onClick={() => setActiveDeptTab(dept as any)}
                   className={`py-2.5 px-5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                     isActive
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-650 text-slate-955 font-extrabold shadow-md'
+                      ? 'bg-gradient-to-r from-blue-600 to-indigo-650 text-white font-extrabold shadow-md'
                       : 'bg-transparent border border-transparent text-slate-400 hover:text-white hover:bg-slate-900/40'
                   }`}
                 >
                   <span>{dept} Department</span>
                   <span className={`px-1.5 py-0.5 rounded text-[10px] ${
-                    isActive ? 'bg-slate-955/20 text-slate-955' : 'bg-slate-900 text-slate-455'
+                    isActive ? 'bg-white/20 text-white font-extrabold' : 'bg-slate-900 text-slate-400'
                   }`}>
                     {count}
                   </span>
@@ -524,8 +614,8 @@ export default function ReportsPage() {
           </div>
 
           {/* Dynamic Table Section */}
-          <div className="bg-[#111625] border border-slate-800 rounded-2xl p-6 shadow-xl">
-            <div className="flex justify-between items-center mb-6 border-b border-slate-800 pb-3">
+          <div className="bg-[#111625] border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-800 pb-4">
               <h3 className="text-sm font-bold text-white tracking-wide uppercase flex items-center gap-2">
                 <span className={`w-2.5 h-2.5 rounded-full ${
                   activeDeptTab === 'Sales' ? 'bg-cyan-500' :
@@ -534,21 +624,40 @@ export default function ReportsPage() {
                 }`} />
                 <span>{activeDeptTab} Staff Performance & Audit List</span>
               </h3>
-              {auditLoading && (
-                <div className="flex items-center gap-2 text-xs text-slate-455 animate-pulse">
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600 dark:text-blue-400" />
-                  <span>Syncing metrics...</span>
+
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <div className="relative w-full sm:w-64">
+                  <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
+                  <input
+                    type="text"
+                    placeholder="Search staff name or designation..."
+                    value={auditSearchQuery}
+                    onChange={(e) => setAuditSearchQuery(e.target.value)}
+                    className="w-full pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-slate-700"
+                  />
                 </div>
-              )}
+
+                {auditLoading && (
+                  <div className="flex items-center gap-1.5 text-xs text-slate-400 animate-pulse shrink-0">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-400" />
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="overflow-x-auto">
               {(() => {
-                const employeesList = auditData?.departments?.[activeDeptTab] || [];
+                const rawList = auditData?.departments?.[activeDeptTab] || [];
+                const employeesList = rawList.filter((emp: any) => {
+                  if (!auditSearchQuery.trim()) return true;
+                  const q = auditSearchQuery.toLowerCase();
+                  return (emp.name || '').toLowerCase().includes(q) || (emp.designation || '').toLowerCase().includes(q);
+                });
+
                 if (employeesList.length === 0) {
                   return (
                     <div className="py-12 text-center text-slate-500 text-xs italic">
-                      No active members found in {activeDeptTab} department for this timeframe.
+                      {auditSearchQuery ? `No staff matching "${auditSearchQuery}" found.` : `No active members found in ${activeDeptTab} department for this timeframe.`}
                     </div>
                   );
                 }
