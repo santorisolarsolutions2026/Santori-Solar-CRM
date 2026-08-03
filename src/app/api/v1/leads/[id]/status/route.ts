@@ -509,6 +509,15 @@ export async function POST(
         // Wipe previous tracking journey history if clearHistory is true/truthy
         const shouldClear = clearHistory === true || String(clearHistory) === 'true';
         if (shouldClear) {
+          await tx.meetingBooking.deleteMany({
+            where: { leadId },
+          });
+          await tx.leadTask.deleteMany({
+            where: { leadId },
+          });
+          await tx.activity.deleteMany({
+            where: { leadId },
+          });
           await tx.leadActivityLog.deleteMany({
             where: { leadId },
           });

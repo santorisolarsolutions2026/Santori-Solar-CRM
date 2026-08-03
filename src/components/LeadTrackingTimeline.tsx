@@ -308,20 +308,23 @@ export function LeadTrackingTimeline({ lead }: LeadTrackingProps) {
     }
   }
 
-  // 4. Actual Meetings Booked / Conducted
+  // 4. Actual Meetings Conducted (Only when meeting is completed / over)
   if (lead.meetings && lead.meetings.length > 0) {
-    lead.meetings.forEach((m) => {
-      const mTime = new Date(m.meetingDate).getTime() || 0;
-      events.push({
-        id: `meeting-${m.id}`,
-        title: `Site Visit / Meeting Scheduled`,
-        date: formatDate(m.meetingDate),
-        fullDate: `${m.meetingDate} at ${m.meetingTime}`,
-        timestamp: mTime,
-        description: m.notes ? `Meeting Notes: "${m.notes}"` : 'Site inspection & solar estimation meeting scheduled with customer.',
-        badge: 'Meeting',
-        user: m.executive ? `${m.executive.name} (${m.executive.role.toUpperCase()})` : undefined,
-      });
+    lead.meetings.forEach((m: any) => {
+      const isMeetingOver = !!m.meetingEndedAt || !!m.meetingDurationSec || lead.status >= 9;
+      if (isMeetingOver) {
+        const mTime = m.meetingEndedAt ? new Date(m.meetingEndedAt).getTime() : (new Date(m.meetingDate).getTime() || 0);
+        events.push({
+          id: `meeting-${m.id}`,
+          title: `Site Visit / Meeting Completed`,
+          date: formatDate(m.meetingDate),
+          fullDate: `${m.meetingDate} at ${m.meetingTime}`,
+          timestamp: mTime,
+          description: m.notes ? `Meeting Notes: "${m.notes}"` : 'Site inspection & solar estimation meeting completed with customer.',
+          badge: 'Meeting Completed',
+          user: m.executive ? `${m.executive.name} (${m.executive.role.toUpperCase()})` : undefined,
+        });
+      }
     });
   }
 
@@ -357,8 +360,12 @@ export function LeadTrackingTimeline({ lead }: LeadTrackingProps) {
     });
   }
 
+  // Filter out any future data events (timestamp > now)
+  const nowBuffer = Date.now() + 60000;
+  const filteredEvents = events.filter((e) => e.timestamp <= nowBuffer);
+
   // Sort events chronologically (Newest first on top)
-  events.sort((a, b) => b.timestamp - a.timestamp);
+  filteredEvents.sort((a, b) => b.timestamp - a.timestamp);
 
   return (
     <div className="bg-[#0b0f19] border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
@@ -389,9 +396,9 @@ export function LeadTrackingTimeline({ lead }: LeadTrackingProps) {
       {/* Dynamic Delivery Tracking Timeline UI (Only Real Completed Events) */}
       <div className="py-2 px-2 sm:px-4">
         <div className="space-y-0 relative">
-          {events.map((event, idx) => {
+          {filteredEvents.map((event, idx) => {
             const isLatest = idx === 0;
-            const isVisualLast = idx === events.length - 1;
+            const isVisualLast = idx === filteredEvents.length - 1;
 
             return (
               <div key={event.id} className="flex items-start gap-4 sm:gap-6 relative group pb-8 last:pb-0">
