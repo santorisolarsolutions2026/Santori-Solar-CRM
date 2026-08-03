@@ -4041,6 +4041,114 @@ export default function TeamManagementPage() {
                         </label>
                       </div>
                     )}
+
+                    {/* Custom Access Level Overrides Panel */}
+                    {canEditPermissionsAndRole && (
+                      <div className="border-t border-slate-800/80 pt-4 space-y-3.5">
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5 flex items-center justify-between">
+                            <span>Custom Access Level Overrides</span>
+                            <span className="text-[9px] font-mono font-normal text-blue-400">
+                              {editMemberPermissions.filter(p => p !== 'none').length} Active Granted
+                            </span>
+                          </label>
+                          <p className="text-[9px] text-slate-500">
+                            Enable custom permission switches (e.g. View Completed Orders) for this employee.
+                          </p>
+                        </div>
+
+                        {/* Categories header bar */}
+                        <div className="flex flex-wrap gap-1 border-b border-slate-800 pb-1.5">
+                          {[
+                            { key: 'PSA', label: 'Pre-Sales', icon: Phone },
+                            { key: 'Sales', label: 'Sales', icon: LineChart },
+                            { key: 'Finance', label: 'Finance', icon: DollarSign },
+                            { key: 'Operations', label: 'Operations', icon: Hammer },
+                            { key: 'IT', label: 'IT & System Admin', icon: Terminal },
+                          ].map((cat) => {
+                            const isActive = selectedPermissionCategory === cat.key;
+                            const Icon = cat.icon;
+                            return (
+                              <button
+                                key={cat.key}
+                                type="button"
+                                onClick={() => setSelectedPermissionCategory(cat.key)}
+                                className={`flex items-center gap-1 px-2.5 py-1 border rounded-md text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                                  isActive
+                                    ? 'bg-blue-500/10 border-blue-500/40 text-blue-400 font-extrabold'
+                                    : 'bg-transparent border-transparent text-slate-400 hover:text-slate-200'
+                                }`}
+                              >
+                                <Icon className="w-3 h-3" />
+                                <span>{cat.label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* Permission switches list */}
+                        <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                          {ALL_PERMISSIONS.filter(p => p.category === selectedPermissionCategory).map((perm) => {
+                            const isChecked = perm.category === 'IT'
+                              ? ALL_PERMISSIONS.filter(p => p.category === 'IT').every(p => editMemberPermissions.includes(p.key))
+                              : editMemberPermissions.includes(perm.key);
+
+                            return (
+                              <label
+                                key={perm.key}
+                                className={`flex items-start gap-2.5 p-2 rounded-lg border select-none cursor-pointer transition-all duration-200 ${
+                                  isChecked
+                                    ? 'bg-blue-600/[0.03] border-blue-500/30 shadow-sm'
+                                    : 'bg-slate-950/20 border-slate-900/60 hover:border-slate-800'
+                                }`}
+                              >
+                                <div className="relative shrink-0 mt-0.5 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={isChecked}
+                                    onChange={() => {
+                                      if (perm.category === 'IT') {
+                                        const itKeys = ALL_PERMISSIONS.filter(p => p.category === 'IT').map(p => p.key);
+                                        if (isChecked) {
+                                          setEditMemberPermissions(editMemberPermissions.filter(k => !itKeys.includes(k)));
+                                        } else {
+                                          const otherKeys = editMemberPermissions.filter(k => !itKeys.includes(k));
+                                          setEditMemberPermissions([...otherKeys, ...itKeys]);
+                                        }
+                                      } else {
+                                        if (isChecked) {
+                                          setEditMemberPermissions(editMemberPermissions.filter(k => k !== perm.key));
+                                        } else {
+                                          setEditMemberPermissions([...editMemberPermissions, perm.key]);
+                                        }
+                                      }
+                                    }}
+                                    className="sr-only"
+                                  />
+                                  <div className={`w-7 h-4 rounded-full transition-colors duration-200 ease-in-out ${
+                                    isChecked
+                                      ? 'bg-blue-600'
+                                      : 'bg-slate-800 border border-slate-700/60'
+                                  }`} />
+                                  <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${
+                                    isChecked ? 'translate-x-3' : 'translate-x-0'
+                                  }`} />
+                                </div>
+
+                                <div className="flex flex-col min-w-0">
+                                  <span className={`text-[10px] font-bold tracking-wide transition-colors ${isChecked ? 'text-white' : 'text-slate-350'}`}>
+                                    {perm.label}
+                                  </span>
+                                  <span className="text-[8px] text-slate-500 leading-snug">
+                                    {perm.description}
+                                  </span>
+                                </div>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Access Logs */}
