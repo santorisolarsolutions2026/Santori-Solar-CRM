@@ -48,10 +48,10 @@ export default function Typewriter({ texts }: { texts: string[] }) {
 
   return (
     <span className="relative inline-block whitespace-nowrap">
-      <span className="text-blue-500 dark:text-blue-400 font-extrabold">
+      <span className="text-emerald-500 dark:text-emerald-400 font-extrabold">
         {currentText || "\u00A0"}
       </span>
-      <span className="absolute -right-2 top-0 bottom-0 w-0.5 bg-blue-500 dark:bg-blue-400 animate-pulse" />
+      <span className="absolute -right-2 top-0 bottom-0 w-0.5 bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
     </span>
   );
 }

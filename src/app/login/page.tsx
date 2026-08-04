@@ -220,59 +220,62 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2 selection:bg-emerald-600 selection:text-white bg-white dark:bg-[var(--bg-main)]">
-      {/* LEFT PANEL - Brand / Visual */}
-      <div className="hidden lg:flex flex-col justify-center bg-[var(--bg-sidebar)] relative overflow-hidden p-12">
-        <div 
-          className="absolute inset-0 bg-cover bg-center opacity-45 mix-blend-luminosity scale-105 transition-transform duration-1000"
-          style={{ backgroundImage: 'url("/Sun-being-reflected-over-solar-panels.jpg")' }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0D1117] via-[#111318]/80 to-[#0D1117]/60" />
-        
-        <div className="relative z-10 max-w-lg mx-auto w-full">
-          <div className="mb-8">
+    <div className="min-h-screen relative flex items-center justify-center selection:bg-emerald-600 selection:text-white bg-[#0D1117] overflow-hidden p-6 sm:p-10">
+      {/* Full Page Background Image with Dark Overlay */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-luminosity scale-105 transition-transform duration-1000"
+        style={{ backgroundImage: 'url("/Sun-being-reflected-over-solar-panels.jpg")' }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#0D1117]/95 via-[#0D1117]/85 to-[#0D1117]/95 backdrop-blur-[2px]" />
+
+      {/* Main Content Grid */}
+      <div className="relative z-10 w-full max-w-5xl mx-auto grid lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+        {/* LEFT PANEL - Brand / Visual */}
+        <div className="hidden lg:flex lg:col-span-6 flex-col justify-center p-6 space-y-6">
+          <div className="mb-2">
             <Image 
               src="/logo.png" 
               alt="Santori Solar Solutions Logo" 
-              width={80} 
-              height={80} 
-              className="object-contain drop-shadow-lg"
+              width={84} 
+              height={84} 
+              className="object-contain drop-shadow-xl"
               priority
             />
           </div>
-          <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4 leading-tight">
-            Santori <span className="text-emerald-500">Solar</span>
-          </h1>
-          <h2 className="text-xl text-gray-300 font-medium mb-6">
-            Powering Sustainable Futures
-          </h2>
-          <p className="text-gray-400 text-sm leading-relaxed max-w-md">
+          <div>
+            <h1 className="text-4xl md:text-5xl font-extrabold text-white leading-tight">
+              Santori <span className="text-emerald-500">Solar</span>
+            </h1>
+            <h2 className="text-xl text-emerald-400/90 font-medium mt-1">
+              Powering Sustainable Futures
+            </h2>
+          </div>
+          <p className="text-gray-300 text-sm leading-relaxed max-w-md">
             Streamline your operations and manage customer relationships with our powerful, green-first CRM solution designed specifically for modern solar energy providers.
           </p>
         </div>
-      </div>
 
-      {/* RIGHT PANEL - Form */}
-      <div className="flex flex-col items-center justify-center p-6 sm:p-12 h-full bg-white dark:bg-[var(--bg-card)]">
-        <div className="w-full max-w-md">
-          <div className="mb-8 text-center lg:text-left">
-            <div className="lg:hidden flex justify-center mb-6">
-              <Image 
-                src="/logo.png" 
-                alt="Santori Solar Solutions Logo" 
-                width={64} 
-                height={64} 
-                className="object-contain"
-                priority
-              />
+        {/* RIGHT PANEL - Form Card */}
+        <div className="lg:col-span-6 flex justify-center w-full">
+          <div className="w-full max-w-md bg-[#161B22]/90 border border-[var(--border-color)] rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
+            <div className="mb-8 text-center lg:text-left">
+              <div className="lg:hidden flex justify-center mb-6">
+                <Image 
+                  src="/logo.png" 
+                  alt="Santori Solar Solutions Logo" 
+                  width={64} 
+                  height={64} 
+                  className="object-contain"
+                  priority
+                />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                {isSetupRequired ? 'Initial Admin Setup' : 'Welcome Back'}
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                {isSetupRequired ? 'Configure your primary administrator account to get started.' : 'Sign in to access your CRM portal'}
+              </p>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-              {isSetupRequired ? 'Initial Admin Setup' : 'Welcome Back'}
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-              {isSetupRequired ? 'Configure your primary administrator account to get started.' : 'Sign in to access your CRM portal'}
-            </p>
-          </div>
 
           {/* Error Message */}
           {error && (
@@ -460,5 +463,6 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 }

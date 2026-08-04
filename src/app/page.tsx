@@ -13,7 +13,7 @@ export default async function LandingPage() {
   const portalText = token ? 'Go to Dashboard' : 'Access CRM Portal';
 
   return (
-    <div className="h-screen text-zinc-100 font-sans selection:bg-blue-600 selection:text-white overflow-hidden relative flex flex-col justify-between">
+    <div className="h-screen text-zinc-100 font-sans selection:bg-emerald-600 selection:text-white overflow-hidden relative flex flex-col justify-between">
       {/* Background Image with Premium Dark Overlay */}
       <div 
         className="absolute inset-0 bg-cover bg-center -z-20 scale-105 transition-transform duration-1000"
@@ -39,7 +39,7 @@ export default async function LandingPage() {
               <span className="text-sm font-bold tracking-tight text-white block leading-none">
                 Santori Solar
               </span>
-              <span className="text-[9px] uppercase tracking-wider text-slate-350 dark:text-zinc-400 font-bold block leading-none mt-0.5">
+              <span className="text-[9px] uppercase tracking-wider text-emerald-400 font-bold block leading-none mt-0.5">
                 SOLUTIONS
               </span>
             </div>
@@ -48,7 +48,7 @@ export default async function LandingPage() {
           <div className="flex items-center gap-6">
             <Link 
               href={portalLink}
-              className="px-4 py-2 text-xs font-bold rounded-lg bg-white/10 dark:bg-[var(--bg-card)] border border-white/20 dark:border-[var(--border-color)] text-white hover:bg-white/20 transition-all duration-300 flex items-center gap-1.5 shadow-lg backdrop-blur-sm hover:scale-105 active:scale-95"
+              className="px-4 py-2 text-xs font-bold rounded-lg bg-white/10 dark:bg-[var(--bg-card)] border border-white/20 dark:border-[var(--border-color)] text-white hover:border-emerald-500/40 hover:text-emerald-400 transition-all duration-300 flex items-center gap-1.5 shadow-lg backdrop-blur-sm hover:scale-105 active:scale-95"
             >
               {portalText}
               <ArrowRight className="w-3.5 h-3.5" />
@@ -61,8 +61,8 @@ export default async function LandingPage() {
       <section className="relative flex-grow flex items-center py-4 lg:py-6 px-6 max-w-[86%] mx-auto w-full">
         <div className="grid lg:grid-cols-12 gap-10 items-center w-full">
           <div className="lg:col-span-7 space-y-5 lg:space-y-6">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/10 dark:bg-[var(--bg-card)] border border-white/20 dark:border-[var(--border-color)] text-[var(--text-primary)] text-[11px] font-bold uppercase tracking-wider animate-fade-in-up backdrop-blur-sm">
-              <Sparkles className="w-3.5 h-3.5 animate-pulse text-blue-400" />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[11px] font-bold uppercase tracking-wider animate-fade-in-up backdrop-blur-sm">
+              <Sparkles className="w-3.5 h-3.5 animate-pulse text-emerald-400" />
               Empowering Sustainable Energy Systems
             </div>
 
@@ -78,15 +78,15 @@ export default async function LandingPage() {
 
             {/* Glassmorphic Small Features Cards */}
             <div className="grid grid-cols-3 gap-4 max-w-2xl pt-1 animate-fade-in-up animation-delay-500">
-              <div className="p-3 lg:p-4 rounded-xl bg-white/10 dark:bg-[var(--bg-card)] border border-white/20 dark:border-[var(--border-color)] backdrop-blur-md hover:border-white/30 hover:bg-white/15 transition-all duration-300 group/item shadow-lg">
+              <div className="p-3 lg:p-4 rounded-xl bg-white/10 dark:bg-[var(--bg-card)] border border-white/20 dark:border-[var(--border-color)] backdrop-blur-md hover:border-emerald-500/30 hover:bg-white/15 transition-all duration-300 group/item shadow-lg">
                 <span className="text-slate-900 dark:text-white font-bold block text-sm lg:text-base mb-1">Instant Site Audits</span>
                 <span className="text-[10px] lg:text-[11px] text-slate-700 dark:text-zinc-400 block leading-normal font-medium">Schedule field surveys and inspect roof suitability.</span>
               </div>
-              <div className="p-3 lg:p-4 rounded-xl bg-white/10 dark:bg-[var(--bg-card)] border border-white/20 dark:border-[var(--border-color)] backdrop-blur-md hover:border-white/30 hover:bg-white/15 transition-all duration-300 group/item shadow-lg">
+              <div className="p-3 lg:p-4 rounded-xl bg-white/10 dark:bg-[var(--bg-card)] border border-white/20 dark:border-[var(--border-color)] backdrop-blur-md hover:border-emerald-500/30 hover:bg-white/15 transition-all duration-300 group/item shadow-lg">
                 <span className="text-slate-900 dark:text-white font-bold block text-sm lg:text-base mb-1">Pipeline Tracking</span>
                 <span className="text-[10px] lg:text-[11px] text-slate-700 dark:text-zinc-400 block leading-normal font-medium">Manage prospect pipelines from pitch to order dispatch.</span>
               </div>
-              <div className="p-3 lg:p-4 rounded-xl bg-white/10 dark:bg-[var(--bg-card)] border border-white/20 dark:border-[var(--border-color)] backdrop-blur-md hover:border-white/30 hover:bg-white/15 transition-all duration-300 group/item shadow-lg">
+              <div className="p-3 lg:p-4 rounded-xl bg-white/10 dark:bg-[var(--bg-card)] border border-white/20 dark:border-[var(--border-color)] backdrop-blur-md hover:border-emerald-500/30 hover:bg-white/15 transition-all duration-300 group/item shadow-lg">
                 <span className="text-slate-900 dark:text-white font-bold block text-sm lg:text-base mb-1">Sales Booking</span>
                 <span className="text-[10px] lg:text-[11px] text-slate-700 dark:text-zinc-400 block leading-normal font-medium">Instantly process customer sales orders and agreements.</span>
               </div>
@@ -95,7 +95,7 @@ export default async function LandingPage() {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-1 animate-fade-in-up animation-delay-600">
               <Link 
                 href={portalLink}
-                className="px-8 py-3.5 text-center font-bold text-white bg-blue-700 hover:bg-[var(--border-color)]lue-800 active:bg-blue-900 border border-blue-800/40 rounded-xl transition-all duration-300 shadow-lg shadow-blue-950/20 flex items-center justify-center gap-2 text-sm lg:text-base group hover:scale-[1.02] active:scale-95 cursor-pointer"
+                className="px-8 py-3.5 text-center font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 border border-emerald-500/30 rounded-xl transition-all duration-300 shadow-lg shadow-emerald-950/20 flex items-center justify-center gap-2 text-sm lg:text-base group hover:scale-[1.02] active:scale-95 cursor-pointer"
               >
                 Launch CRM Application
                 <ArrowRight className="w-4 h-4 lg:w-5 lg:h-5 group-hover:translate-x-1.5 transition-transform" />
@@ -105,9 +105,9 @@ export default async function LandingPage() {
 
           {/* Large Glass Card */}
           <div className="lg:col-span-5 flex justify-center relative">
-            <div className="absolute inset-0 bg-blue-500/5 rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute inset-0 bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none" />
             
-            <div className="relative w-full max-w-[400px] rounded-2xl bg-white/10 dark:bg-[var(--bg-card)] border border-white/20 dark:border-[var(--border-color)] p-6 lg:p-8 flex flex-col items-center justify-center shadow-2xl backdrop-blur-lg group hover:border-white/30 transition-all duration-500 animate-float">
+            <div className="relative w-full max-w-[400px] rounded-2xl bg-white/10 dark:bg-[var(--bg-card)] border border-white/20 dark:border-[var(--border-color)] p-6 lg:p-8 flex flex-col items-center justify-center shadow-2xl backdrop-blur-lg group hover:border-emerald-500/40 transition-all duration-500 animate-float">
               
               <div className="relative w-44 h-44 mb-6 bg-white rounded-2xl border border-white/20 dark:border-[var(--border-color)] shadow-2xl flex items-center justify-center overflow-hidden group-hover:scale-105 transition-all duration-500">
                 <Image 
@@ -133,7 +133,7 @@ export default async function LandingPage() {
       {/* Footer */}
       <footer className="border-t border-white/10 dark:border-zinc-900/60 py-4 text-center text-slate-350 dark:text-zinc-500 text-xs bg-black/10 backdrop-blur-sm">
         <div className="max-w-[86%] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-2">
-          <p>Â© 2026 Santori Solar Solutions. All rights reserved.</p>
+          <p>© 2026 Santori Solar Solutions. All rights reserved.</p>
           <div className="flex gap-6">
             <span className="hover:text-white cursor-pointer">Privacy Policy</span>
             <span className="hover:text-white cursor-pointer">Terms of Service</span>
