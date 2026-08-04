@@ -2469,7 +2469,7 @@ export default function LeadDetailPage({
                       <div className="flex gap-3 border-t border-[var(--border-color)]/80 pt-4">
                         <button
                           type="submit"
-                          className="py-2 px-4 bg-gradient-to-r from-blue-600 to-indigo-650 text-slate-950 rounded-lg font-bold text-xs shadow-md"
+                          className="py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md shadow-emerald-500/20 transition-all cursor-pointer font-sans"
                         >
                           Save Changes
                         </button>

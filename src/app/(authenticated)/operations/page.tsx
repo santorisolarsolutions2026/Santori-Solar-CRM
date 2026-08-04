@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -2652,7 +2652,7 @@ export default function OperationsPage() {
                       customPicker.onChange(`${selectedHour}:${selectedMinute}`);
                       setCustomPicker(prev => ({ ...prev, isOpen: false }));
                     }}
-                    className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold rounded text-[10px] cursor-pointer"
+                    className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded text-[10px] cursor-pointer"
                   >
                     Confirm
                   </button>

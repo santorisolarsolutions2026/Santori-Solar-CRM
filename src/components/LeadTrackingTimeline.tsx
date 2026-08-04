@@ -345,22 +345,7 @@ export function LeadTrackingTimeline({ lead }: LeadTrackingProps) {
     });
   }
 
-  // 6. Audit Logs
-  if (lead.auditLogs && lead.auditLogs.length > 0) {
-    lead.auditLogs.forEach((audit: any) => {
-      const auditTime = new Date(audit.createdAt).getTime() || 0;
-      events.push({
-        id: `audit-${audit.id}`,
-        title: `Audit Change: ${audit.fieldName}`,
-        date: formatDate(audit.createdAt),
-        fullDate: formatDateTime(audit.createdAt),
-        timestamp: auditTime,
-        description: `Field "${audit.fieldName}" updated from "${audit.oldValue || 'None'}" to "${audit.newValue || 'None'}".`,
-        badge: 'Audit Log',
-        user: audit.user ? `${audit.user.name} (${audit.user.role?.toUpperCase() || 'USER'})` : 'System',
-      });
-    });
-  }
+
 
   // Filter out any future data events (timestamp > now)
   const nowBuffer = Date.now() + 60000;

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -1234,7 +1234,7 @@ export default function FinancePage() {
                             {canVerifyOrder && (
                               <button
                                 onClick={() => { setSelectedOrder(order); setModalMode('verify'); }}
-                                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-slate-950 rounded font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1"
+                                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1"
                               >
                                 <Eye className="w-3.5 h-3.5" />
                                 <span>Verify Order</span>
