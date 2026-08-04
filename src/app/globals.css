@@ -148,22 +148,23 @@ body::after {
    BASE BODY & LAYOUT
    ============================================================ */
 
+/* ============================================================
+   BASE BODY & LAYOUT (Smooth Theme Transitions)
+   ============================================================ */
+
 body,
 header,
 aside,
 nav,
 main,
 section,
-form,
-div,
-button,
-input,
-select,
-textarea,
 table,
-th,
-td {
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+.bg-\[var\(--bg-card\)\],
+.bg-\[var\(--bg-main\)\],
+.bg-\[var\(--bg-sidebar\)\] {
+  transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 body {
@@ -228,18 +229,18 @@ body {
    LIGHT MODE — FORCE HIGH CONTRAST TEXT & BUTTON READABILITY
    ============================================================ */
 
-/* Guarantee dark text for table cells, text links, and unstyled table buttons in light mode */
+/* Guarantee dark text for table cells, text links, employee names, and unstyled table buttons in light mode */
 .light table td,
-.light table th {
-  color: var(--text-primary);
+.light table th,
+.light table td button:not([class*="bg-emerald"]):not([class*="bg-red"]):not([class*="bg-blue"]):not([class*="bg-indigo"]),
+.light table td a:not([class*="bg-emerald"]):not([class*="bg-red"]):not([class*="bg-blue"]):not([class*="bg-indigo"]),
+.light .dark\:text-white:not([class*="bg-emerald"]):not([class*="bg-red"]):not([class*="bg-blue"]):not([class*="bg-indigo"]) {
+  color: var(--text-primary) !important;
 }
 
-.light table td a:not([class*="bg-"]) {
-  color: var(--text-primary);
-}
-
-.light table td a:not([class*="bg-"]):hover {
-  color: var(--accent-color);
+.light table td a:not([class*="bg-"]):hover,
+.light table td button:not([class*="bg-"]):hover {
+  color: var(--accent-color) !important;
 }
 
 /* Secondary header, filter, and card buttons adapt cleanly to dark text in Light Mode */

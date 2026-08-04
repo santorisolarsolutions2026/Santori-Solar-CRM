@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
@@ -2795,11 +2795,11 @@ export default function TeamManagementPage() {
                       </td>
 
                       {/* Full Name Column */}
-                      <td className="py-4 px-4 font-bold text-slate-900 dark:text-white w-48">
+                      <td className="py-4 px-4 font-bold text-[var(--text-primary)] w-48">
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleOpenProfile(member)}
-                            className="hover:text-emerald-600 dark:hover:text-emerald-400 text-left font-bold text-slate-900 dark:text-white transition-colors cursor-pointer"
+                            className="hover:text-emerald-600 dark:hover:text-emerald-400 text-left font-bold text-[var(--text-primary)] transition-colors cursor-pointer"
                           >
                             {member.name}
                           </button>
@@ -2843,10 +2843,10 @@ export default function TeamManagementPage() {
                           })()}
                         </span>
                       </td>
-                      <td className="py-4 px-4 text-[var(--text-secondary)] w-40">
-                        {member.supervisor?.name || <span className="text-slate-650 text-xs italic">None</span>}
+                      <td className="py-4 px-4 text-xs text-[var(--text-secondary)] w-36">
+                        {member.supervisor?.name || <span className="text-slate-600 italic">Unassigned</span>}
                       </td>
-                      <td className="py-4 px-4 text-[var(--text-primary)] w-36">
+                      <td className="py-4 px-4 text-xs text-[var(--text-primary)] w-28">
                         {calculateYearsInCompany(member.joiningDate)}
                       </td>
                       <td className="py-4 px-4 text-center text-emerald-400 font-bold font-mono w-28">
@@ -2868,25 +2868,10 @@ export default function TeamManagementPage() {
                           {hasPermission('logs:view') && (
                             <button
                               onClick={() => handleOpenActivityLogs(member)}
-                              className="p-1.5 rounded-lg border bg-[var(--bg-card)] hover:bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-white border-slate-805 hover:border-[var(--border-color)] transition-all cursor-pointer flex items-center justify-center"
+                              className="p-1.5 rounded-lg border bg-[var(--bg-card)] hover:bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border-slate-805 hover:border-[var(--border-color)] transition-all cursor-pointer flex items-center justify-center"
                               title="View Activity Logs"
                             >
                               <History className="w-4 h-4" />
-                            </button>
-                          )}
-
-                          {isAdminOrDirectorOrSalesHead && member.id !== user?.id && (
-                            <button
-                              onClick={() => {
-                                setEditingReportingUser(member);
-                                const assignedTeam = teamsList.find(t => t.users.some((u: any) => u.id === member.id));
-                                setNewTeamAssignmentId(assignedTeam ? String(assignedTeam.id) : '');
-                                setNewSupervisorId(member.reportsTo ? String(member.reportsTo) : '');
-                              }}
-                              className="p-1.5 rounded-lg border bg-[var(--bg-card)] hover:bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-white border-slate-805 hover:border-[var(--border-color)] transition-all cursor-pointer flex items-center justify-center"
-                              title="Edit Clan & Supervisor"
-                            >
-                              <Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                             </button>
                           )}
 
