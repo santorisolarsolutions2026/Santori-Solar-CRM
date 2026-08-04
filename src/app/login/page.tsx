@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import { Eye, EyeOff, Lock, Mail, Loader2, ShieldAlert } from 'lucide-react';
+import Logo3D from '@/app/components/Logo3D';
 
 function getBrowserLocation(timeoutMs = 5000): Promise<string> {
   return new Promise((resolve) => {
@@ -233,14 +234,7 @@ export default function LoginPage() {
         {/* LEFT PANEL - Brand / Visual */}
         <div className="hidden lg:flex lg:col-span-6 flex-col justify-center p-6 space-y-6">
           <div className="mb-2">
-            <Image 
-              src="/logo.png" 
-              alt="Santori Solar Solutions Logo" 
-              width={84} 
-              height={84} 
-              className="object-contain drop-shadow-xl"
-              priority
-            />
+            <Logo3D size={88} />
           </div>
           <div>
             <h1 className="text-4xl md:text-5xl font-extrabold text-white leading-tight">
@@ -260,14 +254,7 @@ export default function LoginPage() {
           <div className="w-full max-w-md bg-[#161B22]/90 border border-[var(--border-color)] rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
             <div className="mb-8 text-center lg:text-left">
               <div className="lg:hidden flex justify-center mb-6">
-                <Image 
-                  src="/logo.png" 
-                  alt="Santori Solar Solutions Logo" 
-                  width={64} 
-                  height={64} 
-                  className="object-contain"
-                  priority
-                />
+                <Logo3D size={64} />
               </div>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                 {isSetupRequired ? 'Initial Admin Setup' : 'Welcome Back'}

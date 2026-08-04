@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { cookies } from 'next/headers';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import Typewriter from './components/Typewriter';
+import Logo3D from './components/Logo3D';
 const TYPEWRITER_PHRASES = ['Solar CRM Workflows', 'Access Control Systems', 'Performance Dashboards'];
 
 export default async function LandingPage() {
@@ -109,14 +110,8 @@ export default async function LandingPage() {
             
             <div className="relative w-full max-w-[400px] rounded-2xl bg-white/10 dark:bg-[var(--bg-card)] border border-white/20 dark:border-[var(--border-color)] p-6 lg:p-8 flex flex-col items-center justify-center shadow-2xl backdrop-blur-lg group hover:border-emerald-500/40 transition-all duration-500 animate-float">
               
-              <div className="relative w-44 h-44 mb-6 bg-white rounded-2xl border border-white/20 dark:border-[var(--border-color)] shadow-2xl flex items-center justify-center overflow-hidden group-hover:scale-105 transition-all duration-500">
-                <Image 
-                  src="/logo.png" 
-                  alt="Santori Solar Logo large" 
-                  width={176} 
-                  height={176} 
-                  className="object-contain w-full h-full scale-[1.12]"
-                />
+              <div className="mb-6 flex justify-center">
+                <Logo3D size={140} />
               </div>
 
               <div className="text-center space-y-2">
