@@ -983,18 +983,18 @@ export default function LeadsPage() {
           {(hasPermission('sales:lead_import') || hasPermission('leads:import')) && (
             <button
               onClick={() => setShowImportModal(true)}
-              className="py-2.5 px-4 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-900 dark:text-white rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
+              className="py-2.5 px-4 bg-[#161C24] hover:bg-[#1C2430] border border-white/10 text-white rounded-xl font-bold text-xs flex items-center gap-2 transition-all shadow-md cursor-pointer"
             >
-              <Upload className="w-4 h-4" />
+              <Upload className="w-4 h-4 text-amber-400" />
               <span>Import CSV</span>
             </button>
           )}
           {(hasPermission('sales:lead_add') || hasPermission('leads:create')) && (
             <Link
               href="/leads/new"
-              className="py-2.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs shadow-lg shadow-blue-500/10 flex items-center gap-1.5 transition-all w-fit"
+              className="py-2.5 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl font-bold text-xs shadow-lg shadow-amber-500/20 flex items-center gap-2 transition-all w-fit cursor-pointer"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 text-slate-950" />
               <span>Add New Lead</span>
             </Link>
           )}
@@ -1002,7 +1002,7 @@ export default function LeadsPage() {
       </div>
 
       {/* Filter and Search Bar Card */}
-      <div className="bg-[#111625] border border-slate-800 rounded-xl p-5 shadow-lg space-y-4">
+      <div className="bg-[#121820] border border-white/10 rounded-2xl p-5 shadow-lg space-y-4">
         <form onSubmit={handleSearchSubmit} className="flex flex-col md:flex-row items-center justify-between gap-4">
           {/* Live Search */}
           <div className="relative flex-1 w-full">
@@ -1011,9 +1011,9 @@ export default function LeadsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search Customer Name / Mobile / Lead Code..."
-              className="block w-full pl-9 pr-4 py-2.5 bg-slate-955/60 border border-slate-800 rounded-xl text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-600 text-xs transition-all shadow-inner"
+              className="block w-full pl-9 pr-4 py-2.5 bg-[#0E131A] border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-xs transition-all shadow-inner"
             />
-            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
           </div>
 
           <div className="flex flex-wrap items-center gap-3 w-full md:w-auto shrink-0 justify-end">
@@ -1040,12 +1040,12 @@ export default function LeadsPage() {
             <button
               type="button"
               onClick={() => setShowDetailedFilterModal(true)}
-              className="py-2.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-xl font-bold text-xs shadow-md flex items-center gap-2 transition-all cursor-pointer"
+              className="py-2.5 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl font-bold text-xs shadow-lg shadow-amber-500/10 flex items-center gap-2 transition-all cursor-pointer"
             >
-              <SlidersHorizontal className="w-4 h-4" />
+              <SlidersHorizontal className="w-4 h-4 text-slate-950" />
               <span>Filters</span>
               {getActiveFilterCount() > 0 && (
-                <span className="bg-slate-955 text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded-full border border-white/20">
+                <span className="bg-slate-950 text-amber-400 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full border border-amber-500/30">
                   {getActiveFilterCount()}
                 </span>
               )}

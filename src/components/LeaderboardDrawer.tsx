@@ -236,8 +236,8 @@ export default function LeaderboardDrawer({ isOpen, onClose }: LeaderboardDrawer
                 }}
                 className={`py-1 px-3 text-[10px] font-bold border rounded-full uppercase tracking-wider transition-all cursor-pointer ${
                   department === d
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200'
+                    ? 'bg-amber-500 text-slate-950 border-amber-500'
+                    : 'bg-[#161C24] text-slate-400 border-white/10 hover:border-white/20 hover:text-white'
                 }`}
               >
                 {d === 'all' ? 'All Departments' : d === 'sales' ? 'Sales' : d}
