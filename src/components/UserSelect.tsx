@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, ChevronDown, Check, X, User } from 'lucide-react';
@@ -73,7 +73,7 @@ export default function UserSelect({
     else if (typeof u.department === 'string' && u.department) dept = u.department;
 
     if (des && dept && !des.toLowerCase().includes(dept.toLowerCase())) {
-      return `${dept} â€¢ ${des}`;
+      return `${dept} • ${des}`;
     }
     return des || dept || 'Staff';
   };

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -1041,7 +1041,7 @@ export default function AuthenticatedLayout({
                       ? 'bg-emerald-500/10 text-emerald-650 dark:text-emerald-400 border-emerald-500/20' 
                       : 'bg-emerald-500/10 text-emerald-650 dark:text-emerald-400 border-emerald-500/20 animate-pulse'
                 }`}>
-                  {!todayAttendance ? 'âšª Pending' : todayAttendance.checkOut ? 'âœ… Completed' : 'ðŸŸ¢ Active'}
+                  {!todayAttendance ? 'Pending' : todayAttendance.checkOut ? 'Completed' : 'Active'}
                 </span>
               </button>
 
@@ -1113,48 +1113,45 @@ export default function AuthenticatedLayout({
                     </button>
                   ) : (
                     <div className="text-[11px] text-center text-emerald-450 font-semibold py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
-                      âœ“ Completed ({Math.floor((todayAttendance.workDurationMin || 0) / 60)}h {(todayAttendance.workDurationMin || 0) % 60}m)
+                      Completed ({Math.floor((todayAttendance.workDurationMin || 0) / 60)}h {(todayAttendance.workDurationMin || 0) % 60}m)
                     </div>
                   )}
                 </div>
               )}
             </div>
 
-            {/* Theme Toggle Button */}
+            {/* Dark/Light Mode Switcher Toggle Button */}
             <button
-              onClick={toggleTheme}
-              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              className="p-2 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-white transition-all relative focus:outline-none cursor-pointer flex items-center justify-center"
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="p-2 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all cursor-pointer focus:outline-none"
+              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
             >
-              {theme === 'dark' ? (
-                <Sun className="w-5 h-5 text-emerald-500" />
-              ) : (
-                <Moon className="w-5 h-5 text-indigo-500" />
-              )}
+              {theme === 'dark' ? <Sun className="w-4 h-4 text-emerald-500" /> : <Moon className="w-4 h-4 text-emerald-500" />}
             </button>
 
             {/* Notification Bell Dropdown */}
             <div className="relative" ref={notifRef}>
               <button
                 onClick={() => setNotifDropdownOpen(!notifDropdownOpen)}
-                className="p-2 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-white transition-all relative focus:outline-none"
+                className="p-2 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all relative focus:outline-none cursor-pointer"
               >
-                <Bell className="w-5 h-5" />
+                <Bell className="w-4 h-4" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white font-extrabold text-[9px] flex items-center justify-center shadow-lg border border-[var(--border-color)] animate-bounce">
-                    {unreadCount}
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center animate-pulse">
+                    {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
               </button>
 
-              {/* Dropdown Menu */}
+              {/* Dropdown Card */}
               {notifDropdownOpen && (
                 <div className="absolute right-0 mt-3 w-80 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-2xl z-50 overflow-hidden animate-fade-in-down">
-                  <div className="p-4 border-b border-[var(--border-color)] bg-[var(--bg-main)]/60 space-y-2">
+                  <div className="p-3 bg-[var(--bg-main)]/60 border-b border-[var(--border-color)] space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-white tracking-wider uppercase flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5 text-emerald-500" /> News & Announcements
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-emerald-500" />
+                        <span className="text-xs font-bold text-[var(--text-primary)]">Notifications</span>
+                      </div>
                       {unreadCount > 0 && (
                         <button
                           onClick={handleMarkAllRead}
@@ -1164,7 +1161,9 @@ export default function AuthenticatedLayout({
                         </button>
                       )}
                     </div>
-                    {(user?.role === 'admin' || user?.role?.startsWith('admin:') || user?.role === 'director') && (
+
+                    {/* Broadcast News Button for Admins */}
+                    {isCurrentUserAdmin && (
                       <button
                         type="button"
                         onClick={() => {
@@ -1174,7 +1173,7 @@ export default function AuthenticatedLayout({
                         className="w-full py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md"
                       >
                         <Sparkles className="w-3.5 h-3.5" />
-                        <span>ðŸ“¢ Broadcast News to Employees</span>
+                        <span>Broadcast News to Employees</span>
                       </button>
                     )}
                   </div>

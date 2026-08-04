@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Lock, CheckCircle2, User, Building, AlertCircle, Save, Loader2 } from 'lucide-react';
@@ -161,7 +161,7 @@ export default function AccessControlManager({ currentUser, users, onPermissions
             <div>
               <span className="text-xs text-[var(--text-secondary)] font-mono uppercase">Configuring User</span>
               <h4 className="text-lg font-bold text-emerald-400">{selectedUser.name}</h4>
-              <p className="text-xs text-[var(--text-secondary)]">{selectedUser.email} â€¢ {selectedUser.department?.name || 'Department Unassigned'} â€¢ {selectedUser.designation?.name || selectedUser.role}</p>
+              <p className="text-xs text-[var(--text-secondary)]">{selectedUser.email} • {selectedUser.department?.name || 'Department Unassigned'} • {selectedUser.designation?.name || selectedUser.role}</p>
             </div>
             <div className="flex gap-2">
               <button

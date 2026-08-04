@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import {
@@ -200,7 +200,7 @@ export function LeadTrackingTimeline({ lead }: LeadTrackingProps) {
           
           eventTitle = titleCase;
           eventDescription = rest || `Action completed: ${titleCase}`;
-        } else if (log.remark.startsWith('Payment of â‚¹')) {
+        } else if (log.remark.startsWith('Payment of ₹')) {
           eventTitle = 'Payment Recorded';
           eventDescription = log.remark;
         } else if (log.remark.includes('Order punched and submitted')) {
@@ -337,7 +337,7 @@ export function LeadTrackingTimeline({ lead }: LeadTrackingProps) {
       date: formatDate(lead.order.createdAt || new Date().toISOString()),
       fullDate: formatDateTime(lead.order.createdAt || new Date().toISOString()),
       timestamp: orderTime,
-      description: `System Size: ${lead.order.systemSizeKw} kW | Total Value: â‚¹${lead.order.totalValue?.toLocaleString('en-IN') || '-'} | Status: ${lead.order.status.toUpperCase()}`,
+      description: `System Size: ${lead.order.systemSizeKw} kW | Total Value: ₹${lead.order.totalValue?.toLocaleString('en-IN') || '-'} | Status: ${lead.order.status.toUpperCase()}`,
       badge: 'Order Punched',
       user: lead.order.submittedBy ? `${lead.order.submittedBy.name} (${lead.order.submittedBy.role.toUpperCase()})` : undefined,
     });

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -170,8 +170,8 @@ export default function ReportsPage() {
   };
 
   const getSortIcon = (field: string) => {
-    if (sortField !== field) return <span className="text-slate-600 ml-1 font-mono text-[10px]">â†•</span>;
-    return <span className="text-emerald-400 ml-1 font-mono text-[10px]">{sortOrder === 'asc' ? 'â†‘' : 'â†“'}</span>;
+    if (sortField !== field) return <span className="text-[var(--text-muted)] ml-1 font-mono text-[10px]">↕</span>;
+    return <span className="text-emerald-500 ml-1 font-mono text-[10px]">{sortOrder === 'asc' ? '↑' : '↓'}</span>;
   };
 
   const getInitials = (name: string) => {

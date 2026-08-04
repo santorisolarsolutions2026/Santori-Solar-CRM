@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import { AlertTriangle, UserCheck, ShieldAlert, CheckCircle2, X } from 'lucide-react';
@@ -152,7 +152,7 @@ export default function ConfirmationModal({
             }`}
           >
             <CheckCircle2 className="w-4 h-4" />
-            <span>{confirmText || (step === 1 ? 'Proceed to Step 2 â†’' : 'Yes, Confirm Assignment')}</span>
+            <span>{confirmText || (step === 1 ? 'Proceed to Step 2 →' : 'Yes, Confirm Assignment')}</span>
           </button>
         </div>
       </div>
