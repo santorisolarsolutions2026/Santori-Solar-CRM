@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import {
@@ -48,6 +48,15 @@ interface LeadSourcePieChartProps {
 }
 
 export function LeadSourcePieChart({ leadSourceData, colors }: LeadSourcePieChartProps) {
+  if (!leadSourceData || leadSourceData.length === 0) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-[var(--bg-main)]/30 border border-dashed border-[var(--border-color)] rounded-xl">
+        <p className="text-xs text-[var(--text-secondary)] font-semibold">No lead source data available yet.</p>
+        <p className="text-[10px] text-[var(--text-muted)] mt-1">Imported leads without source tag are excluded until updated.</p>
+      </div>
+    );
+  }
+
   const total = leadSourceData.reduce((acc, curr) => acc + curr.value, 0);
 
   return (

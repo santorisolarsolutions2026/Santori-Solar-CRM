@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -127,6 +127,7 @@ export default function DashboardPage() {
   const [trend, setTrend] = useState<any[]>([]);
   const [activities, setActivities] = useState<ActivityLog[]>([]);
   const [reminders, setReminders] = useState<any[]>([]);
+  const [leadSources, setLeadSources] = useState<{ name: string; value: number }[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Activity Stream full screen modal state for Admin
@@ -154,7 +155,8 @@ export default function DashboardPage() {
         trendRes,
         perfRes,
         feedRes,
-        remindersRes
+        remindersRes,
+        sourcesRes,
       ] = await Promise.all([
         fetch('/api/v1/reports/overview'),
         fetch('/api/v1/reports/pipeline'),
@@ -162,6 +164,7 @@ export default function DashboardPage() {
         fetch('/api/v1/reports/team-performance'),
         fetch('/api/v1/reports/recent-activity'),
         fetch('/api/v1/reports/reminders'),
+        fetch('/api/v1/reports/lead-sources'),
       ]);
 
       const [
@@ -170,14 +173,16 @@ export default function DashboardPage() {
         trendData,
         perfData,
         feedData,
-        remindersData
+        remindersData,
+        sourcesData,
       ] = await Promise.all([
         statsRes.json(),
         pipelineRes.json(),
         trendRes.json(),
         perfRes.json(),
         feedRes.json(),
-        remindersRes.json()
+        remindersRes.json(),
+        sourcesRes.json(),
       ]);
 
       if (statsData.success) setStats(statsData.data);
@@ -186,6 +191,7 @@ export default function DashboardPage() {
       if (perfData.success) setPerformance(perfData.data);
       if (feedData.success) setActivities(feedData.data.logs || feedData.data || []);
       if (remindersData.success) setReminders(remindersData.data);
+      if (sourcesData.success && Array.isArray(sourcesData.data)) setLeadSources(sourcesData.data);
     } catch (err) {
       console.error('Fetch dashboard data error:', err);
     } finally {
@@ -555,7 +561,7 @@ export default function DashboardPage() {
         <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 shadow-sm flex flex-col justify-between">
           <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-4">Lead Acquisition Channels</h3>
           <div className="h-80 w-full flex items-center justify-center">
-            <LeadSourcePieChart leadSourceData={leadSourceData} colors={COLORS} />
+            <LeadSourcePieChart leadSourceData={leadSources} colors={COLORS} />
           </div>
         </div>
 

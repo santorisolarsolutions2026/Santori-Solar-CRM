@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -244,6 +244,12 @@ export default function AttendancePage() {
     }
   };
 
+  const handleDownloadAttendanceRegister = (m?: number, y?: number) => {
+    const targetMonth = m || selectedMonth;
+    const targetYear = y || selectedYear;
+    window.open(`/api/v1/attendance/monthly-report?month=${targetMonth}&year=${targetYear}&format=csv`, '_blank');
+  };
+
   useEffect(() => {
     if (user) {
       fetchEmployees();
@@ -473,6 +479,16 @@ export default function AttendancePage() {
         </div>
 
         <div className="flex items-center gap-3 self-end lg:self-auto flex-wrap">
+          <button
+            type="button"
+            onClick={() => handleDownloadAttendanceRegister()}
+            className="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-all shadow-md shadow-emerald-500/20 font-sans"
+            title="Download Monthwise Attendance Register (School/Company Register Format)"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-white" />
+            <span>Download Attendance Register</span>
+          </button>
+
           {user?.role === 'admin' && (
             <button
               onClick={() => {

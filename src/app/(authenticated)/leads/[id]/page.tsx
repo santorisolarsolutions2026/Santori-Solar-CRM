@@ -2055,7 +2055,7 @@ export default function LeadDetailPage({
                               className="block w-full px-3 py-1.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded text-[var(--text-primary)] text-[11px]"
                             >
                               <option value="Not Interested">Not Interested</option>
-                              <option value="Book Meeting Again">Book Meeting Again</option>
+                              <option value="Reschedule Meeting">Reschedule Meeting</option>
                               <option value="Can't Fit Solar">Can't Fit Solar</option>
                             </select>
                           </div>

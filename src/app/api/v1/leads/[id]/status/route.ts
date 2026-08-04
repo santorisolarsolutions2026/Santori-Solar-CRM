@@ -455,7 +455,7 @@ export async function POST(
         finalStatusNum = 4;
         updateData.statusSub = 'Price';
         updateData.isActive = false;
-      } else if (sub_status === 'Book Meeting Again') {
+      } else if (sub_status === 'Reschedule Meeting' || sub_status === 'Book Meeting Again') {
         finalStatusNum = 3;
         updateData.statusSub = 'warm';
         updateData.followupAt = new Date(); // prompt them to book ASAP
