@@ -60,16 +60,17 @@ export async function GET(req: Request) {
     const attendanceRecords = await prisma.attendance.findMany({
       where: {
         date: {
-          gte: startDateStr,
-          lte: endDateStr,
+          gte: startOfMonthDate,
+          lte: endOfMonthDate,
         },
       },
     });
 
-    // Map attendance by userId_date string
+    // Map attendance by userId_date string (formatted as YYYY-MM-DD)
     const attendanceMap = new Map<string, any>();
     attendanceRecords.forEach((rec) => {
-      attendanceMap.set(`${rec.userId}_${rec.date}`, rec);
+      const recDateStr = new Date(rec.date).toISOString().split('T')[0];
+      attendanceMap.set(`${rec.userId}_${recDateStr}`, rec);
     });
 
     const todayStr = new Date().toISOString().split('T')[0];
