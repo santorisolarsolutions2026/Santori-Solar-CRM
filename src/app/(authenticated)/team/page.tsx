@@ -2729,12 +2729,11 @@ export default function TeamManagementPage() {
                 )}
                 <th className="py-4 px-4 w-20 text-center">Photo</th>
                 <th className="py-4 px-4 w-48">Full Name</th>
-                {!empSearchInput.trim() && <th className="py-4 px-4 w-32">Employee ID</th>}
-                {empSearchInput.trim() && <th className="py-4 px-4 w-32">Working Location</th>}
+                <th className="py-4 px-4 w-32">Employee ID</th>
                 <th className="py-4 px-4 w-40">Designation</th>
                 {!empSearchInput.trim() && <th className="py-4 px-4 w-40">Direct Supervisor</th>}
                 {!empSearchInput.trim() && <th className="py-4 px-4 w-36">Years in the Company</th>}
-                {!empSearchInput.trim() && <th className="py-4 px-4 w-28 text-center">Leads Closed</th>}
+                {!empSearchInput.trim() && <th className="py-4 px-4 w-36">Working Location</th>}
                 <th className="py-4 px-4 w-28 text-center">Status</th>
                 {!empSearchInput.trim() && <th className="py-4 px-4 w-36 text-center">Control</th>}
               </tr>
@@ -2815,7 +2814,6 @@ export default function TeamManagementPage() {
                       <td className="py-4 px-4 font-mono text-xs text-[var(--text-primary)] w-32">
                         {member.employeeId || <span className="text-slate-600 italic">Not Set</span>}
                       </td>
-                      {empSearchInput.trim() && <td className="py-4 px-4 text-xs text-[var(--text-primary)] w-32">{member.workingLocation || <span className="text-slate-600 italic">Not Set</span>}</td>}
 
                       {/* Designation/Role Column */}
                       <td className="py-4 px-4 w-40">
@@ -2849,8 +2847,8 @@ export default function TeamManagementPage() {
                       <td className="py-4 px-4 text-xs text-[var(--text-primary)] w-28">
                         {calculateYearsInCompany(member.joiningDate)}
                       </td>
-                      <td className="py-4 px-4 text-center text-emerald-400 font-bold font-mono w-28">
-                        {member.leadsClosed || 0}
+                      <td className="py-4 px-4 text-xs text-[var(--text-primary)] w-36">
+                        {member.workingLocation || <span className="text-slate-600 italic">Not Set</span>}
                       </td>
                       <td className="py-4 px-4 text-center w-28">
                         <span
