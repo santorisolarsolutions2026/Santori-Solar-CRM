@@ -156,6 +156,84 @@ export default function ReportsPage() {
   const [hierarchyModalData, setHierarchyModalData] = useState<any>(null);
   const [hierarchyLoading, setHierarchyLoading] = useState(false);
 
+  // Sorting and preset states for Employee Audit
+  const [sortField, setSortField] = useState<string>('name');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortOrder(['name', 'designation'].includes(field) ? 'asc' : 'desc');
+    }
+  };
+
+  const getSortIcon = (field: string) => {
+    if (sortField !== field) return <span className="text-slate-600 ml-1 font-mono text-[10px]">↕</span>;
+    return <span className="text-blue-400 ml-1 font-mono text-[10px]">{sortOrder === 'asc' ? '↑' : '↓'}</span>;
+  };
+
+  const getInitials = (name: string) => {
+    if (!name) return 'U';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
+
+  const getAvatarGradient = (id: number | string) => {
+    const gradients = [
+      'from-blue-600 to-indigo-600 border-blue-400/30 text-blue-100',
+      'from-emerald-600 to-teal-600 border-emerald-400/30 text-emerald-100',
+      'from-purple-600 to-indigo-600 border-purple-400/30 text-purple-100',
+      'from-amber-600 to-orange-600 border-amber-400/30 text-amber-100',
+      'from-cyan-600 to-blue-600 border-cyan-400/30 text-cyan-100',
+      'from-rose-600 to-red-600 border-rose-400/30 text-rose-100',
+    ];
+    const num = typeof id === 'number' ? id : (id || '').length;
+    return gradients[num % gradients.length];
+  };
+
+  const setPresetRange = (preset: 'today' | 'yesterday' | 'week' | 'month' | 'all') => {
+    const now = new Date();
+    const pad = (n: number) => (n < 10 ? '0' + n : n);
+    const formatYYYYMMDD = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+    if (preset === 'today') {
+      const todayStr = formatYYYYMMDD(now);
+      setFilterStartDate(todayStr);
+      setFilterEndDate(todayStr);
+      setFilterStartTime('00:00');
+      setFilterEndTime('23:59');
+    } else if (preset === 'yesterday') {
+      const yest = new Date(now);
+      yest.setDate(yest.getDate() - 1);
+      const yestStr = formatYYYYMMDD(yest);
+      setFilterStartDate(yestStr);
+      setFilterEndDate(yestStr);
+      setFilterStartTime('00:00');
+      setFilterEndTime('23:59');
+    } else if (preset === 'week') {
+      const weekAgo = new Date(now);
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      setFilterStartDate(formatYYYYMMDD(weekAgo));
+      setFilterEndDate(formatYYYYMMDD(now));
+      setFilterStartTime('00:00');
+      setFilterEndTime('23:59');
+    } else if (preset === 'month') {
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      setFilterStartDate(formatYYYYMMDD(monthStart));
+      setFilterEndDate(formatYYYYMMDD(now));
+      setFilterStartTime('00:00');
+      setFilterEndTime('23:59');
+    } else if (preset === 'all') {
+      setFilterStartDate('');
+      setFilterEndDate('');
+      setFilterStartTime('00:00');
+      setFilterEndTime('23:59');
+    }
+  };
+
   const fetchTimelineData = async (empId: number) => {
     try {
       setTimelineLoading(true);
@@ -426,76 +504,104 @@ export default function ReportsPage() {
       {/* Employee Audit Dashboard */}
       <div className="space-y-6">
           {/* Filter Bar with Date Inputs */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#111625] border border-slate-800 rounded-xl p-5 shadow-md">
-            <div>
-              <h2 className="text-sm font-bold text-white uppercase tracking-wider">Employee Audit filters</h2>
-              <p className="text-xs text-slate-400 mt-0.5">Select a date range to filter contributions across all departments.</p>
-            </div>
-            
-            <div className="flex flex-wrap items-center gap-3 text-xs">
-              {/* Designation Filter */}
-              <div className="flex items-center gap-2">
-                <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Designation:</span>
-                <div className="w-48">
-                  <CustomSelect
-                    options={[
-                      { value: 'all', label: 'All Designations' },
-                      ...(auditData?.designations || []).map((des) => ({
-                        value: des,
-                        label: des,
-                      })),
-                    ]}
-                    value={filterDesignation}
-                    onChange={(val) => setFilterDesignation(val)}
-                    placeholder="All Designations"
+          <div className="flex flex-col gap-4 bg-[#111625] border border-slate-800 rounded-xl p-5 shadow-md">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-blue-400" />
+                  <span>Employee Audit filters</span>
+                </h2>
+                <p className="text-xs text-slate-400 mt-0.5">Select a date range or quick preset to filter staff contributions across all departments.</p>
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-3 text-xs">
+                {/* Designation Filter */}
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Designation:</span>
+                  <div className="w-48">
+                    <CustomSelect
+                      options={[
+                        { value: 'all', label: 'All Designations' },
+                        ...(auditData?.designations || []).map((des) => ({
+                          value: des,
+                          label: des,
+                        })),
+                      ]}
+                      value={filterDesignation}
+                      onChange={(val) => setFilterDesignation(val)}
+                      placeholder="All Designations"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-500 font-semibold">Start:</span>
+                  <input
+                    type="date"
+                    value={filterStartDate}
+                    onChange={(e) => setFilterStartDate(e.target.value)}
+                    className="bg-slate-950 border border-slate-800 text-slate-300 px-3 py-1.5 rounded-lg focus:ring-blue-500 focus:outline-none cursor-pointer"
+                  />
+                  <input
+                    type="time"
+                    value={filterStartTime}
+                    onChange={(e) => setFilterStartTime(e.target.value)}
+                    className="bg-slate-950 border border-slate-800 text-slate-300 px-2 py-1.5 rounded-lg focus:ring-blue-500 focus:outline-none cursor-pointer font-mono"
                   />
                 </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-500 font-semibold">End:</span>
+                  <input
+                    type="date"
+                    value={filterEndDate}
+                    onChange={(e) => setFilterEndDate(e.target.value)}
+                    className="bg-slate-950 border border-slate-800 text-slate-300 px-3 py-1.5 rounded-lg focus:ring-blue-500 focus:outline-none cursor-pointer"
+                  />
+                  <input
+                    type="time"
+                    value={filterEndTime}
+                    onChange={(e) => setFilterEndTime(e.target.value)}
+                    className="bg-slate-950 border border-slate-800 text-slate-300 px-2 py-1.5 rounded-lg focus:ring-blue-500 focus:outline-none cursor-pointer font-mono"
+                  />
+                </div>
+                {(filterStartDate || filterEndDate || filterDesignation !== 'all') && (
+                  <button
+                    onClick={() => {
+                      setFilterStartDate('');
+                      setFilterEndDate('');
+                      setFilterStartTime('00:00');
+                      setFilterEndTime('23:59');
+                      setFilterDesignation('all');
+                    }}
+                    className="py-1.5 px-3 bg-slate-900 border border-slate-800 text-slate-400 hover:text-white rounded-lg transition-colors cursor-pointer"
+                  >
+                    Clear Filters
+                  </button>
+                )}
               </div>
+            </div>
 
-              <div className="flex items-center gap-2">
-                <span className="text-slate-500 font-semibold">Start:</span>
-                <input
-                  type="date"
-                  value={filterStartDate}
-                  onChange={(e) => setFilterStartDate(e.target.value)}
-                  className="bg-slate-950 border border-slate-800 text-slate-300 px-3 py-1.5 rounded-lg focus:ring-blue-500 focus:outline-none cursor-pointer"
-                />
-                <input
-                  type="time"
-                  value={filterStartTime}
-                  onChange={(e) => setFilterStartTime(e.target.value)}
-                  className="bg-slate-950 border border-slate-800 text-slate-300 px-2 py-1.5 rounded-lg focus:ring-blue-500 focus:outline-none cursor-pointer font-mono"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-slate-500 font-semibold">End:</span>
-                <input
-                  type="date"
-                  value={filterEndDate}
-                  onChange={(e) => setFilterEndDate(e.target.value)}
-                  className="bg-slate-950 border border-slate-800 text-slate-300 px-3 py-1.5 rounded-lg focus:ring-blue-500 focus:outline-none cursor-pointer"
-                />
-                <input
-                  type="time"
-                  value={filterEndTime}
-                  onChange={(e) => setFilterEndTime(e.target.value)}
-                  className="bg-slate-950 border border-slate-800 text-slate-300 px-2 py-1.5 rounded-lg focus:ring-blue-500 focus:outline-none cursor-pointer font-mono"
-                />
-              </div>
-              {(filterStartDate || filterEndDate || filterDesignation !== 'all') && (
+            {/* Quick Date Presets Row */}
+            <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-800/80">
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mr-1 flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5 text-blue-400" /> Quick Presets:
+              </span>
+              {[
+                { label: 'Today', key: 'today' },
+                { label: 'Yesterday', key: 'yesterday' },
+                { label: 'This Week', key: 'week' },
+                { label: 'This Month', key: 'month' },
+                { label: 'All Time', key: 'all' },
+              ].map((p) => (
                 <button
-                  onClick={() => {
-                    setFilterStartDate('');
-                    setFilterEndDate('');
-                    setFilterStartTime('00:00');
-                    setFilterEndTime('23:59');
-                    setFilterDesignation('all');
-                  }}
-                  className="py-1.5 px-3 bg-slate-900 border border-slate-800 text-slate-400 hover:text-white rounded-lg transition-colors cursor-pointer"
+                  key={p.key}
+                  type="button"
+                  onClick={() => setPresetRange(p.key as any)}
+                  className="px-3 py-1 bg-slate-900/90 hover:bg-slate-850 border border-slate-800 hover:border-blue-500/40 text-slate-300 hover:text-white rounded-lg transition-all text-xs font-medium cursor-pointer flex items-center gap-1 shadow-sm"
                 >
-                  Clear Filters
+                  {p.label}
                 </button>
-              )}
+              ))}
             </div>
           </div>
 
@@ -648,10 +754,31 @@ export default function ReportsPage() {
             <div className="overflow-x-auto">
               {(() => {
                 const rawList = auditData?.departments?.[activeDeptTab] || [];
-                const employeesList = rawList.filter((emp: any) => {
+                const filteredList = rawList.filter((emp: any) => {
                   if (!auditSearchQuery.trim()) return true;
                   const q = auditSearchQuery.toLowerCase();
                   return (emp.name || '').toLowerCase().includes(q) || (emp.designation || '').toLowerCase().includes(q);
+                });
+
+                const employeesList = [...filteredList].sort((a: any, b: any) => {
+                  let valA: any = a[sortField];
+                  let valB: any = b[sortField];
+
+                  if (valA === undefined && a.metrics) {
+                    valA = a.metrics[sortField];
+                  }
+                  if (valB === undefined && b.metrics) {
+                    valB = b.metrics[sortField];
+                  }
+
+                  if (valA === undefined || valA === null) valA = 0;
+                  if (valB === undefined || valB === null) valB = 0;
+
+                  if (typeof valA === 'string') {
+                    const cmp = valA.localeCompare(String(valB));
+                    return sortOrder === 'asc' ? cmp : -cmp;
+                  }
+                  return sortOrder === 'asc' ? valA - valB : valB - valA;
                 });
 
                 if (employeesList.length === 0) {
@@ -666,40 +793,68 @@ export default function ReportsPage() {
                   return (
                     <table className="w-full text-left border-collapse min-w-[950px]">
                       <thead>
-                        <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                          <th className="pb-3 px-4 text-left">Employee Name</th>
-                          <th className="pb-3 px-4 text-left">Designation</th>
-                          <th className="pb-3 px-4 text-center">Team Members</th>
-                          <th className="pb-3 px-4 text-center">Leads Worked</th>
-                          <th className="pb-3 px-4 text-center">Meetings Booked</th>
-                          <th className="pb-3 px-4 text-center">Meetings Recorded</th>
-                          <th className="pb-3 px-4 text-center">Meetings Cancelled</th>
-                          <th className="pb-3 px-4 text-center">Sales Done</th>
-                          <th className="pb-3 px-4 text-center">Orders Punched</th>
+                        <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider bg-slate-950/40 select-none">
+                          <th onClick={() => handleSort('name')} className="pb-3 px-4 text-left cursor-pointer hover:text-white transition-colors">
+                            Employee Name {getSortIcon('name')}
+                          </th>
+                          <th onClick={() => handleSort('designation')} className="pb-3 px-4 text-left cursor-pointer hover:text-white transition-colors">
+                            Designation {getSortIcon('designation')}
+                          </th>
+                          <th onClick={() => handleSort('teamSize')} className="pb-3 px-4 text-center cursor-pointer hover:text-white transition-colors">
+                            Team Members {getSortIcon('teamSize')}
+                          </th>
+                          <th onClick={() => handleSort('leadsWorked')} className="pb-3 px-4 text-center cursor-pointer hover:text-white transition-colors">
+                            Leads Worked {getSortIcon('leadsWorked')}
+                          </th>
+                          <th onClick={() => handleSort('meetingsBooked')} className="pb-3 px-4 text-center cursor-pointer hover:text-white transition-colors">
+                            Meetings Booked {getSortIcon('meetingsBooked')}
+                          </th>
+                          <th onClick={() => handleSort('meetingsRecorded')} className="pb-3 px-4 text-center cursor-pointer hover:text-white transition-colors">
+                            Meetings Recorded {getSortIcon('meetingsRecorded')}
+                          </th>
+                          <th onClick={() => handleSort('meetingsCancelled')} className="pb-3 px-4 text-center cursor-pointer hover:text-white transition-colors">
+                            Meetings Cancelled {getSortIcon('meetingsCancelled')}
+                          </th>
+                          <th onClick={() => handleSort('salesDone')} className="pb-3 px-4 text-center cursor-pointer hover:text-white transition-colors">
+                            Sales Done {getSortIcon('salesDone')}
+                          </th>
+                          <th onClick={() => handleSort('ordersPunched')} className="pb-3 px-4 text-center cursor-pointer hover:text-white transition-colors">
+                            Orders Punched {getSortIcon('ordersPunched')}
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-800/40 text-sm">
                         {employeesList.map((emp: any) => (
-                          <tr key={emp.id} className="hover:bg-slate-900/10 transition-colors">
-                            <td className="py-3.5 px-4 font-bold text-white flex items-center gap-2">
-                              <span>{emp.name}</span>
+                          <tr key={emp.id} className="hover:bg-slate-900/40 transition-colors group">
+                            <td className="py-3.5 px-4 font-bold text-white flex items-center gap-3">
+                              <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${getAvatarGradient(emp.id)} flex items-center justify-center font-bold text-xs shadow-inner shrink-0 border`}>
+                                {getInitials(emp.name)}
+                              </div>
+                              <div className="flex flex-col min-w-0">
+                                <span className="truncate group-hover:text-blue-400 transition-colors">{emp.name}</span>
+                              </div>
                               <button
                                 type="button"
                                 onClick={() => handleOpenTimelineModal(emp.id, emp.name)}
-                                className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-blue-600 dark:text-blue-400 transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium ml-auto"
+                                className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 hover:border-blue-500/40 text-slate-400 hover:text-blue-400 transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium ml-auto"
                                 title="View Daily Activity Timeline"
                               >
-                                <Calendar className="w-3 h-3 text-blue-600 dark:text-blue-400" /> Timeline
+                                <Calendar className="w-3 h-3 text-blue-400" /> Timeline
                               </button>
                             </td>
                             <td className="py-3.5 px-4 text-slate-400 font-medium text-xs">{emp.designation}</td>
-                            <td className="py-3.5 px-4 text-center font-extrabold font-mono text-blue-600 dark:text-blue-400">
-                              {emp.teamSize || 1}
+                            <td className="py-3.5 px-4 text-center">
+                              <button
+                                onClick={() => handleOpenHierarchyModal(emp.id)}
+                                className="font-extrabold font-mono text-blue-400 hover:underline outline-none cursor-pointer px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-xs"
+                              >
+                                {emp.teamSize || 1}
+                              </button>
                             </td>
                             <td className="py-3.5 px-4 text-center">
                               <button
                                 onClick={() => handleOpenDetailsModal(emp.id, 'leads_worked')}
-                                className="font-extrabold text-blue-600 dark:text-blue-400 hover:text-blue-600 dark:text-blue-400 hover:underline outline-none cursor-pointer"
+                                className="font-extrabold text-blue-400 hover:text-blue-300 hover:underline outline-none cursor-pointer"
                               >
                                 {emp.metrics.leadsWorked}
                               </button>
@@ -755,32 +910,56 @@ export default function ReportsPage() {
                   return (
                     <table className="w-full text-left border-collapse min-w-[850px]">
                       <thead>
-                        <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                          <th className="pb-3 px-4 text-left">Employee Name</th>
-                          <th className="pb-3 px-4 text-left">Designation</th>
-                          <th className="pb-3 px-4 text-center">Team Members</th>
-                          <th className="pb-3 px-4 text-center">Orders Verified</th>
-                          <th className="pb-3 px-4 text-center">Ledger Activities</th>
-                          <th className="pb-3 px-4 text-center">Payments Handled</th>
-                          <th className="pb-3 px-4 text-right">Total Verified Value</th>
+                        <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider bg-slate-950/40 select-none">
+                          <th onClick={() => handleSort('name')} className="pb-3 px-4 text-left cursor-pointer hover:text-white transition-colors">
+                            Employee Name {getSortIcon('name')}
+                          </th>
+                          <th onClick={() => handleSort('designation')} className="pb-3 px-4 text-left cursor-pointer hover:text-white transition-colors">
+                            Designation {getSortIcon('designation')}
+                          </th>
+                          <th onClick={() => handleSort('teamSize')} className="pb-3 px-4 text-center cursor-pointer hover:text-white transition-colors">
+                            Team Members {getSortIcon('teamSize')}
+                          </th>
+                          <th onClick={() => handleSort('ordersVerified')} className="pb-3 px-4 text-center cursor-pointer hover:text-white transition-colors">
+                            Orders Verified {getSortIcon('ordersVerified')}
+                          </th>
+                          <th onClick={() => handleSort('ledgerActivities')} className="pb-3 px-4 text-center cursor-pointer hover:text-white transition-colors">
+                            Ledger Activities {getSortIcon('ledgerActivities')}
+                          </th>
+                          <th onClick={() => handleSort('paymentsAmount')} className="pb-3 px-4 text-center cursor-pointer hover:text-white transition-colors">
+                            Payments Handled {getSortIcon('paymentsAmount')}
+                          </th>
+                          <th onClick={() => handleSort('ordersVerifiedValue')} className="pb-3 px-4 text-right cursor-pointer hover:text-white transition-colors">
+                            Total Verified Value {getSortIcon('ordersVerifiedValue')}
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-800/40 text-sm">
                         {employeesList.map((emp: any) => (
-                          <tr key={emp.id} className="hover:bg-slate-900/10 transition-colors">
-                            <td className="py-3.5 px-4 font-bold text-white flex items-center gap-2">
-                              <span>{emp.name}</span>
+                          <tr key={emp.id} className="hover:bg-slate-900/40 transition-colors group">
+                            <td className="py-3.5 px-4 font-bold text-white flex items-center gap-3">
+                              <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${getAvatarGradient(emp.id)} flex items-center justify-center font-bold text-xs shadow-inner shrink-0 border`}>
+                                {getInitials(emp.name)}
+                              </div>
+                              <div className="flex flex-col min-w-0">
+                                <span className="truncate group-hover:text-blue-400 transition-colors">{emp.name}</span>
+                              </div>
                               <button
                                 type="button"
                                 onClick={() => handleOpenTimelineModal(emp.id, emp.name)}
-                                className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-blue-600 dark:text-blue-400 transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium ml-auto"
+                                className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 hover:border-blue-500/40 text-slate-400 hover:text-blue-400 transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium ml-auto"
                               >
-                                <Calendar className="w-3 h-3 text-blue-600 dark:text-blue-400" /> Timeline
+                                <Calendar className="w-3 h-3 text-blue-400" /> Timeline
                               </button>
                             </td>
                             <td className="py-3.5 px-4 text-slate-400 font-medium text-xs">{emp.designation}</td>
-                            <td className="py-3.5 px-4 text-center font-extrabold font-mono text-blue-600 dark:text-blue-400">
-                              {emp.teamSize || 1}
+                            <td className="py-3.5 px-4 text-center">
+                              <button
+                                onClick={() => handleOpenHierarchyModal(emp.id)}
+                                className="font-extrabold font-mono text-blue-400 hover:underline outline-none cursor-pointer px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-xs"
+                              >
+                                {emp.teamSize || 1}
+                              </button>
                             </td>
                             <td className="py-3.5 px-4 text-center">
                               <button
@@ -793,7 +972,7 @@ export default function ReportsPage() {
                             <td className="py-3.5 px-4 text-center">
                               <button
                                 onClick={() => handleOpenDetailsModal(emp.id, 'ledger_activities')}
-                                className="font-extrabold text-blue-600 dark:text-blue-400 hover:text-blue-600 dark:text-blue-400 hover:underline outline-none cursor-pointer"
+                                className="font-extrabold text-blue-400 hover:text-blue-300 hover:underline outline-none cursor-pointer"
                               >
                                 {emp.metrics.ledgerActivities}
                               </button>
@@ -815,32 +994,56 @@ export default function ReportsPage() {
                   return (
                     <table className="w-full text-left border-collapse min-w-[850px]">
                       <thead>
-                        <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                          <th className="pb-3 px-4 text-left">Employee Name</th>
-                          <th className="pb-3 px-4 text-left">Designation</th>
-                          <th className="pb-3 px-4 text-center">Team Members</th>
-                          <th className="pb-3 px-4 text-center">Deliveries</th>
-                          <th className="pb-3 px-4 text-center">Installations</th>
-                          <th className="pb-3 px-4 text-center">Plants Commissioned</th>
-                          <th className="pb-3 px-4 text-center">Subsidies Applied</th>
+                        <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider bg-slate-950/40 select-none">
+                          <th onClick={() => handleSort('name')} className="pb-3 px-4 text-left cursor-pointer hover:text-white transition-colors">
+                            Employee Name {getSortIcon('name')}
+                          </th>
+                          <th onClick={() => handleSort('designation')} className="pb-3 px-4 text-left cursor-pointer hover:text-white transition-colors">
+                            Designation {getSortIcon('designation')}
+                          </th>
+                          <th onClick={() => handleSort('teamSize')} className="pb-3 px-4 text-center cursor-pointer hover:text-white transition-colors">
+                            Team Members {getSortIcon('teamSize')}
+                          </th>
+                          <th onClick={() => handleSort('deliveriesCompleted')} className="pb-3 px-4 text-center cursor-pointer hover:text-white transition-colors">
+                            Deliveries {getSortIcon('deliveriesCompleted')}
+                          </th>
+                          <th onClick={() => handleSort('installationsCompleted')} className="pb-3 px-4 text-center cursor-pointer hover:text-white transition-colors">
+                            Installations {getSortIcon('installationsCompleted')}
+                          </th>
+                          <th onClick={() => handleSort('commissionedCompleted')} className="pb-3 px-4 text-center cursor-pointer hover:text-white transition-colors">
+                            Plants Commissioned {getSortIcon('commissionedCompleted')}
+                          </th>
+                          <th onClick={() => handleSort('subsidiesApplied')} className="pb-3 px-4 text-center cursor-pointer hover:text-white transition-colors">
+                            Subsidies Applied {getSortIcon('subsidiesApplied')}
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-800/40 text-sm">
                         {employeesList.map((emp: any) => (
-                          <tr key={emp.id} className="hover:bg-slate-900/10 transition-colors">
-                            <td className="py-3.5 px-4 font-bold text-white flex items-center gap-2">
-                              <span>{emp.name}</span>
+                          <tr key={emp.id} className="hover:bg-slate-900/40 transition-colors group">
+                            <td className="py-3.5 px-4 font-bold text-white flex items-center gap-3">
+                              <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${getAvatarGradient(emp.id)} flex items-center justify-center font-bold text-xs shadow-inner shrink-0 border`}>
+                                {getInitials(emp.name)}
+                              </div>
+                              <div className="flex flex-col min-w-0">
+                                <span className="truncate group-hover:text-blue-400 transition-colors">{emp.name}</span>
+                              </div>
                               <button
                                 type="button"
                                 onClick={() => handleOpenTimelineModal(emp.id, emp.name)}
-                                className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-blue-600 dark:text-blue-400 transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium ml-auto"
+                                className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 hover:border-blue-500/40 text-slate-400 hover:text-blue-400 transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium ml-auto"
                               >
-                                <Calendar className="w-3 h-3 text-blue-600 dark:text-blue-400" /> Timeline
+                                <Calendar className="w-3 h-3 text-blue-400" /> Timeline
                               </button>
                             </td>
                             <td className="py-3.5 px-4 text-slate-400 font-medium text-xs">{emp.designation}</td>
-                            <td className="py-3.5 px-4 text-center font-extrabold font-mono text-blue-600 dark:text-blue-400">
-                              {emp.teamSize || 1}
+                            <td className="py-3.5 px-4 text-center">
+                              <button
+                                onClick={() => handleOpenHierarchyModal(emp.id)}
+                                className="font-extrabold font-mono text-blue-400 hover:underline outline-none cursor-pointer px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-xs"
+                              >
+                                {emp.teamSize || 1}
+                              </button>
                             </td>
                             <td className="py-3.5 px-4 text-center">
                               <button
@@ -869,7 +1072,7 @@ export default function ReportsPage() {
                             <td className="py-3.5 px-4 text-center">
                               <button
                                 onClick={() => handleOpenDetailsModal(emp.id, 'subsidies_applied')}
-                                className="font-extrabold text-blue-600 dark:text-blue-400 hover:text-blue-600 dark:text-blue-400 hover:underline outline-none cursor-pointer"
+                                className="font-extrabold text-blue-400 hover:text-blue-300 hover:underline outline-none cursor-pointer"
                               >
                                 {emp.metrics.subsidiesApplied}
                               </button>
@@ -884,32 +1087,47 @@ export default function ReportsPage() {
                 return (
                   <table className="w-full text-left border-collapse min-w-[700px]">
                     <thead>
-                      <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                        <th className="pb-3 px-4 text-left">Employee Name</th>
-                        <th className="pb-3 px-4 text-left">Designation</th>
-                        <th className="pb-3 px-4 text-center">Team Members</th>
-                        <th className="pb-3 px-4 text-center">Leads Worked</th>
-                        <th className="pb-3 px-4 text-center">Actions Logged</th>
+                      <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider bg-slate-950/40 select-none">
+                        <th onClick={() => handleSort('name')} className="pb-3 px-4 text-left cursor-pointer hover:text-white transition-colors">
+                          Employee Name {getSortIcon('name')}
+                        </th>
+                        <th onClick={() => handleSort('designation')} className="pb-3 px-4 text-left cursor-pointer hover:text-white transition-colors">
+                          Designation {getSortIcon('designation')}
+                        </th>
+                        <th onClick={() => handleSort('teamSize')} className="pb-3 px-4 text-center cursor-pointer hover:text-white transition-colors">
+                          Team Members {getSortIcon('teamSize')}
+                        </th>
+                        <th onClick={() => handleSort('leadsWorked')} className="pb-3 px-4 text-center cursor-pointer hover:text-white transition-colors">
+                          Leads Worked {getSortIcon('leadsWorked')}
+                        </th>
+                        <th onClick={() => handleSort('ledgerActivities')} className="pb-3 px-4 text-center cursor-pointer hover:text-white transition-colors">
+                          Actions Logged {getSortIcon('ledgerActivities')}
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/40 text-sm">
                       {employeesList.map((emp: any) => (
-                        <tr key={emp.id} className="hover:bg-slate-900/10 transition-colors">
-                          <td className="py-3.5 px-4 font-bold text-white flex items-center gap-2">
-                            <span>{emp.name}</span>
+                        <tr key={emp.id} className="hover:bg-slate-900/40 transition-colors group">
+                          <td className="py-3.5 px-4 font-bold text-white flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${getAvatarGradient(emp.id)} flex items-center justify-center font-bold text-xs shadow-inner shrink-0 border`}>
+                              {getInitials(emp.name)}
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                              <span className="truncate group-hover:text-blue-400 transition-colors">{emp.name}</span>
+                            </div>
                             <button
                               type="button"
                               onClick={() => handleOpenTimelineModal(emp.id, emp.name)}
-                              className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-blue-600 dark:text-blue-400 transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium ml-auto"
+                              className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 hover:border-blue-500/40 text-slate-400 hover:text-blue-400 transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium ml-auto"
                             >
-                              <Calendar className="w-3 h-3 text-blue-600 dark:text-blue-400" /> Timeline
+                              <Calendar className="w-3 h-3 text-blue-400" /> Timeline
                             </button>
                           </td>
                           <td className="py-3.5 px-4 text-slate-400 font-medium text-xs">{emp.designation}</td>
                           <td className="py-3.5 px-4 text-center">
                             <button
                               onClick={() => handleOpenHierarchyModal(emp.id)}
-                              className="font-extrabold font-mono text-blue-600 dark:text-blue-400 hover:underline outline-none cursor-pointer"
+                              className="font-extrabold font-mono text-blue-400 hover:underline outline-none cursor-pointer px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-xs"
                             >
                               {emp.teamSize || 1}
                             </button>
@@ -917,7 +1135,7 @@ export default function ReportsPage() {
                           <td className="py-3.5 px-4 text-center">
                             <button
                               onClick={() => handleOpenDetailsModal(emp.id, 'leads_worked')}
-                              className="font-extrabold text-blue-600 dark:text-blue-400 hover:text-blue-600 dark:text-blue-400 hover:underline outline-none cursor-pointer"
+                              className="font-extrabold text-blue-400 hover:text-blue-300 hover:underline outline-none cursor-pointer"
                             >
                               {emp.metrics.leadsWorked}
                             </button>

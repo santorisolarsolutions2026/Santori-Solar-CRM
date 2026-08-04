@@ -33,6 +33,7 @@ export const DEPARTMENT_PERMISSIONS: {
     { key: 'ops:view_all_orders', label: 'View All Orders', group: 'Operations Chronological Workflow', description: '1. View all verified orders in the operations queue.' },
     { key: 'ops:order_assign', label: 'Assign Orders', group: 'Operations Chronological Workflow', description: '2. Assign verified orders to operations team members down the hierarchy.' },
     { key: 'ops:update_stages', label: 'Manage Operations Stages', group: 'Operations Chronological Workflow', description: '3. Manage and progress all operations execution stages (material dispatch, installation, site photos, net metering, commissioning & subsidy).' },
+    { key: 'ops:delivered_orders', label: 'View Completed Orders', group: 'Operations Chronological Workflow', description: '4. Access completed orders portal and view fully delivered installation records.' },
   ],
   admin: [
     { key: 'admin:attendance_view', label: 'View Attendance', group: 'Administration & Supervision', description: 'View check-in & check-out attendance logs of everyone down the hierarchy.' },
