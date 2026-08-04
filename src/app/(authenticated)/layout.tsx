@@ -221,7 +221,7 @@ export default function AuthenticatedLayout({
   // Initialize theme from localStorage on mount
   useEffect(() => {
     const savedTheme = localStorage.getItem('solar-crm-theme') as 'dark' | 'light' | null;
-    if (savedTheme) {
+    if (savedTheme === 'light' || savedTheme === 'dark') {
       setTheme(savedTheme);
       if (savedTheme === 'light') {
         document.documentElement.classList.add('light');
@@ -233,12 +233,24 @@ export default function AuthenticatedLayout({
     }
   }, []);
 
+  // Synchronize document.documentElement class and localStorage whenever theme changes
+  useEffect(() => {
+    if (theme === 'light') {
+      document.documentElement.classList.add('light');
+    } else {
+      document.documentElement.classList.remove('light');
+    }
+    localStorage.setItem('solar-crm-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prevTheme) => (prevTheme === 'dark' ? 'light' : 'dark'));
+  };
+
   // Global click listener for date and time inputs to open showPicker() on click
   useEffect(() => {
     const handleInputClick = (e: MouseEvent) => {
-      // Only handle left clicks
       if (e.button !== 0) return;
-      
       const target = e.target as HTMLElement;
       const input = target.closest('input');
       if (input && (input.type === 'date' || input.type === 'time')) {
@@ -266,7 +278,6 @@ export default function AuthenticatedLayout({
             setTodayAlerts(data.data);
             setShowTodayAlertModal(true);
           }
-          // Set session storage flag to avoid annoying repeated popups
           sessionStorage.setItem('solar-crm-login-notified', 'true');
         } catch (err) {
           console.error('Failed to fetch login alerts:', err);
@@ -275,17 +286,6 @@ export default function AuthenticatedLayout({
       fetchAlerts();
     }
   }, [user]);
-
-  const toggleTheme = () => {
-    const nextTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(nextTheme);
-    localStorage.setItem('solar-crm-theme', nextTheme);
-    if (nextTheme === 'light') {
-      document.documentElement.classList.add('light');
-    } else {
-      document.documentElement.classList.remove('light');
-    }
-  };
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent | TouchEvent) {
@@ -1122,7 +1122,8 @@ export default function AuthenticatedLayout({
 
             {/* Dark/Light Mode Switcher Toggle Button */}
             <button
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              type="button"
+              onClick={toggleTheme}
               className="p-2 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all cursor-pointer focus:outline-none"
               title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
             >
