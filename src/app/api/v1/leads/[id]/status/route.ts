@@ -494,6 +494,9 @@ export async function POST(
       if (allFailed && pastLogs.length >= 4) {
         updateData.isUnreachable = true;
       }
+    } else {
+      // Transitioning to any active/reachable stage automatically clears unreachable flag
+      updateData.isUnreachable = false;
     }
 
     // Run DB transaction

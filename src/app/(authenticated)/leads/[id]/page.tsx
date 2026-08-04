@@ -1734,7 +1734,7 @@ export default function LeadDetailPage({
               <span className={`text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${stageBadge.class}`}>
                 {stageBadge.name}
               </span>
-              {lead.isUnreachable && (
+              {lead.isUnreachable && lead.status !== 13 && lead.status !== 6 && (
                 <span className="text-[10px] bg-red-500/10 text-red-400 border border-red-500/20 rounded-full px-2 py-0.5 font-bold uppercase tracking-wider">
                   Unreachable ⚠️
                 </span>
@@ -1886,10 +1886,10 @@ export default function LeadDetailPage({
                       <button
                         type="button"
                         onClick={() => setShowFormC(true)}
-                        className="w-full sm:w-auto py-2.5 px-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 rounded-lg font-bold text-xs shadow-md shadow-emerald-500/10 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                        className="w-full sm:w-auto py-2.5 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md shadow-emerald-500/20 flex items-center justify-center gap-1.5 transition-all cursor-pointer font-sans"
                       >
-                        <Sun className="w-4 h-4" />
-                        <span>Document Meeting Outcome</span>
+                        <Sun className="w-4 h-4 text-white" />
+                        <span className="text-white font-bold">Document Meeting Outcome</span>
                       </button>
                     </div>
                   ) : roleFilteredNextStages.length > 0 ? (
@@ -2598,13 +2598,13 @@ export default function LeadDetailPage({
                             
                              {!meet.meetingStartedAt ? (
                               !hasAssignedSalesMember ? (
-                                <div className="p-4 bg-amber-950/30 border border-amber-800/50 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
                                   <div className="text-left space-y-0.5">
-                                    <span className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
-                                      <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 animate-pulse" />
+                                    <span className="text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                                      <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 animate-pulse" />
                                       <span>Sales Team Member Assignment Required</span>
                                     </span>
-                                    <p className="text-[11px] text-amber-200/80">
+                                    <p className="text-[11px] text-[var(--text-secondary)]">
                                       A sales team member must be assigned to this lead before the site meeting can be started or audio recorded.
                                     </p>
                                   </div>
@@ -2612,7 +2612,7 @@ export default function LeadDetailPage({
                                     <button
                                       type="button"
                                       onClick={() => setShowPostMeetingAssignModal(true)}
-                                      className="w-full sm:w-auto py-2 px-4 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-550 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-emerald-500/30 cursor-pointer shrink-0"
+                                      className="w-full sm:w-auto py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-emerald-500/20 cursor-pointer shrink-0"
                                     >
                                       Assign Sales Member →
                                     </button>
@@ -2674,7 +2674,7 @@ export default function LeadDetailPage({
                                         <button
                                           type="button"
                                           onClick={() => handleStartRecordingOnly(meet.id)}
-                                          className="w-full sm:w-auto py-2.5 px-4 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-emerald-500 dark:text-emerald-400 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                                          className="w-full sm:w-auto py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                                         >
                                           <Mic className="w-3.5 h-3.5" />
                                           <span>Start Audio Recording</span>
@@ -2686,7 +2686,7 @@ export default function LeadDetailPage({
                                           type="button"
                                           disabled={isEndingMeeting || isUploadingAudio}
                                           onClick={() => handleStopMeeting(meet.id)}
-                                          className="w-full sm:w-auto py-2.5 px-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 rounded-lg font-bold text-xs shadow-md disabled:opacity-50 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                                          className="w-full sm:w-auto py-2.5 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md shadow-emerald-500/20 disabled:opacity-50 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                                         >
                                           {isEndingMeeting ? (
                                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
