@@ -271,7 +271,11 @@ body {
 .light .bg-slate-800,
 .light .bg-slate-900,
 .light .bg-zinc-800,
-.light .bg-zinc-900 {
+.light .bg-zinc-900,
+.light button[class*="bg-emerald"],
+.light button[class*="bg-red"],
+.light button[class*="bg-blue"],
+.light button[class*="bg-indigo"] {
   color: #FFFFFF !important;
 }
 

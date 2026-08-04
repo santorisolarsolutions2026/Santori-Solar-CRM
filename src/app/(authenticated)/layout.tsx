@@ -1542,7 +1542,7 @@ export default function AuthenticatedLayout({
                     confirmModal.onConfirm();
                     setConfirmModal(null);
                   }}
-                  className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white font-bold rounded-lg transition-all text-xs cursor-pointer shadow-lg shadow-blue-500/10"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition-all text-xs cursor-pointer shadow-md shadow-emerald-500/20 font-sans"
                 >
                   Confirm
                 </button>
