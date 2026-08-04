@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -8,7 +8,7 @@ const TrendLineChart = dynamic(
   () => import('@/components/ReportsCharts').then((mod) => mod.TrendLineChart),
   {
     ssr: false,
-    loading: () => <div className="h-full w-full bg-slate-950/20 animate-pulse rounded-xl" />,
+    loading: () => <div className="h-full w-full bg-[var(--bg-main)] animate-pulse rounded-xl" />,
   }
 );
 
@@ -16,7 +16,7 @@ const LeadSourcePieChart = dynamic(
   () => import('@/components/ReportsCharts').then((mod) => mod.LeadSourcePieChart),
   {
     ssr: false,
-    loading: () => <div className="h-full w-full bg-slate-950/20 animate-pulse rounded-xl" />,
+    loading: () => <div className="h-full w-full bg-[var(--bg-main)] animate-pulse rounded-xl" />,
   }
 );
 
@@ -24,7 +24,7 @@ const PipelineBarChart = dynamic(
   () => import('@/components/ReportsCharts').then((mod) => mod.PipelineBarChart),
   {
     ssr: false,
-    loading: () => <div className="h-full w-full bg-slate-950/20 animate-pulse rounded-xl" />,
+    loading: () => <div className="h-full w-full bg-[var(--bg-main)] animate-pulse rounded-xl" />,
   }
 );
 import {
@@ -95,7 +95,7 @@ const STAGE_NAMES: Record<number, string> = {
   13: 'Sale Done',
 };
 
-const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#0EA5E9', '#14B8A6'];
+const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#8B5CF6', '#EC4899', '#0EA5E9', '#14B8A6'];
 
 export default function ReportsPage() {
   const { user, loading: authLoading, hasPermission } = useAuth();
@@ -103,19 +103,19 @@ export default function ReportsPage() {
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
       </div>
     );
   }
 
   if (!hasPermission('reports:view')) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center bg-[#111625] border border-slate-800 rounded-xl shadow-lg mt-6">
+      <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-lg mt-6">
         <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 text-red-500 rounded-full flex items-center justify-center mb-4 animate-pulse">
           <AlertCircle className="w-8 h-8" />
         </div>
         <h2 className="text-xl font-bold text-white mb-2">Access Denied</h2>
-        <p className="text-sm text-slate-400 max-w-md">
+        <p className="text-sm text-[var(--text-secondary)] max-w-md">
           You do not have the required permissions to view Performance Reports & Analytics. Please contact your administrator if you believe this is in error.
         </p>
       </div>
@@ -170,8 +170,8 @@ export default function ReportsPage() {
   };
 
   const getSortIcon = (field: string) => {
-    if (sortField !== field) return <span className="text-slate-600 ml-1 font-mono text-[10px]">↕</span>;
-    return <span className="text-blue-400 ml-1 font-mono text-[10px]">{sortOrder === 'asc' ? '↑' : '↓'}</span>;
+    if (sortField !== field) return <span className="text-slate-600 ml-1 font-mono text-[10px]">â†•</span>;
+    return <span className="text-emerald-400 ml-1 font-mono text-[10px]">{sortOrder === 'asc' ? 'â†‘' : 'â†“'}</span>;
   };
 
   const getInitials = (name: string) => {
@@ -183,7 +183,7 @@ export default function ReportsPage() {
 
   const getAvatarGradient = (id: number | string) => {
     const gradients = [
-      'from-blue-600 to-indigo-600 border-blue-400/30 text-blue-100',
+      'from-blue-600 to-indigo-600 border-emerald-400/30 text-emerald-100',
       'from-emerald-600 to-teal-600 border-emerald-400/30 text-emerald-100',
       'from-purple-600 to-indigo-600 border-purple-400/30 text-purple-100',
       'from-amber-600 to-orange-600 border-amber-400/30 text-amber-100',
@@ -450,8 +450,8 @@ export default function ReportsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#090b11] flex items-center justify-center">
-        <Sun className="w-12 h-12 text-blue-600 dark:text-blue-400 animate-spin" />
+      <div className="min-h-screen bg-[var(--bg-main)] flex items-center justify-center">
+        <Sun className="w-12 h-12 text-emerald-600 dark:text-emerald-400 animate-spin" />
       </div>
     );
   }
@@ -479,23 +479,23 @@ export default function ReportsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
         <div>
           <h1 className="text-xl font-bold text-white tracking-wide">Employee Audit</h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-[var(--text-secondary)] mt-1">
             Inspect staff performance metrics, activity logs, and detailed work audit trails.
           </p>
         </div>
         <div className="flex gap-3">
           <button
             onClick={handleExportCSV}
-            className="py-2.5 px-4 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-200 rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+            className="py-2.5 px-4 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
           >
             <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
             <span>Export to Excel (CSV)</span>
           </button>
           <button
             onClick={handleExportPDF}
-            className="py-2.5 px-4 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-200 rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+            className="py-2.5 px-4 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
           >
-            <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <FileText className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>Print Audit (PDF)</span>
           </button>
         </div>
@@ -504,17 +504,17 @@ export default function ReportsPage() {
       {/* Employee Audit Dashboard */}
       <div className="space-y-6">
           {/* Employee Audit Filter Bar */}
-          <div className="bg-[#111625] border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-6 shadow-xl space-y-5">
             {/* Header & Clear Button */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--border-color)]/80 pb-4">
               <div>
                 <h2 className="text-base font-bold text-white tracking-wide uppercase flex items-center gap-2">
-                  <div className="p-1.5 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-400">
+                  <div className="p-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400">
                     <Filter className="w-4 h-4" />
                   </div>
                   <span>Employee Audit Filters</span>
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-[var(--text-secondary)] mt-1">
                   Filter performance metrics and activity logs by designation, date range, or quick presets.
                 </p>
               </div>
@@ -540,9 +540,9 @@ export default function ReportsPage() {
             {/* Structured Controls Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Designation Filter */}
-              <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5 flex flex-col gap-1.5 shadow-inner">
-                <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+              <div className="bg-[var(--bg-main)] border border-[var(--border-color)]/80 rounded-xl p-3.5 flex flex-col gap-1.5 shadow-inner">
+                <label className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--text-secondary)] flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                   <span>Designation Role</span>
                 </label>
                 <div className="w-full">
@@ -562,8 +562,8 @@ export default function ReportsPage() {
               </div>
 
               {/* Start Date & Time */}
-              <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5 flex flex-col gap-1.5 shadow-inner">
-                <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <div className="bg-[var(--bg-main)] border border-[var(--border-color)]/80 rounded-xl p-3.5 flex flex-col gap-1.5 shadow-inner">
+                <label className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--text-secondary)] flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                   <span>Start Date & Time</span>
                 </label>
@@ -572,20 +572,20 @@ export default function ReportsPage() {
                     type="date"
                     value={filterStartDate}
                     onChange={(e) => setFilterStartDate(e.target.value)}
-                    className="flex-1 bg-slate-900 border border-slate-800 hover:border-slate-700 text-white px-3 py-2 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none cursor-pointer"
+                    className="flex-1 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-white px-3 py-2 rounded-lg text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none cursor-pointer"
                   />
                   <input
                     type="time"
                     value={filterStartTime}
                     onChange={(e) => setFilterStartTime(e.target.value)}
-                    className="w-24 bg-slate-900 border border-slate-800 hover:border-slate-700 text-white px-2.5 py-2 rounded-lg text-xs font-mono focus:ring-1 focus:ring-blue-500 focus:outline-none cursor-pointer"
+                    className="w-24 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-white px-2.5 py-2 rounded-lg text-xs font-mono focus:ring-1 focus:ring-emerald-500 focus:outline-none cursor-pointer"
                   />
                 </div>
               </div>
 
               {/* End Date & Time */}
-              <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5 flex flex-col gap-1.5 shadow-inner">
-                <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <div className="bg-[var(--bg-main)] border border-[var(--border-color)]/80 rounded-xl p-3.5 flex flex-col gap-1.5 shadow-inner">
+                <label className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--text-secondary)] flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
                   <span>End Date & Time</span>
                 </label>
@@ -594,23 +594,23 @@ export default function ReportsPage() {
                     type="date"
                     value={filterEndDate}
                     onChange={(e) => setFilterEndDate(e.target.value)}
-                    className="flex-1 bg-slate-900 border border-slate-800 hover:border-slate-700 text-white px-3 py-2 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none cursor-pointer"
+                    className="flex-1 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-white px-3 py-2 rounded-lg text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none cursor-pointer"
                   />
                   <input
                     type="time"
                     value={filterEndTime}
                     onChange={(e) => setFilterEndTime(e.target.value)}
-                    className="w-24 bg-slate-900 border border-slate-800 hover:border-slate-700 text-white px-2.5 py-2 rounded-lg text-xs font-mono focus:ring-1 focus:ring-blue-500 focus:outline-none cursor-pointer"
+                    className="w-24 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-white px-2.5 py-2 rounded-lg text-xs font-mono focus:ring-1 focus:ring-emerald-500 focus:outline-none cursor-pointer"
                   />
                 </div>
               </div>
             </div>
 
             {/* Quick Date Presets Row */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-800/60">
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-[var(--border-color)]/60">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1.5 mr-1">
-                  <Clock className="w-3.5 h-3.5 text-blue-400" /> Quick Ranges:
+                <span className="text-[11px] text-[var(--text-secondary)] font-bold uppercase tracking-wider flex items-center gap-1.5 mr-1">
+                  <Clock className="w-3.5 h-3.5 text-emerald-400" /> Quick Ranges:
                 </span>
                 {[
                   { label: 'Today', key: 'today' },
@@ -648,8 +648,8 @@ export default function ReportsPage() {
                       onClick={() => setPresetRange(p.key as any)}
                       className={`px-3.5 py-1.5 rounded-xl transition-all text-xs font-semibold cursor-pointer flex items-center gap-1.5 shadow-sm border ${
                         isSelected
-                          ? 'bg-blue-600 border-blue-500 text-white font-extrabold shadow-blue-500/20'
-                          : 'bg-slate-900/90 hover:bg-slate-850 border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white'
+                          ? 'bg-emerald-600 border-emerald-500 text-white font-extrabold shadow-emerald-500/20'
+                          : 'bg-[var(--bg-card)]/90 hover:bg-[var(--bg-card)] border-[var(--border-color)] hover:border-[var(--border-color)] text-[var(--text-primary)] hover:text-white'
                       }`}
                     >
                       <span>{p.label}</span>
@@ -698,19 +698,19 @@ export default function ReportsPage() {
 
             return (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between shadow-lg">
+                <div className="p-4 bg-[var(--bg-card)] border border-[var(--border-color)]/80 rounded-xl flex items-center justify-between shadow-lg">
                   <div>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Active Staff</span>
-                    <span className="text-xl font-extrabold text-white mt-1 block">{staffCount} <span className="text-xs text-slate-500 font-normal">Members</span></span>
+                    <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-wider block">Active Staff</span>
+                    <span className="text-xl font-extrabold text-white mt-1 block">{staffCount} <span className="text-xs text-[var(--text-muted)] font-normal">Members</span></span>
                   </div>
-                  <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
                     <Users className="w-5 h-5" />
                   </div>
                 </div>
 
-                <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between shadow-lg">
+                <div className="p-4 bg-[var(--bg-card)] border border-[var(--border-color)]/80 rounded-xl flex items-center justify-between shadow-lg">
                   <div>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">{outputLabel}</span>
+                    <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-wider block">{outputLabel}</span>
                     <span className="text-xl font-extrabold text-emerald-400 mt-1 block">{totalOutput.toLocaleString('en-IN')}</span>
                   </div>
                   <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
@@ -718,12 +718,12 @@ export default function ReportsPage() {
                   </div>
                 </div>
 
-                <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between shadow-lg">
+                <div className="p-4 bg-[var(--bg-card)] border border-[var(--border-color)]/80 rounded-xl flex items-center justify-between shadow-lg">
                   <div>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Active Department</span>
-                    <span className="text-sm font-bold text-slate-200 mt-1 block flex items-center gap-1.5">
+                    <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-wider block">Active Department</span>
+                    <span className="text-sm font-bold text-[var(--text-primary)] mt-1 block flex items-center gap-1.5">
                       <span className={`w-2 h-2 rounded-full ${
-                        activeDeptTab === 'Sales' ? 'bg-cyan-400' : activeDeptTab === 'Finance' ? 'bg-emerald-400' : activeDeptTab === 'Operations' ? 'bg-purple-400' : 'bg-blue-400'
+                        activeDeptTab === 'Sales' ? 'bg-cyan-400' : activeDeptTab === 'Finance' ? 'bg-emerald-400' : activeDeptTab === 'Operations' ? 'bg-purple-400' : 'bg-emerald-400'
                       }`} />
                       {activeDeptTab}
                     </span>
@@ -733,9 +733,9 @@ export default function ReportsPage() {
                   </div>
                 </div>
 
-                <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between shadow-lg">
+                <div className="p-4 bg-[var(--bg-card)] border border-[var(--border-color)]/80 rounded-xl flex items-center justify-between shadow-lg">
                   <div>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Top Contributor</span>
+                    <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-wider block">Top Contributor</span>
                     <span className="text-xs font-bold text-amber-300 mt-1 block truncate max-w-[130px]" title={topStaff}>
                       {topStaff}
                     </span>
@@ -749,7 +749,7 @@ export default function ReportsPage() {
           })()}
 
           {/* Department Tab Buttons */}
-          <div className="flex gap-2 border-b border-slate-800 bg-slate-955/20 p-1.5 rounded-xl overflow-x-auto whitespace-nowrap scrollbar-none">
+          <div className="flex gap-2 border-b border-[var(--border-color)] bg-slate-955/20 p-1.5 rounded-xl overflow-x-auto whitespace-nowrap scrollbar-none">
             {(['Sales', 'Finance', 'Operations', 'Other'] as const).map((dept) => {
               const isActive = activeDeptTab === (dept as any);
               const count = auditData?.departments?.[dept]?.length || 0;
@@ -759,13 +759,13 @@ export default function ReportsPage() {
                   onClick={() => setActiveDeptTab(dept as any)}
                   className={`py-2.5 px-5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                     isActive
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-650 text-white font-extrabold shadow-md'
-                      : 'bg-transparent border border-transparent text-slate-400 hover:text-white hover:bg-slate-900/40'
+                      ? 'bg-emerald-600 text-white font-extrabold shadow-md'
+                      : 'bg-transparent border border-transparent text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-card)]/40'
                   }`}
                 >
                   <span>{dept} Department</span>
                   <span className={`px-1.5 py-0.5 rounded text-[10px] ${
-                    isActive ? 'bg-white/20 text-white font-extrabold' : 'bg-slate-900 text-slate-400'
+                    isActive ? 'bg-white/20 text-white font-extrabold' : 'bg-[var(--bg-card)] text-[var(--text-secondary)]'
                   }`}>
                     {count}
                   </span>
@@ -775,32 +775,32 @@ export default function ReportsPage() {
           </div>
 
           {/* Dynamic Table Section */}
-          <div className="bg-[#111625] border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-800 pb-4">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-6 shadow-xl space-y-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-[var(--border-color)] pb-4">
               <h3 className="text-sm font-bold text-white tracking-wide uppercase flex items-center gap-2">
                 <span className={`w-2.5 h-2.5 rounded-full ${
                   activeDeptTab === 'Sales' ? 'bg-cyan-500' :
                   activeDeptTab === 'Finance' ? 'bg-emerald-500' :
-                  activeDeptTab === 'Operations' ? 'bg-purple-500' : 'bg-blue-600'
+                  activeDeptTab === 'Operations' ? 'bg-purple-500' : 'bg-emerald-600'
                 }`} />
                 <span>{activeDeptTab} Staff Performance & Audit List</span>
               </h3>
 
               <div className="flex items-center gap-3 w-full sm:w-auto">
                 <div className="relative w-full sm:w-64">
-                  <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
+                  <Search className="w-3.5 h-3.5 text-[var(--text-muted)] absolute left-3 top-2.5" />
                   <input
                     type="text"
                     placeholder="Search staff name or designation..."
                     value={auditSearchQuery}
                     onChange={(e) => setAuditSearchQuery(e.target.value)}
-                    className="w-full pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-slate-700"
+                    className="w-full pl-8 pr-3 py-1.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[var(--border-color)]"
                   />
                 </div>
 
                 {auditLoading && (
-                  <div className="flex items-center gap-1.5 text-xs text-slate-400 animate-pulse shrink-0">
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-400" />
+                  <div className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)] animate-pulse shrink-0">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-400" />
                   </div>
                 )}
               </div>
@@ -838,7 +838,7 @@ export default function ReportsPage() {
 
                 if (employeesList.length === 0) {
                   return (
-                    <div className="py-12 text-center text-slate-500 text-xs italic">
+                    <div className="py-12 text-center text-[var(--text-muted)] text-xs italic">
                       {auditSearchQuery ? `No staff matching "${auditSearchQuery}" found.` : `No active members found in ${activeDeptTab} department for this timeframe.`}
                     </div>
                   );
@@ -848,7 +848,7 @@ export default function ReportsPage() {
                   return (
                     <table className="w-full text-left border-collapse min-w-[950px]">
                       <thead>
-                        <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider bg-slate-950/40 select-none">
+                        <tr className="border-b border-[var(--border-color)] text-[var(--text-secondary)] text-xs font-semibold uppercase tracking-wider bg-[var(--bg-main)] select-none">
                           <th onClick={() => handleSort('name')} className="pb-3 px-4 text-left cursor-pointer hover:text-white transition-colors">
                             Employee Name {getSortIcon('name')}
                           </th>
@@ -880,28 +880,28 @@ export default function ReportsPage() {
                       </thead>
                       <tbody className="divide-y divide-slate-800/40 text-sm">
                         {employeesList.map((emp: any) => (
-                          <tr key={emp.id} className="hover:bg-slate-900/40 transition-colors group">
+                          <tr key={emp.id} className="hover:bg-[var(--bg-card)]/40 transition-colors group">
                             <td className="py-3.5 px-4 font-bold text-white flex items-center gap-3">
                               <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${getAvatarGradient(emp.id)} flex items-center justify-center font-bold text-xs shadow-inner shrink-0 border`}>
                                 {getInitials(emp.name)}
                               </div>
                               <div className="flex flex-col min-w-0">
-                                <span className="truncate group-hover:text-blue-400 transition-colors">{emp.name}</span>
+                                <span className="truncate group-hover:text-emerald-400 transition-colors">{emp.name}</span>
                               </div>
                               <button
                                 type="button"
                                 onClick={() => handleOpenTimelineModal(emp.id, emp.name)}
-                                className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 hover:border-blue-500/40 text-slate-400 hover:text-blue-400 transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium ml-auto"
+                                className="px-2 py-0.5 rounded bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-emerald-500/40 text-[var(--text-secondary)] hover:text-emerald-400 transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium ml-auto"
                                 title="View Daily Activity Timeline"
                               >
-                                <Calendar className="w-3 h-3 text-blue-400" /> Timeline
+                                <Calendar className="w-3 h-3 text-emerald-400" /> Timeline
                               </button>
                             </td>
-                            <td className="py-3.5 px-4 text-slate-400 font-medium text-xs">{emp.designation}</td>
+                            <td className="py-3.5 px-4 text-[var(--text-secondary)] font-medium text-xs">{emp.designation}</td>
                             <td className="py-3.5 px-4 text-center">
                               <button
                                 onClick={() => handleOpenHierarchyModal(emp.id)}
-                                className="font-extrabold font-mono text-blue-400 hover:underline outline-none cursor-pointer px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-xs"
+                                className="font-extrabold font-mono text-emerald-400 hover:underline outline-none cursor-pointer px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-xs"
                               >
                                 {emp.teamSize || 1}
                               </button>
@@ -909,7 +909,7 @@ export default function ReportsPage() {
                             <td className="py-3.5 px-4 text-center">
                               <button
                                 onClick={() => handleOpenDetailsModal(emp.id, 'leads_worked')}
-                                className="font-extrabold text-blue-400 hover:text-blue-300 hover:underline outline-none cursor-pointer"
+                                className="font-extrabold text-emerald-400 hover:text-blue-300 hover:underline outline-none cursor-pointer"
                               >
                                 {emp.metrics.leadsWorked}
                               </button>
@@ -935,7 +935,7 @@ export default function ReportsPage() {
                                 onClick={() => handleOpenDetailsModal(emp.id, 'meetings_cancelled')}
                                 className="font-extrabold text-red-400 hover:text-red-300 hover:underline outline-none cursor-pointer"
                               >
-                                {emp.metrics.meetingsCancelled || 0} <span className="text-[10px] font-normal text-slate-500">({emp.metrics.cancellationRate || 0}%)</span>
+                                {emp.metrics.meetingsCancelled || 0} <span className="text-[10px] font-normal text-[var(--text-muted)]">({emp.metrics.cancellationRate || 0}%)</span>
                               </button>
                             </td>
                             <td className="py-3.5 px-4 text-center">
@@ -943,7 +943,7 @@ export default function ReportsPage() {
                                 onClick={() => handleOpenDetailsModal(emp.id, 'sales_done')}
                                 className="font-extrabold text-emerald-400 hover:text-emerald-300 hover:underline outline-none cursor-pointer"
                               >
-                                {emp.metrics.salesDone || 0} <span className="text-[10px] font-normal text-slate-500">({emp.metrics.saleConversionRate || 0}%)</span>
+                                {emp.metrics.salesDone || 0} <span className="text-[10px] font-normal text-[var(--text-muted)]">({emp.metrics.saleConversionRate || 0}%)</span>
                               </button>
                             </td>
                             <td className="py-3.5 px-4 text-center">
@@ -965,7 +965,7 @@ export default function ReportsPage() {
                   return (
                     <table className="w-full text-left border-collapse min-w-[850px]">
                       <thead>
-                        <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider bg-slate-950/40 select-none">
+                        <tr className="border-b border-[var(--border-color)] text-[var(--text-secondary)] text-xs font-semibold uppercase tracking-wider bg-[var(--bg-main)] select-none">
                           <th onClick={() => handleSort('name')} className="pb-3 px-4 text-left cursor-pointer hover:text-white transition-colors">
                             Employee Name {getSortIcon('name')}
                           </th>
@@ -991,27 +991,27 @@ export default function ReportsPage() {
                       </thead>
                       <tbody className="divide-y divide-slate-800/40 text-sm">
                         {employeesList.map((emp: any) => (
-                          <tr key={emp.id} className="hover:bg-slate-900/40 transition-colors group">
+                          <tr key={emp.id} className="hover:bg-[var(--bg-card)]/40 transition-colors group">
                             <td className="py-3.5 px-4 font-bold text-white flex items-center gap-3">
                               <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${getAvatarGradient(emp.id)} flex items-center justify-center font-bold text-xs shadow-inner shrink-0 border`}>
                                 {getInitials(emp.name)}
                               </div>
                               <div className="flex flex-col min-w-0">
-                                <span className="truncate group-hover:text-blue-400 transition-colors">{emp.name}</span>
+                                <span className="truncate group-hover:text-emerald-400 transition-colors">{emp.name}</span>
                               </div>
                               <button
                                 type="button"
                                 onClick={() => handleOpenTimelineModal(emp.id, emp.name)}
-                                className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 hover:border-blue-500/40 text-slate-400 hover:text-blue-400 transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium ml-auto"
+                                className="px-2 py-0.5 rounded bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-emerald-500/40 text-[var(--text-secondary)] hover:text-emerald-400 transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium ml-auto"
                               >
-                                <Calendar className="w-3 h-3 text-blue-400" /> Timeline
+                                <Calendar className="w-3 h-3 text-emerald-400" /> Timeline
                               </button>
                             </td>
-                            <td className="py-3.5 px-4 text-slate-400 font-medium text-xs">{emp.designation}</td>
+                            <td className="py-3.5 px-4 text-[var(--text-secondary)] font-medium text-xs">{emp.designation}</td>
                             <td className="py-3.5 px-4 text-center">
                               <button
                                 onClick={() => handleOpenHierarchyModal(emp.id)}
-                                className="font-extrabold font-mono text-blue-400 hover:underline outline-none cursor-pointer px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-xs"
+                                className="font-extrabold font-mono text-emerald-400 hover:underline outline-none cursor-pointer px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-xs"
                               >
                                 {emp.teamSize || 1}
                               </button>
@@ -1027,16 +1027,16 @@ export default function ReportsPage() {
                             <td className="py-3.5 px-4 text-center">
                               <button
                                 onClick={() => handleOpenDetailsModal(emp.id, 'ledger_activities')}
-                                className="font-extrabold text-blue-400 hover:text-blue-300 hover:underline outline-none cursor-pointer"
+                                className="font-extrabold text-emerald-400 hover:text-blue-300 hover:underline outline-none cursor-pointer"
                               >
                                 {emp.metrics.ledgerActivities}
                               </button>
                             </td>
-                            <td className="py-3.5 px-4 text-center font-extrabold text-slate-200">
-                              ₹{(emp.metrics.paymentsAmount || 0).toLocaleString('en-IN')}
+                            <td className="py-3.5 px-4 text-center font-extrabold text-[var(--text-primary)]">
+                              â‚¹{(emp.metrics.paymentsAmount || 0).toLocaleString('en-IN')}
                             </td>
-                            <td className="py-3.5 px-4 text-right font-extrabold text-slate-200 font-mono">
-                              ₹{(emp.metrics.ordersVerifiedValue || 0).toLocaleString('en-IN')}
+                            <td className="py-3.5 px-4 text-right font-extrabold text-[var(--text-primary)] font-mono">
+                              â‚¹{(emp.metrics.ordersVerifiedValue || 0).toLocaleString('en-IN')}
                             </td>
                           </tr>
                         ))}
@@ -1049,7 +1049,7 @@ export default function ReportsPage() {
                   return (
                     <table className="w-full text-left border-collapse min-w-[850px]">
                       <thead>
-                        <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider bg-slate-950/40 select-none">
+                        <tr className="border-b border-[var(--border-color)] text-[var(--text-secondary)] text-xs font-semibold uppercase tracking-wider bg-[var(--bg-main)] select-none">
                           <th onClick={() => handleSort('name')} className="pb-3 px-4 text-left cursor-pointer hover:text-white transition-colors">
                             Employee Name {getSortIcon('name')}
                           </th>
@@ -1075,27 +1075,27 @@ export default function ReportsPage() {
                       </thead>
                       <tbody className="divide-y divide-slate-800/40 text-sm">
                         {employeesList.map((emp: any) => (
-                          <tr key={emp.id} className="hover:bg-slate-900/40 transition-colors group">
+                          <tr key={emp.id} className="hover:bg-[var(--bg-card)]/40 transition-colors group">
                             <td className="py-3.5 px-4 font-bold text-white flex items-center gap-3">
                               <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${getAvatarGradient(emp.id)} flex items-center justify-center font-bold text-xs shadow-inner shrink-0 border`}>
                                 {getInitials(emp.name)}
                               </div>
                               <div className="flex flex-col min-w-0">
-                                <span className="truncate group-hover:text-blue-400 transition-colors">{emp.name}</span>
+                                <span className="truncate group-hover:text-emerald-400 transition-colors">{emp.name}</span>
                               </div>
                               <button
                                 type="button"
                                 onClick={() => handleOpenTimelineModal(emp.id, emp.name)}
-                                className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 hover:border-blue-500/40 text-slate-400 hover:text-blue-400 transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium ml-auto"
+                                className="px-2 py-0.5 rounded bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-emerald-500/40 text-[var(--text-secondary)] hover:text-emerald-400 transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium ml-auto"
                               >
-                                <Calendar className="w-3 h-3 text-blue-400" /> Timeline
+                                <Calendar className="w-3 h-3 text-emerald-400" /> Timeline
                               </button>
                             </td>
-                            <td className="py-3.5 px-4 text-slate-400 font-medium text-xs">{emp.designation}</td>
+                            <td className="py-3.5 px-4 text-[var(--text-secondary)] font-medium text-xs">{emp.designation}</td>
                             <td className="py-3.5 px-4 text-center">
                               <button
                                 onClick={() => handleOpenHierarchyModal(emp.id)}
-                                className="font-extrabold font-mono text-blue-400 hover:underline outline-none cursor-pointer px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-xs"
+                                className="font-extrabold font-mono text-emerald-400 hover:underline outline-none cursor-pointer px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-xs"
                               >
                                 {emp.teamSize || 1}
                               </button>
@@ -1127,7 +1127,7 @@ export default function ReportsPage() {
                             <td className="py-3.5 px-4 text-center">
                               <button
                                 onClick={() => handleOpenDetailsModal(emp.id, 'subsidies_applied')}
-                                className="font-extrabold text-blue-400 hover:text-blue-300 hover:underline outline-none cursor-pointer"
+                                className="font-extrabold text-emerald-400 hover:text-blue-300 hover:underline outline-none cursor-pointer"
                               >
                                 {emp.metrics.subsidiesApplied}
                               </button>
@@ -1142,7 +1142,7 @@ export default function ReportsPage() {
                 return (
                   <table className="w-full text-left border-collapse min-w-[700px]">
                     <thead>
-                      <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider bg-slate-950/40 select-none">
+                      <tr className="border-b border-[var(--border-color)] text-[var(--text-secondary)] text-xs font-semibold uppercase tracking-wider bg-[var(--bg-main)] select-none">
                         <th onClick={() => handleSort('name')} className="pb-3 px-4 text-left cursor-pointer hover:text-white transition-colors">
                           Employee Name {getSortIcon('name')}
                         </th>
@@ -1162,27 +1162,27 @@ export default function ReportsPage() {
                     </thead>
                     <tbody className="divide-y divide-slate-800/40 text-sm">
                       {employeesList.map((emp: any) => (
-                        <tr key={emp.id} className="hover:bg-slate-900/40 transition-colors group">
+                        <tr key={emp.id} className="hover:bg-[var(--bg-card)]/40 transition-colors group">
                           <td className="py-3.5 px-4 font-bold text-white flex items-center gap-3">
                             <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${getAvatarGradient(emp.id)} flex items-center justify-center font-bold text-xs shadow-inner shrink-0 border`}>
                               {getInitials(emp.name)}
                             </div>
                             <div className="flex flex-col min-w-0">
-                              <span className="truncate group-hover:text-blue-400 transition-colors">{emp.name}</span>
+                              <span className="truncate group-hover:text-emerald-400 transition-colors">{emp.name}</span>
                             </div>
                             <button
                               type="button"
                               onClick={() => handleOpenTimelineModal(emp.id, emp.name)}
-                              className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 hover:border-blue-500/40 text-slate-400 hover:text-blue-400 transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium ml-auto"
+                              className="px-2 py-0.5 rounded bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-emerald-500/40 text-[var(--text-secondary)] hover:text-emerald-400 transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium ml-auto"
                             >
-                              <Calendar className="w-3 h-3 text-blue-400" /> Timeline
+                              <Calendar className="w-3 h-3 text-emerald-400" /> Timeline
                             </button>
                           </td>
-                          <td className="py-3.5 px-4 text-slate-400 font-medium text-xs">{emp.designation}</td>
+                          <td className="py-3.5 px-4 text-[var(--text-secondary)] font-medium text-xs">{emp.designation}</td>
                           <td className="py-3.5 px-4 text-center">
                             <button
                               onClick={() => handleOpenHierarchyModal(emp.id)}
-                              className="font-extrabold font-mono text-blue-400 hover:underline outline-none cursor-pointer px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-xs"
+                              className="font-extrabold font-mono text-emerald-400 hover:underline outline-none cursor-pointer px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-xs"
                             >
                               {emp.teamSize || 1}
                             </button>
@@ -1190,12 +1190,12 @@ export default function ReportsPage() {
                           <td className="py-3.5 px-4 text-center">
                             <button
                               onClick={() => handleOpenDetailsModal(emp.id, 'leads_worked')}
-                              className="font-extrabold text-blue-400 hover:text-blue-300 hover:underline outline-none cursor-pointer"
+                              className="font-extrabold text-emerald-400 hover:text-blue-300 hover:underline outline-none cursor-pointer"
                             >
                               {emp.metrics.leadsWorked}
                             </button>
                           </td>
-                          <td className="py-3.5 px-4 text-center font-extrabold text-slate-200">
+                          <td className="py-3.5 px-4 text-center font-extrabold text-[var(--text-primary)]">
                             {emp.metrics.ledgerActivities || emp.metrics.leadsWorked}
                           </td>
                         </tr>
@@ -1211,31 +1211,31 @@ export default function ReportsPage() {
       {/* Employee Detail Audit Modal */}
       {selectedAuditEmpId !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-955/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[#111625] border border-slate-800 rounded-2xl w-full max-w-5xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl w-full max-w-5xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
             {/* Modal Header */}
-            <div className="p-6 border-b border-slate-800 flex justify-between items-start gap-4">
+            <div className="p-6 border-b border-[var(--border-color)] flex justify-between items-start gap-4">
               <div>
-                <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Detailed Activity Trail</span>
+                <span className="text-[9px] uppercase font-bold text-[var(--text-muted)] tracking-wider">Detailed Activity Trail</span>
                 <h2 className="text-lg font-bold text-white mt-1 flex items-center gap-2">
                   <span>{modalData?.employee?.name || 'Loading Employee...'}</span>
                   {modalData?.employee && (
-                    <span className="text-[10px] bg-slate-900 border border-slate-850 px-2 py-0.5 rounded text-slate-400 font-mono">
+                    <span className="text-[10px] bg-[var(--bg-card)] border border-[var(--border-color)] px-2 py-0.5 rounded text-[var(--text-secondary)] font-mono">
                       {modalData.employee.designation?.name || modalData.employee.role.toUpperCase()} ({modalData.employee.department?.name || 'Sales'})
                     </span>
                   )}
                   {modalData?.teamSize && modalData.teamSize > 1 && (
-                    <span className="text-[10px] bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded font-mono">
+                    <span className="text-[10px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded font-mono">
                       Hierarchy Team ({modalData.teamSize} members)
                     </span>
                   )}
                 </h2>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Drilldown Line Items for: <span className="text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider">{activeDetailType.replace('_', ' ')}</span>
+                <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+                  Drilldown Line Items for: <span className="text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider">{activeDetailType.replace('_', ' ')}</span>
                 </p>
               </div>
               <button
                 onClick={handleCloseAuditModal}
-                className="p-1.5 rounded-lg border border-slate-800 bg-slate-900/60 text-slate-400 hover:text-white transition-all cursor-pointer outline-none"
+                className="p-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)]/60 text-[var(--text-secondary)] hover:text-white transition-all cursor-pointer outline-none"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1245,13 +1245,13 @@ export default function ReportsPage() {
             <div className="p-6 flex-1 overflow-y-auto min-h-[400px]">
               {modalData?.results && modalData.results.length > 0 && (
                 <div className="mb-6 relative">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
                   <input
                     type="text"
                     placeholder="Search by Lead Name, ID, or Details..."
                     value={auditSearchQuery}
                     onChange={(e) => setAuditSearchQuery(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-9 pr-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500/50"
+                    className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg pl-9 pr-4 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:border-emerald-500/50"
                   />
                 </div>
               )}
@@ -1270,8 +1270,8 @@ export default function ReportsPage() {
 
                 if (modalLoading && !modalData) {
                   return (
-                    <div className="flex flex-col items-center justify-center py-20 text-slate-500 text-xs italic gap-2">
-                      <Loader2 className="w-6 h-6 animate-spin text-blue-600 dark:text-blue-400" />
+                    <div className="flex flex-col items-center justify-center py-20 text-[var(--text-muted)] text-xs italic gap-2">
+                      <Loader2 className="w-6 h-6 animate-spin text-emerald-600 dark:text-emerald-400" />
                       <span>Fetching activity details across team hierarchy...</span>
                     </div>
                   );
@@ -1279,7 +1279,7 @@ export default function ReportsPage() {
 
                 if (!modalData || filteredResults.length === 0) {
                   return (
-                    <div className="flex flex-col items-center justify-center py-20 text-slate-500 text-xs italic">
+                    <div className="flex flex-col items-center justify-center py-20 text-[var(--text-muted)] text-xs italic">
                       <p>No recorded activity items found for this metric in the selected timeframe (or your search didn't match anything).</p>
                     </div>
                   );
@@ -1304,43 +1304,43 @@ export default function ReportsPage() {
                   return (
                     <div className="space-y-4">
                       {groupArray.map((group: any) => (
-                        <div key={group.leadId} className="border border-slate-800 rounded-xl overflow-hidden bg-[#141a2a]">
+                        <div key={group.leadId} className="border border-[var(--border-color)] rounded-xl overflow-hidden bg-[var(--bg-card)]">
                           <button
                             onClick={() => setExpandedLeadIds(prev => ({ ...prev, [group.leadId]: !prev[group.leadId] }))}
-                            className="w-full flex items-center justify-between p-4 hover:bg-slate-800/30 transition-colors text-left border-b border-transparent focus:outline-none"
+                            className="w-full flex items-center justify-between p-4 hover:bg-[var(--bg-card)] transition-colors text-left border-b border-transparent focus:outline-none"
                           >
                             <div className="flex items-center gap-4">
-                              <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center border border-blue-500/20 shadow-inner">
-                                <span className="text-blue-400 font-bold text-xs">{group.logs.length}</span>
+                              <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-inner">
+                                <span className="text-emerald-400 font-bold text-xs">{group.logs.length}</span>
                               </div>
                               <div>
                                 <h4 className="text-white font-bold text-sm tracking-wide">{group.customerName || `Lead #${group.leadCode}`}</h4>
-                                <span className="text-[10px] text-slate-500 font-mono block mt-0.5">#{group.leadCode}</span>
+                                <span className="text-[10px] text-[var(--text-muted)] font-mono block mt-0.5">#{group.leadCode}</span>
                               </div>
                             </div>
-                            <div className="flex items-center gap-4 text-slate-400 bg-slate-900/60 px-3 py-1.5 rounded-full border border-slate-800/60">
+                            <div className="flex items-center gap-4 text-[var(--text-secondary)] bg-[var(--bg-card)]/60 px-3 py-1.5 rounded-full border border-[var(--border-color)]/60">
                               <span className="text-[10px] font-mono font-medium">{group.logs.length} Actions</span>
-                              {expandedLeadIds[group.leadId] ? <ChevronUp className="w-4 h-4 text-blue-400" /> : <ChevronDown className="w-4 h-4" />}
+                              {expandedLeadIds[group.leadId] ? <ChevronUp className="w-4 h-4 text-emerald-400" /> : <ChevronDown className="w-4 h-4" />}
                             </div>
                           </button>
                           
                           {expandedLeadIds[group.leadId] && (
-                            <div className="border-t border-slate-800 bg-slate-950/40 p-5 shadow-inner">
-                              <div className="relative border-l-2 border-slate-800 ml-4 pl-6 space-y-6">
+                            <div className="border-t border-[var(--border-color)] bg-[var(--bg-main)] p-5 shadow-inner">
+                              <div className="relative border-l-2 border-[var(--border-color)] ml-4 pl-6 space-y-6">
                                 {group.logs.map((log: any) => (
                                   <div key={log.id} className="relative group">
-                                    <div className="absolute -left-[33px] top-1.5 w-4 h-4 rounded-full border-[3px] border-blue-500/80 bg-slate-950 ring-4 ring-slate-950 shadow-sm" />
-                                    <div className="bg-slate-900/50 border border-slate-800/60 rounded-xl p-3 hover:border-slate-700 transition-colors">
+                                    <div className="absolute -left-[33px] top-1.5 w-4 h-4 rounded-full border-[3px] border-emerald-500/80 bg-[var(--bg-main)] ring-4 ring-slate-950 shadow-sm" />
+                                    <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)]/60 rounded-xl p-3 hover:border-[var(--border-color)] transition-colors">
                                       <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
-                                        <span className="text-xs font-bold text-blue-400/90 tracking-wide uppercase">{log.detail1}</span>
-                                        <span className="text-[10px] text-slate-500 font-mono">
+                                        <span className="text-xs font-bold text-emerald-400/90 tracking-wide uppercase">{log.detail1}</span>
+                                        <span className="text-[10px] text-[var(--text-muted)] font-mono">
                                           {log.date || new Date(log.timestamp).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
                                         </span>
                                       </div>
-                                      <p className="text-xs text-slate-300 leading-relaxed font-sans">{log.detail2}</p>
+                                      <p className="text-xs text-[var(--text-primary)] leading-relaxed font-sans">{log.detail2}</p>
                                       {log.executedBy && (
-                                        <div className="mt-2 text-[10px] bg-slate-950 border border-slate-850 px-2 py-1 rounded inline-flex items-center gap-1">
-                                          <span className="text-slate-500">Executed by:</span> <span className="text-white font-medium">{log.executedBy.name}</span>
+                                        <div className="mt-2 text-[10px] bg-[var(--bg-main)] border border-[var(--border-color)] px-2 py-1 rounded inline-flex items-center gap-1">
+                                          <span className="text-[var(--text-muted)]">Executed by:</span> <span className="text-white font-medium">{log.executedBy.name}</span>
                                         </div>
                                       )}
                                     </div>
@@ -1356,10 +1356,10 @@ export default function ReportsPage() {
                 }
 
                 return (
-                  <div className="overflow-x-auto bg-[#141a2a] rounded-xl border border-slate-800 overflow-hidden">
+                  <div className="overflow-x-auto bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)] overflow-hidden">
                     <table className="w-full text-left border-collapse min-w-[850px]">
                       <thead>
-                        <tr className="border-b border-slate-800 bg-slate-900/40 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                        <tr className="border-b border-[var(--border-color)] bg-[var(--bg-card)]/40 text-[var(--text-secondary)] text-[10px] font-bold uppercase tracking-wider">
                           <th className="py-3 px-4">Date & Time</th>
                           <th className="py-3 px-4">Executed By (Who)</th>
                           <th className="py-3 px-4">Lead / Client</th>
@@ -1370,41 +1370,41 @@ export default function ReportsPage() {
                           )}
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-800/40 text-xs text-slate-300">
+                      <tbody className="divide-y divide-slate-800/40 text-xs text-[var(--text-primary)]">
                         {filteredResults.map((item: any) => (
-                          <tr key={item.id} className="hover:bg-slate-900/80 transition-colors group">
-                            <td className="py-3.5 px-4 text-slate-400 font-mono whitespace-nowrap">
+                          <tr key={item.id} className="hover:bg-[var(--bg-card)]/80 transition-colors group">
+                            <td className="py-3.5 px-4 text-[var(--text-secondary)] font-mono whitespace-nowrap">
                               {item.date || new Date(item.timestamp).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
                             </td>
                             <td className="py-3.5 px-4">
                               {item.executedBy ? (
                                 <div className="flex flex-col">
-                                  <span className="font-bold text-white group-hover:text-blue-400 transition-colors">{item.executedBy.name}</span>
-                                  <span className="text-[9px] text-blue-500/70 font-mono mt-0.5">{item.executedBy.designation}</span>
+                                  <span className="font-bold text-white group-hover:text-emerald-400 transition-colors">{item.executedBy.name}</span>
+                                  <span className="text-[9px] text-emerald-500/70 font-mono mt-0.5">{item.executedBy.designation}</span>
                                 </div>
                               ) : (
-                                <span className="text-slate-500 italic">Self</span>
+                                <span className="text-[var(--text-muted)] italic">Self</span>
                               )}
                             </td>
                             <td className="py-3.5 px-4">
                               {item.leadId ? (
-                                <a href={`/leads/${item.leadId}`} className="hover:underline text-blue-500 font-bold block transition-colors">
+                                <a href={`/leads/${item.leadId}`} className="hover:underline text-emerald-500 font-bold block transition-colors">
                                   {item.customerName || `Lead #${item.leadCode}`}
                                 </a>
                               ) : (
-                                <span className="text-slate-400 font-medium">{item.customerName || '-'}</span>
+                                <span className="text-[var(--text-secondary)] font-medium">{item.customerName || '-'}</span>
                               )}
-                              {item.leadCode && <span className="text-[9px] text-slate-500 font-mono block mt-0.5">#{item.leadCode}</span>}
+                              {item.leadCode && <span className="text-[9px] text-[var(--text-muted)] font-mono block mt-0.5">#{item.leadCode}</span>}
                             </td>
-                            <td className="py-3.5 px-4 font-semibold text-slate-200">
+                            <td className="py-3.5 px-4 font-semibold text-[var(--text-primary)]">
                               {item.detail1}
                             </td>
-                            <td className="py-3.5 px-4 text-slate-400 max-w-[280px] leading-relaxed">
+                            <td className="py-3.5 px-4 text-[var(--text-secondary)] max-w-[280px] leading-relaxed">
                               {item.detail2}
                             </td>
                             {modalData.results.some((r: any) => r.value !== undefined) && (
-                              <td className="py-3.5 px-4 text-right font-extrabold text-white font-mono bg-slate-900/20">
-                                {item.value ? `₹${item.value.toLocaleString('en-IN')}` : '-'}
+                              <td className="py-3.5 px-4 text-right font-extrabold text-white font-mono bg-[var(--bg-card)]/20">
+                                {item.value ? `â‚¹${item.value.toLocaleString('en-IN')}` : '-'}
                               </td>
                             )}
                           </tr>
@@ -1417,10 +1417,10 @@ export default function ReportsPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-slate-800 bg-slate-955/20 text-right">
+            <div className="p-4 border-t border-[var(--border-color)] bg-slate-955/20 text-right">
               <button
                 onClick={handleCloseAuditModal}
-                className="py-2 px-5 bg-slate-900 border border-slate-800 text-slate-355 hover:text-white rounded-lg font-bold text-xs transition-all cursor-pointer outline-none"
+                className="py-2 px-5 bg-[var(--bg-card)] border border-[var(--border-color)] text-slate-355 hover:text-white rounded-lg font-bold text-xs transition-all cursor-pointer outline-none"
               >
                 Close Audit View
               </button>
@@ -1431,22 +1431,22 @@ export default function ReportsPage() {
 
       {/* Activity Timeline Calendar Modal */}
       {selectedTimelineEmpId !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in font-sans">
-          <div className="bg-[#111625] border border-slate-800 rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--bg-main)] backdrop-blur-sm animate-fade-in font-sans">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
             {/* Modal Header */}
-            <div className="p-6 border-b border-slate-800 flex justify-between items-start gap-4">
+            <div className="p-6 border-b border-[var(--border-color)] flex justify-between items-start gap-4">
               <div>
-                <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Employee Performance Audit</span>
+                <span className="text-[9px] uppercase font-bold text-[var(--text-muted)] tracking-wider">Employee Performance Audit</span>
                 <h2 className="text-lg font-bold text-white mt-1 flex items-center gap-2">
                   <span>{selectedTimelineEmpName}'s Task Timeline Calendar</span>
                 </h2>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                   Chronological trail of daily check-ins, pipeline updates, and meetings.
                 </p>
               </div>
               <button
                 onClick={handleCloseTimelineModal}
-                className="p-1.5 rounded-lg border border-slate-800 bg-slate-900/60 text-slate-400 hover:text-white transition-all cursor-pointer outline-none"
+                className="p-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)]/60 text-[var(--text-secondary)] hover:text-white transition-all cursor-pointer outline-none"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1455,16 +1455,16 @@ export default function ReportsPage() {
             {/* Modal Body */}
             <div className="p-6 flex-1 overflow-y-auto min-h-[350px] space-y-4">
               {timelineLoading ? (
-                <div className="flex flex-col items-center justify-center py-20 text-slate-500 text-xs italic gap-2">
-                  <Loader2 className="w-6 h-6 animate-spin text-blue-600 dark:text-blue-400" />
+                <div className="flex flex-col items-center justify-center py-20 text-[var(--text-muted)] text-xs italic gap-2">
+                  <Loader2 className="w-6 h-6 animate-spin text-emerald-600 dark:text-emerald-400" />
                   <span>Aggregating task trail from database logs...</span>
                 </div>
               ) : timelineEvents.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 text-slate-500 text-xs italic font-sans">
+                <div className="flex flex-col items-center justify-center py-20 text-[var(--text-muted)] text-xs italic font-sans">
                   <p>No logged check-ins, status modifications, or meetings in this timeframe.</p>
                 </div>
               ) : (
-                <div className="relative border-l border-slate-800 ml-4 pl-6 space-y-6">
+                <div className="relative border-l border-[var(--border-color)] ml-4 pl-6 space-y-6">
                   {timelineEvents.map((evt: any) => {
                     const isCheckIn = evt.type === 'check_in';
                     const isCheckOut = evt.type === 'check_out';
@@ -1473,26 +1473,26 @@ export default function ReportsPage() {
 
                     const theme = isCheckIn ? { border: 'border-emerald-500', bg: 'bg-emerald-500/10', text: 'text-emerald-400' } :
                                   isCheckOut ? { border: 'border-teal-500', bg: 'bg-teal-500/10', text: 'text-teal-400' } :
-                                  isLog ? { border: 'border-blue-500', bg: 'bg-blue-500/10', text: 'text-blue-600 dark:text-blue-400' } :
+                                  isLog ? { border: 'border-emerald-500', bg: 'bg-emerald-500/10', text: 'text-emerald-600 dark:text-emerald-400' } :
                                   isMeet ? { border: 'border-cyan-500', bg: 'bg-cyan-500/10', text: 'text-cyan-400' } :
                                   { border: 'border-purple-500', bg: 'bg-purple-500/10', text: 'text-purple-400' };
 
                     return (
                       <div key={evt.id} className="relative group">
                         {/* Dot indicator */}
-                        <div className={`absolute -left-9 top-1 w-5 h-5 rounded-full border-2 ${theme.border} bg-[#111625] flex items-center justify-center`} />
+                        <div className={`absolute -left-9 top-1 w-5 h-5 rounded-full border-2 ${theme.border} bg-[var(--bg-card)] flex items-center justify-center`} />
                         
-                        <div className="bg-slate-900/35 border border-slate-850 hover:border-slate-800 p-4 rounded-xl space-y-1.5 transition-colors">
+                        <div className="bg-[var(--bg-card)]/35 border border-[var(--border-color)] hover:border-[var(--border-color)] p-4 rounded-xl space-y-1.5 transition-colors">
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <span className={`text-xs font-bold uppercase tracking-wider ${theme.text}`}>{evt.title}</span>
-                            <span className="text-[10px] text-slate-500 font-mono font-medium">
+                            <span className="text-[10px] text-[var(--text-muted)] font-mono font-medium">
                               {new Date(evt.timestamp).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
                             </span>
                           </div>
-                          <p className="text-xs text-slate-300 leading-relaxed font-sans">{evt.description}</p>
+                          <p className="text-xs text-[var(--text-primary)] leading-relaxed font-sans">{evt.description}</p>
                           
                           {evt.meta && (evt.meta.notes || evt.meta.remark) && (
-                            <div className="text-[11px] bg-slate-950/60 border border-slate-900/60 px-3 py-1.5 rounded-lg text-slate-400 italic">
+                            <div className="text-[11px] bg-[var(--bg-main)] border border-[var(--border-color)] px-3 py-1.5 rounded-lg text-[var(--text-secondary)] italic">
                               &ldquo;{evt.meta.notes || evt.meta.remark}&rdquo;
                             </div>
                           )}
@@ -1505,11 +1505,11 @@ export default function ReportsPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-slate-800 bg-slate-955/20 text-right">
+            <div className="p-4 border-t border-[var(--border-color)] bg-slate-955/20 text-right">
               <button
                 type="button"
                 onClick={handleCloseTimelineModal}
-                className="py-2 px-5 bg-slate-900 border border-slate-800 text-slate-355 hover:text-white rounded-lg font-bold text-xs transition-all cursor-pointer outline-none"
+                className="py-2 px-5 bg-[var(--bg-card)] border border-[var(--border-color)] text-slate-355 hover:text-white rounded-lg font-bold text-xs transition-all cursor-pointer outline-none"
               >
                 Close Timeline
               </button>
@@ -1520,22 +1520,22 @@ export default function ReportsPage() {
 
       {/* Team Hierarchy Modal */}
       {hierarchyModalData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in font-sans">
-          <div className="bg-[#111625] border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--bg-main)] backdrop-blur-sm animate-fade-in font-sans">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
             {/* Modal Header */}
-            <div className="p-6 border-b border-slate-800 flex justify-between items-start gap-4">
+            <div className="p-6 border-b border-[var(--border-color)] flex justify-between items-start gap-4">
               <div>
-                <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Organizational Structure</span>
+                <span className="text-[9px] uppercase font-bold text-[var(--text-muted)] tracking-wider">Organizational Structure</span>
                 <h2 className="text-lg font-bold text-white mt-1 flex items-center gap-2">
                   <span>Team Hierarchy</span>
                 </h2>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                   View the direct and indirect reporting structure.
                 </p>
               </div>
               <button
                 onClick={() => setHierarchyModalData(null)}
-                className="p-1.5 rounded-lg border border-slate-800 bg-slate-900/60 text-slate-400 hover:text-white transition-all cursor-pointer outline-none"
+                className="p-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)]/60 text-[var(--text-secondary)] hover:text-white transition-all cursor-pointer outline-none"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1544,8 +1544,8 @@ export default function ReportsPage() {
             {/* Modal Body */}
             <div className="p-6 flex-1 overflow-y-auto min-h-[300px]">
               {hierarchyLoading || hierarchyModalData.loading ? (
-                <div className="flex flex-col items-center justify-center py-20 text-slate-500 text-xs italic gap-2">
-                  <Loader2 className="w-6 h-6 animate-spin text-blue-600 dark:text-blue-400" />
+                <div className="flex flex-col items-center justify-center py-20 text-[var(--text-muted)] text-xs italic gap-2">
+                  <Loader2 className="w-6 h-6 animate-spin text-emerald-600 dark:text-emerald-400" />
                   <span>Loading hierarchy tree...</span>
                 </div>
               ) : (
@@ -1554,17 +1554,17 @@ export default function ReportsPage() {
                   {(() => {
                     const renderNode = (node: any, level: number = 0) => {
                       return (
-                        <div key={node.id} className={`pl-${level === 0 ? '0' : '6'} border-l ${level === 0 ? 'border-transparent' : 'border-slate-800'} mt-2`}>
-                          <div className="flex items-center gap-3 p-3 bg-slate-900/40 border border-slate-800/60 rounded-xl relative">
-                            {level > 0 && <div className="absolute -left-6 top-1/2 w-6 border-t border-slate-800"></div>}
-                            <div className="w-10 h-10 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center flex-shrink-0">
-                              <Users className="w-5 h-5 text-blue-400" />
+                        <div key={node.id} className={`pl-${level === 0 ? '0' : '6'} border-l ${level === 0 ? 'border-transparent' : 'border-[var(--border-color)]'} mt-2`}>
+                          <div className="flex items-center gap-3 p-3 bg-[var(--bg-card)]/40 border border-[var(--border-color)]/60 rounded-xl relative">
+                            {level > 0 && <div className="absolute -left-6 top-1/2 w-6 border-t border-[var(--border-color)]"></div>}
+                            <div className="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
+                              <Users className="w-5 h-5 text-emerald-400" />
                             </div>
                             <div className="flex-1 min-w-0">
                               <h4 className="text-white font-bold text-sm truncate">{node.name}</h4>
-                              <p className="text-[10px] text-slate-500 font-mono truncate">{node.designation} • {node.department}</p>
+                              <p className="text-[10px] text-[var(--text-muted)] font-mono truncate">{node.designation} â€¢ {node.department}</p>
                             </div>
-                            <div className="text-[10px] font-bold text-slate-400 bg-slate-950 px-2 py-1 rounded border border-slate-800">
+                            <div className="text-[10px] font-bold text-[var(--text-secondary)] bg-[var(--bg-main)] px-2 py-1 rounded border border-[var(--border-color)]">
                               {node.children?.length || 0} Direct
                             </div>
                           </div>
@@ -1583,10 +1583,10 @@ export default function ReportsPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-slate-800 bg-slate-955/20 text-right">
+            <div className="p-4 border-t border-[var(--border-color)] bg-slate-955/20 text-right">
               <button
                 onClick={() => setHierarchyModalData(null)}
-                className="py-2 px-5 bg-slate-900 border border-slate-800 text-slate-355 hover:text-white rounded-lg font-bold text-xs transition-all cursor-pointer outline-none"
+                className="py-2 px-5 bg-[var(--bg-card)] border border-[var(--border-color)] text-slate-355 hover:text-white rounded-lg font-bold text-xs transition-all cursor-pointer outline-none"
               >
                 Close Tree
               </button>

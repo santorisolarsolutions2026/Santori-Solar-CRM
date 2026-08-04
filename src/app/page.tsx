@@ -1,4 +1,4 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 import Image from 'next/image';
 import { cookies } from 'next/headers';
 import { ArrowRight, Sparkles } from 'lucide-react';
@@ -19,7 +19,7 @@ export default async function LandingPage() {
         className="absolute inset-0 bg-cover bg-center -z-20"
         style={{ backgroundImage: 'url("/solar_background.png")' }}
       />
-      <div className="absolute inset-0 bg-slate-950/30 dark:bg-slate-950/45 backdrop-blur-[1px] -z-10" />
+      <div className="absolute inset-0 bg-[var(--bg-main)] dark:bg-[var(--bg-main)] backdrop-blur-[1px] -z-10" />
 
       {/* Header/Navbar */}
       <header className="border-b border-white/10 dark:border-zinc-800/40 bg-black/15 dark:bg-zinc-950/20 backdrop-blur-md sticky top-0 z-50">
@@ -48,7 +48,7 @@ export default async function LandingPage() {
           <div className="flex items-center gap-6">
             <Link 
               href={portalLink}
-              className="px-4 py-2 text-xs font-bold rounded-lg bg-white/10 dark:bg-slate-900/40 border border-white/20 dark:border-slate-800/60 text-white hover:bg-white/20 transition-all duration-300 flex items-center gap-1.5 shadow-lg backdrop-blur-sm hover:scale-105 active:scale-95"
+              className="px-4 py-2 text-xs font-bold rounded-lg bg-white/10 dark:bg-[var(--bg-card)] border border-white/20 dark:border-[var(--border-color)] text-white hover:bg-white/20 transition-all duration-300 flex items-center gap-1.5 shadow-lg backdrop-blur-sm hover:scale-105 active:scale-95"
             >
               {portalText}
               <ArrowRight className="w-3.5 h-3.5" />
@@ -61,7 +61,7 @@ export default async function LandingPage() {
       <section className="relative flex-grow flex items-center py-4 lg:py-6 px-6 max-w-[86%] mx-auto w-full">
         <div className="grid lg:grid-cols-12 gap-10 items-center w-full">
           <div className="lg:col-span-7 space-y-5 lg:space-y-6">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/10 dark:bg-slate-900/30 border border-white/20 dark:border-slate-800/40 text-slate-200 text-[11px] font-bold uppercase tracking-wider animate-fade-in-up backdrop-blur-sm">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/10 dark:bg-[var(--bg-card)] border border-white/20 dark:border-[var(--border-color)] text-[var(--text-primary)] text-[11px] font-bold uppercase tracking-wider animate-fade-in-up backdrop-blur-sm">
               <Sparkles className="w-3.5 h-3.5 animate-pulse text-blue-400" />
               Empowering Sustainable Energy Systems
             </div>
@@ -71,22 +71,22 @@ export default async function LandingPage() {
               <Typewriter texts={TYPEWRITER_PHRASES} />
             </h1>
 
-            <p className="text-slate-200 dark:text-zinc-300 text-sm lg:text-base xl:text-lg leading-relaxed max-w-xl lg:max-w-2xl animate-fade-in-up animation-delay-400">
+            <p className="text-[var(--text-primary)] dark:text-zinc-300 text-sm lg:text-base xl:text-lg leading-relaxed max-w-xl lg:max-w-2xl animate-fade-in-up animation-delay-400">
               Experience the synergy of high-efficiency solar panel installations and custom CRM automation. 
               Manage leads, schedule site visits, book customer meetings, punch sales orders, and streamline operations from a single workspace.
             </p>
 
             {/* Glassmorphic Small Features Cards */}
             <div className="grid grid-cols-3 gap-4 max-w-2xl pt-1 animate-fade-in-up animation-delay-500">
-              <div className="p-3 lg:p-4 rounded-xl bg-white/10 dark:bg-slate-900/30 border border-white/20 dark:border-slate-800/50 backdrop-blur-md hover:border-white/30 hover:bg-white/15 transition-all duration-300 group/item shadow-lg">
+              <div className="p-3 lg:p-4 rounded-xl bg-white/10 dark:bg-[var(--bg-card)] border border-white/20 dark:border-[var(--border-color)] backdrop-blur-md hover:border-white/30 hover:bg-white/15 transition-all duration-300 group/item shadow-lg">
                 <span className="text-slate-900 dark:text-white font-bold block text-sm lg:text-base mb-1">Instant Site Audits</span>
                 <span className="text-[10px] lg:text-[11px] text-slate-700 dark:text-zinc-400 block leading-normal font-medium">Schedule field surveys and inspect roof suitability.</span>
               </div>
-              <div className="p-3 lg:p-4 rounded-xl bg-white/10 dark:bg-slate-900/30 border border-white/20 dark:border-slate-800/50 backdrop-blur-md hover:border-white/30 hover:bg-white/15 transition-all duration-300 group/item shadow-lg">
+              <div className="p-3 lg:p-4 rounded-xl bg-white/10 dark:bg-[var(--bg-card)] border border-white/20 dark:border-[var(--border-color)] backdrop-blur-md hover:border-white/30 hover:bg-white/15 transition-all duration-300 group/item shadow-lg">
                 <span className="text-slate-900 dark:text-white font-bold block text-sm lg:text-base mb-1">Pipeline Tracking</span>
                 <span className="text-[10px] lg:text-[11px] text-slate-700 dark:text-zinc-400 block leading-normal font-medium">Manage prospect pipelines from pitch to order dispatch.</span>
               </div>
-              <div className="p-3 lg:p-4 rounded-xl bg-white/10 dark:bg-slate-900/30 border border-white/20 dark:border-slate-800/50 backdrop-blur-md hover:border-white/30 hover:bg-white/15 transition-all duration-300 group/item shadow-lg">
+              <div className="p-3 lg:p-4 rounded-xl bg-white/10 dark:bg-[var(--bg-card)] border border-white/20 dark:border-[var(--border-color)] backdrop-blur-md hover:border-white/30 hover:bg-white/15 transition-all duration-300 group/item shadow-lg">
                 <span className="text-slate-900 dark:text-white font-bold block text-sm lg:text-base mb-1">Sales Booking</span>
                 <span className="text-[10px] lg:text-[11px] text-slate-700 dark:text-zinc-400 block leading-normal font-medium">Instantly process customer sales orders and agreements.</span>
               </div>
@@ -95,7 +95,7 @@ export default async function LandingPage() {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-1 animate-fade-in-up animation-delay-600">
               <Link 
                 href={portalLink}
-                className="px-8 py-3.5 text-center font-bold text-white bg-blue-700 hover:bg-blue-800 active:bg-blue-900 border border-blue-800/40 rounded-xl transition-all duration-300 shadow-lg shadow-blue-950/20 flex items-center justify-center gap-2 text-sm lg:text-base group hover:scale-[1.02] active:scale-95 cursor-pointer"
+                className="px-8 py-3.5 text-center font-bold text-white bg-blue-700 hover:bg-[var(--border-color)]lue-800 active:bg-blue-900 border border-blue-800/40 rounded-xl transition-all duration-300 shadow-lg shadow-blue-950/20 flex items-center justify-center gap-2 text-sm lg:text-base group hover:scale-[1.02] active:scale-95 cursor-pointer"
               >
                 Launch CRM Application
                 <ArrowRight className="w-4 h-4 lg:w-5 lg:h-5 group-hover:translate-x-1.5 transition-transform" />
@@ -107,9 +107,9 @@ export default async function LandingPage() {
           <div className="lg:col-span-5 flex justify-center relative">
             <div className="absolute inset-0 bg-blue-500/5 rounded-full blur-[100px] pointer-events-none" />
             
-            <div className="relative w-full max-w-[400px] rounded-2xl bg-white/10 dark:bg-slate-900/30 border border-white/20 dark:border-slate-850/60 p-6 lg:p-8 flex flex-col items-center justify-center shadow-2xl backdrop-blur-lg group hover:border-white/30 transition-all duration-500 animate-float">
+            <div className="relative w-full max-w-[400px] rounded-2xl bg-white/10 dark:bg-[var(--bg-card)] border border-white/20 dark:border-[var(--border-color)] p-6 lg:p-8 flex flex-col items-center justify-center shadow-2xl backdrop-blur-lg group hover:border-white/30 transition-all duration-500 animate-float">
               
-              <div className="relative w-44 h-44 mb-6 bg-white rounded-2xl border border-white/20 dark:border-slate-800/40 shadow-2xl flex items-center justify-center overflow-hidden group-hover:scale-105 transition-all duration-500">
+              <div className="relative w-44 h-44 mb-6 bg-white rounded-2xl border border-white/20 dark:border-[var(--border-color)] shadow-2xl flex items-center justify-center overflow-hidden group-hover:scale-105 transition-all duration-500">
                 <Image 
                   src="/logo.png" 
                   alt="Santori Solar Logo large" 
@@ -121,7 +121,7 @@ export default async function LandingPage() {
 
               <div className="text-center space-y-2">
                 <h3 className="text-xl lg:text-2xl font-black text-white">Santori Solar Solutions</h3>
-                <p className="text-slate-200 dark:text-zinc-400 text-xs lg:text-sm max-w-[280px] mx-auto leading-relaxed font-medium">
+                <p className="text-[var(--text-primary)] dark:text-zinc-400 text-xs lg:text-sm max-w-[280px] mx-auto leading-relaxed font-medium">
                   Premium solar panel installations paired with intelligent workflow analytics.
                 </p>
               </div>
@@ -133,7 +133,7 @@ export default async function LandingPage() {
       {/* Footer */}
       <footer className="border-t border-white/10 dark:border-zinc-900/60 py-4 text-center text-slate-350 dark:text-zinc-500 text-xs bg-black/10 backdrop-blur-sm">
         <div className="max-w-[86%] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-2">
-          <p>© 2026 Santori Solar Solutions. All rights reserved.</p>
+          <p>Â© 2026 Santori Solar Solutions. All rights reserved.</p>
           <div className="flex gap-6">
             <span className="hover:text-white cursor-pointer">Privacy Policy</span>
             <span className="hover:text-white cursor-pointer">Terms of Service</span>

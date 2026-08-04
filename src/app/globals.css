@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #FFFFFF;
-  --foreground: #0F172A;
+  --background: #F7FAF8;
+  --foreground: #111827;
 }
 
 @theme inline {
@@ -14,8 +14,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0F172A;
-    --foreground: #F8FAFC;
+    --background: #0D1117;
+    --foreground: #F0F6FC;
   }
 }
 
@@ -25,83 +25,98 @@ body {
   font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
 }
 
+/* ============================================================
+   ANIMATION UTILITIES
+   ============================================================ */
+
 @keyframes fade-in-up {
-  0% {
-    opacity: 0;
-    transform: translateY(15px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fade-in-up {
-  animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Delay classes for staggered animation */
-.animation-delay-200 {
-  animation-delay: 200ms;
-}
-.animation-delay-400 {
-  animation-delay: 400ms;
+.animation-delay-200 { animation-delay: 200ms; }
+.animation-delay-400 { animation-delay: 400ms; }
+
+@keyframes slide-in-right {
+  0% { opacity: 0; transform: translateX(100%); }
+  100% { opacity: 1; transform: translateX(0); }
 }
 
-/* Hide scrollbars globally across the entire application */
-::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-* {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+@keyframes skeleton-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
-/* Theme 2: Sky Blue & Slate Grey System variables */
+/* ============================================================
+   SCROLLBAR — Hidden globally
+   ============================================================ */
+
+::-webkit-scrollbar { display: none; width: 0; height: 0; }
+* { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ============================================================
+   DESIGN SYSTEM — CSS Variables
+   Emerald Green-first Enterprise Theme
+   ============================================================ */
+
 :root {
-  /* Dark mode colors (default) */
-  --bg-main: #0F172A;
-  --bg-sidebar: #0B0F19;
-  --bg-card: #1E293B;
-  --bg-card-solid: #1E293B;
-  --bg-input: #0F172A;
-  --border-color: rgba(255, 255, 255, 0.06);
-  --border-color-hover: rgba(255, 255, 255, 0.12);
-  --text-primary: #F8FAFC;
-  --text-secondary: #CBD5E1; /* Increased contrast for Dark Mode secondary text */
-  --text-muted: #94A3B8; /* Increased contrast for Dark Mode muted text */
-  --shadow-color: rgba(0, 0, 0, 0.25);
-  --accent-color: #0EA5E9; /* Sky Blue (#0EA5E9) */
-  --accent-hover: #0284C7; /* Darker Sky Blue */
-  --btn-text: #FFFFFF;
+  /* === DARK THEME (default) === */
+  --bg-main:              #0D1117;
+  --bg-sidebar:           #111318;
+  --bg-card:              #161B22;
+  --bg-card-solid:        #161B22;
+  --bg-input:             #0D1117;
+  --border-color:         rgba(255, 255, 255, 0.08);
+  --border-color-hover:   rgba(255, 255, 255, 0.16);
+  --text-primary:         #F0F6FC;
+  --text-secondary:       #8B949E;
+  --text-muted:           #6E7681;
+  --shadow-color:         rgba(0, 0, 0, 0.35);
+
+  /* === ACCENT — Emerald Green === */
+  --accent-color:         #10B981;
+  --accent-hover:         #059669;
+  --accent-subtle:        rgba(16, 185, 129, 0.10);
+  --accent-border:        rgba(16, 185, 129, 0.20);
+  --btn-text:             #FFFFFF;
 }
 
 .light {
-  /* Light mode colors matching mockup image */
-  --bg-main: #F8FAFC;
-  --bg-sidebar: #FFFFFF; /* Pure white sidebar in light mode */
-  --bg-card: #FFFFFF;
-  --bg-card-solid: #FFFFFF;
-  --bg-input: #FFFFFF;
-  --border-color: #E2E8F0;
-  --border-color-hover: #CBD5E1;
-  --text-primary: #0F172A;
-  --text-secondary: #475569; /* Increased contrast (darker) for Light Mode secondary text */
-  --text-muted: #64748B; /* Increased contrast (darker) for Light Mode muted text */
-  --shadow-color: rgba(15, 23, 42, 0.04);
-  --accent-color: #2563EB; /* Premium Royal Blue for Light mode active states */
-  --accent-hover: #1D4ED8; /* Darker Royal Blue */
-  --btn-text: #FFFFFF;
+  /* === LIGHT THEME — Soft greenish tint, easy on eyes === */
+  --bg-main:              #F2F7F4;
+  --bg-sidebar:           #FFFFFF;
+  --bg-card:              #FFFFFF;
+  --bg-card-solid:        #FFFFFF;
+  --bg-input:             #F9FAFB;
+  --border-color:         #E2E8E4;
+  --border-color-hover:   #9CA3AF;
+  --text-primary:         #111827;
+  --text-secondary:       #374151;
+  --text-muted:           #6B7280;
+  --shadow-color:         rgba(17, 24, 39, 0.08);
+
+  /* === ACCENT — Emerald (slightly deeper for light bg) === */
+  --accent-color:         #059669;
+  --accent-hover:         #047857;
+  --accent-subtle:        rgba(5, 150, 105, 0.08);
+  --accent-border:        rgba(5, 150, 105, 0.20);
+  --btn-text:             #FFFFFF;
 }
 
-/* Remove background gradient glows & decorative blurs */
+/* ============================================================
+   REMOVE DECORATIVE EFFECTS (dark mode)
+   ============================================================ */
+
 body::before,
-body::after,
-.light body::before,
-.light body::after {
+body::after {
   content: none !important;
   display: none !important;
   background: none !important;
@@ -109,11 +124,11 @@ body::after,
 
 [class*="blur-[150px]"],
 [class*="blur-3xl"],
-[class*="blur-[120px]"] {
+[class*="blur-[120px]"],
+[class*="blur-[80px]"] {
   display: none !important;
 }
 
-/* Disable flashy animations */
 .animate-float,
 .animate-pulse-slow,
 .animate-spin-slow,
@@ -122,7 +137,6 @@ body::after,
   transform: none !important;
 }
 
-/* Make text shimmer look flat and clean */
 .animate-text-shimmer {
   background: none !important;
   color: var(--accent-color) !important;
@@ -130,196 +144,306 @@ body::after,
   background-clip: unset !important;
 }
 
-/* Apply theme variables to default classes */
+/* ============================================================
+   BASE BODY & LAYOUT
+   ============================================================ */
+
 body {
   background-color: var(--bg-main) !important;
   color: var(--text-primary) !important;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-.bg-\[\#090b11\],
-.bg-slate-955 {
-  background-color: var(--bg-main) !important;
-  transition: background-color 0.3s ease;
-}
+/* ============================================================
+   LIGHT MODE — BORDER OVERRIDES
+   ============================================================ */
 
-/* Opaque / Solid Backgrounds for cards, dropdowns, modals, and sticky headers */
-.bg-\[\#111625\],
-.bg-slate-900 {
-  background-color: var(--bg-card-solid) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  transition: background-color 0.3s ease, border-color 0.3s ease;
-}
-
-/* Sidebar and Header layout bars (use var(--bg-sidebar) for a distinct layout panel appearance) */
-aside.bg-\[\#111625\],
-header.bg-\[\#111625\],
-.animate-slide-in.bg-\[\#111625\],
-div.relative.bg-\[\#111625\] {
-  background-color: var(--bg-sidebar) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-/* Transparent Glass Cards (Override with solid backgrounds for clean UI) */
-.bg-slate-900\/80,
-.bg-slate-900\/60,
-.bg-slate-900\/40,
-.bg-slate-900\/20,
-.bg-slate-955\/10,
-.bg-slate-955\/40,
-.bg-slate-955\/60,
-.bg-slate-955\/80,
-.bg-slate-950\/60,
-.bg-slate-950\/40,
-.bg-slate-950\/20,
-.bg-\[\#111625\]\/80,
-.bg-\[\#111625\]\/60,
-.bg-slate-850 {
-  background-color: var(--bg-card) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  transition: background-color 0.3s ease, border-color 0.3s ease;
-}
-
-/* Borders */
-.border-slate-800,
-.border-slate-850,
-.border-slate-850\/60,
-.border-slate-900,
-.border-slate-700,
-.border-slate-700\/80,
-.border-slate-700\/60 {
-  border-color: var(--border-color) !important;
-  transition: border-color 0.3s ease;
-}
-
-/* Hover background states */
-.hover\:bg-slate-800:hover,
-.hover\:bg-slate-850:hover,
-.hover\:bg-slate-900:hover,
-.hover\:bg-slate-950:hover,
-.hover\:bg-slate-900\/20:hover {
-  background-color: var(--border-color) !important;
-  transition: background-color 0.2s ease;
-}
-
-/* Selected indicator */
-.bg-slate-800 {
-  background-color: var(--border-color) !important;
-}
-
-/* Table row overrides */
-tr:hover {
-  background-color: var(--border-color) !important;
-}
-
-.divide-slate-800 > :not([hidden]) ~ :not([hidden]),
-.divide-slate-850 > :not([hidden]) ~ :not([hidden]) {
+.light .border-\[var\(--border-color\)\],
+.light .border-slate-800,
+.light .border-slate-850,
+.light .border-slate-700,
+.light .border-slate-700\/80,
+.light .border-slate-800\/80,
+.light .border-slate-800\/40 {
   border-color: var(--border-color) !important;
 }
 
-/* Light mode text overrides */
-.light [class*="text-slate-"],
-.light [class*="text-zinc-"],
-.light [class*="text-gray-"],
-.light [class*="text-neutral-"],
-.light h1, .light h2, .light h3, .light h4, .light h5, .light h6 {
-  color: var(--text-primary) !important;
-  transition: color 0.3s ease;
-}
+/* ============================================================
+   LIGHT MODE — TEXT OVERRIDES
+   Force all white/light text to dark in light mode
+   ============================================================ */
 
-.light [class*="text-white"]:not(button):not(a):not(.btn):not([role="button"]):not(.bg-red-500):not(.rounded-full) {
+/* Generic white text → dark */
+.light .text-white:not(button):not(.bg-emerald-600):not(.bg-emerald-700):not(.bg-red-600):not(.bg-red-700):not([class*="bg-emerald"]):not([class*="bg-red"]) {
   color: var(--text-primary) !important;
 }
 
-.light [class*="text-slate-400"],
-.light [class*="text-slate-450"],
-.light [class*="text-zinc-400"],
-.light [class*="text-gray-400"],
-.light [class*="text-neutral-400"] {
+/* Slate text hierarchy */
+.light .text-slate-100,
+.light .text-slate-200,
+.light .text-slate-300 {
+  color: var(--text-primary) !important;
+}
+
+.light .text-slate-400 {
   color: var(--text-secondary) !important;
-  transition: color 0.3s ease;
 }
 
-.light [class*="text-slate-500"],
-.light [class*="text-slate-555"],
-.light [class*="text-slate-550"],
-.light [class*="text-zinc-500"],
-.light [class*="text-gray-500"],
-.light [class*="text-neutral-500"] {
+.light .text-slate-500,
+.light .text-slate-555 {
   color: var(--text-muted) !important;
-  transition: color 0.3s ease;
 }
 
-/* Inactive Sidebar text color adjust for light mode */
-.light aside [class*="text-slate-"],
-.light aside [class*="text-zinc-"],
-.light aside [class*="text-gray-"],
-.light div.relative.bg-\[\#111625\] [class*="text-slate-"] {
+/* CSS variable text — ensure readable in light mode */
+.light .text-\[var\(--text-primary\)\] {
+  color: var(--text-primary) !important;
+}
+
+.light .text-\[var\(--text-secondary\)\] {
   color: var(--text-secondary) !important;
 }
 
-.light aside [class*="hover:text-white"]:hover,
-.light div.relative.bg-\[\#111625\] [class*="hover:text-white"]:hover {
+.light .text-\[var\(--text-muted\)\] {
+  color: var(--text-muted) !important;
+}
+
+/* ============================================================
+   LIGHT MODE — SEMANTIC COLOR ADJUSTMENTS
+   Darken vibrant colors for readability on white bg
+   ============================================================ */
+
+.light .text-emerald-400  { color: #047857 !important; }
+.light .text-emerald-500  { color: #059669 !important; }
+.light .text-teal-400     { color: #0f766e !important; }
+.light .text-teal-500     { color: #0d9488 !important; }
+.light .text-cyan-400     { color: #0e7490 !important; }
+.light .text-blue-400     { color: #1d4ed8 !important; }
+.light .text-blue-500     { color: #1d4ed8 !important; }
+.light .text-indigo-400   { color: #4338ca !important; }
+.light .text-purple-400   { color: #7e22ce !important; }
+.light .text-pink-400     { color: #be185d !important; }
+.light .text-rose-400     { color: #be123c !important; }
+.light .text-amber-400    { color: #b45309 !important; }
+.light .text-yellow-400   { color: #a16207 !important; }
+.light .text-orange-400   { color: #c2410c !important; }
+.light .text-red-400      { color: #b91c1c !important; }
+.light .text-sky-400      { color: #0369a1 !important; }
+.light .text-stone-400    { color: #44403c !important; }
+
+/* ============================================================
+   LIGHT MODE — SEMI-TRANSPARENT BG OVERRIDES
+   (subtle tinted badges/chips)
+   ============================================================ */
+
+/* Neutral chip backgrounds */
+.light .bg-slate-800,
+.light .bg-slate-900,
+.light .bg-slate-950 {
+  background-color: #F3F4F6 !important;
+  color: var(--text-secondary) !important;
+}
+
+.light .bg-slate-800\/20,
+.light .bg-slate-700\/20,
+.light .bg-slate-900\/30,
+.light .bg-slate-900\/40,
+.light .bg-slate-900\/60,
+.light .bg-slate-900\/80 {
+  background-color: #F3F4F6 !important;
+}
+
+.light .bg-stone-900 {
+  background-color: #F3F4F6 !important;
+  color: var(--text-secondary) !important;
+}
+
+/* Emerald chips — slightly darkened bg on light */
+.light .bg-emerald-500\/10 { background-color: rgba(5, 150, 105, 0.10) !important; }
+.light .bg-emerald-500\/20 { background-color: rgba(5, 150, 105, 0.15) !important; }
+
+/* Teal */
+.light .bg-teal-500\/10  { background-color: rgba(20, 184, 166, 0.10) !important; }
+
+/* Blue */
+.light .bg-blue-500\/10  { background-color: rgba(59, 130, 246, 0.10) !important; }
+
+/* Purple */
+.light .bg-purple-500\/10 { background-color: rgba(168, 85, 247, 0.10) !important; }
+
+/* Amber */
+.light .bg-amber-500\/10 { background-color: rgba(245, 158, 11, 0.10) !important; }
+
+/* Red */
+.light .bg-red-800\/10   { background-color: rgba(220, 38, 38, 0.10) !important; }
+.light .bg-red-950\/50   { background-color: rgba(127, 29, 29, 0.12) !important; }
+
+/* ============================================================
+   LIGHT MODE — HOVER STATES
+   ============================================================ */
+
+.light .hover\:bg-white\/5:hover {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+.light .hover\:bg-slate-800:hover,
+.light .hover\:bg-slate-850:hover,
+.light .hover\:bg-slate-900:hover,
+.light .hover\:bg-slate-950:hover {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+.light tr:hover {
+  background-color: rgba(5, 150, 105, 0.04) !important;
+}
+
+.light .divide-slate-800 > :not([hidden]) ~ :not([hidden]),
+.light .divide-slate-850 > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--border-color) !important;
+}
+
+/* ============================================================
+   LIGHT MODE — FORM INPUTS
+   ============================================================ */
+
+.light input:not([type="submit"]):not([type="button"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.light select,
+.light textarea {
+  background-color: #FFFFFF !important;
+  color: #111827 !important;
+  border-color: var(--border-color) !important;
+}
+
+.light input::placeholder,
+.light textarea::placeholder {
+  color: #9CA3AF !important;
+}
+
+.light select option {
+  background-color: #FFFFFF !important;
+  color: #111827 !important;
+}
+
+/* ============================================================
+   LIGHT MODE — SIDEBAR NAV SPECIFICS
+   ============================================================ */
+
+/* Sidebar base */
+.light aside,
+.light header {
+  background-color: #FFFFFF !important;
+  border-color: var(--border-color) !important;
+}
+
+/* Sidebar brand text */
+.light aside .text-white,
+.light aside span.text-white {
+  color: #111827 !important;
+}
+
+/* Inactive nav links */
+.light aside a:not([class*="bg-emerald-500/10"]) {
+  color: var(--text-secondary) !important;
+}
+
+.light aside a:not([class*="bg-emerald-500/10"]):hover {
+  background-color: rgba(0, 0, 0, 0.04) !important;
   color: var(--text-primary) !important;
 }
 
-/* Icon / Graphic overrides */
-.text-slate-400:hover {
+.light aside a:not([class*="bg-emerald-500/10"]) svg {
+  color: var(--text-muted) !important;
+}
+
+.light aside a:not([class*="bg-emerald-500/10"]):hover svg {
   color: var(--text-primary) !important;
 }
 
-/* Shadows */
-.shadow-2xl {
-  box-shadow: 0 4px 12px -2px var(--shadow-color) !important;
+/* Active nav link */
+.light aside a[class*="bg-emerald-500/10"] {
+  color: #059669 !important;
 }
 
-/* Custom pickers scroll */
-.scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: var(--border-color-hover) !important;
+.light aside a[class*="bg-emerald-500/10"] svg {
+  color: #059669 !important;
 }
 
-/* Light mode high-contrast text and badge colors overrides */
-.light [class*="text-blue-400"],
-.light [class*="text-blue-500"] {
-  color: #1d4ed8 !important; /* blue-700 */
-}
-.light [class*="text-emerald-400"],
-.light [class*="text-emerald-455"],
-.light [class*="text-emerald-500"] {
-  color: #047857 !important; /* emerald-700 */
-}
-.light [class*="text-red-400"] {
-  color: #b91c1c !important; /* red-700 */
-}
-.light [class*="text-purple-400"] {
-  color: #6d28d9 !important; /* purple-700 */
-}
-.light [class*="text-teal-400"] {
-  color: #0f766e !important; /* teal-700 */
-}
-.light [class*="text-cyan-400"] {
-  color: #0e7490 !important; /* cyan-700 */
-}
-.light [class*="text-indigo-400"] {
-  color: #4338ca !important; /* indigo-700 */
-}
-.light [class*="text-pink-400"] {
-  color: #be185d !important; /* pink-700 */
-}
-.light [class*="text-sky-400"] {
-  color: #0369a1 !important; /* sky-700 */
-}
-.light [class*="text-orange-400"] {
-  color: #c2410c !important; /* orange-700 */
-}
-.light [class*="text-rose-400"] {
-  color: #be123c !important; /* rose-700 */
+/* Nav group labels */
+.light aside button {
+  color: var(--text-muted) !important;
 }
 
-/* Primary Accent & Amber/Yellow to Sky Blue overrides */
+/* User profile card in sidebar */
+.light aside > button,
+.light aside > div > button {
+  background-color: #F9FAFB !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+/* ============================================================
+   LIGHT MODE — HEADER SPECIFICS
+   ============================================================ */
+
+.light header {
+  background-color: #FFFFFF !important;
+  border-color: var(--border-color) !important;
+}
+
+.light header .text-slate-400 {
+  color: var(--text-secondary) !important;
+}
+
+/* ============================================================
+   LIGHT MODE — MODAL/DROPDOWN BACKGROUNDS
+   ============================================================ */
+
+/* Attendance, notifications dropdowns */
+.light .absolute.bg-\[\#161B22\],
+.light .fixed.bg-\[\#161B22\],
+.light div[class*="bg-[var(--bg-card)]"].absolute,
+.light div[class*="bg-[var(--bg-card)]"].fixed {
+  background-color: #FFFFFF !important;
+  border-color: var(--border-color) !important;
+}
+
+/* Modal overlays */
+.light [class*="bg-[var(--bg-card)]"] {
+  background-color: #FFFFFF !important;
+}
+
+.light [class*="bg-[var(--bg-main)]"] {
+  background-color: var(--bg-main) !important;
+}
+
+/* ============================================================
+   LIGHT MODE — TABLE
+   ============================================================ */
+
+.light .table-header-row,
+.light thead {
+  background-color: #F3F4F6 !important;
+  border-color: var(--border-color) !important;
+}
+
+.light td,
+.light th {
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+/* ============================================================
+   DARK MODE — BACKGROUND VARIABLE USES
+   ============================================================ */
+
+.bg-\[\#0D1117\] { background-color: var(--bg-main); }
+.bg-\[\#111318\] { background-color: var(--bg-sidebar); }
+.bg-\[\#161B22\] { background-color: var(--bg-card); }
+
+/* ============================================================
+   ACCENT COLOR (dark mode — global applies to both modes via var)
+   ============================================================ */
+
+/* Primary text accent */
 .text-amber-400,
 .text-amber-500,
 .text-yellow-400,
@@ -329,204 +453,73 @@ tr:hover {
   color: var(--accent-color) !important;
 }
 
-.bg-amber-500,
-.bg-amber-600,
-.bg-yellow-500,
-.bg-yellow-600 {
-  background-color: var(--accent-color) !important;
+/* Solid accent backgrounds (CTA buttons) */
+.bg-emerald-600 {
+  background-color: #059669 !important;
+  color: #FFFFFF !important;
 }
 
-/* Semi-transparent backgrounds mapping to accent-color opacity */
-.bg-amber-500\/10,
-.bg-yellow-500\/10,
-.bg-amber-500\/20,
-.bg-yellow-500\/20,
-.bg-amber-500\/15 {
-  background-color: color-mix(in srgb, var(--accent-color) 12%, transparent) !important;
+.bg-emerald-700,
+.hover\:bg-emerald-700:hover {
+  background-color: #047857 !important;
+  color: #FFFFFF !important;
 }
 
-/* Borders mapping to accent-color opacity */
-.border-amber-500,
-.border-amber-600,
-.border-yellow-500,
-.border-yellow-600,
-.border-amber-500\/20,
-.border-amber-500\/30 {
-  border-color: color-mix(in srgb, var(--accent-color) 30%, transparent) !important;
-}
-
-/* Focus and ring states overrides */
-.focus\:border-amber-500:focus,
-.focus\:border-yellow-500:focus {
-  border-color: var(--accent-color) !important;
-}
-
-.focus\:ring-amber-500\/40:focus,
-.focus\:ring-yellow-500\/40:focus,
-.focus\:ring-amber-500\/50:focus {
-  --tw-ring-color: color-mix(in srgb, var(--accent-color) 40%, transparent) !important;
-}
-
-/* Primary Button Styling overrides for amber/yellow button styles */
-button.bg-amber-500,
-button.bg-yellow-500,
-.bg-amber-500.text-slate-955,
-.bg-amber-500.text-slate-900,
-.bg-amber-500.text-slate-950,
-.bg-amber-500.text-black,
-.bg-yellow-500.text-slate-955,
-.bg-yellow-500.text-slate-900,
-.bg-yellow-500.text-slate-955,
-.bg-yellow-500.text-slate-950,
-.bg-yellow-500.text-black,
-.bg-gradient-to-r.from-amber-500.to-yellow-500 {
-  background-color: var(--accent-color) !important;
-  color: var(--btn-text) !important;
-}
-
-/* Collapse gradients into clean solid colors */
-.bg-gradient-to-r,
-.bg-gradient-to-br,
-.bg-gradient-to-tr,
-.bg-gradient-to-t,
-.bg-gradient-to-b {
-  background-image: none !important;
-}
-
-/* Specific background color overrides based on their from/to classes */
+/* Gradient fallback → flat accent */
 .from-amber-500,
 .from-yellow-400,
 .from-yellow-500,
-.from-amber-600,
-.bg-amber-500,
-.bg-yellow-500,
-.bg-amber-600 {
+.from-amber-600 {
   background-color: var(--accent-color) !important;
   color: var(--btn-text) !important;
 }
 
-.from-emerald-600,
-.from-emerald-700,
-.bg-emerald-600,
-.bg-emerald-700 {
-  background-color: #10b981 !important; /* solid green */
-  color: #ffffff !important;
+/* Gradient buttons that got through: strip gradient */
+.bg-gradient-to-r,
+.bg-gradient-to-br,
+.bg-gradient-to-tr {
+  background-image: none !important;
 }
 
-.light .from-emerald-600,
-.light .from-emerald-700,
-.light .bg-emerald-600,
-.light .bg-emerald-700 {
-  background-color: #059669 !important; /* solid dark green for light mode */
-  color: #ffffff !important;
+/* ============================================================
+   HOVER & FOCUS — EMERALD UNIFIED
+   ============================================================ */
+
+.hover\:bg-emerald-600:hover { background-color: #059669 !important; }
+.hover\:bg-emerald-700:hover { background-color: #047857 !important; }
+
+input:not([type="checkbox"]):not([type="radio"]):focus,
+textarea:focus,
+select:focus {
+  outline: none !important;
+  border-color: var(--accent-color) !important;
+  box-shadow: 0 0 0 2px var(--accent-subtle) !important;
 }
 
-.from-red-600,
-.from-rose-600,
-.bg-red-600,
-.bg-rose-600 {
-  background-color: #ef4444 !important; /* solid red */
-  color: #ffffff !important;
+.focus\:border-emerald-500:focus { border-color: var(--accent-color) !important; }
+
+/* ============================================================
+   FORM ELEMENTS (dark mode baseline)
+   ============================================================ */
+
+input:not([type="submit"]):not([type="button"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(.glass-input-premium),
+select,
+textarea {
+  background-color: var(--bg-input) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
 }
 
-.light .from-red-600,
-.light .from-rose-600,
-.light .bg-red-600,
-.light .bg-rose-600 {
-  background-color: #dc2626 !important;
-  color: #ffffff !important;
+input:not(.glass-input-premium)::placeholder,
+textarea::placeholder {
+  color: var(--text-muted) !important;
 }
 
-.from-blue-600,
-.from-blue-650,
-.bg-blue-600,
-.bg-blue-655 {
-  background-color: var(--accent-color) !important;
-  color: var(--btn-text) !important;
+select option {
+  background-color: var(--bg-card-solid) !important;
+  color: var(--text-primary) !important;
 }
 
-/* Sidebar Menu Active State Redesign to match the solid blue pill in Light & Dark Mode */
-aside a[class*="bg-amber-500/10"],
-div.relative.bg-\[\#111625\] a[class*="bg-amber-500/10"] {
-  background-color: var(--accent-color) !important;
-  color: #FFFFFF !important;
-  border-left: none !important;
-  padding-left: 0.75rem !important; /* Reset extra padding from border-l */
-  border-radius: 0.5rem !important; /* rounded-lg (8px) */
-  box-shadow: none !important;
-}
-
-aside a[class*="bg-amber-500/10"] svg,
-div.relative.bg-\[\#111625\] a[class*="bg-amber-500/10"] svg {
-  color: #FFFFFF !important;
-}
-
-/* Inactive Sidebar item adjustments for Light Mode */
-.light aside a:not([class*="bg-amber-500/10"]),
-.light div.relative.bg-\[\#111625\] a:not([class*="bg-amber-500/10"]) {
-  color: #475569 !important;
-}
-
-.light aside a:not([class*="bg-amber-500/10"]):hover,
-.light div.relative.bg-\[\#111625\] a:not([class*="bg-amber-500/10"]):hover {
-  background-color: #F1F5F9 !important;
-  color: #0F172A !important;
-}
-
-.light aside a:not([class*="bg-amber-500/10"]) svg,
-.light div.relative.bg-\[\#111625\] a:not([class*="bg-amber-500/10"]) svg {
-  color: #64748B !important;
-}
-
-.light aside a:not([class*="bg-amber-500/10"]):hover svg,
-.light div.relative.bg-\[\#111625\] a:not([class*="bg-amber-500/10"]):hover svg {
-  color: #0F172A !important;
-}
-
-/* User Profile Button at the bottom of Sidebar for Light Mode */
-.light aside button[class*="bg-slate-900/60"],
-.light div.relative.bg-\[\#111625\] button[class*="bg-slate-900/60"] {
-  background-color: #F8FAFC !important;
-  border-color: #E2E8F0 !important;
-}
-.light aside button[class*="bg-slate-900/60"] p,
-.light div.relative.bg-\[\#111625\] button[class*="bg-slate-900/60"] p {
-  color: #0F172A !important;
-}
-.light aside button[class*="bg-slate-900/60"] span,
-.light div.relative.bg-\[\#111625\] button[class*="bg-slate-900/60"] span {
-  background-color: #E2E8F0 !important;
-  color: #475569 !important;
-  border-color: transparent !important;
-}
-
-/* Light mode Welcome/Attendance Banner backgrounds override */
-.light .from-slate-900,
-.light .from-\[\#111625\],
-.light .from-slate-900\/80 {
-  --tw-gradient-from: #ffffff !important;
-}
-
-.light .via-\[\#131b2e\],
-.light .via-\[\#141b2e\] {
-  --tw-gradient-via: #f1f5f9 !important;
-}
-
-.light .to-slate-900,
-.light .to-\[\#111625\],
-.light .to-slate-900\/80 {
-  --tw-gradient-to: #ffffff !important;
-}
-
-/* Explicit CSS overrides for gradients */
-.light .bg-gradient-to-r.from-slate-900,
-.light .bg-gradient-to-r.from-\[\#111625\],
-.light .bg-gradient-to-r.from-slate-900\/80 {
-  background-image: linear-gradient(to right, #ffffff, #f1f5f9, #ffffff) !important;
-  border-color: #e2e8f0 !important;
-}
-
-/* Beautiful calendar and time inputs styling */
 input[type="date"],
 input[type="time"] {
   color-scheme: dark;
@@ -538,282 +531,109 @@ input[type="time"] {
   color-scheme: light;
 }
 
-/* Ensure calendar/clock icons look elegant and don't break layouts */
 input[type="date"]::-webkit-calendar-picker-indicator,
 input[type="time"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
-  filter: invert(0.8);
+  filter: invert(0.7);
   transition: transform 0.2s ease;
 }
 
 .light input[type="date"]::-webkit-calendar-picker-indicator,
 .light input[type="time"]::-webkit-calendar-picker-indicator {
-  filter: invert(0.2);
+  filter: invert(0.3);
 }
 
-input[type="date"]::-webkit-calendar-picker-indicator:hover,
-input[type="time"]::-webkit-calendar-picker-indicator:hover {
-  transform: scale(1.1);
-}
+/* ============================================================
+   TABLE (dark)
+   ============================================================ */
 
-input:not([type="submit"]):not([type="button"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(.glass-input-premium),
-select,
-textarea {
-  background-color: var(--bg-input) !important;
-  color: var(--text-primary) !important;
-  border-color: var(--border-color) !important;
-}
-
-/* Customize placeholder colors */
-input:not(.glass-input-premium)::placeholder,
-textarea::placeholder {
-  color: var(--text-muted) !important;
-}
-
-/* Style options inside select */
-select option {
-  background-color: var(--bg-card-solid) !important;
-  color: var(--text-primary) !important;
-}
-
-/* Ensure light gray/slate text has proper contrast in light mode */
-.light [class*="text-slate-100"],
-.light [class*="text-slate-200"],
-.light [class*="text-slate-300"],
-.light [class*="text-zinc-100"],
-.light [class*="text-zinc-200"],
-.light [class*="text-zinc-300"],
-.light [class*="text-gray-100"],
-.light [class*="text-gray-200"],
-.light [class*="text-gray-300"] {
-  color: var(--text-primary) !important;
-}
-
-/* Light mode overrides for container backgrounds (high contrast & clean colors) */
-.light .bg-slate-955,
-.light .bg-slate-950 {
-  background-color: var(--bg-main) !important;
-  border-color: var(--border-color) !important;
-  color: var(--text-secondary) !important;
-}
-
-.light .bg-slate-900\/30,
-.light .bg-slate-900\/40,
-.light .bg-slate-900\/60,
-.light .bg-slate-900\/80,
-.light .bg-slate-850,
-.light .bg-\[\#111625\]\/80,
-.light .bg-\[\#111625\]\/60,
-.light .bg-\[\#0f1527\]\/95 {
-  background-color: var(--bg-card) !important;
-  border-color: var(--border-color) !important;
-}
-
-.light .bg-slate-955\/60,
-.light .bg-slate-955\/45,
-.light .bg-slate-955\/40,
-.light .bg-slate-950\/60,
-.light .bg-slate-950\/45,
-.light .bg-slate-950\/40,
-.light .bg-slate-950\/30,
-.light .bg-slate-950\/20,
-.light .bg-slate-955\/10,
-.light .bg-slate-950\/10,
-.light .bg-\[\#0b0f19\] {
-  background-color: var(--bg-main) !important;
-  border-color: var(--border-color) !important;
-}
-
-/* Toast animations */
-@keyframes slide-in-right {
-  0% {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.animate-slide-in-right {
-  animation: slide-in-right 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-/* HIGH CONTRAST BADGES, TEXT, AND HOVER OVERRIDES */
-
-/* 1. High contrast color text overrides for Light Mode status badges and text */
-.light [class*="text-blue-400"] { color: #1d4ed8 !important; }
-.light [class*="text-amber-400"] { color: #b45309 !important; }
-.light [class*="text-yellow-400"] { color: #a16207 !important; }
-.light [class*="text-purple-400"] { color: #7e22ce !important; }
-.light [class*="text-emerald-400"] { color: #047857 !important; }
-.light [class*="text-teal-400"] { color: #0f766e !important; }
-.light [class*="text-cyan-400"] { color: #0e7490 !important; }
-.light [class*="text-red-400"] { color: #b91c1c !important; }
-.light [class*="text-stone-400"] { color: #44403c !important; }
-.light [class*="text-slate-400"] { color: #475569 !important; }
-
-/* 2. Light mode stage badge dark background overrides (e.g. Can't Fit Solar stone-900) */
-.light .bg-stone-900 {
-  background-color: #f1f5f9 !important;
-  border-color: #cbd5e1 !important;
-  color: #475569 !important;
-}
-
-/* 3. Transparent backgrounds select/hover opacity mapping to Sky Blue / Blue (instead of amber/yellow) */
-.bg-amber-500\/\[0\.02\],
-.bg-yellow-500\/\[0\.02\],
-.bg-amber-500\/\[0\.03\],
-.bg-yellow-500\/\[0\.03\],
-.bg-amber-500\/\[0\.06\],
-.bg-yellow-500\/\[0\.06\],
-.bg-amber-500\/15,
-.bg-amber-500\/10,
-.bg-yellow-500\/10,
-.bg-amber-500\/20,
-.bg-yellow-500\/20 {
-  background-color: color-mix(in srgb, var(--accent-color) 8%, transparent) !important;
-}
-
-/* 4. Unified thin professional focus ring for all text and input fields */
-input:not([type="checkbox"]):not([type="radio"]):focus,
-textarea:focus,
-select:focus,
-button:focus,
-[role="button"]:focus,
-.focus\:ring-2:focus,
-.focus\:ring-1:focus,
-.focus\:ring-amber-500:focus,
-.focus\:ring-yellow-500:focus,
-.focus\:ring-amber-500\/40:focus,
-.focus\:ring-yellow-500\/40:focus,
-.focus\:ring-amber-500\/50:focus {
-  outline: none !important;
-  --tw-ring-offset-width: 0px !important;
-  --tw-ring-width: 1px !important;
-  --tw-ring-color: var(--accent-color) !important;
-  border-color: var(--accent-color) !important;
-  box-shadow: 0 0 0 1px var(--accent-color) !important;
-}
-
-/* 5. Background hover color overrides for amber/yellow button gradients */
-.hover\:from-amber-400:hover,
-.hover\:from-yellow-400:hover,
-.hover\:to-amber-400:hover,
-.hover\:to-yellow-400:hover,
-.hover\:bg-amber-400:hover,
-.hover\:bg-yellow-400:hover,
-button.bg-amber-500:hover,
-button.bg-yellow-500:hover,
-.bg-gradient-to-r.from-amber-500.to-yellow-500:hover {
-  background-color: var(--accent-hover) !important;
-  background-image: none !important;
-  color: var(--btn-text) !important;
-}
-
-/* 6. Text and Border hover overrides for amber/yellow elements */
-.hover\:text-amber-400:hover,
-.hover\:text-yellow-400:hover,
-.hover\:text-amber-500:hover,
-.hover\:text-yellow-500:hover,
-.hover\:text-amber-300:hover,
-.hover\:text-yellow-300:hover {
-  color: var(--accent-color) !important;
-}
-.hover\:border-amber-500:hover,
-.hover\:border-yellow-500:hover,
-.hover\:border-amber-400:hover,
-.hover\:border-yellow-400:hover {
-  border-color: var(--accent-color) !important;
-}
-
-/* Premium Glassmorphic overrides for Login Page - LIGHT theme */
-.glass-card-premium {
-  background-color: rgba(255, 255, 255, 0.35) !important;
-  backdrop-filter: blur(28px) !important;
-  -webkit-backdrop-filter: blur(28px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.55) !important;
-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.08), 
-              inset 0 1px 1px rgba(255, 255, 255, 0.3) !important;
-}
-
-.light .glass-card-premium {
-  background-color: rgba(255, 255, 255, 0.4) !important;
-  border: 1px solid rgba(255, 255, 255, 0.6) !important;
-}
-
-.glass-card-premium h1 {
-  color: #0f172a !important; /* dark slate text */
-}
-
-.glass-card-premium label {
-  color: #334155 !important; /* slate-700 text */
-}
-
-.glass-card-premium span {
-  color: #475569 !important; /* slate-600 text */
-}
-
-.glass-card-premium p {
-  color: #334155 !important; /* slate-700 text */
-}
-
-.glass-card-premium input.glass-input-premium {
-  background-color: rgba(255, 255, 255, 0.4) !important;
-  border: 1px solid rgba(255, 255, 255, 0.35) !important;
-  color: #0f172a !important; /* dark slate text */
-  backdrop-filter: blur(10px) !important;
-  -webkit-backdrop-filter: blur(10px) !important;
-}
-
-.light .glass-card-premium input.glass-input-premium {
-  background-color: rgba(255, 255, 255, 0.45) !important;
-  border: 1px solid rgba(255, 255, 255, 0.4) !important;
-  color: #0f172a !important;
-}
-
-.glass-card-premium input.glass-input-premium:focus {
-  background-color: rgba(255, 255, 255, 0.75) !important;
-  border-color: #2563eb !important; /* blue-600 */
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15) !important;
-  color: #0f172a !important;
-}
-
-.glass-card-premium input.glass-input-premium::placeholder {
-  color: rgba(15, 23, 42, 0.5) !important;
-}
-
-/* Specific webkit autofill override for light-theme inputs */
-.glass-card-premium input.glass-input-premium:-webkit-autofill,
-.glass-card-premium input.glass-input-premium:-webkit-autofill:hover,
-.glass-card-premium input.glass-input-premium:-webkit-autofill:focus,
-.glass-card-premium input.glass-input-premium:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.5) inset !important;
-  -webkit-text-fill-color: #0f172a !important;
-  transition: background-color 5000s ease-in-out 0s;
-}
-
-/* Custom Table Header Row to respect active theme over OS media query preferences */
 .table-header-row {
   background-color: var(--bg-sidebar) !important;
   border-bottom: 1px solid var(--border-color) !important;
 }
 
-.light .table-header-row {
-  background-color: #f1f5f9 !important; /* light slate gray matching table design */
-  border-bottom: 1px solid var(--border-color) !important;
-}
+/* ============================================================
+   DESIGNATION / ROLE BADGES
+   ============================================================ */
 
-/* Designation / Role badge in dropdowns and select lists */
 .designation-badge {
-  background-color: rgba(14, 165, 233, 0.1) !important; /* 10% opacity sky blue in dark mode */
-  border: 1px solid rgba(14, 165, 233, 0.2) !important;
-  color: #38bdf8 !important; /* sky blue text */
+  background-color: var(--accent-subtle) !important;
+  border: 1px solid var(--accent-border) !important;
+  color: var(--accent-color) !important;
 }
 
-.light .designation-badge {
-  background-color: rgba(37, 99, 235, 0.08) !important; /* 8% opacity royal blue in light mode */
-  border: 1px solid rgba(37, 99, 235, 0.15) !important;
-  color: #2563eb !important; /* royal blue text */
+/* ============================================================
+   LOGIN — Glass card (kept only for login page)
+   ============================================================ */
+
+.glass-card-premium {
+  background-color: rgba(255, 255, 255, 0.35) !important;
+  backdrop-filter: blur(28px) !important;
+  -webkit-backdrop-filter: blur(28px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.55) !important;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.08),
+              inset 0 1px 1px rgba(255, 255, 255, 0.3) !important;
+}
+
+.glass-card-premium h1 { color: #0f172a !important; }
+.glass-card-premium label { color: #374151 !important; }
+.glass-card-premium span { color: #4B5563 !important; }
+.glass-card-premium p { color: #374151 !important; }
+
+.glass-card-premium input.glass-input-premium {
+  background-color: rgba(255, 255, 255, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+  color: #0f172a !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+}
+
+.glass-card-premium input.glass-input-premium:focus {
+  background-color: rgba(255, 255, 255, 0.75) !important;
+  border-color: #059669 !important;
+  box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.15) !important;
+  color: #0f172a !important;
+}
+
+.glass-card-premium input.glass-input-premium::placeholder {
+  color: rgba(15, 23, 42, 0.45) !important;
+}
+
+.glass-card-premium input.glass-input-premium:-webkit-autofill,
+.glass-card-premium input.glass-input-premium:-webkit-autofill:hover,
+.glass-card-premium input.glass-input-premium:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.5) inset !important;
+  -webkit-text-fill-color: #0f172a !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* ============================================================
+   COLLAPSIBLE SIDEBAR TRANSITIONS
+   ============================================================ */
+
+.sidebar-collapsed {
+  width: 4rem !important;
+}
+
+.sidebar-expanded {
+  width: 16rem !important;
+}
+
+aside {
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================================
+   LIGHT MODE — COLLAPSIBLE SIDEBAR TOGGLE BUTTON
+   ============================================================ */
+
+.light .sidebar-toggle-btn {
+  background-color: #F3F4F6 !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-secondary) !important;
+}
+
+.light .sidebar-toggle-btn:hover {
+  background-color: #E5E7EB !important;
+  color: var(--text-primary) !important;
 }

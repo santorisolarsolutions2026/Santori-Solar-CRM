@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useState } from 'react';
 
@@ -96,12 +96,12 @@ export function MeetingLocationDisplay({
   }, [latitude, longitude, dbLocality, dbCity, dbPinCode]);
 
   if (!latitude || !longitude) {
-    return <span className="text-slate-500 italic">Location permission was denied.</span>;
+    return <span className="text-[var(--text-muted)] italic">Location permission was denied.</span>;
   }
 
   if (loading) {
     return (
-      <span className="text-slate-400 italic flex items-center gap-1.5 animate-pulse">
+      <span className="text-[var(--text-secondary)] italic flex items-center gap-1.5 animate-pulse">
         Resolving locality name, pincode & city...
       </span>
     );

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -404,32 +404,32 @@ export default function AttendancePage() {
         );
        } else if (record.status === 'half_day') {
         return (
-          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-blue-500/10 text-blue-600 dark:text-blue-400 dark:text-blue-400 border-blue-500/20 uppercase tracking-wider">
-            Half Day ⚠️
+          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-emerald-500/10 text-emerald-500 border-emerald-500/20 uppercase tracking-wider">
+            Half Day âš ï¸
           </span>
         );
       } else {
         return (
-          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 uppercase tracking-wider animate-pulse">
+          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-emerald-500/10 text-emerald-500 border-emerald-500/20 uppercase tracking-wider animate-pulse">
             Active
           </span>
         );
       }
     } else if (isFuture) {
       return (
-        <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full border bg-slate-900/40 text-slate-650 border-slate-900/60 uppercase tracking-wider">
+        <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full border bg-[var(--bg-card)]/40 text-emerald-500/60 uppercase tracking-wider">
           Future
         </span>
       );
     } else if (isHoliday) {
       return (
-        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-blue-500/10 text-blue-450 border-blue-500/20 uppercase tracking-wider" title={holidayName}>
-          Holiday 🌟
+        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-emerald-500/10 text-emerald-500 border-emerald-500/20 uppercase tracking-wider" title={holidayName}>
+          Holiday ðŸŒŸ
         </span>
       );
     } else if (isWeekend) {
       return (
-        <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full border bg-slate-950 text-slate-500 border-slate-850 uppercase tracking-wider">
+        <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full border bg-[var(--bg-main)] text-[var(--text-muted)] border-[var(--border-color)] uppercase tracking-wider">
           Weekly Off
         </span>
       );
@@ -446,12 +446,12 @@ export default function AttendancePage() {
 
   if (!hasAttendanceAccess) {
     return (
-      <div className="p-12 text-center bg-[#111625] border border-slate-800 rounded-2xl max-w-xl mx-auto my-12 space-y-4 shadow-xl">
-        <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 mx-auto">
+      <div className="p-12 text-center bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl max-w-xl mx-auto my-12 space-y-4 shadow-xl">
+        <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 mx-auto">
           <Clock className="w-6 h-6" />
         </div>
         <h2 className="text-base font-bold text-white uppercase tracking-wider">Attendance Access Restricted</h2>
-        <p className="text-xs text-slate-400 leading-relaxed">
+        <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
           Daily attendance tracking and time logs are restricted to administrators or team members granted explicit Attendance View access. Please contact your system admin if you require access.
         </p>
       </div>
@@ -464,10 +464,10 @@ export default function AttendancePage() {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-white tracking-wide flex items-center gap-2.5">
-            <Clock className="w-6 h-6 text-blue-600 dark:text-blue-450" />
+            <Clock className="w-6 h-6 text-emerald-500" />
             <span>Team Member Attendance & Work Hours</span>
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-[var(--text-secondary)] mt-1">
             Track daily check-ins, check-outs, working durations, and attendance logs across the organization.
           </p>
         </div>
@@ -479,21 +479,21 @@ export default function AttendancePage() {
                 fetchHolidays();
                 setShowHolidayModal(true);
               }}
-              className="py-2.5 px-4 bg-slate-900 border border-slate-800 text-slate-350 hover:text-white rounded-2xl font-bold text-xs flex items-center gap-1.5 cursor-pointer hover:border-slate-700 transition-all font-sans"
+              className="py-2.5 px-4 bg-[var(--bg-card)] border border-[var(--border-color)] text-slate-350 hover:text-white rounded-2xl font-bold text-xs flex items-center gap-1.5 cursor-pointer hover:border-[var(--border-color)] transition-all font-sans"
             >
-              <Calendar className="w-4 h-4 text-blue-600" />
+              <Calendar className="w-4 h-4 text-emerald-500" />
               <span>Manage Holidays</span>
             </button>
           )}
 
           {/* Quick Personal Action Box */}
-          <div className="p-3.5 bg-gradient-to-r from-slate-900 via-[#131b2e] to-slate-900 border border-slate-800 rounded-2xl flex items-center gap-4 shadow-lg shrink-0">
+          <div className="p-3.5 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl flex items-center gap-4 shadow-lg shrink-0">
             <div className="text-right">
-              <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block">Today's Status</span>
+              <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block">Today's Status</span>
               <span className={`text-xs font-bold font-mono ${
-                !todayAttendance ? 'text-slate-400' : todayAttendance.checkOut ? 'text-emerald-400' : 'text-blue-600 dark:text-blue-400'
+                !todayAttendance ? 'text-[var(--text-secondary)]' : todayAttendance.checkOut ? 'text-emerald-400' : 'text-emerald-500'
               }`}>
-                {!todayAttendance ? 'Not Checked In' : todayAttendance.checkOut ? 'Day Completed ✓' : 'Checked In'}
+                {!todayAttendance ? 'Not Checked In' : todayAttendance.checkOut ? 'Day Completed âœ“' : 'Checked In'}
               </span>
             </div>
 
@@ -501,7 +501,7 @@ export default function AttendancePage() {
               <button
                 onClick={handleCheckIn}
                 disabled={actionLoading}
-                className="py-2 px-4 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-xl font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all"
+                className="py-2 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all"
               >
                 {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCheck className="w-4 h-4" />}
                 <span>Check In Now</span>
@@ -526,29 +526,29 @@ export default function AttendancePage() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-5 bg-[#111625] border border-slate-800 rounded-2xl flex items-center justify-between">
+        <div className="p-5 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl flex items-center justify-between">
           <div>
-            <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block">Total Team Members</span>
+            <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block">Total Team Members</span>
             <span className="text-xl font-extrabold text-white mt-1 block font-mono">{teamRoster.length}</span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500">
             <Users className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="p-5 bg-[#111625] border border-slate-800 rounded-2xl flex items-center justify-between">
+        <div className="p-5 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl flex items-center justify-between">
           <div>
-            <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block">Checked In (Active)</span>
-            <span className="text-xl font-extrabold text-blue-600 dark:text-blue-400 mt-1 block font-mono">{checkedInCount}</span>
+            <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block">Checked In (Active)</span>
+            <span className="text-xl font-extrabold text-emerald-500 mt-1 block font-mono">{checkedInCount}</span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500">
             <UserCheck className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="p-5 bg-[#111625] border border-slate-800 rounded-2xl flex items-center justify-between">
+        <div className="p-5 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl flex items-center justify-between">
           <div>
-            <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block">Checked Out (Completed)</span>
+            <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block">Checked Out (Completed)</span>
             <span className="text-xl font-extrabold text-emerald-400 mt-1 block font-mono">{completedCount}</span>
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
@@ -558,11 +558,11 @@ export default function AttendancePage() {
       </div>
 
       {/* Filter and Search Controls */}
-      <div className="bg-[#111625] border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col sm:flex-row gap-4 justify-between items-center">
+      <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-5 shadow-lg flex flex-col sm:flex-row gap-4 justify-between items-center">
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
           {activeTab !== 'monthly' && (
-            <div className="flex items-center gap-2 bg-slate-950/60 border border-slate-800 px-3 py-2 rounded-xl text-xs text-slate-300">
-              <Calendar className="w-4 h-4 text-blue-650 dark:text-blue-400 shrink-0" />
+            <div className="flex items-center gap-2 bg-[var(--bg-main)] border border-[var(--border-color)] px-3 py-2 rounded-xl text-xs text-[var(--text-primary)]">
+              <Calendar className="w-4 h-4 text-emerald-500 shrink-0" />
               <input
                 type="date"
                 value={selectedDate}
@@ -572,13 +572,13 @@ export default function AttendancePage() {
             </div>
           )}
 
-          <div className="flex bg-slate-955/60 border border-slate-800 p-1 rounded-xl">
+          <div className="flex bg-slate-955/60 border border-[var(--border-color)] p-1 rounded-xl">
             {isSupervisor && (
               <button
                 type="button"
                 onClick={() => setActiveTab('team')}
                 className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  activeTab === 'team' ? 'bg-blue-600 text-white shadow' : 'text-slate-450 hover:text-white'
+                  activeTab === 'team' ? 'bg-emerald-600 text-white shadow' : 'text-slate-450 hover:text-white'
                 }`}
               >
                 Team Roster
@@ -588,7 +588,7 @@ export default function AttendancePage() {
               type="button"
               onClick={() => setActiveTab('personal')}
               className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'personal' ? 'bg-blue-600 text-white shadow' : 'text-slate-450 hover:text-white'
+                activeTab === 'personal' ? 'bg-emerald-600 text-white shadow' : 'text-slate-450 hover:text-white'
               }`}
             >
               My Log
@@ -597,7 +597,7 @@ export default function AttendancePage() {
               type="button"
               onClick={() => setActiveTab('monthly')}
               className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'monthly' ? 'bg-blue-600 text-white shadow' : 'text-slate-450 hover:text-white'
+                activeTab === 'monthly' ? 'bg-emerald-600 text-white shadow' : 'text-slate-450 hover:text-white'
               }`}
             >
               Monthly History
@@ -612,24 +612,24 @@ export default function AttendancePage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search team member name or ID..."
-              className="block w-full pl-9 pr-3 py-2 bg-slate-955/60 border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-xs"
+              className="block w-full pl-9 pr-3 py-2 bg-slate-955/60 border border-[var(--border-color)] rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 text-xs"
             />
-            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+            <Search className="w-4 h-4 text-[var(--text-muted)] absolute left-3 top-2.5" />
           </div>
         )}
 
         {activeTab === 'monthly' && (
           <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
             {/* Employee Selector */}
-            <div className="flex items-center gap-2 bg-slate-950/60 border border-slate-800 px-3 py-1.5 rounded-xl text-xs text-slate-300">
-              <span className="text-slate-500 uppercase tracking-wider text-[10px] font-bold">Employee:</span>
+            <div className="flex items-center gap-2 bg-[var(--bg-main)] border border-[var(--border-color)] px-3 py-1.5 rounded-xl text-xs text-[var(--text-primary)]">
+              <span className="text-[var(--text-muted)] uppercase tracking-wider text-[10px] font-bold">Employee:</span>
               <select
                 value={selectedEmployeeId}
                 onChange={(e) => setSelectedEmployeeId(e.target.value)}
                 className="bg-transparent text-white focus:outline-none cursor-pointer font-bold font-sans"
               >
                 {visibleEmployees.map((emp) => (
-                  <option key={emp.id} value={emp.id} className="bg-slate-950 text-white">
+                  <option key={emp.id} value={emp.id} className="bg-[var(--bg-main)] text-white">
                     {emp.name} ({emp.employeeId || 'No ID'})
                   </option>
                 ))}
@@ -637,8 +637,8 @@ export default function AttendancePage() {
             </div>
 
             {/* Month Selector */}
-            <div className="flex items-center gap-2 bg-slate-950/60 border border-slate-800 px-3 py-1.5 rounded-xl text-xs text-slate-300">
-              <span className="text-slate-500 uppercase tracking-wider text-[10px] font-bold">Month:</span>
+            <div className="flex items-center gap-2 bg-[var(--bg-main)] border border-[var(--border-color)] px-3 py-1.5 rounded-xl text-xs text-[var(--text-primary)]">
+              <span className="text-[var(--text-muted)] uppercase tracking-wider text-[10px] font-bold">Month:</span>
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
@@ -647,7 +647,7 @@ export default function AttendancePage() {
                 {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => {
                   const name = new Date(2000, m - 1, 1).toLocaleString('default', { month: 'long' });
                   return (
-                    <option key={m} value={m} className="bg-slate-950 text-white">
+                    <option key={m} value={m} className="bg-[var(--bg-main)] text-white">
                       {name}
                     </option>
                   );
@@ -656,8 +656,8 @@ export default function AttendancePage() {
             </div>
 
             {/* Year Selector */}
-            <div className="flex items-center gap-2 bg-slate-950/60 border border-slate-800 px-3 py-1.5 rounded-xl text-xs text-slate-300">
-              <span className="text-slate-500 uppercase tracking-wider text-[10px] font-bold">Year:</span>
+            <div className="flex items-center gap-2 bg-[var(--bg-main)] border border-[var(--border-color)] px-3 py-1.5 rounded-xl text-xs text-[var(--text-primary)]">
+              <span className="text-[var(--text-muted)] uppercase tracking-wider text-[10px] font-bold">Year:</span>
               <select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(parseInt(e.target.value))}
@@ -666,7 +666,7 @@ export default function AttendancePage() {
                 {[-2, -1, 0, 1].map((offset) => {
                   const y = new Date().getFullYear() + offset;
                   return (
-                    <option key={y} value={y} className="bg-slate-950 text-white">
+                    <option key={y} value={y} className="bg-[var(--bg-main)] text-white">
                       {y}
                     </option>
                   );
@@ -678,17 +678,17 @@ export default function AttendancePage() {
       </div>
 
       {/* Attendance Roster Table */}
-      <div className="bg-[#111625] border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+      <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl overflow-hidden shadow-xl">
         {loading ? (
-          <div className="p-12 text-center text-slate-400 flex flex-col items-center gap-3">
-            <Loader2 className="w-6 h-6 animate-spin text-blue-600 dark:text-blue-400" />
+          <div className="p-12 text-center text-[var(--text-secondary)] flex flex-col items-center gap-3">
+            <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
             <span className="text-xs font-semibold">Loading daily attendance records...</span>
           </div>
         ) : activeTab === 'team' ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[900px]">
               <thead>
-                <tr className="border-b border-slate-800 bg-slate-900/40 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                <tr className="border-b border-[var(--border-color)] bg-[var(--bg-card)]/40 text-[var(--text-secondary)] text-xs font-semibold uppercase tracking-wider">
                   <th className="py-4 px-5 w-64">Team Member</th>
                   <th className="py-4 px-4 w-36">Check In</th>
                   <th className="py-4 px-4 w-36">Check Out</th>
@@ -700,33 +700,33 @@ export default function AttendancePage() {
               <tbody className="divide-y divide-slate-800/60 text-xs">
                 {filteredRoster.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-12 text-center text-slate-500 italic">
+                    <td colSpan={6} className="py-12 text-center text-[var(--text-muted)] italic">
                       No team members found for the selected date.
                     </td>
                   </tr>
                 ) : (
                   filteredRoster.map(({ user: member, attendance }) => (
-                    <tr key={member.id} className="hover:bg-slate-900/30 transition-all">
+                    <tr key={member.id} className="hover:bg-[var(--bg-card)]/30 transition-all">
                       <td className="py-3.5 px-5">
                         <div className="flex items-center gap-3">
                           {member.photograph ? (
                             <img
                               src={`/api/v1/users/${member.id}/photograph?t=${Date.now()}`}
                               alt={member.name}
-                              className="w-9 h-9 rounded-full object-cover border border-slate-800 shrink-0"
+                              className="w-9 h-9 rounded-full object-cover border border-[var(--border-color)] shrink-0"
                               onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
                             />
                           ) : (
-                            <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700/80 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+                            <div className="w-9 h-9 rounded-full bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-center text-emerald-500 shrink-0">
                               <User className="w-5 h-5" />
                             </div>
                           )}
                           <div className="min-w-0">
                             <span className="font-bold text-white block truncate">{member.name}</span>
                             <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-[10px] text-slate-400 capitalize">{member.role}</span>
+                              <span className="text-[10px] text-[var(--text-secondary)] capitalize">{member.role}</span>
                               {member.employeeId && (
-                                <span className="text-[9px] font-mono text-blue-600 dark:text-blue-400 bg-blue-500/10 px-1.5 py-0.25 rounded border border-blue-500/20">
+                                <span className="text-[9px] font-mono text-emerald-500 bg-emerald-500/10 px-1.5 py-0.25 rounded border border-emerald-500/20">
                                   {member.employeeId}
                                 </span>
                               )}
@@ -735,7 +735,7 @@ export default function AttendancePage() {
                         </div>
                       </td>
 
-                      <td className="py-3.5 px-4 font-mono font-semibold text-slate-300">
+                      <td className="py-3.5 px-4 font-mono font-semibold text-[var(--text-primary)]">
                         {attendance ? (
                           new Date(attendance.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                         ) : (
@@ -743,7 +743,7 @@ export default function AttendancePage() {
                         )}
                       </td>
 
-                      <td className="py-3.5 px-4 font-mono font-semibold text-slate-300">
+                      <td className="py-3.5 px-4 font-mono font-semibold text-[var(--text-primary)]">
                         {attendance?.checkOut ? (
                           new Date(attendance.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                         ) : (
@@ -751,7 +751,7 @@ export default function AttendancePage() {
                         )}
                       </td>
 
-                      <td className="py-3.5 px-4 font-mono text-slate-300 font-semibold">
+                      <td className="py-3.5 px-4 font-mono text-[var(--text-primary)] font-semibold">
                         {attendance?.workDurationMin ? (
                           `${Math.floor(attendance.workDurationMin / 60)}h ${attendance.workDurationMin % 60}m`
                         ) : (
@@ -761,21 +761,21 @@ export default function AttendancePage() {
 
                       <td className="py-3.5 px-4">
                         {!attendance ? (
-                          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full border bg-slate-900/60 text-slate-500 border-slate-800 uppercase tracking-wider flex items-center gap-1 w-fit" title="Not Checked In Yet">
-                            <AlertCircle className="w-3 h-3 text-slate-500" /> Pending
+                          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full border bg-[var(--bg-card)]/60 text-[var(--text-muted)] border-[var(--border-color)] uppercase tracking-wider flex items-center gap-1 w-fit" title="Not Checked In Yet">
+                            <AlertCircle className="w-3 h-3 text-[var(--text-muted)]" /> Pending
                           </span>
                         ) : attendance.checkOut ? (
                           <span className="text-[10px] font-bold px-2.5 py-1 rounded-full border bg-emerald-500/10 text-emerald-400 border-emerald-500/20 uppercase tracking-wider flex items-center gap-1 w-fit" title="Day Completed & Checked Out">
                             <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Completed
                           </span>
                         ) : (
-                          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full border bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 uppercase tracking-wider flex items-center gap-1 w-fit animate-pulse" title="Currently Checked In">
-                            <UserCheck className="w-3 h-3 text-blue-600 dark:text-blue-450" /> Active
+                          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full border bg-emerald-500/10 text-emerald-500 border-emerald-500/20 uppercase tracking-wider flex items-center gap-1 w-fit animate-pulse" title="Currently Checked In">
+                            <UserCheck className="w-3 h-3 text-emerald-500" /> Active
                           </span>
                         )}
                       </td>
 
-                      <td className="py-3.5 px-4 text-slate-300 text-xs truncate max-w-xs font-medium" title={member.loginLocation || attendance?.checkInLocation || '-'}>
+                      <td className="py-3.5 px-4 text-[var(--text-primary)] text-xs truncate max-w-xs font-medium" title={member.loginLocation || attendance?.checkInLocation || '-'}>
                         {(member.loginLocation && !member.loginLocation.includes('Web Portal'))
                           ? member.loginLocation
                           : (attendance?.checkInLocation && !attendance.checkInLocation.includes('Web Portal')
@@ -792,7 +792,7 @@ export default function AttendancePage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[700px]">
               <thead>
-                <tr className="border-b border-slate-800 bg-slate-900/40 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                <tr className="border-b border-[var(--border-color)] bg-[var(--bg-card)]/40 text-[var(--text-secondary)] text-xs font-semibold uppercase tracking-wider">
                   <th className="py-4 px-5 w-36">Date</th>
                   <th className="py-4 px-4 w-36">Check In</th>
                   <th className="py-4 px-4 w-36">Check Out</th>
@@ -803,21 +803,21 @@ export default function AttendancePage() {
               <tbody className="divide-y divide-slate-800/60 text-xs font-mono">
                 {records.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-12 text-center text-slate-500 italic font-sans">
+                    <td colSpan={5} className="py-12 text-center text-[var(--text-muted)] italic font-sans">
                       No personal attendance records found for this date.
                     </td>
                   </tr>
                 ) : (
                   records.map((att) => (
-                    <tr key={att.id} className="hover:bg-slate-900/30 transition-all">
+                    <tr key={att.id} className="hover:bg-[var(--bg-card)]/30 transition-all">
                       <td className="py-3.5 px-5 font-bold text-white">{att.date.split('T')[0]}</td>
-                      <td className="py-3.5 px-4 text-slate-300">
+                      <td className="py-3.5 px-4 text-[var(--text-primary)]">
                         {new Date(att.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </td>
-                      <td className="py-3.5 px-4 text-slate-300">
+                      <td className="py-3.5 px-4 text-[var(--text-primary)]">
                         {att.checkOut ? new Date(att.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
                       </td>
-                      <td className="py-3.5 px-4 text-blue-650 dark:text-blue-400 font-bold">
+                      <td className="py-3.5 px-4 text-emerald-500 font-bold">
                         {att.workDurationMin ? `${Math.floor(att.workDurationMin / 60)}h ${att.workDurationMin % 60}m` : '-'}
                       </td>
                       <td className="py-3.5 px-4 font-sans">
@@ -834,12 +834,12 @@ export default function AttendancePage() {
         ) : (
           <div className="space-y-6">
             {/* Monthly Stats Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-5 bg-slate-900/20 border-b border-slate-800">
-              <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl flex items-center justify-between">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-5 bg-[var(--bg-card)]/20 border-b border-[var(--border-color)]">
+              <div className="p-4 bg-[var(--bg-card)]/60 border border-[var(--border-color)] rounded-xl flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block">Days Present</span>
+                  <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block">Days Present</span>
                   <span className="text-lg font-extrabold text-emerald-400 mt-1 block font-mono">
-                    {presentDaysCount} <span className="text-xs text-slate-500 font-sans font-normal">/ {totalWorkingDays} working days</span>
+                    {presentDaysCount} <span className="text-xs text-[var(--text-muted)] font-sans font-normal">/ {totalWorkingDays} working days</span>
                   </span>
                 </div>
                 <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
@@ -847,19 +847,19 @@ export default function AttendancePage() {
                 </div>
               </div>
 
-              <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl flex items-center justify-between">
+              <div className="p-4 bg-[var(--bg-card)]/60 border border-[var(--border-color)] rounded-xl flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block">Total Work Hours</span>
-                  <span className="text-lg font-extrabold text-blue-600 dark:text-blue-400 mt-1 block font-mono">{totalWorkHoursStr}</span>
+                  <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block">Total Work Hours</span>
+                  <span className="text-lg font-extrabold text-emerald-500 mt-1 block font-mono">{totalWorkHoursStr}</span>
                 </div>
-                <div className="w-9 h-9 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500">
                   <Clock className="w-5 h-5" />
                 </div>
               </div>
 
-              <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl flex items-center justify-between">
+              <div className="p-4 bg-[var(--bg-card)]/60 border border-[var(--border-color)] rounded-xl flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block">Avg. Shift Length</span>
+                  <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block">Avg. Shift Length</span>
                   <span className="text-lg font-extrabold text-sky-400 mt-1 block font-mono">{avgWorkHoursStr}</span>
                 </div>
                 <div className="w-9 h-9 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
@@ -867,10 +867,10 @@ export default function AttendancePage() {
                 </div>
               </div>
 
-              <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl flex items-center justify-between">
+              <div className="p-4 bg-[var(--bg-card)]/60 border border-[var(--border-color)] rounded-xl flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block">Late Check-Ins</span>
-                  <span className="text-lg font-extrabold text-rose-400 mt-1 block font-mono">{lateCheckinsCount} <span className="text-xs text-slate-500 font-sans font-normal">days</span></span>
+                  <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block">Late Check-Ins</span>
+                  <span className="text-lg font-extrabold text-rose-400 mt-1 block font-mono">{lateCheckinsCount} <span className="text-xs text-[var(--text-muted)] font-sans font-normal">days</span></span>
                 </div>
                 <div className="w-9 h-9 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
                   <AlertCircle className="w-5 h-5" />
@@ -880,15 +880,15 @@ export default function AttendancePage() {
 
             {/* Monthly Calendar Tabular List */}
             {monthlyLoading ? (
-              <div className="p-12 text-center text-slate-400 flex flex-col items-center gap-3">
-                <Loader2 className="w-6 h-6 animate-spin text-blue-600 dark:text-blue-400" />
+              <div className="p-12 text-center text-[var(--text-secondary)] flex flex-col items-center gap-3">
+                <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
                 <span className="text-xs font-semibold">Loading monthly logs...</span>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[950px]">
                   <thead>
-                    <tr className="border-b border-slate-800 bg-slate-900/40 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                    <tr className="border-b border-[var(--border-color)] bg-[var(--bg-card)]/40 text-[var(--text-secondary)] text-xs font-semibold uppercase tracking-wider">
                       <th className="py-3 px-5 w-48">Date & Day</th>
                       <th className="py-3 px-4 w-32">Status</th>
                       <th className="py-3 px-4 w-32">Check In</th>
@@ -897,7 +897,7 @@ export default function AttendancePage() {
                       <th className="py-3 px-4">Locations & Remarks</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/60 text-xs font-medium text-slate-300">
+                  <tbody className="divide-y divide-slate-800/60 text-xs font-medium text-[var(--text-primary)]">
                     {monthlyDays.map((dayDate) => {
                       const dayStr = dayDate.toISOString().split('T')[0];
                       const record = monthlyRecords.find(r => r.date.split('T')[0] === dayStr);
@@ -912,10 +912,10 @@ export default function AttendancePage() {
                       const weekdayDisplay = dayDate.toLocaleDateString('default', { weekday: 'short', timeZone: 'UTC' });
 
                       return (
-                        <tr key={dayStr} className={`hover:bg-slate-900/30 transition-all ${isToday ? 'bg-blue-500/[0.04]' : ''}`}>
+                        <tr key={dayStr} className={`hover:bg-[var(--bg-card)]/30 transition-all ${isToday ? 'bg-emerald-500/[0.04]' : ''}`}>
                           <td className="py-3 px-5 font-sans">
                             <span className="font-bold text-white block">{dateDisplay}</span>
-                            <span className="text-[10px] text-slate-500 font-medium">{weekdayDisplay}</span>
+                            <span className="text-[10px] text-[var(--text-muted)] font-medium">{weekdayDisplay}</span>
                           </td>
                           <td className="py-3 px-4 font-sans">
                             {user?.role === 'admin' ? (
@@ -935,40 +935,40 @@ export default function AttendancePage() {
                               renderStatusBadge(record, isFuture, isWeekend, dayStr)
                             )}
                           </td>
-                          <td className="py-3 px-4 text-slate-300">
+                          <td className="py-3 px-4 text-[var(--text-primary)]">
                             {record ? (
                               new Date(record.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                             ) : (
                               <span className="text-slate-650 font-normal">-</span>
                             )}
                           </td>
-                          <td className="py-3 px-4 text-slate-300">
+                          <td className="py-3 px-4 text-[var(--text-primary)]">
                             {record && record.checkOut ? (
                               new Date(record.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                             ) : (
                               <span className="text-slate-655 font-normal">-</span>
                             )}
                           </td>
-                          <td className="py-3 px-4 text-blue-650 dark:text-blue-400 font-bold">
+                          <td className="py-3 px-4 text-emerald-500 font-bold">
                             {record && record.workDurationMin ? (
                               `${Math.floor(record.workDurationMin / 60)}h ${record.workDurationMin % 60}m`
                             ) : record && !record.checkOut ? (
-                              <span className="text-slate-500 font-normal italic">Active...</span>
+                              <span className="text-[var(--text-muted)] font-normal italic">Active...</span>
                             ) : (
                               <span className="text-slate-655 font-normal">-</span>
                             )}
                           </td>
-                          <td className="py-3 px-4 text-slate-400 text-xs font-sans max-w-sm truncate" title={record?.checkInLocation || ''}>
+                          <td className="py-3 px-4 text-[var(--text-secondary)] text-xs font-sans max-w-sm truncate" title={record?.checkInLocation || ''}>
                             {record ? (
                               <div className="flex flex-col gap-0.5">
                                 {record.checkInLocation && (
-                                  <span className="text-slate-300 truncate">
-                                    <span className="text-slate-500 font-semibold text-[9px] uppercase tracking-wide mr-1">In Loc:</span>
+                                  <span className="text-[var(--text-primary)] truncate">
+                                    <span className="text-[var(--text-muted)] font-semibold text-[9px] uppercase tracking-wide mr-1">In Loc:</span>
                                     {record.checkInLocation.replace('Web Portal check-in at ', '')}
                                   </span>
                                 )}
                                 {record.notes && (
-                                  <span className="text-blue-600 dark:text-blue-450 italic text-[11px]">
+                                  <span className="text-emerald-500 italic text-[11px]">
                                     &ldquo;{record.notes}&rdquo;
                                   </span>
                                 )}
@@ -991,44 +991,44 @@ export default function AttendancePage() {
       {/* Manage Holidays Modal */}
       {showHolidayModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md px-4 py-6 overflow-y-auto font-sans">
-          <div className="w-full max-w-2xl bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-8 flex flex-col max-h-[85vh] animate-fade-in-up">
-            <div className="p-5 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+          <div className="w-full max-w-2xl bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden my-8 flex flex-col max-h-[85vh] animate-fade-in-up">
+            <div className="p-5 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex justify-between items-center">
               <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-blue-600" />
+                <Calendar className="w-5 h-5 text-emerald-500" />
                 <h3 className="text-sm font-bold uppercase tracking-wider text-white">Manage Gazetted Holidays</h3>
               </div>
-              <button type="button" onClick={() => setShowHolidayModal(false)} className="text-slate-400 hover:text-white cursor-pointer border border-transparent">
+              <button type="button" onClick={() => setShowHolidayModal(false)} className="text-[var(--text-secondary)] hover:text-white cursor-pointer border border-transparent">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="p-6 overflow-y-auto flex-1 space-y-6">
               {/* Form to define holiday */}
-              <form onSubmit={handleCreateHoliday} className="bg-slate-900/40 p-4 border border-slate-800 rounded-xl grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+              <form onSubmit={handleCreateHoliday} className="bg-[var(--bg-card)]/40 p-4 border border-[var(--border-color)] rounded-xl grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Holiday Name *</label>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1">Holiday Name *</label>
                   <input
                     type="text"
                     required
                     value={newHolidayName}
                     onChange={(e) => setNewHolidayName(e.target.value)}
                     placeholder="e.g. Independence Day, Diwali"
-                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
+                    className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-emerald-500 focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Date *</label>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1">Date *</label>
                   <div className="flex gap-2">
                     <input
                       type="date"
                       required
                       value={newHolidayDate}
                       onChange={(e) => setNewHolidayDate(e.target.value)}
-                      className="block flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
+                      className="block flex-1 px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-emerald-500 focus:outline-none"
                     />
                     <button
                       type="submit"
-                      className="py-2 px-4 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs shadow-md transition-all cursor-pointer shrink-0 border border-transparent"
+                      className="py-2 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold text-xs shadow-md transition-all cursor-pointer shrink-0 border border-transparent"
                     >
                       Add
                     </button>
@@ -1039,20 +1039,20 @@ export default function AttendancePage() {
               {/* Holiday List */}
               <div className="space-y-3">
                 <h4 className="text-xs font-bold text-white uppercase tracking-wider">Defined Gazetted Holidays</h4>
-                <div className="divide-y divide-slate-800 max-h-[35vh] overflow-y-auto border border-slate-800 rounded-xl bg-slate-950/20 px-4">
+                <div className="divide-y divide-slate-800 max-h-[35vh] overflow-y-auto border border-[var(--border-color)] rounded-xl bg-[var(--bg-main)] px-4">
                   {holidays.length === 0 ? (
-                    <p className="py-8 text-center text-slate-500 italic text-xs font-sans">No holidays defined yet.</p>
+                    <p className="py-8 text-center text-[var(--text-muted)] italic text-xs font-sans">No holidays defined yet.</p>
                   ) : (
                     holidays.map(h => (
                       <div key={h.id} className="py-3 flex justify-between items-center text-xs">
                         <div className="font-sans">
                           <p className="font-bold text-white">{h.name}</p>
-                          <p className="text-[10px] text-slate-500 font-mono">{new Date(h.date).toLocaleDateString(undefined, { timeZone: 'UTC', dateStyle: 'medium' })}</p>
+                          <p className="text-[10px] text-[var(--text-muted)] font-mono">{new Date(h.date).toLocaleDateString(undefined, { timeZone: 'UTC', dateStyle: 'medium' })}</p>
                         </div>
                         <button
                           type="button"
                           onClick={() => handleDeleteHoliday(h.id)}
-                          className="py-1 px-2.5 bg-slate-900 border border-slate-800 hover:bg-rose-955/20 hover:border-rose-900/30 text-slate-400 hover:text-rose-500 rounded-md transition-all cursor-pointer font-sans"
+                          className="py-1 px-2.5 bg-[var(--bg-card)] border border-[var(--border-color)] hover:bg-rose-955/20 hover:border-rose-900/30 text-[var(--text-secondary)] hover:text-rose-500 rounded-md transition-all cursor-pointer font-sans"
                         >
                           Remove
                         </button>
@@ -1063,11 +1063,11 @@ export default function AttendancePage() {
               </div>
             </div>
 
-            <div className="p-5 border-t border-slate-800 bg-slate-900/10 flex justify-end">
+            <div className="p-5 border-t border-[var(--border-color)] bg-[var(--bg-card)]/10 flex justify-end">
               <button
                 type="button"
                 onClick={() => setShowHolidayModal(false)}
-                className="py-2 px-5 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 rounded-lg font-bold text-xs shadow-md cursor-pointer"
+                className="py-2 px-5 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-[var(--text-primary)] rounded-lg font-bold text-xs shadow-md cursor-pointer"
               >
                 Close Window
               </button>
@@ -1079,31 +1079,31 @@ export default function AttendancePage() {
       {/* Attendance Override Modal */}
       {showOverrideModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md px-4 py-6 font-sans">
-          <div className="w-full max-w-md bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
-            <div className="p-5 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+          <div className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div className="p-5 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex justify-between items-center">
               <div className="flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-blue-600" />
+                <ShieldCheck className="w-5 h-5 text-emerald-500" />
                 <h3 className="text-sm font-bold uppercase tracking-wider text-white">Override Attendance Status</h3>
               </div>
-              <button type="button" onClick={() => setShowOverrideModal(false)} className="text-slate-400 hover:text-white cursor-pointer border border-transparent">
+              <button type="button" onClick={() => setShowOverrideModal(false)} className="text-[var(--text-secondary)] hover:text-white cursor-pointer border border-transparent">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleOverrideSubmit}>
               <div className="p-6 space-y-4">
-                <div className="bg-blue-500/5 border border-blue-500/10 rounded-xl p-3.5 text-xs text-blue-600 dark:text-blue-400 leading-relaxed font-sans">
+                <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-3.5 text-xs text-emerald-500 leading-relaxed font-sans">
                   You are overriding attendance for:
                   <strong className="text-white block font-sans mt-1">Date: {overrideDate}</strong>
                   <strong className="text-white block font-sans">Employee: {employees.find(e => e.id === overrideUserId)?.name || `ID #${overrideUserId}`}</strong>
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">New Attendance Status</label>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1.5">New Attendance Status</label>
                   <select
                     value={overrideStatus}
                     onChange={(e) => setOverrideStatus(e.target.value)}
-                    className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:ring-blue-500 focus:outline-none"
+                    className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-white text-xs focus:ring-emerald-500 focus:outline-none"
                   >
                     <option value="present">Present (Completed)</option>
                     <option value="half_day">Half Day</option>
@@ -1113,17 +1113,17 @@ export default function AttendancePage() {
                 </div>
               </div>
 
-              <div className="p-5 border-t border-slate-800 bg-slate-900/10 flex justify-end gap-2">
+              <div className="p-5 border-t border-[var(--border-color)] bg-[var(--bg-card)]/10 flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setShowOverrideModal(false)}
-                  className="py-2 px-4 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-350 rounded-xl font-bold text-xs cursor-pointer"
+                  className="py-2 px-4 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-slate-350 rounded-xl font-bold text-xs cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="py-2 px-5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-xl font-bold text-xs shadow-md transition-all cursor-pointer border border-transparent"
+                  className="py-2 px-5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-md transition-all cursor-pointer border border-transparent"
                 >
                   Confirm Override
                 </button>

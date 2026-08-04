@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -28,7 +28,7 @@ import dynamic from 'next/dynamic';
 const DashboardChart = dynamic(() => import('@/components/DashboardChart'), {
   ssr: false,
   loading: () => (
-    <div className="h-full w-full flex items-center justify-center bg-slate-950/20 rounded-xl border border-slate-900/40">
+    <div className="h-full w-full flex items-center justify-center bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
       <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
     </div>
   ),
@@ -38,11 +38,11 @@ const LeadSourcePieChart = dynamic(
   () => import('@/components/ReportsCharts').then((mod) => mod.LeadSourcePieChart),
   {
     ssr: false,
-    loading: () => <div className="h-full w-full bg-slate-950/20 animate-pulse rounded-xl" />,
+    loading: () => <div className="h-full w-full bg-[var(--bg-main)] animate-pulse rounded-xl" />,
   }
 );
 
-const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#0EA5E9', '#14B8A6'];
+const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#8B5CF6', '#EC4899', '#0EA5E9', '#14B8A6'];
 
 const leadSourceData = [
   { name: 'Meta', value: 35 },
@@ -202,12 +202,12 @@ export default function DashboardPage() {
       <div className="space-y-6 animate-pulse">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-32 bg-[#111625] border border-slate-800 rounded-xl" />
+            <div key={i} className="h-32 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl" />
           ))}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="h-96 bg-[#111625] border border-slate-800 rounded-xl lg:col-span-2" />
-          <div className="h-96 bg-[#111625] border border-slate-800 rounded-xl" />
+          <div className="h-96 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl lg:col-span-2" />
+          <div className="h-96 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl" />
         </div>
       </div>
     );
@@ -224,7 +224,7 @@ export default function DashboardPage() {
         name: 'Orders Received (Pending Verification)',
         value: stats?.totalOrdersPending || 0,
         icon: Layers,
-        color: 'from-blue-600/10 to-indigo-600/5 border-blue-500/20 text-blue-400',
+        color: 'border-[var(--border-color)] text-emerald-400',
       },
       {
         name: 'Orders Verified (Total)',
@@ -234,21 +234,21 @@ export default function DashboardPage() {
       },
       {
         name: 'Total Ledger Value',
-        value: `₹${(stats?.totalLedgerValue || 0).toLocaleString('en-IN')}`,
+        value: `â‚¹${(stats?.totalLedgerValue || 0).toLocaleString('en-IN')}`,
         icon: TrendingUp,
-        color: 'from-cyan-600/10 to-blue-600/5 border-cyan-500/20 text-cyan-400',
+        color: 'border-[var(--border-color)] text-teal-400',
       },
       {
         name: 'Payments Collected',
-        value: `₹${(stats?.totalPaymentsCollected || 0).toLocaleString('en-IN')}`,
+        value: `â‚¹${(stats?.totalPaymentsCollected || 0).toLocaleString('en-IN')}`,
         icon: DollarSign,
         color: 'from-purple-600/10 to-pink-600/5 border-purple-500/20 text-purple-400',
       },
       {
         name: 'Outstanding Balance',
-        value: `₹${(stats?.outstandingBalance || 0).toLocaleString('en-IN')}`,
+        value: `â‚¹${(stats?.outstandingBalance || 0).toLocaleString('en-IN')}`,
         icon: Clock,
-        color: 'from-blue-600/10 to-indigo-600/5 border-blue-500/20 text-blue-600 dark:text-blue-400',
+        color: 'border-[var(--border-color)] text-emerald-400',
       },
     ];
   } else if (userDept === 'Operations' || userBaseRole === 'operations') {
@@ -257,19 +257,19 @@ export default function DashboardPage() {
         name: 'Total Assigned Jobs',
         value: stats?.totalJobsAssigned || 0,
         icon: Layers,
-        color: 'from-blue-600/10 to-indigo-600/5 border-blue-500/20 text-blue-400',
+        color: 'border-[var(--border-color)] text-emerald-400',
       },
       {
         name: 'Materials Delivered',
         value: stats?.deliveredJobs || 0,
         icon: Truck,
-        color: 'from-blue-600/10 to-indigo-600/5 border-blue-500/20 text-blue-600 dark:text-blue-400',
+        color: 'border-[var(--border-color)] text-emerald-400',
       },
       {
         name: 'Installations Completed',
         value: stats?.installedJobs || 0,
         icon: Hammer,
-        color: 'from-cyan-600/10 to-blue-600/5 border-cyan-500/20 text-cyan-400',
+        color: 'border-[var(--border-color)] text-teal-400',
       },
       {
         name: 'Plants Commissioned',
@@ -290,13 +290,13 @@ export default function DashboardPage() {
         name: 'Total Leads Assigned',
         value: stats?.totalLeads || 0,
         icon: Layers,
-        color: 'from-blue-600/10 to-indigo-600/5 border-blue-500/20 text-blue-400',
+        color: 'border-[var(--border-color)] text-emerald-400',
       },
       {
         name: 'Total Meetings Booked',
         value: stats?.meetingsBookedThisMonth || 0,
         icon: Calendar,
-        color: 'from-cyan-600/10 to-blue-600/5 border-cyan-500/20 text-cyan-400',
+        color: 'border-[var(--border-color)] text-teal-400',
       },
       {
         name: 'Total Meetings Recorded',
@@ -314,7 +314,7 @@ export default function DashboardPage() {
         name: "Today's Scheduled Actions",
         value: stats?.todayFollowUps || 0,
         icon: Clock,
-        color: 'from-blue-600/10 to-indigo-600/5 border-blue-500/20 text-blue-600 dark:text-blue-400',
+        color: 'border-[var(--border-color)] text-emerald-400',
       },
       {
         name: 'Sales Closure Rate',
@@ -328,14 +328,13 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
-      <div className="relative bg-slate-900 border border-slate-800 rounded-2xl p-6 overflow-hidden shadow-sm">
-        <div className="absolute top-[-20%] right-[-5%] w-[40%] h-[150%] rounded-full bg-blue-500/5 blur-[80px] pointer-events-none" />
+      <div className="relative bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-6 overflow-hidden shadow-sm">
         <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-wide">
-              Welcome Back, <span className="text-blue-600 dark:text-blue-400 font-extrabold">{user?.name}</span>!
+              Welcome Back, <span className="text-emerald-500 font-extrabold">{user?.name}</span>!
             </h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-sm text-[var(--text-muted)] dark:text-[var(--text-secondary)] mt-1">
               Here's the latest status of your solar sales pipeline.
             </p>
           </div>
@@ -343,7 +342,7 @@ export default function DashboardPage() {
             {hasPermission('leads:create') && (
               <Link
                 href="/leads/new"
-                className="py-2 px-4 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white rounded-lg font-bold text-xs transition-all flex items-center gap-1.5 shadow-sm"
+                className="py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs transition-all flex items-center gap-1.5 shadow-sm"
               >
                 <span>Add New Lead</span>
                 <ArrowUpRight className="w-3.5 h-3.5" />
@@ -360,15 +359,15 @@ export default function DashboardPage() {
           return (
             <div
               key={index}
-              className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm hover:shadow-md flex justify-between items-center h-28 transition-all duration-200"
+              className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-5 shadow-sm hover:shadow-md flex justify-between items-center h-28 transition-all duration-200"
             >
               <div className="flex flex-col justify-between h-full">
-                <span className="text-xs font-semibold text-slate-400 tracking-wider uppercase leading-snug">
+                <span className="text-xs font-semibold text-[var(--text-secondary)] tracking-wider uppercase leading-snug">
                   {card.name}
                 </span>
                 <span className="text-2xl font-extrabold text-white tracking-tight">{card.value}</span>
               </div>
-              <div className="w-10 h-10 rounded-full flex items-center justify-center bg-blue-500/10 text-blue-400 shrink-0">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center bg-emerald-500/10 text-emerald-400 shrink-0">
                 <Icon className="w-5 h-5" />
               </div>
             </div>
@@ -379,13 +378,13 @@ export default function DashboardPage() {
       {/* Reminders & Activity Feed Section (Placed right below Leads Data) */}
       <div className={`grid grid-cols-1 ${isAdmin ? 'lg:grid-cols-2' : ''} gap-6`}>
         {/* Column 1: Upcoming Task Reminders */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm flex flex-col h-[28rem]">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-6 flex items-center gap-2">
-            <Clock className="w-5 h-5 text-blue-500" />
+        <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 shadow-sm flex flex-col h-[28rem]">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-6 flex items-center gap-2">
+            <Clock className="w-5 h-5 text-emerald-500" />
             <span>Upcoming Task Reminders</span>
           </h3>
           {reminders.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-slate-500 text-xs italic py-12">
+            <div className="h-full flex flex-col items-center justify-center text-[var(--text-muted)] text-xs italic py-12">
               <span>No upcoming tasks scheduled.</span>
             </div>
           ) : (
@@ -395,11 +394,11 @@ export default function DashboardPage() {
                 return (
                   <div
                     key={rem.id}
-                    className="py-3 flex items-start gap-3 transition-colors hover:bg-slate-950/40 px-2 rounded-lg"
+                    className="py-3 flex items-start gap-3 transition-colors hover:bg-[var(--bg-main)] px-2 rounded-lg"
                   >
                     <div className="mt-0.5 shrink-0">
                       {isMeeting ? (
-                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
                           <Calendar className="w-4 h-4" />
                         </div>
                       ) : (
@@ -412,14 +411,14 @@ export default function DashboardPage() {
                       <div className="flex justify-between items-start gap-2">
                         <Link
                           href={`/leads/${rem.leadId}`}
-                          className="text-xs font-bold text-white hover:text-blue-400 truncate"
+                          className="text-xs font-bold text-white hover:text-emerald-400 truncate"
                         >
                           {rem.customerName}
-                          <span className="text-[10px] text-slate-400 font-semibold ml-1.5 font-mono">
+                          <span className="text-[10px] text-[var(--text-secondary)] font-semibold ml-1.5 font-mono">
                             ({rem.leadCode})
                           </span>
                         </Link>
-                        <span className="text-[9px] font-bold text-slate-500 shrink-0 font-mono">
+                        <span className="text-[9px] font-bold text-[var(--text-muted)] shrink-0 font-mono">
                           {new Date(rem.datetime).toLocaleTimeString('en-IN', {
                             hour: '2-digit',
                             minute: '2-digit',
@@ -431,13 +430,13 @@ export default function DashboardPage() {
                       <div className="flex justify-between items-center mt-1">
                         <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.25 rounded-md border ${
                           isMeeting 
-                            ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' 
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
                             : 'bg-teal-500/10 text-teal-400 border-teal-500/20'
                         }`}>
                           {rem.title}
                         </span>
                         
-                        <span className="text-[9px] text-slate-400 font-bold font-mono">
+                        <span className="text-[9px] text-[var(--text-secondary)] font-bold font-mono">
                           {new Date(rem.datetime).toLocaleDateString('en-IN', {
                             day: 'numeric',
                             month: 'short',
@@ -445,7 +444,7 @@ export default function DashboardPage() {
                         </span>
                       </div>
                       
-                      <p className="text-[10px] text-slate-500 mt-1.5 leading-normal truncate">
+                      <p className="text-[10px] text-[var(--text-muted)] mt-1.5 leading-normal truncate">
                         {rem.subtitle}
                       </p>
                     </div>
@@ -458,16 +457,16 @@ export default function DashboardPage() {
 
         {/* Column 2: Recent Activity Stream (Strictly Admin / Director Only) */}
         {isAdmin && (
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm h-[28rem] flex flex-col">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 shadow-sm h-[28rem] flex flex-col">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-                <Clock className="w-5 h-5 text-blue-500" />
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] flex items-center gap-2">
+                <Clock className="w-5 h-5 text-emerald-500" />
                 <span>Recent Activity Stream</span>
               </h3>
               <button
                 type="button"
                 onClick={() => setActivityModalOpen(true)}
-                className="p-1.5 rounded-lg bg-slate-950/80 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white transition-all cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold"
+                className="p-1.5 rounded-lg bg-[var(--bg-main)] border border-[var(--border-color)] hover:border-emerald-500 text-[var(--text-secondary)] hover:text-white transition-all cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold"
                 title="Expand Full Screen Activity Timeline"
               >
                 <Maximize2 className="w-3.5 h-3.5" />
@@ -475,9 +474,9 @@ export default function DashboardPage() {
               </button>
             </div>
 
-            <div className="relative border-l border-slate-800 ml-4 pl-6 space-y-5 overflow-y-auto pr-1 flex-1 py-1">
+            <div className="relative border-l border-[var(--border-color)] ml-4 pl-6 space-y-5 overflow-y-auto pr-1 flex-1 py-1">
               {activities.length === 0 ? (
-                <div className="py-8 text-center text-slate-500 text-xs italic">
+                <div className="py-8 text-center text-[var(--text-muted)] text-xs italic">
                   No system activity records found.
                 </div>
               ) : (
@@ -486,7 +485,7 @@ export default function DashboardPage() {
                   return (
                     <div key={log.id} className="relative group">
                       <span 
-                        className="absolute -left-[31px] top-1.5 w-2.5 h-2.5 rounded-full border-2 border-slate-900 transition-transform group-hover:scale-125 animate-pulse" 
+                        className="absolute -left-[31px] top-1.5 w-2.5 h-2.5 rounded-full border-2 border-[var(--border-color)] transition-transform group-hover:scale-125 animate-pulse" 
                         style={{ backgroundColor: stage.color }} 
                       />
                       <div className="min-w-0">
@@ -494,15 +493,15 @@ export default function DashboardPage() {
                           <p className="text-xs font-bold text-white truncate">
                             <Link
                               href={`/leads/${log.lead.id}`}
-                              className="hover:text-blue-400 hover:underline"
+                              className="hover:text-emerald-400 hover:underline"
                             >
                               {log.lead.customerName}
                             </Link>
-                            <span className="text-[9.5px] text-slate-400 font-semibold ml-1.5 font-mono">
+                            <span className="text-[9.5px] text-[var(--text-secondary)] font-semibold ml-1.5 font-mono">
                               ({log.lead.leadCode})
                             </span>
                           </p>
-                          <span className="text-[9px] text-slate-400 shrink-0 font-semibold">
+                          <span className="text-[9px] text-[var(--text-secondary)] shrink-0 font-semibold">
                             {new Date(log.createdAt).toLocaleString('en-IN', {
                               day: 'numeric',
                               month: 'short',
@@ -511,14 +510,14 @@ export default function DashboardPage() {
                             })}
                           </span>
                         </div>
-                        <p className="text-[10px] text-slate-400 mt-0.5">
+                        <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">
                           Moved to <strong style={{ color: stage.color }} className="font-semibold">{stage.name}</strong> by{' '}
-                          <Link href={`/team?userId=${log.user.id}`} className="text-blue-400 hover:underline font-bold">
+                          <Link href={`/team?userId=${log.user.id}`} className="text-emerald-500 hover:underline font-bold">
                             {log.user.name}
                           </Link>
                         </p>
                         {log.remark && (
-                          <p className="text-[10px] text-slate-400 mt-1 italic truncate font-mono bg-slate-950/60 p-1.5 rounded border border-slate-800/80">
+                          <p className="text-[10px] text-[var(--text-secondary)] mt-1 italic truncate font-mono bg-[var(--bg-main)] p-1.5 rounded border border-[var(--border-color)]">
                             "{log.remark}"
                           </p>
                         )}
@@ -535,9 +534,9 @@ export default function DashboardPage() {
       {/* Charts & Redesigned Pipeline Distribution Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Trend line graph */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 lg:col-span-2 shadow-sm">
+        <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 lg:col-span-2 shadow-sm">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Sales & Leads Trend (15 Days)</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">Sales & Leads Trend (15 Days)</h3>
             <div className="flex gap-4 text-xs">
               <span className="flex items-center gap-1.5 text-blue-400 font-semibold">
                 <span className="w-2.5 h-2.5 bg-blue-500 rounded-full" /> Leads Created
@@ -553,22 +552,22 @@ export default function DashboardPage() {
         </div>
 
         {/* Lead Acquisition Channels Pie Chart */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm flex flex-col justify-between">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">Lead Acquisition Channels</h3>
+        <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 shadow-sm flex flex-col justify-between">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-4">Lead Acquisition Channels</h3>
           <div className="h-80 w-full flex items-center justify-center">
             <LeadSourcePieChart leadSourceData={leadSourceData} colors={COLORS} />
           </div>
         </div>
 
         {/* Redesigned Pipeline Stage Distribution Grid */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm flex flex-col justify-between lg:col-span-3">
+        <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 shadow-sm flex flex-col justify-between lg:col-span-3">
           <div>
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-                <Layers className="w-4 h-4 text-blue-500" />
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] flex items-center gap-2">
+                <Layers className="w-4 h-4 text-emerald-500" />
                 <span>Pipeline Stage Distribution</span>
               </h3>
-              <span className="text-[11px] text-slate-400 font-semibold font-mono">
+              <span className="text-[11px] text-[var(--text-secondary)] font-semibold font-mono">
                 Total Active Leads: <strong className="text-white">{pipeline.reduce((acc, curr) => acc + curr.count, 0)}</strong>
               </span>
             </div>
@@ -585,8 +584,8 @@ export default function DashboardPage() {
                     key={item.stage}
                     className={`p-3.5 rounded-xl border transition-all flex flex-col justify-between space-y-2.5 ${
                       hasLeads
-                        ? 'bg-slate-950/80 border-slate-700/80 shadow-md'
-                        : 'bg-slate-950/30 border-slate-800/40 opacity-70'
+                        ? 'bg-[var(--bg-main)] border-[var(--border-color)] shadow-md'
+                        : 'bg-[var(--bg-main)]/40 border-[var(--border-color)]/50 opacity-70'
                     }`}
                   >
                     <div className="flex items-center justify-between">
@@ -595,7 +594,7 @@ export default function DashboardPage() {
                           className="w-2.5 h-2.5 rounded-full shrink-0"
                           style={{ backgroundColor: stageInfo.color }}
                         />
-                        <span className="text-xs font-bold text-slate-200 truncate" title={stageInfo.name}>
+                        <span className="text-xs font-bold text-[var(--text-primary)] truncate" title={stageInfo.name}>
                           {stageInfo.name}
                         </span>
                       </div>
@@ -603,7 +602,7 @@ export default function DashboardPage() {
                         className={`text-xs font-extrabold px-2 py-0.5 rounded-full shrink-0 font-mono ${
                           hasLeads
                             ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                            : 'bg-slate-800/50 text-slate-400'
+                            : 'bg-[var(--bg-card)] text-[var(--text-secondary)]'
                         }`}
                       >
                         {item.count}
@@ -611,13 +610,13 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="space-y-1">
-                      <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                      <div className="w-full h-1.5 bg-[var(--bg-card)] rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full transition-all duration-500"
                           style={{ width: `${percent}%`, backgroundColor: stageInfo.color }}
                         />
                       </div>
-                      <div className="flex justify-between items-center text-[10px] text-slate-400 font-mono">
+                      <div className="flex justify-between items-center text-[10px] text-[var(--text-secondary)] font-mono">
                         <span>Share</span>
                         <span>{percent}%</span>
                       </div>
@@ -628,10 +627,10 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="pt-4 border-t border-slate-800 mt-6 flex justify-center">
+          <div className="pt-4 border-t border-[var(--border-color)] mt-6 flex justify-center">
             <Link
               href="/leads"
-              className="text-xs text-blue-400 hover:text-blue-300 font-bold flex items-center justify-center gap-1.5 group"
+              className="text-xs text-emerald-400 hover:text-emerald-300 font-bold flex items-center justify-center gap-1.5 group"
             >
               <span>View Full Interactive Pipeline Grid</span>
               <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
@@ -643,11 +642,11 @@ export default function DashboardPage() {
       {/* Full-Screen Activity Modal for Admin */}
       {activityModalOpen && isAdmin && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8 bg-black/80 backdrop-blur-md animate-fade-in font-sans">
-          <div className="bg-[#0f1422] border border-slate-800 rounded-2xl w-full max-w-5xl h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl w-full max-w-5xl h-[85vh] flex flex-col shadow-2xl overflow-hidden">
             {/* Modal Header */}
-            <div className="p-5 border-b border-slate-800 bg-slate-950/60 flex items-center justify-between gap-4">
+            <div className="p-5 border-b border-[var(--border-color)] bg-[var(--bg-main)] flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
                   <Clock className="w-5 h-5" />
                 </div>
                 <div>
@@ -657,26 +656,26 @@ export default function DashboardPage() {
                       {activities.length} logs
                     </span>
                   </h3>
-                  <p className="text-xs text-slate-400">Live operational timeline across all teams</p>
+                  <p className="text-xs text-[var(--text-secondary)]">Live operational timeline across all teams</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
                 <div className="relative w-64 hidden sm:block">
-                  <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-500" />
+                  <Search className="w-4 h-4 absolute left-3 top-2.5 text-[var(--text-muted)]" />
                   <input
                     type="text"
                     placeholder="Search logs..."
                     value={activitySearchQuery}
                     onChange={(e) => setActivitySearchQuery(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 rounded-lg pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none"
+                    className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-emerald-500 rounded-lg pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none"
                   />
                 </div>
 
                 <button
                   type="button"
                   onClick={() => setActivityModalOpen(false)}
-                  className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-all cursor-pointer"
+                  className="w-8 h-8 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-emerald-500 flex items-center justify-center text-[var(--text-secondary)] hover:text-white transition-all cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -684,13 +683,13 @@ export default function DashboardPage() {
             </div>
 
             {/* Modal Body */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-950/40">
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-[var(--bg-main)]">
               {filteredActivities.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-slate-500 text-xs italic py-20">
+                <div className="h-full flex flex-col items-center justify-center text-[var(--text-muted)] text-xs italic py-20">
                   <span>No activity logs matched your search.</span>
                 </div>
               ) : (
-                <div className="relative border-l-2 border-slate-800 ml-4 pl-6 space-y-6">
+                <div className="relative border-l-2 border-[var(--border-color)] ml-4 pl-6 space-y-6">
                   {filteredActivities.map((log) => {
                     const stage = STAGE_NAMES[log.toStatus] || { name: `Stage ${log.toStatus}`, color: '#9CA3AF' };
                     return (
@@ -700,19 +699,19 @@ export default function DashboardPage() {
                           style={{ backgroundColor: stage.color }}
                         />
 
-                        <div className="bg-slate-900/80 border border-slate-800/80 rounded-xl p-4 space-y-2 hover:border-slate-700 transition-all">
+                        <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-4 space-y-2 hover:border-[var(--border-color)] transition-all">
                           <div className="flex justify-between items-start gap-3">
                             <div>
                               <Link
                                 href={`/leads/${log.lead.id}`}
                                 onClick={() => setActivityModalOpen(false)}
-                                className="text-sm font-bold text-white hover:text-blue-400 hover:underline flex items-center gap-2"
+                                className="text-sm font-bold text-white hover:text-emerald-400 hover:underline flex items-center gap-2"
                               >
                                 <span>{log.lead.customerName}</span>
-                                <span className="text-xs text-slate-400 font-mono font-semibold">({log.lead.leadCode})</span>
+                                <span className="text-xs text-[var(--text-secondary)] font-mono font-semibold">({log.lead.leadCode})</span>
                               </Link>
                             </div>
-                            <span className="text-xs text-slate-400 font-mono">
+                            <span className="text-xs text-[var(--text-secondary)] font-mono">
                               {new Date(log.createdAt).toLocaleString('en-IN', {
                                 day: 'numeric',
                                 month: 'short',
@@ -724,7 +723,7 @@ export default function DashboardPage() {
                           </div>
 
                           <div className="flex flex-wrap items-center gap-2 text-xs">
-                            <span className="text-slate-400">Moved to</span>
+                            <span className="text-[var(--text-secondary)]">Moved to</span>
                             <span
                               className="px-2 py-0.5 rounded text-[11px] font-bold border"
                               style={{
@@ -735,14 +734,14 @@ export default function DashboardPage() {
                             >
                               {stage.name}
                             </span>
-                            <span className="text-slate-400">by</span>
-                            <span className="font-bold text-white bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                            <span className="text-[var(--text-secondary)]">by</span>
+                            <span className="font-bold text-white bg-[var(--bg-card)] px-2 py-0.5 rounded border border-[var(--border-color)]">
                               {log.user.name} ({log.user.role})
                             </span>
                           </div>
 
                           {log.remark && (
-                            <p className="text-xs text-slate-300 italic font-mono bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/60">
+                            <p className="text-xs text-[var(--text-primary)] italic font-mono bg-[var(--bg-main)] p-2.5 rounded-lg border border-[var(--border-color)]">
                               "{log.remark}"
                             </p>
                           )}
@@ -755,12 +754,12 @@ export default function DashboardPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-slate-800 bg-slate-950/60 flex justify-between items-center text-xs text-slate-400">
+            <div className="p-4 border-t border-[var(--border-color)] bg-[var(--bg-main)] flex justify-between items-center text-xs text-[var(--text-secondary)]">
               <span>Showing full activity history for system administrators</span>
               <button
                 type="button"
                 onClick={() => setActivityModalOpen(false)}
-                className="px-4 py-2 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-white rounded-lg font-bold transition-all cursor-pointer"
+                className="px-4 py-2 bg-[var(--bg-card)] border border-[var(--border-color)] hover:bg-[var(--bg-card)] text-white rounded-lg font-bold transition-all cursor-pointer"
               >
                 Close Full Screen View
               </button>

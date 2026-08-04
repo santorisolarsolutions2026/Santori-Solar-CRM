@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -100,11 +100,11 @@ const PAYMENT_METHODS = [
 ];
 
 const METHOD_LABELS: Record<string, string> = {
-  cash: 'Cash 💵',
-  upi: 'UPI 📱',
-  cheque: 'Cheque ✍️',
-  neft: 'NEFT 🏦',
-  bank_transfer: 'Bank Transfer 🏛️',
+  cash: 'Cash ðŸ’µ',
+  upi: 'UPI ðŸ“±',
+  cheque: 'Cheque âœï¸',
+  neft: 'NEFT ðŸ¦',
+  bank_transfer: 'Bank Transfer ðŸ›ï¸',
 };
 
 const DOC_TYPES: Record<string, string> = {
@@ -125,19 +125,19 @@ export default function FinancePage() {
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
       </div>
     );
   }
 
   if (!hasPermission('orders:finance_access')) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center bg-[#111625] border border-slate-800 rounded-xl shadow-lg mt-6">
+      <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-lg mt-6">
         <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 text-red-500 rounded-full flex items-center justify-center mb-4 animate-pulse">
           <AlertTriangle className="w-8 h-8" />
         </div>
         <h2 className="text-xl font-bold text-white mb-2">Access Denied</h2>
-        <p className="text-sm text-slate-400 max-w-md">
+        <p className="text-sm text-[var(--text-secondary)] max-w-md">
           You do not have the required permissions to view Finance & Payments details. Please contact your administrator if you believe this is in error.
         </p>
       </div>
@@ -726,7 +726,7 @@ export default function FinancePage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white tracking-wide">Finance & Payments Ledger</h1>
-          <p className="text-xs text-slate-400 mt-1">Verify incoming sales orders and maintain the financial transaction ledger.</p>
+          <p className="text-xs text-[var(--text-secondary)] mt-1">Verify incoming sales orders and maintain the financial transaction ledger.</p>
         </div>
         
         <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -736,9 +736,9 @@ export default function FinancePage() {
               placeholder="Search by client, order, connection..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-slate-200 text-xs focus:outline-none focus:border-slate-700 placeholder-slate-500"
+              className="w-full pl-9 pr-3 py-2 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:outline-none focus:border-[var(--border-color)] placeholder-slate-500"
             />
-            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+            <Search className="w-4 h-4 text-[var(--text-muted)] absolute left-3 top-2.5" />
           </form>
 
           <button
@@ -746,15 +746,15 @@ export default function FinancePage() {
             onClick={() => setShowFilters(!showFilters)}
             className={`px-3 py-2 border rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               showFilters || filterDateRange !== 'all' || filterPaymentMethod !== 'all' || filterBalanceStatus !== 'all' || filterMinAmount || filterMaxAmount || filterOrderStatus !== 'all' || filterSubmittedBy !== 'all' || filterVerifiedBy !== 'all'
-                ? 'bg-blue-500/10 border-blue-500/30 text-blue-600 dark:text-blue-400'
-                : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-750'
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                : 'bg-[var(--bg-card)] border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-slate-750'
             }`}
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
             <span className="relative">
               Filters
               {(filterDateRange !== 'all' || filterPaymentMethod !== 'all' || filterBalanceStatus !== 'all' || filterMinAmount || filterMaxAmount || filterOrderStatus !== 'all' || filterSubmittedBy !== 'all' || filterVerifiedBy !== 'all') && (
-                <span className="absolute -top-1 -right-2 w-1.5 h-1.5 bg-blue-600 rounded-full animate-ping" />
+                <span className="absolute -top-1 -right-2 w-1.5 h-1.5 bg-emerald-600 rounded-full animate-ping" />
               )}
             </span>
           </button>
@@ -763,10 +763,10 @@ export default function FinancePage() {
 
       {/* Advanced Filter Panel */}
       {showFilters && (
-        <div className="p-4 bg-slate-900/40 border border-slate-805 rounded-xl shadow-xl space-y-4">
-          <div className="flex justify-between items-center border-b border-slate-800/60 pb-2.5">
+        <div className="p-4 bg-[var(--bg-card)]/40 border border-slate-805 rounded-xl shadow-xl space-y-4">
+          <div className="flex justify-between items-center border-b border-[var(--border-color)] pb-2.5">
             <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-              <SlidersHorizontal className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+              <SlidersHorizontal className="w-3.5 h-3.5 text-emerald-400" />
               <span>Advanced Filters</span>
             </h3>
             <button
@@ -781,11 +781,11 @@ export default function FinancePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
             {/* Date Range Filter */}
             <div className="space-y-1">
-              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Date Created</label>
+              <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Date Created</label>
               <select
                 value={filterDateRange}
                 onChange={(e) => setFilterDateRange(e.target.value)}
-                className="w-full px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700 capitalize"
+                className="w-full px-2.5 py-1.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)] capitalize"
               >
                 <option value="all">All Time</option>
                 <option value="today">Today</option>
@@ -798,11 +798,11 @@ export default function FinancePage() {
 
             {/* Payment Method Filter */}
             <div className="space-y-1">
-              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Payment Method</label>
+              <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Payment Method</label>
               <select
                 value={filterPaymentMethod}
                 onChange={(e) => setFilterPaymentMethod(e.target.value)}
-                className="w-full px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700 capitalize"
+                className="w-full px-2.5 py-1.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)] capitalize"
               >
                 <option value="all">All Methods</option>
                 {PAYMENT_METHODS.map((m) => (
@@ -813,11 +813,11 @@ export default function FinancePage() {
 
             {/* Outstanding Balance Filter */}
             <div className="space-y-1">
-              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Balance Status</label>
+              <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Balance Status</label>
               <select
                 value={filterBalanceStatus}
                 onChange={(e) => setFilterBalanceStatus(e.target.value)}
-                className="w-full px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700"
+                className="w-full px-2.5 py-1.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)]"
               >
                 <option value="all">All Ledgers</option>
                 <option value="cleared">Fully Cleared (Paid)</option>
@@ -827,11 +827,11 @@ export default function FinancePage() {
 
             {/* Order Status Filter */}
             <div className="space-y-1">
-              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Order Status</label>
+              <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Order Status</label>
               <select
                 value={filterOrderStatus}
                 onChange={(e) => setFilterOrderStatus(e.target.value)}
-                className="w-full px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700 capitalize"
+                className="w-full px-2.5 py-1.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)] capitalize"
               >
                 <option value="all">All Statuses</option>
                 <option value="submitted">Submitted (Awaiting)</option>
@@ -843,11 +843,11 @@ export default function FinancePage() {
 
             {/* Submitted By Filter */}
             <div className="space-y-1">
-              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Submitted By</label>
+              <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Submitted By</label>
               <select
                 value={filterSubmittedBy}
                 onChange={(e) => setFilterSubmittedBy(e.target.value)}
-                className="w-full px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700 capitalize"
+                className="w-full px-2.5 py-1.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)] capitalize"
               >
                 <option value="all">All Submitters</option>
                 {Array.from(new Map(orders.filter(o => o.submittedBy).map(o => [o.submittedBy.id, o.submittedBy])).values()).map(sub => (
@@ -858,11 +858,11 @@ export default function FinancePage() {
 
             {/* Verified By Filter */}
             <div className="space-y-1">
-              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Verified By</label>
+              <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Verified By</label>
               <select
                 value={filterVerifiedBy}
                 onChange={(e) => setFilterVerifiedBy(e.target.value)}
-                className="w-full px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700 capitalize"
+                className="w-full px-2.5 py-1.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)] capitalize"
               >
                 <option value="all">All Verifiers</option>
                 {Array.from(new Map(orders.filter(o => o.financeProcessedBy).map(o => [o.financeProcessedBy!.id, o.financeProcessedBy!])).values()).map(ver => (
@@ -872,24 +872,24 @@ export default function FinancePage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-800/40">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-[var(--border-color)]">
             {/* Custom Date Inputs */}
             {filterDateRange === 'custom' ? (
               <div className="space-y-1">
-                <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Custom Date Range</label>
+                <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Custom Date Range</label>
                 <div className="flex items-center gap-2">
                   <input
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="flex-1 px-2.5 py-1.5 bg-slate-950 border border-slate-805 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-slate-700"
+                    className="flex-1 px-2.5 py-1.5 bg-[var(--bg-main)] border border-slate-805 rounded-lg text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-color)]"
                   />
-                  <span className="text-slate-500 text-xs">to</span>
+                  <span className="text-[var(--text-muted)] text-xs">to</span>
                   <input
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="flex-1 px-2.5 py-1.5 bg-slate-950 border border-slate-805 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-slate-700"
+                    className="flex-1 px-2.5 py-1.5 bg-[var(--bg-main)] border border-slate-805 rounded-lg text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-color)]"
                   />
                 </div>
               </div>
@@ -899,22 +899,22 @@ export default function FinancePage() {
 
             {/* Contract Value Range */}
             <div className="space-y-1">
-              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Contract Value Range (₹)</label>
+              <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Contract Value Range (â‚¹)</label>
               <div className="flex items-center gap-2">
                 <input
                   type="number"
                   placeholder="Min Value"
                   value={filterMinAmount}
                   onChange={(e) => setFilterMinAmount(e.target.value)}
-                  className="flex-1 px-2.5 py-1.5 bg-slate-950 border border-slate-805 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-slate-700 placeholder-slate-700"
+                  className="flex-1 px-2.5 py-1.5 bg-[var(--bg-main)] border border-slate-805 rounded-lg text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-color)] placeholder-slate-700"
                 />
-                <span className="text-slate-500 text-xs">to</span>
+                <span className="text-[var(--text-muted)] text-xs">to</span>
                 <input
                   type="number"
                   placeholder="Max Value"
                   value={filterMaxAmount}
                   onChange={(e) => setFilterMaxAmount(e.target.value)}
-                  className="flex-1 px-2.5 py-1.5 bg-slate-950 border border-slate-805 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-slate-700 placeholder-slate-700"
+                  className="flex-1 px-2.5 py-1.5 bg-[var(--bg-main)] border border-slate-805 rounded-lg text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-color)] placeholder-slate-700"
                 />
               </div>
             </div>
@@ -947,51 +947,51 @@ export default function FinancePage() {
           <div className="space-y-4">
             {/* Top Key Metric Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between shadow-lg">
+              <div className="p-4 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl flex items-center justify-between shadow-lg">
                 <div>
-                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Total Order Value</span>
-                  <span className="text-xl font-extrabold text-white mt-1 block">₹{totalValue.toLocaleString('en-IN')}</span>
+                  <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-wider block">Total Order Value</span>
+                  <span className="text-xl font-extrabold text-white mt-1 block">â‚¹{totalValue.toLocaleString('en-IN')}</span>
                 </div>
-                <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+                <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
                   <FileText className="w-5 h-5" />
                 </div>
               </div>
 
-              <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between shadow-lg">
+              <div className="p-4 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl flex items-center justify-between shadow-lg">
                 <div>
-                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Payments Collected</span>
-                  <span className="text-xl font-extrabold text-emerald-400 mt-1 block">₹{totalCollected.toLocaleString('en-IN')}</span>
+                  <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-wider block">Payments Collected</span>
+                  <span className="text-xl font-extrabold text-emerald-400 mt-1 block">â‚¹{totalCollected.toLocaleString('en-IN')}</span>
                 </div>
                 <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
                   <IndianRupee className="w-5 h-5" />
                 </div>
               </div>
 
-              <div className="p-4 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl flex items-center justify-between shadow-lg">
+              <div className="p-4 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl flex items-center justify-between shadow-lg">
                 <div>
-                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Outstanding Balance</span>
-                  <span className="text-xl font-extrabold text-blue-600 dark:text-blue-400 mt-1 block">₹{totalOutstanding.toLocaleString('en-IN')}</span>
+                  <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-wider block">Outstanding Balance</span>
+                  <span className="text-xl font-extrabold text-emerald-400 mt-1 block">â‚¹{totalOutstanding.toLocaleString('en-IN')}</span>
                 </div>
-                <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
                   <ArrowDownLeft className="w-5 h-5" />
                 </div>
               </div>
             </div>
 
             {/* Payment Methods Breakdown Card */}
-            <div className="p-5 bg-gradient-to-br from-slate-900 to-[#111625] border border-slate-800/80 rounded-xl shadow-xl space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+            <div className="p-5 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-xl space-y-3">
+              <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-2.5">
                 <div className="flex items-center gap-2">
                   <PieChartIcon className="w-4 h-4 text-emerald-400" />
-                  <span className="text-xs text-slate-300 font-bold uppercase tracking-wider">Verified Payment Methods Breakdown</span>
+                  <span className="text-xs text-[var(--text-primary)] font-bold uppercase tracking-wider">Verified Payment Methods Breakdown</span>
                 </div>
-                <span className="text-[10px] text-slate-400 font-mono">
-                  Total Collected: <strong className="text-emerald-400 font-bold">₹{totalPaymentSum.toLocaleString('en-IN')}</strong>
+                <span className="text-[10px] text-[var(--text-secondary)] font-mono">
+                  Total Collected: <strong className="text-emerald-400 font-bold">â‚¹{totalPaymentSum.toLocaleString('en-IN')}</strong>
                 </span>
               </div>
 
               {pieChartData.length === 0 ? (
-                <div className="py-6 text-center text-slate-500 text-xs italic">
+                <div className="py-6 text-center text-[var(--text-muted)] text-xs italic">
                   No verified payments recorded in selected timeline
                 </div>
               ) : (
@@ -1017,12 +1017,12 @@ export default function FinancePage() {
                         <ChartTooltip
                           contentStyle={{ backgroundColor: '#090b11', border: '1px solid #1f2937', borderRadius: '8px', padding: '8px' }}
                           itemStyle={{ fontSize: '11px', color: '#fff' }}
-                          formatter={(value: any) => [`₹${Number(value).toLocaleString('en-IN')}`, 'Amount']}
+                          formatter={(value: any) => [`â‚¹${Number(value).toLocaleString('en-IN')}`, 'Amount']}
                         />
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                      <span className="text-[10px] text-slate-400 font-bold uppercase">Methods</span>
+                      <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase">Methods</span>
                       <span className="text-xs font-black text-white">{pieChartData.length}</span>
                     </div>
                   </div>
@@ -1033,14 +1033,14 @@ export default function FinancePage() {
                       const color = PIE_COLORS[index % PIE_COLORS.length];
                       const pct = totalPaymentSum > 0 ? Math.round((item.value / totalPaymentSum) * 100) : 0;
                       return (
-                        <div key={item.name} className="p-2.5 bg-slate-955/80 border border-slate-800/60 rounded-lg flex items-center justify-between gap-3">
+                        <div key={item.name} className="p-2.5 bg-slate-955/80 border border-[var(--border-color)] rounded-lg flex items-center justify-between gap-3">
                           <div className="flex items-center gap-2 min-w-0">
                             <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                            <span className="text-xs text-slate-200 font-bold truncate">{item.name}</span>
+                            <span className="text-xs text-[var(--text-primary)] font-bold truncate">{item.name}</span>
                           </div>
                           <div className="text-right shrink-0">
-                            <span className="text-xs font-black text-white block">₹{item.value.toLocaleString('en-IN')}</span>
-                            <span className="text-[10px] text-slate-400 font-mono block">{pct}% share</span>
+                            <span className="text-xs font-black text-white block">â‚¹{item.value.toLocaleString('en-IN')}</span>
+                            <span className="text-[10px] text-[var(--text-secondary)] font-mono block">{pct}% share</span>
                           </div>
                         </div>
                       );
@@ -1054,18 +1054,18 @@ export default function FinancePage() {
       })()}
 
       {/* Tabs */}
-      <div className="flex border-b border-slate-800">
+      <div className="flex border-b border-[var(--border-color)]">
         <button
           onClick={() => { setActiveTab('pending'); setSelectedOrderIds([]); }}
           className={`px-6 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 ${
             activeTab === 'pending'
-              ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
+              ? 'border-emerald-500 text-emerald-400'
+              : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
           }`}
         >
           <span>Awaiting Verification</span>
           {pendingOrders.length > 0 && (
-            <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-extrabold">
+            <span className="bg-emerald-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-extrabold">
               {pendingOrders.length}
             </span>
           )}
@@ -1074,12 +1074,12 @@ export default function FinancePage() {
           onClick={() => { setActiveTab('ledger'); setSelectedOrderIds([]); }}
           className={`px-6 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 ${
             activeTab === 'ledger'
-              ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
+              ? 'border-emerald-500 text-emerald-400'
+              : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
           }`}
         >
           <span>Active Ledgers</span>
-          <span className="bg-slate-800 text-slate-400 text-[10px] px-1.5 py-0.5 rounded-full font-semibold">
+          <span className="bg-[var(--bg-card)] text-[var(--text-secondary)] text-[10px] px-1.5 py-0.5 rounded-full font-semibold">
             {verifiedOrders.length}
           </span>
         </button>
@@ -1087,20 +1087,20 @@ export default function FinancePage() {
 
       {/* Bulk assign toolbar */}
       {canAssignFinance && selectedOrderIds.length > 0 && (
-        <div className="flex items-center justify-between p-3 bg-blue-500/5 border border-blue-500/20 rounded-xl animate-fade-in-up">
-          <span className="text-xs font-bold text-blue-400">
+        <div className="flex items-center justify-between p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-xl animate-fade-in-up">
+          <span className="text-xs font-bold text-emerald-400">
             {selectedOrderIds.length} order{selectedOrderIds.length > 1 ? 's' : ''} selected
           </span>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSelectedOrderIds([])}
-              className="px-3 py-1.5 bg-slate-900 border border-slate-700 text-slate-300 rounded font-bold text-[11px] transition-all cursor-pointer"
+              className="px-3 py-1.5 bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] rounded font-bold text-[11px] transition-all cursor-pointer"
             >
               Clear
             </button>
             <button
               onClick={() => setShowAssignModal(true)}
-              className="px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-md shadow-blue-500/10"
+              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-md shadow-emerald-500/10"
             >
               <UsersRound className="w-3.5 h-3.5" />
               <span>Assign Finance Member</span>
@@ -1112,31 +1112,31 @@ export default function FinancePage() {
       {/* Content */}
       {loading ? (
         <div className="py-24 flex flex-col items-center justify-center gap-3">
-          <Loader2 className="w-8 h-8 text-blue-600 dark:text-blue-400 animate-spin" />
-          <p className="text-xs text-slate-400">Loading ledger data...</p>
+          <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
+          <p className="text-xs text-[var(--text-secondary)]">Loading ledger data...</p>
         </div>
       ) : activeTab === 'pending' ? (
         // Awaiting Verification Table
         pendingOrders.length === 0 ? (
-          <div className="py-16 text-center bg-slate-900/30 border border-slate-800 rounded-xl">
+          <div className="py-16 text-center bg-[var(--bg-card)]/30 border border-[var(--border-color)] rounded-xl">
             <CheckCircle className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-            <p className="text-slate-300 font-semibold text-sm">All Clean! No Pending Orders</p>
-            <p className="text-xs text-slate-500 mt-1">Incoming orders punched by the sales team will appear here for review.</p>
+            <p className="text-[var(--text-primary)] font-semibold text-sm">All Clean! No Pending Orders</p>
+            <p className="text-xs text-[var(--text-muted)] mt-1">Incoming orders punched by the sales team will appear here for review.</p>
           </div>
         ) : (
           <div className="space-y-3">
-            <div className="bg-[#111625] border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+            <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl overflow-hidden shadow-xl">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
-                    <tr className="border-b border-slate-800 bg-slate-900/40 text-slate-400 font-semibold">
+                    <tr className="border-b border-[var(--border-color)] bg-[var(--bg-card)]/40 text-[var(--text-secondary)] font-semibold">
                       {canAssignFinance && (
                         <th className="py-4 px-3 w-10">
                           <input
                             type="checkbox"
                             checked={pendingOrders.length > 0 && selectedOrderIds.length === pendingOrders.length}
                             onChange={toggleAllOrders}
-                            className="accent-blue-500 w-3.5 h-3.5 cursor-pointer"
+                            className="accent-emerald-500 w-3.5 h-3.5 cursor-pointer"
                           />
                         </th>
                       )}
@@ -1152,77 +1152,77 @@ export default function FinancePage() {
                   </thead>
                   <tbody className="divide-y divide-slate-800/60">
                     {pendingOrders.map((order) => (
-                      <tr key={order.id} className={`hover:bg-slate-900/30 transition-all text-slate-300 ${selectedOrderIds.includes(order.id) ? 'bg-blue-500/5' : ''}`}>
+                      <tr key={order.id} className={`hover:bg-[var(--bg-card)]/30 transition-all text-[var(--text-primary)] ${selectedOrderIds.includes(order.id) ? 'bg-emerald-500/5' : ''}`}>
                         {canAssignFinance && (
                           <td className="py-4 px-3">
                             <input
                               type="checkbox"
                               checked={selectedOrderIds.includes(order.id)}
                               onChange={() => toggleOrderSelection(order.id)}
-                              className="accent-blue-500 w-3.5 h-3.5 cursor-pointer"
+                              className="accent-emerald-500 w-3.5 h-3.5 cursor-pointer"
                             />
                           </td>
                         )}
-                        <td className="py-4 px-4 font-mono font-bold text-slate-100">{order.orderCode}</td>
+                        <td className="py-4 px-4 font-mono font-bold text-[var(--text-primary)]">{order.orderCode}</td>
                         <td className="py-4 px-4 font-semibold relative">
                           <button
                             type="button"
                             onClick={() => setLeadInfoOrder(leadInfoOrder?.id === order.id ? null : order)}
-                            className="text-blue-400 hover:underline cursor-pointer text-left"
+                            className="text-emerald-400 hover:underline cursor-pointer text-left"
                           >
                             {order.lead.customerName}
                           </button>
                           {/* Lead Info Popover */}
                           {leadInfoOrder?.id === order.id && (
-                            <div className="absolute z-30 top-full left-0 mt-1 w-72 bg-[#0d1017] border border-slate-700 rounded-xl shadow-2xl p-4 space-y-2.5 animate-fade-in-up">
+                            <div className="absolute z-30 top-full left-0 mt-1 w-72 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl shadow-2xl p-4 space-y-2.5 animate-fade-in-up">
                               <div className="flex items-center justify-between">
-                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Lead Details</span>
-                                <button type="button" onClick={() => setLeadInfoOrder(null)} className="text-slate-500 hover:text-white cursor-pointer">
+                                <span className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-wider">Lead Details</span>
+                                <button type="button" onClick={() => setLeadInfoOrder(null)} className="text-[var(--text-muted)] hover:text-white cursor-pointer">
                                   <X className="w-3.5 h-3.5" />
                                 </button>
                               </div>
                               <div className="space-y-1.5">
                                 <div className="flex items-center gap-2 text-xs">
-                                  <User className="w-3.5 h-3.5 text-slate-500" />
+                                  <User className="w-3.5 h-3.5 text-[var(--text-muted)]" />
                                   <span className="font-bold text-white">{order.lead.customerName}</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-xs">
-                                  <Hash className="w-3.5 h-3.5 text-slate-500" />
-                                  <span className="text-slate-300 font-mono">{order.lead.leadCode}</span>
+                                  <Hash className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                                  <span className="text-[var(--text-primary)] font-mono">{order.lead.leadCode}</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-xs">
-                                  <Phone className="w-3.5 h-3.5 text-slate-500" />
-                                  <a href={`tel:${order.lead.mobile}`} className="text-blue-400 hover:underline font-semibold">{order.lead.mobile}</a>
+                                  <Phone className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                                  <a href={`tel:${order.lead.mobile}`} className="text-emerald-400 hover:underline font-semibold">{order.lead.mobile}</a>
                                 </div>
                                 <div className="flex items-center gap-2 text-xs">
-                                  <MapPin className="w-3.5 h-3.5 text-slate-500" />
-                                  <span className="text-slate-300">{order.lead.city}</span>
+                                  <MapPin className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                                  <span className="text-[var(--text-primary)]">{order.lead.city}</span>
                                 </div>
                               </div>
                               <Link
                                 href={`/leads/${order.lead.id}`}
-                                className="block w-full text-center py-1.5 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-lg text-[10px] font-bold hover:bg-blue-500/20 transition-all mt-2"
+                                className="block w-full text-center py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg text-[10px] font-bold hover:bg-emerald-500/20 transition-all mt-2"
                               >
-                                Open Full Lead →
+                                Open Full Lead â†’
                               </Link>
                             </div>
                           )}
                         </td>
-                        <td className="py-4 px-4 font-semibold text-slate-400">{order.systemSizeKw} kW</td>
-                        <td className="py-4 px-4 font-extrabold text-white">₹{order.totalValue.toLocaleString('en-IN')}</td>
-                        <td className="py-4 px-4 font-bold text-blue-600 dark:text-blue-400">
-                          ₹{order.downPayment.toLocaleString('en-IN')}
-                          <span className="block text-[10px] text-slate-500 font-normal">Method: {order.paymentMethod.toUpperCase()}</span>
+                        <td className="py-4 px-4 font-semibold text-[var(--text-secondary)]">{order.systemSizeKw} kW</td>
+                        <td className="py-4 px-4 font-extrabold text-white">â‚¹{order.totalValue.toLocaleString('en-IN')}</td>
+                        <td className="py-4 px-4 font-bold text-emerald-400">
+                          â‚¹{order.downPayment.toLocaleString('en-IN')}
+                          <span className="block text-[10px] text-[var(--text-muted)] font-normal">Method: {order.paymentMethod.toUpperCase()}</span>
                         </td>
-                        <td className="py-4 px-4 text-slate-400">
-                          <Link href={`/team?userId=${order.submittedBy.id}`} className="text-blue-600 dark:text-blue-400 hover:underline font-bold">
+                        <td className="py-4 px-4 text-[var(--text-secondary)]">
+                          <Link href={`/team?userId=${order.submittedBy.id}`} className="text-emerald-400 hover:underline font-bold">
                             {order.submittedBy.name}
                           </Link>
                         </td>
-                        <td className="py-4 px-4 font-medium text-slate-300">
+                        <td className="py-4 px-4 font-medium text-[var(--text-primary)]">
                           {order.assignedFinance ? (
-                            <span className="inline-flex items-center gap-1.5 text-blue-400 font-semibold text-xs">
-                              <User className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                            <span className="inline-flex items-center gap-1.5 text-emerald-400 font-semibold text-xs">
+                              <User className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                               <span>{order.assignedFinance.name}</span>
                             </span>
                           ) : (
@@ -1234,7 +1234,7 @@ export default function FinancePage() {
                             {canVerifyOrder && (
                               <button
                                 onClick={() => { setSelectedOrder(order); setModalMode('verify'); }}
-                                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-slate-950 rounded font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1"
+                                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-slate-950 rounded font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1"
                               >
                                 <Eye className="w-3.5 h-3.5" />
                                 <span>Verify Order</span>
@@ -1253,24 +1253,24 @@ export default function FinancePage() {
       ) : (
         // Active Ledger Table
         verifiedOrders.length === 0 ? (
-          <div className="py-16 text-center bg-slate-900/30 border border-slate-800 rounded-xl">
+          <div className="py-16 text-center bg-[var(--bg-card)]/30 border border-[var(--border-color)] rounded-xl">
             <AlertTriangle className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-            <p className="text-slate-300 font-semibold text-sm">No Active Ledgers</p>
-            <p className="text-xs text-slate-500 mt-1">Verified orders will display here to manage ledger entries and payment schedules.</p>
+            <p className="text-[var(--text-primary)] font-semibold text-sm">No Active Ledgers</p>
+            <p className="text-xs text-[var(--text-muted)] mt-1">Verified orders will display here to manage ledger entries and payment schedules.</p>
           </div>
         ) : (
-          <div className="bg-[#111625] border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl overflow-hidden shadow-xl">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="border-b border-slate-800 bg-slate-900/40 text-slate-400 font-semibold">
+                  <tr className="border-b border-[var(--border-color)] bg-[var(--bg-card)]/40 text-[var(--text-secondary)] font-semibold">
                     {canAssignFinance && (
                       <th className="py-4 px-3 w-10">
                         <input
                           type="checkbox"
                           checked={verifiedOrders.length > 0 && selectedOrderIds.length === verifiedOrders.length}
                           onChange={toggleAllOrders}
-                          className="accent-blue-500 w-3.5 h-3.5 cursor-pointer"
+                          className="accent-emerald-500 w-3.5 h-3.5 cursor-pointer"
                         />
                       </th>
                     )}
@@ -1287,75 +1287,75 @@ export default function FinancePage() {
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
                   {verifiedOrders.map((order) => (
-                    <tr key={order.id} className={`hover:bg-slate-900/30 transition-all text-slate-300 ${selectedOrderIds.includes(order.id) ? 'bg-blue-500/5' : ''}`}>
+                    <tr key={order.id} className={`hover:bg-[var(--bg-card)]/30 transition-all text-[var(--text-primary)] ${selectedOrderIds.includes(order.id) ? 'bg-emerald-500/5' : ''}`}>
                       {canAssignFinance && (
                         <td className="py-4 px-3">
                           <input
                             type="checkbox"
                             checked={selectedOrderIds.includes(order.id)}
                             onChange={() => toggleOrderSelection(order.id)}
-                            className="accent-blue-500 w-3.5 h-3.5 cursor-pointer"
+                            className="accent-emerald-500 w-3.5 h-3.5 cursor-pointer"
                           />
                         </td>
                       )}
-                      <td className="py-4 px-4 font-mono font-bold text-slate-100">{order.orderCode}</td>
+                      <td className="py-4 px-4 font-mono font-bold text-[var(--text-primary)]">{order.orderCode}</td>
                       <td className="py-4 px-4 font-semibold relative">
                         <button
                           type="button"
                           onClick={() => setLeadInfoOrder(leadInfoOrder?.id === order.id ? null : order)}
-                          className="text-blue-400 hover:underline cursor-pointer text-left"
+                          className="text-emerald-400 hover:underline cursor-pointer text-left"
                         >
                           {order.lead.customerName}
                         </button>
                         {/* Lead Info Popover */}
                         {leadInfoOrder?.id === order.id && (
-                          <div className="absolute z-30 top-full left-0 mt-1 w-72 bg-[#0d1017] border border-slate-700 rounded-xl shadow-2xl p-4 space-y-2.5 animate-fade-in-up">
+                          <div className="absolute z-30 top-full left-0 mt-1 w-72 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl shadow-2xl p-4 space-y-2.5 animate-fade-in-up">
                             <div className="flex items-center justify-between">
-                              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Lead Details</span>
-                              <button type="button" onClick={() => setLeadInfoOrder(null)} className="text-slate-500 hover:text-white cursor-pointer">
+                              <span className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-wider">Lead Details</span>
+                              <button type="button" onClick={() => setLeadInfoOrder(null)} className="text-[var(--text-muted)] hover:text-white cursor-pointer">
                                 <X className="w-3.5 h-3.5" />
                               </button>
                             </div>
                             <div className="space-y-1.5">
                               <div className="flex items-center gap-2 text-xs">
-                                <User className="w-3.5 h-3.5 text-slate-500" />
+                                <User className="w-3.5 h-3.5 text-[var(--text-muted)]" />
                                 <span className="font-bold text-white">{order.lead.customerName}</span>
                               </div>
                               <div className="flex items-center gap-2 text-xs">
-                                <Hash className="w-3.5 h-3.5 text-slate-500" />
-                                <span className="text-slate-300 font-mono">{order.lead.leadCode}</span>
+                                <Hash className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                                <span className="text-[var(--text-primary)] font-mono">{order.lead.leadCode}</span>
                               </div>
                               <div className="flex items-center gap-2 text-xs">
-                                <Phone className="w-3.5 h-3.5 text-slate-500" />
-                                <a href={`tel:${order.lead.mobile}`} className="text-blue-400 hover:underline font-semibold">{order.lead.mobile}</a>
+                                <Phone className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                                <a href={`tel:${order.lead.mobile}`} className="text-emerald-400 hover:underline font-semibold">{order.lead.mobile}</a>
                               </div>
                               <div className="flex items-center gap-2 text-xs">
-                                <MapPin className="w-3.5 h-3.5 text-slate-500" />
-                                <span className="text-slate-300">{order.lead.city}</span>
+                                <MapPin className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                                <span className="text-[var(--text-primary)]">{order.lead.city}</span>
                               </div>
                             </div>
                             <Link
                               href={`/leads/${order.lead.id}`}
-                              className="block w-full text-center py-1.5 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-lg text-[10px] font-bold hover:bg-blue-500/20 transition-all mt-2"
+                              className="block w-full text-center py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg text-[10px] font-bold hover:bg-emerald-500/20 transition-all mt-2"
                             >
-                              Open Full Lead →
+                              Open Full Lead â†’
                             </Link>
                           </div>
                         )}
                       </td>
-                      <td className="py-4 px-4 font-extrabold text-white">₹{order.totalValue.toLocaleString('en-IN')}</td>
-                      <td className="py-4 px-4 font-bold text-slate-400">₹{order.downPayment.toLocaleString('en-IN')}</td>
-                      <td className="py-4 px-4 font-extrabold text-emerald-400">₹{order.totalPaid.toLocaleString('en-IN')}</td>
-                      <td className="py-4 px-4 font-extrabold text-blue-600 dark:text-blue-400">
-                        ₹{order.balanceOutstanding.toLocaleString('en-IN')}
+                      <td className="py-4 px-4 font-extrabold text-white">â‚¹{order.totalValue.toLocaleString('en-IN')}</td>
+                      <td className="py-4 px-4 font-bold text-[var(--text-secondary)]">â‚¹{order.downPayment.toLocaleString('en-IN')}</td>
+                      <td className="py-4 px-4 font-extrabold text-emerald-400">â‚¹{order.totalPaid.toLocaleString('en-IN')}</td>
+                      <td className="py-4 px-4 font-extrabold text-emerald-400">
+                        â‚¹{order.balanceOutstanding.toLocaleString('en-IN')}
                         {order.balanceOutstanding === 0 && (
                           <span className="inline-block text-[9px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20 ml-2">Paid</span>
                         )}
                       </td>
-                      <td className="py-4 px-4 font-medium text-slate-300">
+                      <td className="py-4 px-4 font-medium text-[var(--text-primary)]">
                         {order.assignedFinance ? (
-                          <span className="inline-flex items-center gap-1.5 text-blue-400 font-semibold text-xs">
-                            <User className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                          <span className="inline-flex items-center gap-1.5 text-emerald-400 font-semibold text-xs">
+                            <User className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                             <span>{order.assignedFinance.name}</span>
                           </span>
                         ) : order.assignedOps ? (
@@ -1364,8 +1364,8 @@ export default function FinancePage() {
                             <span>{order.assignedOps.name}</span>
                           </span>
                         ) : order.submittedBy ? (
-                          <span className="inline-flex items-center gap-1.5 text-slate-400 text-xs">
-                            <User className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                          <span className="inline-flex items-center gap-1.5 text-[var(--text-secondary)] text-xs">
+                            <User className="w-3.5 h-3.5 text-[var(--text-muted)] shrink-0" />
                             <span>{order.submittedBy.name}</span>
                           </span>
                         ) : (
@@ -1375,7 +1375,7 @@ export default function FinancePage() {
                       <td className="py-4 px-4 capitalize">
                         <span className={`inline-block text-[9px] font-bold px-2 py-0.5 border rounded-full ${
                           order.status === 'finance_verified' 
-                            ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                             : order.status === 'ops_assigned'
                               ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
                               : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
@@ -1387,9 +1387,9 @@ export default function FinancePage() {
                         {canMaintainLedger ? (
                           <button
                             onClick={() => { setSelectedOrder(order); setModalMode('ledger_detail'); }}
-                            className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 hover:border-slate-600 text-slate-200 rounded font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1"
+                            className="px-3 py-1.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-slate-600 text-[var(--text-primary)] rounded font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1"
                           >
-                            <CreditCard className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                            <CreditCard className="w-3.5 h-3.5 text-emerald-400" />
                             <span>View Ledger</span>
                           </button>
                         ) : null}
@@ -1406,17 +1406,17 @@ export default function FinancePage() {
       {/* Modal dialogs */}
       {selectedOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="w-full max-w-4xl bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]">
+          <div className="w-full max-w-4xl bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]">
             
             {/* Header */}
-            <div className="p-5 border-b border-slate-800 bg-slate-900/30 flex justify-between items-center">
+            <div className="p-5 border-b border-[var(--border-color)] bg-[var(--bg-card)]/30 flex justify-between items-center">
               <div>
                 <h3 className="text-sm font-bold uppercase tracking-wider text-white">
-                  {modalMode === 'verify' ? 'Review & Verify Order' : `Financial Ledger — Order ${selectedOrder.orderCode}`}
+                  {modalMode === 'verify' ? 'Review & Verify Order' : `Financial Ledger â€” Order ${selectedOrder.orderCode}`}
                 </h3>
-                <p className="text-[11px] text-slate-400 mt-0.5">
+                <p className="text-[11px] text-[var(--text-secondary)] mt-0.5">
                   Client:{' '}
-                  <Link href={`/leads/${selectedOrder.lead.id}`} className="text-blue-600 dark:text-blue-400 hover:underline font-bold">
+                  <Link href={`/leads/${selectedOrder.lead.id}`} className="text-emerald-400 hover:underline font-bold">
                     {selectedOrder.lead.customerName}
                   </Link>{' '}
                   ({selectedOrder.lead.city})
@@ -1424,7 +1424,7 @@ export default function FinancePage() {
               </div>
               <button 
                 onClick={() => setSelectedOrder(null)} 
-                className="text-slate-400 hover:text-white cursor-pointer"
+                className="text-[var(--text-secondary)] hover:text-white cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1434,22 +1434,22 @@ export default function FinancePage() {
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               
               {/* Common details */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-slate-950/40 border border-slate-850 rounded-xl text-xs">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-xs">
                 <div>
-                  <span className="text-slate-400 block font-semibold">Total Contract Value</span>
-                  <span className="text-sm font-extrabold text-white">₹{selectedOrder.totalValue.toLocaleString('en-IN')}</span>
+                  <span className="text-[var(--text-secondary)] block font-semibold">Total Contract Value</span>
+                  <span className="text-sm font-extrabold text-white">â‚¹{selectedOrder.totalValue.toLocaleString('en-IN')}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block font-semibold">Down Payment Punched</span>
-                  <span className="text-sm font-bold text-blue-600 dark:text-blue-400">₹{selectedOrder.downPayment.toLocaleString('en-IN')}</span>
+                  <span className="text-[var(--text-secondary)] block font-semibold">Down Payment Punched</span>
+                  <span className="text-sm font-bold text-emerald-400">â‚¹{selectedOrder.downPayment.toLocaleString('en-IN')}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block font-semibold">Total Payments Cleared</span>
-                  <span className="text-sm font-extrabold text-emerald-400">₹{selectedOrder.totalPaid.toLocaleString('en-IN')}</span>
+                  <span className="text-[var(--text-secondary)] block font-semibold">Total Payments Cleared</span>
+                  <span className="text-sm font-extrabold text-emerald-400">â‚¹{selectedOrder.totalPaid.toLocaleString('en-IN')}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block font-semibold">Outstanding Balance</span>
-                  <span className="text-sm font-extrabold text-blue-600 dark:text-blue-400">₹{selectedOrder.balanceOutstanding.toLocaleString('en-IN')}</span>
+                  <span className="text-[var(--text-secondary)] block font-semibold">Outstanding Balance</span>
+                  <span className="text-sm font-extrabold text-emerald-400">â‚¹{selectedOrder.balanceOutstanding.toLocaleString('en-IN')}</span>
                 </div>
               </div>
 
@@ -1459,8 +1459,8 @@ export default function FinancePage() {
                   
                   {/* Left Column: Order Details and Documents */}
                   <div className="space-y-6">
-                    <div className="space-y-3.5 bg-slate-900/20 p-4 border border-slate-850 rounded-xl text-xs">
-                      <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-2">Order Punching Fields</h4>
+                    <div className="space-y-3.5 bg-[var(--bg-card)]/20 p-4 border border-[var(--border-color)] rounded-xl text-xs">
+                      <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-[var(--border-color)] pb-2">Order Punching Fields</h4>
                       
                       <div className="grid grid-cols-2 gap-y-3 gap-x-2">
                         <div>
@@ -1492,25 +1492,25 @@ export default function FinancePage() {
                         {selectedOrder.subsidyAmount && (
                           <div>
                             <span className="text-slate-450 block font-semibold">Subsidy Amount</span>
-                            <span className="text-slate-205 font-bold text-emerald-450">₹{selectedOrder.subsidyAmount.toLocaleString('en-IN')}</span>
+                            <span className="text-slate-205 font-bold text-emerald-450">â‚¹{selectedOrder.subsidyAmount.toLocaleString('en-IN')}</span>
                           </div>
                         )}
                       </div>
                     </div>
 
                     {/* Uploaded Documents List */}
-                    <div className="bg-slate-900/20 p-4 border border-slate-850 rounded-xl text-xs space-y-3">
-                      <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-2">Mandatory Documents</h4>
+                    <div className="bg-[var(--bg-card)]/20 p-4 border border-[var(--border-color)] rounded-xl text-xs space-y-3">
+                      <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-[var(--border-color)] pb-2">Mandatory Documents</h4>
                       
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {['aadhaar', 'pan', 'electricity_bill', 'bank_passbook', 'downpayment_receipt'].map((type) => {
                           const doc = selectedOrder.documents?.find(d => d.docType === type);
                           return (
-                            <div key={type} className="p-2.5 bg-slate-950/40 border border-slate-850 rounded-lg flex items-center justify-between">
+                            <div key={type} className="p-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg flex items-center justify-between">
                               <div>
-                                <span className="text-[10px] text-slate-500 font-semibold block">{DOC_TYPES[type]}</span>
+                                <span className="text-[10px] text-[var(--text-muted)] font-semibold block">{DOC_TYPES[type]}</span>
                                 <span className={`text-[10px] font-bold ${doc ? 'text-emerald-400' : 'text-rose-450'}`}>
-                                  {doc ? '✓ Uploaded' : '✗ Missing'}
+                                  {doc ? 'âœ“ Uploaded' : 'âœ— Missing'}
                                 </span>
                               </div>
                               {doc && (
@@ -1518,7 +1518,7 @@ export default function FinancePage() {
                                   href={`/api/v1/orders/${selectedOrder.id}/documents/${doc.id}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-[10px] text-blue-600 dark:text-blue-400 hover:underline font-bold"
+                                  className="text-[10px] text-emerald-400 hover:underline font-bold"
                                 >
                                   View File
                                 </a>
@@ -1531,22 +1531,22 @@ export default function FinancePage() {
                   </div>
 
                   {/* Right Column: Approval Action */}
-                  <div className="bg-slate-900/20 p-5 border border-slate-850 rounded-xl flex flex-col justify-between h-full">
+                  <div className="bg-[var(--bg-card)]/20 p-5 border border-[var(--border-color)] rounded-xl flex flex-col justify-between h-full">
                     <div className="space-y-4">
-                      <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-2">Verification Action</h4>
+                      <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-[var(--border-color)] pb-2">Verification Action</h4>
                       
-                      <div className="p-3 bg-blue-500/5 border border-blue-500/10 rounded-lg text-slate-300 text-xs leading-normal">
+                      <div className="p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-lg text-[var(--text-primary)] text-xs leading-normal">
                         Please inspect all file uploads, client load capacity, connection numbers, and initial payment methods. 
                         Approving moves this order to **Operations** and records the initial down payment in the active ledger.
                       </div>
 
                       <div className="space-y-2">
-                        <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Remarks / Rejection Reason</label>
+                        <label className="block text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Remarks / Rejection Reason</label>
                         <textarea
                           placeholder="Provide approval notes or a detailed rejection reason if declining..."
                           value={financeRemark}
                           onChange={(e) => setFinanceRemark(e.target.value)}
-                          className="w-full h-24 p-3 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-slate-700 placeholder-slate-500"
+                          className="w-full h-24 p-3 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-color)] placeholder-slate-500"
                         />
                       </div>
                     </div>
@@ -1573,8 +1573,8 @@ export default function FinancePage() {
                         </button>
                       </div>
                     ) : (
-                      <div className="p-3.5 mt-6 bg-slate-950/60 border border-slate-800 rounded-lg text-center">
-                        <span className="text-[11px] text-slate-500 italic">🔒 Restricted: Requires 'Verify Order' permission to approve or reject</span>
+                      <div className="p-3.5 mt-6 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-center">
+                        <span className="text-[11px] text-[var(--text-muted)] italic">ðŸ”’ Restricted: Requires 'Verify Order' permission to approve or reject</span>
                       </div>
                     )}
                   </div>
@@ -1586,20 +1586,20 @@ export default function FinancePage() {
                   
                   {/* Ledger list: 3 columns */}
                   <div className="md:col-span-3 space-y-4">
-                    <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-2">Payment Transaction History</h4>
+                    <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-[var(--border-color)] pb-2">Payment Transaction History</h4>
                     
                     {selectedOrder.payments.length === 0 ? (
-                      <div className="py-8 text-center text-slate-500 text-xs">No payments recorded.</div>
+                      <div className="py-8 text-center text-[var(--text-muted)] text-xs">No payments recorded.</div>
                     ) : (
                       <div className="space-y-3.5 max-h-[45vh] overflow-y-auto pr-1">
                         {(() => {
                           const downpaymentDoc = selectedOrder.documents?.find(d => d.docType === 'downpayment_receipt');
                           return selectedOrder.payments.map((pmt) => (
-                            <div key={pmt.id} className={`p-3.5 border rounded-xl text-xs space-y-1.5 transition-all ${pmt.isDiscarded ? 'bg-red-950/10 border-red-900/20 opacity-60' : 'bg-slate-900/40 border-slate-850 hover:bg-slate-900/60'}`}>
+                            <div key={pmt.id} className={`p-3.5 border rounded-xl text-xs space-y-1.5 transition-all ${pmt.isDiscarded ? 'bg-red-950/10 border-red-900/20 opacity-60' : 'bg-[var(--bg-card)]/40 border-[var(--border-color)] hover:bg-[var(--bg-card)]/60'}`}>
                               <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-2">
-                                  <span className={`font-extrabold text-sm ${pmt.isDiscarded ? 'line-through text-slate-500' : 'text-white'}`}>
-                                    ₹{pmt.amount.toLocaleString('en-IN')}
+                                  <span className={`font-extrabold text-sm ${pmt.isDiscarded ? 'line-through text-[var(--text-muted)]' : 'text-white'}`}>
+                                    â‚¹{pmt.amount.toLocaleString('en-IN')}
                                   </span>
                                   {pmt.isDiscarded && (
                                     <span className="text-[9px] bg-rose-950/80 border border-rose-900/50 text-rose-450 px-1.5 py-0.5 rounded font-bold uppercase tracking-wide">
@@ -1608,7 +1608,7 @@ export default function FinancePage() {
                                   )}
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <span className="font-mono text-[9px] bg-slate-950 border border-slate-850 px-2 py-0.5 rounded text-slate-400 capitalize">
+                                  <span className="font-mono text-[9px] bg-[var(--bg-main)] border border-[var(--border-color)] px-2 py-0.5 rounded text-[var(--text-secondary)] capitalize">
                                     {METHOD_LABELS[pmt.paymentMethod] || pmt.paymentMethod}
                                   </span>
                                   {!pmt.isDiscarded && canMaintainLedger && (
@@ -1624,7 +1624,7 @@ export default function FinancePage() {
                                           setEditPaymentReason('');
                                         }}
                                         title="Modify Payment"
-                                        className="text-slate-400 hover:text-blue-600 dark:text-blue-400 p-1 hover:bg-slate-800 rounded transition-all cursor-pointer border border-transparent"
+                                        className="text-[var(--text-secondary)] hover:text-emerald-400 p-1 hover:bg-[var(--bg-card)] rounded transition-all cursor-pointer border border-transparent"
                                       >
                                         <SlidersHorizontal className="w-3.5 h-3.5" />
                                       </button>
@@ -1635,7 +1635,7 @@ export default function FinancePage() {
                                           setDiscardPaymentReason('');
                                         }}
                                         title="Discard Payment"
-                                        className="text-slate-400 hover:text-rose-500 p-1 hover:bg-slate-850 rounded transition-all cursor-pointer border border-transparent"
+                                        className="text-[var(--text-secondary)] hover:text-rose-500 p-1 hover:bg-[var(--bg-card)] rounded transition-all cursor-pointer border border-transparent"
                                       >
                                         <Trash2 className="w-3.5 h-3.5" />
                                       </button>
@@ -1656,35 +1656,35 @@ export default function FinancePage() {
                                 </p>
                               )}
                               {pmt.changeReason && (
-                                <p className="text-[10px] text-blue-600 dark:text-blue-400 italic bg-blue-950/20 border border-blue-900/30 p-2 rounded-lg mt-1.5">
+                                <p className="text-[10px] text-emerald-400 italic bg-emerald-950/20 border border-emerald-900/30 p-2 rounded-lg mt-1.5">
                                   <strong>Edit Reason:</strong> {pmt.changeReason}
                                 </p>
                               )}
                               {(pmt.receiptUrl || (pmt.remarks?.includes('Initial Down Payment') && downpaymentDoc)) ? (
                                 <div className="flex items-center gap-1.5 pt-0.5">
-                                  <span className="text-[10px] text-slate-400">Receipt copy:</span>
+                                  <span className="text-[10px] text-[var(--text-secondary)]">Receipt copy:</span>
                                   <a 
                                     href={pmt.receiptUrl || `/api/v1/orders/${selectedOrder.id}/documents/${downpaymentDoc?.id}`} 
                                     target="_blank" 
                                     rel="noopener noreferrer" 
-                                    className="text-[10px] text-blue-600 dark:text-blue-400 hover:underline font-bold flex items-center gap-1"
+                                    className="text-[10px] text-emerald-400 hover:underline font-bold flex items-center gap-1"
                                   >
-                                    <FileText className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                                    <FileText className="w-3 h-3 text-emerald-400" />
                                     <span>{pmt.receiptUrl ? 'View Image' : 'View Receipt'}</span>
                                   </a>
                                 </div>
                               ) : null}
 
-                              <div className="flex items-center justify-between text-[9px] text-slate-500 font-medium pt-1.5 border-t border-slate-800/40">
+                              <div className="flex items-center justify-between text-[9px] text-[var(--text-muted)] font-medium pt-1.5 border-t border-[var(--border-color)]">
                                 <span className="flex items-center gap-1">
-                                  <User className="w-2.5 h-2.5 text-slate-500" />
+                                  <User className="w-2.5 h-2.5 text-[var(--text-muted)]" />
                                   Recorded by{' '}
-                                  <Link href={`/team?userId=${pmt.recordedBy.id}`} className="text-blue-600 dark:text-blue-400 hover:underline font-bold">
+                                  <Link href={`/team?userId=${pmt.recordedBy.id}`} className="text-emerald-400 hover:underline font-bold">
                                     {pmt.recordedBy.name}
                                   </Link>
                                 </span>
                                 <span className="flex items-center gap-1 font-mono">
-                                  <Calendar className="w-2.5 h-2.5 text-slate-500" />
+                                  <Calendar className="w-2.5 h-2.5 text-[var(--text-muted)]" />
                                   {new Date(pmt.paymentDate).toLocaleDateString('en-IN', {
                                     day: '2-digit',
                                     month: 'short',
@@ -1703,12 +1703,12 @@ export default function FinancePage() {
 
                   {/* Record Payment Form: 2 columns */}
                   {canMaintainLedger ? (
-                    <div className="md:col-span-2 bg-slate-900/20 p-4 border border-slate-850 rounded-xl">
-                      <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-2 mb-4">Record Payment Receipt</h4>
+                    <div className="md:col-span-2 bg-[var(--bg-card)]/20 p-4 border border-[var(--border-color)] rounded-xl">
+                      <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-[var(--border-color)] pb-2 mb-4">Record Payment Receipt</h4>
                       
                       <form onSubmit={handleRecordPayment} className="space-y-4">
                         <div>
-                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Receipt Amount *</label>
+                          <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Receipt Amount *</label>
                           <div className="relative">
                             <input
                               type="number"
@@ -1719,19 +1719,19 @@ export default function FinancePage() {
                               value={newPaymentAmount}
                               onChange={(e) => setNewPaymentAmount(e.target.value)}
                               disabled={selectedOrder.balanceOutstanding === 0}
-                              className="w-full pl-8 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700 placeholder-slate-600 font-extrabold"
+                              className="w-full pl-8 pr-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)] placeholder-slate-600 font-extrabold"
                             />
-                            <span className="absolute left-3 top-2 text-slate-500 font-bold">₹</span>
+                            <span className="absolute left-3 top-2 text-[var(--text-muted)] font-bold">â‚¹</span>
                           </div>
                         </div>
 
                         <div>
-                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Payment Method *</label>
+                          <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Payment Method *</label>
                           <select
                             value={newPaymentMethod}
                             onChange={(e) => setNewPaymentMethod(e.target.value)}
                             disabled={selectedOrder.balanceOutstanding === 0}
-                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700 capitalize"
+                            className="w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)] capitalize"
                           >
                             {PAYMENT_METHODS.map((m) => (
                               <option key={m.value} value={m.value}>{m.label}</option>
@@ -1740,30 +1740,30 @@ export default function FinancePage() {
                         </div>
 
                         <div>
-                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Transaction Ref / Cheque No.</label>
+                          <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Transaction Ref / Cheque No.</label>
                           <input
                             type="text"
                             placeholder="Ref ID, Cheque No, Bank Details"
                             value={newPaymentRef}
                             onChange={(e) => setNewPaymentRef(e.target.value)}
                             disabled={selectedOrder.balanceOutstanding === 0}
-                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700 placeholder-slate-600 font-mono"
+                            className="w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)] placeholder-slate-600 font-mono"
                           />
                         </div>
 
                         <div>
-                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Remarks / Note</label>
+                          <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Remarks / Note</label>
                           <textarea
                             placeholder="e.g. 2nd Milestone payment, Loan Disbursal part, etc."
                             value={newPaymentRemarks}
                             onChange={(e) => setNewPaymentRemarks(e.target.value)}
                             disabled={selectedOrder.balanceOutstanding === 0}
-                            className="w-full h-20 p-3 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700 placeholder-slate-600"
+                            className="w-full h-20 p-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)] placeholder-slate-600"
                           />
                         </div>
 
                         <div>
-                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Receipt Image</label>
+                          <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-2">Receipt Image</label>
                           
                           {/* Hidden file inputs */}
                           <input
@@ -1786,15 +1786,15 @@ export default function FinancePage() {
 
                           {/* State 1: Uploading */}
                           {receiptUploading && (
-                            <div className="flex flex-col items-center justify-center p-6 bg-slate-950/60 border border-dashed border-blue-500/40 rounded-xl space-y-2 animate-pulse">
-                              <Loader2 className="w-6 h-6 text-blue-600 dark:text-blue-400 animate-spin" />
-                              <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Receipt is Uploading</span>
+                            <div className="flex flex-col items-center justify-center p-6 bg-[var(--bg-main)] border border-dashed border-emerald-500/40 rounded-xl space-y-2 animate-pulse">
+                              <Loader2 className="w-6 h-6 text-emerald-400 animate-spin" />
+                              <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">Receipt is Uploading</span>
                             </div>
                           )}
 
                           {/* State 2: Uploaded (Success Preview) */}
                           {!receiptUploading && receiptUrl && (
-                            <div className="p-3 bg-slate-950 border border-emerald-500/30 rounded-xl space-y-3 relative group overflow-hidden">
+                            <div className="p-3 bg-[var(--bg-main)] border border-emerald-500/30 rounded-xl space-y-3 relative group overflow-hidden">
                               <div className="absolute top-2 right-2 z-10">
                                 <button
                                   type="button"
@@ -1809,18 +1809,18 @@ export default function FinancePage() {
                                 </button>
                               </div>
                               <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 bg-slate-900 border border-slate-800 rounded-lg flex items-center justify-center overflow-hidden bg-cover bg-center" style={{ backgroundImage: `url(${receiptUrl})` }}>
-                                  {!receiptUrl && <Image className="w-5 h-5 text-slate-500" />}
+                                <div className="w-12 h-12 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg flex items-center justify-center overflow-hidden bg-cover bg-center" style={{ backgroundImage: `url(${receiptUrl})` }}>
+                                  {!receiptUrl && <Image className="w-5 h-5 text-[var(--text-muted)]" />}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <p className="text-[11px] font-bold text-emerald-400 truncate flex items-center gap-1">
-                                    <span>✓ Uploaded Successfully</span>
+                                    <span>âœ“ Uploaded Successfully</span>
                                   </p>
                                   <a 
                                     href={receiptUrl} 
                                     target="_blank" 
                                     rel="noopener noreferrer" 
-                                    className="text-[10px] text-blue-600 dark:text-blue-400 hover:text-blue-600 dark:text-blue-400 font-bold underline mt-0.5 inline-block"
+                                    className="text-[10px] text-emerald-400 hover:text-emerald-400 font-bold underline mt-0.5 inline-block"
                                   >
                                     View Full Receipt Image
                                   </a>
@@ -1836,26 +1836,26 @@ export default function FinancePage() {
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
                                 disabled={selectedOrder.balanceOutstanding === 0}
-                                className="flex flex-col items-center justify-center p-4 bg-slate-950 hover:bg-slate-900 border border-slate-850 hover:border-blue-500/30 rounded-xl space-y-1.5 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed group"
+                                className="flex flex-col items-center justify-center p-4 bg-[var(--bg-main)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-emerald-500/30 rounded-xl space-y-1.5 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed group"
                               >
-                                <div className="w-8 h-8 bg-slate-900 border border-slate-800 group-hover:border-blue-500/20 rounded-lg flex items-center justify-center transition-all">
-                                  <Upload className="w-4 h-4 text-slate-400 group-hover:text-blue-600 dark:text-blue-400 transition-colors" />
+                                <div className="w-8 h-8 bg-[var(--bg-card)] border border-[var(--border-color)] group-hover:border-emerald-500/20 rounded-lg flex items-center justify-center transition-all">
+                                  <Upload className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-emerald-400 transition-colors" />
                                 </div>
-                                <span className="text-[10px] font-bold text-slate-300 group-hover:text-white transition-colors">Upload File</span>
-                                <span className="text-[8px] text-slate-500">From Device</span>
+                                <span className="text-[10px] font-bold text-[var(--text-primary)] group-hover:text-white transition-colors">Upload File</span>
+                                <span className="text-[8px] text-[var(--text-muted)]">From Device</span>
                               </button>
 
                               <button
                                 type="button"
                                 onClick={() => cameraInputRef.current?.click()}
                                 disabled={selectedOrder.balanceOutstanding === 0}
-                                className="flex flex-col items-center justify-center p-4 bg-slate-950 hover:bg-slate-900 border border-slate-850 hover:border-blue-500/30 rounded-xl space-y-1.5 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed group"
+                                className="flex flex-col items-center justify-center p-4 bg-[var(--bg-main)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-emerald-500/30 rounded-xl space-y-1.5 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed group"
                               >
-                                <div className="w-8 h-8 bg-slate-900 border border-slate-800 group-hover:border-blue-500/20 rounded-lg flex items-center justify-center transition-all">
-                                  <Camera className="w-4 h-4 text-slate-400 group-hover:text-blue-600 dark:text-blue-400 transition-colors" />
+                                <div className="w-8 h-8 bg-[var(--bg-card)] border border-[var(--border-color)] group-hover:border-emerald-500/20 rounded-lg flex items-center justify-center transition-all">
+                                  <Camera className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-emerald-400 transition-colors" />
                                 </div>
-                                <span className="text-[10px] font-bold text-slate-300 group-hover:text-white transition-colors">Take Photo</span>
-                                <span className="text-[8px] text-slate-500">Open Camera</span>
+                                <span className="text-[10px] font-bold text-[var(--text-primary)] group-hover:text-white transition-colors">Take Photo</span>
+                                <span className="text-[8px] text-[var(--text-muted)]">Open Camera</span>
                               </button>
                             </div>
                           )}
@@ -1863,13 +1863,13 @@ export default function FinancePage() {
 
                         {selectedOrder.balanceOutstanding === 0 ? (
                           <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs rounded-lg font-bold text-center">
-                            ✓ This ledger has been fully cleared.
+                            âœ“ This ledger has been fully cleared.
                           </div>
                         ) : (
                           <button
                             type="submit"
                             disabled={paymentRecording || receiptUploading}
-                            className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs shadow-md shadow-blue-500/10 flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                            className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md shadow-emerald-500/10 flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
                           >
                             {paymentRecording ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <PlusCircle className="w-3.5 h-3.5" />}
                             <span>Record Receipt</span>
@@ -1878,8 +1878,8 @@ export default function FinancePage() {
                       </form>
                     </div>
                   ) : (
-                    <div className="md:col-span-2 bg-slate-900/20 p-6 border border-slate-850 rounded-xl flex items-center justify-center text-center">
-                      <p className="text-[11px] text-slate-500 italic">🔒 Maintaining ledger is restricted: You do not have permission to record or modify payments.</p>
+                    <div className="md:col-span-2 bg-[var(--bg-card)]/20 p-6 border border-[var(--border-color)] rounded-xl flex items-center justify-center text-center">
+                      <p className="text-[11px] text-[var(--text-muted)] italic">ðŸ”’ Maintaining ledger is restricted: You do not have permission to record or modify payments.</p>
                     </div>
                   )}
 
@@ -1895,34 +1895,34 @@ export default function FinancePage() {
       {/* Edit Payment Modal */}
       {editingPayment && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/75 backdrop-blur-sm px-4">
-          <div className="w-full max-w-md bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
-            <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+          <div className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div className="p-6 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex justify-between items-center">
               <h3 className="text-sm font-bold uppercase tracking-wider text-white">Modify Payment Record</h3>
-              <button type="button" onClick={() => setEditingPayment(null)} className="text-slate-400 hover:text-white cursor-pointer border border-transparent">
+              <button type="button" onClick={() => setEditingPayment(null)} className="text-[var(--text-secondary)] hover:text-white cursor-pointer border border-transparent">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleModifyPayment} className="p-6 space-y-4">
               <div>
-                <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Receipt Amount (₹) *</label>
+                <label className="block text-[10px] font-semibold uppercase text-[var(--text-secondary)] mb-1">Receipt Amount (â‚¹) *</label>
                 <input
                   type="number"
                   step="0.01"
                   required
                   value={editPaymentAmt}
                   onChange={(e) => setEditPaymentAmt(e.target.value)}
-                  className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
+                  className="block w-full px-3 py-2 bg-slate-955 border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-emerald-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Payment Method *</label>
+                <label className="block text-[10px] font-semibold uppercase text-[var(--text-secondary)] mb-1">Payment Method *</label>
                 <select
                   required
                   value={editPaymentMethod}
                   onChange={(e) => setEditPaymentMethod(e.target.value)}
-                  className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
+                  className="block w-full px-3 py-2 bg-slate-955 border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-emerald-500 focus:outline-none"
                 >
                   {PAYMENT_METHODS.map((m) => (
                     <option key={m.value} value={m.value}>{m.label}</option>
@@ -1931,49 +1931,49 @@ export default function FinancePage() {
               </div>
 
               <div>
-                <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Transaction Reference</label>
+                <label className="block text-[10px] font-semibold uppercase text-[var(--text-secondary)] mb-1">Transaction Reference</label>
                 <input
                   type="text"
                   value={editPaymentRef}
                   onChange={(e) => setEditPaymentRef(e.target.value)}
                   placeholder="e.g. Bank TXN, UPI ID, Cheque number"
-                  className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
+                  className="block w-full px-3 py-2 bg-slate-955 border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-emerald-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Remarks</label>
+                <label className="block text-[10px] font-semibold uppercase text-[var(--text-secondary)] mb-1">Remarks</label>
                 <textarea
                   value={editPaymentRemarks}
                   onChange={(e) => setEditPaymentRemarks(e.target.value)}
                   rows={2}
-                  className="block w-full px-3 py-2 bg-slate-955 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none resize-none"
+                  className="block w-full px-3 py-2 bg-slate-955 border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-emerald-500 focus:outline-none resize-none"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-semibold uppercase text-blue-600 dark:text-blue-400 mb-1">Reason for Modification *</label>
+                <label className="block text-[10px] font-semibold uppercase text-emerald-400 mb-1">Reason for Modification *</label>
                 <textarea
                   required
                   value={editPaymentReason}
                   onChange={(e) => setEditPaymentReason(e.target.value)}
                   placeholder="Explain why this payment record is being changed..."
                   rows={2}
-                  className="block w-full px-3 py-2 bg-slate-955 border border-blue-900/40 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none resize-none"
+                  className="block w-full px-3 py-2 bg-slate-955 border border-emerald-900/40 rounded-lg text-white text-xs focus:ring-emerald-500 focus:outline-none resize-none"
                 />
               </div>
 
-              <div className="flex gap-3 border-t border-slate-800/80 pt-4 justify-end">
+              <div className="flex gap-3 border-t border-[var(--border-color)] pt-4 justify-end">
                 <button
                   type="button"
                   onClick={() => setEditingPayment(null)}
-                  className="py-2 px-4 bg-slate-900 border border-slate-800 text-slate-400 rounded-lg font-bold text-xs"
+                  className="py-2 px-4 bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] rounded-lg font-bold text-xs"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="py-2 px-5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs shadow-md"
+                  className="py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md"
                 >
                   Save Changes
                 </button>
@@ -1986,20 +1986,20 @@ export default function FinancePage() {
       {/* Discard Payment Modal */}
       {discardingPayment && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/75 backdrop-blur-sm px-4">
-          <div className="w-full max-w-md bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
-            <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+          <div className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div className="p-6 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex justify-between items-center">
               <h3 className="text-sm font-bold uppercase tracking-wider text-rose-500 flex items-center gap-1.5">
                 <AlertTriangle className="w-4 h-4 text-rose-500" />
                 <span>Discard Payment Record</span>
               </h3>
-              <button type="button" onClick={() => setDiscardingPayment(null)} className="text-slate-400 hover:text-white cursor-pointer border border-transparent">
+              <button type="button" onClick={() => setDiscardingPayment(null)} className="text-[var(--text-secondary)] hover:text-white cursor-pointer border border-transparent">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleDiscardPayment} className="p-6 space-y-4">
-              <p className="text-xs text-slate-400 leading-relaxed bg-rose-950/20 border border-rose-900/30 p-3 rounded-lg text-rose-350">
-                Are you sure you want to discard the payment of <strong>₹{discardingPayment.amount.toLocaleString('en-IN')}</strong>? This action cannot be undone, and the order balance outstanding will be automatically adjusted.
+              <p className="text-xs text-[var(--text-secondary)] leading-relaxed bg-rose-950/20 border border-rose-900/30 p-3 rounded-lg text-rose-350">
+                Are you sure you want to discard the payment of <strong>â‚¹{discardingPayment.amount.toLocaleString('en-IN')}</strong>? This action cannot be undone, and the order balance outstanding will be automatically adjusted.
               </p>
 
               <div>
@@ -2010,15 +2010,15 @@ export default function FinancePage() {
                   onChange={(e) => setDiscardPaymentReason(e.target.value)}
                   placeholder="Provide a mandatory reason why this payment is being discarded..."
                   rows={3}
-                  className="block w-full px-3 py-2 bg-slate-955 border border-rose-900/60 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none resize-none"
+                  className="block w-full px-3 py-2 bg-slate-955 border border-rose-900/60 rounded-lg text-white text-xs focus:ring-emerald-500 focus:outline-none resize-none"
                 />
               </div>
 
-              <div className="flex gap-3 border-t border-slate-800/80 pt-4 justify-end">
+              <div className="flex gap-3 border-t border-[var(--border-color)] pt-4 justify-end">
                 <button
                   type="button"
                   onClick={() => setDiscardingPayment(null)}
-                  className="py-2 px-4 bg-slate-900 border border-slate-800 text-slate-400 rounded-lg font-bold text-xs font-sans"
+                  className="py-2 px-4 bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] rounded-lg font-bold text-xs font-sans"
                 >
                   Cancel
                 </button>
@@ -2037,44 +2037,44 @@ export default function FinancePage() {
       {/* Bulk Assign Finance Member Modal */}
       {showAssignModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="w-full max-w-lg bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
-            <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+          <div className="w-full max-w-lg bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div className="p-6 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex justify-between items-center">
               <h3 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
-                <UsersRound className="w-4 h-4 text-blue-400" />
+                <UsersRound className="w-4 h-4 text-emerald-400" />
                 Assign Finance Team Member
               </h3>
-              <button onClick={() => { setShowAssignModal(false); setAssignTargetUserId(''); }} className="text-slate-400 hover:text-white cursor-pointer">
+              <button onClick={() => { setShowAssignModal(false); setAssignTargetUserId(''); }} className="text-[var(--text-secondary)] hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="p-6 space-y-4">
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
                 Assign <strong className="text-white">{selectedOrderIds.length}</strong> selected order{selectedOrderIds.length > 1 ? 's' : ''} to a finance team member in your reporting hierarchy.
               </p>
 
               <div>
-                <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Select Team Member *</label>
+                <label className="block text-[10px] font-semibold uppercase text-[var(--text-secondary)] mb-1">Select Team Member *</label>
                 <select
                   required
                   value={assignTargetUserId}
                   onChange={(e) => setAssignTargetUserId(e.target.value)}
-                  className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
+                  className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-emerald-500 focus:outline-none"
                 >
                   <option value="">Select a team member...</option>
                   {financeSubordinates.map((emp) => (
                     <option key={emp.id} value={emp.id}>
-                      {emp.name} ({emp.department?.name || 'N/A'} — {emp.designation?.name || emp.role})
+                      {emp.name} ({emp.department?.name || 'N/A'} â€” {emp.designation?.name || emp.role})
                     </option>
                   ))}
                 </select>
               </div>
 
-              <div className="flex gap-3 border-t border-slate-800/80 pt-4 justify-end">
+              <div className="flex gap-3 border-t border-[var(--border-color)] pt-4 justify-end">
                 <button
                   type="button"
                   onClick={() => { setShowAssignModal(false); setAssignTargetUserId(''); }}
-                  className="py-2 px-4 bg-slate-900 border border-slate-800 text-slate-400 rounded-lg font-bold text-xs cursor-pointer"
+                  className="py-2 px-4 bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] rounded-lg font-bold text-xs cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -2082,7 +2082,7 @@ export default function FinancePage() {
                   type="button"
                   onClick={handleBulkAssign}
                   disabled={!assignTargetUserId || assignLoading}
-                  className="py-2 px-5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs shadow-md cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
+                  className="py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
                 >
                   {assignLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UsersRound className="w-3.5 h-3.5" />}
                   <span>Confirm Assignment</span>

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -186,7 +186,7 @@ export default function NewLeadPage() {
         const existing = data.data.leads[0];
         const assignedName = existing.consultant?.name || 'Unassigned';
         setDuplicateWarning(
-          `A lead with this number already exists. Lead ID: #${existing.leadCode} — assigned to ${assignedName}.`
+          `A lead with this number already exists. Lead ID: #${existing.leadCode} â€” assigned to ${assignedName}.`
         );
         if (hasPermission('leads:edit') || user?.role === 'admin') {
           setShowOverride(true);
@@ -262,15 +262,15 @@ export default function NewLeadPage() {
 
   if (user && !canAddLead) {
     return (
-      <div className="p-8 text-center bg-[#111625] border border-slate-800 rounded-xl space-y-4 max-w-lg mx-auto mt-12">
+      <div className="p-8 text-center bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl space-y-4 max-w-lg mx-auto mt-12">
         <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
         <h2 className="text-lg font-bold text-white">Access Restricted</h2>
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-emerald-400">
           You do not have custom access permission to add new leads to the pipeline.
         </p>
         <Link
           href="/leads"
-          className="inline-block py-2 px-4 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-semibold text-xs transition-all"
+          className="inline-block py-2 px-4 bg-emerald-800 hovering-emerald-500 text-white rounded-lg font-semibold text-xs transition-all"
         >
           Return to Leads Pipeline
         </Link>
@@ -284,23 +284,23 @@ export default function NewLeadPage() {
       <div className="flex items-center gap-3">
         <Link
           href="/leads"
-          className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-all focus:outline-none"
+          className="p-2 rounded-lg bg-emerald-900 border border-[var(--border-color)] text-emerald-400 hover:text-white transition-all focus:outline-none"
         >
           <ArrowLeft className="w-4 h-4" />
         </Link>
         <div>
           <h1 className="text-xl font-bold text-white tracking-wide">Create New Sales Lead</h1>
-          <p className="text-xs text-slate-400 mt-1">Form A: Add Lead details and assign team pool.</p>
+          <p className="text-xs text-emerald-400 mt-1">Form A: Add Lead details and assign team pool.</p>
         </div>
       </div>
 
       {/* Main card */}
-      <div className="bg-[#111625] border border-slate-800 rounded-xl p-6 shadow-xl relative overflow-hidden">
+      <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 shadow-xl relative overflow-hidden">
         <form onSubmit={handleSubmit} className="space-y-6 relative">
           {/* Customer name and phone */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-emerald-400 mb-2">
                 Customer Full Name *
               </label>
               <input
@@ -309,11 +309,11 @@ export default function NewLeadPage() {
                 value={form.customerName}
                 onChange={(e) => setForm({ ...form, customerName: e.target.value })}
                 placeholder="e.g. Rajesh Singhania"
-                className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:border-blue-500 focus:outline-none"
+                className="block w-full px-3 py-2 bg-emerald-950/60 border border-[var(--border-color)] rounded-lg text-white text-xs focus:border-emerald-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-emerald-400 mb-2">
                 Mobile Number *
               </label>
               <div className="relative">
@@ -324,11 +324,11 @@ export default function NewLeadPage() {
                   onChange={(e) => setForm({ ...form, mobile: e.target.value })}
                   onBlur={handlePhoneBlur}
                   placeholder="10-digit number"
-                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:border-blue-500 focus:outline-none font-mono"
+                  className="block w-full px-3 py-2 bg-emerald-950/60 border border-[var(--border-color)] rounded-lg text-white text-xs focus:border-emerald-500 focus:outline-none font-mono"
                 />
                 {checkingDuplicate && (
                   <span className="absolute right-3 top-2.5">
-                    <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
+                    <Loader2 className="w-4 h-4 text-emerald-500 animate-spin" />
                   </span>
                 )}
               </div>
@@ -337,7 +337,7 @@ export default function NewLeadPage() {
 
           {/* Duplicate warnings alerts */}
           {duplicateWarning && (
-            <div className="p-4 bg-red-950/40 border border-red-900 rounded-lg text-red-200 text-xs flex flex-col gap-2.5">
+            <div className="p-4 bg-red-950/40 border border-emerald-600 rounded-lg text-red-200 text-xs flex flex-col gap-2.5">
               <div className="flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
                 <span>{duplicateWarning}</span>
@@ -348,7 +348,7 @@ export default function NewLeadPage() {
                     type="checkbox"
                     checked={overrideDuplicate}
                     onChange={(e) => setOverrideDuplicate(e.target.checked)}
-                    className="w-3.5 h-3.5 bg-slate-950 border border-slate-800 text-red-600 focus:ring-0 rounded"
+                    className="w-3.5 h-3.5 bg-[var(--bg-main)] border border-[var(--border-color)] text-red-600 focus:ring-0 rounded"
                   />
                   <span className="font-semibold text-[11px] text-red-300">
                     Admin Override: Create this duplicate lead anyway.
@@ -361,7 +361,7 @@ export default function NewLeadPage() {
           {/* Alternate Mobile and Source */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
                 Alternate Mobile
               </label>
               <input
@@ -369,17 +369,17 @@ export default function NewLeadPage() {
                 value={form.mobileAlt}
                 onChange={(e) => setForm({ ...form, mobileAlt: e.target.value })}
                 placeholder="Alternate phone"
-                className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:border-blue-500 focus:outline-none font-mono"
+                className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:border-emerald-500 focus:outline-none font-mono"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
                 Lead Source
               </label>
               <select
                 value={form.leadSource}
                 onChange={(e) => setForm({ ...form, leadSource: e.target.value })}
-                className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-300 text-xs focus:border-blue-500 focus:outline-none"
+                className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:border-emerald-500 focus:outline-none"
               >
                 <option value="meta">Meta</option>
                 <option value="discom">Discom</option>
@@ -394,13 +394,13 @@ export default function NewLeadPage() {
           {/* Connection and Load */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
                 Connection Type
               </label>
               <select
                 value={form.connectionType}
                 onChange={(e) => setForm({ ...form, connectionType: e.target.value })}
-                className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-300 text-xs focus:border-blue-500 focus:outline-none"
+                className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:border-emerald-500 focus:outline-none"
               >
                 <option value="residential">Residential</option>
                 <option value="commercial">Commercial</option>
@@ -408,7 +408,7 @@ export default function NewLeadPage() {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
                 Sanctioned Load (kW)
               </label>
               <input
@@ -417,7 +417,7 @@ export default function NewLeadPage() {
                 value={form.sanctionedLoadKw}
                 onChange={(e) => setForm({ ...form, sanctionedLoadKw: e.target.value })}
                 placeholder="kW from electricity bill"
-                className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:border-blue-500 focus:outline-none"
+                className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:border-emerald-500 focus:outline-none"
               />
             </div>
           </div>
@@ -425,7 +425,7 @@ export default function NewLeadPage() {
           {/* DisCom Name and Connection Number */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
                 DisCom Name
               </label>
               <input
@@ -433,11 +433,11 @@ export default function NewLeadPage() {
                 value={form.discomName}
                 onChange={(e) => setForm({ ...form, discomName: e.target.value })}
                 placeholder="e.g. UPPCL"
-                className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:border-blue-500 focus:outline-none"
+                className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:border-emerald-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
                 Connection Number
               </label>
               <input
@@ -445,28 +445,28 @@ export default function NewLeadPage() {
                 value={form.connectionNumber}
                 onChange={(e) => setForm({ ...form, connectionNumber: e.target.value })}
                 placeholder="Consumer/Connection Number"
-                className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:border-blue-500 focus:outline-none font-mono"
+                className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:border-emerald-500 focus:outline-none font-mono"
               />
             </div>
           </div>
 
           {/* Address details */}
-          <div className="space-y-4 border-t border-slate-800/80 pt-6">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-100">Site Location Details</h3>
+          <div className="space-y-4 border-t border-[var(--border-color)]/80 pt-6">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">Site Location Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="md:col-span-3">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
                   Full Street Address
                 </label>
                 <textarea
                   value={form.address}
                   onChange={(e) => setForm({ ...form, address: e.target.value })}
                   placeholder="House number, flat, apartment, street address details..."
-                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs h-16 focus:border-blue-500 focus:outline-none"
+                  className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs h-16 focus:border-emerald-500 focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
                   Pincode
                 </label>
                 <input
@@ -474,29 +474,29 @@ export default function NewLeadPage() {
                   value={form.pinCode}
                   onChange={handlePincodeChange}
                   placeholder="6-digit pincode"
-                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:border-blue-500 focus:outline-none font-mono"
+                  className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:border-emerald-500 focus:outline-none font-mono"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
                   City
                 </label>
                 <input
                   type="text"
                   value={form.city}
                   onChange={(e) => setForm({ ...form, city: e.target.value })}
-                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:border-blue-500 focus:outline-none"
+                  className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:border-emerald-500 focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
                   State
                 </label>
                 <input
                   type="text"
                   value={form.state}
                   onChange={(e) => setForm({ ...form, state: e.target.value })}
-                  className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-850 rounded-lg text-white text-xs focus:border-blue-500 focus:outline-none"
+                  className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:border-emerald-500 focus:outline-none"
                 />
               </div>
             </div>
@@ -504,23 +504,23 @@ export default function NewLeadPage() {
 
           {/* Initial remark */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
               Initial Remarks / Caller Notes
             </label>
             <textarea
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
               placeholder="Initial details about client requirements..."
-              className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs h-20 focus:border-blue-500 focus:outline-none"
+              className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs h-20 focus:border-emerald-500 focus:outline-none"
             />
           </div>
 
           {/* Submit */}
-          <div className="flex gap-4 pt-4 border-t border-slate-800/80">
+          <div className="flex gap-4 pt-4 border-t border-[var(--border-color)]/80">
             <button
               type="submit"
               disabled={loading}
-              className="py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs shadow-lg shadow-blue-500/10 disabled:opacity-50 flex items-center gap-2"
+              className="py-3 px-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-lg shadow-emerald-500/10 disabled:opacity-50 flex items-center gap-2"
             >
               {loading ? (
                 <>
@@ -536,7 +536,7 @@ export default function NewLeadPage() {
             </button>
             <Link
               href="/leads"
-              className="py-3 px-6 bg-slate-900 border border-slate-800 text-slate-400 rounded-lg font-bold text-xs hover:text-white flex items-center justify-center transition-all"
+              className="py-3 px-6 bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] rounded-lg font-bold text-xs hover:text-white flex items-center justify-center transition-all"
             >
               Cancel
             </Link>

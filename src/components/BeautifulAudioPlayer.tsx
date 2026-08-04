@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useRef, useState, useEffect } from 'react';
 import { Play, Pause, RotateCcw, Volume2, VolumeX, Loader2, Download } from 'lucide-react';
@@ -116,7 +116,7 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
   };
 
   return (
-    <div className="bg-slate-900/80 backdrop-blur-md border border-slate-800/80 rounded-xl p-4 flex flex-col gap-3 shadow-xl transition-all hover:border-slate-700/60 w-full">
+    <div className="bg-[var(--bg-card)] backdrop-blur-md border border-[var(--border-color)] rounded-xl p-4 flex flex-col gap-3 shadow-xl transition-all hover:border-[var(--border-color)] w-full">
       <audio
         ref={audioRef}
         src={src}
@@ -140,7 +140,7 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
 
       {/* Progress bar and timeline */}
       <div className="flex items-center gap-3 w-full">
-        <span className="text-[10px] font-mono text-slate-400 select-none w-10 text-right">
+        <span className="text-[10px] font-mono text-[var(--text-secondary)] select-none w-10 text-right">
           {formatTime(currentTime)}
         </span>
 
@@ -152,14 +152,14 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
             value={currentTime}
             onChange={handleSeekChange}
             disabled={isLoading}
-            className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-600 focus:outline-none disabled:opacity-50"
+            className="w-full h-1 bg-[var(--bg-card)] rounded-lg appearance-none cursor-pointer accent-blue-600 focus:outline-none disabled:opacity-50"
             style={{
               background: `linear-gradient(to right, #2563eb 0%, #2563eb ${(currentTime / (duration || 1)) * 100}%, #1e293b ${(currentTime / (duration || 1)) * 100}%, #1e293b 100%)`,
             }}
           />
         </div>
 
-        <span className="text-[10px] font-mono text-slate-400 select-none w-10 text-left">
+        <span className="text-[10px] font-mono text-[var(--text-secondary)] select-none w-10 text-left">
           {formatTime(duration)}
         </span>
       </div>
@@ -188,7 +188,7 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
             type="button"
             onClick={restartAudio}
             title="Restart"
-            className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-800 hover:border-slate-700 bg-slate-950/40 text-slate-400 hover:text-slate-200 transition-colors flex-shrink-0"
+            className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] hover:border-[var(--border-color)] bg-[var(--bg-main)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors flex-shrink-0"
           >
             <RotateCcw className="w-4 h-4" />
           </button>
@@ -198,7 +198,7 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
             type="button"
             onClick={handlePlaybackRateChange}
             title="Speed"
-            className="px-2.5 h-8 text-[10px] font-bold flex items-center justify-center rounded-lg border border-slate-800 hover:border-slate-700 bg-slate-950/40 text-slate-400 hover:text-slate-200 transition-colors select-none font-mono flex-shrink-0"
+            className="px-2.5 h-8 text-[10px] font-bold flex items-center justify-center rounded-lg border border-[var(--border-color)] hover:border-[var(--border-color)] bg-[var(--bg-main)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors select-none font-mono flex-shrink-0"
           >
             {playbackRate.toFixed(2)}x
           </button>
@@ -210,7 +210,7 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
             target="_blank"
             rel="noopener noreferrer"
             title="Download Audio Recording"
-            className="h-8 px-2.5 flex items-center gap-1.5 rounded-lg border border-slate-800 hover:border-slate-700 bg-slate-950/40 text-slate-400 hover:text-white transition-colors flex-shrink-0 text-[10px] font-bold"
+            className="h-8 px-2.5 flex items-center gap-1.5 rounded-lg border border-[var(--border-color)] hover:border-[var(--border-color)] bg-[var(--bg-main)] text-[var(--text-secondary)] hover:text-white transition-colors flex-shrink-0 text-[10px] font-bold"
           >
             <Download className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
             <span className="hidden sm:inline">Download Audio</span>
@@ -222,7 +222,7 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
           <button
             type="button"
             onClick={toggleMute}
-            className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-800 hover:border-slate-700 bg-slate-950/40 text-slate-400 hover:text-slate-200 transition-colors flex-shrink-0"
+            className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] hover:border-[var(--border-color)] bg-[var(--bg-main)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors flex-shrink-0"
           >
             {isMuted || volume === 0 ? (
               <VolumeX className="w-4 h-4 text-rose-400" />
@@ -238,7 +238,7 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
             step="0.05"
             value={isMuted ? 0 : volume}
             onChange={handleVolumeChange}
-            className="w-16 sm:w-20 md:w-24 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-600 focus:outline-none"
+            className="w-16 sm:w-20 md:w-24 h-1 bg-[var(--bg-card)] rounded-lg appearance-none cursor-pointer accent-blue-600 focus:outline-none"
             style={{
               background: `linear-gradient(to right, #2563eb 0%, #2563eb ${(isMuted ? 0 : volume) * 100}%, #1e293b ${(isMuted ? 0 : volume) * 100}%, #1e293b 100%)`,
             }}

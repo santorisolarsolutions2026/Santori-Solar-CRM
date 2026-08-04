@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -64,24 +64,24 @@ interface Lead {
 
 const STAGE_BADGES: Record<number, { name: string; class: string }> = {
   0: { name: 'Uninitiated', class: 'bg-stone-550/15 text-stone-400 border-stone-500/20 font-bold' },
-  1: { name: 'Fresh Lead', class: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-  2: { name: 'DNP', class: 'bg-slate-500/10 text-slate-400 border-slate-500/20' },
-  3: { name: 'Follow Up', class: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' },
+  1: { name: 'Fresh Lead', class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+  2: { name: 'DNP', class: 'bg-slate-500/10 text-[var(--text-secondary)] border-slate-500/20' },
+  3: { name: 'Follow Up', class: 'bg-teal-500/10 text-teal-500 border-teal-500/20' },
   4: { name: 'Not Interested', class: 'bg-red-800/10 text-red-400 border-red-800/20' },
   5: { name: 'Call Later', class: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
-  6: { name: 'Already Installed', class: 'bg-slate-800/20 text-slate-500 border-slate-800/30' },
-  7: { name: 'Decision Pending', class: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' },
+  6: { name: 'Already Installed', class: 'bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border-color)]/30' },
+  7: { name: 'Decision Pending', class: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
   8: { name: 'Meeting Booked', class: 'bg-teal-500/10 text-teal-400 border-teal-500/20' },
   9: { name: 'Meeting Done', class: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
-  10: { name: 'Disconnected', class: 'bg-slate-600/15 text-slate-400 border-slate-600/20' },
-  11: { name: 'Switch Off', class: 'bg-slate-700/20 text-slate-400 border-slate-700/30' },
+  10: { name: 'Disconnected', class: 'bg-slate-600/15 text-[var(--text-secondary)] border-slate-600/20' },
+  11: { name: 'Switch Off', class: 'bg-slate-700/20 text-[var(--text-secondary)] border-[var(--border-color)]' },
   12: { name: 'Can\'t Fit Solar', class: 'bg-stone-900 text-stone-400 border-stone-800/40' },
   13: { name: 'Sale Done', class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-bold' },
 };
 
 const CONNECTION_BADGES: Record<string, string> = {
   residential: 'bg-emerald-500/5 text-emerald-400 border-emerald-500/10',
-  commercial: 'bg-blue-500/5 text-blue-400 border-blue-500/10',
+  commercial: 'bg-emerald-500/5 text-emerald-400 border-emerald-500/10',
   industrial: 'bg-purple-500/5 text-purple-400 border-purple-500/10',
 };
 
@@ -135,19 +135,19 @@ export default function LeadsPage() {
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
       </div>
     );
   }
 
   if (!hasPermission('leads:view')) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center bg-[#111625] border border-slate-800 rounded-xl shadow-lg mt-6">
+      <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-lg mt-6">
         <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 text-red-500 rounded-full flex items-center justify-center mb-4 animate-pulse">
           <AlertCircle className="w-8 h-8" />
         </div>
         <h2 className="text-xl font-bold text-white mb-2">Access Denied</h2>
-        <p className="text-sm text-slate-400 max-w-md">
+        <p className="text-sm text-[var(--text-secondary)] max-w-md">
           You do not have the required permissions to view the Sales Leads Pipeline. Please contact your administrator if you believe this is in error.
         </p>
       </div>
@@ -975,7 +975,7 @@ export default function LeadsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-white tracking-wide">Sales Leads Pipeline</h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-[var(--text-secondary)] mt-1">
             Nurture, track, and close solar customer deals.
           </p>
         </div>
@@ -983,7 +983,7 @@ export default function LeadsPage() {
           {(hasPermission('sales:lead_import') || hasPermission('leads:import')) && (
             <button
               onClick={() => setShowImportModal(true)}
-              className="py-2.5 px-4 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-900 dark:text-white rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
+              className="py-2.5 px-4 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-slate-900 dark:text-white rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
             >
               <Upload className="w-4 h-4" />
               <span>Import CSV</span>
@@ -992,7 +992,7 @@ export default function LeadsPage() {
           {(hasPermission('sales:lead_add') || hasPermission('leads:create')) && (
             <Link
               href="/leads/new"
-              className="py-2.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs shadow-lg shadow-blue-500/10 flex items-center gap-1.5 transition-all w-fit"
+              className="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-lg shadow-emerald-500/10 flex items-center gap-1.5 transition-all w-fit"
             >
               <Plus className="w-4 h-4" />
               <span>Add New Lead</span>
@@ -1002,7 +1002,7 @@ export default function LeadsPage() {
       </div>
 
       {/* Filter and Search Bar Card */}
-      <div className="bg-[#111625] border border-slate-800 rounded-xl p-5 shadow-lg space-y-4">
+      <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-5 shadow-lg space-y-4">
         <form onSubmit={handleSearchSubmit} className="flex flex-col md:flex-row items-center justify-between gap-4">
           {/* Live Search */}
           <div className="relative flex-1 w-full">
@@ -1011,9 +1011,9 @@ export default function LeadsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search Customer Name / Mobile / Lead Code..."
-              className="block w-full pl-9 pr-4 py-2.5 bg-slate-955/60 border border-slate-800 rounded-xl text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-600 text-xs transition-all shadow-inner"
+              className="block w-full pl-9 pr-4 py-2.5 bg-slate-955/60 border border-[var(--border-color)] rounded-xl text-[var(--text-primary)] placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-600 text-xs transition-all shadow-inner"
             />
-            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+            <Search className="w-4 h-4 text-[var(--text-muted)] absolute left-3 top-3" />
           </div>
 
           <div className="flex flex-wrap items-center gap-3 w-full md:w-auto shrink-0 justify-end">
@@ -1040,7 +1040,7 @@ export default function LeadsPage() {
             <button
               type="button"
               onClick={() => setShowDetailedFilterModal(true)}
-              className="py-2.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-xl font-bold text-xs shadow-md flex items-center gap-2 transition-all cursor-pointer"
+              className="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-md flex items-center gap-2 transition-all cursor-pointer"
             >
               <SlidersHorizontal className="w-4 h-4" />
               <span>Filters</span>
@@ -1056,7 +1056,7 @@ export default function LeadsPage() {
               <button
                 type="button"
                 onClick={handleClearFilters}
-                className="py-2.5 px-3 bg-slate-955 border border-slate-850 hover:bg-slate-900 text-slate-400 hover:text-white rounded-xl text-xs transition-all cursor-pointer"
+                className="py-2.5 px-3 bg-slate-955 border border-[var(--border-color)] hover:bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-white rounded-xl text-xs transition-all cursor-pointer"
               >
                 Reset All
               </button>
@@ -1066,12 +1066,12 @@ export default function LeadsPage() {
 
         {/* Active Applied Filter Tags Bar */}
         {getActiveFilterCount() > 0 && (
-          <div className="pt-3 border-t border-slate-850 flex flex-wrap items-center gap-2 text-xs">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
-              <Filter className="w-3 h-3 text-blue-600 dark:text-blue-450" /> Active Filters:
+          <div className="pt-3 border-t border-[var(--border-color)] flex flex-wrap items-center gap-2 text-xs">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center gap-1">
+              <Filter className="w-3 h-3 text-emerald-500" /> Active Filters:
             </span>
             {statusFilter && statusFilter.split(',').map(st => (
-              <span key={`st-${st}`} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-[11px] font-semibold">
+              <span key={`st-${st}`} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[11px] font-semibold">
                 Stage: {STAGE_BADGES[Number(st)]?.name || st}
                 <X 
                   className="w-3 h-3 cursor-pointer hover:text-white ml-0.5" 
@@ -1083,7 +1083,7 @@ export default function LeadsPage() {
               </span>
             ))}
             {connectionFilter && connectionFilter.split(',').map(ct => (
-              <span key={`ct-${ct}`} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-450 text-[11px] font-semibold capitalize">
+              <span key={`ct-${ct}`} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-semibold capitalize">
                 Type: {ct}
                 <X className="w-3 h-3 cursor-pointer hover:text-white ml-0.5" onClick={() => setConnectionFilter(connectionFilter.split(',').filter(s => s !== ct).join(','))} />
               </span>
@@ -1107,7 +1107,7 @@ export default function LeadsPage() {
               </span>
             )}
             {consultantFilter && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-[11px] font-semibold">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[11px] font-semibold">
                 Consultant Assigned
                 <X className="w-3 h-3 cursor-pointer hover:text-white ml-0.5" onClick={() => setConsultantFilter('')} />
               </span>
@@ -1132,7 +1132,7 @@ export default function LeadsPage() {
             )}
             <button
               onClick={handleClearFilters}
-              className="text-[10px] font-bold text-slate-400 hover:text-red-400 underline underline-offset-2 ml-1 cursor-pointer"
+              className="text-[10px] font-bold text-[var(--text-secondary)] hover:text-red-400 underline underline-offset-2 ml-1 cursor-pointer"
             >
               Clear all
             </button>
@@ -1142,10 +1142,10 @@ export default function LeadsPage() {
 
       {/* Bulk Actions Banner */}
       {selectedIds.length > 0 && (
-        <div className="bg-slate-900/60 border border-slate-800/80 rounded-xl p-4 flex items-center justify-between shadow-lg">
+        <div className="bg-[var(--bg-card)]/60 border border-[var(--border-color)]/80 rounded-xl p-4 flex items-center justify-between shadow-lg">
           <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-ping" />
-            <span className="text-xs font-semibold text-slate-200">
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-ping" />
+            <span className="text-xs font-semibold text-[var(--text-primary)]">
               <strong>{selectedIds.length}</strong> leads selected {selectedIds.length === total ? "(all matching leads across pages)" : ""}
             </span>
           </div>
@@ -1154,7 +1154,7 @@ export default function LeadsPage() {
               <>
                 <button
                   onClick={() => setShowBulkAssignModal(true)}
-                  className="py-2 px-4 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer font-sans"
+                  className="py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer font-sans"
                 >
                   <UserCheck className="w-3.5 h-3.5" />
                   <span>Assign Member</span>
@@ -1164,7 +1164,7 @@ export default function LeadsPage() {
                     setBulkStage('UNCHANGED');
                     setShowBulkStageModal(true);
                   }}
-                  className="py-2 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-lg font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer font-sans"
+                  className="py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer font-sans"
                 >
                   <SlidersHorizontal className="w-3.5 h-3.5" />
                   <span>Change Stage</span>
@@ -1198,11 +1198,11 @@ export default function LeadsPage() {
       )}
 
       {/* Leads Table Card */}
-      <div className="bg-[#111625] border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+      <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl overflow-hidden shadow-xl">
         {/* Table Header Control Bar */}
-        <div className="p-4 border-b border-slate-800 bg-slate-900/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="p-4 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex flex-col sm:flex-row items-center justify-between gap-4">
           <form onSubmit={handleArbitrarySelectSubmit} className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold text-slate-300">Arbitrary Select (Display & Select Leads):</span>
+            <span className="text-xs font-semibold text-[var(--text-primary)]">Arbitrary Select (Display & Select Leads):</span>
             <div className="flex items-center">
               <input
                 type="number"
@@ -1210,11 +1210,11 @@ export default function LeadsPage() {
                 placeholder="Enter count (e.g. 100)..."
                 value={customSelectVal}
                 onChange={(e) => setCustomSelectVal(e.target.value)}
-                className="w-40 px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-l-lg text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                className="w-40 px-3 py-1.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-l-lg text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-500 text-xs"
               />
               <button
                 type="submit"
-                className="py-1.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-r-lg text-xs font-bold transition-all cursor-pointer shadow-md"
+                className="py-1.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-r-lg text-xs font-bold transition-all cursor-pointer shadow-md"
               >
                 Select & Show All
               </button>
@@ -1235,13 +1235,13 @@ export default function LeadsPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[1100px]">
             <thead>
-              <tr className="border-b border-slate-800 bg-slate-900/10 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+              <tr className="border-b border-[var(--border-color)] bg-[var(--bg-card)]/10 text-[var(--text-secondary)] text-xs font-semibold uppercase tracking-wider">
                 <th className="py-4 px-4 w-12 text-center">
                   <input
                     type="checkbox"
                     checked={leads.length > 0 && leads.map(l => l.id).every((id) => selectedIds.includes(id))}
                     onChange={handleSelectAllToggle}
-                    className="w-4 h-4 rounded border-slate-800 bg-slate-950 text-blue-600 dark:text-blue-400 focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                    className="w-4 h-4 rounded border-[var(--border-color)] bg-[var(--bg-main)] text-emerald-600 dark:text-emerald-400 focus:ring-0 focus:ring-offset-0 cursor-pointer"
                   />
                 </th>
                 <th className="py-4 px-4 w-28">Lead ID</th>
@@ -1257,20 +1257,20 @@ export default function LeadsPage() {
             <tbody className="divide-y divide-slate-800/60 text-sm">
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center text-slate-500 text-xs">
+                  <td colSpan={9} className="py-12 text-center text-[var(--text-muted)] text-xs">
                     Fetching active opportunities...
                   </td>
                 </tr>
               ) : leads.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center text-slate-500 text-xs">
+                  <td colSpan={9} className="py-12 text-center text-[var(--text-muted)] text-xs">
                     No leads found matching current criteria.
                   </td>
                 </tr>
               ) : (
                 leads.map((lead) => {
-                  const stage = STAGE_BADGES[lead.status] || { name: `Stage ${lead.status}`, class: 'bg-slate-500/10 text-slate-400 border-slate-500/20' };
-                  const connectionClass = CONNECTION_BADGES[lead.connectionType] || 'bg-slate-500/10 text-slate-400';
+                  const stage = STAGE_BADGES[lead.status] || { name: `Stage ${lead.status}`, class: 'bg-slate-500/10 text-[var(--text-secondary)] border-slate-500/20' };
+                  const connectionClass = CONNECTION_BADGES[lead.connectionType] || 'bg-slate-500/10 text-[var(--text-secondary)]';
                   
                   return (
                     <tr
@@ -1314,21 +1314,21 @@ export default function LeadsPage() {
                         }
                         window.location.href = `/leads/${lead.id}`;
                       }}
-                      className={`hover:bg-slate-900/30 transition-all cursor-pointer ${
+                      className={`hover:bg-[var(--bg-card)]/30 transition-all cursor-pointer ${
                         lead.isUnreachable ? 'bg-red-500/[0.01] border-l-2 border-l-red-500' : ''
                       } ${
-                        !lead.isActive ? 'opacity-70 border-l-2 border-l-slate-650 bg-slate-900/[0.08]' : ''
-                      } ${selectedIds.includes(lead.id) ? 'bg-blue-600/[0.02]' : ''}`}
+                        !lead.isActive ? 'opacity-70 border-l-2 border-l-slate-650 bg-[var(--bg-card)]/[0.08]' : ''
+                      } ${selectedIds.includes(lead.id) ? 'bg-emerald-600/[0.02]' : ''}`}
                     >
                       <td className="py-3.5 px-4 text-center w-12">
                         <input
                           type="checkbox"
                           checked={selectedIds.includes(lead.id)}
                           onChange={() => handleSelectToggle(lead.id)}
-                          className="w-4 h-4 rounded border-slate-800 bg-slate-950 text-blue-600 dark:text-blue-400 focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                          className="w-4 h-4 rounded border-[var(--border-color)] bg-[var(--bg-main)] text-emerald-600 dark:text-emerald-400 focus:ring-0 focus:ring-offset-0 cursor-pointer"
                         />
                       </td>
-                      <td className="py-3.5 px-4 font-mono font-bold text-xs text-slate-300 w-28">
+                      <td className="py-3.5 px-4 font-mono font-bold text-xs text-[var(--text-primary)] w-28">
                         {lead.leadCode}
                       </td>
                       <td className="py-3.5 px-4 font-bold text-white w-48">
@@ -1341,14 +1341,14 @@ export default function LeadsPage() {
                             </span>
                           )}
                           {!lead.isActive && (
-                            <span className="text-[9px] bg-slate-500/15 text-slate-400 border border-slate-550/20 rounded-full px-2 py-0.25 font-bold uppercase tracking-wider shrink-0">
+                            <span className="text-[9px] bg-slate-500/15 text-[var(--text-secondary)] border border-slate-550/20 rounded-full px-2 py-0.25 font-bold uppercase tracking-wider shrink-0">
                               Inactive
                             </span>
                           )}
                         </div>
                       </td>
-                      <td className="py-3.5 px-4 text-slate-300 font-mono text-xs w-32">{lead.mobile}</td>
-                      <td className="py-3.5 px-4 text-slate-300 w-28">{lead.city}</td>
+                      <td className="py-3.5 px-4 text-[var(--text-primary)] font-mono text-xs w-32">{lead.mobile}</td>
+                      <td className="py-3.5 px-4 text-[var(--text-primary)] w-28">{lead.city}</td>
                       <td className="py-3.5 px-4 w-32">
                         <span className={`inline-block text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${connectionClass}`}>
                           {lead.connectionType}
@@ -1358,7 +1358,7 @@ export default function LeadsPage() {
                         <div className="flex flex-col gap-1">
                           {lead.status === 13 && lead.order?.status === 'draft' && lead.order?.rejectionReason ? (
                             <span className="inline-block text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider bg-rose-500/10 text-rose-450 border-rose-500/20">
-                              Rejected ⚠️
+                              Rejected âš ï¸
                             </span>
                           ) : (
                             <span className={`inline-block text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${stage.class}`}>
@@ -1367,15 +1367,15 @@ export default function LeadsPage() {
                           )}
                         </div>
                       </td>
-                      <td className="py-3.5 px-4 font-medium text-slate-300 w-40">
+                      <td className="py-3.5 px-4 font-medium text-[var(--text-primary)] w-40">
                         {(() => {
                           const assigned = getLeadAssignedDisplay(lead, user);
                           return assigned ? (
-                            <Link href={`/team?userId=${assigned.id}`} className="text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:underline font-semibold">
+                            <Link href={`/team?userId=${assigned.id}`} className="text-slate-700 dark:text-[var(--text-primary)] hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline font-semibold">
                               {assigned.name}
                             </Link>
                           ) : (
-                            <span className="text-slate-500 text-xs italic">Unassigned</span>
+                            <span className="text-[var(--text-muted)] text-xs italic">Unassigned</span>
                           );
                         })()}
                       </td>
@@ -1384,7 +1384,7 @@ export default function LeadsPage() {
                           {(hasPermission('sales:lead_track') || hasPermission('leads:track')) && (
                             <button
                               onClick={() => handleOpenTracker(lead)}
-                              className="p-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-blue-600 dark:text-blue-450 transition-all cursor-pointer"
+                              className="p-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700/20 border border-emerald-500/20 text-emerald-500 transition-all cursor-pointer"
                               title="Track Lead Journey"
                             >
                               <Truck className="w-4.5 h-4.5" />
@@ -1393,7 +1393,7 @@ export default function LeadsPage() {
                           {hasPermission('leads:edit') && (
                             <Link
                               href={`/leads/${lead.id}?edit=true`}
-                              className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white transition-all"
+                              className="p-1.5 rounded-lg bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-[var(--text-secondary)] hover:text-white transition-all"
                               title="Edit Lead Info"
                             >
                               <Edit2 className="w-4.5 h-4.5" />
@@ -1402,7 +1402,7 @@ export default function LeadsPage() {
                           {!lead.isActive && hasPermission('leads:edit') && (
                             <button
                               onClick={() => handleActivateLead(lead.id)}
-                              className="p-1.5 rounded-lg bg-slate-900 hover:bg-emerald-950/20 border border-slate-800 hover:border-emerald-900/30 text-slate-400 hover:text-emerald-400 transition-all cursor-pointer"
+                              className="p-1.5 rounded-lg bg-[var(--bg-card)] hover:bg-emerald-950/20 border border-[var(--border-color)] hover:border-emerald-900/30 text-[var(--text-secondary)] hover:text-emerald-400 transition-all cursor-pointer"
                               title="Activate Lead"
                             >
                               <Check className="w-4.5 h-4.5" />
@@ -1411,7 +1411,7 @@ export default function LeadsPage() {
                           {hasPermission('leads:delete') && (
                             <button
                               onClick={() => handleDeleteLead(lead.id)}
-                              className="p-1.5 rounded-lg bg-slate-900 hover:bg-red-950/20 border border-slate-800 hover:border-red-900/30 text-slate-400 hover:text-red-400 transition-all cursor-pointer"
+                              className="p-1.5 rounded-lg bg-[var(--bg-card)] hover:bg-red-950/20 border border-[var(--border-color)] hover:border-red-900/30 text-[var(--text-secondary)] hover:text-red-400 transition-all cursor-pointer"
                               title={lead.isActive ? "Deactivate Opportunity" : "Delete Lead permanently"}
                             >
                               <Trash2 className="w-4.5 h-4.5" />
@@ -1429,15 +1429,15 @@ export default function LeadsPage() {
 
         {/* Pagination Panel */}
         {totalPages > 1 && (
-          <div className="p-4 border-t border-slate-800 bg-slate-900/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-center sm:text-left">
-            <span className="text-slate-400">
+          <div className="p-4 border-t border-[var(--border-color)] bg-[var(--bg-card)]/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-center sm:text-left">
+            <span className="text-[var(--text-secondary)]">
               Showing page <strong>{page}</strong> of <strong>{totalPages}</strong> (<strong>{total}</strong> leads total)
             </span>
             <div className="flex gap-2">
               <button
                 disabled={page === 1}
                 onClick={() => setPage(page - 1)}
-                className="py-1.5 px-3 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg flex items-center gap-1 transition-all"
+                className="py-1.5 px-3 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-[var(--text-primary)] disabled:opacity-40 disabled:cursor-not-allowed rounded-lg flex items-center gap-1 transition-all"
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
                 <span>Prev</span>
@@ -1445,7 +1445,7 @@ export default function LeadsPage() {
               <button
                 disabled={page === totalPages}
                 onClick={() => setPage(page + 1)}
-                className="py-1.5 px-3 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg flex items-center gap-1 transition-all"
+                className="py-1.5 px-3 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-[var(--text-primary)] disabled:opacity-40 disabled:cursor-not-allowed rounded-lg flex items-center gap-1 transition-all"
               >
                 <span>Next</span>
                 <ChevronRight className="w-3.5 h-3.5" />
@@ -1458,16 +1458,16 @@ export default function LeadsPage() {
       {/* CSV IMPORT MODAL */}
       {showImportModal && (hasPermission('sales:lead_import') || hasPermission('leads:import')) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4 overflow-y-auto">
-          <div className="w-full max-w-4xl bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-8 animate-fade-in-up">
-            <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+          <div className="w-full max-w-4xl bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden my-8 animate-fade-in-up">
+            <div className="p-6 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex justify-between items-center">
               <div className="flex items-center gap-2">
-                <Upload className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <Upload className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                 <h3 className="text-sm font-bold uppercase tracking-wider text-white">Import Leads from CSV</h3>
               </div>
               <button 
                 onClick={handleCloseImportModal} 
                 disabled={importing} 
-                className="text-slate-400 hover:text-white transition-all disabled:opacity-30 disabled:pointer-events-none"
+                className="text-[var(--text-secondary)] hover:text-white transition-all disabled:opacity-30 disabled:pointer-events-none"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1476,15 +1476,15 @@ export default function LeadsPage() {
             <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
               {/* File Selector */}
               {!csvFile ? (
-                <div className="border-2 border-dashed border-slate-800 rounded-xl p-8 text-center bg-slate-950/20 flex flex-col items-center justify-center hover:border-slate-700 transition-all">
-                  <div className="w-12 h-12 rounded-full bg-slate-900 flex items-center justify-center mb-4">
-                    <Upload className="w-6 h-6 text-slate-400" />
+                <div className="border-2 border-dashed border-[var(--border-color)] rounded-xl p-8 text-center bg-[var(--bg-main)]/20 flex flex-col items-center justify-center hover:border-[var(--border-color)] transition-all">
+                  <div className="w-12 h-12 rounded-full bg-[var(--bg-card)] flex items-center justify-center mb-4">
+                    <Upload className="w-6 h-6 text-[var(--text-secondary)]" />
                   </div>
-                  <p className="text-xs font-semibold text-slate-300">Select a CSV leads dataset to begin</p>
-                  <p className="text-[10px] text-slate-500 mt-1 mb-4">
+                  <p className="text-xs font-semibold text-[var(--text-primary)]">Select a CSV leads dataset to begin</p>
+                  <p className="text-[10px] text-[var(--text-muted)] mt-1 mb-4">
                     Required fields: Customer Name, Contact Number
                   </p>
-                  <label className="cursor-pointer py-2 px-4 bg-gradient-to-r from-blue-600 to-indigo-650 text-slate-950 rounded-lg font-bold text-xs shadow-md">
+                  <label className="cursor-pointer py-2 px-4 bg-emerald-600 text-white rounded-lg font-bold text-xs shadow-md">
                     Choose CSV File
                     <input
                       type="file"
@@ -1497,10 +1497,10 @@ export default function LeadsPage() {
               ) : (
                 <div className="space-y-6">
                   {/* File info banner */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-950/40 p-4 border border-slate-850 rounded-xl">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-[var(--bg-main)]/40 p-4 border border-[var(--border-color)] rounded-xl">
                     <div className="text-xs">
-                      <p className="text-slate-400 font-semibold">Selected File: <span className="text-white">{csvFile.name}</span></p>
-                      <p className="text-slate-500 mt-0.5">Detected: <strong className="text-blue-600 dark:text-blue-400">{csvRows.length}</strong> records and <strong className="text-blue-600 dark:text-blue-400">{csvHeaders.length}</strong> headers.</p>
+                      <p className="text-[var(--text-secondary)] font-semibold">Selected File: <span className="text-white">{csvFile.name}</span></p>
+                      <p className="text-[var(--text-muted)] mt-0.5">Detected: <strong className="text-emerald-600 dark:text-emerald-400">{csvRows.length}</strong> records and <strong className="text-emerald-600 dark:text-emerald-400">{csvHeaders.length}</strong> headers.</p>
                     </div>
                     <button
                       onClick={() => { setCsvFile(null); setCsvHeaders([]); setCsvRows([]); setImportResult(null); }}
@@ -1513,31 +1513,31 @@ export default function LeadsPage() {
 
                   {/* Import Progress Card */}
                   {importProgress && (
-                    <div className="p-6 bg-slate-900/40 border border-slate-800 rounded-xl space-y-4">
+                    <div className="p-6 bg-[var(--bg-card)]/40 border border-[var(--border-color)] rounded-xl space-y-4">
                       <div className="flex justify-between items-center text-xs">
-                        <span className="text-slate-400 font-medium">{importProgress.statusText}</span>
-                        <span className="text-blue-600 dark:text-blue-400 font-extrabold">{importProgress.percent}%</span>
+                        <span className="text-[var(--text-secondary)] font-medium">{importProgress.statusText}</span>
+                        <span className="text-emerald-600 dark:text-emerald-400 font-extrabold">{importProgress.percent}%</span>
                       </div>
-                      <div className="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-900">
+                      <div className="w-full bg-[var(--bg-main)] rounded-full h-2 overflow-hidden border border-[var(--border-color)]">
                         <div 
-                          className="bg-gradient-to-r from-blue-600 to-indigo-650 h-full transition-all duration-300 ease-out" 
+                          className="bg-emerald-600 h-full transition-all duration-300 ease-out" 
                           style={{ width: `${importProgress.percent}%` }}
                         ></div>
                       </div>
                       <div className="grid grid-cols-3 gap-4 text-center">
-                        <div className="bg-slate-950/60 p-3 rounded-lg border border-slate-850">
-                          <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Processed</span>
+                        <div className="bg-[var(--bg-main)]/60 p-3 rounded-lg border border-[var(--border-color)]">
+                          <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider block">Processed</span>
                           <span className="text-xs font-bold text-white mt-1 block">
                             {importProgress.current} / {importProgress.total}
                           </span>
                         </div>
-                        <div className="bg-slate-950/60 p-3 rounded-lg border border-slate-850">
-                          <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Imported</span>
+                        <div className="bg-[var(--bg-main)]/60 p-3 rounded-lg border border-[var(--border-color)]">
+                          <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider block">Imported</span>
                           <span className="text-xs font-bold text-emerald-400 mt-1 block">{importProgress.importedCount}</span>
                         </div>
-                        <div className="bg-slate-950/60 p-3 rounded-lg border border-slate-850">
-                          <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Skipped</span>
-                          <span className="text-xs font-bold text-blue-600 dark:text-blue-400 mt-1 block">{importProgress.skippedCount}</span>
+                        <div className="bg-[var(--bg-main)]/60 p-3 rounded-lg border border-[var(--border-color)]">
+                          <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider block">Skipped</span>
+                          <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-1 block">{importProgress.skippedCount}</span>
                         </div>
                       </div>
                     </div>
@@ -1546,12 +1546,12 @@ export default function LeadsPage() {
                   {/* Mapping Grid */}
                   {!importResult && !importProgress && (
                     <div className="space-y-4">
-                      <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider border-b border-slate-800/80 pb-2">
+                      <h4 className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider border-b border-[var(--border-color)]/80 pb-2">
                         Map CSV Columns to Lead Fields
                       </h4>
-                      <p className="text-[11px] text-slate-500 leading-normal">
+                      <p className="text-[11px] text-[var(--text-muted)] leading-normal">
                         Select which header from your CSV matches each lead attribute in the CRM database.
-                        Any unmapped columns will be stored as <strong className="text-slate-400">JSON metadata</strong> in the lead's "Other Data" field.
+                        Any unmapped columns will be stored as <strong className="text-[var(--text-secondary)]">JSON metadata</strong> in the lead's "Other Data" field.
                       </p>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1569,14 +1569,14 @@ export default function LeadsPage() {
                           { key: 'discomName', label: 'DisCom Name', req: false },
                           { key: 'connectionNumber', label: 'Connection Number', req: false },
                         ].map((field) => (
-                          <div key={field.key} className="space-y-1 bg-slate-950/20 p-3 border border-slate-850 rounded-lg">
-                            <label className="block text-[11px] font-bold text-slate-300">
+                          <div key={field.key} className="space-y-1 bg-[var(--bg-main)]/20 p-3 border border-[var(--border-color)] rounded-lg">
+                            <label className="block text-[11px] font-bold text-[var(--text-primary)]">
                               {field.label}
                             </label>
                             <select
                               value={columnMapping[field.key] || ''}
                               onChange={(e) => setColumnMapping({ ...columnMapping, [field.key]: e.target.value })}
-                              className="block w-full px-3 py-2 bg-slate-950/60 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none capitalize"
+                              className="block w-full px-3 py-2 bg-[var(--bg-main)]/60 border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-emerald-500 focus:outline-none capitalize"
                             >
                               <option value="">-- Ignore / Unmapped --</option>
                               {csvHeaders.map((header) => (
@@ -1594,13 +1594,13 @@ export default function LeadsPage() {
                   {/* 5 Row Mapped Preview */}
                   {!importResult && !importProgress && csvRows.length > 0 && (
                     <div className="space-y-3">
-                      <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                      <h4 className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider">
                         Mapped Field Preview (First 5 Rows)
                       </h4>
-                      <div className="overflow-x-auto border border-slate-800/80 rounded-xl">
+                      <div className="overflow-x-auto border border-[var(--border-color)]/80 rounded-xl">
                         <table className="w-full text-left text-xs border-collapse min-w-[800px]">
                           <thead>
-                            <tr className="bg-slate-900/40 text-slate-400 border-b border-slate-800">
+                            <tr className="bg-[var(--bg-card)]/40 text-[var(--text-secondary)] border-b border-[var(--border-color)]">
                               <th className="py-2.5 px-4 font-bold">Customer Name</th>
                               <th className="py-2.5 px-4 font-bold">Mobile</th>
                               <th className="py-2.5 px-4 font-bold">Address</th>
@@ -1609,11 +1609,11 @@ export default function LeadsPage() {
                               <th className="py-2.5 px-4 font-bold">Capacity (kW)</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-850 text-slate-300 bg-slate-950/10">
+                          <tbody className="divide-y divide-slate-850 text-[var(--text-primary)] bg-[var(--bg-main)]/10">
                             {getPreviewData().map((row, i) => (
-                              <tr key={i} className="hover:bg-slate-900/10">
+                              <tr key={i} className="hover:bg-[var(--bg-card)]/10">
                                 <td className="py-2 px-4 font-semibold text-white">{row.customerName}</td>
-                                <td className="py-2 px-4 font-mono text-slate-400">{row.mobile}</td>
+                                <td className="py-2 px-4 font-mono text-[var(--text-secondary)]">{row.mobile}</td>
                                 <td className="py-2 px-4 max-w-[200px] truncate">{row.address}</td>
                                 <td className="py-2 px-4 font-mono">{row.pinCode}</td>
                                 <td className="py-2 px-4">{row.city}, {row.state}</td>
@@ -1629,26 +1629,26 @@ export default function LeadsPage() {
                   {/* Import Results Card */}
                   {importResult && (
                     <div className="space-y-6">
-                      <div className="p-5 bg-slate-900/30 border border-slate-800 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="p-5 bg-[var(--bg-card)]/30 border border-[var(--border-color)] rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
                             <Check className="w-5 h-5 text-emerald-400" />
                           </div>
                           <div>
                             <h4 className="text-sm font-bold text-white uppercase tracking-wide">Import Process Completed</h4>
-                            <p className="text-xs text-slate-400 mt-0.5">
+                            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                               Check the summary report below for detailed records creation status.
                             </p>
                           </div>
                         </div>
                         <div className="flex gap-4 text-xs font-semibold">
-                          <div className="bg-slate-950/40 border border-slate-800 p-2.5 rounded-lg text-center min-w-[80px]">
-                            <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Imported</span>
+                          <div className="bg-[var(--bg-main)]/40 border border-[var(--border-color)] p-2.5 rounded-lg text-center min-w-[80px]">
+                            <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider block">Imported</span>
                             <span className="text-base font-extrabold text-emerald-400">{importResult.importedCount}</span>
                           </div>
-                          <div className="bg-slate-950/40 border border-slate-800 p-2.5 rounded-lg text-center min-w-[80px]">
-                            <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Skipped</span>
-                            <span className="text-base font-extrabold text-blue-600 dark:text-blue-400">{importResult.skippedCount}</span>
+                          <div className="bg-[var(--bg-main)]/40 border border-[var(--border-color)] p-2.5 rounded-lg text-center min-w-[80px]">
+                            <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider block">Skipped</span>
+                            <span className="text-base font-extrabold text-emerald-600 dark:text-emerald-400">{importResult.skippedCount}</span>
                           </div>
                         </div>
                       </div>
@@ -1656,17 +1656,17 @@ export default function LeadsPage() {
                       {/* Skipped Details Log */}
                       {importResult.skipped.length > 0 && (
                         <div className="space-y-3">
-                          <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                          <h4 className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider">
                             Skipped Records Logs ({importResult.skipped.length})
                           </h4>
-                          <div className="max-h-56 overflow-y-auto border border-slate-800/80 rounded-xl bg-slate-950/20 text-xs divide-y divide-slate-850">
+                          <div className="max-h-56 overflow-y-auto border border-[var(--border-color)]/80 rounded-xl bg-[var(--bg-main)]/20 text-xs divide-y divide-slate-850">
                             {importResult.skipped.map((skipItem, index) => (
-                              <div key={index} className="p-3 flex justify-between gap-4 hover:bg-slate-900/10 transition-all">
+                              <div key={index} className="p-3 flex justify-between gap-4 hover:bg-[var(--bg-card)]/10 transition-all">
                                 <div>
                                   <span className="font-bold text-white">{skipItem.customerName}</span>
-                                  <span className="text-slate-500 ml-2 font-mono">{skipItem.mobile}</span>
+                                  <span className="text-[var(--text-muted)] ml-2 font-mono">{skipItem.mobile}</span>
                                 </div>
-                                <div className="text-blue-600 dark:text-blue-400 italic text-[11px] font-medium">
+                                <div className="text-emerald-600 dark:text-emerald-400 italic text-[11px] font-medium">
                                   {skipItem.reason}
                                 </div>
                               </div>
@@ -1680,13 +1680,13 @@ export default function LeadsPage() {
               )}
             </div>
 
-            <div className="p-6 border-t border-slate-800 bg-slate-900/10 flex justify-end gap-3">
+            <div className="p-6 border-t border-[var(--border-color)] bg-[var(--bg-card)]/10 flex justify-end gap-3">
               {!importProgress ? (
                 <>
                   <button
                     type="button"
                     onClick={handleCloseImportModal}
-                    className="py-2 px-4 bg-slate-900 border border-slate-800 text-slate-400 rounded-lg font-bold text-xs hover:text-white"
+                    className="py-2 px-4 bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] rounded-lg font-bold text-xs hover:text-white"
                   >
                     {importResult ? 'Close' : 'Cancel'}
                   </button>
@@ -1694,7 +1694,7 @@ export default function LeadsPage() {
                     <button
                       type="button"
                       onClick={handleExecuteImport}
-                      className="py-2 px-5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs shadow-md"
+                      className="py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md"
                     >
                       Execute Import ({csvRows.length} Leads)
                     </button>
@@ -1718,18 +1718,18 @@ export default function LeadsPage() {
       {/* Bulk Reassign Team Modal */}
       {showBulkAssignModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="w-full max-w-lg bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
-            <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+          <div className="w-full max-w-lg bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div className="p-6 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex justify-between items-center">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                   <UserCheck className="w-4 h-4" />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold uppercase tracking-wider text-white">Bulk Assign Lead</h3>
-                  <p className="text-[11px] text-slate-400">Assign a single team member for {selectedIds.length} selected lead(s).</p>
+                  <p className="text-[11px] text-[var(--text-secondary)]">Assign a single team member for {selectedIds.length} selected lead(s).</p>
                 </div>
               </div>
-              <button onClick={() => setShowBulkAssignModal(false)} className="text-slate-400 hover:text-white cursor-pointer">
+              <button onClick={() => setShowBulkAssignModal(false)} className="text-[var(--text-secondary)] hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1759,7 +1759,7 @@ export default function LeadsPage() {
 
                 return (
                   <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1.5">
                       Assign Lead To Employee
                     </label>
                     <UserSelect
@@ -1768,25 +1768,25 @@ export default function LeadsPage() {
                       onChange={(val) => setBulkAssigneeId(val ? String(val) : 'UNASSIGN')}
                       placeholder="-- Select Single Team Member --"
                     />
-                    <p className="text-[10px] text-slate-400 mt-2.5 leading-relaxed bg-slate-900/60 border border-slate-800/80 p-2.5 rounded-lg">
-                      <span className="font-bold text-blue-400">Hierarchy Note:</span> Selecting a team member automatically links their supervisors up the reporting chain. The lead will be visible to the assignee and everyone above them.
+                    <p className="text-[10px] text-[var(--text-secondary)] mt-2.5 leading-relaxed bg-[var(--bg-card)]/60 border border-[var(--border-color)]/80 p-2.5 rounded-lg">
+                      <span className="font-bold text-emerald-400">Hierarchy Note:</span> Selecting a team member automatically links their supervisors up the reporting chain. The lead will be visible to the assignee and everyone above them.
                     </p>
                   </div>
                 );
               })()}
 
-              <div className="pt-4 border-t border-slate-800 flex justify-end gap-3">
+              <div className="pt-4 border-t border-[var(--border-color)] flex justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setShowBulkAssignModal(false)}
-                  className="py-2 px-4 bg-slate-900 border border-slate-800 text-slate-400 rounded-xl font-bold text-xs cursor-pointer"
+                  className="py-2 px-4 bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] rounded-xl font-bold text-xs cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={bulkAssigning}
-                  className="py-2 px-5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-xl font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  className="py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
                   {bulkAssigning ? (
                     <>
@@ -1809,31 +1809,31 @@ export default function LeadsPage() {
       {/* Bulk Pipeline Stage Shift Modal */}
       {showBulkStageModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="w-full max-w-md bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
-            <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+          <div className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div className="p-6 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex justify-between items-center">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
                   <SlidersHorizontal className="w-4 h-4" />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold uppercase tracking-wider text-white">Bulk Change Pipeline Stage</h3>
-                  <p className="text-[11px] text-slate-400">Update stage for {selectedIds.length} selected lead(s).</p>
+                  <p className="text-[11px] text-[var(--text-secondary)]">Update stage for {selectedIds.length} selected lead(s).</p>
                 </div>
               </div>
-              <button type="button" onClick={() => setShowBulkStageModal(false)} className="text-slate-400 hover:text-white cursor-pointer border border-transparent">
+              <button type="button" onClick={() => setShowBulkStageModal(false)} className="text-[var(--text-secondary)] hover:text-white cursor-pointer border border-transparent">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleBulkStageSubmit} className="p-6 space-y-4">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1">
                   Select New Pipeline Stage
                 </label>
                 <select
                   value={bulkStage}
                   onChange={(e) => setBulkStage(e.target.value)}
-                  className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-blue-500 focus:outline-none"
+                  className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-[var(--text-primary)] text-xs focus:ring-emerald-500 focus:outline-none"
                 >
                   <option value="UNCHANGED">-- Select Target Stage --</option>
                   {Object.entries(STAGE_BADGES)
@@ -1846,18 +1846,18 @@ export default function LeadsPage() {
                 </select>
               </div>
 
-              <div className="pt-4 border-t border-slate-800 flex justify-end gap-3">
+              <div className="pt-4 border-t border-[var(--border-color)] flex justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setShowBulkStageModal(false)}
-                  className="py-2 px-4 bg-slate-900 border border-slate-800 text-slate-400 rounded-xl font-bold text-xs cursor-pointer"
+                  className="py-2 px-4 bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] rounded-xl font-bold text-xs cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={bulkAssigning}
-                  className="py-2 px-5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  className="py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
                   {bulkAssigning ? (
                     <>
@@ -1880,52 +1880,52 @@ export default function LeadsPage() {
       {/* Bulk Revert to Fresh Lead Modal */}
       {showBulkRevertFreshModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="w-full max-w-md bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
-            <div className="p-5 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+          <div className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div className="p-5 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex justify-between items-center">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
                   <RotateCcw className="w-4 h-4" />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold uppercase tracking-wider text-white">Bulk Revert to Fresh Lead</h3>
-                  <p className="text-[11px] text-slate-400">Reset {selectedIds.length} selected lead(s) back to Fresh Lead (Stage 1)</p>
+                  <p className="text-[11px] text-[var(--text-secondary)]">Reset {selectedIds.length} selected lead(s) back to Fresh Lead (Stage 1)</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowBulkRevertFreshModal(false)}
-                className="text-slate-400 hover:text-white cursor-pointer"
+                className="text-[var(--text-secondary)] hover:text-white cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleBulkRevertSubmit} className="p-5 space-y-4">
-              <div className="p-3 bg-blue-500/5 border border-blue-500/20 rounded-xl text-xs text-slate-300 leading-relaxed">
-                <span className="font-bold text-blue-400">Note:</span> Reverting selected lead(s) to Fresh Lead will automatically clear their current assignments and return them to <span className="font-bold text-white">Unassigned</span>.
+              <div className="p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-xl text-xs text-[var(--text-primary)] leading-relaxed">
+                <span className="font-bold text-emerald-400">Note:</span> Reverting selected lead(s) to Fresh Lead will automatically clear their current assignments and return them to <span className="font-bold text-white">Unassigned</span>.
               </div>
 
               {/* History Deletion Option */}
-              <label className="flex items-start gap-3 p-3 bg-slate-900/80 border border-slate-800 rounded-xl cursor-pointer hover:border-slate-700 transition-all select-none">
+              <label className="flex items-start gap-3 p-3 bg-[var(--bg-card)]/80 border border-[var(--border-color)] rounded-xl cursor-pointer hover:border-[var(--border-color)] transition-all select-none">
                 <input
                   type="checkbox"
                   checked={bulkRevertClearHistory}
                   onChange={(e) => setBulkRevertClearHistory(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 rounded border-slate-700 bg-slate-950 text-blue-600 focus:ring-0 cursor-pointer"
+                  className="mt-0.5 w-4 h-4 rounded border-[var(--border-color)] bg-[var(--bg-main)] text-emerald-600 focus:ring-0 cursor-pointer"
                 />
                 <div>
                   <p className="text-xs font-bold text-white">Clear track journey history</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5 leading-normal">
+                  <p className="text-[10px] text-[var(--text-secondary)] mt-0.5 leading-normal">
                     {bulkRevertClearHistory 
-                      ? "Yes — Delete previous activity logs and begin showing only the fresh lead entry in track journey for selected leads." 
-                      : "No — Preserve previous activity logs in track journey history for selected leads."}
+                      ? "Yes â€” Delete previous activity logs and begin showing only the fresh lead entry in track journey for selected leads." 
+                      : "No â€” Preserve previous activity logs in track journey history for selected leads."}
                   </p>
                 </div>
               </label>
 
               {/* Mandatory Remark */}
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1.5">
                   Remark / Reason for Reverting *
                 </label>
                 <textarea
@@ -1933,23 +1933,23 @@ export default function LeadsPage() {
                   value={bulkRevertRemark}
                   onChange={(e) => setBulkRevertRemark(e.target.value)}
                   placeholder="Enter reason for reverting selected lead(s) to Fresh Lead..."
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white h-20 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-xs text-white h-20 focus:outline-none focus:border-emerald-500"
                 />
               </div>
 
               {/* Buttons */}
-              <div className="pt-3 border-t border-slate-800/80 flex justify-end gap-3">
+              <div className="pt-3 border-t border-[var(--border-color)]/80 flex justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setShowBulkRevertFreshModal(false)}
-                  className="py-2 px-4 bg-slate-900 border border-slate-800 text-slate-400 rounded-xl font-bold text-xs cursor-pointer hover:text-white"
+                  className="py-2 px-4 bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] rounded-xl font-bold text-xs cursor-pointer hover:text-white"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={bulkAssigning}
-                  className="py-2 px-5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-xs cursor-pointer shadow-lg shadow-blue-500/20 flex items-center gap-1.5 disabled:opacity-50"
+                  className="py-2 px-5 bg-emerald-600 hover:bg-emerald-600 text-white rounded-xl font-bold text-xs cursor-pointer shadow-lg shadow-emerald-500/20 flex items-center gap-1.5 disabled:opacity-50"
                 >
                   {bulkAssigning ? (
                     <>
@@ -1972,26 +1972,26 @@ export default function LeadsPage() {
       {/* Amazon / Flipkart Style Detailed Filter Modal Drawer */}
       {showDetailedFilterModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md px-4 py-6">
-          <div className="w-full max-w-4xl bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[85vh]">
+          <div className="w-full max-w-4xl bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[85vh]">
             {/* Modal Header */}
-            <div className="p-5 border-b border-slate-800 bg-slate-900/40 flex justify-between items-center shrink-0">
+            <div className="p-5 border-b border-[var(--border-color)] bg-[var(--bg-card)]/40 flex justify-between items-center shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-450">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500">
                   <SlidersHorizontal className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
                     <span>Filters</span>
                     {getActiveFilterCount() > 0 && (
-                      <span className="bg-blue-650 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                      <span className="bg-emerald-650 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">
                         {getActiveFilterCount()} Active
                       </span>
                     )}
                   </h3>
-                  <p className="text-[11px] text-slate-400">Filter sales leads by stage, geography, source, team allocation, and dates.</p>
+                  <p className="text-[11px] text-[var(--text-secondary)]">Filter sales leads by stage, geography, source, team allocation, and dates.</p>
                 </div>
               </div>
-              <button onClick={() => setShowDetailedFilterModal(false)} className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-850 transition-all cursor-pointer">
+              <button onClick={() => setShowDetailedFilterModal(false)} className="text-[var(--text-secondary)] hover:text-white p-1 rounded-lg hover:bg-[var(--bg-card)] transition-all cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1999,7 +1999,7 @@ export default function LeadsPage() {
             {/* E-Commerce Two-Column Layout */}
             <div className="flex-1 flex overflow-hidden min-h-[400px]">
               {/* Left Navigation Sidebar Category Tabs */}
-              <div className="w-1/3 max-w-[240px] bg-slate-955/60 border-r border-slate-800/80 p-3 space-y-1 overflow-y-auto shrink-0 select-none">
+              <div className="w-1/3 max-w-[240px] bg-slate-955/60 border-r border-[var(--border-color)]/80 p-3 space-y-1 overflow-y-auto shrink-0 select-none">
                 {[
                   { id: 'stages', label: 'Pipeline Stages', icon: Layers, count: statusFilter ? statusFilter.split(',').filter(Boolean).length : 0 },
                   { id: 'connection', label: 'Connection Type', icon: Zap, count: connectionFilter ? connectionFilter.split(',').filter(Boolean).length : 0 },
@@ -2016,16 +2016,16 @@ export default function LeadsPage() {
                       onClick={() => setActiveFilterTab(tab.id as any)}
                       className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer text-left ${
                         isActive
-                          ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 shadow-md'
-                          : 'text-slate-400 hover:bg-slate-900/60 hover:text-slate-200 border border-transparent'
+                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-md'
+                          : 'text-[var(--text-secondary)] hover:bg-[var(--bg-card)]/60 hover:text-[var(--text-primary)] border border-transparent'
                       }`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <TabIcon className={`w-4 h-4 shrink-0 ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500'}`} />
+                        <TabIcon className={`w-4 h-4 shrink-0 ${isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-[var(--text-muted)]'}`} />
                         <span className="truncate">{tab.label}</span>
                       </div>
                       {tab.count > 0 && (
-                        <span className="bg-blue-600 text-white font-bold text-[9px] px-1.5 py-0.25 rounded-full shrink-0">
+                        <span className="bg-emerald-600 text-white font-bold text-[9px] px-1.5 py-0.25 rounded-full shrink-0">
                           {tab.count}
                         </span>
                       )}
@@ -2035,17 +2035,17 @@ export default function LeadsPage() {
               </div>
 
               {/* Right Filter Options Panel */}
-              <div className="flex-1 p-6 overflow-y-auto bg-[#111625] space-y-6">
+              <div className="flex-1 p-6 overflow-y-auto bg-[var(--bg-card)] space-y-6">
                 {/* 1. PIPELINE STAGES TAB */}
                 {activeFilterTab === 'stages' && (
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
                       <div>
                         <h4 className="text-xs font-bold uppercase tracking-wider text-white">Select Pipeline Stages</h4>
-                        <p className="text-[11px] text-slate-400">Select multiple stages to filter leads.</p>
+                        <p className="text-[11px] text-[var(--text-secondary)]">Select multiple stages to filter leads.</p>
                       </div>
                       {statusFilter && (
-                        <button onClick={() => setStatusFilter('')} className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold hover:underline cursor-pointer">
+                        <button onClick={() => setStatusFilter('')} className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold hover:underline cursor-pointer">
                           Clear Stages
                         </button>
                       )}
@@ -2065,15 +2065,15 @@ export default function LeadsPage() {
                             }}
                             className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer select-none transition-all ${
                               isChecked
-                                ? 'bg-blue-500/10 border-blue-500/20 shadow-sm'
-                                : 'bg-slate-950/40 border-slate-850 hover:border-slate-800 hover:bg-slate-900/20'
+                                ? 'bg-emerald-500/10 border-emerald-500/20 shadow-sm'
+                                : 'bg-[var(--bg-main)]/40 border-[var(--border-color)] hover:border-[var(--border-color)] hover:bg-[var(--bg-card)]/20'
                             }`}
                           >
                             <span className={`text-xs font-bold ${badge.class} border px-2 py-0.5 rounded-full`}>
                               {badge.name}
                             </span>
                             <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${
-                              isChecked ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-700 bg-slate-900'
+                              isChecked ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-[var(--border-color)] bg-[var(--bg-card)]'
                             }`}>
                               {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
                             </div>
@@ -2087,13 +2087,13 @@ export default function LeadsPage() {
                 {/* 2. CONNECTION TYPE TAB */}
                 {activeFilterTab === 'connection' && (
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
                       <div>
                         <h4 className="text-xs font-bold uppercase tracking-wider text-white">Solar Connection Type</h4>
-                        <p className="text-[11px] text-slate-400">Filter by residential, commercial, or industrial setup.</p>
+                        <p className="text-[11px] text-[var(--text-secondary)]">Filter by residential, commercial, or industrial setup.</p>
                       </div>
                       {connectionFilter && (
-                        <button onClick={() => setConnectionFilter('')} className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold hover:underline cursor-pointer">
+                        <button onClick={() => setConnectionFilter('')} className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold hover:underline cursor-pointer">
                           Clear Types
                         </button>
                       )}
@@ -2113,11 +2113,11 @@ export default function LeadsPage() {
                             }}
                             className={`p-4 rounded-xl border text-center cursor-pointer select-none transition-all flex flex-col items-center justify-center gap-2 ${
                               isChecked
-                                ? 'bg-blue-500/10 border-blue-500/40 shadow-md'
-                                : 'bg-slate-950/40 border-slate-850 hover:border-slate-800'
+                                ? 'bg-emerald-500/10 border-emerald-500/40 shadow-md'
+                                : 'bg-[var(--bg-main)]/40 border-[var(--border-color)] hover:border-[var(--border-color)]'
                             }`}
                           >
-                            <Zap className={`w-6 h-6 ${isChecked ? 'text-blue-400' : 'text-slate-500'}`} />
+                            <Zap className={`w-6 h-6 ${isChecked ? 'text-emerald-400' : 'text-[var(--text-muted)]'}`} />
                             <span className="text-xs font-bold text-white capitalize">{type}</span>
                           </div>
                         );
@@ -2129,13 +2129,13 @@ export default function LeadsPage() {
                 {/* 3. LEAD SOURCE TAB */}
                 {activeFilterTab === 'sources' && (
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
                       <div>
                         <h4 className="text-xs font-bold uppercase tracking-wider text-white">Lead Acquisition Source</h4>
-                        <p className="text-[11px] text-slate-400">Filter leads by where they originated.</p>
+                        <p className="text-[11px] text-[var(--text-secondary)]">Filter leads by where they originated.</p>
                       </div>
                       {sourceFilter && (
-                        <button onClick={() => setSourceFilter('')} className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold hover:underline cursor-pointer">
+                        <button onClick={() => setSourceFilter('')} className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold hover:underline cursor-pointer">
                           Clear Sources
                         </button>
                       )}
@@ -2163,7 +2163,7 @@ export default function LeadsPage() {
                             className={`p-3 rounded-xl border text-center cursor-pointer select-none transition-all flex items-center justify-between ${
                               isChecked
                                 ? 'bg-purple-500/10 border-purple-500/40 text-purple-300 font-bold'
-                                : 'bg-slate-950/40 border-slate-850 hover:border-slate-800 text-slate-300'
+                                : 'bg-[var(--bg-main)]/40 border-[var(--border-color)] hover:border-[var(--border-color)] text-[var(--text-primary)]'
                             }`}
                           >
                             <span className="text-xs font-semibold">{src.name}</span>
@@ -2178,30 +2178,30 @@ export default function LeadsPage() {
                 {/* 4. LOCATION TAB */}
                 {activeFilterTab === 'location' && (
                   <div className="space-y-4">
-                    <div className="border-b border-slate-800 pb-3">
+                    <div className="border-b border-[var(--border-color)] pb-3">
                       <h4 className="text-xs font-bold uppercase tracking-wider text-white">City & State Filter</h4>
-                      <p className="text-[11px] text-slate-400">Search leads by customer city or state.</p>
+                      <p className="text-[11px] text-[var(--text-secondary)]">Search leads by customer city or state.</p>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">City Name</label>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1">City Name</label>
                         <input
                           type="text"
                           value={cityFilter}
                           onChange={(e) => { setCityFilter(e.target.value); setPage(1); }}
                           placeholder="e.g. Delhi, Jaipur, Mumbai..."
-                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:ring-blue-500"
+                          className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-white text-xs focus:ring-emerald-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">State Name</label>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1">State Name</label>
                         <input
                           type="text"
                           value={stateFilter}
                           onChange={(e) => { setStateFilter(e.target.value); setPage(1); }}
                           placeholder="e.g. Rajasthan, Haryana..."
-                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:ring-blue-500"
+                          className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-white text-xs focus:ring-emerald-500"
                         />
                       </div>
                     </div>
@@ -2211,13 +2211,13 @@ export default function LeadsPage() {
                 {/* 5. TEAM ALLOCATION TAB */}
                 {activeFilterTab === 'team' && (
                   <div className="space-y-4">
-                    <div className="border-b border-slate-800 pb-3">
+                    <div className="border-b border-[var(--border-color)] pb-3">
                       <h4 className="text-xs font-bold uppercase tracking-wider text-white">Assigned Team Members</h4>
-                      <p className="text-[11px] text-slate-400">Filter leads by assigned Consultants, TLs, or Managers.</p>
+                      <p className="text-[11px] text-[var(--text-secondary)]">Filter leads by assigned Consultants, TLs, or Managers.</p>
                     </div>
 
                     <div className="space-y-3.5">
-                      <label className="flex items-center gap-2.5 p-3 rounded-xl border border-slate-850 bg-slate-955/40 hover:bg-slate-900/20 cursor-pointer select-none transition-all">
+                      <label className="flex items-center gap-2.5 p-3 rounded-xl border border-[var(--border-color)] bg-slate-955/40 hover:bg-[var(--bg-card)]/20 cursor-pointer select-none transition-all">
                         <input
                           type="checkbox"
                           checked={unassignedFilter}
@@ -2230,13 +2230,13 @@ export default function LeadsPage() {
                               setManagerFilter('');
                             }
                           }}
-                          className="w-4 h-4 rounded border-slate-800 bg-slate-950 text-blue-600 focus:ring-0 cursor-pointer"
+                          className="w-4 h-4 rounded border-[var(--border-color)] bg-[var(--bg-main)] text-emerald-600 focus:ring-0 cursor-pointer"
                         />
-                        <span className="text-xs font-semibold text-slate-200">Show only Unassigned Leads (no coordinators assigned)</span>
+                        <span className="text-xs font-semibold text-[var(--text-primary)]">Show only Unassigned Leads (no coordinators assigned)</span>
                       </label>
 
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Assigned Consultant</label>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1">Assigned Consultant</label>
                         <UserSelect
                           users={consultants}
                           value={consultantFilter}
@@ -2247,7 +2247,7 @@ export default function LeadsPage() {
                       </div>
 
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Assigned Team Leader (TL)</label>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1">Assigned Team Leader (TL)</label>
                         <UserSelect
                           users={teamMembers.filter(m => ['tl', 'psa_tl'].includes(m.role))}
                           value={tlFilter}
@@ -2258,7 +2258,7 @@ export default function LeadsPage() {
                       </div>
 
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Assigned Manager</label>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1">Assigned Manager</label>
                         <UserSelect
                           users={teamMembers.filter(m => ['manager', 'sales_head', 'admin', 'director'].includes(m.role))}
                           value={managerFilter}
@@ -2272,28 +2272,28 @@ export default function LeadsPage() {
                 )}                {/* 6. CREATED DATES TAB */}
                 {activeFilterTab === 'dates' && (
                   <div className="space-y-4">
-                    <div className="border-b border-slate-800 pb-3">
+                    <div className="border-b border-[var(--border-color)] pb-3">
                       <h4 className="text-xs font-bold uppercase tracking-wider text-white">Lead Registration Date Range</h4>
-                      <p className="text-[11px] text-slate-400">Filter leads registered within a specific date timeframe.</p>
+                      <p className="text-[11px] text-[var(--text-secondary)]">Filter leads registered within a specific date timeframe.</p>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">From Date</label>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1">From Date</label>
                         <input
                           type="date"
                           value={dateFromFilter}
                           onChange={(e) => { setDateFromFilter(e.target.value); setPage(1); }}
-                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-blue-500"
+                          className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-[var(--text-primary)] text-xs focus:ring-emerald-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">To Date</label>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1">To Date</label>
                         <input
                           type="date"
                           value={dateToFilter}
                           onChange={(e) => { setDateToFilter(e.target.value); setPage(1); }}
-                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-blue-500"
+                          className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-[var(--text-primary)] text-xs focus:ring-emerald-500"
                         />
                       </div>
                     </div>
@@ -2303,18 +2303,18 @@ export default function LeadsPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-slate-800 bg-slate-900/30 flex items-center justify-between shrink-0">
+            <div className="p-4 border-t border-[var(--border-color)] bg-[var(--bg-card)]/30 flex items-center justify-between shrink-0">
               <button
                 type="button"
                 onClick={handleClearFilters}
-                className="py-2.5 px-4 bg-slate-900 hover:bg-slate-855 border border-slate-800 text-slate-400 hover:text-white rounded-xl font-bold text-xs transition-all cursor-pointer"
+                className="py-2.5 px-4 bg-[var(--bg-card)] hover:bg-slate-855 border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-white rounded-xl font-bold text-xs transition-all cursor-pointer"
               >
                 Reset All Filters
               </button>
               <button
                 type="button"
                 onClick={() => setShowDetailedFilterModal(false)}
-                className="py-2.5 px-6 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-xl font-bold text-xs shadow-lg flex items-center gap-1.5 cursor-pointer"
+                className="py-2.5 px-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-lg flex items-center gap-1.5 cursor-pointer"
               >
                 <Check className="w-4 h-4 stroke-[3]" />
                 <span>Apply & View Leads ({total})</span>
@@ -2327,17 +2327,17 @@ export default function LeadsPage() {
       {/* Track Lead Progress Modal (Amazon Delivery Tracking Style) */}
       {trackingLead && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md px-4 py-6">
-          <div className="w-full max-w-2xl bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]">
-            <div className="p-4 border-b border-slate-800 bg-slate-900/40 flex justify-between items-center shrink-0">
+          <div className="w-full max-w-2xl bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]">
+            <div className="p-4 border-b border-[var(--border-color)] bg-[var(--bg-card)]/40 flex justify-between items-center shrink-0">
               <div className="flex items-center gap-2">
-                <Truck className="w-5 h-5 text-blue-600 dark:text-blue-450" />
+                <Truck className="w-5 h-5 text-emerald-500" />
                 <h3 className="text-sm font-bold text-white uppercase tracking-wider">
                   Lead Journey Tracker: {trackingLead.customerName}
                 </h3>
               </div>
               <button
                 onClick={() => setTrackingLead(null)}
-                className="text-slate-405 hover:text-white p-1 rounded-lg hover:bg-slate-850 transition-all cursor-pointer"
+                className="text-slate-405 hover:text-white p-1 rounded-lg hover:bg-[var(--bg-card)] transition-all cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -2345,23 +2345,23 @@ export default function LeadsPage() {
             <div className="p-5 overflow-y-auto flex-1">
               {trackingLoading ? (
                 <div className="flex flex-col items-center justify-center py-20 space-y-4">
-                  <Loader2 className="w-10 h-10 text-blue-600 dark:text-blue-400 animate-spin" />
-                  <p className="text-xs text-slate-400 font-semibold tracking-wider uppercase font-mono">Loading Lead Journey...</p>
+                  <Loader2 className="w-10 h-10 text-emerald-600 dark:text-emerald-400 animate-spin" />
+                  <p className="text-xs text-[var(--text-secondary)] font-semibold tracking-wider uppercase font-mono">Loading Lead Journey...</p>
                 </div>
               ) : (
                 <LeadTrackingTimeline lead={trackingLead} />
               )}
             </div>
-            <div className="p-4 border-t border-slate-800 bg-slate-900/30 flex justify-between items-center shrink-0">
+            <div className="p-4 border-t border-[var(--border-color)] bg-[var(--bg-card)]/30 flex justify-between items-center shrink-0">
               <Link
                 href={`/leads/${trackingLead.id}`}
-                className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
               >
                 <span>Open Full Lead Workspace</span> &rarr;
               </Link>
               <button
                 onClick={() => setTrackingLead(null)}
-                className="py-2 px-4 bg-slate-800 hover:bg-slate-750 text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
+                className="py-2 px-4 bg-[var(--bg-card)] hover:bg-slate-750 text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
               >
                 Close Tracker
               </button>
@@ -2386,7 +2386,7 @@ export default function LeadsPage() {
               : "Are you completely sure you want to proceed with this bulk assignment?"
           }
           type={bulkConfirmModal.step === 2 ? "warning" : "info"}
-          confirmText={bulkConfirmModal.step === 1 ? "Proceed to Step 2 →" : "Yes, Confirm Assignment"}
+          confirmText={bulkConfirmModal.step === 1 ? "Proceed to Step 2 â†’" : "Yes, Confirm Assignment"}
           cancelText={bulkConfirmModal.step === 2 ? "Go Back" : "Cancel"}
           onClose={() => setBulkConfirmModal(null)}
           onConfirm={() => {

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -107,10 +107,10 @@ const formatExecutiveSummary = (log: AuditLog) => {
   }
 
   if (table.includes('payment')) {
-    return `${log.user.name} recorded payment entry #${log.recordId} (Amount: ₹${newVal || oldVal || '0'})`;
+    return `${log.user.name} recorded payment entry #${log.recordId} (Amount: â‚¹${newVal || oldVal || '0'})`;
   }
 
-  return `${log.user.name} updated ${log.tableName} #${log.recordId} (${log.fieldName}: ${oldVal || 'None'} → ${newVal || 'None'})`;
+  return `${log.user.name} updated ${log.tableName} #${log.recordId} (${log.fieldName}: ${oldVal || 'None'} â†’ ${newVal || 'None'})`;
 };
 
 export default function AuditLogsPage() {
@@ -186,8 +186,8 @@ export default function AuditLogsPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-[#090b11] flex items-center justify-center">
-        <RefreshCw className="w-10 h-10 text-blue-600 dark:text-blue-400 animate-spin" />
+      <div className="min-h-screen bg-[var(--bg-main)] flex items-center justify-center">
+        <RefreshCw className="w-10 h-10 text-emerald-400 animate-spin" />
       </div>
     );
   }
@@ -203,19 +203,19 @@ export default function AuditLogsPage() {
 
   if (!hasAccess) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] bg-[#090b11] p-6 flex items-center justify-center">
-        <div className="max-w-md w-full bg-[#111625]/80 border border-slate-800 rounded-2xl p-8 text-center shadow-2xl backdrop-blur-xl">
+      <div className="min-h-[calc(100vh-4rem)] bg-[var(--bg-main)] p-6 flex items-center justify-center">
+        <div className="max-w-md w-full bg-[var(--bg-card)]/80 border border-[var(--border-color)] rounded-2xl p-8 text-center shadow-2xl backdrop-blur-xl">
           <div className="w-16 h-16 bg-red-950/40 border border-red-900/50 rounded-full flex items-center justify-center mx-auto mb-6">
             <ShieldAlert className="w-8 h-8 text-red-500" />
           </div>
           <h2 className="text-xl font-black text-white uppercase tracking-wider mb-2">Access Forbidden</h2>
-          <p className="text-slate-400 text-sm leading-relaxed mb-6">
+          <p className="text-[var(--text-secondary)] text-sm leading-relaxed mb-6">
             The System Audit Logs are strictly restricted to the IT Department and system Administrators.
             You do not have the required permissions to view this resource.
           </p>
           <button
             onClick={() => router.push('/dashboard')}
-            className="w-full py-2.5 bg-slate-900 hover:bg-slate-850 text-blue-600 dark:text-blue-400 hover:text-blue-600 dark:text-blue-400 border border-slate-800 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer"
+            className="w-full py-2.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] text-emerald-400 hover:text-emerald-400 border border-[var(--border-color)] rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer"
           >
             Return to Dashboard
           </button>
@@ -234,68 +234,68 @@ export default function AuditLogsPage() {
       const parsed = JSON.parse(val);
       if (typeof parsed === 'object') {
         return (
-          <pre className="text-[10px] font-mono bg-slate-950/80 p-2 rounded border border-slate-900 overflow-x-auto text-slate-350 max-w-xs">
+          <pre className="text-[10px] font-mono bg-[var(--bg-main)] p-2 rounded border border-[var(--border-color)] overflow-x-auto text-slate-350 max-w-xs">
             {JSON.stringify(parsed, null, 2)}
           </pre>
         );
       }
     } catch {}
-    return <span className="font-mono text-slate-300 break-all text-[11px]">{val}</span>;
+    return <span className="font-mono text-[var(--text-primary)] break-all text-[11px]">{val}</span>;
   };
 
   return (
-    <div className="min-h-screen bg-[#090b11] p-6 space-y-6">
+    <div className="min-h-screen bg-[var(--bg-main)] p-6 space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-850">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-[var(--border-color)]">
         <div>
-          <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider mb-1">
+          <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase tracking-wider mb-1">
             <Terminal className="w-3.5 h-3.5" />
             <span>Admin Console</span>
           </div>
           <h1 className="text-2xl font-black tracking-tight text-white uppercase">System Audit Logs</h1>
-          <p className="text-slate-400 text-xs mt-1">
+          <p className="text-[var(--text-secondary)] text-xs mt-1">
             Real-time tracking of every model and configuration write across the Santori Solar Database.
           </p>
         </div>
         <button
           onClick={() => fetchLogs(page)}
-          className="flex items-center gap-1.5 px-3 py-2 bg-slate-900 hover:bg-slate-850 text-slate-300 hover:text-white border border-slate-800 rounded-lg text-xs font-bold transition-all cursor-pointer self-end sm:self-auto"
+          className="flex items-center gap-1.5 px-3 py-2 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] text-[var(--text-primary)] hover:text-white border border-[var(--border-color)] rounded-lg text-xs font-bold transition-all cursor-pointer self-end sm:self-auto"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-blue-600 dark:text-blue-400' : ''}`} />
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-emerald-400' : ''}`} />
           <span>Refresh Feed</span>
         </button>
       </div>
 
       {/* Advanced Filters */}
-      <div className="bg-[#111625]/60 border border-slate-800/80 rounded-2xl p-5 shadow-xl backdrop-blur-sm space-y-4">
-        <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
-          <Filter className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+      <div className="bg-[var(--bg-card)]/60 border border-[var(--border-color)]/80 rounded-2xl p-5 shadow-xl backdrop-blur-sm space-y-4">
+        <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1">
+          <Filter className="w-3.5 h-3.5 text-emerald-400" />
           <span>Search & Filters</span>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           {/* User Search */}
           <div className="space-y-1">
-            <label className="block text-[10px] font-bold uppercase text-slate-500">Performed By (User)</label>
+            <label className="block text-[10px] font-bold uppercase text-[var(--text-muted)]">Performed By (User)</label>
             <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-slate-500" />
+              <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-[var(--text-muted)]" />
               <input
                 type="text"
                 placeholder="Search name or email..."
                 value={searchUser}
                 onChange={(e) => setSearchUser(e.target.value)}
-                className="w-full pl-8 pr-3 py-2 bg-slate-950/80 border border-slate-850 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none placeholder:text-slate-600"
+                className="w-full pl-8 pr-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-emerald-500 focus:outline-none placeholder:text-slate-600"
               />
             </div>
           </div>
 
           {/* Table Selector */}
           <div className="space-y-1">
-            <label className="block text-[10px] font-bold uppercase text-slate-500">Database Component</label>
+            <label className="block text-[10px] font-bold uppercase text-[var(--text-muted)]">Database Component</label>
             <select
               value={selectedTable}
               onChange={(e) => setSelectedTable(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-950/80 border border-slate-850 rounded-lg text-slate-300 text-xs focus:ring-blue-500 focus:outline-none"
+              className="w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:ring-emerald-500 focus:outline-none"
             >
               <option value="">All Tables</option>
               <option value="User">User Accounts</option>
@@ -310,49 +310,49 @@ export default function AuditLogsPage() {
 
           {/* Action Type */}
           <div className="space-y-1">
-            <label className="block text-[10px] font-bold uppercase text-slate-500">Operation / Action</label>
+            <label className="block text-[10px] font-bold uppercase text-[var(--text-muted)]">Operation / Action</label>
             <input
               type="text"
               placeholder="e.g. CREATE, role, isActive..."
               value={selectedAction}
               onChange={(e) => setSelectedAction(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-950/80 border border-slate-850 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none placeholder:text-slate-600"
+              className="w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-emerald-500 focus:outline-none placeholder:text-slate-600"
             />
           </div>
 
           {/* Start Date */}
           <div className="space-y-1">
-            <label className="block text-[10px] font-bold uppercase text-slate-500">From Date & Time</label>
+            <label className="block text-[10px] font-bold uppercase text-[var(--text-muted)]">From Date & Time</label>
             <input
               type="datetime-local"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-950/80 border border-slate-850 rounded-lg text-slate-350 text-xs focus:ring-blue-500 focus:outline-none"
+              className="w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-slate-350 text-xs focus:ring-emerald-500 focus:outline-none"
             />
           </div>
 
           {/* End Date */}
           <div className="space-y-1">
-            <label className="block text-[10px] font-bold uppercase text-slate-500">To Date & Time</label>
+            <label className="block text-[10px] font-bold uppercase text-[var(--text-muted)]">To Date & Time</label>
             <input
               type="datetime-local"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-950/80 border border-slate-850 rounded-lg text-slate-355 text-xs focus:ring-blue-500 focus:outline-none"
+              className="w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-slate-355 text-xs focus:ring-emerald-500 focus:outline-none"
             />
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-2 border-t border-slate-900">
+        <div className="flex justify-end gap-3 pt-2 border-t border-[var(--border-color)]">
           <button
             onClick={handleResetFilters}
-            className="px-4 py-2 bg-transparent hover:bg-slate-900 border border-transparent rounded-lg text-slate-400 hover:text-slate-200 text-xs font-bold transition-all cursor-pointer"
+            className="px-4 py-2 bg-transparent hover:bg-[var(--bg-card)] border border-transparent rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-bold transition-all cursor-pointer"
           >
             Clear Fields
           </button>
           <button
             onClick={() => fetchLogs(1)}
-            className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-slate-955 rounded-lg text-xs font-extrabold shadow-lg shadow-blue-500/10 transition-all cursor-pointer uppercase tracking-wider"
+            className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-slate-955 rounded-lg text-xs font-extrabold shadow-lg shadow-emerald-500/10 transition-all cursor-pointer uppercase tracking-wider"
           >
             Apply Filters
           </button>
@@ -360,25 +360,25 @@ export default function AuditLogsPage() {
       </div>
 
       {/* Logs Table */}
-      <div className="bg-[#111625]/60 border border-slate-800/80 rounded-2xl shadow-xl overflow-hidden backdrop-blur-sm">
+      <div className="bg-[var(--bg-card)]/60 border border-[var(--border-color)]/80 rounded-2xl shadow-xl overflow-hidden backdrop-blur-sm">
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center gap-3">
-            <RefreshCw className="w-8 h-8 text-blue-600 dark:text-blue-400 animate-spin" />
-            <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Retrieving Logs...</span>
+            <RefreshCw className="w-8 h-8 text-emerald-400 animate-spin" />
+            <span className="text-[var(--text-secondary)] text-xs font-bold uppercase tracking-wider">Retrieving Logs...</span>
           </div>
         ) : logs.length === 0 ? (
           <div className="py-20 text-center space-y-3">
-            <div className="w-12 h-12 bg-slate-900 border border-slate-850 rounded-full flex items-center justify-center mx-auto text-slate-600">
+            <div className="w-12 h-12 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-full flex items-center justify-center mx-auto text-slate-600">
               <Database className="w-5 h-5" />
             </div>
-            <p className="text-slate-500 text-xs uppercase font-extrabold tracking-wider">No audit logs matching this filter</p>
+            <p className="text-[var(--text-muted)] text-xs uppercase font-extrabold tracking-wider">No audit logs matching this filter</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
 
               <thead>
-                <tr className="border-b border-slate-800 bg-slate-950/40 text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                <tr className="border-b border-[var(--border-color)] bg-[var(--bg-main)] text-[10px] font-black uppercase text-[var(--text-secondary)] tracking-wider">
                   <th className="py-3.5 px-5">Timestamp</th>
                   <th className="py-3.5 px-5">Operator (Who)</th>
                   <th className="py-3.5 px-5">Executive Action Summary</th>
@@ -394,12 +394,12 @@ export default function AuditLogsPage() {
                   return (
                     <tr
                       key={log.id}
-                      className="hover:bg-slate-900/10 transition-colors text-xs text-slate-300"
+                      className="hover:bg-[var(--bg-card)] transition-colors text-xs text-[var(--text-primary)]"
                     >
                       {/* Timestamp */}
                       <td className="py-3.5 px-5 whitespace-nowrap">
                         <div className="flex items-center gap-1.5">
-                          <Clock className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                          <Clock className="w-3.5 h-3.5 text-[var(--text-muted)] shrink-0" />
                           <div className="flex flex-col">
                             <span className="font-bold text-white">
                               {new Date(log.createdAt).toLocaleString('en-IN', {
@@ -417,13 +417,13 @@ export default function AuditLogsPage() {
                       {/* Operator */}
                       <td className="py-3.5 px-5 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 font-extrabold text-[11px]">
+                          <div className="w-7 h-7 rounded-full bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-center text-emerald-400 shrink-0 font-extrabold text-[11px]">
                             {log.user.name.charAt(0).toUpperCase()}
                           </div>
                           <div className="flex flex-col">
                             <span className="font-bold text-white">{log.user.name}</span>
-                            <span className="text-[10px] text-slate-500">{log.user.email}</span>
-                            <span className="text-[9px] text-blue-600 dark:text-blue-400 font-extrabold uppercase tracking-widest mt-0.5">
+                            <span className="text-[10px] text-[var(--text-muted)]">{log.user.email}</span>
+                            <span className="text-[9px] text-emerald-400 font-extrabold uppercase tracking-widest mt-0.5">
                               {dept} ({log.user.role.includes(':') ? log.user.role.split(':')[1] : log.user.role})
                             </span>
                           </div>
@@ -431,22 +431,22 @@ export default function AuditLogsPage() {
                       </td>
 
                       {/* Executive Action Summary */}
-                      <td className="py-3.5 px-5 font-medium text-blue-600 dark:text-blue-400 max-w-xs">
+                      <td className="py-3.5 px-5 font-medium text-emerald-400 max-w-xs">
                         {formatExecutiveSummary(log)}
                       </td>
 
                       {/* Target Component */}
                       <td className="py-3.5 px-5 whitespace-nowrap">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-950/60 border border-slate-850 rounded-lg text-white font-mono text-[10px] uppercase font-bold">
-                          <Database className="w-3 h-3 text-slate-500" />
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white font-mono text-[10px] uppercase font-bold">
+                          <Database className="w-3 h-3 text-[var(--text-muted)]" />
                           {log.tableName}
-                          <span className="text-blue-600 dark:text-blue-400 font-normal">#{log.recordId}</span>
+                          <span className="text-emerald-400 font-normal">#{log.recordId}</span>
                         </span>
                       </td>
 
                       {/* Action / Field */}
                       <td className="py-3.5 px-5 whitespace-nowrap">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 font-mono text-[10px] font-bold uppercase tracking-wider">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono text-[10px] font-bold uppercase tracking-wider">
                           <Activity className="w-2.5 h-2.5 shrink-0" />
                           {log.fieldName}
                         </span>
@@ -471,25 +471,25 @@ export default function AuditLogsPage() {
 
         {/* Pagination controls */}
         {!loading && totalPages > 1 && (
-          <div className="flex items-center justify-between px-5 py-4 border-t border-slate-800 bg-slate-950/30">
-            <span className="text-xs text-slate-500 font-bold uppercase tracking-wide">
+          <div className="flex items-center justify-between px-5 py-4 border-t border-[var(--border-color)] bg-[var(--bg-main)]">
+            <span className="text-xs text-[var(--text-muted)] font-bold uppercase tracking-wide">
               Showing <span className="text-white">{logs.length}</span> of <span className="text-white">{total}</span> logs
             </span>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => fetchLogs(page - 1)}
                 disabled={page === 1}
-                className="p-1.5 bg-slate-900 border border-slate-800 rounded-lg text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all flex items-center justify-center"
+                className="p-1.5 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg text-[var(--text-secondary)] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all flex items-center justify-center"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <span className="text-xs font-extrabold text-slate-300 px-2 uppercase tracking-wide">
-                Page <span className="text-blue-600 dark:text-blue-400">{page}</span> of {totalPages}
+              <span className="text-xs font-extrabold text-[var(--text-primary)] px-2 uppercase tracking-wide">
+                Page <span className="text-emerald-400">{page}</span> of {totalPages}
               </span>
               <button
                 onClick={() => fetchLogs(page + 1)}
                 disabled={page === totalPages}
-                className="p-1.5 bg-slate-900 border border-slate-800 rounded-lg text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all flex items-center justify-center"
+                className="p-1.5 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg text-[var(--text-secondary)] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all flex items-center justify-center"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>

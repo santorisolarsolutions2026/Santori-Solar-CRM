@@ -48,7 +48,7 @@ export default function CustomSelect({
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full px-3 py-2 bg-[var(--bg-card-solid)] border border-[var(--border-color)] hover:bg-[var(--border-color)]/30 rounded-xl text-xs text-left font-medium text-[var(--text-primary)] transition-all flex items-center justify-between gap-2 shadow-inner focus:outline-none focus:ring-2 focus:ring-blue-500/40 ${
+        className={`w-full px-3 py-2 bg-[var(--bg-card-solid)] border border-[var(--border-color)] hover:bg-[var(--border-color)]/30 rounded-xl text-xs text-left font-medium text-[var(--text-primary)] transition-all flex items-center justify-between gap-2 shadow-inner focus:outline-none focus:ring-2 focus:ring-emerald-500/40 ${
           disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
         }`}
       >
@@ -64,11 +64,11 @@ export default function CustomSelect({
             <span className="text-[var(--text-muted)] truncate">{placeholder}</span>
           )}
         </span>
-        <ChevronDown className={`w-3.5 h-3.5 text-[var(--text-muted)] transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180 text-blue-600 dark:text-blue-400' : ''}`} />
+        <ChevronDown className={`w-3.5 h-3.5 text-[var(--text-muted)] transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180 text-emerald-600 dark:text-emerald-400' : ''}`} />
       </button>
 
       {isOpen && !disabled && (
-        <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-[var(--bg-card-solid)] border border-[var(--border-color)] rounded-xl shadow-2xl overflow-hidden py-1 max-h-60 overflow-y-auto backdrop-blur-md animate-fade-in-up">
+        <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-2xl overflow-hidden py-1 max-h-60 overflow-y-auto backdrop-blur-md animate-fade-in-up">
           {options.map((opt) => {
             const isSelected = String(opt.value) === String(value);
             return (
@@ -80,7 +80,7 @@ export default function CustomSelect({
                 }}
                 className={`px-3 py-2 text-xs flex items-center justify-between cursor-pointer transition-colors ${
                   isSelected
-                    ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold border-l-2 border-blue-600'
+                    ? 'bg-emerald-500/10 text-emerald-400 font-bold border-l-2 border-emerald-600'
                     : 'text-[var(--text-secondary)] hover:bg-[var(--border-color)] hover:text-[var(--text-primary)]'
                 }`}
               >
@@ -90,7 +90,7 @@ export default function CustomSelect({
                   )}
                   <span className="truncate">{opt.label}</span>
                 </div>
-                {isSelected && <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0 ml-2" />}
+                {isSelected && <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 ml-2" />}
               </div>
             );
           })}

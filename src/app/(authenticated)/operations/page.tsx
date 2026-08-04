@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -96,19 +96,19 @@ export default function OperationsPage() {
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
       </div>
     );
   }
 
   if (!hasPermission('orders:operations')) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center bg-[#111625] border border-slate-800 rounded-xl shadow-lg mt-6">
+      <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-lg mt-6">
         <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 text-red-500 rounded-full flex items-center justify-center mb-4 animate-pulse">
           <AlertTriangle className="w-8 h-8" />
         </div>
         <h2 className="text-xl font-bold text-white mb-2">Access Denied</h2>
-        <p className="text-sm text-slate-400 max-w-md">
+        <p className="text-sm text-[var(--text-secondary)] max-w-md">
           You do not have the required permissions to view Operations details. Please contact your administrator if you believe this is in error.
         </p>
       </div>
@@ -922,7 +922,7 @@ export default function OperationsPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             to_status: 13,
-            remark: `[SUBSIDY APPLIED] Government subsidy registered as applied. Actual Date/Time: ${formatDateTime(actualSubsidyTimestamp)}. Expected Amount: ₹${amountNum.toLocaleString('en-IN')}. Order completed successfully.`,
+            remark: `[SUBSIDY APPLIED] Government subsidy registered as applied. Actual Date/Time: ${formatDateTime(actualSubsidyTimestamp)}. Expected Amount: â‚¹${amountNum.toLocaleString('en-IN')}. Order completed successfully.`,
           }),
         });
 
@@ -1067,34 +1067,34 @@ export default function OperationsPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white tracking-wide">Operations & Delivery</h1>
-          <p className="text-xs text-slate-400 mt-1">Manage delivery, solar structure installation, net meter installation, plant commissioning, subsidies, and track completion logs.</p>
+          <p className="text-xs text-[var(--text-secondary)] mt-1">Manage delivery, solar structure installation, net meter installation, plant commissioning, subsidies, and track completion logs.</p>
         </div>
         
 
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-[#111625] border border-slate-800 rounded-xl p-4 flex flex-wrap gap-4 items-end shadow-lg">
+      <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-4 flex flex-wrap gap-4 items-end shadow-lg">
         <div className="flex-1 min-w-[200px]">
-          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Search Orders</label>
+          <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Search Orders</label>
           <div className="relative">
             <input
               type="text"
               placeholder="Search by client or order code..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-slate-200 text-sm focus:outline-none focus:border-slate-700 placeholder-slate-500"
+              className="w-full pl-9 pr-3 py-2 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--border-color)] placeholder-slate-500"
             />
-            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+            <Search className="w-4 h-4 text-[var(--text-muted)] absolute left-3 top-2.5" />
           </div>
         </div>
 
         <div className="w-full sm:w-auto min-w-[150px]">
-          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Assigned To</label>
+          <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Assigned To</label>
           <select
             value={filterManagerId}
             onChange={(e) => setFilterManagerId(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-slate-200 text-sm focus:outline-none focus:border-slate-700"
+            className="w-full px-3 py-2 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--border-color)]"
           >
             <option value="all">All Managers</option>
             {uniqueManagers.map(m => (
@@ -1104,11 +1104,11 @@ export default function OperationsPage() {
         </div>
 
         <div className="w-full sm:w-auto min-w-[180px]">
-          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Current Stage</label>
+          <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Current Stage</label>
           <select
             value={filterStage}
             onChange={(e) => setFilterStage(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-slate-200 text-sm focus:outline-none focus:border-slate-700"
+            className="w-full px-3 py-2 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--border-color)]"
           >
             <option value="all">All Stages</option>
             <option value="delivery_scheduled">Delivery Scheduled</option>
@@ -1123,21 +1123,21 @@ export default function OperationsPage() {
 
         <div className="flex gap-4">
           <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Order Date From</label>
+            <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Order Date From</label>
             <input
               type="date"
               value={filterDateFrom}
               onChange={(e) => setFilterDateFrom(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-slate-200 text-sm focus:outline-none focus:border-slate-700"
+              className="w-full px-3 py-2 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--border-color)]"
             />
           </div>
           <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Order Date To</label>
+            <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Order Date To</label>
             <input
               type="date"
               value={filterDateTo}
               onChange={(e) => setFilterDateTo(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-slate-200 text-sm focus:outline-none focus:border-slate-700"
+              className="w-full px-3 py-2 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--border-color)]"
             />
           </div>
         </div>
@@ -1146,27 +1146,27 @@ export default function OperationsPage() {
       {/* List View */}
       {loading ? (
         <div className="py-24 flex flex-col items-center justify-center gap-3">
-          <Loader2 className="w-8 h-8 text-blue-600 dark:text-blue-400 animate-spin" />
-          <p className="text-xs text-slate-400">Loading operations queue...</p>
+          <Loader2 className="w-8 h-8 text-emerald-600 dark:text-emerald-400 animate-spin" />
+          <p className="text-xs text-[var(--text-secondary)]">Loading operations queue...</p>
         </div>
       ) : filteredOrders.length === 0 ? (
-        <div className="py-16 text-center bg-[#111625] border border-slate-800 rounded-xl shadow-lg">
+        <div className="py-16 text-center bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-lg">
           <Wrench className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-          <p className="text-slate-300 font-semibold text-sm">No Orders Found</p>
-          <p className="text-xs text-slate-500 mt-1">Try adjusting your filters or search query.</p>
+          <p className="text-[var(--text-primary)] font-semibold text-sm">No Orders Found</p>
+          <p className="text-xs text-[var(--text-muted)] mt-1">Try adjusting your filters or search query.</p>
         </div>
       ) : (
         <>
           {/* Bulk Assign Operations Member Bar */}
           {canAssignOps && selectedOrderIds.length > 0 && (
-            <div className="flex items-center justify-between bg-blue-600/10 border border-blue-600/20 px-4 py-3 rounded-xl mb-4 text-xs">
-              <div className="flex items-center gap-2 text-blue-400 font-bold">
+            <div className="flex items-center justify-between bg-emerald-600/10 border border-emerald-600/20 px-4 py-3 rounded-xl mb-4 text-xs">
+              <div className="flex items-center gap-2 text-emerald-400 font-bold">
                 <Users className="w-4 h-4" />
                 <span>Selected {selectedOrderIds.length} order{selectedOrderIds.length > 1 ? 's' : ''}</span>
               </div>
               <button
                 onClick={() => setShowAssignModal(true)}
-                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white font-bold rounded-lg transition-all shadow-md shadow-blue-500/10 flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition-all shadow-md shadow-emerald-500/10 flex items-center gap-1.5 cursor-pointer"
               >
                 <Users className="w-3.5 h-3.5" />
                 <span>Assign / Reassign Operations Member</span>
@@ -1174,72 +1174,72 @@ export default function OperationsPage() {
             </div>
           )}
 
-          <div className="bg-[#111625] border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl overflow-hidden shadow-2xl">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-900/50 border-b border-slate-800">
+                <tr className="bg-[var(--bg-card)]/50 border-b border-[var(--border-color)]">
                   {canAssignOps && (
                     <th className="px-3 py-3 w-10 text-center">
                       <input
                         type="checkbox"
                         checked={filteredOrders.length > 0 && selectedOrderIds.length === filteredOrders.length}
                         onChange={toggleAllOrders}
-                        className="accent-blue-500 w-3.5 h-3.5 cursor-pointer"
+                        className="accent-emerald-500 w-3.5 h-3.5 cursor-pointer"
                       />
                     </th>
                   )}
-                  <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-slate-400 font-bold">Order Details</th>
-                  <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-slate-400 font-bold">Assigned To</th>
-                  <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-slate-400 font-bold">Current Stage</th>
-                  <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-slate-400 font-bold">Order Date</th>
-                  <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-slate-400 font-bold text-right">Actions</th>
+                  <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Order Details</th>
+                  <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Assigned To</th>
+                  <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Current Stage</th>
+                  <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Order Date</th>
+                  <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
                 {filteredOrders.map((order) => {
-                  let stageText = 'Awaiting Schedule ⏳';
-                  let stageClass = 'bg-slate-800 text-slate-400 border-slate-700';
+                  let stageText = 'Awaiting Schedule â³';
+                  let stageClass = 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-color)]';
 
                   if (order.isSubsidyApplied || (order.isCommissioned && !order.subsidyApplicable)) {
-                    stageText = 'Completed ✅';
-                    stageClass = 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+                    stageText = 'Completed âœ…';
+                    stageClass = 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
                   } else if (order.isCommissioned) {
-                    stageText = 'Subsidy Pending ⏳';
-                    stageClass = 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+                    stageText = 'Subsidy Pending â³';
+                    stageClass = 'bg-purple-500/10 text-purple-400 border-purple-500/20';
                   } else if (order.isMeterInstalled) {
-                    stageText = 'Commissioning Pending ⚡';
-                    stageClass = 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+                    stageText = 'Commissioning Pending âš¡';
+                    stageClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
                   } else if (order.isInstalled) {
-                    stageText = 'Meter Pending ⚡';
-                    stageClass = 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
+                    stageText = 'Meter Pending âš¡';
+                    stageClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
                   } else if (order.isDelivered) {
-                    stageText = 'Delivered 🚚';
-                    stageClass = 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
+                    stageText = 'Delivered ðŸšš';
+                    stageClass = 'bg-teal-500/10 text-teal-400 border-teal-500/20';
                   } else if (order.deliveryDate) {
-                    stageText = 'Scheduled 🚚';
-                    stageClass = 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
+                    stageText = 'Scheduled ðŸšš';
+                    stageClass = 'bg-teal-500/10 text-teal-400 border-teal-500/20';
                   }
 
                   return (
-                    <tr key={order.id} className={`hover:bg-slate-900/30 transition-colors group ${selectedOrderIds.includes(order.id) ? 'bg-blue-500/5' : ''}`}>
+                    <tr key={order.id} className={`hover:bg-[var(--bg-card)]/30 transition-colors group ${selectedOrderIds.includes(order.id) ? 'bg-emerald-500/5' : ''}`}>
                       {canAssignOps && (
                         <td className="px-3 py-4 text-center">
                           <input
                             type="checkbox"
                             checked={selectedOrderIds.includes(order.id)}
                             onChange={() => toggleOrderSelection(order.id)}
-                            className="accent-blue-500 w-3.5 h-3.5 cursor-pointer"
+                            className="accent-emerald-500 w-3.5 h-3.5 cursor-pointer"
                           />
                         </td>
                       )}
                       <td className="px-5 py-4">
                         <div className="flex flex-col">
                           <span className="font-mono font-bold text-white text-xs">{order.orderCode}</span>
-                          <Link href={`/leads/${order.lead.id}`} className="text-sm font-bold text-blue-400 hover:underline mt-1">
+                          <Link href={`/leads/${order.lead.id}`} className="text-sm font-bold text-emerald-400 hover:underline mt-1">
                             {order.lead.customerName}
                           </Link>
-                          <p className="text-[10px] text-slate-500 flex items-center gap-1 mt-1 truncate max-w-[250px]">
+                          <p className="text-[10px] text-[var(--text-muted)] flex items-center gap-1 mt-1 truncate max-w-[250px]">
                             <MapPin className="w-3 h-3" />
                             <span>{order.lead.address}, {order.lead.city}</span>
                           </p>
@@ -1247,15 +1247,15 @@ export default function OperationsPage() {
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700 shrink-0">
-                            <User className="w-3 h-3 text-slate-400" />
+                          <div className="w-7 h-7 rounded-full bg-[var(--bg-card)] flex items-center justify-center border border-[var(--border-color)] shrink-0">
+                            <User className="w-3 h-3 text-[var(--text-secondary)]" />
                           </div>
                           <div className="flex flex-col gap-1">
                             {canAssignOps ? (
                               <select
                                 value={order.assignedOpsId || ''}
                                 onChange={(e) => handleSingleAssign(order.id, e.target.value)}
-                                className="bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                                className="bg-[var(--bg-main)] border border-[var(--border-color)] rounded px-2.5 py-1.5 text-xs text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
                               >
                                 <option value="">-- Unassigned --</option>
                                 {eligibleAssignees.map((emp) => (
@@ -1265,7 +1265,7 @@ export default function OperationsPage() {
                                 ))}
                               </select>
                             ) : (
-                              <span className="text-xs font-semibold text-slate-300">
+                              <span className="text-xs font-semibold text-[var(--text-primary)]">
                                 {order.assignedOps?.name || 'Unassigned'}
                               </span>
                             )}
@@ -1274,7 +1274,7 @@ export default function OperationsPage() {
                               const desig = currentAssignee?.designation?.name || currentAssignee?.role;
                               if (!desig || !order.assignedOpsId) return null;
                               return (
-                                <span className="inline-block text-[9px] font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-full w-fit uppercase tracking-wider">
+                                <span className="inline-block text-[9px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full w-fit uppercase tracking-wider">
                                   {desig}
                                 </span>
                               );
@@ -1287,23 +1287,23 @@ export default function OperationsPage() {
                           {stageText}
                         </span>
                         {order.deliveryDate && !order.isDelivered && (
-                          <div className="text-[10px] text-slate-400 mt-2">
+                          <div className="text-[10px] text-[var(--text-secondary)] mt-2">
                             Scheduled: {order.deliveryDate} {order.deliveryTime}
                           </div>
                         )}
                         {order.installationDate && !order.isInstalled && order.isDelivered && (
-                          <div className="text-[10px] text-slate-400 mt-2">
+                          <div className="text-[10px] text-[var(--text-secondary)] mt-2">
                             Install: {order.installationDate} {order.installationTime}
                           </div>
                         )}
                       </td>
-                      <td className="px-5 py-4 text-xs text-slate-400 font-mono">
+                      <td className="px-5 py-4 text-xs text-[var(--text-secondary)] font-mono">
                         {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : ''}
                       </td>
                       <td className="px-5 py-4 text-right">
                         <button
                           onClick={() => { setSelectedOrder(order); setShowScheduleForm(false); setShowInstallForm(false); setShowActualDeliveryForm(false); setShowActualInstallForm(false); setShowActualMeterForm(false); setShowActualCommissionForm(false); setNewSubsidyAmount(''); }}
-                          className="px-3 py-1.5 bg-slate-900 border border-slate-700 hover:bg-slate-800 text-blue-400 rounded-lg font-bold text-xs transition-all cursor-pointer inline-flex items-center gap-1.5"
+                          className="px-3 py-1.5 bg-[var(--bg-card)] border border-[var(--border-color)] hover:bg-[var(--bg-card)] text-emerald-400 rounded-lg font-bold text-xs transition-all cursor-pointer inline-flex items-center gap-1.5"
                         >
                           <Eye className="w-3.5 h-3.5" />
                           <span>Manage</span>
@@ -1331,21 +1331,21 @@ export default function OperationsPage() {
 
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-            <div className="w-full max-w-5xl bg-[#111625] border border-slate-800 rounded-xl shadow-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]">
+            <div className="w-full max-w-5xl bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]">
               
               {/* Header */}
-              <div className="p-5 border-b border-slate-800/60 bg-slate-900/10 flex justify-between items-center">
+              <div className="p-5 border-b border-[var(--border-color)]/60 bg-[var(--bg-card)]/10 flex justify-between items-center">
                 <div>
                   <h3 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
-                    <Wrench className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    <Wrench className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     <span>Operations & Scheduling Panel</span>
-                    <span className="text-slate-500 font-mono text-xs font-normal">({selectedOrder.orderCode})</span>
+                    <span className="text-[var(--text-muted)] font-mono text-xs font-normal">({selectedOrder.orderCode})</span>
                   </h3>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Project manager view for solar deployment workflow.</p>
+                  <p className="text-[11px] text-[var(--text-secondary)] mt-0.5">Project manager view for solar deployment workflow.</p>
                 </div>
                 <button 
                   onClick={() => setSelectedOrder(null)} 
-                  className="text-slate-400 hover:text-white cursor-pointer"
+                  className="text-[var(--text-secondary)] hover:text-white cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -1360,18 +1360,18 @@ export default function OperationsPage() {
                     
                     {/* ==================== 1. DELIVERY PHASE ==================== */}
                     <div className="space-y-4">
-                      <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-1.5 flex items-center gap-2">
-                        <span className="w-5 h-5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-mono text-[10px]">1</span>
+                      <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-[var(--border-color)] pb-1.5 flex items-center gap-2">
+                        <span className="w-5 h-5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-mono text-[10px]">1</span>
                         <span>Material Delivery Phase</span>
                       </h4>
                       
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-xs">
                         <div>
-                          <span className="text-slate-500 block uppercase tracking-wider text-[8px] font-bold">Delivery Status</span>
+                          <span className="text-[var(--text-muted)] block uppercase tracking-wider text-[8px] font-bold">Delivery Status</span>
                           <div className="flex items-center gap-2 mt-1">
-                            <Truck className={`w-4 h-4 ${selectedOrder.isDelivered ? 'text-emerald-400' : selectedOrder.deliveryDate ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500'}`} />
+                            <Truck className={`w-4 h-4 ${selectedOrder.isDelivered ? 'text-emerald-400' : selectedOrder.deliveryDate ? 'text-emerald-600 dark:text-emerald-400' : 'text-[var(--text-muted)]'}`} />
                             <div className="flex flex-col">
-                              <span className="text-sm font-bold text-slate-300">
+                              <span className="text-sm font-bold text-[var(--text-primary)]">
                                 {selectedOrder.isDelivered 
                                   ? 'Materials Delivered' 
                                   : selectedOrder.deliveryDate 
@@ -1390,9 +1390,9 @@ export default function OperationsPage() {
                           {!selectedOrder.isDelivered && (
                             <button
                               onClick={() => { setShowScheduleForm(!showScheduleForm); setShowInstallForm(false); setShowActualDeliveryForm(false); setShowActualCommissionForm(false); }}
-                              className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-350 hover:text-white rounded-lg font-bold text-[10px] cursor-pointer flex items-center gap-1 transition-all"
+                              className="px-3 py-1.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] text-slate-350 hover:text-white rounded-lg font-bold text-[10px] cursor-pointer flex items-center gap-1 transition-all"
                             >
-                              <Calendar className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                              <Calendar className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                               <span>{selectedOrder.deliveryDate ? 'Re-schedule' : 'Schedule Delivery'}</span>
                             </button>
                           )}
@@ -1404,7 +1404,7 @@ export default function OperationsPage() {
                               disabled={schedulingLoading || deliveredImages.length === 0}
                               className={`px-4 py-1.5 text-white rounded-lg font-bold text-[10px] cursor-pointer shadow-md inline-flex items-center gap-1.5 transition-all ${
                                 deliveredImages.length === 0
-                                  ? 'bg-slate-800 text-slate-500 border border-slate-700/60 cursor-not-allowed opacity-60'
+                                  ? 'bg-[var(--bg-card)] text-[var(--text-muted)] border border-[var(--border-color)] cursor-not-allowed opacity-60'
                                   : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-emerald-500/10'
                               }`}
                               title={deliveredImages.length === 0 ? "You must upload at least one Delivered Items proof file first." : "Mark as Delivered"}
@@ -1418,30 +1418,30 @@ export default function OperationsPage() {
 
                       {/* Delivery Schedule Form */}
                       {showScheduleForm && (
-                        <form onSubmit={handleSaveSchedule} className="p-4 bg-slate-900/20 border border-slate-850 rounded-lg space-y-4">
-                          <h5 className="text-[11px] font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-1.5">Set Delivery Date & Time</h5>
+                        <form onSubmit={handleSaveSchedule} className="p-4 bg-[var(--bg-card)]/20 border border-[var(--border-color)] rounded-lg space-y-4">
+                          <h5 className="text-[11px] font-bold text-white uppercase tracking-wider border-b border-[var(--border-color)] pb-1.5">Set Delivery Date & Time</h5>
                           
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Delivery Date *</label>
+                              <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Delivery Date *</label>
                               <input
                                 type="date"
                                 required
                                 value={scheduleDate}
                                 onChange={(e) => setScheduleDate(e.target.value)}
                                 onContextMenu={(e) => handleInputContextMenu(e, 'date', scheduleDate, setScheduleDate)}
-                                className="w-full px-3 py-1.5 bg-slate-955 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700"
+                                className="w-full px-3 py-1.5 bg-slate-955 border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)]"
                               />
                             </div>
                             <div>
-                              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Delivery Time *</label>
+                              <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Delivery Time *</label>
                               <input
                                 type="time"
                                 required
                                 value={scheduleTime}
                                 onChange={(e) => setScheduleTime(e.target.value)}
                                 onContextMenu={(e) => handleInputContextMenu(e, 'time', scheduleTime, setScheduleTime)}
-                                className="w-full px-3 py-1.5 bg-slate-955 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700"
+                                className="w-full px-3 py-1.5 bg-slate-955 border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)]"
                               />
                             </div>
                           </div>
@@ -1450,14 +1450,14 @@ export default function OperationsPage() {
                             <button
                               type="button"
                               onClick={() => setShowScheduleForm(false)}
-                              className="px-3 py-1 bg-slate-955 border border-slate-800 text-slate-400 hover:text-slate-200 rounded text-xs cursor-pointer"
+                              className="px-3 py-1 bg-slate-955 border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded text-xs cursor-pointer"
                             >
                               Cancel
                             </button>
                             <button
                               type="submit"
                               disabled={schedulingLoading}
-                              className="px-3.5 py-1 bg-blue-600 hover:bg-blue-500 text-slate-955 rounded font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer"
+                              className="px-3.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-slate-955 rounded font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer"
                             >
                               {schedulingLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                               <span>Confirm Schedule</span>
@@ -1468,33 +1468,33 @@ export default function OperationsPage() {
 
                       {/* Actual Delivery Logging Form */}
                       {showActualDeliveryForm && (
-                        <form onSubmit={handleConfirmDelivery} className="p-4 bg-slate-900/20 border border-slate-850 rounded-lg space-y-4">
-                          <div className="border-b border-slate-800 pb-1.5">
+                        <form onSubmit={handleConfirmDelivery} className="p-4 bg-[var(--bg-card)]/20 border border-[var(--border-color)] rounded-lg space-y-4">
+                          <div className="border-b border-[var(--border-color)] pb-1.5">
                             <h5 className="text-[11px] font-bold text-emerald-450 uppercase tracking-wider">Confirm Actual Material Delivery</h5>
-                            <p className="text-[10px] text-slate-500 mt-0.5">Please confirm the actual date and time when the materials were delivered at site.</p>
+                            <p className="text-[10px] text-[var(--text-muted)] mt-0.5">Please confirm the actual date and time when the materials were delivered at site.</p>
                           </div>
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Actual Delivery Date *</label>
+                              <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Actual Delivery Date *</label>
                               <input
                                 type="date"
                                 required
                                 value={actualDeliveryDate}
                                 onChange={(e) => setActualDeliveryDate(e.target.value)}
                                 onContextMenu={(e) => handleInputContextMenu(e, 'date', actualDeliveryDate, setActualDeliveryDate)}
-                                className="w-full px-3 py-1.5 bg-slate-955 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700"
+                                className="w-full px-3 py-1.5 bg-slate-955 border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)]"
                               />
                             </div>
                             <div>
-                              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Actual Delivery Time *</label>
+                              <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Actual Delivery Time *</label>
                               <input
                                 type="time"
                                 required
                                 value={actualDeliveryTime}
                                 onChange={(e) => setActualDeliveryTime(e.target.value)}
                                 onContextMenu={(e) => handleInputContextMenu(e, 'time', actualDeliveryTime, setActualDeliveryTime)}
-                                className="w-full px-3 py-1.5 bg-slate-955 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700"
+                                className="w-full px-3 py-1.5 bg-slate-955 border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)]"
                               />
                             </div>
                           </div>
@@ -1503,7 +1503,7 @@ export default function OperationsPage() {
                             <button
                               type="button"
                               onClick={() => setShowActualDeliveryForm(false)}
-                              className="px-3 py-1 bg-slate-955 border border-slate-800 text-slate-400 hover:text-slate-200 rounded text-xs cursor-pointer"
+                              className="px-3 py-1 bg-slate-955 border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded text-xs cursor-pointer"
                             >
                               Cancel
                             </button>
@@ -1522,10 +1522,10 @@ export default function OperationsPage() {
                       {/* Upload Delivered items proof and gallery */}
                       {(selectedOrder.deliveryDate || selectedOrder.isDelivered) && (
                         <div className="space-y-3">
-                          <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                          <div className="flex justify-between items-center border-b border-[var(--border-color)] pb-2">
                             <div>
                               <h5 className="text-[10px] font-bold text-slate-350 uppercase tracking-wider">Delivered Items Photos & Videos</h5>
-                              <p className="text-[10px] text-slate-500">Upload photos/videos of delivered solar inventory at the site.</p>
+                              <p className="text-[10px] text-[var(--text-muted)]">Upload photos/videos of delivered solar inventory at the site.</p>
                             </div>
 
                             {/* Upload Button */}
@@ -1539,9 +1539,9 @@ export default function OperationsPage() {
                                       onCapture: (file) => executeUpload(file, 'delivered_items')
                                     });
                                   }}
-                                  className="px-2.5 py-1 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-350 hover:text-white rounded text-[10px] font-bold cursor-pointer transition-all inline-flex items-center gap-1.5"
+                                  className="px-2.5 py-1 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-slate-350 hover:text-white rounded text-[10px] font-bold cursor-pointer transition-all inline-flex items-center gap-1.5"
                                 >
-                                  <Camera className="w-3.5 h-3.5 text-slate-500" />
+                                  <Camera className="w-3.5 h-3.5 text-[var(--text-muted)]" />
                                   <span>Open Camera</span>
                                 </button>
                                 <div className="relative">
@@ -1555,9 +1555,9 @@ export default function OperationsPage() {
                                   />
                                   <label
                                     htmlFor="delivery-file-input"
-                                    className="px-2.5 py-1 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-350 hover:text-white rounded text-[10px] font-bold cursor-pointer transition-all inline-flex items-center gap-1.5"
+                                    className="px-2.5 py-1 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-slate-350 hover:text-white rounded text-[10px] font-bold cursor-pointer transition-all inline-flex items-center gap-1.5"
                                   >
-                                    {uploadingFile ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5 text-slate-500" />}
+                                    {uploadingFile ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5 text-[var(--text-muted)]" />}
                                     <span>Upload File</span>
                                   </label>
                                 </div>
@@ -1576,7 +1576,7 @@ export default function OperationsPage() {
                                 const isVideo = img.fileName.endsWith('.mp4') || img.fileName.endsWith('.mov') || img.fileName.endsWith('.webm') || img.fileName.endsWith('.avi');
                                 
                                 return (
-                                  <div key={img.id} className="relative group rounded overflow-hidden bg-slate-955 border border-slate-850 aspect-video flex items-center justify-center">
+                                  <div key={img.id} className="relative group rounded overflow-hidden bg-slate-955 border border-[var(--border-color)] aspect-video flex items-center justify-center">
                                     {isVideo ? (
                                       <video
                                         src={`/api/v1/orders/${selectedOrder.id}/installation-images/${img.id}`}
@@ -1616,18 +1616,18 @@ export default function OperationsPage() {
                     {/* ==================== 2. INSTALLATION PHASE ==================== */}
                     {selectedOrder.isDelivered ? (
                       <div className="space-y-4 pt-2">
-                        <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-1.5 flex items-center gap-2">
-                          <span className="w-5 h-5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-mono text-[10px]">2</span>
+                        <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-[var(--border-color)] pb-1.5 flex items-center gap-2">
+                          <span className="w-5 h-5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-mono text-[10px]">2</span>
                           <span>Solar Installation Phase</span>
                         </h4>
                         
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-xs">
                           <div>
-                            <span className="text-slate-500 block uppercase tracking-wider text-[8px] font-bold">Installation Status</span>
+                            <span className="text-[var(--text-muted)] block uppercase tracking-wider text-[8px] font-bold">Installation Status</span>
                             <div className="flex items-center gap-2 mt-1">
-                              <Wrench className={`w-4 h-4 ${selectedOrder.isInstalled ? 'text-emerald-400' : selectedOrder.installationDate ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500'}`} />
+                              <Wrench className={`w-4 h-4 ${selectedOrder.isInstalled ? 'text-emerald-400' : selectedOrder.installationDate ? 'text-emerald-600 dark:text-emerald-400' : 'text-[var(--text-muted)]'}`} />
                               <div className="flex flex-col">
-                                <span className="text-sm font-bold text-slate-200">
+                                <span className="text-sm font-bold text-[var(--text-primary)]">
                                   {selectedOrder.isInstalled 
                                     ? 'Installation Completed' 
                                     : selectedOrder.installationDate 
@@ -1646,9 +1646,9 @@ export default function OperationsPage() {
                             {!selectedOrder.isInstalled && (
                               <button
                                 onClick={() => { setShowInstallForm(!showInstallForm); setShowScheduleForm(false); setShowActualInstallForm(false); setShowActualCommissionForm(false); }}
-                                className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-350 hover:text-white rounded-lg font-bold text-[10px] cursor-pointer flex items-center gap-1 transition-all"
+                                className="px-3 py-1.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] text-slate-350 hover:text-white rounded-lg font-bold text-[10px] cursor-pointer flex items-center gap-1 transition-all"
                               >
-                                <Calendar className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                                <Calendar className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                                 <span>{selectedOrder.installationDate ? 'Re-schedule' : 'Schedule Installation'}</span>
                               </button>
                             )}
@@ -1660,7 +1660,7 @@ export default function OperationsPage() {
                                 disabled={installLoading || installedImages.length === 0}
                                 className={`px-4 py-1.5 text-white rounded-lg font-bold text-[10px] cursor-pointer shadow-md inline-flex items-center gap-1.5 transition-all ${
                                   installedImages.length === 0
-                                    ? 'bg-slate-800 text-slate-500 border border-slate-700/60 cursor-not-allowed opacity-60'
+                                    ? 'bg-[var(--bg-card)] text-[var(--text-muted)] border border-[var(--border-color)] cursor-not-allowed opacity-60'
                                     : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-emerald-500/10'
                                 }`}
                                 title={installedImages.length === 0 ? "You must upload at least one Completed Installation proof photo/video first." : "Mark Installation as Done"}
@@ -1674,30 +1674,30 @@ export default function OperationsPage() {
 
                         {/* Installation Schedule Form */}
                         {showInstallForm && (
-                          <form onSubmit={handleSaveInstallSchedule} className="p-4 bg-slate-900/20 border border-slate-850 rounded-lg space-y-4">
-                            <h5 className="text-[11px] font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-1.5">Set Installation Date & Time</h5>
+                          <form onSubmit={handleSaveInstallSchedule} className="p-4 bg-[var(--bg-card)]/20 border border-[var(--border-color)] rounded-lg space-y-4">
+                            <h5 className="text-[11px] font-bold text-white uppercase tracking-wider border-b border-[var(--border-color)] pb-1.5">Set Installation Date & Time</h5>
                             
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               <div>
-                                <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Installation Date *</label>
+                                <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Installation Date *</label>
                                 <input
                                   type="date"
                                   required
                                   value={installDate}
                                   onChange={(e) => setInstallDate(e.target.value)}
                                   onContextMenu={(e) => handleInputContextMenu(e, 'date', installDate, setInstallDate)}
-                                  className="w-full px-3 py-1.5 bg-slate-955 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700"
+                                  className="w-full px-3 py-1.5 bg-slate-955 border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)]"
                                 />
                               </div>
                               <div>
-                                <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Installation Time *</label>
+                                <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Installation Time *</label>
                                 <input
                                   type="time"
                                   required
                                   value={installTime}
                                   onChange={(e) => setInstallTime(e.target.value)}
                                   onContextMenu={(e) => handleInputContextMenu(e, 'time', installTime, setInstallTime)}
-                                  className="w-full px-3 py-1.5 bg-slate-955 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700"
+                                  className="w-full px-3 py-1.5 bg-slate-955 border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)]"
                                 />
                               </div>
                             </div>
@@ -1706,14 +1706,14 @@ export default function OperationsPage() {
                               <button
                                 type="button"
                                 onClick={() => setShowInstallForm(false)}
-                                className="px-3 py-1 bg-slate-955 border border-slate-850 text-slate-400 hover:text-slate-200 rounded text-xs"
+                                className="px-3 py-1 bg-slate-955 border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded text-xs"
                               >
                                 Cancel
                               </button>
                               <button
                                 type="submit"
                                 disabled={installLoading}
-                                className="px-3.5 py-1 bg-blue-600 hover:bg-blue-500 text-slate-955 rounded font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer"
+                                className="px-3.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-slate-955 rounded font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer"
                               >
                                 {installLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                                 <span>Confirm Schedule</span>
@@ -1724,33 +1724,33 @@ export default function OperationsPage() {
 
                         {/* Actual Installation Logging Form */}
                         {showActualInstallForm && (
-                          <form onSubmit={handleConfirmInstallation} className="p-4 bg-slate-900/20 border border-slate-850 rounded-lg space-y-4 animate-fade-in-up">
-                            <div className="border-b border-slate-800 pb-1.5">
+                          <form onSubmit={handleConfirmInstallation} className="p-4 bg-[var(--bg-card)]/20 border border-[var(--border-color)] rounded-lg space-y-4 animate-fade-in-up">
+                            <div className="border-b border-[var(--border-color)] pb-1.5">
                               <h5 className="text-[11px] font-bold text-emerald-450 uppercase tracking-wider">Confirm Actual Installation Completed</h5>
-                              <p className="text-[10px] text-slate-500 mt-0.5">Please confirm the actual date and time when the solar structure was fully installed.</p>
+                              <p className="text-[10px] text-[var(--text-muted)] mt-0.5">Please confirm the actual date and time when the solar structure was fully installed.</p>
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               <div>
-                                <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Actual Installation Date *</label>
+                                <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Actual Installation Date *</label>
                                 <input
                                   type="date"
                                   required
                                   value={actualInstallDate}
                                   onChange={(e) => setActualInstallDate(e.target.value)}
                                   onContextMenu={(e) => handleInputContextMenu(e, 'date', actualInstallDate, setActualInstallDate)}
-                                  className="w-full px-3 py-1.5 bg-slate-955 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700"
+                                  className="w-full px-3 py-1.5 bg-slate-955 border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)]"
                                 />
                               </div>
                               <div>
-                                <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Actual Installation Time *</label>
+                                <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Actual Installation Time *</label>
                                 <input
                                   type="time"
                                   required
                                   value={actualInstallTime}
                                   onChange={(e) => setActualInstallTime(e.target.value)}
                                   onContextMenu={(e) => handleInputContextMenu(e, 'time', actualInstallTime, setActualInstallTime)}
-                                  className="w-full px-3 py-1.5 bg-slate-955 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700"
+                                  className="w-full px-3 py-1.5 bg-slate-955 border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)]"
                                 />
                               </div>
                             </div>
@@ -1759,7 +1759,7 @@ export default function OperationsPage() {
                               <button
                                 type="button"
                                 onClick={() => setShowActualInstallForm(false)}
-                                className="px-3 py-1 bg-slate-955 border border-slate-800 text-slate-400 hover:text-slate-200 rounded text-xs cursor-pointer"
+                                className="px-3 py-1 bg-slate-955 border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded text-xs cursor-pointer"
                               >
                                 Cancel
                               </button>
@@ -1778,10 +1778,10 @@ export default function OperationsPage() {
                         {/* Upload Completed Installation proofs and gallery */}
                         {(selectedOrder.installationDate || selectedOrder.isInstalled) && (
                           <div className="space-y-3">
-                            <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                            <div className="flex justify-between items-center border-b border-[var(--border-color)] pb-2">
                               <div>
-                                <h5 className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">Installation Completion Photos & Videos</h5>
-                                <p className="text-[10px] text-slate-500">Upload photos/videos of the final completed solar structure on-site.</p>
+                                <h5 className="text-[10px] font-bold text-[var(--text-primary)] uppercase tracking-wider">Installation Completion Photos & Videos</h5>
+                                <p className="text-[10px] text-[var(--text-muted)]">Upload photos/videos of the final completed solar structure on-site.</p>
                               </div>
 
                               {/* Upload Button */}
@@ -1795,9 +1795,9 @@ export default function OperationsPage() {
                                         onCapture: (file) => executeUpload(file, 'installation_done')
                                       });
                                     }}
-                                    className="px-2.5 py-1 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-350 hover:text-white rounded text-[10px] font-bold cursor-pointer transition-all inline-flex items-center gap-1.5"
+                                    className="px-2.5 py-1 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-slate-350 hover:text-white rounded text-[10px] font-bold cursor-pointer transition-all inline-flex items-center gap-1.5"
                                   >
-                                    <Camera className="w-3.5 h-3.5 text-slate-500" />
+                                    <Camera className="w-3.5 h-3.5 text-[var(--text-muted)]" />
                                     <span>Open Camera</span>
                                   </button>
                                   <div className="relative">
@@ -1811,9 +1811,9 @@ export default function OperationsPage() {
                                     />
                                     <label
                                       htmlFor="install-file-input"
-                                      className="px-2.5 py-1 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-355 hover:text-white rounded text-[10px] font-bold cursor-pointer transition-all inline-flex items-center gap-1.5"
+                                      className="px-2.5 py-1 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-slate-355 hover:text-white rounded text-[10px] font-bold cursor-pointer transition-all inline-flex items-center gap-1.5"
                                     >
-                                      {uploadingFile ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5 text-slate-500" />}
+                                      {uploadingFile ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5 text-[var(--text-muted)]" />}
                                       <span>Upload File</span>
                                     </label>
                                   </div>
@@ -1823,7 +1823,7 @@ export default function OperationsPage() {
 
                             {/* Installation Media Grid */}
                             {installedImages.length === 0 ? (
-                              <div className="py-4 text-center text-[10px] text-slate-500 bg-slate-955/10 rounded-lg">
+                              <div className="py-4 text-center text-[10px] text-[var(--text-muted)] bg-slate-955/10 rounded-lg">
                                 No installation completed files uploaded yet.
                               </div>
                             ) : (
@@ -1832,7 +1832,7 @@ export default function OperationsPage() {
                                   const isVideo = img.fileName.endsWith('.mp4') || img.fileName.endsWith('.mov') || img.fileName.endsWith('.webm') || img.fileName.endsWith('.avi');
                                   
                                   return (
-                                    <div key={img.id} className="relative group rounded overflow-hidden bg-slate-955 border border-slate-850 aspect-video flex items-center justify-center">
+                                    <div key={img.id} className="relative group rounded overflow-hidden bg-slate-955 border border-[var(--border-color)] aspect-video flex items-center justify-center">
                                       {isVideo ? (
                                         <video
                                           src={`/api/v1/orders/${selectedOrder.id}/installation-images/${img.id}`}
@@ -1870,25 +1870,25 @@ export default function OperationsPage() {
                       </div>
                     ) : (
                       <div className="py-4 text-center text-[11px] text-slate-550 italic bg-slate-955/20 rounded-lg">
-                        🔒 Installation phase will unlock once materials are marked as Delivered.
+                        ðŸ”’ Installation phase will unlock once materials are marked as Delivered.
                       </div>
                     )}
 
                     {/* ==================== 3. NET METERING PHASE ==================== */}
                     {selectedOrder.isInstalled ? (
                       <div className="space-y-4 pt-2">
-                        <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-1.5 flex items-center gap-2">
-                          <span className="w-5 h-5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-mono text-[10px]">3</span>
+                        <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-[var(--border-color)] pb-1.5 flex items-center gap-2">
+                          <span className="w-5 h-5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-mono text-[10px]">3</span>
                           <span>Net Metering Phase</span>
                         </h4>
 
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-xs">
                           <div>
-                            <span className="text-slate-500 block uppercase tracking-wider text-[8px] font-bold">Meter Status</span>
+                            <span className="text-[var(--text-muted)] block uppercase tracking-wider text-[8px] font-bold">Meter Status</span>
                             <div className="flex items-center gap-2 mt-1">
                               <Activity className={`w-4 h-4 ${selectedOrder.isMeterInstalled ? 'text-emerald-400' : 'text-rose-400'}`} />
                               <div className="flex flex-col">
-                                <span className="text-sm font-bold text-slate-200">
+                                <span className="text-sm font-bold text-[var(--text-primary)]">
                                   {selectedOrder.isMeterInstalled 
                                     ? 'Net Meter Installed' 
                                     : 'Meter Installation Pending (Electricity Dept)'}
@@ -1908,7 +1908,7 @@ export default function OperationsPage() {
                                 disabled={meterLoading || meterImages.length === 0}
                                 className={`px-4 py-1.5 text-white rounded-lg font-bold text-[10px] cursor-pointer shadow-md inline-flex items-center gap-1.5 transition-all ${
                                   meterImages.length === 0
-                                    ? 'bg-slate-800 text-slate-500 border border-slate-700/60 cursor-not-allowed opacity-60'
+                                    ? 'bg-[var(--bg-card)] text-[var(--text-muted)] border border-[var(--border-color)] cursor-not-allowed opacity-60'
                                     : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-emerald-500/10'
                                 }`}
                                 title={meterImages.length === 0 ? "You must upload the Meter Sealing Paper first." : "Mark Meter as Installed"}
@@ -1922,33 +1922,33 @@ export default function OperationsPage() {
 
                         {/* Actual Meter Logging Form */}
                         {showActualMeterForm && (
-                          <form onSubmit={handleConfirmMeterInstallation} className="p-4 bg-slate-900/20 border border-slate-850 rounded-lg space-y-4">
-                            <div className="border-b border-slate-800 pb-1.5">
+                          <form onSubmit={handleConfirmMeterInstallation} className="p-4 bg-[var(--bg-card)]/20 border border-[var(--border-color)] rounded-lg space-y-4">
+                            <div className="border-b border-[var(--border-color)] pb-1.5">
                               <h5 className="text-[11px] font-bold text-emerald-450 uppercase tracking-wider">Confirm Meter Installation Date & Time</h5>
-                              <p className="text-[10px] text-slate-500 mt-0.5">Please confirm when the Net Meter was officially sealed and activated by the department.</p>
+                              <p className="text-[10px] text-[var(--text-muted)] mt-0.5">Please confirm when the Net Meter was officially sealed and activated by the department.</p>
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               <div>
-                                <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Activation Date *</label>
+                                <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Activation Date *</label>
                                 <input
                                   type="date"
                                   required
                                   value={actualMeterDate}
                                   onChange={(e) => setActualMeterDate(e.target.value)}
                                   onContextMenu={(e) => handleInputContextMenu(e, 'date', actualMeterDate, setActualMeterDate)}
-                                  className="w-full px-3 py-1.5 bg-slate-955 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700"
+                                  className="w-full px-3 py-1.5 bg-slate-955 border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)]"
                                 />
                               </div>
                               <div>
-                                <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Activation Time *</label>
+                                <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Activation Time *</label>
                                 <input
                                   type="time"
                                   required
                                   value={actualMeterTime}
                                   onChange={(e) => setActualMeterTime(e.target.value)}
                                   onContextMenu={(e) => handleInputContextMenu(e, 'time', actualMeterTime, setActualMeterTime)}
-                                  className="w-full px-3 py-1.5 bg-slate-955 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700"
+                                  className="w-full px-3 py-1.5 bg-slate-955 border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)]"
                                 />
                               </div>
                             </div>
@@ -1957,7 +1957,7 @@ export default function OperationsPage() {
                               <button
                                 type="button"
                                 onClick={() => setShowActualMeterForm(false)}
-                                className="px-3 py-1 bg-slate-955 border border-slate-800 text-slate-400 hover:text-slate-200 rounded text-xs cursor-pointer"
+                                className="px-3 py-1 bg-slate-955 border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded text-xs cursor-pointer"
                               >
                                 Cancel
                               </button>
@@ -1975,10 +1975,10 @@ export default function OperationsPage() {
 
                         {/* Upload Meter Sealing Paper proof and gallery */}
                         <div className="space-y-3">
-                          <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                          <div className="flex justify-between items-center border-b border-[var(--border-color)] pb-2">
                             <div>
-                              <h5 className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">Meter Sealing Paper</h5>
-                              <p className="text-[10px] text-slate-500">Upload a scan/photo of the official Meter Sealing paper from the Electricity Dept.</p>
+                              <h5 className="text-[10px] font-bold text-[var(--text-primary)] uppercase tracking-wider">Meter Sealing Paper</h5>
+                              <p className="text-[10px] text-[var(--text-muted)]">Upload a scan/photo of the official Meter Sealing paper from the Electricity Dept.</p>
                             </div>
 
                             {/* Upload Button */}
@@ -1992,9 +1992,9 @@ export default function OperationsPage() {
                                       onCapture: (file) => executeUpload(file, 'meter_sealing_paper')
                                     });
                                   }}
-                                  className="px-2.5 py-1 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-350 hover:text-white rounded text-[10px] font-bold cursor-pointer transition-all inline-flex items-center gap-1.5"
+                                  className="px-2.5 py-1 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-slate-350 hover:text-white rounded text-[10px] font-bold cursor-pointer transition-all inline-flex items-center gap-1.5"
                                 >
-                                  <Camera className="w-3.5 h-3.5 text-slate-500" />
+                                  <Camera className="w-3.5 h-3.5 text-[var(--text-muted)]" />
                                   <span>Open Camera</span>
                                 </button>
                                 <div className="relative">
@@ -2008,9 +2008,9 @@ export default function OperationsPage() {
                                   />
                                   <label
                                     htmlFor="meter-file-input"
-                                    className="px-2.5 py-1 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-350 hover:text-white rounded text-[10px] font-bold cursor-pointer transition-all inline-flex items-center gap-1.5"
+                                    className="px-2.5 py-1 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-slate-350 hover:text-white rounded text-[10px] font-bold cursor-pointer transition-all inline-flex items-center gap-1.5"
                                   >
-                                    {uploadingFile ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5 text-slate-500" />}
+                                    {uploadingFile ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5 text-[var(--text-muted)]" />}
                                     <span>Upload Sealing Paper</span>
                                   </label>
                                 </div>
@@ -2029,16 +2029,16 @@ export default function OperationsPage() {
                                 const isPDF = img.fileName.endsWith('.pdf');
                                 
                                 return (
-                                  <div key={img.id} className="relative group rounded overflow-hidden bg-slate-950 border border-slate-850 aspect-video flex items-center justify-center">
+                                  <div key={img.id} className="relative group rounded overflow-hidden bg-[var(--bg-main)] border border-[var(--border-color)] aspect-video flex items-center justify-center">
                                     {isPDF ? (
                                       <a
                                         href={`/api/v1/orders/${selectedOrder.id}/installation-images/${img.id}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="w-full h-full flex flex-col items-center justify-center p-2 text-red-400 hover:text-red-305 font-bold font-mono text-[9px] hover:bg-slate-900/35 transition-all"
+                                        className="w-full h-full flex flex-col items-center justify-center p-2 text-red-400 hover:text-red-305 font-bold font-mono text-[9px] hover:bg-[var(--bg-card)]/35 transition-all"
                                       >
-                                        <span>📄 PDF Document</span>
-                                        <span className="text-[8px] text-slate-500 truncate max-w-full mt-1 font-semibold">{img.fileName}</span>
+                                        <span>ðŸ“„ PDF Document</span>
+                                        <span className="text-[8px] text-[var(--text-muted)] truncate max-w-full mt-1 font-semibold">{img.fileName}</span>
                                       </a>
                                     ) : (
                                       <img
@@ -2071,15 +2071,15 @@ export default function OperationsPage() {
 
                     ) : (
                       <div className="py-4 text-center text-[11px] text-slate-550 italic bg-slate-955/20 rounded-lg">
-                        🔒 Meter Installation phase will unlock once solar structure is marked as Installed.
+                        ðŸ”’ Meter Installation phase will unlock once solar structure is marked as Installed.
                       </div>
                     )}
 
                     {/* ==================== 4. COMMISSIONING PHASE ==================== */}
                     {selectedOrder.isMeterInstalled ? (
                       <div className="space-y-4 pt-2">
-                        <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-1.5 flex items-center gap-2">
-                          <span className="w-5 h-5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-mono text-[10px]">4</span>
+                        <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-[var(--border-color)] pb-1.5 flex items-center gap-2">
+                          <span className="w-5 h-5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-mono text-[10px]">4</span>
                           <span>Plant Commissioning Phase</span>
                         </h4>
 
@@ -2087,9 +2087,9 @@ export default function OperationsPage() {
                           <div>
                             <span className="text-slate-555 block uppercase tracking-wider text-[8px] font-bold">Commissioning Status</span>
                             <div className="flex items-center gap-2 mt-1">
-                              <Zap className={`w-4 h-4 ${selectedOrder.isCommissioned ? 'text-emerald-400' : 'text-blue-600 dark:text-blue-400 animate-pulse'}`} />
+                              <Zap className={`w-4 h-4 ${selectedOrder.isCommissioned ? 'text-emerald-400' : 'text-emerald-600 dark:text-emerald-400 animate-pulse'}`} />
                               <div className="flex flex-col">
-                                <span className="text-sm font-bold text-slate-200">
+                                <span className="text-sm font-bold text-[var(--text-primary)]">
                                   {selectedOrder.isCommissioned 
                                     ? 'Plant Commissioned' 
                                     : 'Plant Commissioning Pending'}
@@ -2109,7 +2109,7 @@ export default function OperationsPage() {
                                 disabled={commissionLoading || commissionedImages.length === 0}
                                 className={`px-4 py-1.5 text-white rounded-lg font-bold text-[10px] cursor-pointer shadow-md inline-flex items-center gap-1.5 transition-all ${
                                   commissionedImages.length === 0
-                                    ? 'bg-slate-800 text-slate-500 border border-slate-700/60 cursor-not-allowed opacity-60'
+                                    ? 'bg-[var(--bg-card)] text-[var(--text-muted)] border border-[var(--border-color)] cursor-not-allowed opacity-60'
                                     : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-emerald-500/10'
                                 }`}
                                 title={commissionedImages.length === 0 ? "You must upload at least one commissioning photo/video of the working solar plant first." : "Mark Plant as Commissioned"}
@@ -2123,33 +2123,33 @@ export default function OperationsPage() {
 
                         {/* Actual Commissioning Logging Form */}
                         {showActualCommissionForm && (
-                          <form onSubmit={handleConfirmPlantCommissioning} className="p-4 bg-slate-900/20 border border-slate-850 rounded-lg space-y-4">
-                            <div className="border-b border-slate-800 pb-1.5">
+                          <form onSubmit={handleConfirmPlantCommissioning} className="p-4 bg-[var(--bg-card)]/20 border border-[var(--border-color)] rounded-lg space-y-4">
+                            <div className="border-b border-[var(--border-color)] pb-1.5">
                               <h5 className="text-[11px] font-bold text-emerald-450 uppercase tracking-wider">Confirm Commissioning Date & Time</h5>
-                              <p className="text-[10px] text-slate-500 mt-0.5">Please confirm when the plant was officially commissioned, powered up, and verified as fully functional.</p>
+                              <p className="text-[10px] text-[var(--text-muted)] mt-0.5">Please confirm when the plant was officially commissioned, powered up, and verified as fully functional.</p>
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               <div>
-                                <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Commission Date *</label>
+                                <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Commission Date *</label>
                                 <input
                                   type="date"
                                   required
                                   value={actualCommissionDate}
                                   onChange={(e) => setActualCommissionDate(e.target.value)}
                                   onContextMenu={(e) => handleInputContextMenu(e, 'date', actualCommissionDate, setActualCommissionDate)}
-                                  className="w-full px-3 py-1.5 bg-slate-955 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700"
+                                  className="w-full px-3 py-1.5 bg-slate-955 border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)]"
                                 />
                               </div>
                               <div>
-                                <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Commission Time *</label>
+                                <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Commission Time *</label>
                                 <input
                                   type="time"
                                   required
                                   value={actualCommissionTime}
                                   onChange={(e) => setActualCommissionTime(e.target.value)}
                                   onContextMenu={(e) => handleInputContextMenu(e, 'time', actualCommissionTime, setActualCommissionTime)}
-                                  className="w-full px-3 py-1.5 bg-slate-955 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700"
+                                  className="w-full px-3 py-1.5 bg-slate-955 border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)]"
                                 />
                               </div>
                             </div>
@@ -2158,7 +2158,7 @@ export default function OperationsPage() {
                               <button
                                 type="button"
                                 onClick={() => setShowActualCommissionForm(false)}
-                                className="px-3 py-1 bg-slate-955 border border-slate-800 text-slate-400 hover:text-slate-200 rounded text-xs cursor-pointer"
+                                className="px-3 py-1 bg-slate-955 border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded text-xs cursor-pointer"
                               >
                                 Cancel
                               </button>
@@ -2176,10 +2176,10 @@ export default function OperationsPage() {
 
                         {/* Upload Commissioning proof and gallery */}
                         <div className="space-y-3">
-                          <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                          <div className="flex justify-between items-center border-b border-[var(--border-color)] pb-2">
                             <div>
-                              <h5 className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">Commissioning Photos & Videos</h5>
-                              <p className="text-[10px] text-slate-500">Upload photos/videos proving the solar plant is properly working (generation screen, inverter lights, etc.).</p>
+                              <h5 className="text-[10px] font-bold text-[var(--text-primary)] uppercase tracking-wider">Commissioning Photos & Videos</h5>
+                              <p className="text-[10px] text-[var(--text-muted)]">Upload photos/videos proving the solar plant is properly working (generation screen, inverter lights, etc.).</p>
                             </div>
 
                             {/* Upload Button */}
@@ -2193,9 +2193,9 @@ export default function OperationsPage() {
                                       onCapture: (file) => executeUpload(file, 'plant_commissioned')
                                     });
                                   }}
-                                  className="px-2.5 py-1 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-350 hover:text-white rounded text-[10px] font-bold cursor-pointer transition-all inline-flex items-center gap-1.5"
+                                  className="px-2.5 py-1 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-slate-350 hover:text-white rounded text-[10px] font-bold cursor-pointer transition-all inline-flex items-center gap-1.5"
                                 >
-                                  <Camera className="w-3.5 h-3.5 text-slate-500" />
+                                  <Camera className="w-3.5 h-3.5 text-[var(--text-muted)]" />
                                   <span>Open Camera</span>
                                 </button>
                                 <div className="relative">
@@ -2209,9 +2209,9 @@ export default function OperationsPage() {
                                   />
                                   <label
                                     htmlFor="commission-file-input"
-                                    className="px-2.5 py-1 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-350 hover:text-white rounded text-[10px] font-bold cursor-pointer transition-all inline-flex items-center gap-1.5"
+                                    className="px-2.5 py-1 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-slate-350 hover:text-white rounded text-[10px] font-bold cursor-pointer transition-all inline-flex items-center gap-1.5"
                                   >
-                                    {uploadingFile ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5 text-slate-500" />}
+                                    {uploadingFile ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5 text-[var(--text-muted)]" />}
                                     <span>Upload Proof</span>
                                   </label>
                                 </div>
@@ -2230,7 +2230,7 @@ export default function OperationsPage() {
                                 const isVideo = img.fileName.endsWith('.mp4') || img.fileName.endsWith('.mov') || img.fileName.endsWith('.webm') || img.fileName.endsWith('.avi');
                                 
                                 return (
-                                  <div key={img.id} className="relative group rounded overflow-hidden bg-slate-955 border border-slate-850 aspect-video flex items-center justify-center">
+                                  <div key={img.id} className="relative group rounded overflow-hidden bg-slate-955 border border-[var(--border-color)] aspect-video flex items-center justify-center">
                                     {isVideo ? (
                                       <video
                                         src={`/api/v1/orders/${selectedOrder.id}/installation-images/${img.id}`}
@@ -2267,80 +2267,80 @@ export default function OperationsPage() {
                       </div>
                     ) : (
                       <div className="py-4 text-center text-[11px] text-slate-550 italic bg-slate-955/20 rounded-lg">
-                        🔒 Plant Commissioning phase will unlock once Net Meter is marked as Installed.
+                        ðŸ”’ Plant Commissioning phase will unlock once Net Meter is marked as Installed.
                       </div>
                     )}
 
                     {/* ==================== 5. SUBSIDY PHASE ==================== */}
                     {selectedOrder.isCommissioned ? (
                       <div className="space-y-4 pt-2">
-                        <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-1.5 flex items-center gap-2">
-                          <span className="w-5 h-5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-mono text-[10px]">5</span>
+                        <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-[var(--border-color)] pb-1.5 flex items-center gap-2">
+                          <span className="w-5 h-5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-mono text-[10px]">5</span>
                           <span>Government Subsidy Stage</span>
                         </h4>
                         {selectedOrder.isSubsidyApplied ? (
                           // Already Applied
-                          <div className="p-4 bg-slate-900/10 border border-slate-850 rounded-lg text-xs space-y-2">
+                          <div className="p-4 bg-[var(--bg-card)]/10 border border-[var(--border-color)] rounded-lg text-xs space-y-2">
                             <div className="flex items-center gap-2 text-emerald-450 font-bold">
                               <Gift className="w-4 h-4 text-emerald-400" />
                               <span>Government Subsidy Applied & Verified</span>
                             </div>
                             <div className="text-slate-350 text-[11px] space-y-1">
-                              <div><span className="text-slate-500">Applied Date:</span> {formatDateTime(selectedOrder.actualSubsidyAppliedAt)}</div>
-                              <div><span className="text-slate-500">Subsidy Amount:</span> ₹{selectedOrder.subsidyAmount?.toLocaleString('en-IN') || '0'}</div>
+                              <div><span className="text-[var(--text-muted)]">Applied Date:</span> {formatDateTime(selectedOrder.actualSubsidyAppliedAt)}</div>
+                              <div><span className="text-[var(--text-muted)]">Subsidy Amount:</span> â‚¹{selectedOrder.subsidyAmount?.toLocaleString('en-IN') || '0'}</div>
                             </div>
                           </div>
                         ) : balanceOutstanding > 0 ? (
                           // Money remaining -> cannot be applied
-                          <div className="py-3 px-4 bg-slate-900/15 border border-red-500/20 text-red-400 rounded-lg text-xs flex items-center gap-2.5">
+                          <div className="py-3 px-4 bg-[var(--bg-card)]/15 border border-red-500/20 text-red-400 rounded-lg text-xs flex items-center gap-2.5">
                             <Info className="w-4 h-4 shrink-0 text-red-400" />
                             <span>
-                              ⚠️ Subsidy cannot be applied because there is an outstanding balance of <strong>₹{balanceOutstanding.toLocaleString('en-IN')}</strong>. Please clear all remaining payments first.
+                              âš ï¸ Subsidy cannot be applied because there is an outstanding balance of <strong>â‚¹{balanceOutstanding.toLocaleString('en-IN')}</strong>. Please clear all remaining payments first.
                             </span>
                           </div>
                         ) : (
                           // Dues paid -> Eligible for subsidy! Show the registration form.
-                          <form onSubmit={handleConfirmSubsidy} className="p-4 bg-slate-900/20 border border-slate-850 rounded-lg space-y-4 animate-fade-in-up">
-                            <div className="border-b border-slate-800 pb-1.5">
+                          <form onSubmit={handleConfirmSubsidy} className="p-4 bg-[var(--bg-card)]/20 border border-[var(--border-color)] rounded-lg space-y-4 animate-fade-in-up">
+                            <div className="border-b border-[var(--border-color)] pb-1.5">
                               <h5 className="text-[11px] font-bold text-emerald-450 uppercase tracking-wider flex items-center gap-1.5">
                                 <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
                                 <span>Apply Government Subsidy</span>
                               </h5>
-                              <p className="text-[10px] text-slate-500 mt-0.5">Dues are fully paid (₹0 outstanding). Please record the government subsidy details below.</p>
+                              <p className="text-[10px] text-[var(--text-muted)] mt-0.5">Dues are fully paid (â‚¹0 outstanding). Please record the government subsidy details below.</p>
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                               <div>
-                                <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Expected Subsidy Amount (₹) *</label>
+                                <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Expected Subsidy Amount (â‚¹) *</label>
                                 <input
                                   type="number"
                                   required
                                   value={newSubsidyAmount}
                                   onChange={(e) => setNewSubsidyAmount(e.target.value)}
                                   placeholder="e.g. 78000"
-                                  className="w-full px-3 py-1.5 bg-slate-955 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700 font-mono"
+                                  className="w-full px-3 py-1.5 bg-slate-955 border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)] font-mono"
                                 />
                               </div>
                               <div>
-                                <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Registration Date *</label>
+                                <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Registration Date *</label>
                                 <input
                                   type="date"
                                   required
                                   value={actualSubsidyDate}
                                   onChange={(e) => setActualSubsidyDate(e.target.value)}
                                   onContextMenu={(e) => handleInputContextMenu(e, 'date', actualSubsidyDate, setActualSubsidyDate)}
-                                  className="w-full px-3 py-1.5 bg-slate-955 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700"
+                                  className="w-full px-3 py-1.5 bg-slate-955 border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)]"
                                 />
                               </div>
                               <div>
-                                <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Registration Time *</label>
+                                <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Registration Time *</label>
                                 <input
                                   type="time"
                                   required
                                   value={actualSubsidyTime}
                                   onChange={(e) => setActualSubsidyTime(e.target.value)}
                                   onContextMenu={(e) => handleInputContextMenu(e, 'time', actualSubsidyTime, setActualSubsidyTime)}
-                                  className="w-full px-3 py-1.5 bg-slate-955 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-slate-700"
+                                  className="w-full px-3 py-1.5 bg-slate-955 border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)]"
                                 />
                               </div>
                             </div>
@@ -2369,40 +2369,40 @@ export default function OperationsPage() {
                       </div>
                     ) : (
                       <div className="py-4 text-center text-[11px] text-slate-550 italic bg-slate-955/20 rounded-lg">
-                        🔒 Subsidy stage will unlock once solar plant is marked as Commissioned.
+                        ðŸ”’ Subsidy stage will unlock once solar plant is marked as Commissioned.
                       </div>
                     )}
 
                   </div>
 
                   {/* RIGHT COLUMN: Client Inspector Panel (Takes 1/3 space) */}
-                  <div className="lg:col-span-1 space-y-6 lg:border-l lg:border-slate-800/80 lg:pl-6">
+                  <div className="lg:col-span-1 space-y-6 lg:border-l lg:border-[var(--border-color)]/80 lg:pl-6">
                     
                     {/* Client Details Section */}
                     <div className="space-y-4">
-                      <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-1.5 flex items-center gap-1.5">
-                        <User className="w-4 h-4 text-slate-400" />
+                      <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-[var(--border-color)] pb-1.5 flex items-center gap-1.5">
+                        <User className="w-4 h-4 text-[var(--text-secondary)]" />
                         <span>Client Information</span>
                       </h4>
                       
                       <div className="space-y-3.5 text-xs">
                         <div>
-                          <span className="text-[10px] text-slate-500 font-bold block uppercase tracking-wider">Customer Name</span>
-                          <span className="font-semibold text-slate-200">
-                            <Link href={`/leads/${selectedOrder.lead.id}`} className="text-blue-600 dark:text-blue-400 hover:underline">
+                          <span className="text-[10px] text-[var(--text-muted)] font-bold block uppercase tracking-wider">Customer Name</span>
+                          <span className="font-semibold text-[var(--text-primary)]">
+                            <Link href={`/leads/${selectedOrder.lead.id}`} className="text-emerald-600 dark:text-emerald-400 hover:underline">
                               {selectedOrder.lead.customerName}
                             </Link>
                           </span>
                         </div>
                         <div>
-                          <span className="text-[10px] text-slate-500 font-bold block uppercase tracking-wider">Site Address</span>
-                          <span className="font-medium text-slate-300 leading-relaxed block mt-0.5">
+                          <span className="text-[10px] text-[var(--text-muted)] font-bold block uppercase tracking-wider">Site Address</span>
+                          <span className="font-medium text-[var(--text-primary)] leading-relaxed block mt-0.5">
                             {selectedOrder.lead.address}, {selectedOrder.lead.city}, {selectedOrder.lead.state} - {selectedOrder.lead.pinCode}
                           </span>
                         </div>
                         <div>
-                          <span className="text-[10px] text-slate-500 font-bold block uppercase tracking-wider">Mobile Number</span>
-                          <a href={`tel:${selectedOrder.lead.mobile}`} className="text-blue-600 dark:text-blue-400 font-bold hover:underline block mt-0.5">
+                          <span className="text-[10px] text-[var(--text-muted)] font-bold block uppercase tracking-wider">Mobile Number</span>
+                          <a href={`tel:${selectedOrder.lead.mobile}`} className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline block mt-0.5">
                             {selectedOrder.lead.mobile}
                           </a>
                         </div>
@@ -2410,38 +2410,38 @@ export default function OperationsPage() {
                     </div>
 
                     {/* Project Details Section */}
-                    <div className="space-y-4 pt-4 border-t border-slate-800/60">
-                      <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-1.5 flex items-center gap-1.5">
-                        <Info className="w-4 h-4 text-slate-400" />
+                    <div className="space-y-4 pt-4 border-t border-[var(--border-color)]/60">
+                      <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-[var(--border-color)] pb-1.5 flex items-center gap-1.5">
+                        <Info className="w-4 h-4 text-[var(--text-secondary)]" />
                         <span>Project Specs</span>
                       </h4>
                       
                       <div className="space-y-3.5 text-xs">
                         <div>
-                          <span className="text-[10px] text-slate-500 font-bold block uppercase tracking-wider">Capacity & Client Type</span>
-                          <span className="font-bold text-slate-200 block mt-0.5">
+                          <span className="text-[10px] text-[var(--text-muted)] font-bold block uppercase tracking-wider">Capacity & Client Type</span>
+                          <span className="font-bold text-[var(--text-primary)] block mt-0.5">
                             {selectedOrder.systemSizeKw} kW ({selectedOrder.clientType.toUpperCase().replace('_', ' ')})
                           </span>
                         </div>
                         <div>
-                          <span className="text-[10px] text-slate-500 font-bold block uppercase tracking-wider">Connection Number</span>
-                          <span className="font-mono text-slate-300 block mt-0.5">{selectedOrder.connectionNumber}</span>
+                          <span className="text-[10px] text-[var(--text-muted)] font-bold block uppercase tracking-wider">Connection Number</span>
+                          <span className="font-mono text-[var(--text-primary)] block mt-0.5">{selectedOrder.connectionNumber}</span>
                         </div>
                         <div>
-                          <span className="text-[10px] text-slate-500 font-bold block uppercase tracking-wider">Financial Status</span>
+                          <span className="text-[10px] text-[var(--text-muted)] font-bold block uppercase tracking-wider">Financial Status</span>
                           <div className="mt-1.5 space-y-1.5">
-                            <div className="flex justify-between text-slate-400 text-[11px]">
+                            <div className="flex justify-between text-[var(--text-secondary)] text-[11px]">
                               <span>Contract Value:</span>
-                              <span className="font-bold text-slate-200">₹{selectedOrder.totalValue.toLocaleString('en-IN')}</span>
+                              <span className="font-bold text-[var(--text-primary)]">â‚¹{selectedOrder.totalValue.toLocaleString('en-IN')}</span>
                             </div>
-                            <div className="flex justify-between text-slate-400 text-[11px]">
+                            <div className="flex justify-between text-[var(--text-secondary)] text-[11px]">
                               <span>Total Paid:</span>
-                              <span className="text-emerald-400 font-bold">₹{totalPaid.toLocaleString('en-IN')}</span>
+                              <span className="text-emerald-400 font-bold">â‚¹{totalPaid.toLocaleString('en-IN')}</span>
                             </div>
-                            <div className="flex justify-between border-t border-slate-800/60 pt-1.5 text-[11px]">
-                              <span className="text-slate-300 font-semibold">Remaining Balance:</span>
-                              <span className={`font-mono font-bold ${balanceOutstanding <= 0 ? 'text-emerald-400' : 'text-blue-600 dark:text-blue-400'}`}>
-                                ₹{balanceOutstanding.toLocaleString('en-IN')}
+                            <div className="flex justify-between border-t border-[var(--border-color)]/60 pt-1.5 text-[11px]">
+                              <span className="text-[var(--text-primary)] font-semibold">Remaining Balance:</span>
+                              <span className={`font-mono font-bold ${balanceOutstanding <= 0 ? 'text-emerald-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                                â‚¹{balanceOutstanding.toLocaleString('en-IN')}
                               </span>
                             </div>
                           </div>
@@ -2466,7 +2466,7 @@ export default function OperationsPage() {
           onClick={() => setPreviewImage(null)}
         >
           <button 
-            className="absolute top-5 right-5 p-2 bg-slate-900 rounded-full text-slate-400 hover:text-white cursor-pointer"
+            className="absolute top-5 right-5 p-2 bg-[var(--bg-card)] rounded-full text-[var(--text-secondary)] hover:text-white cursor-pointer"
             onClick={() => setPreviewImage(null)}
           >
             <X className="w-6 h-6" />
@@ -2475,10 +2475,10 @@ export default function OperationsPage() {
             <img 
               src={previewImage.src} 
               alt={previewImage.title}
-              className="max-w-full max-h-[80vh] rounded-lg border border-slate-800 object-contain shadow-2xl"
+              className="max-w-full max-h-[80vh] rounded-lg border border-[var(--border-color)] object-contain shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             />
-            <span className="text-slate-400 text-xs font-mono">{previewImage.title}</span>
+            <span className="text-[var(--text-secondary)] text-xs font-mono">{previewImage.title}</span>
           </div>
         </div>
       )}
@@ -2493,12 +2493,12 @@ export default function OperationsPage() {
           />
           <div 
             style={{ top: customPicker.y, left: customPicker.x, position: 'fixed' }}
-            className="z-[1000] backdrop-blur-md bg-slate-900/95 border border-slate-800 rounded-xl shadow-2xl p-4 w-64 animate-fade-in text-white"
+            className="z-[1000] backdrop-blur-md bg-[var(--bg-card)]/95 border border-[var(--border-color)] rounded-xl shadow-2xl p-4 w-64 animate-fade-in text-white"
           >
             {customPicker.type === 'date' ? (
               // Calendar Date Picker UI
               <div className="space-y-3">
-                <div className="flex justify-between items-center pb-2 border-b border-slate-800">
+                <div className="flex justify-between items-center pb-2 border-b border-[var(--border-color)]">
                   <button
                     type="button"
                     onClick={() => {
@@ -2509,11 +2509,11 @@ export default function OperationsPage() {
                         setCalendarMonth(prev => prev - 1);
                       }
                     }}
-                    className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white cursor-pointer"
+                    className="p-1 hover:bg-[var(--bg-card)] rounded text-[var(--text-secondary)] hover:text-white cursor-pointer"
                   >
                     <ChevronLeft className="w-3.5 h-3.5" />
                   </button>
-                  <span className="text-xs font-bold text-slate-200">
+                  <span className="text-xs font-bold text-[var(--text-primary)]">
                     {new Date(calendarYear, calendarMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}
                   </span>
                   <button
@@ -2526,13 +2526,13 @@ export default function OperationsPage() {
                         setCalendarMonth(prev => prev + 1);
                       }
                     }}
-                    className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white cursor-pointer"
+                    className="p-1 hover:bg-[var(--bg-card)] rounded text-[var(--text-secondary)] hover:text-white cursor-pointer"
                   >
                     <ChevronRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
 
-                <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-500 uppercase">
+                <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-[var(--text-muted)] uppercase">
                   {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
                     <div key={d}>{d}</div>
                   ))}
@@ -2557,9 +2557,9 @@ export default function OperationsPage() {
                             customPicker.onChange(dateStr);
                             setCustomPicker(prev => ({ ...prev, isOpen: false }));
                           }}
-                          className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-semibold cursor-pointer transition-all hover:bg-slate-800 ${
+                          className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-semibold cursor-pointer transition-all hover:bg-[var(--bg-card)] ${
                             isSelected 
-                              ? 'bg-blue-600 text-white font-bold hover:bg-blue-500' 
+                              ? 'bg-emerald-600 text-white font-bold hover:bg-emerald-500' 
                               : 'text-slate-350 hover:text-white'
                           }`}
                         >
@@ -2571,7 +2571,7 @@ export default function OperationsPage() {
                   })()}
                 </div>
                 
-                <div className="flex justify-between items-center pt-2 border-t border-slate-800">
+                <div className="flex justify-between items-center pt-2 border-t border-[var(--border-color)]">
                   <button
                     type="button"
                     onClick={() => {
@@ -2580,14 +2580,14 @@ export default function OperationsPage() {
                       customPicker.onChange(dateStr);
                       setCustomPicker(prev => ({ ...prev, isOpen: false }));
                     }}
-                    className="text-[10px] text-blue-600 dark:text-blue-400 hover:text-blue-600 dark:text-blue-400 font-bold cursor-pointer"
+                    className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:text-emerald-600 dark:text-emerald-400 font-bold cursor-pointer"
                   >
                     Today
                   </button>
                   <button
                     type="button"
                     onClick={() => setCustomPicker(prev => ({ ...prev, isOpen: false }))}
-                    className="text-[10px] text-slate-400 hover:text-slate-350 cursor-pointer"
+                    className="text-[10px] text-[var(--text-secondary)] hover:text-slate-350 cursor-pointer"
                   >
                     Close
                   </button>
@@ -2596,21 +2596,21 @@ export default function OperationsPage() {
             ) : (
               // Time Picker UI
               <div className="space-y-3">
-                <div className="text-xs font-bold text-slate-200 pb-2 border-b border-slate-800 text-center uppercase tracking-wider">
+                <div className="text-xs font-bold text-[var(--text-primary)] pb-2 border-b border-[var(--border-color)] text-center uppercase tracking-wider">
                   Select Time
                 </div>
 
                 <div className="flex gap-4 justify-center py-2">
                   <div className="flex flex-col items-center">
-                    <span className="text-[9px] text-slate-500 uppercase tracking-wider font-bold mb-1">Hour</span>
-                    <div className="h-32 overflow-y-auto w-14 bg-slate-955 border border-slate-800 rounded-lg py-1 scrollbar-thin">
+                    <span className="text-[9px] text-[var(--text-muted)] uppercase tracking-wider font-bold mb-1">Hour</span>
+                    <div className="h-32 overflow-y-auto w-14 bg-slate-955 border border-[var(--border-color)] rounded-lg py-1 scrollbar-thin">
                       {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')).map(h => (
                         <button
                           key={h}
                           type="button"
                           onClick={() => setSelectedHour(h)}
-                          className={`w-full text-center py-0.5 text-xs cursor-pointer hover:bg-slate-800 ${
-                            selectedHour === h ? 'text-blue-600 dark:text-blue-400 font-bold bg-slate-850' : 'text-slate-350 hover:text-white'
+                          className={`w-full text-center py-0.5 text-xs cursor-pointer hover:bg-[var(--bg-card)] ${
+                            selectedHour === h ? 'text-emerald-600 dark:text-emerald-400 font-bold bg-[var(--bg-card)]' : 'text-slate-350 hover:text-white'
                           }`}
                         >
                           {h}
@@ -2620,15 +2620,15 @@ export default function OperationsPage() {
                   </div>
 
                   <div className="flex flex-col items-center">
-                    <span className="text-[9px] text-slate-500 uppercase tracking-wider font-bold mb-1">Minute</span>
-                    <div className="h-32 overflow-y-auto w-14 bg-slate-955 border border-slate-800 rounded-lg py-1 scrollbar-thin">
+                    <span className="text-[9px] text-[var(--text-muted)] uppercase tracking-wider font-bold mb-1">Minute</span>
+                    <div className="h-32 overflow-y-auto w-14 bg-slate-955 border border-[var(--border-color)] rounded-lg py-1 scrollbar-thin">
                       {Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0')).map(m => (
                         <button
                           key={m}
                           type="button"
                           onClick={() => setSelectedMinute(m)}
-                          className={`w-full text-center py-0.5 text-xs cursor-pointer hover:bg-slate-800 ${
-                            selectedMinute === m ? 'text-blue-600 dark:text-blue-400 font-bold bg-slate-850' : 'text-slate-350 hover:text-white'
+                          className={`w-full text-center py-0.5 text-xs cursor-pointer hover:bg-[var(--bg-card)] ${
+                            selectedMinute === m ? 'text-emerald-600 dark:text-emerald-400 font-bold bg-[var(--bg-card)]' : 'text-slate-350 hover:text-white'
                           }`}
                         >
                           {m}
@@ -2638,11 +2638,11 @@ export default function OperationsPage() {
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+                <div className="flex justify-end gap-2 pt-2 border-t border-[var(--border-color)]">
                   <button
                     type="button"
                     onClick={() => setCustomPicker(prev => ({ ...prev, isOpen: false }))}
-                    className="px-2.5 py-1 bg-slate-800 hover:bg-slate-750 text-slate-400 hover:text-slate-200 rounded text-[10px] cursor-pointer"
+                    className="px-2.5 py-1 bg-[var(--bg-card)] hover:bg-slate-750 text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded text-[10px] cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -2652,7 +2652,7 @@ export default function OperationsPage() {
                       customPicker.onChange(`${selectedHour}:${selectedMinute}`);
                       setCustomPicker(prev => ({ ...prev, isOpen: false }));
                     }}
-                    className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-slate-950 font-bold rounded text-[10px] cursor-pointer"
+                    className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold rounded text-[10px] cursor-pointer"
                   >
                     Confirm
                   </button>
@@ -2665,10 +2665,10 @@ export default function OperationsPage() {
       {/* Custom Alert Modal */}
       {customAlert.isOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-2xl max-w-sm w-full space-y-4 text-center animate-fade-in-up">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-5 shadow-2xl max-w-sm w-full space-y-4 text-center animate-fade-in-up">
             <div className="flex justify-center">
               {customAlert.type === 'success' ? (
-                <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                   <CheckCircle className="w-6 h-6" />
                 </div>
               ) : customAlert.type === 'error' ? (
@@ -2676,7 +2676,7 @@ export default function OperationsPage() {
                   <X className="w-6 h-6" />
                 </div>
               ) : (
-                <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                   <Info className="w-6 h-6" />
                 </div>
               )}
@@ -2686,7 +2686,7 @@ export default function OperationsPage() {
               <h4 className="text-sm font-bold text-white uppercase tracking-wider">
                 {customAlert.type === 'success' ? 'Success' : customAlert.type === 'error' ? 'Error' : 'Notification'}
               </h4>
-              <p className="text-xs text-slate-300 leading-relaxed font-medium pt-1">
+              <p className="text-xs text-[var(--text-primary)] leading-relaxed font-medium pt-1">
                 {customAlert.message}
               </p>
             </div>
@@ -2697,10 +2697,10 @@ export default function OperationsPage() {
                 onClick={() => setCustomAlert(prev => ({ ...prev, isOpen: false }))}
                 className={`w-full py-2 rounded-lg font-bold text-xs cursor-pointer shadow-md transition-all ${
                   customAlert.type === 'success'
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white shadow-blue-500/10'
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/10'
                     : customAlert.type === 'error'
                     ? 'bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white shadow-rose-500/10'
-                    : 'bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white shadow-blue-500/10'
+                    : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/10'
                 }`}
               >
                 Dismiss
@@ -2713,7 +2713,7 @@ export default function OperationsPage() {
       {/* Custom Confirm Modal */}
       {customConfirm.isOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-2xl max-w-sm w-full space-y-4 text-center animate-fade-in-up">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-5 shadow-2xl max-w-sm w-full space-y-4 text-center animate-fade-in-up">
             <div className="flex justify-center">
               <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center text-red-400">
                 <Info className="w-6 h-6" />
@@ -2722,7 +2722,7 @@ export default function OperationsPage() {
             
             <div className="space-y-1">
               <h4 className="text-sm font-bold text-white uppercase tracking-wider">Confirm Action</h4>
-              <p className="text-xs text-slate-300 leading-relaxed font-medium pt-1">
+              <p className="text-xs text-[var(--text-primary)] leading-relaxed font-medium pt-1">
                 {customConfirm.message}
               </p>
             </div>
@@ -2731,7 +2731,7 @@ export default function OperationsPage() {
               <button
                 type="button"
                 onClick={() => setCustomConfirm(prev => ({ ...prev, isOpen: false }))}
-                className="w-1/2 py-2 bg-slate-800 hover:bg-slate-750 text-slate-400 hover:text-slate-200 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                className="w-1/2 py-2 bg-[var(--bg-card)] hover:bg-slate-750 text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-lg text-xs font-bold transition-all cursor-pointer"
               >
                 Cancel
               </button>
@@ -2752,19 +2752,19 @@ export default function OperationsPage() {
       {/* WebRTC Camera Modal */}
       {cameraModal.isOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 px-4 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-2xl max-w-md w-full space-y-4 text-center text-white animate-fade-in-up">
-            <div className="flex justify-between items-center pb-2 border-b border-slate-800">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-200">Capture Proof Photo</span>
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-5 shadow-2xl max-w-md w-full space-y-4 text-center text-white animate-fade-in-up">
+            <div className="flex justify-between items-center pb-2 border-b border-[var(--border-color)]">
+              <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">Capture Proof Photo</span>
               <button 
                 type="button" 
                 onClick={() => setCameraModal(prev => ({ ...prev, isOpen: false }))}
-                className="text-slate-400 hover:text-white cursor-pointer"
+                className="text-[var(--text-secondary)] hover:text-white cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
             
-            <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-slate-950 border border-slate-850 flex items-center justify-center">
+            <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-[var(--bg-main)] border border-[var(--border-color)] flex items-center justify-center">
               {capturedPhoto ? (
                 <img 
                   src={capturedPhoto} 
@@ -2787,14 +2787,14 @@ export default function OperationsPage() {
                   <button
                     type="button"
                     onClick={retakePhoto}
-                    className="w-1/2 py-2 bg-slate-800 hover:bg-slate-750 text-slate-350 hover:text-white rounded-lg text-xs font-bold transition-all cursor-pointer"
+                    className="w-1/2 py-2 bg-[var(--bg-card)] hover:bg-slate-750 text-slate-350 hover:text-white rounded-lg text-xs font-bold transition-all cursor-pointer"
                   >
                     Retake
                   </button>
                   <button
                     type="button"
                     onClick={confirmPhoto}
-                    className="w-1/2 py-2 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md shadow-blue-500/10"
+                    className="w-1/2 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md shadow-emerald-500/10"
                   >
                     Use Photo
                   </button>
@@ -2804,14 +2804,14 @@ export default function OperationsPage() {
                   <button
                     type="button"
                     onClick={() => setCameraModal(prev => ({ ...prev, isOpen: false }))}
-                    className="w-1/3 py-2 bg-slate-800 hover:bg-slate-750 text-slate-400 hover:text-slate-250 rounded-lg text-xs cursor-pointer"
+                    className="w-1/3 py-2 bg-[var(--bg-card)] hover:bg-slate-750 text-[var(--text-secondary)] hover:text-slate-250 rounded-lg text-xs cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
                     onClick={capturePhoto}
-                    className="w-2/3 py-2 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md shadow-blue-500/10 flex items-center justify-center gap-1.5"
+                    className="w-2/3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md shadow-emerald-500/10 flex items-center justify-center gap-1.5"
                   >
                     <Camera className="w-4 h-4" />
                     <span>Capture Photo</span>
@@ -2826,24 +2826,24 @@ export default function OperationsPage() {
       {/* Bulk Assign Operations Member Modal */}
       {showAssignModal && (
         <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="w-full max-w-md bg-[#111625] border border-slate-800 rounded-xl shadow-2xl overflow-hidden p-6 animate-fade-in-up space-y-4">
-            <div className="flex justify-between items-center pb-3 border-b border-slate-800">
+          <div className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-2xl overflow-hidden p-6 animate-fade-in-up space-y-4">
+            <div className="flex justify-between items-center pb-3 border-b border-[var(--border-color)]">
               <h3 className="text-sm font-bold text-white uppercase tracking-wider">Assign Operations Member</h3>
-              <button onClick={() => { setShowAssignModal(false); setAssignTargetUserId(''); }} className="text-slate-400 hover:text-white cursor-pointer">
+              <button onClick={() => { setShowAssignModal(false); setAssignTargetUserId(''); }} className="text-[var(--text-secondary)] hover:text-white cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <p className="text-xs text-slate-300">
+            <p className="text-xs text-[var(--text-primary)]">
               Assign <strong className="text-white">{selectedOrderIds.length}</strong> selected order{selectedOrderIds.length > 1 ? 's' : ''} to an operations member in your reporting hierarchy.
             </p>
 
             <div className="space-y-1.5">
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Select Team Member</label>
+              <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Select Team Member</label>
               <select
                 value={assignTargetUserId}
                 onChange={(e) => setAssignTargetUserId(e.target.value)}
-                className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
+                className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-emerald-500 focus:outline-none"
               >
                 <option value="">-- Choose Team Member --</option>
                 {eligibleAssignees.map((emp) => (
@@ -2854,11 +2854,11 @@ export default function OperationsPage() {
               </select>
             </div>
 
-            <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
+            <div className="flex justify-end gap-3 pt-3 border-t border-[var(--border-color)]">
               <button
                 type="button"
                 onClick={() => { setShowAssignModal(false); setAssignTargetUserId(''); }}
-                className="px-4 py-2 bg-slate-900 border border-slate-800 text-slate-400 rounded-lg text-xs font-bold hover:text-white transition-all cursor-pointer"
+                className="px-4 py-2 bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] rounded-lg text-xs font-bold hover:text-white transition-all cursor-pointer"
               >
                 Cancel
               </button>
@@ -2866,7 +2866,7 @@ export default function OperationsPage() {
                 type="button"
                 onClick={handleBulkAssign}
                 disabled={!assignTargetUserId || assignLoading}
-                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg text-xs font-bold transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shadow-md shadow-blue-500/10"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shadow-md shadow-emerald-500/10"
               >
                 {assignLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Users className="w-3.5 h-3.5" />}
                 <span>Confirm Assignment</span>

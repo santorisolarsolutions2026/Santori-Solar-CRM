@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import {
@@ -26,16 +26,16 @@ export function TrendLineChart({ trend }: TrendLineChartProps) {
     <ResponsiveContainer width="100%" height="100%">
       <LineChart data={trend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
-        <XAxis dataKey="date" stroke="var(--text-muted)" fontSize={10} tickLine={false} />
-        <YAxis stroke="var(--text-muted)" fontSize={10} tickLine={false} />
+        <XAxis dataKey="date" stroke="#6E7681" fontSize={10} tickLine={false} />
+        <YAxis stroke="#6E7681" fontSize={10} tickLine={false} />
         <Tooltip
-          contentStyle={{ backgroundColor: 'var(--bg-card-solid)', border: '1px solid var(--border-color)', borderRadius: '8px' }}
+          contentStyle={{ backgroundColor: '#161B22', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '8px' }}
           labelStyle={{ color: 'var(--text-primary)', fontSize: '12px', fontWeight: 'bold' }}
           itemStyle={{ fontSize: '12px', color: 'var(--text-secondary)' }}
           cursor={false}
         />
         <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
-        <Line type="monotone" name="Leads Created" dataKey="created" stroke="var(--accent-color)" strokeWidth={2.5} activeDot={{ r: 6 }} dot={false} />
+        <Line type="monotone" name="Leads Created" dataKey="created" stroke="#3B82F6" strokeWidth={2.5} activeDot={{ r: 6 }} dot={false} />
         <Line type="monotone" name="Sales Completed" dataKey="closed" stroke="#10B981" strokeWidth={2.5} dot={false} />
       </LineChart>
     </ResponsiveContainer>
@@ -71,7 +71,7 @@ export function LeadSourcePieChart({ leadSourceData, colors }: LeadSourcePieChar
               ))}
             </Pie>
             <Tooltip
-              contentStyle={{ backgroundColor: '#090b11', border: '1px solid #1f2937', borderRadius: '8px', padding: '8px' }}
+              contentStyle={{ backgroundColor: '#161B22', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '8px', padding: '8px' }}
               labelStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}
               itemStyle={{ fontSize: '12px', color: '#94a3b8' }}
               formatter={(value: any, name: any) => [`${value} leads (${total > 0 ? ((Number(value) / total) * 100).toFixed(0) : 0}%)`, name]}
@@ -79,7 +79,7 @@ export function LeadSourcePieChart({ leadSourceData, colors }: LeadSourcePieChar
           </PieChart>
         </ResponsiveContainer>
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total</span>
+          <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-wider">Total</span>
           <span className="text-sm font-extrabold text-white">{total}</span>
         </div>
       </div>
@@ -89,11 +89,11 @@ export function LeadSourcePieChart({ leadSourceData, colors }: LeadSourcePieChar
         {leadSourceData.map((item, index) => {
           const pct = total > 0 ? ((item.value / total) * 100).toFixed(0) : 0;
           return (
-            <div key={item.name} className="flex items-center gap-2 p-2 rounded-lg bg-slate-950/50 border border-slate-800/60 min-w-0">
+            <div key={item.name} className="flex items-center gap-2 p-2 rounded-lg bg-[var(--bg-main)] border border-[var(--border-color)] min-w-0">
               <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: colors[index % colors.length] }} />
               <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-semibold text-slate-200 truncate" title={item.name}>{item.name}</p>
-                <p className="text-[10px] text-slate-400 font-mono">{pct}% ({item.value})</p>
+                <p className="text-[11px] font-semibold text-[var(--text-primary)] truncate" title={item.name}>{item.name}</p>
+                <p className="text-[10px] text-[var(--text-secondary)] font-mono">{pct}% ({item.value})</p>
               </div>
             </div>
           );
@@ -112,15 +112,15 @@ export function PipelineBarChart({ pipelineBarData }: PipelineBarChartProps) {
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={pipelineBarData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
-        <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={8} tickLine={false} />
-        <YAxis stroke="var(--text-muted)" fontSize={10} tickLine={false} />
+        <XAxis dataKey="name" stroke="#6E7681" fontSize={8} tickLine={false} />
+        <YAxis stroke="#6E7681" fontSize={10} tickLine={false} />
         <Tooltip
-          contentStyle={{ backgroundColor: 'var(--bg-card-solid)', border: '1px solid var(--border-color)', borderRadius: '8px' }}
+          contentStyle={{ backgroundColor: '#161B22', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '8px' }}
           labelStyle={{ color: 'var(--text-primary)', fontSize: '12px', fontWeight: 'bold' }}
           itemStyle={{ fontSize: '12px', color: 'var(--text-secondary)' }}
           cursor={false}
         />
-        <Bar dataKey="Leads" fill="var(--accent-color)" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="Leads" fill="#10B981" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );

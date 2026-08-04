@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import {
@@ -86,17 +86,17 @@ const STAGE_NAMES: Record<number, string> = {
 
 const STAGE_BADGES: Record<number, { name: string; class: string }> = {
   0: { name: 'Uninitiated', class: 'bg-[#3b3a37] text-[#c9c5ba] border-[#4f4d45]' },
-  1: { name: 'Fresh Lead', class: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-  2: { name: 'DNP (No Answer)', class: 'bg-slate-500/10 text-slate-400 border-slate-500/20' },
-  3: { name: 'Follow Up', class: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' },
+  1: { name: 'Fresh Lead', class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+  2: { name: 'DNP (No Answer)', class: 'bg-slate-500/10 text-[var(--text-secondary)] border-slate-500/20' },
+  3: { name: 'Follow Up', class: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' },
   4: { name: 'Not Interested', class: 'bg-red-800/10 text-red-400 border-red-800/20' },
   5: { name: 'Call Later', class: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
-  6: { name: 'Already Installed', class: 'bg-slate-800/20 text-slate-500 border-slate-800/30' },
-  7: { name: 'Decision Pending', class: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' },
+  6: { name: 'Already Installed', class: 'bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border-color)]' },
+  7: { name: 'Decision Pending', class: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' },
   8: { name: 'Meeting Booked', class: 'bg-teal-500/10 text-teal-400 border-teal-500/20' },
   9: { name: 'Meeting Done', class: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
-  10: { name: 'Disconnected', class: 'bg-slate-600/15 text-slate-400 border-slate-600/20' },
-  11: { name: 'Switch Off', class: 'bg-slate-700/20 text-slate-400 border-slate-700/30' },
+  10: { name: 'Disconnected', class: 'bg-slate-600/15 text-[var(--text-secondary)] border-slate-600/20' },
+  11: { name: 'Switch Off', class: 'bg-slate-700/20 text-[var(--text-secondary)] border-[var(--border-color)]' },
   12: { name: 'Can\'t Fit Solar', class: 'bg-stone-900 text-stone-400 border-stone-800/40' },
   13: { name: 'Sale Done', class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-bold' },
 };
@@ -200,7 +200,7 @@ export function LeadTrackingTimeline({ lead }: LeadTrackingProps) {
           
           eventTitle = titleCase;
           eventDescription = rest || `Action completed: ${titleCase}`;
-        } else if (log.remark.startsWith('Payment of ₹')) {
+        } else if (log.remark.startsWith('Payment of â‚¹')) {
           eventTitle = 'Payment Recorded';
           eventDescription = log.remark;
         } else if (log.remark.includes('Order punched and submitted')) {
@@ -337,7 +337,7 @@ export function LeadTrackingTimeline({ lead }: LeadTrackingProps) {
       date: formatDate(lead.order.createdAt || new Date().toISOString()),
       fullDate: formatDateTime(lead.order.createdAt || new Date().toISOString()),
       timestamp: orderTime,
-      description: `System Size: ${lead.order.systemSizeKw} kW | Total Value: ₹${lead.order.totalValue?.toLocaleString('en-IN') || '-'} | Status: ${lead.order.status.toUpperCase()}`,
+      description: `System Size: ${lead.order.systemSizeKw} kW | Total Value: â‚¹${lead.order.totalValue?.toLocaleString('en-IN') || '-'} | Status: ${lead.order.status.toUpperCase()}`,
       badge: 'Order Punched',
       user: lead.order.submittedBy ? `${lead.order.submittedBy.name} (${lead.order.submittedBy.role.toUpperCase()})` : undefined,
     });
@@ -368,26 +368,26 @@ export function LeadTrackingTimeline({ lead }: LeadTrackingProps) {
   filteredEvents.sort((a, b) => b.timestamp - a.timestamp);
 
   return (
-    <div className="bg-[#0b0f19] border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+    <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-6 shadow-xl space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+      <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 shadow-inner">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-inner">
             <Truck className="w-5 h-5" />
           </div>
           <div>
             <h3 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
               <span>Track Lead Journey</span>
-              <span className="text-[10px] bg-blue-500/10 text-blue-600 dark:text-blue-450 border border-blue-500/20 px-2 py-0.5 rounded-full font-mono">
+              <span className="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-450 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono">
                 #{lead.leadCode}
               </span>
             </h3>
-            <p className="text-[11px] text-slate-400">Live progress tracking showing all completed actions and pipeline activity for this lead.</p>
+            <p className="text-[11px] text-[var(--text-secondary)]">Live progress tracking showing all completed actions and pipeline activity for this lead.</p>
           </div>
         </div>
         <div className="text-right">
-          <span className="text-[10px] uppercase font-bold text-slate-500 block">Current Stage</span>
-          <span className={`text-xs font-extrabold px-2.5 py-1 rounded-lg border inline-block mt-0.5 ${STAGE_BADGES[lead.status]?.class || 'bg-slate-800 text-slate-400 border-slate-700'}`}>
+          <span className="text-[10px] uppercase font-bold text-[var(--text-muted)] block">Current Stage</span>
+          <span className={`text-xs font-extrabold px-2.5 py-1 rounded-lg border inline-block mt-0.5 ${STAGE_BADGES[lead.status]?.class || 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-color)]'}`}>
             {STAGE_NAMES[lead.status] || `Stage ${lead.status}`}
           </span>
         </div>
@@ -404,7 +404,7 @@ export function LeadTrackingTimeline({ lead }: LeadTrackingProps) {
               <div key={event.id} className="flex items-start gap-4 sm:gap-6 relative group pb-8 last:pb-0">
                 {/* Left Column: Date */}
                 <div className="w-16 sm:w-20 shrink-0 pt-0.5 text-right">
-                  <span className="text-xs font-bold font-mono text-slate-500">
+                  <span className="text-xs font-bold font-mono text-[var(--text-muted)]">
                     {event.date}
                   </span>
                 </div>
@@ -414,8 +414,8 @@ export function LeadTrackingTimeline({ lead }: LeadTrackingProps) {
                   <div
                     className={`w-7 h-7 rounded-lg flex items-center justify-center shadow-md transition-all duration-300 ${
                       isLatest
-                        ? 'bg-gradient-to-br from-blue-600 to-indigo-600 font-bold shadow-blue-500/30 ring-4 ring-blue-500/20'
-                        : 'bg-gradient-to-br from-blue-600 to-indigo-600 font-bold shadow-blue-500/10'
+                        ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 font-bold shadow-emerald-500/30 ring-4 ring-emerald-500/20'
+                        : 'bg-emerald-500 font-bold shadow-emerald-500/10'
                     }`}
                     style={{ color: '#ffffff' }}
                   >
@@ -423,18 +423,18 @@ export function LeadTrackingTimeline({ lead }: LeadTrackingProps) {
                   </div>
 
                   {!isVisualLast && (
-                    <div className="w-[2px] absolute top-7 bottom-0 bg-slate-200 dark:bg-slate-800 transition-all duration-500" />
+                    <div className="w-[2px] absolute top-7 bottom-0 bg-[var(--border-color)] transition-all duration-500" />
                   )}
                 </div>
 
                 {/* Right Column: Title & Detailed Subtext */}
-                <div className="flex-1 pt-0.5 space-y-2 bg-slate-955/40 border border-slate-900 hover:border-slate-800 p-3.5 rounded-xl transition-all">
+                <div className="flex-1 pt-0.5 space-y-2 bg-[var(--bg-card)]/40 border border-[var(--border-color)] hover:border-[var(--border-color)] p-3.5 rounded-xl transition-all">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <h4 className="text-xs font-bold text-white flex items-center gap-2">
                       <span>{event.title}</span>
                     </h4>
                     {isLatest && (
-                      <span className="text-[9px] font-extrabold uppercase tracking-wider bg-blue-500/10 text-blue-600 dark:text-blue-450 border border-blue-500/20 px-2 py-0.5 rounded-full animate-pulse">
+                      <span className="text-[9px] font-extrabold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-450 border border-emerald-500/20 px-2 py-0.5 rounded-full animate-pulse">
                         Latest Action
                       </span>
                     )}
@@ -448,7 +448,7 @@ export function LeadTrackingTimeline({ lead }: LeadTrackingProps) {
                           <span className={`text-[9px] px-1.5 py-0.5 border rounded uppercase tracking-wider font-semibold ${event.fromStatusClass}`}>
                             {event.fromStatusName}
                           </span>
-                          <span className="text-slate-500 text-xs font-bold">&rarr;</span>
+                          <span className="text-[var(--text-muted)] text-xs font-bold">&rarr;</span>
                         </>
                       )}
                       <span className={`text-[9px] px-1.5 py-0.5 border rounded uppercase tracking-wider font-semibold ${event.toStatusClass}`}>
@@ -457,13 +457,13 @@ export function LeadTrackingTimeline({ lead }: LeadTrackingProps) {
                     </div>
                   )}
 
-                  <p className="text-[11px] text-slate-300 leading-relaxed">
+                  <p className="text-[11px] text-[var(--text-primary)] leading-relaxed">
                     {event.description}
                   </p>
                   
-                  <div className="flex items-center justify-between pt-1 border-t border-slate-900/60 text-[10px] text-slate-500 font-mono">
+                  <div className="flex items-center justify-between pt-1 border-t border-[var(--border-color)] text-[10px] text-[var(--text-muted)] font-mono">
                     <span>{event.fullDate}</span>
-                    {event.user && <span className="text-slate-400 font-sans">By: {event.user}</span>}
+                    {event.user && <span className="text-[var(--text-secondary)] font-sans">By: {event.user}</span>}
                   </div>
                 </div>
               </div>

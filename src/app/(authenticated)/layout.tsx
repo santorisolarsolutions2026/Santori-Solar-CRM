@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -21,6 +21,7 @@ import {
   Calendar,
   AlertTriangle,
   ChevronRight,
+  ChevronLeft,
   ChevronDown,
   TrendingUp,
   Upload,
@@ -80,6 +81,20 @@ export default function AuthenticatedLayout({
   const pathname = usePathname();
   
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('sidebarCollapsed') === 'true';
+    }
+    return false;
+  });
+
+  const toggleSidebarCollapsed = () => {
+    setSidebarCollapsed(prev => {
+      const next = !prev;
+      localStorage.setItem('sidebarCollapsed', String(next));
+      return next;
+    });
+  };
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     workspace: true,
     hr: true,
@@ -552,10 +567,10 @@ export default function AuthenticatedLayout({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#090b11] flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--bg-main)] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <Sun className="w-12 h-12 text-blue-600 dark:text-blue-400 animate-spin" />
-          <p className="text-slate-400 text-sm font-semibold tracking-wider uppercase">Loading SolarCRM...</p>
+          <Sun className="w-12 h-12 text-emerald-500 animate-spin" />
+          <p className="text-[var(--text-secondary)] text-sm font-semibold tracking-wider uppercase">Loading SolarCRM...</p>
         </div>
       </div>
     );
@@ -650,10 +665,10 @@ export default function AuthenticatedLayout({
   }).filter(group => group.items.length > 0);
 
   const roleLabels: Record<string, { label: string; color: string }> = {
-    admin: { label: 'Admin', color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' },
+    admin: { label: 'Admin', color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
     director: { label: 'Director', color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' },
     sales_head: { label: 'Sales Head', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
-    finance: { label: 'Finance Manager', color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' },
+    finance: { label: 'Finance Manager', color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
     operations: { label: 'Operations Manager', color: 'bg-pink-500/10 text-pink-400 border-pink-500/20' },
     psa_tl: { label: 'PSA Team Leader', color: 'bg-sky-500/10 text-sky-400 border-sky-500/20' },
     psa: { label: 'PSA Consultant', color: 'bg-orange-500/10 text-orange-400 border-orange-500/20' },
@@ -662,79 +677,115 @@ export default function AuthenticatedLayout({
   };
 
   const userRoleConfig = user.role.includes(':')
-    ? { label: user.role.split(':')[1], color: roleLabels[user.role.split(':')[0]]?.color || 'bg-slate-500/10 text-slate-400' }
-    : roleLabels[user.role] || { label: user.role, color: 'bg-slate-500/10 text-slate-400' };
+    ? { label: user.role.split(':')[1], color: roleLabels[user.role.split(':')[0]]?.color || 'bg-slate-500/10 text-[var(--text-secondary)]' }
+    : roleLabels[user.role] || { label: user.role, color: 'bg-slate-500/10 text-[var(--text-secondary)]' };
 
   return (
-    <div className="flex h-screen bg-[#090b11] text-slate-100 overflow-hidden">
+    <div className="flex h-screen bg-[var(--bg-main)] text-[var(--text-primary)] overflow-hidden">
       {/* 1. Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 bg-[#111625] border-r border-slate-800 shadow-xl">
-        <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800">
-          <Link href="/dashboard" className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-slate-900 border border-slate-800 rounded-lg flex items-center justify-center overflow-hidden p-1 shadow-md shadow-black/20">
-              <img
-                src="/logo.png"
-                alt="Santori Solar Solutions Logo"
-                className="w-full h-full object-contain"
-              />
-            </div>
-            <span className="text-xl font-extrabold text-white tracking-wide">
-              Solar<span className="text-blue-600 dark:text-blue-400">CRM</span>
-            </span>
-          </Link>
+      <aside className={`hidden md:flex flex-col bg-[var(--bg-sidebar)] border-r border-[var(--border-color)] shadow-xl transition-all duration-250 ease-in-out ${sidebarCollapsed ? 'w-16' : 'w-64'}`}>
+        <div className="h-16 flex items-center justify-between px-3 border-b border-[var(--border-color)] relative">
+          {!sidebarCollapsed && (
+            <Link href="/dashboard" className="flex items-center gap-3 flex-1 min-w-0">
+              <div className="w-8 h-8 flex-shrink-0 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg flex items-center justify-center overflow-hidden p-1 shadow-md shadow-black/20">
+                <img
+                  src="/logo.png"
+                  alt="Santori Solar Solutions Logo"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <span className="text-xl font-extrabold text-[var(--text-primary)] tracking-wide truncate">
+                Solar<span className="text-emerald-500">CRM</span>
+              </span>
+            </Link>
+          )}
+          {sidebarCollapsed && (
+            <Link href="/dashboard" className="flex items-center justify-center w-full">
+              <div className="w-8 h-8 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg flex items-center justify-center overflow-hidden p-1">
+                <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
+              </div>
+            </Link>
+          )}
+          <button
+            onClick={toggleSidebarCollapsed}
+            className={`sidebar-toggle-btn flex-shrink-0 w-6 h-6 rounded-md flex items-center justify-center bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--border-color)] transition-all focus:outline-none ${sidebarCollapsed ? 'ml-auto mr-0' : 'ml-2'}`}
+            title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {sidebarCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
+          </button>
         </div>
 
         {/* User Card */}
         <button
           onClick={handleOpenProfile}
-          className="p-4 mx-4 my-6 bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 rounded-xl text-left cursor-pointer transition-all block w-[calc(100%-2rem)] focus:outline-none"
+          className={`bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color-hover)] rounded-xl text-left cursor-pointer transition-all focus:outline-none ${
+            sidebarCollapsed ? 'p-2 mx-2 my-3 flex items-center justify-center' : 'p-4 mx-4 my-6 block w-[calc(100%-2rem)]'
+          }`}
         >
-          <div className="flex items-center gap-3">
-            {user.photograph ? (
-              <img
-                src={`/api/v1/users/${user.id}/photograph?t=${Date.now()}`}
-                alt={user.name}
-                className="w-8 h-8 rounded-full object-cover border border-slate-850"
-                onError={(e) => {
-                  (e.target as HTMLElement).style.display = 'none';
-                }}
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700/80 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+          {sidebarCollapsed ? (
+            <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-[var(--border-color)] flex items-center justify-center text-emerald-500 shrink-0">
+              {user.photograph ? (
+                <img
+                  src={`/api/v1/users/${user.id}/photograph?t=${Date.now()}`}
+                  alt={user.name}
+                  className="w-8 h-8 rounded-full object-cover"
+                  onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                />
+              ) : (
                 <User className="w-4 h-4" />
-              </div>
-            )}
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-white truncate">{user.name}</p>
-              <p className="text-[10px] text-slate-400 truncate mb-2">{user.email}</p>
+              )}
             </div>
-          </div>
-          <span className={`inline-block text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 border rounded-full mt-1 ${userRoleConfig.color}`}>
-            {userRoleConfig.label}
-          </span>
+          ) : (
+            <>
+              <div className="flex items-center gap-3">
+                {user.photograph ? (
+                  <img
+                    src={`/api/v1/users/${user.id}/photograph?t=${Date.now()}`}
+                    alt={user.name}
+                    className="w-8 h-8 rounded-full object-cover border border-[var(--border-color)]"
+                    onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-[var(--border-color)] flex items-center justify-center text-emerald-500 shrink-0">
+                    <User className="w-4 h-4" />
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{user.name}</p>
+                  <p className="text-[10px] text-[var(--text-muted)] truncate mb-2">{user.email}</p>
+                </div>
+              </div>
+              <span className={`inline-block text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 border rounded-full mt-1 ${userRoleConfig.color}`}>
+                {userRoleConfig.label}
+              </span>
+            </>
+          )}
         </button>
 
         {/* Nav Links */}
-        <nav className="flex-1 px-4 space-y-4 overflow-y-auto">
+        <nav className={`flex-1 overflow-y-auto space-y-4 ${sidebarCollapsed ? 'px-2' : 'px-4'}`}>
           {visibleGroups.map((group) => {
             const isExpanded = expandedGroups[group.id];
             return (
               <div key={group.id} className="space-y-1">
-                <button
-                  type="button"
-                  onClick={() => toggleGroup(group.id)}
-                  className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-slate-500 hover:text-slate-350 transition-colors select-none text-left cursor-pointer focus:outline-none"
-                >
-                  <span>{group.title}</span>
-                  {isExpanded ? (
-                    <ChevronDown className="w-3 h-3 text-slate-500" />
-                  ) : (
-                    <ChevronRight className="w-3 h-3 text-slate-500" />
-                  )}
-                </button>
+                {!sidebarCollapsed && (
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(group.id)}
+                    className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors select-none text-left cursor-pointer focus:outline-none"
+                  >
+                    <span>{group.title}</span>
+                    {isExpanded ? (
+                      <ChevronDown className="w-3 h-3 text-[var(--text-muted)]" />
+                    ) : (
+                      <ChevronRight className="w-3 h-3 text-[var(--text-muted)]" />
+                    )}
+                  </button>
+                )}
 
-                {isExpanded && (
-                  <div className="space-y-0.5 pl-1.5">
+                {/* Collapsed: show all items as icon-only */}
+                {sidebarCollapsed ? (
+                  <div className="space-y-1">
                     {group.items.map((item) => {
                       const isActive = pathname === item.path || pathname.startsWith(item.path + '/');
                       const Icon = item.icon;
@@ -742,18 +793,41 @@ export default function AuthenticatedLayout({
                         <Link
                           key={item.path}
                           href={item.path}
-                          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all group ${
+                          title={item.name}
+                          className={`flex items-center justify-center w-10 h-10 mx-auto rounded-lg transition-all ${
                             isActive
-                              ? 'bg-blue-650 dark:bg-blue-500/10 text-white dark:text-blue-400 border-l-2 border-blue-600 dark:border-blue-500 pl-2.5 font-bold shadow-inner'
-                              : 'text-slate-400 hover:text-white hover:bg-slate-900/40'
+                              ? 'bg-emerald-500/10 text-emerald-500'
+                              : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--border-color)]'
                           }`}
                         >
-                          <Icon className={`w-4 h-4 transition-transform group-hover:scale-105 duration-200 ${isActive ? 'text-white dark:text-blue-400' : 'text-slate-500 group-hover:text-slate-200'}`} />
-                          <span>{item.name}</span>
+                          <Icon className="w-4.5 h-4.5" />
                         </Link>
                       );
                     })}
                   </div>
+                ) : (
+                  isExpanded && (
+                    <div className="space-y-0.5 pl-1.5">
+                      {group.items.map((item) => {
+                        const isActive = pathname === item.path || pathname.startsWith(item.path + '/');
+                        const Icon = item.icon;
+                        return (
+                          <Link
+                            key={item.path}
+                            href={item.path}
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all group ${
+                              isActive
+                                ? 'bg-emerald-500/10 text-emerald-500 border-l-2 border-emerald-500 pl-2.5'
+                                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-color)]'
+                            }`}
+                          >
+                            <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-emerald-500' : 'text-[var(--text-muted)] group-hover:text-[var(--text-primary)]'}`} />
+                            <span>{item.name}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )
                 )}
               </div>
             );
@@ -763,13 +837,16 @@ export default function AuthenticatedLayout({
 
 
         {/* Logout */}
-        <div className="p-4 border-t border-slate-800">
+        <div className={`border-t border-[var(--border-color)] ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
           <button
             onClick={() => setShowLogoutConfirm(true)}
-            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-slate-900/60 hover:bg-red-950/20 text-slate-400 hover:text-red-400 border border-slate-800 hover:border-red-900/30 transition-all font-semibold text-sm cursor-pointer"
+            title="Logout"
+            className={`flex items-center justify-center gap-2 py-2.5 rounded-lg bg-[var(--bg-card)] hover:bg-red-950/20 text-[var(--text-secondary)] hover:text-red-500 border border-[var(--border-color)] hover:border-red-900/30 transition-all font-semibold text-sm cursor-pointer ${
+              sidebarCollapsed ? 'w-10 mx-auto px-0' : 'w-full px-4'
+            }`}
           >
-            <LogOut className="w-4 h-4" />
-            <span>Logout</span>
+            <LogOut className="w-4 h-4 shrink-0" />
+            {!sidebarCollapsed && <span>Logout</span>}
           </button>
         </div>
       </aside>
@@ -777,10 +854,10 @@ export default function AuthenticatedLayout({
       {/* 2. Mobile Nav Drawer */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 flex md:hidden bg-black/60 backdrop-blur-sm">
-          <div className="relative w-64 max-w-xs bg-[#111625] flex flex-col h-full shadow-2xl animate-slide-in">
-            <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800">
+          <div className="relative w-64 max-w-xs bg-[var(--bg-sidebar)] flex flex-col h-full shadow-2xl animate-slide-in">
+            <div className="h-16 flex items-center justify-between px-6 border-b border-[var(--border-color)]">
               <Link href="/dashboard" className="flex items-center gap-3" onClick={() => setSidebarOpen(false)}>
-                <div className="w-8 h-8 bg-slate-900 border border-slate-800 rounded-lg flex items-center justify-center overflow-hidden p-1 shadow-md shadow-black/20">
+                <div className="w-8 h-8 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg flex items-center justify-center overflow-hidden p-1 shadow-md shadow-black/20">
                   <img
                     src="/logo.png"
                     alt="Santori Solar Solutions Logo"
@@ -788,10 +865,10 @@ export default function AuthenticatedLayout({
                   />
                 </div>
                 <span className="text-xl font-extrabold text-white tracking-wide">
-                  Solar<span className="text-blue-600 dark:text-blue-400">CRM</span>
+                  Solar<span className="text-emerald-500">CRM</span>
                 </span>
               </Link>
-              <button onClick={() => setSidebarOpen(false)} className="text-slate-400 hover:text-white">
+              <button onClick={() => setSidebarOpen(false)} className="text-[var(--text-secondary)] hover:text-white">
                 <X className="w-6 h-6" />
               </button>
             </div>
@@ -801,26 +878,26 @@ export default function AuthenticatedLayout({
                 setSidebarOpen(false);
                 handleOpenProfile();
               }}
-              className="p-4 mx-4 my-6 bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 rounded-xl text-left cursor-pointer transition-all block w-[calc(100%-2rem)] focus:outline-none"
+              className="p-4 mx-4 my-6 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color-hover)] rounded-xl text-left cursor-pointer transition-all block w-[calc(100%-2rem)] focus:outline-none"
             >
               <div className="flex items-center gap-3">
                 {user.photograph ? (
                   <img
                     src={`/api/v1/users/${user.id}/photograph?t=${Date.now()}`}
                     alt={user.name}
-                    className="w-8 h-8 rounded-full object-cover border border-slate-850"
+                    className="w-8 h-8 rounded-full object-cover border border-[var(--border-color)]"
                     onError={(e) => {
                       (e.target as HTMLElement).style.display = 'none';
                     }}
                   />
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700/80 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-center text-emerald-500 shrink-0">
                     <User className="w-4 h-4" />
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-white truncate">{user.name}</p>
-                  <p className="text-[10px] text-slate-400 truncate mb-2">{user.email}</p>
+                  <p className="text-[10px] text-[var(--text-secondary)] truncate mb-2">{user.email}</p>
                 </div>
               </div>
               <span className={`inline-block text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 border rounded-full mt-1 ${userRoleConfig.color}`}>
@@ -829,12 +906,12 @@ export default function AuthenticatedLayout({
             </button>
 
             {/* Quick Attendance Mobile Widget */}
-            <div className="mx-4 mb-4 p-3 bg-slate-900/80 border border-slate-800 rounded-xl space-y-2">
+            <div className="mx-4 mb-4 p-3 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Attendance
+                <span className="text-xs font-bold text-[var(--text-primary)] flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-emerald-500" /> Attendance
                 </span>
-                <span className="text-[9px] font-bold text-blue-600 dark:text-blue-400 uppercase">
+                <span className="text-[9px] font-bold text-emerald-500 uppercase">
                   {!todayAttendance ? 'Not Checked In' : todayAttendance.checkOut ? 'Completed' : 'Checked In'}
                 </span>
               </div>
@@ -867,13 +944,13 @@ export default function AuthenticatedLayout({
                     <button
                       type="button"
                       onClick={() => toggleGroup(group.id)}
-                      className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-slate-500 hover:text-slate-350 transition-colors select-none text-left cursor-pointer focus:outline-none"
+                      className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)] hover:text-slate-350 transition-colors select-none text-left cursor-pointer focus:outline-none"
                     >
                       <span>{group.title}</span>
                       {isExpanded ? (
-                        <ChevronDown className="w-3 h-3 text-slate-500" />
+                        <ChevronDown className="w-3 h-3 text-[var(--text-muted)]" />
                       ) : (
-                        <ChevronRight className="w-3 h-3 text-slate-500" />
+                        <ChevronRight className="w-3 h-3 text-[var(--text-muted)]" />
                       )}
                     </button>
 
@@ -889,11 +966,11 @@ export default function AuthenticatedLayout({
                               href={item.path}
                               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all group ${
                                 isActive
-                                  ? 'bg-blue-650 dark:bg-blue-500/10 text-white dark:text-blue-400 border-l-2 border-blue-600 dark:border-blue-500 pl-2.5 font-bold shadow-inner'
-                                  : 'text-slate-400 hover:text-white hover:bg-slate-900/40'
+                                  ? 'bg-emerald-500/10 text-emerald-400 border-l-2 border-emerald-500 pl-2.5 font-semibold'
+                                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5'
                               }`}
                             >
-                              <Icon className={`w-4 h-4 transition-transform group-hover:scale-105 duration-200 ${isActive ? 'text-white dark:text-blue-400' : 'text-slate-500 group-hover:text-slate-200'}`} />
+                              <Icon className={`w-4 h-4 transition-transform group-hover:scale-105 duration-200 ${isActive ? 'text-emerald-400' : 'text-[var(--text-muted)] group-hover:text-[var(--text-primary)]'}`} />
                               <span>{item.name}</span>
                             </Link>
                           );
@@ -907,10 +984,10 @@ export default function AuthenticatedLayout({
 
 
 
-            <div className="p-4 border-t border-slate-800">
+            <div className="p-4 border-t border-[var(--border-color)]">
               <button
                 onClick={() => setShowLogoutConfirm(true)}
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-slate-900/60 hover:bg-red-950/20 text-slate-400 hover:text-red-400 border border-slate-800 hover:border-red-900/30 transition-all font-semibold text-sm cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-[var(--bg-card)] hover:bg-red-950/20 text-[var(--text-secondary)] hover:text-red-400 border border-[var(--border-color)] hover:border-red-900/30 transition-all font-semibold text-sm cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Logout</span>
@@ -921,17 +998,17 @@ export default function AuthenticatedLayout({
       )}
 
       {/* 3. Main Workspace Container */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Header */}
-        <header className="h-16 bg-[#111625] border-b border-slate-800 flex items-center justify-between px-6 z-10 relative">
+        <header className="h-16 bg-[var(--bg-sidebar)] border-b border-[var(--border-color)] flex items-center justify-between px-6 z-10 relative">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="md:hidden text-slate-400 hover:text-white focus:outline-none"
+              className="md:hidden text-[var(--text-secondary)] hover:text-white focus:outline-none"
             >
               <Menu className="w-6 h-6" />
             </button>
-            <h2 className="text-lg font-bold text-white tracking-wide">
+            <h2 className="text-lg font-bold text-[var(--text-primary)]">
               {visibleGroups.flatMap(g => g.items).find((item) => pathname === item.path || pathname.startsWith(item.path + '/'))?.name || 'System Details'}
             </h2>
           </div>
@@ -942,9 +1019,9 @@ export default function AuthenticatedLayout({
               type="button"
               onClick={() => setLeaderboardOpen(true)}
               title="Santori Standings - View Team Leaderboard"
-              className="py-1.5 px-3 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/25 text-blue-400 transition-all focus:outline-none cursor-pointer flex items-center gap-2 text-xs font-bold shadow-sm"
+              className="py-1.5 px-3 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 text-emerald-400 transition-all focus:outline-none cursor-pointer flex items-center gap-2 text-xs font-bold shadow-sm"
             >
-              <Trophy className="w-4 h-4 text-blue-400" />
+              <Trophy className="w-4 h-4 text-emerald-400" />
               <span className="hidden sm:inline">Santori Standings</span>
             </button>
 
@@ -953,50 +1030,50 @@ export default function AuthenticatedLayout({
               <button
                 onClick={() => setAttendanceDropdownOpen(!attendanceDropdownOpen)}
                 title="Daily Attendance Status"
-                className="py-1.5 px-3 rounded-lg bg-slate-900/80 border border-slate-800 text-slate-400 hover:text-white transition-all relative focus:outline-none cursor-pointer flex items-center gap-2 text-xs font-semibold"
+                className="py-1.5 px-3 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-white transition-all relative focus:outline-none cursor-pointer flex items-center gap-2 text-xs font-semibold"
               >
-                <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <Clock className="w-4 h-4 text-emerald-500" />
                 <span className="hidden sm:inline">Attendance:</span>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider flex items-center gap-1 ${
                   !todayAttendance 
-                    ? 'bg-slate-800 text-slate-400 border-slate-700' 
+                    ? 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-color)]' 
                     : todayAttendance.checkOut 
                       ? 'bg-emerald-500/10 text-emerald-650 dark:text-emerald-400 border-emerald-500/20' 
-                      : 'bg-blue-500/10 text-blue-650 dark:text-blue-400 border-blue-500/20 animate-pulse'
+                      : 'bg-emerald-500/10 text-emerald-650 dark:text-emerald-400 border-emerald-500/20 animate-pulse'
                 }`}>
-                  {!todayAttendance ? '⚪ Pending' : todayAttendance.checkOut ? '✅ Completed' : '🟢 Active'}
+                  {!todayAttendance ? 'âšª Pending' : todayAttendance.checkOut ? 'âœ… Completed' : 'ðŸŸ¢ Active'}
                 </span>
               </button>
 
               {/* Attendance Dropdown Card */}
               {attendanceDropdownOpen && (
-                <div className="absolute right-0 mt-3 w-72 bg-[#111625] border border-slate-800 rounded-xl shadow-2xl z-50 p-4 space-y-3 animate-fade-in-down">
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                <div className="absolute right-0 mt-3 w-72 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-2xl z-50 p-4 space-y-3 animate-fade-in-down">
+                  <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-2.5">
                     <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                      <span className="text-xs font-bold text-slate-200">Daily Attendance</span>
+                      <Clock className="w-4 h-4 text-emerald-500" />
+                      <span className="text-xs font-bold text-[var(--text-primary)]">Daily Attendance</span>
                     </div>
                   </div>
 
                   {todayAttendance ? (
-                    <div className="text-[11px] text-slate-450 space-y-1 bg-slate-950/60 p-2 rounded-lg border border-slate-850">
+                    <div className="text-[11px] text-slate-450 space-y-1 bg-[var(--bg-main)] p-2 rounded-lg border border-[var(--border-color)]">
                       <div className="flex justify-between">
                         <span>Check In Time:</span>
-                        <span className="font-mono font-semibold text-slate-200">
+                        <span className="font-mono font-semibold text-[var(--text-primary)]">
                           {new Date(todayAttendance.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
                       {todayAttendance.checkOut ? (
                         <div className="flex justify-between">
                           <span>Check Out Time:</span>
-                          <span className="font-mono font-semibold text-slate-200">
+                          <span className="font-mono font-semibold text-[var(--text-primary)]">
                             {new Date(todayAttendance.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
                       ) : (
                         <div className="flex justify-between">
                           <span>Active duration:</span>
-                          <span className="font-mono font-semibold text-blue-600 dark:text-blue-400">
+                          <span className="font-mono font-semibold text-emerald-500">
                             Active Now
                           </span>
                         </div>
@@ -1016,7 +1093,7 @@ export default function AuthenticatedLayout({
                         setAttendanceDropdownOpen(false);
                       }}
                       disabled={attendanceActionLoading}
-                      className="w-full py-2 px-3 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs shadow-md shadow-blue-500/10 flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                      className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md shadow-blue-500/10 flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
                     >
                       {attendanceActionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserCheck className="w-3.5 h-3.5" />}
                       <span>Check In Now</span>
@@ -1029,14 +1106,14 @@ export default function AuthenticatedLayout({
                         setAttendanceDropdownOpen(false);
                       }}
                       disabled={attendanceActionLoading}
-                      className="w-full py-2 px-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg font-bold text-xs shadow-md flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                      className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
                     >
                       {attendanceActionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LogOut className="w-3.5 h-3.5" />}
                       <span>Check Out Now</span>
                     </button>
                   ) : (
                     <div className="text-[11px] text-center text-emerald-450 font-semibold py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
-                      ✓ Completed ({Math.floor((todayAttendance.workDurationMin || 0) / 60)}h {(todayAttendance.workDurationMin || 0) % 60}m)
+                      âœ“ Completed ({Math.floor((todayAttendance.workDurationMin || 0) / 60)}h {(todayAttendance.workDurationMin || 0) % 60}m)
                     </div>
                   )}
                 </div>
@@ -1047,10 +1124,10 @@ export default function AuthenticatedLayout({
             <button
               onClick={toggleTheme}
               title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              className="p-2 rounded-lg bg-slate-900/80 border border-slate-800 text-slate-400 hover:text-white transition-all relative focus:outline-none cursor-pointer flex items-center justify-center"
+              className="p-2 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-white transition-all relative focus:outline-none cursor-pointer flex items-center justify-center"
             >
               {theme === 'dark' ? (
-                <Sun className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <Sun className="w-5 h-5 text-emerald-500" />
               ) : (
                 <Moon className="w-5 h-5 text-indigo-500" />
               )}
@@ -1060,11 +1137,11 @@ export default function AuthenticatedLayout({
             <div className="relative" ref={notifRef}>
               <button
                 onClick={() => setNotifDropdownOpen(!notifDropdownOpen)}
-                className="p-2 rounded-lg bg-slate-900/80 border border-slate-800 text-slate-400 hover:text-white transition-all relative focus:outline-none"
+                className="p-2 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-white transition-all relative focus:outline-none"
               >
                 <Bell className="w-5 h-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white font-extrabold text-[9px] flex items-center justify-center shadow-lg border border-slate-900 animate-bounce">
+                  <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white font-extrabold text-[9px] flex items-center justify-center shadow-lg border border-[var(--border-color)] animate-bounce">
                     {unreadCount}
                   </span>
                 )}
@@ -1072,16 +1149,16 @@ export default function AuthenticatedLayout({
 
               {/* Dropdown Menu */}
               {notifDropdownOpen && (
-                <div className="absolute right-0 mt-3 w-80 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl z-50 overflow-hidden animate-fade-in-down">
-                  <div className="p-4 border-b border-slate-800 bg-slate-950/40 space-y-2">
+                <div className="absolute right-0 mt-3 w-80 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-2xl z-50 overflow-hidden animate-fade-in-down">
+                  <div className="p-4 border-b border-[var(--border-color)] bg-[var(--bg-main)]/60 space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-white tracking-wider uppercase flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> News & Announcements
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-500" /> News & Announcements
                       </span>
                       {unreadCount > 0 && (
                         <button
                           onClick={handleMarkAllRead}
-                          className="text-[10px] text-blue-600 dark:text-blue-400 hover:underline font-semibold cursor-pointer"
+                          className="text-[10px] text-emerald-500 hover:underline font-semibold cursor-pointer"
                         >
                           Mark all as read
                         </button>
@@ -1094,16 +1171,16 @@ export default function AuthenticatedLayout({
                           setNotifDropdownOpen(false);
                           setBroadcastModalOpen(true);
                         }}
-                        className="w-full py-1.5 px-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md"
+                        className="w-full py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md"
                       >
                         <Sparkles className="w-3.5 h-3.5" />
-                        <span>📢 Broadcast News to Employees</span>
+                        <span>ðŸ“¢ Broadcast News to Employees</span>
                       </button>
                     )}
                   </div>
                   <div className="max-h-64 overflow-y-auto divide-y divide-slate-800/80">
                     {notifications.length === 0 ? (
-                      <div className="p-6 text-center text-slate-500 text-xs">
+                      <div className="p-6 text-center text-[var(--text-muted)] text-xs">
                         No new notifications.
                       </div>
                     ) : (
@@ -1111,8 +1188,8 @@ export default function AuthenticatedLayout({
                         <div
                           key={notif.id}
                           onClick={() => handleNotifClick(notif)}
-                          className={`p-4 hover:bg-slate-800/40 dark:hover:bg-slate-800/20 active:bg-slate-700/30 dark:active:bg-slate-800/40 cursor-pointer transition-colors ${
-                            !notif.isRead ? 'bg-blue-500/[0.04] dark:bg-blue-500/[0.02]' : ''
+                          className={`p-4 hover:bg-[var(--bg-card)] dark:hover:bg-[var(--bg-card)] active:bg-slate-700/30 dark:active:bg-[var(--bg-card)] cursor-pointer transition-colors ${
+                            !notif.isRead ? 'bg-emerald-500/[0.04] dark:bg-emerald-500/[0.02]' : ''
                           }`}
                         >
                           <div className="flex items-start gap-2.5">
@@ -1121,17 +1198,17 @@ export default function AuthenticatedLayout({
                               {notif.type === 'sale_done' && <TrendingUp className="w-4 h-4 text-emerald-400" />}
                               {notif.type === 'unreachable_lead' && <AlertTriangle className="w-4 h-4 text-red-400" />}
                               {['lead_assigned', 'order_submitted', 'order_verified', 'order_rejected'].includes(notif.type) && (
-                                <ChevronRight className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                <ChevronRight className="w-4 h-4 text-emerald-500" />
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className={`text-xs text-white ${!notif.isRead ? 'font-bold' : 'font-medium'}`}>
                                 {notif.title}
                               </p>
-                              <p className="text-[10px] text-slate-400 mt-0.5 leading-normal">
+                              <p className="text-[10px] text-[var(--text-secondary)] mt-0.5 leading-normal">
                                 {notif.body}
                               </p>
-                              <p className="text-[9px] text-slate-500 mt-1">
+                              <p className="text-[9px] text-[var(--text-muted)] mt-1">
                                 {new Date(notif.createdAt).toLocaleTimeString('en-IN', {
                                   hour: '2-digit',
                                   minute: '2-digit',
@@ -1150,32 +1227,32 @@ export default function AuthenticatedLayout({
             {/* Profile Brief Info */}
             <button
               onClick={handleOpenProfile}
-              className="hidden sm:flex items-center gap-3 px-3 py-1.5 bg-slate-900/40 border border-slate-800/50 hover:border-slate-700 rounded-lg text-left cursor-pointer transition-all focus:outline-none"
+              className="hidden sm:flex items-center gap-3 px-3 py-1.5 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color-hover)] rounded-lg text-left cursor-pointer transition-all focus:outline-none"
             >
               {user.photograph ? (
                 <img
                   src={`/api/v1/users/${user.id}/photograph?t=${Date.now()}`}
                   alt={user.name}
-                  className="w-8 h-8 rounded-full object-cover border border-slate-850"
+                  className="w-8 h-8 rounded-full object-cover border border-[var(--border-color)]"
                   onError={(e) => {
                     (e.target as HTMLElement).style.display = 'none';
                   }}
                 />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700/80 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+                <div className="w-8 h-8 rounded-full bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-center text-emerald-500 shrink-0">
                   <User className="w-4 h-4" />
                 </div>
               )}
               <div className="text-left">
                 <p className="text-xs font-bold text-white leading-none">{user.name}</p>
-                <p className="text-[9px] text-slate-400 mt-1 leading-none capitalize">{user.role.includes(':') ? user.role.split(':')[1] : user.role}</p>
+                <p className="text-[9px] text-[var(--text-secondary)] mt-1 leading-none capitalize">{user.role.includes(':') ? user.role.split(':')[1] : user.role}</p>
               </div>
             </button>
           </div>
         </header>
 
         {/* Page Content Workspace Area */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-[#090b11]">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-[var(--bg-main)]">
           {children}
         </main>
       </div>
@@ -1183,10 +1260,10 @@ export default function AuthenticatedLayout({
       {/* Profile Modal */}
       {profileModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="w-full max-w-lg bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
-            <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+          <div className="w-full max-w-lg bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div className="p-6 border-b border-[var(--border-color)] transparent flex justify-between items-center">
               <h3 className="text-sm font-bold uppercase tracking-wider text-white">My Profile Settings</h3>
-              <button onClick={closeProfileModal} className="text-slate-400 hover:text-white cursor-pointer">
+              <button onClick={closeProfileModal} className="text-[var(--text-secondary)] hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1200,8 +1277,8 @@ export default function AuthenticatedLayout({
                 )}
 
                 {/* Profile Picture Upload Section */}
-                <div className="flex items-center gap-4 p-4 bg-slate-900/20 border border-slate-850 rounded-xl">
-                  <div className="relative w-16 h-16 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center overflow-hidden">
+                <div className="flex items-center gap-4 p-4 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl">
+                  <div className="relative w-16 h-16 rounded-xl bg-[var(--bg-main)] border border-[var(--border-color)] flex items-center justify-center overflow-hidden">
                     {editPhotoPreviewUrl || editPhotoPath ? (
                       <img
                         src={editPhotoPreviewUrl || `/api/v1/users/${user.id}/photograph?t=${Date.now()}`}
@@ -1209,18 +1286,18 @@ export default function AuthenticatedLayout({
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full bg-slate-900 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                      <div className="w-full h-full bg-[var(--bg-card)] flex items-center justify-center text-emerald-500">
                         <User className="w-8 h-8" />
                       </div>
                     )}
                     {uploadingEditPhoto && (
                       <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
-                        <Loader2 className="w-4 h-4 text-blue-500 dark:text-blue-400 animate-spin" />
+                        <Loader2 className="w-4 h-4 text-emerald-500 animate-spin" />
                       </div>
                     )}
                   </div>
                   <div className="flex-1 space-y-1">
-                    <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px]">Profile Photograph</span>
+                    <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px]">Profile Photograph</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -1230,9 +1307,9 @@ export default function AuthenticatedLayout({
                     />
                     <label
                       htmlFor="layout-edit-photo-input"
-                      className="py-1.5 px-3 bg-slate-900 border border-slate-850 hover:border-slate-800 text-slate-300 rounded-lg text-xs font-semibold flex items-center gap-1.5 w-fit cursor-pointer transition-all"
+                      className="py-1.5 px-3 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color-hover)] text-[var(--text-primary)] rounded-lg text-xs font-semibold flex items-center gap-1.5 w-fit cursor-pointer transition-all"
                     >
-                      <Upload className="w-3.5 h-3.5 text-slate-400" />
+                      <Upload className="w-3.5 h-3.5 text-[var(--text-secondary)]" />
                       <span>Change photo</span>
                     </label>
                   </div>
@@ -1242,93 +1319,93 @@ export default function AuthenticatedLayout({
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4 text-xs">
                     <div>
-                      <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Full Name</span>
+                      <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1">Full Name</span>
                       {user.role === 'admin' || user.role.startsWith('admin:') ? (
                         <input
                           type="text"
                           required
                           value={editName}
                           onChange={(e) => setEditName(e.target.value)}
-                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
+                          className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
                         />
                       ) : (
-                        <span className="text-white text-xs font-semibold block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg opacity-70 truncate" title={user.name}>
+                        <span className="text-white text-xs font-semibold block bg-[var(--bg-main)] border border-[var(--border-color)] px-3 py-2 rounded-lg opacity-70 truncate" title={user.name}>
                           {user.name}
                         </span>
                       )}
                     </div>
                     <div>
-                      <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Employee ID</span>
+                      <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1">Employee ID</span>
                       {user.role === 'admin' || user.role.startsWith('admin:') ? (
                         <input
                           type="text"
                           required
                           value={editEmployeeId}
                           onChange={(e) => setEditEmployeeId(e.target.value)}
-                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none font-mono"
+                          className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none font-mono"
                         />
                       ) : (
-                        <span className="text-white text-xs font-mono block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg opacity-70 truncate" title={user.employeeId || 'Not Set'}>
+                        <span className="text-white text-xs font-mono block bg-[var(--bg-main)] border border-[var(--border-color)] px-3 py-2 rounded-lg opacity-70 truncate" title={user.employeeId || 'Not Set'}>
                           {user.employeeId || 'Not Set'}
                         </span>
                       )}
                     </div>
                     <div>
-                      <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Email Address</span>
+                      <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1">Email Address</span>
                       {user.role === 'admin' || user.role.startsWith('admin:') ? (
                         <input
                           type="email"
                           required
                           value={editEmail}
                           onChange={(e) => setEditEmail(e.target.value)}
-                          className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none font-mono"
+                          className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none font-mono"
                         />
                       ) : (
-                        <span className="text-slate-300 text-xs font-mono block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg opacity-70 truncate" title={user.email}>
+                        <span className="text-[var(--text-primary)] text-xs font-mono block bg-[var(--bg-main)] border border-[var(--border-color)] px-3 py-2 rounded-lg opacity-70 truncate" title={user.email}>
                           {user.email}
                         </span>
                       )}
                     </div>
                     <div>
-                      <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">System Role</span>
-                      <span className="text-slate-355 text-xs block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg capitalize opacity-70 truncate" title={user.role.includes(':') ? user.role.split(':')[1] : (roleLabels[user.role]?.label || user.role)}>
+                      <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1">System Role</span>
+                      <span className="text-slate-355 text-xs block bg-[var(--bg-main)] border border-[var(--border-color)] px-3 py-2 rounded-lg capitalize opacity-70 truncate" title={user.role.includes(':') ? user.role.split(':')[1] : (roleLabels[user.role]?.label || user.role)}>
                         {user.role.includes(':') ? user.role.split(':')[1] : (roleLabels[user.role]?.label || user.role)}
                       </span>
                     </div>
                     <div>
-                      <span className="block text-slate-500 font-semibold uppercase tracking-wider text-[9px] mb-1">Years in Company</span>
-                      <span className="text-slate-355 text-xs block bg-slate-950/30 border border-slate-900 px-3 py-2 rounded-lg opacity-70 truncate" title={calculateYearsInCompany(user.joiningDate)}>
+                      <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1">Years in Company</span>
+                      <span className="text-slate-355 text-xs block bg-[var(--bg-main)] border border-[var(--border-color)] px-3 py-2 rounded-lg opacity-70 truncate" title={calculateYearsInCompany(user.joiningDate)}>
                         {calculateYearsInCompany(user.joiningDate)}
                       </span>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Contact Phone</label>
+                    <label className="block text-[10px] font-bold uppercase text-[var(--text-secondary)] mb-1">Contact Phone</label>
                     <input
                       type="text"
                       required
                       value={editPhone}
                       onChange={(e) => setEditPhone(e.target.value)}
                       placeholder="Update mobile number"
-                      className="block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
+                      className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-blue-500 focus:outline-none"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="p-6 border-t border-slate-800 bg-slate-900/10 flex justify-end gap-3">
+              <div className="p-6 border-t border-[var(--border-color)] transparent flex justify-end gap-3">
                 <button
                   type="button"
                   onClick={closeProfileModal}
-                  className="py-2 px-4 bg-slate-900 border border-slate-800 text-slate-400 rounded-lg font-bold text-xs cursor-pointer"
+                  className="py-2 px-4 bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] rounded-lg font-bold text-xs cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={updatingProfile}
-                  className="py-2 px-5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer"
+                  className="py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer"
                 >
                   {updatingProfile ? (
                     <>
@@ -1348,18 +1425,18 @@ export default function AuthenticatedLayout({
       {/* Personalized Login Today Alerts Modal */}
       {showTodayAlertModal && todayAlerts.length > 0 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
-          <div className="w-full max-w-lg bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
-            <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+          <div className="w-full max-w-lg bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div className="p-6 border-b border-[var(--border-color)] transparent flex justify-between items-center">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500">
                   <Flame className="w-4.5 h-4.5" />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold uppercase tracking-wider text-white">Your Tasks Scheduled Today</h3>
-                  <p className="text-[10px] text-slate-400">You have {todayAlerts.length} personalized action item(s) today.</p>
+                  <p className="text-[10px] text-[var(--text-secondary)]">You have {todayAlerts.length} personalized action item(s) today.</p>
                 </div>
               </div>
-              <button onClick={() => setShowTodayAlertModal(false)} className="text-slate-400 hover:text-white cursor-pointer">
+              <button onClick={() => setShowTodayAlertModal(false)} className="text-[var(--text-secondary)] hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1368,19 +1445,19 @@ export default function AuthenticatedLayout({
               {todayAlerts.map((alert) => (
                 <div
                   key={alert.id}
-                  className="p-3 bg-slate-900/30 border border-slate-800 rounded-xl flex items-start gap-3 hover:border-slate-700 transition-colors"
+                  className="p-3 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl flex items-start gap-3 hover:border-[var(--border-color)] transition-colors"
                 >
-                  <div className="text-xs font-mono font-bold text-blue-600 dark:text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-1 rounded shrink-0">
+                  <div className="text-xs font-mono font-bold text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded shrink-0">
                     {alert.time}
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-xs font-bold text-white leading-snug">{alert.title}</h4>
-                    <p className="text-[10px] text-slate-400 mt-1 truncate">{alert.detail}</p>
+                    <p className="text-[10px] text-[var(--text-secondary)] mt-1 truncate">{alert.detail}</p>
                   </div>
                   <Link
                     href={`/leads/${alert.leadId}`}
                     onClick={() => setShowTodayAlertModal(false)}
-                    className="text-[10px] text-blue-600 dark:text-blue-400 hover:text-blue-600 dark:text-blue-400 font-bold self-center px-2 py-1 rounded hover:bg-slate-900 transition-colors"
+                    className="text-[10px] text-emerald-500 hover:text-emerald-500 font-bold self-center px-2 py-1 rounded hover:bg-[var(--bg-card)] transition-colors"
                   >
                     View Lead
                   </Link>
@@ -1388,11 +1465,11 @@ export default function AuthenticatedLayout({
               ))}
             </div>
 
-            <div className="p-6 border-t border-slate-800 bg-slate-900/10 flex justify-end">
+            <div className="p-6 border-t border-[var(--border-color)] transparent flex justify-end">
               <button
                 type="button"
                 onClick={() => setShowTodayAlertModal(false)}
-                className="py-2 px-5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white rounded-lg font-bold text-xs shadow-md cursor-pointer"
+                className="py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md cursor-pointer"
               >
                 Acknowledge & Continue
               </button>
@@ -1406,12 +1483,12 @@ export default function AuthenticatedLayout({
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className="p-4 rounded-xl shadow-2xl border pointer-events-auto flex items-start gap-3 animate-slide-in-right transition-all bg-[#0f1527]/95 border-slate-800/80 backdrop-blur-md"
+            className="p-4 rounded-xl shadow-2xl border pointer-events-auto flex items-start gap-3 animate-slide-in-right transition-all bg-[var(--bg-card)] border-[var(--border-color)] backdrop-blur-md"
           >
             <div className="shrink-0 mt-0.5">
               {toast.type === 'success' && <CheckCircle className="w-5 h-5 text-emerald-400" />}
               {toast.type === 'error' && <XCircle className="w-5 h-5 text-rose-400" />}
-              {toast.type === 'info' && <Info className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
+              {toast.type === 'info' && <Info className="w-5 h-5 text-emerald-500" />}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-white leading-normal">
@@ -1420,7 +1497,7 @@ export default function AuthenticatedLayout({
             </div>
             <button
               onClick={() => setToasts((prev) => prev.filter((t) => t.id !== toast.id))}
-              className="shrink-0 text-slate-400 hover:text-white transition-colors cursor-pointer"
+              className="shrink-0 text-[var(--text-secondary)] hover:text-white transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -1431,21 +1508,21 @@ export default function AuthenticatedLayout({
       {/* Custom Confirm Modal */}
       {confirmModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="w-full max-w-md bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
-            <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+          <div className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div className="p-6 border-b border-[var(--border-color)] transparent flex justify-between items-center">
               <h3 className="text-sm font-bold uppercase tracking-wider text-white">Confirm Action</h3>
               <button
                 onClick={() => {
                   confirmModal.onCancel();
                   setConfirmModal(null);
                 }}
-                className="text-slate-400 hover:text-white cursor-pointer"
+                className="text-[var(--text-secondary)] hover:text-white cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6 space-y-6">
-              <p className="text-sm text-slate-300 leading-relaxed">
+              <p className="text-sm text-[var(--text-primary)] leading-relaxed">
                 {confirmModal.message}
               </p>
               <div className="flex justify-end gap-3">
@@ -1455,7 +1532,7 @@ export default function AuthenticatedLayout({
                     confirmModal.onCancel();
                     setConfirmModal(null);
                   }}
-                  className="px-4 py-2 bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-lg text-slate-300 hover:text-white transition-all font-semibold text-xs cursor-pointer"
+                  className="px-4 py-2 bg-[var(--bg-card)] hover:bg-[var(--bg-main)] border border-[var(--border-color)] hover:border-[var(--border-color-hover)] rounded-lg text-[var(--text-primary)] hover:text-white transition-all font-semibold text-xs cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1478,25 +1555,25 @@ export default function AuthenticatedLayout({
       {/* Logout Confirmation Modal */}
       {showLogoutConfirm && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="w-full max-w-sm bg-[#111625] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
-            <div className="p-5 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+          <div className="w-full max-w-sm bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div className="p-5 border-b border-[var(--border-color)] transparent flex justify-between items-center">
               <h3 className="text-xs font-bold uppercase tracking-wider text-white">Logout Confirmation</h3>
               <button
                 onClick={() => setShowLogoutConfirm(false)}
-                className="text-slate-400 hover:text-white cursor-pointer"
+                className="text-[var(--text-secondary)] hover:text-white cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
             <div className="p-5 space-y-5">
-              <p className="text-xs text-slate-300 leading-relaxed font-medium">
+              <p className="text-xs text-[var(--text-primary)] leading-relaxed font-medium">
                 Are you sure you want to log out of the company portal?
               </p>
               <div className="flex justify-end gap-2.5">
                 <button
                   type="button"
                   onClick={() => setShowLogoutConfirm(false)}
-                  className="px-4 py-2 bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-lg text-slate-300 hover:text-white transition-all font-semibold text-[11px] cursor-pointer"
+                  className="px-4 py-2 bg-[var(--bg-card)] hover:bg-[var(--bg-main)] border border-[var(--border-color)] hover:border-[var(--border-color-hover)] rounded-lg text-[var(--text-primary)] hover:text-white transition-all font-semibold text-[11px] cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1522,15 +1599,15 @@ export default function AuthenticatedLayout({
       {/* Broadcast News Modal */}
       {broadcastModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in font-sans">
-          <div className="bg-[#111625] border border-slate-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl p-6 space-y-4">
-            <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl w-full max-w-md overflow-hidden shadow-2xl p-6 space-y-4">
+            <div className="flex justify-between items-center border-b border-[var(--border-color)] pb-3">
               <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <Sparkles className="w-4 h-4 text-emerald-500" />
                 <span>Broadcast News to Employees</span>
               </h3>
               <button
                 onClick={() => setBroadcastModalOpen(false)}
-                className="text-slate-400 hover:text-white transition-colors cursor-pointer"
+                className="text-[var(--text-secondary)] hover:text-white transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1538,7 +1615,7 @@ export default function AuthenticatedLayout({
 
             <form onSubmit={handleBroadcastNews} className="space-y-4">
               <div>
-                <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider block mb-1">
+                <label className="text-[11px] font-bold text-[var(--text-primary)] uppercase tracking-wider block mb-1">
                   News Title / Headline
                 </label>
                 <input
@@ -1547,12 +1624,12 @@ export default function AuthenticatedLayout({
                   placeholder="e.g. Office Holiday Notice, Policy Update..."
                   value={broadcastTitle}
                   onChange={(e) => setBroadcastTitle(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-white text-xs focus:outline-none"
+                  className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-[var(--accent-color)] rounded-lg px-3 py-2 text-white text-xs focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider block mb-1">
+                <label className="text-[11px] font-bold text-[var(--text-primary)] uppercase tracking-wider block mb-1">
                   Announcement Message
                 </label>
                 <textarea
@@ -1561,22 +1638,22 @@ export default function AuthenticatedLayout({
                   placeholder="Enter complete news details to notify all active employees..."
                   value={broadcastMessage}
                   onChange={(e) => setBroadcastMessage(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-white text-xs focus:outline-none resize-none"
+                  className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-[var(--accent-color)] rounded-lg px-3 py-2 text-white text-xs focus:outline-none resize-none"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+              <div className="flex justify-end gap-2 pt-2 border-t border-[var(--border-color)]">
                 <button
                   type="button"
                   onClick={() => setBroadcastModalOpen(false)}
-                  className="py-2 px-4 bg-slate-900 border border-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-bold transition-all cursor-pointer"
+                  className="py-2 px-4 bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] rounded-lg text-xs font-bold transition-all cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={broadcasting}
-                  className="py-2 px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                  className="py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
                 >
                   {broadcasting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
                   <span>Send to All Employees</span>
