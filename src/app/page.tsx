@@ -1,4 +1,4 @@
-﻿import Link from 'next/link';
+import Link from 'next/link';
 import Image from 'next/image';
 import { cookies } from 'next/headers';
 import { ArrowRight, Sparkles } from 'lucide-react';
@@ -14,12 +14,12 @@ export default async function LandingPage() {
 
   return (
     <div className="h-screen text-zinc-100 font-sans selection:bg-blue-600 selection:text-white overflow-hidden relative flex flex-col justify-between">
-      {/* Background Image with Dark Overlay */}
+      {/* Background Image with Premium Dark Overlay */}
       <div 
-        className="absolute inset-0 bg-cover bg-center -z-20"
-        style={{ backgroundImage: 'url("/solar_background.png")' }}
+        className="absolute inset-0 bg-cover bg-center -z-20 scale-105 transition-transform duration-1000"
+        style={{ backgroundImage: 'url("/23424-1.jpg")' }}
       />
-      <div className="absolute inset-0 bg-[var(--bg-main)] dark:bg-[var(--bg-main)] backdrop-blur-[1px] -z-10" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/60 to-[#0D1117]/95 backdrop-blur-[2px] -z-10" />
 
       {/* Header/Navbar */}
       <header className="border-b border-white/10 dark:border-zinc-800/40 bg-black/15 dark:bg-zinc-950/20 backdrop-blur-md sticky top-0 z-50">

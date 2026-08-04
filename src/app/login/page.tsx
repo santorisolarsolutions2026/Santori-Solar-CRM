@@ -223,8 +223,11 @@ export default function LoginPage() {
     <div className="min-h-screen grid lg:grid-cols-2 selection:bg-emerald-600 selection:text-white bg-white dark:bg-[var(--bg-main)]">
       {/* LEFT PANEL - Brand / Visual */}
       <div className="hidden lg:flex flex-col justify-center bg-[var(--bg-sidebar)] relative overflow-hidden p-12">
-        <div className="absolute inset-0 bg-[url('/solar_background.png')] bg-cover bg-center opacity-20 mix-blend-overlay" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#111318] via-[#111318]/80 to-transparent" />
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-45 mix-blend-luminosity scale-105 transition-transform duration-1000"
+          style={{ backgroundImage: 'url("/Sun-being-reflected-over-solar-panels.jpg")' }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0D1117] via-[#111318]/80 to-[#0D1117]/60" />
         
         <div className="relative z-10 max-w-lg mx-auto w-full">
           <div className="mb-8">
