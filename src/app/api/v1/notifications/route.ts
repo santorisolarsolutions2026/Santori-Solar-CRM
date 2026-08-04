@@ -9,14 +9,31 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
+    // Automatically purge notifications older than 48 hours
+    const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
+    await prisma.notification.deleteMany({
+      where: {
+        createdAt: {
+          lt: fortyEightHoursAgo,
+        },
+      },
+    });
+
     const notifications = await prisma.notification.findMany({
-      where: { userId: userPayload.id },
+      where: {
+        userId: userPayload.id,
+        createdAt: { gte: fortyEightHoursAgo },
+      },
       orderBy: { createdAt: 'desc' },
       take: 50,
     });
 
     const unreadCount = await prisma.notification.count({
-      where: { userId: userPayload.id, isRead: false },
+      where: {
+        userId: userPayload.id,
+        isRead: false,
+        createdAt: { gte: fortyEightHoursAgo },
+      },
     });
 
     return NextResponse.json({
@@ -41,6 +58,16 @@ export async function POST(req: Request) {
     if (!userPayload) {
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
+
+    // Automatically purge notifications older than 48 hours
+    const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
+    await prisma.notification.deleteMany({
+      where: {
+        createdAt: {
+          lt: fortyEightHoursAgo,
+        },
+      },
+    });
 
     const body = await req.json();
     const { action, title, message, notificationId } = body;
@@ -86,7 +113,11 @@ export async function POST(req: Request) {
     } else {
       // Mark all as read
       await prisma.notification.updateMany({
-        where: { userId: userPayload.id, isRead: false },
+        where: {
+          userId: userPayload.id,
+          isRead: false,
+          createdAt: { gte: fortyEightHoursAgo },
+        },
         data: { isRead: true },
       });
     }

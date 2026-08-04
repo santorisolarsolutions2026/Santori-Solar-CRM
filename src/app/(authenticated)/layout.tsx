@@ -1202,7 +1202,7 @@ export default function AuthenticatedLayout({
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className={`text-xs text-white ${!notif.isRead ? 'font-bold' : 'font-medium'}`}>
+                              <p className={`text-xs text-[var(--text-primary)] ${!notif.isRead ? 'font-bold' : 'font-medium'}`}>
                                 {notif.title}
                               </p>
                               <p className="text-[10px] text-[var(--text-secondary)] mt-0.5 leading-normal">
