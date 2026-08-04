@@ -503,105 +503,160 @@ export default function ReportsPage() {
 
       {/* Employee Audit Dashboard */}
       <div className="space-y-6">
-          {/* Filter Bar with Date Inputs */}
-          <div className="flex flex-col gap-4 bg-[#111625] border border-slate-800 rounded-xl p-5 shadow-md">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          {/* Employee Audit Filter Bar */}
+          <div className="bg-[#111625] border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5">
+            {/* Header & Clear Button */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
               <div>
-                <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                  <Filter className="w-4 h-4 text-blue-400" />
-                  <span>Employee Audit filters</span>
-                </h2>
-                <p className="text-xs text-slate-400 mt-0.5">Select a date range or quick preset to filter staff contributions across all departments.</p>
-              </div>
-              
-              <div className="flex flex-wrap items-center gap-3 text-xs">
-                {/* Designation Filter */}
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Designation:</span>
-                  <div className="w-48">
-                    <CustomSelect
-                      options={[
-                        { value: 'all', label: 'All Designations' },
-                        ...(auditData?.designations || []).map((des) => ({
-                          value: des,
-                          label: des,
-                        })),
-                      ]}
-                      value={filterDesignation}
-                      onChange={(val) => setFilterDesignation(val)}
-                      placeholder="All Designations"
-                    />
+                <h2 className="text-base font-bold text-white tracking-wide uppercase flex items-center gap-2">
+                  <div className="p-1.5 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-400">
+                    <Filter className="w-4 h-4" />
                   </div>
-                </div>
+                  <span>Employee Audit Filters</span>
+                </h2>
+                <p className="text-xs text-slate-400 mt-1">
+                  Filter performance metrics and activity logs by designation, date range, or quick presets.
+                </p>
+              </div>
 
+              {(filterStartDate || filterEndDate || filterDesignation !== 'all') && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilterStartDate('');
+                    setFilterEndDate('');
+                    setFilterStartTime('00:00');
+                    setFilterEndTime('23:59');
+                    setFilterDesignation('all');
+                  }}
+                  className="px-3.5 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>Reset All Filters</span>
+                </button>
+              )}
+            </div>
+
+            {/* Structured Controls Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Designation Filter */}
+              <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5 flex flex-col gap-1.5 shadow-inner">
+                <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                  <span>Designation Role</span>
+                </label>
+                <div className="w-full">
+                  <CustomSelect
+                    options={[
+                      { value: 'all', label: 'All Designations' },
+                      ...(auditData?.designations || []).map((des) => ({
+                        value: des,
+                        label: des,
+                      })),
+                    ]}
+                    value={filterDesignation}
+                    onChange={(val) => setFilterDesignation(val)}
+                    placeholder="All Designations"
+                  />
+                </div>
+              </div>
+
+              {/* Start Date & Time */}
+              <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5 flex flex-col gap-1.5 shadow-inner">
+                <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                  <span>Start Date & Time</span>
+                </label>
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-500 font-semibold">Start:</span>
                   <input
                     type="date"
                     value={filterStartDate}
                     onChange={(e) => setFilterStartDate(e.target.value)}
-                    className="bg-slate-950 border border-slate-800 text-slate-300 px-3 py-1.5 rounded-lg focus:ring-blue-500 focus:outline-none cursor-pointer"
+                    className="flex-1 bg-slate-900 border border-slate-800 hover:border-slate-700 text-white px-3 py-2 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none cursor-pointer"
                   />
                   <input
                     type="time"
                     value={filterStartTime}
                     onChange={(e) => setFilterStartTime(e.target.value)}
-                    className="bg-slate-950 border border-slate-800 text-slate-300 px-2 py-1.5 rounded-lg focus:ring-blue-500 focus:outline-none cursor-pointer font-mono"
+                    className="w-24 bg-slate-900 border border-slate-800 hover:border-slate-700 text-white px-2.5 py-2 rounded-lg text-xs font-mono focus:ring-1 focus:ring-blue-500 focus:outline-none cursor-pointer"
                   />
                 </div>
+              </div>
+
+              {/* End Date & Time */}
+              <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5 flex flex-col gap-1.5 shadow-inner">
+                <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+                  <span>End Date & Time</span>
+                </label>
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-500 font-semibold">End:</span>
                   <input
                     type="date"
                     value={filterEndDate}
                     onChange={(e) => setFilterEndDate(e.target.value)}
-                    className="bg-slate-950 border border-slate-800 text-slate-300 px-3 py-1.5 rounded-lg focus:ring-blue-500 focus:outline-none cursor-pointer"
+                    className="flex-1 bg-slate-900 border border-slate-800 hover:border-slate-700 text-white px-3 py-2 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none cursor-pointer"
                   />
                   <input
                     type="time"
                     value={filterEndTime}
                     onChange={(e) => setFilterEndTime(e.target.value)}
-                    className="bg-slate-950 border border-slate-800 text-slate-300 px-2 py-1.5 rounded-lg focus:ring-blue-500 focus:outline-none cursor-pointer font-mono"
+                    className="w-24 bg-slate-900 border border-slate-800 hover:border-slate-700 text-white px-2.5 py-2 rounded-lg text-xs font-mono focus:ring-1 focus:ring-blue-500 focus:outline-none cursor-pointer"
                   />
                 </div>
-                {(filterStartDate || filterEndDate || filterDesignation !== 'all') && (
-                  <button
-                    onClick={() => {
-                      setFilterStartDate('');
-                      setFilterEndDate('');
-                      setFilterStartTime('00:00');
-                      setFilterEndTime('23:59');
-                      setFilterDesignation('all');
-                    }}
-                    className="py-1.5 px-3 bg-slate-900 border border-slate-800 text-slate-400 hover:text-white rounded-lg transition-colors cursor-pointer"
-                  >
-                    Clear Filters
-                  </button>
-                )}
               </div>
             </div>
 
             {/* Quick Date Presets Row */}
-            <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-800/80">
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mr-1 flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5 text-blue-400" /> Quick Presets:
-              </span>
-              {[
-                { label: 'Today', key: 'today' },
-                { label: 'Yesterday', key: 'yesterday' },
-                { label: 'This Week', key: 'week' },
-                { label: 'This Month', key: 'month' },
-                { label: 'All Time', key: 'all' },
-              ].map((p) => (
-                <button
-                  key={p.key}
-                  type="button"
-                  onClick={() => setPresetRange(p.key as any)}
-                  className="px-3 py-1 bg-slate-900/90 hover:bg-slate-850 border border-slate-800 hover:border-blue-500/40 text-slate-300 hover:text-white rounded-lg transition-all text-xs font-medium cursor-pointer flex items-center gap-1 shadow-sm"
-                >
-                  {p.label}
-                </button>
-              ))}
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-800/60">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1.5 mr-1">
+                  <Clock className="w-3.5 h-3.5 text-blue-400" /> Quick Ranges:
+                </span>
+                {[
+                  { label: 'Today', key: 'today' },
+                  { label: 'Yesterday', key: 'yesterday' },
+                  { label: 'This Week', key: 'week' },
+                  { label: 'This Month', key: 'month' },
+                  { label: 'All Time', key: 'all' },
+                ].map((p) => {
+                  const now = new Date();
+                  const pad = (n: number) => (n < 10 ? '0' + n : n);
+                  const formatYYYYMMDD = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+                  const todayStr = formatYYYYMMDD(now);
+
+                  let isSelected = false;
+                  if (p.key === 'all' && !filterStartDate && !filterEndDate) isSelected = true;
+                  else if (p.key === 'today' && filterStartDate === todayStr && filterEndDate === todayStr) isSelected = true;
+                  else if (p.key === 'yesterday') {
+                    const yest = new Date(now);
+                    yest.setDate(yest.getDate() - 1);
+                    const yestStr = formatYYYYMMDD(yest);
+                    if (filterStartDate === yestStr && filterEndDate === yestStr) isSelected = true;
+                  } else if (p.key === 'week') {
+                    const weekAgo = new Date(now);
+                    weekAgo.setDate(weekAgo.getDate() - 7);
+                    if (filterStartDate === formatYYYYMMDD(weekAgo) && filterEndDate === todayStr) isSelected = true;
+                  } else if (p.key === 'month') {
+                    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                    if (filterStartDate === formatYYYYMMDD(monthStart) && filterEndDate === todayStr) isSelected = true;
+                  }
+
+                  return (
+                    <button
+                      key={p.key}
+                      type="button"
+                      onClick={() => setPresetRange(p.key as any)}
+                      className={`px-3.5 py-1.5 rounded-xl transition-all text-xs font-semibold cursor-pointer flex items-center gap-1.5 shadow-sm border ${
+                        isSelected
+                          ? 'bg-blue-600 border-blue-500 text-white font-extrabold shadow-blue-500/20'
+                          : 'bg-slate-900/90 hover:bg-slate-850 border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white'
+                      }`}
+                    >
+                      <span>{p.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
