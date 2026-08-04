@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -2097,21 +2097,31 @@ export default function LeadDetailPage({
                       <div className="flex justify-end mb-4">
                         <button
                           type="button"
-                          onClick={async () => {
-                            if (!confirm('Are you sure you want to wipe tracking journey history for this lead?')) return;
-                            try {
-                              const res = await fetch(`/api/v1/leads/${leadId}/wipe-tracking`, { method: 'POST' });
-                              const data = await res.json();
-                              alert(data.message);
-                              if (data.success) {
-                                fetchLeadDetails();
+                          onClick={() => {
+                            const doWipe = async () => {
+                              try {
+                                const res = await fetch(`/api/v1/leads/${leadId}/wipe-tracking`, { method: 'POST' });
+                                const data = await res.json();
+                                alert(data.message);
+                                if (data.success) {
+                                  fetchLeadDetails();
+                                }
+                              } catch (err) {
+                                console.error(err);
+                                alert('Failed to clear lead tracking journey history.');
                               }
-                            } catch (err) {
-                              console.error(err);
-                              alert('Failed to clear lead tracking journey history.');
+                            };
+
+                            if (typeof window !== 'undefined' && (window as any).showConfirm) {
+                              (window as any).showConfirm(
+                                'Are you sure you want to wipe tracking journey history for this lead?',
+                                doWipe
+                              );
+                            } else if (confirm('Are you sure you want to wipe tracking journey history for this lead?')) {
+                              doWipe();
                             }
                           }}
-                          className="py-1.5 px-3 bg-red-950/20 border border-red-900/30 hover:bg-red-950/40 text-red-400 hover:text-red-300 rounded-lg text-xs font-medium transition-all cursor-pointer font-sans"
+                          className="py-1.5 px-3 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg text-xs font-bold transition-all cursor-pointer font-sans shadow-sm"
                         >
                           Wipe Tracking Journey History
                         </button>

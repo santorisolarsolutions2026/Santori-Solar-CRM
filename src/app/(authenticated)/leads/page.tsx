@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -1178,7 +1178,7 @@ export default function LeadsPage() {
                   setBulkRevertClearHistory(true);
                   setShowBulkRevertFreshModal(true);
                 }}
-                className="py-2 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer font-sans"
+                className="py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer font-sans"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span>Revert to Fresh</span>
@@ -1187,7 +1187,7 @@ export default function LeadsPage() {
             {hasPermission('leads:delete') && (
               <button
                 onClick={handleBulkDelete}
-                className="py-2 px-4 bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/50 rounded-lg font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer font-sans"
+                className="py-2 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer font-sans"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Delete Leads</span>
@@ -1384,7 +1384,7 @@ export default function LeadsPage() {
                           {(hasPermission('sales:lead_track') || hasPermission('leads:track')) && (
                             <button
                               onClick={() => handleOpenTracker(lead)}
-                              className="p-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700/20 border border-emerald-500/20 text-emerald-500 transition-all cursor-pointer"
+                              className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 transition-all cursor-pointer flex items-center justify-center"
                               title="Track Lead Journey"
                             >
                               <Truck className="w-4.5 h-4.5" />

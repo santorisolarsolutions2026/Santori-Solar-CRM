@@ -18,6 +18,7 @@ import {
   Gauge,
   Power,
   Gift,
+  RotateCcw,
 } from 'lucide-react';
 
 interface ActivityLog {
@@ -125,6 +126,7 @@ export function LeadTrackingTimeline({ lead }: LeadTrackingProps) {
   // Helper to map event titles to beautiful Lucide icons
   const getEventIcon = (title: string, toStatus: number | null) => {
     const t = title.toLowerCase();
+    if (t.includes('revert') || t.includes('fresh')) return <RotateCcw className="w-4 h-4 stroke-[2]" />;
     if (t.includes('registered') || t.includes('opportunity')) return <UserPlus className="w-4 h-4 stroke-[2]" />;
     if (t.includes('allocated') || t.includes('assign')) return <UserCheck className="w-4 h-4 stroke-[2]" />;
     if (t.includes('meeting') || t.includes('site visit')) return <Calendar className="w-4 h-4 stroke-[2]" />;
@@ -376,7 +378,7 @@ export function LeadTrackingTimeline({ lead }: LeadTrackingProps) {
             <Truck className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)] flex items-center gap-2">
               <span>Track Lead Journey</span>
               <span className="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-450 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono">
                 #{lead.leadCode}
@@ -412,12 +414,11 @@ export function LeadTrackingTimeline({ lead }: LeadTrackingProps) {
                 {/* Center Axis: Checkbox Icon + Vertical Line */}
                 <div className="flex flex-col items-center shrink-0 relative z-10">
                   <div
-                    className={`w-7 h-7 rounded-lg flex items-center justify-center shadow-md transition-all duration-300 ${
+                    className={`w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold shadow-md transition-all duration-300 ${
                       isLatest
-                        ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 font-bold shadow-emerald-500/30 ring-4 ring-emerald-500/20'
-                        : 'bg-emerald-500 font-bold shadow-emerald-500/10'
+                        ? 'bg-emerald-600 shadow-emerald-500/30 ring-4 ring-emerald-500/20'
+                        : 'bg-emerald-600 shadow-emerald-500/10'
                     }`}
-                    style={{ color: '#ffffff' }}
                   >
                     {getEventIcon(event.title, event.toStatus || null)}
                   </div>
@@ -430,7 +431,7 @@ export function LeadTrackingTimeline({ lead }: LeadTrackingProps) {
                 {/* Right Column: Title & Detailed Subtext */}
                 <div className="flex-1 pt-0.5 space-y-2 bg-[var(--bg-card)]/40 border border-[var(--border-color)] hover:border-[var(--border-color)] p-3.5 rounded-xl transition-all">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h4 className="text-xs font-bold text-white flex items-center gap-2">
+                    <h4 className="text-xs font-bold text-[var(--text-primary)] flex items-center gap-2">
                       <span>{event.title}</span>
                     </h4>
                     {isLatest && (
