@@ -1019,10 +1019,10 @@ export default function AuthenticatedLayout({
               type="button"
               onClick={() => setLeaderboardOpen(true)}
               title="Santori Standings - View Team Leaderboard"
-              className="py-1.5 px-3 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 text-emerald-400 transition-all focus:outline-none cursor-pointer flex items-center gap-2 text-xs font-bold shadow-sm"
+              className="py-1.5 px-3 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 transition-all focus:outline-none cursor-pointer flex items-center gap-2 text-xs font-bold shadow-sm"
             >
-              <Trophy className="w-4 h-4 text-emerald-400" />
-              <span className="hidden sm:inline">Santori Standings</span>
+              <Trophy className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" />
+              <span className="hidden sm:inline text-emerald-700 dark:text-emerald-400 font-extrabold">Santori Standings</span>
             </button>
 
             {/* Quick Attendance Check-in / Check-out Dropdown */}

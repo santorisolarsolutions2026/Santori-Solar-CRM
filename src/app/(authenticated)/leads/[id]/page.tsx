@@ -1765,27 +1765,28 @@ export default function LeadDetailPage({
                   setRevertClearHistory(true);
                   setShowRevertFreshModal(true);
                 }}
-                className="py-2 px-3.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition-all font-semibold text-xs flex items-center gap-1.5 cursor-pointer shadow-md"
+                className="py-2 px-3.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 transition-all font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-sm"
               >
-                <RotateCcw className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Revert to Fresh</span>
+                <RotateCcw className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400 shrink-0" />
+                <span className="text-emerald-700 dark:text-emerald-400 font-bold">Revert to Fresh</span>
               </button>
             )}
             {!lead.isActive && hasPermission('leads:edit') && (
               <button
                 onClick={() => handleActivateLead(lead.id)}
-                className="py-2 px-4 rounded-lg bg-emerald-950/20 text-emerald-400 hover:text-emerald-300 border border-emerald-900/30 transition-all font-semibold text-xs flex items-center gap-1.5 cursor-pointer"
+                className="py-2 px-4 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 transition-all font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-sm"
               >
-                <Check className="w-4 h-4" />
-                <span>Activate Lead</span>
+                <Check className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" />
+                <span className="text-emerald-700 dark:text-emerald-400 font-bold">Activate Lead</span>
               </button>
             )}
             {hasPermission('leads:delete') && (
               <button
                 onClick={() => handleDeleteLead(lead.id)}
-                className="py-2 px-4 rounded-lg bg-red-950/20 text-red-400 hover:text-red-300 border border-red-900/30 transition-all font-semibold text-xs flex items-center gap-1.5 cursor-pointer"
+                className="py-2 px-4 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-700 dark:text-red-400 border border-red-500/30 transition-all font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-sm"
               >
-                Delete Lead
+                <Trash2 className="w-3.5 h-3.5 text-red-700 dark:text-red-400 shrink-0" />
+                <span className="text-red-700 dark:text-red-400 font-bold">{lead.isActive ? "Deactivate Opportunity" : "Delete Lead"}</span>
               </button>
             )}
           </div>
@@ -1810,24 +1811,24 @@ export default function LeadDetailPage({
               onClick={() => setActiveTab('info')}
               className={`px-5 py-4 border-b-2 transition-all flex items-center justify-center gap-2 shrink-0 ${
                 activeTab === 'info'
-                  ? 'border-emerald-500 text-emerald-500 dark:text-emerald-400 bg-emerald-500/[0.02]'
-                  : 'border-transparent text-[var(--text-secondary)] hover:text-white'
+                  ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 font-extrabold bg-emerald-500/[0.04]'
+                  : 'border-transparent text-[var(--text-secondary)] hover:text-emerald-600 dark:hover:text-emerald-400 font-semibold'
               }`}
             >
-              <User className="w-4 h-4" />
-              <span>Info</span>
+              <User className={`w-4 h-4 ${activeTab === 'info' ? 'text-emerald-600 dark:text-emerald-400' : ''}`} />
+              <span className={activeTab === 'info' ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : ''}>Info</span>
             </button>
             {(lead.status === 9 || roleFilteredNextStages.length > 0) && (
               <button
                 onClick={() => setActiveTab('action')}
                 className={`px-5 py-4 border-b-2 transition-all flex items-center justify-center gap-2 shrink-0 ${
                   activeTab === 'action'
-                    ? 'border-emerald-500 text-emerald-500 dark:text-emerald-400 bg-emerald-500/[0.02]'
-                    : 'border-transparent text-[var(--text-secondary)] hover:text-white'
+                    ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 font-extrabold bg-emerald-500/[0.04]'
+                    : 'border-transparent text-[var(--text-secondary)] hover:text-emerald-600 dark:hover:text-emerald-400 font-semibold'
                 }`}
               >
-                <Layers className="w-4 h-4" />
-                <span>Action</span>
+                <Layers className={`w-4 h-4 ${activeTab === 'action' ? 'text-emerald-600 dark:text-emerald-400' : ''}`} />
+                <span className={activeTab === 'action' ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : ''}>Action</span>
               </button>
             )}
               {canTrackJourney && (
@@ -1835,12 +1836,12 @@ export default function LeadDetailPage({
                   onClick={() => setActiveTab('track')}
                   className={`px-5 py-4 border-b-2 transition-all flex items-center justify-center gap-2 shrink-0 ${
                     activeTab === 'track'
-                      ? 'border-emerald-500 text-emerald-500 dark:text-emerald-400 bg-emerald-500/[0.02]'
-                      : 'border-transparent text-[var(--text-secondary)] hover:text-white'
+                      ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 font-extrabold bg-emerald-500/[0.04]'
+                      : 'border-transparent text-[var(--text-secondary)] hover:text-emerald-600 dark:hover:text-emerald-400 font-semibold'
                   }`}
                 >
-                  <Truck className="w-4 h-4" />
-                  <span>Track Progress</span>
+                  <Truck className={`w-4 h-4 ${activeTab === 'track' ? 'text-emerald-600 dark:text-emerald-400' : ''}`} />
+                  <span className={activeTab === 'track' ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : ''}>Track Progress</span>
                 </button>
               )}
               {lead.status >= 8 && (
@@ -1848,12 +1849,12 @@ export default function LeadDetailPage({
                   onClick={() => setActiveTab('meeting')}
                   className={`px-5 py-4 border-b-2 transition-all flex items-center justify-center gap-2 shrink-0 ${
                     activeTab === 'meeting'
-                      ? 'border-emerald-500 text-emerald-500 dark:text-emerald-400 bg-emerald-500/[0.02]'
-                      : 'border-transparent text-[var(--text-secondary)] hover:text-white'
+                      ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 font-extrabold bg-emerald-500/[0.04]'
+                      : 'border-transparent text-[var(--text-secondary)] hover:text-emerald-600 dark:hover:text-emerald-400 font-semibold'
                   }`}
                 >
-                  <Calendar className="w-4 h-4" />
-                  <span>Meeting Details</span>
+                  <Calendar className={`w-4 h-4 ${activeTab === 'meeting' ? 'text-emerald-600 dark:text-emerald-400' : ''}`} />
+                  <span className={activeTab === 'meeting' ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : ''}>Meeting Details</span>
                 </button>
               )}
               
@@ -1862,12 +1863,12 @@ export default function LeadDetailPage({
                   onClick={() => setActiveTab('order')}
                   className={`px-5 py-4 border-b-2 transition-all flex items-center justify-center gap-2 shrink-0 ${
                     activeTab === 'order'
-                      ? 'border-emerald-500 text-emerald-500 dark:text-emerald-400 bg-emerald-500/[0.02]'
-                      : 'border-transparent text-[var(--text-secondary)] hover:text-white'
+                      ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 font-extrabold bg-emerald-500/[0.04]'
+                      : 'border-transparent text-[var(--text-secondary)] hover:text-emerald-600 dark:hover:text-emerald-400 font-semibold'
                   }`}
                 >
-                  <FileCheck className="w-4 h-4" />
-                  <span>Order Punching & Documents</span>
+                  <FileCheck className={`w-4 h-4 ${activeTab === 'order' ? 'text-emerald-600 dark:text-emerald-400' : ''}`} />
+                  <span className={activeTab === 'order' ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : ''}>Order Punching & Documents</span>
                 </button>
               )}
               
