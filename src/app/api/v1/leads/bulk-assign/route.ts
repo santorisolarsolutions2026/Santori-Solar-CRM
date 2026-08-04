@@ -108,34 +108,40 @@ export async function POST(req: Request) {
       const logEntries: any[] = [];
 
       if (Number(status) === 1) {
-        // Deactivate all active assignments in EmployeeAssignment table for target leads
+        // 1. Deactivate all active assignments in EmployeeAssignment table for target leads
         await tx.employeeAssignment.updateMany({
           where: { leadId: { in: leadIds }, isActive: true },
           data: { isActive: false },
         });
 
-        // Wipe previous tracking journey history if clearHistory is true/truthy
-        const shouldClear = body.clearHistory === true || String(body.clearHistory) === 'true';
-        if (shouldClear) {
-          await tx.meetingBooking.deleteMany({
-            where: { leadId: { in: leadIds } },
-          });
-          await tx.leadTask.deleteMany({
-            where: { leadId: { in: leadIds } },
-          });
-          await tx.activity.deleteMany({
-            where: { leadId: { in: leadIds } },
-          });
-          await tx.leadActivityLog.deleteMany({
-            where: { leadId: { in: leadIds } },
-          });
-          await tx.auditLog.deleteMany({
-            where: { leadId: { in: leadIds } },
-          });
+        // 2. Erase all associated orders and sub-records
+        const orders = await tx.order.findMany({
+          where: { leadId: { in: leadIds } },
+          select: { id: true },
+        });
+        const orderIds = orders.map(o => o.id);
+        if (orderIds.length > 0) {
+          await tx.installationImage.deleteMany({ where: { orderId: { in: orderIds } } });
+          await tx.orderDocument.deleteMany({ where: { orderId: { in: orderIds } } });
+          await tx.payment.deleteMany({ where: { orderId: { in: orderIds } } });
+          await tx.order.deleteMany({ where: { id: { in: orderIds } } });
         }
-      }
 
-      const shouldClear = Number(status) === 1 && (body.clearHistory === true || String(body.clearHistory) === 'true');
+        // 3. Delete meeting bookings, tasks, and activities
+        await tx.meetingBooking.deleteMany({ where: { leadId: { in: leadIds } } });
+        await tx.leadTask.deleteMany({ where: { leadId: { in: leadIds } } });
+        await tx.activity.deleteMany({ where: { leadId: { in: leadIds } } });
+
+        // 4. Wipe previous activity and audit logs
+        await tx.leadActivityLog.deleteMany({ where: { leadId: { in: leadIds } } });
+        await tx.auditLog.deleteMany({ where: { leadId: { in: leadIds } } });
+
+        // 5. Reset pipeline & sub-status fields
+        updateData.statusSub = null;
+        updateData.isUnreachable = false;
+        updateData.isActive = true;
+        updateData.followupAt = null;
+      }
 
       for (const lead of leads) {
         const finalManagerId = assignedManagerId !== undefined ? (assignedManagerId === null || assignedManagerId === '' ? null : Number(assignedManagerId)) : lead.assignedManagerId;
@@ -157,17 +163,25 @@ export async function POST(req: Request) {
         });
         count++;
 
-        logEntries.push({
-          leadId: lead.id,
-          userId: userPayload.id,
-          fromStatus: shouldClear ? null : lead.status,
-          toStatus: newStatus,
-          remark: Number(status) === 1
-            ? `Reverted to Fresh Lead by Admin (${userPayload.name}).${shouldClear ? ' Track journey history cleared.' : ''}`
-            : (status !== undefined && status !== null && status !== 'UNCHANGED'
+        if (Number(status) === 1) {
+          logEntries.push({
+            leadId: lead.id,
+            userId: userPayload.id,
+            fromStatus: null,
+            toStatus: 1,
+            remark: `Lead #${(lead as any).leadCode || lead.id} created in system.`,
+          });
+        } else {
+          logEntries.push({
+            leadId: lead.id,
+            userId: userPayload.id,
+            fromStatus: lead.status,
+            toStatus: newStatus,
+            remark: (status !== undefined && status !== null && status !== 'UNCHANGED'
               ? `Bulk updated pipeline status to Stage ${status} (${userPayload.name}).`
               : `Bulk updated team assignments. Updated fields: ${Object.keys(updateData).join(', ')}.${newStatus === 1 && lead.status === 0 ? ' Status auto-promoted to Fresh Lead.' : ''}`),
-        });
+          });
+        }
       }
 
       if (logEntries.length > 0) {

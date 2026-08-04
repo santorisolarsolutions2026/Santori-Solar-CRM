@@ -499,32 +499,38 @@ export async function POST(
     // Run DB transaction
     const updatedLead = await prisma.$transaction(async (tx) => {
       // If reverting to Fresh Lead (Stage 1 or 0):
-      if (finalStatusNum === 1 || finalStatusNum === 0 || toStatusNum === 1 || toStatusNum === 0) {
-        // Deactivate all active assignments in the EmployeeAssignment table
+      const isRevertFresh = (finalStatusNum === 1 || finalStatusNum === 0 || toStatusNum === 1 || toStatusNum === 0);
+      if (isRevertFresh) {
+        // 1. Deactivate all active assignments in the EmployeeAssignment table
         await tx.employeeAssignment.updateMany({
           where: { leadId, isActive: true },
           data: { isActive: false },
         });
 
-        // Wipe previous tracking journey history if clearHistory is true/truthy
-        const shouldClear = clearHistory === true || String(clearHistory) === 'true';
-        if (shouldClear) {
-          await tx.meetingBooking.deleteMany({
-            where: { leadId },
-          });
-          await tx.leadTask.deleteMany({
-            where: { leadId },
-          });
-          await tx.activity.deleteMany({
-            where: { leadId },
-          });
-          await tx.leadActivityLog.deleteMany({
-            where: { leadId },
-          });
-          await tx.auditLog.deleteMany({
-            where: { leadId },
-          });
+        // 2. Erase all associated orders and sub-records
+        const orders = await tx.order.findMany({ where: { leadId }, select: { id: true } });
+        const orderIds = orders.map(o => o.id);
+        if (orderIds.length > 0) {
+          await tx.installationImage.deleteMany({ where: { orderId: { in: orderIds } } });
+          await tx.orderDocument.deleteMany({ where: { orderId: { in: orderIds } } });
+          await tx.payment.deleteMany({ where: { orderId: { in: orderIds } } });
+          await tx.order.deleteMany({ where: { id: { in: orderIds } } });
         }
+
+        // 3. Delete meeting bookings, tasks, and activities
+        await tx.meetingBooking.deleteMany({ where: { leadId } });
+        await tx.leadTask.deleteMany({ where: { leadId } });
+        await tx.activity.deleteMany({ where: { leadId } });
+
+        // 4. Wipe previous activity and audit logs
+        await tx.leadActivityLog.deleteMany({ where: { leadId } });
+        await tx.auditLog.deleteMany({ where: { leadId } });
+
+        // 5. Reset pipeline & sub-status fields
+        updateData.statusSub = null;
+        updateData.isUnreachable = false;
+        updateData.isActive = true;
+        updateData.followupAt = null;
       }
 
       const res = await tx.lead.update({
@@ -559,14 +565,23 @@ export async function POST(
             remark: `Auto-routed to Stage ${finalStatusNum} from Meeting Cancelled`,
           },
         });
-      } else {
-        const isRevertFresh = (finalStatusNum === 1 || toStatusNum === 1);
-        const shouldClear = isRevertFresh && (clearHistory === true || String(clearHistory) === 'true');
+      } else if (isRevertFresh) {
         await tx.leadActivityLog.create({
           data: {
             leadId,
             userId: userPayload.id,
-            fromStatus: shouldClear ? null : lead.status,
+            fromStatus: null,
+            toStatus: 1,
+            remark: `Lead #${lead.leadCode || lead.id} created in system for customer ${lead.customerName}.`,
+            createdAt: lead.createdAt || new Date(),
+          },
+        });
+      } else {
+        await tx.leadActivityLog.create({
+          data: {
+            leadId,
+            userId: userPayload.id,
+            fromStatus: lead.status,
             toStatus: finalStatusNum,
             remark,
           },

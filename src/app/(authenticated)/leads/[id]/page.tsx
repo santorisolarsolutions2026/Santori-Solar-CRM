@@ -2093,7 +2093,7 @@ export default function LeadDetailPage({
               {activeTab === 'track' && (
                 canTrackJourney ? (
                   <div>
-                    {user?.role === 'admin' && (
+                    {(user?.role === 'admin' || user?.role === 'director' || user?.role?.startsWith('admin:')) && (
                       <div className="flex justify-end mb-4">
                         <button
                           type="button"
