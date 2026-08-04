@@ -742,13 +742,13 @@ export default function AuthenticatedLayout({
                         <Link
                           key={item.path}
                           href={item.path}
-                          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all group ${
+                          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all group ${
                             isActive
-                              ? 'bg-amber-500/10 text-amber-400 border-l-2 border-amber-500 pl-2.5 font-bold shadow-sm'
-                              : 'text-slate-400 hover:text-white hover:bg-white/5'
+                              ? 'bg-blue-650 dark:bg-blue-500/10 text-white dark:text-blue-400 border-l-2 border-blue-600 dark:border-blue-500 pl-2.5 font-bold shadow-inner'
+                              : 'text-slate-400 hover:text-white hover:bg-slate-900/40'
                           }`}
                         >
-                          <Icon className={`w-4 h-4 transition-transform group-hover:scale-105 duration-200 ${isActive ? 'text-amber-400' : 'text-slate-400 group-hover:text-slate-200'}`} />
+                          <Icon className={`w-4 h-4 transition-transform group-hover:scale-105 duration-200 ${isActive ? 'text-white dark:text-blue-400' : 'text-slate-500 group-hover:text-slate-200'}`} />
                           <span>{item.name}</span>
                         </Link>
                       );
@@ -942,9 +942,9 @@ export default function AuthenticatedLayout({
               type="button"
               onClick={() => setLeaderboardOpen(true)}
               title="Santori Standings - View Team Leaderboard"
-              className="py-1.5 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 transition-all focus:outline-none cursor-pointer flex items-center gap-2 text-xs font-bold shadow-sm"
+              className="py-1.5 px-3 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/25 text-blue-400 transition-all focus:outline-none cursor-pointer flex items-center gap-2 text-xs font-bold shadow-sm"
             >
-              <Trophy className="w-4 h-4 text-amber-400" />
+              <Trophy className="w-4 h-4 text-blue-400" />
               <span className="hidden sm:inline">Santori Standings</span>
             </button>
 

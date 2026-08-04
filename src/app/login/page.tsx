@@ -229,62 +229,61 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 font-sans selection:bg-amber-500 selection:text-slate-950">
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 font-sans selection:bg-blue-600 selection:text-white">
       {/* Base background color layer */}
-      <div className="absolute inset-0 bg-[#0B0F14] -z-30" />
-      {/* Subtle Background Overlay */}
+      <div className="absolute inset-0 bg-slate-50 -z-30" />
+      {/* Background Image with Light Overlay */}
       <div 
-        className="absolute inset-0 bg-cover bg-center opacity-30 -z-20 mix-blend-luminosity"
+        className="absolute inset-0 bg-cover bg-center -z-20"
         style={{ backgroundImage: 'url("/solar_background.png")' }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-[#0B0F14]/80 via-[#0B0F14]/90 to-[#0B0F14] -z-10" />
+      <div className="absolute inset-0 bg-white/20 backdrop-blur-[2px] -z-10" />
 
       {/* Grid Pattern Background */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none opacity-20" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f293706_1px,transparent_1px),linear-gradient(to_bottom,#1f293706_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none opacity-10" />
 
       <div className="relative w-full max-w-md">
-        {/* Decorative Ambient Amber Glow */}
-        <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-amber-500/20 via-amber-400/10 to-amber-600/20 opacity-70 blur-xl pointer-events-none" />
+        {/* Decorative Ring */}
+        <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-blue-500 via-sky-400 to-indigo-500 opacity-20 blur-md pointer-events-none" />
 
-        {/* Card Container */}
-        <div className="relative bg-[#121820] border border-white/10 rounded-2xl p-8 shadow-2xl backdrop-blur-xl">
+        {/* Card */}
+        <div className="relative glass-card-premium rounded-2xl p-8 shadow-2xl">
           {/* Logo / Header */}
           <div className="flex flex-col items-center mb-8 text-center">
-            <div className="relative w-16 h-16 bg-[#161C24] rounded-2xl border border-white/10 p-2.5 flex items-center justify-center shadow-inner mb-4 group hover:border-amber-500/40 transition-all duration-300">
+            <div className="relative w-14 h-14 bg-white rounded-xl border border-slate-200/50 p-2 flex items-center justify-center shadow-lg mb-4">
               <Image 
                 src="/logo.png" 
                 alt="Santori Solar Solutions Logo" 
-                width={52} 
-                height={52} 
-                className="object-contain scale-105"
+                width={48} 
+                height={48} 
+                className="object-contain scale-110"
                 priority
               />
             </div>
-            <h1 className="text-2xl font-bold tracking-tight text-white leading-none">
-              Santori <span className="text-amber-500 font-extrabold">Solar</span>
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 leading-none">
+              Santori <span className="text-blue-600 font-extrabold">Solar</span>
             </h1>
-            <span className="text-[11px] uppercase tracking-widest text-slate-400 font-bold mt-2.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400">
-              {isSetupRequired ? 'Initial Admin Setup' : 'Enterprise CRM Portal'}
+            <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mt-2.5">
+              {isSetupRequired ? 'Initial Admin Setup' : 'CRM Portal'}
             </span>
           </div>
 
           {/* Error Message */}
           {error && (
-            <div className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-medium animate-shake flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4 shrink-0 text-rose-400" />
-              <span>{error}</span>
+            <div className="mb-6 p-4 rounded-lg bg-red-950/55 border border-red-800/60 text-red-200 text-sm animate-shake">
+              {error}
             </div>
           )}
 
           {isSetupRequired ? (
             <form onSubmit={handleSetupSubmit} className="space-y-4">
-              <p className="text-xs text-slate-400 mb-4 text-center font-medium leading-relaxed">
-                Welcome to SolarCRM! Let's set up your primary administrator account to initialize your portal.
+              <p className="text-xs text-slate-650 mb-4 text-center font-medium">
+                Welcome to SolarCRM! Let's set up your primary administrator account. This will lock setup for this server.
               </p>
               
               {/* Setup Full Name */}
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
                   Admin Full Name *
                 </label>
                 <input
@@ -293,13 +292,13 @@ export default function LoginPage() {
                   value={setupName}
                   onChange={(e) => setSetupName(e.target.value)}
                   placeholder="e.g. Deepak Sir"
-                  className="block w-full px-3.5 py-2.5 bg-[#0E131A] border border-white/10 rounded-xl placeholder-slate-500 text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all text-xs"
+                  className="block w-full px-3.5 py-2.5 glass-input-premium rounded-lg placeholder-slate-400 focus:outline-none transition-all text-xs"
                 />
               </div>
 
               {/* Setup Email */}
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
                   Email Address *
                 </label>
                 <input
@@ -308,13 +307,13 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="e.g. admin@solarcrm.com"
-                  className="block w-full px-3.5 py-2.5 bg-[#0E131A] border border-white/10 rounded-xl placeholder-slate-500 text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all text-xs"
+                  className="block w-full px-3.5 py-2.5 glass-input-premium rounded-lg placeholder-slate-400 focus:outline-none transition-all text-xs"
                 />
               </div>
 
               {/* Setup Employee ID */}
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
                   Employee ID *
                 </label>
                 <input
@@ -323,13 +322,13 @@ export default function LoginPage() {
                   value={setupEmployeeId}
                   onChange={(e) => setSetupEmployeeId(e.target.value)}
                   placeholder="e.g. EMP-1001"
-                  className="block w-full px-3.5 py-2.5 bg-[#0E131A] border border-white/10 rounded-xl placeholder-slate-500 text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all text-xs"
+                  className="block w-full px-3.5 py-2.5 glass-input-premium rounded-lg placeholder-slate-400 focus:outline-none transition-all text-xs"
                 />
               </div>
 
               {/* Setup Phone */}
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
                   Contact Phone
                 </label>
                 <input
@@ -337,13 +336,13 @@ export default function LoginPage() {
                   value={setupPhone}
                   onChange={(e) => setSetupPhone(e.target.value)}
                   placeholder="e.g. 9876543210"
-                  className="block w-full px-3.5 py-2.5 bg-[#0E131A] border border-white/10 rounded-xl placeholder-slate-500 text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all text-xs"
+                  className="block w-full px-3.5 py-2.5 glass-input-premium rounded-lg placeholder-slate-400 focus:outline-none transition-all text-xs"
                 />
               </div>
 
               {/* Setup Password */}
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
                   Password *
                 </label>
                 <div className="relative">
@@ -353,12 +352,12 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="block w-full pl-3.5 pr-10 py-2.5 bg-[#0E131A] border border-white/10 rounded-xl placeholder-slate-500 text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all text-xs"
+                    className="block w-full pl-3.5 pr-10 py-2.5 glass-input-premium rounded-lg placeholder-slate-400 focus:outline-none transition-all text-xs"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-200 transition-colors"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-700 transition-colors"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -369,11 +368,11 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="relative w-full mt-2 py-3 px-4 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-slate-950 font-bold rounded-xl shadow-lg shadow-amber-500/20 focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-xs flex items-center justify-center gap-2 cursor-pointer"
+                className="relative w-full mt-2 py-3 px-4 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg font-bold shadow-lg shadow-blue-900/20 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-xs flex items-center justify-center gap-2 overflow-hidden group cursor-pointer"
               >
                 {submitting ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                    <Loader2 className="w-4 h-4 animate-spin" />
                     <span>Configuring Admin...</span>
                   </>
                 ) : (
@@ -382,15 +381,15 @@ export default function LoginPage() {
               </button>
             </form>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-6">
               {/* Email Input */}
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">
                   Email Address
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <Mail className="w-4 h-4" />
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                    <Mail className="w-5 h-5" />
                   </div>
                   <input
                     type="email"
@@ -398,28 +397,28 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="e.g. admin@solarcrm.com"
-                    className="block w-full pl-10 pr-3 py-2.5 bg-[#0E131A] border border-white/10 rounded-xl placeholder-slate-500 text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all text-xs"
+                    className="block w-full pl-11 pr-3 py-3 glass-input-premium rounded-lg placeholder-slate-400 focus:outline-none transition-all text-sm"
                   />
                 </div>
               </div>
 
               {/* Password Input */}
               <div>
-                <div className="flex justify-between items-center mb-1.5">
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300">
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-650">
                     Password
                   </label>
                   <button
                     type="button"
-                    onClick={() => setError('Please contact the System Admin to reset your password.')}
-                    className="text-[11px] text-amber-400 hover:text-amber-300 transition-colors font-medium cursor-pointer"
+                    onClick={() => setError('Please contact the Admin to reset your password.')}
+                    className="text-xs text-blue-600 hover:text-blue-500 transition-colors font-semibold cursor-pointer"
                   >
                     Forgot Password?
                   </button>
                 </div>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <Lock className="w-4 h-4" />
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                    <Lock className="w-5 h-5" />
                   </div>
                   <input
                     type={showPassword ? 'text' : 'password'}
@@ -427,14 +426,14 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="block w-full pl-10 pr-10 py-2.5 bg-[#0E131A] border border-white/10 rounded-xl placeholder-slate-500 text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all text-xs"
+                    className="block w-full pl-11 pr-10 py-3 glass-input-premium rounded-lg placeholder-slate-400 focus:outline-none transition-all text-sm"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-200 transition-colors"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-800 transition-colors"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
               </div>
@@ -443,19 +442,20 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="relative w-full py-3 px-4 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-slate-950 font-bold rounded-xl shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-xs flex items-center justify-center gap-2 cursor-pointer mt-2"
+                className="relative w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg font-bold shadow-lg shadow-blue-500/10 hover:shadow-blue-500/20 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-2 overflow-hidden group cursor-pointer"
               >
                 {submitting ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                    <Loader2 className="w-5 h-5 animate-spin" />
                     <span>Logging in...</span>
                   </>
                 ) : (
-                  <span>Sign In to CRM</span>
+                  <span>Access Dashboard</span>
                 )}
               </button>
             </form>
           )}
+
         </div>
       </div>
     </div>

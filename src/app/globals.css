@@ -60,40 +60,40 @@ body {
   scrollbar-width: none;  /* Firefox */
 }
 
-/* Theme System variables: Solar Amber & Deep Navy Enterprise Design System */
+/* Theme 2: Sky Blue & Slate Grey System variables */
 :root {
   /* Dark mode colors (default) */
-  --bg-main: #0B0F14;
-  --bg-sidebar: #080B0F;
-  --bg-card: #121820;
-  --bg-card-solid: #161C24;
-  --bg-input: #0E131A;
-  --border-color: rgba(255, 255, 255, 0.08);
-  --border-color-hover: rgba(255, 255, 255, 0.16);
+  --bg-main: #0F172A;
+  --bg-sidebar: #0B0F19;
+  --bg-card: #1E293B;
+  --bg-card-solid: #1E293B;
+  --bg-input: #0F172A;
+  --border-color: rgba(255, 255, 255, 0.06);
+  --border-color-hover: rgba(255, 255, 255, 0.12);
   --text-primary: #F8FAFC;
-  --text-secondary: #CBD5E1; /* High contrast secondary */
-  --text-muted: #94A3B8; /* High contrast muted */
-  --shadow-color: rgba(0, 0, 0, 0.4);
-  --accent-color: #F59E0B; /* Solar Amber */
-  --accent-hover: #D97706; /* Darker Amber */
-  --btn-text: #0B0F14;
+  --text-secondary: #CBD5E1; /* Increased contrast for Dark Mode secondary text */
+  --text-muted: #94A3B8; /* Increased contrast for Dark Mode muted text */
+  --shadow-color: rgba(0, 0, 0, 0.25);
+  --accent-color: #0EA5E9; /* Sky Blue (#0EA5E9) */
+  --accent-hover: #0284C7; /* Darker Sky Blue */
+  --btn-text: #FFFFFF;
 }
 
 .light {
-  /* Light mode colors: Pure White & Deep Navy */
-  --bg-main: #FFFFFF;
-  --bg-sidebar: #FAFAFA;
+  /* Light mode colors matching mockup image */
+  --bg-main: #F8FAFC;
+  --bg-sidebar: #FFFFFF; /* Pure white sidebar in light mode */
   --bg-card: #FFFFFF;
-  --bg-card-solid: #F8FAFC;
-  --bg-input: #F8FAFC;
+  --bg-card-solid: #FFFFFF;
+  --bg-input: #FFFFFF;
   --border-color: #E2E8F0;
   --border-color-hover: #CBD5E1;
-  --text-primary: #0F172A; /* Deep Navy */
-  --text-secondary: #475569;
-  --text-muted: #64748B;
-  --shadow-color: rgba(15, 23, 42, 0.05);
-  --accent-color: #D97706; /* Rich Solar Amber for light mode */
-  --accent-hover: #B45309;
+  --text-primary: #0F172A;
+  --text-secondary: #475569; /* Increased contrast (darker) for Light Mode secondary text */
+  --text-muted: #64748B; /* Increased contrast (darker) for Light Mode muted text */
+  --shadow-color: rgba(15, 23, 42, 0.04);
+  --accent-color: #2563EB; /* Premium Royal Blue for Light mode active states */
+  --accent-hover: #1D4ED8; /* Darker Royal Blue */
   --btn-text: #FFFFFF;
 }
 
