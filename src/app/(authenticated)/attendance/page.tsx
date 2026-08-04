@@ -467,22 +467,58 @@ export default function AttendancePage() {
   return (
     <div className="space-y-6">
       {/* Title Header & Daily Control */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-6 shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
           <h1 className="text-xl font-bold text-white tracking-wide flex items-center gap-2.5">
-            <Clock className="w-6 h-6 text-emerald-500" />
+            <Clock className="w-6 h-6 text-emerald-500 shrink-0" />
             <span>Team Member Attendance & Work Hours</span>
           </h1>
-          <p className="text-xs text-[var(--text-secondary)] mt-1">
+          <p className="text-xs text-[var(--text-secondary)] mt-1 max-w-xl">
             Track daily check-ins, check-outs, working durations, and attendance logs across the organization.
           </p>
         </div>
 
-        <div className="flex items-center gap-3 self-end lg:self-auto flex-wrap">
+        <div className="flex items-center gap-3 flex-wrap lg:flex-nowrap">
+          {/* Quick Personal Action Box */}
+          <div className="px-4 py-2 bg-[var(--bg-main)]/60 border border-[var(--border-color)] rounded-xl flex items-center gap-3 shadow-inner shrink-0">
+            <div className="text-right">
+              <span className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block">Today's Status</span>
+              <span className={`text-xs font-bold font-mono ${
+                !todayAttendance ? 'text-[var(--text-secondary)]' : todayAttendance.checkOut ? 'text-emerald-400' : 'text-emerald-500'
+              }`}>
+                {!todayAttendance ? 'Not Checked In' : todayAttendance.checkOut ? 'Day Completed ✓' : 'Checked In'}
+              </span>
+            </div>
+
+            {!todayAttendance ? (
+              <button
+                onClick={handleCheckIn}
+                disabled={actionLoading}
+                className="py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all font-sans"
+              >
+                {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserCheck className="w-3.5 h-3.5" />}
+                <span>Check In</span>
+              </button>
+            ) : !todayAttendance.checkOut ? (
+              <button
+                onClick={handleCheckOut}
+                disabled={actionLoading}
+                className="py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all font-sans"
+              >
+                {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LogOut className="w-3.5 h-3.5" />}
+                <span>Check Out</span>
+              </button>
+            ) : (
+              <div className="px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-[10px] font-bold text-emerald-400 font-mono">
+                {Math.floor((todayAttendance.workDurationMin || 0) / 60)}h {(todayAttendance.workDurationMin || 0) % 60}m Worked
+              </div>
+            )}
+          </div>
+
           <button
             type="button"
             onClick={() => handleDownloadAttendanceRegister()}
-            className="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-all shadow-md shadow-emerald-500/20 font-sans"
+            className="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-all shadow-md shadow-emerald-500/20 font-sans shrink-0"
             title="Download Monthwise Attendance Register (School/Company Register Format)"
           >
             <FileSpreadsheet className="w-4 h-4 text-white" />
@@ -495,48 +531,12 @@ export default function AttendancePage() {
                 fetchHolidays();
                 setShowHolidayModal(true);
               }}
-              className="py-2.5 px-4 bg-[var(--bg-card)] border border-[var(--border-color)] text-slate-350 hover:text-white rounded-2xl font-bold text-xs flex items-center gap-1.5 cursor-pointer hover:border-[var(--border-color)] transition-all font-sans"
+              className="py-2.5 px-4 bg-[var(--bg-main)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-white rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer hover:border-[var(--border-color)] transition-all font-sans shrink-0"
             >
               <Calendar className="w-4 h-4 text-emerald-500" />
               <span>Manage Holidays</span>
             </button>
           )}
-
-          {/* Quick Personal Action Box */}
-          <div className="p-3.5 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl flex items-center gap-4 shadow-lg shrink-0">
-            <div className="text-right">
-              <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block">Today's Status</span>
-              <span className={`text-xs font-bold font-mono ${
-                !todayAttendance ? 'text-[var(--text-secondary)]' : todayAttendance.checkOut ? 'text-emerald-400' : 'text-emerald-500'
-              }`}>
-                {!todayAttendance ? 'Not Checked In' : todayAttendance.checkOut ? 'Day Completed ✓' : 'Checked In'}
-              </span>
-            </div>
-
-            {!todayAttendance ? (
-              <button
-                onClick={handleCheckIn}
-                disabled={actionLoading}
-                className="py-2 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all"
-              >
-                {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCheck className="w-4 h-4" />}
-                <span>Check In Now</span>
-              </button>
-            ) : !todayAttendance.checkOut ? (
-              <button
-                onClick={handleCheckOut}
-                disabled={actionLoading}
-                className="py-2 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all"
-              >
-                {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
-                <span>Check Out</span>
-              </button>
-            ) : (
-              <div className="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-[11px] font-bold text-emerald-400 font-mono">
-                {Math.floor((todayAttendance.workDurationMin || 0) / 60)}h {(todayAttendance.workDurationMin || 0) % 60}m Worked
-              </div>
-            )}
-          </div>
         </div>
       </div>
 
