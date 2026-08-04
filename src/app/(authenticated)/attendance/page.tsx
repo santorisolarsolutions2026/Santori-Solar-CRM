@@ -405,7 +405,7 @@ export default function AttendancePage() {
        } else if (record.status === 'half_day') {
         return (
           <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-emerald-500/10 text-emerald-500 border-emerald-500/20 uppercase tracking-wider">
-            Half Day âš ï¸
+            Half Day ⚠️
           </span>
         );
       } else {
@@ -424,7 +424,7 @@ export default function AttendancePage() {
     } else if (isHoliday) {
       return (
         <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-emerald-500/10 text-emerald-500 border-emerald-500/20 uppercase tracking-wider" title={holidayName}>
-          Holiday ðŸŒŸ
+          Holiday 🌟
         </span>
       );
     } else if (isWeekend) {
@@ -493,7 +493,7 @@ export default function AttendancePage() {
               <span className={`text-xs font-bold font-mono ${
                 !todayAttendance ? 'text-[var(--text-secondary)]' : todayAttendance.checkOut ? 'text-emerald-400' : 'text-emerald-500'
               }`}>
-                {!todayAttendance ? 'Not Checked In' : todayAttendance.checkOut ? 'Day Completed âœ“' : 'Checked In'}
+                {!todayAttendance ? 'Not Checked In' : todayAttendance.checkOut ? 'Day Completed ✓' : 'Checked In'}
               </span>
             </div>
 

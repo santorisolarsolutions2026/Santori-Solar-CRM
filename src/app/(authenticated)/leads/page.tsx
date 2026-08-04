@@ -1358,7 +1358,7 @@ export default function LeadsPage() {
                         <div className="flex flex-col gap-1">
                           {lead.status === 13 && lead.order?.status === 'draft' && lead.order?.rejectionReason ? (
                             <span className="inline-block text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider bg-rose-500/10 text-rose-450 border-rose-500/20">
-                              Rejected âš ï¸
+                              Rejected ⚠️
                             </span>
                           ) : (
                             <span className={`inline-block text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${stage.class}`}>
@@ -1917,8 +1917,8 @@ export default function LeadsPage() {
                   <p className="text-xs font-bold text-white">Clear track journey history</p>
                   <p className="text-[10px] text-[var(--text-secondary)] mt-0.5 leading-normal">
                     {bulkRevertClearHistory 
-                      ? "Yes â€” Delete previous activity logs and begin showing only the fresh lead entry in track journey for selected leads." 
-                      : "No â€” Preserve previous activity logs in track journey history for selected leads."}
+                      ? "Yes — Delete previous activity logs and begin showing only the fresh lead entry in track journey for selected leads." 
+                      : "No — Preserve previous activity logs in track journey history for selected leads."}
                   </p>
                 </div>
               </label>
@@ -2386,7 +2386,7 @@ export default function LeadsPage() {
               : "Are you completely sure you want to proceed with this bulk assignment?"
           }
           type={bulkConfirmModal.step === 2 ? "warning" : "info"}
-          confirmText={bulkConfirmModal.step === 1 ? "Proceed to Step 2 â†’" : "Yes, Confirm Assignment"}
+          confirmText={bulkConfirmModal.step === 1 ? "Proceed to Step 2 →" : "Yes, Confirm Assignment"}
           cancelText={bulkConfirmModal.step === 2 ? "Go Back" : "Cancel"}
           onClose={() => setBulkConfirmModal(null)}
           onConfirm={() => {

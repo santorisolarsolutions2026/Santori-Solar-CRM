@@ -922,7 +922,7 @@ export default function OperationsPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             to_status: 13,
-            remark: `[SUBSIDY APPLIED] Government subsidy registered as applied. Actual Date/Time: ${formatDateTime(actualSubsidyTimestamp)}. Expected Amount: â‚¹${amountNum.toLocaleString('en-IN')}. Order completed successfully.`,
+            remark: `[SUBSIDY APPLIED] Government subsidy registered as applied. Actual Date/Time: ${formatDateTime(actualSubsidyTimestamp)}. Expected Amount: ₹${amountNum.toLocaleString('en-IN')}. Order completed successfully.`,
           }),
         });
 
@@ -1202,22 +1202,22 @@ export default function OperationsPage() {
                   let stageClass = 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-color)]';
 
                   if (order.isSubsidyApplied || (order.isCommissioned && !order.subsidyApplicable)) {
-                    stageText = 'Completed âœ…';
+                    stageText = 'Completed ✍…';
                     stageClass = 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
                   } else if (order.isCommissioned) {
                     stageText = 'Subsidy Pending â³';
                     stageClass = 'bg-purple-500/10 text-purple-400 border-purple-500/20';
                   } else if (order.isMeterInstalled) {
-                    stageText = 'Commissioning Pending âš¡';
+                    stageText = 'Commissioning Pending ⚠️¡';
                     stageClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
                   } else if (order.isInstalled) {
-                    stageText = 'Meter Pending âš¡';
+                    stageText = 'Meter Pending ⚠️¡';
                     stageClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
                   } else if (order.isDelivered) {
-                    stageText = 'Delivered ðŸšš';
+                    stageText = 'Delivered 🚚';
                     stageClass = 'bg-teal-500/10 text-teal-400 border-teal-500/20';
                   } else if (order.deliveryDate) {
-                    stageText = 'Scheduled ðŸšš';
+                    stageText = 'Scheduled 🚚';
                     stageClass = 'bg-teal-500/10 text-teal-400 border-teal-500/20';
                   }
 
@@ -1870,7 +1870,7 @@ export default function OperationsPage() {
                       </div>
                     ) : (
                       <div className="py-4 text-center text-[11px] text-slate-550 italic bg-slate-955/20 rounded-lg">
-                        ðŸ”’ Installation phase will unlock once materials are marked as Delivered.
+                        🔒 Installation phase will unlock once materials are marked as Delivered.
                       </div>
                     )}
 
@@ -2037,7 +2037,7 @@ export default function OperationsPage() {
                                         rel="noopener noreferrer"
                                         className="w-full h-full flex flex-col items-center justify-center p-2 text-red-400 hover:text-red-305 font-bold font-mono text-[9px] hover:bg-[var(--bg-card)]/35 transition-all"
                                       >
-                                        <span>ðŸ“„ PDF Document</span>
+                                        <span>📄 PDF Document</span>
                                         <span className="text-[8px] text-[var(--text-muted)] truncate max-w-full mt-1 font-semibold">{img.fileName}</span>
                                       </a>
                                     ) : (
@@ -2071,7 +2071,7 @@ export default function OperationsPage() {
 
                     ) : (
                       <div className="py-4 text-center text-[11px] text-slate-550 italic bg-slate-955/20 rounded-lg">
-                        ðŸ”’ Meter Installation phase will unlock once solar structure is marked as Installed.
+                        🔒 Meter Installation phase will unlock once solar structure is marked as Installed.
                       </div>
                     )}
 
@@ -2267,7 +2267,7 @@ export default function OperationsPage() {
                       </div>
                     ) : (
                       <div className="py-4 text-center text-[11px] text-slate-550 italic bg-slate-955/20 rounded-lg">
-                        ðŸ”’ Plant Commissioning phase will unlock once Net Meter is marked as Installed.
+                        🔒 Plant Commissioning phase will unlock once Net Meter is marked as Installed.
                       </div>
                     )}
 
@@ -2287,7 +2287,7 @@ export default function OperationsPage() {
                             </div>
                             <div className="text-slate-350 text-[11px] space-y-1">
                               <div><span className="text-[var(--text-muted)]">Applied Date:</span> {formatDateTime(selectedOrder.actualSubsidyAppliedAt)}</div>
-                              <div><span className="text-[var(--text-muted)]">Subsidy Amount:</span> â‚¹{selectedOrder.subsidyAmount?.toLocaleString('en-IN') || '0'}</div>
+                              <div><span className="text-[var(--text-muted)]">Subsidy Amount:</span> ₹{selectedOrder.subsidyAmount?.toLocaleString('en-IN') || '0'}</div>
                             </div>
                           </div>
                         ) : balanceOutstanding > 0 ? (
@@ -2295,7 +2295,7 @@ export default function OperationsPage() {
                           <div className="py-3 px-4 bg-[var(--bg-card)]/15 border border-red-500/20 text-red-400 rounded-lg text-xs flex items-center gap-2.5">
                             <Info className="w-4 h-4 shrink-0 text-red-400" />
                             <span>
-                              âš ï¸ Subsidy cannot be applied because there is an outstanding balance of <strong>â‚¹{balanceOutstanding.toLocaleString('en-IN')}</strong>. Please clear all remaining payments first.
+                              ⚠️ Subsidy cannot be applied because there is an outstanding balance of <strong>₹{balanceOutstanding.toLocaleString('en-IN')}</strong>. Please clear all remaining payments first.
                             </span>
                           </div>
                         ) : (
@@ -2306,12 +2306,12 @@ export default function OperationsPage() {
                                 <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
                                 <span>Apply Government Subsidy</span>
                               </h5>
-                              <p className="text-[10px] text-[var(--text-muted)] mt-0.5">Dues are fully paid (â‚¹0 outstanding). Please record the government subsidy details below.</p>
+                              <p className="text-[10px] text-[var(--text-muted)] mt-0.5">Dues are fully paid (₹0 outstanding). Please record the government subsidy details below.</p>
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                               <div>
-                                <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Expected Subsidy Amount (â‚¹) *</label>
+                                <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Expected Subsidy Amount (₹) *</label>
                                 <input
                                   type="number"
                                   required
@@ -2369,7 +2369,7 @@ export default function OperationsPage() {
                       </div>
                     ) : (
                       <div className="py-4 text-center text-[11px] text-slate-550 italic bg-slate-955/20 rounded-lg">
-                        ðŸ”’ Subsidy stage will unlock once solar plant is marked as Commissioned.
+                        🔒 Subsidy stage will unlock once solar plant is marked as Commissioned.
                       </div>
                     )}
 
@@ -2432,16 +2432,16 @@ export default function OperationsPage() {
                           <div className="mt-1.5 space-y-1.5">
                             <div className="flex justify-between text-[var(--text-secondary)] text-[11px]">
                               <span>Contract Value:</span>
-                              <span className="font-bold text-[var(--text-primary)]">â‚¹{selectedOrder.totalValue.toLocaleString('en-IN')}</span>
+                              <span className="font-bold text-[var(--text-primary)]">₹{selectedOrder.totalValue.toLocaleString('en-IN')}</span>
                             </div>
                             <div className="flex justify-between text-[var(--text-secondary)] text-[11px]">
                               <span>Total Paid:</span>
-                              <span className="text-emerald-400 font-bold">â‚¹{totalPaid.toLocaleString('en-IN')}</span>
+                              <span className="text-emerald-400 font-bold">₹{totalPaid.toLocaleString('en-IN')}</span>
                             </div>
                             <div className="flex justify-between border-t border-[var(--border-color)]/60 pt-1.5 text-[11px]">
                               <span className="text-[var(--text-primary)] font-semibold">Remaining Balance:</span>
                               <span className={`font-mono font-bold ${balanceOutstanding <= 0 ? 'text-emerald-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
-                                â‚¹{balanceOutstanding.toLocaleString('en-IN')}
+                                ₹{balanceOutstanding.toLocaleString('en-IN')}
                               </span>
                             </div>
                           </div>

@@ -1033,10 +1033,10 @@ export default function ReportsPage() {
                               </button>
                             </td>
                             <td className="py-3.5 px-4 text-center font-extrabold text-[var(--text-primary)]">
-                              â‚¹{(emp.metrics.paymentsAmount || 0).toLocaleString('en-IN')}
+                              ₹{(emp.metrics.paymentsAmount || 0).toLocaleString('en-IN')}
                             </td>
                             <td className="py-3.5 px-4 text-right font-extrabold text-[var(--text-primary)] font-mono">
-                              â‚¹{(emp.metrics.ordersVerifiedValue || 0).toLocaleString('en-IN')}
+                              ₹{(emp.metrics.ordersVerifiedValue || 0).toLocaleString('en-IN')}
                             </td>
                           </tr>
                         ))}
@@ -1404,7 +1404,7 @@ export default function ReportsPage() {
                             </td>
                             {modalData.results.some((r: any) => r.value !== undefined) && (
                               <td className="py-3.5 px-4 text-right font-extrabold text-white font-mono bg-[var(--bg-card)]/20">
-                                {item.value ? `â‚¹${item.value.toLocaleString('en-IN')}` : '-'}
+                                {item.value ? `₹${item.value.toLocaleString('en-IN')}` : '-'}
                               </td>
                             )}
                           </tr>
@@ -1562,7 +1562,7 @@ export default function ReportsPage() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <h4 className="text-white font-bold text-sm truncate">{node.name}</h4>
-                              <p className="text-[10px] text-[var(--text-muted)] font-mono truncate">{node.designation} â€¢ {node.department}</p>
+                              <p className="text-[10px] text-[var(--text-muted)] font-mono truncate">{node.designation} • {node.department}</p>
                             </div>
                             <div className="text-[10px] font-bold text-[var(--text-secondary)] bg-[var(--bg-main)] px-2 py-1 rounded border border-[var(--border-color)]">
                               {node.children?.length || 0} Direct

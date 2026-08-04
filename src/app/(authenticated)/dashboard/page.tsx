@@ -234,19 +234,19 @@ export default function DashboardPage() {
       },
       {
         name: 'Total Ledger Value',
-        value: `â‚¹${(stats?.totalLedgerValue || 0).toLocaleString('en-IN')}`,
+        value: `₹${(stats?.totalLedgerValue || 0).toLocaleString('en-IN')}`,
         icon: TrendingUp,
         color: 'border-[var(--border-color)] text-teal-400',
       },
       {
         name: 'Payments Collected',
-        value: `â‚¹${(stats?.totalPaymentsCollected || 0).toLocaleString('en-IN')}`,
+        value: `₹${(stats?.totalPaymentsCollected || 0).toLocaleString('en-IN')}`,
         icon: DollarSign,
         color: 'from-purple-600/10 to-pink-600/5 border-purple-500/20 text-purple-400',
       },
       {
         name: 'Outstanding Balance',
-        value: `â‚¹${(stats?.outstandingBalance || 0).toLocaleString('en-IN')}`,
+        value: `₹${(stats?.outstandingBalance || 0).toLocaleString('en-IN')}`,
         icon: Clock,
         color: 'border-[var(--border-color)] text-emerald-400',
       },

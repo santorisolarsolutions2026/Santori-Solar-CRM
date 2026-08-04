@@ -100,9 +100,9 @@ const PAYMENT_METHODS = [
 ];
 
 const METHOD_LABELS: Record<string, string> = {
-  cash: 'Cash ðŸ’µ',
-  upi: 'UPI ðŸ“±',
-  cheque: 'Cheque âœï¸',
+  cash: 'Cash 💵',
+  upi: 'UPI 📱',
+  cheque: 'Cheque ✍ï¸',
   neft: 'NEFT ðŸ¦',
   bank_transfer: 'Bank Transfer ðŸ›ï¸',
 };
@@ -899,7 +899,7 @@ export default function FinancePage() {
 
             {/* Contract Value Range */}
             <div className="space-y-1">
-              <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Contract Value Range (â‚¹)</label>
+              <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Contract Value Range (₹)</label>
               <div className="flex items-center gap-2">
                 <input
                   type="number"
@@ -950,7 +950,7 @@ export default function FinancePage() {
               <div className="p-4 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl flex items-center justify-between shadow-lg">
                 <div>
                   <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-wider block">Total Order Value</span>
-                  <span className="text-xl font-extrabold text-white mt-1 block">â‚¹{totalValue.toLocaleString('en-IN')}</span>
+                  <span className="text-xl font-extrabold text-white mt-1 block">₹{totalValue.toLocaleString('en-IN')}</span>
                 </div>
                 <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
                   <FileText className="w-5 h-5" />
@@ -960,7 +960,7 @@ export default function FinancePage() {
               <div className="p-4 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl flex items-center justify-between shadow-lg">
                 <div>
                   <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-wider block">Payments Collected</span>
-                  <span className="text-xl font-extrabold text-emerald-400 mt-1 block">â‚¹{totalCollected.toLocaleString('en-IN')}</span>
+                  <span className="text-xl font-extrabold text-emerald-400 mt-1 block">₹{totalCollected.toLocaleString('en-IN')}</span>
                 </div>
                 <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
                   <IndianRupee className="w-5 h-5" />
@@ -970,7 +970,7 @@ export default function FinancePage() {
               <div className="p-4 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl flex items-center justify-between shadow-lg">
                 <div>
                   <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-wider block">Outstanding Balance</span>
-                  <span className="text-xl font-extrabold text-emerald-400 mt-1 block">â‚¹{totalOutstanding.toLocaleString('en-IN')}</span>
+                  <span className="text-xl font-extrabold text-emerald-400 mt-1 block">₹{totalOutstanding.toLocaleString('en-IN')}</span>
                 </div>
                 <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
                   <ArrowDownLeft className="w-5 h-5" />
@@ -986,7 +986,7 @@ export default function FinancePage() {
                   <span className="text-xs text-[var(--text-primary)] font-bold uppercase tracking-wider">Verified Payment Methods Breakdown</span>
                 </div>
                 <span className="text-[10px] text-[var(--text-secondary)] font-mono">
-                  Total Collected: <strong className="text-emerald-400 font-bold">â‚¹{totalPaymentSum.toLocaleString('en-IN')}</strong>
+                  Total Collected: <strong className="text-emerald-400 font-bold">₹{totalPaymentSum.toLocaleString('en-IN')}</strong>
                 </span>
               </div>
 
@@ -1017,7 +1017,7 @@ export default function FinancePage() {
                         <ChartTooltip
                           contentStyle={{ backgroundColor: '#090b11', border: '1px solid #1f2937', borderRadius: '8px', padding: '8px' }}
                           itemStyle={{ fontSize: '11px', color: '#fff' }}
-                          formatter={(value: any) => [`â‚¹${Number(value).toLocaleString('en-IN')}`, 'Amount']}
+                          formatter={(value: any) => [`₹${Number(value).toLocaleString('en-IN')}`, 'Amount']}
                         />
                       </PieChart>
                     </ResponsiveContainer>
@@ -1039,7 +1039,7 @@ export default function FinancePage() {
                             <span className="text-xs text-[var(--text-primary)] font-bold truncate">{item.name}</span>
                           </div>
                           <div className="text-right shrink-0">
-                            <span className="text-xs font-black text-white block">â‚¹{item.value.toLocaleString('en-IN')}</span>
+                            <span className="text-xs font-black text-white block">₹{item.value.toLocaleString('en-IN')}</span>
                             <span className="text-[10px] text-[var(--text-secondary)] font-mono block">{pct}% share</span>
                           </div>
                         </div>
@@ -1203,15 +1203,15 @@ export default function FinancePage() {
                                 href={`/leads/${order.lead.id}`}
                                 className="block w-full text-center py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg text-[10px] font-bold hover:bg-emerald-500/20 transition-all mt-2"
                               >
-                                Open Full Lead â†’
+                                Open Full Lead →
                               </Link>
                             </div>
                           )}
                         </td>
                         <td className="py-4 px-4 font-semibold text-[var(--text-secondary)]">{order.systemSizeKw} kW</td>
-                        <td className="py-4 px-4 font-extrabold text-white">â‚¹{order.totalValue.toLocaleString('en-IN')}</td>
+                        <td className="py-4 px-4 font-extrabold text-white">₹{order.totalValue.toLocaleString('en-IN')}</td>
                         <td className="py-4 px-4 font-bold text-emerald-400">
-                          â‚¹{order.downPayment.toLocaleString('en-IN')}
+                          ₹{order.downPayment.toLocaleString('en-IN')}
                           <span className="block text-[10px] text-[var(--text-muted)] font-normal">Method: {order.paymentMethod.toUpperCase()}</span>
                         </td>
                         <td className="py-4 px-4 text-[var(--text-secondary)]">
@@ -1338,16 +1338,16 @@ export default function FinancePage() {
                               href={`/leads/${order.lead.id}`}
                               className="block w-full text-center py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg text-[10px] font-bold hover:bg-emerald-500/20 transition-all mt-2"
                             >
-                              Open Full Lead â†’
+                              Open Full Lead →
                             </Link>
                           </div>
                         )}
                       </td>
-                      <td className="py-4 px-4 font-extrabold text-white">â‚¹{order.totalValue.toLocaleString('en-IN')}</td>
-                      <td className="py-4 px-4 font-bold text-[var(--text-secondary)]">â‚¹{order.downPayment.toLocaleString('en-IN')}</td>
-                      <td className="py-4 px-4 font-extrabold text-emerald-400">â‚¹{order.totalPaid.toLocaleString('en-IN')}</td>
+                      <td className="py-4 px-4 font-extrabold text-white">₹{order.totalValue.toLocaleString('en-IN')}</td>
+                      <td className="py-4 px-4 font-bold text-[var(--text-secondary)]">₹{order.downPayment.toLocaleString('en-IN')}</td>
+                      <td className="py-4 px-4 font-extrabold text-emerald-400">₹{order.totalPaid.toLocaleString('en-IN')}</td>
                       <td className="py-4 px-4 font-extrabold text-emerald-400">
-                        â‚¹{order.balanceOutstanding.toLocaleString('en-IN')}
+                        ₹{order.balanceOutstanding.toLocaleString('en-IN')}
                         {order.balanceOutstanding === 0 && (
                           <span className="inline-block text-[9px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20 ml-2">Paid</span>
                         )}
@@ -1412,7 +1412,7 @@ export default function FinancePage() {
             <div className="p-5 border-b border-[var(--border-color)] bg-[var(--bg-card)]/30 flex justify-between items-center">
               <div>
                 <h3 className="text-sm font-bold uppercase tracking-wider text-white">
-                  {modalMode === 'verify' ? 'Review & Verify Order' : `Financial Ledger â€” Order ${selectedOrder.orderCode}`}
+                  {modalMode === 'verify' ? 'Review & Verify Order' : `Financial Ledger — Order ${selectedOrder.orderCode}`}
                 </h3>
                 <p className="text-[11px] text-[var(--text-secondary)] mt-0.5">
                   Client:{' '}
@@ -1437,19 +1437,19 @@ export default function FinancePage() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-xs">
                 <div>
                   <span className="text-[var(--text-secondary)] block font-semibold">Total Contract Value</span>
-                  <span className="text-sm font-extrabold text-white">â‚¹{selectedOrder.totalValue.toLocaleString('en-IN')}</span>
+                  <span className="text-sm font-extrabold text-white">₹{selectedOrder.totalValue.toLocaleString('en-IN')}</span>
                 </div>
                 <div>
                   <span className="text-[var(--text-secondary)] block font-semibold">Down Payment Punched</span>
-                  <span className="text-sm font-bold text-emerald-400">â‚¹{selectedOrder.downPayment.toLocaleString('en-IN')}</span>
+                  <span className="text-sm font-bold text-emerald-400">₹{selectedOrder.downPayment.toLocaleString('en-IN')}</span>
                 </div>
                 <div>
                   <span className="text-[var(--text-secondary)] block font-semibold">Total Payments Cleared</span>
-                  <span className="text-sm font-extrabold text-emerald-400">â‚¹{selectedOrder.totalPaid.toLocaleString('en-IN')}</span>
+                  <span className="text-sm font-extrabold text-emerald-400">₹{selectedOrder.totalPaid.toLocaleString('en-IN')}</span>
                 </div>
                 <div>
                   <span className="text-[var(--text-secondary)] block font-semibold">Outstanding Balance</span>
-                  <span className="text-sm font-extrabold text-emerald-400">â‚¹{selectedOrder.balanceOutstanding.toLocaleString('en-IN')}</span>
+                  <span className="text-sm font-extrabold text-emerald-400">₹{selectedOrder.balanceOutstanding.toLocaleString('en-IN')}</span>
                 </div>
               </div>
 
@@ -1492,7 +1492,7 @@ export default function FinancePage() {
                         {selectedOrder.subsidyAmount && (
                           <div>
                             <span className="text-slate-450 block font-semibold">Subsidy Amount</span>
-                            <span className="text-slate-205 font-bold text-emerald-450">â‚¹{selectedOrder.subsidyAmount.toLocaleString('en-IN')}</span>
+                            <span className="text-slate-205 font-bold text-emerald-450">₹{selectedOrder.subsidyAmount.toLocaleString('en-IN')}</span>
                           </div>
                         )}
                       </div>
@@ -1510,7 +1510,7 @@ export default function FinancePage() {
                               <div>
                                 <span className="text-[10px] text-[var(--text-muted)] font-semibold block">{DOC_TYPES[type]}</span>
                                 <span className={`text-[10px] font-bold ${doc ? 'text-emerald-400' : 'text-rose-450'}`}>
-                                  {doc ? 'âœ“ Uploaded' : 'âœ— Missing'}
+                                  {doc ? '✓ Uploaded' : '✗ Missing'}
                                 </span>
                               </div>
                               {doc && (
@@ -1574,7 +1574,7 @@ export default function FinancePage() {
                       </div>
                     ) : (
                       <div className="p-3.5 mt-6 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-center">
-                        <span className="text-[11px] text-[var(--text-muted)] italic">ðŸ”’ Restricted: Requires 'Verify Order' permission to approve or reject</span>
+                        <span className="text-[11px] text-[var(--text-muted)] italic">🔒 Restricted: Requires 'Verify Order' permission to approve or reject</span>
                       </div>
                     )}
                   </div>
@@ -1599,7 +1599,7 @@ export default function FinancePage() {
                               <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-2">
                                   <span className={`font-extrabold text-sm ${pmt.isDiscarded ? 'line-through text-[var(--text-muted)]' : 'text-white'}`}>
-                                    â‚¹{pmt.amount.toLocaleString('en-IN')}
+                                    ₹{pmt.amount.toLocaleString('en-IN')}
                                   </span>
                                   {pmt.isDiscarded && (
                                     <span className="text-[9px] bg-rose-950/80 border border-rose-900/50 text-rose-450 px-1.5 py-0.5 rounded font-bold uppercase tracking-wide">
@@ -1721,7 +1721,7 @@ export default function FinancePage() {
                               disabled={selectedOrder.balanceOutstanding === 0}
                               className="w-full pl-8 pr-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)] placeholder-slate-600 font-extrabold"
                             />
-                            <span className="absolute left-3 top-2 text-[var(--text-muted)] font-bold">â‚¹</span>
+                            <span className="absolute left-3 top-2 text-[var(--text-muted)] font-bold">₹</span>
                           </div>
                         </div>
 
@@ -1814,7 +1814,7 @@ export default function FinancePage() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <p className="text-[11px] font-bold text-emerald-400 truncate flex items-center gap-1">
-                                    <span>âœ“ Uploaded Successfully</span>
+                                    <span>✓ Uploaded Successfully</span>
                                   </p>
                                   <a 
                                     href={receiptUrl} 
@@ -1863,7 +1863,7 @@ export default function FinancePage() {
 
                         {selectedOrder.balanceOutstanding === 0 ? (
                           <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs rounded-lg font-bold text-center">
-                            âœ“ This ledger has been fully cleared.
+                            ✓ This ledger has been fully cleared.
                           </div>
                         ) : (
                           <button
@@ -1879,7 +1879,7 @@ export default function FinancePage() {
                     </div>
                   ) : (
                     <div className="md:col-span-2 bg-[var(--bg-card)]/20 p-6 border border-[var(--border-color)] rounded-xl flex items-center justify-center text-center">
-                      <p className="text-[11px] text-[var(--text-muted)] italic">ðŸ”’ Maintaining ledger is restricted: You do not have permission to record or modify payments.</p>
+                      <p className="text-[11px] text-[var(--text-muted)] italic">🔒 Maintaining ledger is restricted: You do not have permission to record or modify payments.</p>
                     </div>
                   )}
 
@@ -1905,7 +1905,7 @@ export default function FinancePage() {
 
             <form onSubmit={handleModifyPayment} className="p-6 space-y-4">
               <div>
-                <label className="block text-[10px] font-semibold uppercase text-[var(--text-secondary)] mb-1">Receipt Amount (â‚¹) *</label>
+                <label className="block text-[10px] font-semibold uppercase text-[var(--text-secondary)] mb-1">Receipt Amount (₹) *</label>
                 <input
                   type="number"
                   step="0.01"
@@ -1999,7 +1999,7 @@ export default function FinancePage() {
 
             <form onSubmit={handleDiscardPayment} className="p-6 space-y-4">
               <p className="text-xs text-[var(--text-secondary)] leading-relaxed bg-rose-950/20 border border-rose-900/30 p-3 rounded-lg text-rose-350">
-                Are you sure you want to discard the payment of <strong>â‚¹{discardingPayment.amount.toLocaleString('en-IN')}</strong>? This action cannot be undone, and the order balance outstanding will be automatically adjusted.
+                Are you sure you want to discard the payment of <strong>₹{discardingPayment.amount.toLocaleString('en-IN')}</strong>? This action cannot be undone, and the order balance outstanding will be automatically adjusted.
               </p>
 
               <div>
@@ -2064,7 +2064,7 @@ export default function FinancePage() {
                   <option value="">Select a team member...</option>
                   {financeSubordinates.map((emp) => (
                     <option key={emp.id} value={emp.id}>
-                      {emp.name} ({emp.department?.name || 'N/A'} â€” {emp.designation?.name || emp.role})
+                      {emp.name} ({emp.department?.name || 'N/A'} — {emp.designation?.name || emp.role})
                     </option>
                   ))}
                 </select>

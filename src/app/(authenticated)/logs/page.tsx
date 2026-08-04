@@ -107,10 +107,10 @@ const formatExecutiveSummary = (log: AuditLog) => {
   }
 
   if (table.includes('payment')) {
-    return `${log.user.name} recorded payment entry #${log.recordId} (Amount: â‚¹${newVal || oldVal || '0'})`;
+    return `${log.user.name} recorded payment entry #${log.recordId} (Amount: ₹${newVal || oldVal || '0'})`;
   }
 
-  return `${log.user.name} updated ${log.tableName} #${log.recordId} (${log.fieldName}: ${oldVal || 'None'} â†’ ${newVal || 'None'})`;
+  return `${log.user.name} updated ${log.tableName} #${log.recordId} (${log.fieldName}: ${oldVal || 'None'} → ${newVal || 'None'})`;
 };
 
 export default function AuditLogsPage() {

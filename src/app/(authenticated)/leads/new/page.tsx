@@ -186,7 +186,7 @@ export default function NewLeadPage() {
         const existing = data.data.leads[0];
         const assignedName = existing.consultant?.name || 'Unassigned';
         setDuplicateWarning(
-          `A lead with this number already exists. Lead ID: #${existing.leadCode} â€” assigned to ${assignedName}.`
+          `A lead with this number already exists. Lead ID: #${existing.leadCode} — assigned to ${assignedName}.`
         );
         if (hasPermission('leads:edit') || user?.role === 'admin') {
           setShowOverride(true);

@@ -224,7 +224,7 @@ export default function CompletedOrdersPage() {
           </div>
           <div className="bg-[var(--bg-card)] border border-[var(--border-color)] p-3 rounded-xl text-center">
             <span className="text-[10px] text-[var(--text-secondary)] uppercase font-mono block">Total Value</span>
-            <span className="text-lg font-bold text-emerald-400">â‚¹{(totalRevenue / 100000).toFixed(2)}L</span>
+            <span className="text-lg font-bold text-emerald-400">₹{(totalRevenue / 100000).toFixed(2)}L</span>
           </div>
         </div>
       </div>
@@ -373,15 +373,15 @@ export default function CompletedOrdersPage() {
                     </td>
                     <td className="p-4">
                       <div className="font-semibold text-white">{order.lead.customerName}</div>
-                      <div className="text-[11px] text-[var(--text-secondary)]">{order.lead.mobile} â€¢ {order.lead.city}</div>
+                      <div className="text-[11px] text-[var(--text-secondary)]">{order.lead.mobile} • {order.lead.city}</div>
                     </td>
                     <td className="p-4 font-mono font-bold text-emerald-400">
                       {order.systemSizeKw} kW
                       <span className="block text-[10px] text-[var(--text-secondary)] font-normal uppercase">{order.clientType.replace('_', '-')}</span>
                     </td>
                     <td className="p-4 font-mono">
-                      <span className="font-bold text-emerald-400">â‚¹{order.totalValue.toLocaleString()}</span>
-                      <span className="block text-[10px] text-[var(--text-muted)]">Paid: â‚¹{order.totalPaid.toLocaleString()}</span>
+                      <span className="font-bold text-emerald-400">₹{order.totalValue.toLocaleString()}</span>
+                      <span className="block text-[10px] text-[var(--text-muted)]">Paid: ₹{order.totalPaid.toLocaleString()}</span>
                     </td>
                     <td className="p-4 space-y-0.5 text-[11px]">
                       <div><span className="text-[var(--text-muted)]">Sales:</span> {order.submittedBy?.name || '-'}</div>
@@ -428,7 +428,7 @@ export default function CompletedOrdersPage() {
                   <h2 className="text-xl font-bold text-white">{selectedOrder.orderCode}</h2>
                   <span className="px-2.5 py-0.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-[10px] font-bold uppercase rounded-full">Completed & Commissioned</span>
                 </div>
-                <p className="text-xs text-[var(--text-secondary)]">Lead Reference: {selectedOrder.lead.leadCode} â€¢ Customer: {selectedOrder.lead.customerName}</p>
+                <p className="text-xs text-[var(--text-secondary)]">Lead Reference: {selectedOrder.lead.leadCode} • Customer: {selectedOrder.lead.customerName}</p>
               </div>
             </div>
 
@@ -449,7 +449,7 @@ export default function CompletedOrdersPage() {
                 <div className="text-white font-semibold">{selectedOrder.systemSizeKw} kW Solar Plant</div>
                 <div className="text-[var(--text-secondary)]">Type: {selectedOrder.clientType.replace('_', ' ').toUpperCase()}</div>
                 <div className="text-[var(--text-secondary)]">Connection #: {selectedOrder.connectionNumber}</div>
-                <div className="text-[var(--text-secondary)]">Subsidy: {selectedOrder.subsidyApplicable ? `Applicable (â‚¹${selectedOrder.subsidyAmount || 0})` : 'Not Applicable'}</div>
+                <div className="text-[var(--text-secondary)]">Subsidy: {selectedOrder.subsidyApplicable ? `Applicable (₹${selectedOrder.subsidyAmount || 0})` : 'Not Applicable'}</div>
               </div>
 
               {/* Stakeholders */}
@@ -470,7 +470,7 @@ export default function CompletedOrdersPage() {
                 </h4>
                 <div className="text-xs font-mono">
                   <span className="text-[var(--text-secondary)]">Total Value: </span>
-                  <span className="text-emerald-400 font-bold">â‚¹{selectedOrder.totalValue.toLocaleString()}</span>
+                  <span className="text-emerald-400 font-bold">₹{selectedOrder.totalValue.toLocaleString()}</span>
                 </div>
               </div>
 
@@ -479,7 +479,7 @@ export default function CompletedOrdersPage() {
                   {selectedOrder.payments.map(p => (
                     <div key={p.id} className="p-3 bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)] flex items-center justify-between text-xs">
                       <div>
-                        <span className="font-bold text-white">â‚¹{p.amount.toLocaleString()}</span>
+                        <span className="font-bold text-white">₹{p.amount.toLocaleString()}</span>
                         <span className="text-[var(--text-secondary)] ml-2 font-mono text-[10px] uppercase">[{p.paymentMethod}]</span>
                         {p.transactionRef && <span className="text-[var(--text-muted)] ml-2 text-[10px]">Ref: {p.transactionRef}</span>}
                       </div>

@@ -471,7 +471,7 @@ const HierarchyTreeNodeComponent = ({
             </button>
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className="text-[9px] text-[var(--text-secondary)] font-medium truncate max-w-[100px]">{node.designationName}</span>
-              <span className="text-slate-700 text-[10px]">â€¢</span>
+              <span className="text-slate-700 text-[10px]">•</span>
               <span className="text-[8px] bg-[var(--bg-main)] border border-[var(--border-color)]/80 text-[var(--text-secondary)] px-1 py-0.5 rounded font-bold uppercase tracking-wider truncate max-w-[80px]">
                 {node.departmentName}
               </span>
@@ -740,19 +740,19 @@ const DesignationTreeNodeComponent = ({
             getLevelBorderColor(node.level)
           }`}>
             <span className="text-[7px] text-[var(--text-muted)] font-bold block leading-none">LVL</span>
-            <span className="text-xs font-extrabold text-white block mt-0.5 leading-none">{node.level}</span>
+            <span className="text-xs font-extrabold text-[var(--text-primary)] block mt-0.5 leading-none">{node.level}</span>
           </div>
 
           {/* Info */}
           <div className="min-w-0 flex-1">
-            <h4 className="text-xs font-extrabold text-white leading-none mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors truncate">
+            <h4 className="text-xs font-extrabold text-[var(--text-primary)] leading-none mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors truncate">
               {node.name}
             </h4>
             <div className="flex items-center gap-1.5 flex-wrap mt-1">
               <span className="text-[8px] bg-[var(--bg-main)] border border-[var(--border-color)]/80 text-[var(--text-secondary)] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
                 {node.departmentName}
               </span>
-              <span className="text-slate-700 text-[10px]">â€¢</span>
+              <span className="text-slate-700 text-[10px]">•</span>
               <span className="text-[8px] bg-emerald-500/5 border border-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded font-bold font-mono">
                 {node.defaultPermissionsCount} Defaults
               </span>
@@ -1207,12 +1207,12 @@ export default function TeamManagementPage() {
                     {m.name.charAt(0)}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-white truncate leading-none mb-1">{m.name}</p>
+                    <p className="text-xs font-bold text-[var(--text-primary)] truncate leading-none mb-1">{m.name}</p>
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="text-[9px] text-[var(--text-muted)] font-mono uppercase truncate">{m.designation?.name || m.role}</span>
                       {level > 0 && m.reportsTo && (
                         <>
-                          <span className="text-slate-700 text-[8px]">â€¢</span>
+                          <span className="text-slate-700 text-[8px]">•</span>
                           <span className="text-[8px] text-emerald-600/70 dark:text-emerald-400/70 font-semibold" title={`Supervisor: ID ${m.reportsTo}`}>
                             Reports to: {users.find((u: any) => u.id === m.reportsTo)?.name || `ID ${m.reportsTo}`}
                           </span>
@@ -1289,10 +1289,10 @@ export default function TeamManagementPage() {
                     {m.name.charAt(0)}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-white leading-none mb-1">{m.name}</p>
+                    <p className="text-xs font-bold text-[var(--text-primary)] leading-none mb-1">{m.name}</p>
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-[10px] text-[var(--text-secondary)] font-bold tracking-wide">{m.designation?.name || 'Employee'}</span>
-                      <span className="text-slate-700 text-xs">â€¢</span>
+                      <span className="text-slate-700 text-xs">•</span>
                       <span className="text-[9px] bg-[var(--bg-main)] border border-[var(--border-color)] text-[var(--text-secondary)] px-1.5 py-0.5 rounded font-bold uppercase">{deptName}</span>
                     </div>
                   </div>
@@ -2472,7 +2472,7 @@ export default function TeamManagementPage() {
       {/* Title Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-white tracking-wide">{titleText}</h1>
+          <h1 className="text-xl font-bold text-[var(--text-primary)] tracking-wide">{titleText}</h1>
           <p className="text-xs text-[var(--text-secondary)] mt-1">
             {activeTab === 'members'
 
@@ -2563,7 +2563,7 @@ export default function TeamManagementPage() {
             disabled={!!empSearchInput.trim()}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={empSearchInput.trim() ? "Clear Employee ID lookup to search by name..." : "Search by name, email, or employee ID..."}
-            className="w-full pl-9 pr-4 py-2 bg-slate-955/80 border border-slate-805 rounded-xl text-white placeholder-slate-550 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/50 disabled:opacity-40"
+            className="w-full pl-9 pr-4 py-2 bg-slate-955/80 border border-slate-805 rounded-xl text-[var(--text-primary)] placeholder-slate-550 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/50 disabled:opacity-40"
           />
           <Search className="w-4 h-4 text-[var(--text-muted)] absolute left-3 top-2.5" />
         </div>
@@ -2573,7 +2573,7 @@ export default function TeamManagementPage() {
             value={empSearchInput}
             onChange={(e) => setEmpSearchInput(e.target.value)}
             placeholder="Exact Employee ID Lookup (EMP-101)..."
-            className="w-full pl-9 pr-4 py-2.5 bg-slate-955/80 border border-slate-805 rounded-xl text-white placeholder-slate-550 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/50 font-mono tracking-wide"
+            className="w-full pl-9 pr-4 py-2.5 bg-slate-955/80 border border-slate-805 rounded-xl text-[var(--text-primary)] placeholder-slate-550 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/50 font-mono tracking-wide"
           />
           <Search className="w-4 h-4 text-[var(--text-muted)] absolute left-3 top-3" />
         </div>
@@ -2679,8 +2679,8 @@ export default function TeamManagementPage() {
                           )}
                         </div>
                         <div className="text-center">
-                          <p className="text-white font-bold text-sm leading-tight">{member.name}</p>
-                          <p className="text-[var(--text-muted)] font-mono text-[10px] mt-1">{member.employeeId || 'â€”'}</p>
+                          <p className="text-[var(--text-primary)] font-bold text-sm leading-tight">{member.name}</p>
+                          <p className="text-[var(--text-muted)] font-mono text-[10px] mt-1">{member.employeeId || '—'}</p>
                         </div>
                         <span className={`inline-block text-[9px] font-bold px-3 py-1 border rounded-full uppercase tracking-wider ${roleConfig.class}`}>
                           {designationLabel}
@@ -3053,7 +3053,7 @@ export default function TeamManagementPage() {
                   value={treeSearchQuery}
                   onChange={(e) => setTreeSearchQuery(e.target.value)}
                   placeholder="Search and focus on employee..."
-                  className="w-full pl-9 pr-4 py-2 bg-slate-955 border border-[var(--border-color)] rounded-xl text-white placeholder-slate-500 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                  className="w-full pl-9 pr-4 py-2 bg-slate-955 border border-[var(--border-color)] rounded-xl text-[var(--text-primary)] placeholder-slate-500 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
                 />
                 <Search className="w-4 h-4 text-[var(--text-muted)] absolute left-3 top-2.5" />
                 {treeSearchQuery && (
@@ -3081,7 +3081,7 @@ export default function TeamManagementPage() {
                       className="w-full text-left px-4 py-2.5 hover:bg-[var(--bg-card)] flex items-center justify-between text-xs transition-colors cursor-pointer"
                     >
                       <div>
-                        <p className="font-bold text-white leading-none mb-1">{m.name}</p>
+                        <p className="font-bold text-[var(--text-primary)] leading-none mb-1">{m.name}</p>
                         <p className="text-[10px] text-slate-450">{m.designation?.name || 'Employee'}</p>
                       </div>
                       <span className="text-[9px] bg-[var(--bg-main)] border border-[var(--border-color)] px-1.5 py-0.5 rounded text-[var(--text-secondary)] font-mono font-bold">
@@ -3167,7 +3167,7 @@ export default function TeamManagementPage() {
               <button
                 type="button"
                 onClick={() => setFocusedNodeId(null)}
-                className="ml-auto text-[9px] bg-slate-955 border border-[var(--border-color)] hover:border-slate-750 text-[var(--text-secondary)] hover:text-white px-2 py-1 rounded font-bold uppercase tracking-wide cursor-pointer transition-all"
+                className="ml-auto text-[9px] bg-slate-955 border border-[var(--border-color)] hover:border-slate-750 text-[var(--text-secondary)] hover:text-[var(--text-primary)] px-2 py-1 rounded font-bold uppercase tracking-wide cursor-pointer transition-all"
               >
                 Reset Focus
               </button>
@@ -3238,7 +3238,7 @@ export default function TeamManagementPage() {
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
         <div className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
           <div className="p-5 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex justify-between items-center">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-white">Form New Clan (Team)</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">Form New Clan (Team)</h3>
             <button onClick={() => setShowCreateTeamModal(false)} className="text-[var(--text-secondary)] hover:text-white cursor-pointer">
               <X className="w-4 h-4" />
             </button>
@@ -3253,7 +3253,7 @@ export default function TeamManagementPage() {
                   value={newTeamName}
                   onChange={(e) => setNewTeamName(e.target.value)}
                   placeholder="e.g. PSA Tigers, Sales Challengers..."
-                  className="w-full px-3 py-2 bg-slate-955 border border-[var(--border-color)] rounded-xl text-white text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                  className="w-full px-3 py-2 bg-slate-955 border border-[var(--border-color)] rounded-xl text-[var(--text-primary)] text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
                 />
               </div>
               <div>
@@ -3296,7 +3296,7 @@ export default function TeamManagementPage() {
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
         <div className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
           <div className="p-5 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex justify-between items-center">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-white">Edit Reporting Structure</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">Edit Reporting Structure</h3>
             <button onClick={() => setEditingReportingUser(null)} className="text-[var(--text-secondary)] hover:text-white cursor-pointer">
               <X className="w-4 h-4" />
             </button>
@@ -3304,7 +3304,7 @@ export default function TeamManagementPage() {
           <form onSubmit={handleUpdateReportingSubmit}>
             <div className="p-5 space-y-4">
               <div className="p-3 bg-[var(--bg-card)]/30 border border-[var(--border-color)] rounded-xl">
-                <p className="text-xs text-white font-bold">{editingReportingUser.name}</p>
+                <p className="text-xs text-[var(--text-primary)] font-bold">{editingReportingUser.name}</p>
                 <p className="text-[10px] text-[var(--text-muted)] mt-0.5 uppercase tracking-wide font-mono">
                   {editingReportingUser.role} (Current Supervisor ID: {editingReportingUser.reportsTo || 'None'})
                 </p>
@@ -3374,7 +3374,7 @@ export default function TeamManagementPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
           <div className="w-full max-w-3xl bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
             <div className="p-6 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex justify-between items-center">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-white">Register New Team Member</h3>
+              <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">Register New Team Member</h3>
               <button onClick={closeAddModal} className="text-[var(--text-secondary)] hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
@@ -3434,7 +3434,7 @@ export default function TeamManagementPage() {
 
                                 <div className="flex-1 space-y-2">
 
-                                  <p className="text-xs font-bold text-white">Profile Photograph</p>
+                                  <p className="text-xs font-bold text-[var(--text-primary)]">Profile Photograph</p>
 
                                   <p className="text-[10px] text-[var(--text-muted)]">Upload a clear photo. Recommended: square, min 200Ã—200px.</p>
 
@@ -3492,7 +3492,7 @@ export default function TeamManagementPage() {
 
                                     placeholder="e.g. Ramesh Singh"
 
-                                    className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-emerald-600/50 rounded-xl text-white text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all"
+                                    className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-emerald-600/50 rounded-xl text-[var(--text-primary)] text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all"
 
                                   />
 
@@ -3518,7 +3518,7 @@ export default function TeamManagementPage() {
 
                                     placeholder="e.g. SSS-1002"
 
-                                    className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-emerald-600/50 rounded-xl text-white text-xs font-mono placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all"
+                                    className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-emerald-600/50 rounded-xl text-[var(--text-primary)] text-xs font-mono placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all"
 
                                   />
 
@@ -3552,7 +3552,7 @@ export default function TeamManagementPage() {
 
                                     placeholder="e.g. ramesh@solarcrm.com"
 
-                                    className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-emerald-600/50 rounded-xl text-white text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all"
+                                    className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-emerald-600/50 rounded-xl text-[var(--text-primary)] text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all"
 
                                   />
 
@@ -3578,7 +3578,7 @@ export default function TeamManagementPage() {
 
                                     placeholder="10-digit mobile number"
 
-                                    className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-emerald-600/50 rounded-xl text-white text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all"
+                                    className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-emerald-600/50 rounded-xl text-[var(--text-primary)] text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all"
 
                                   />
 
@@ -3614,9 +3614,9 @@ export default function TeamManagementPage() {
 
                                   onChange={(e) => setForm({ ...form, workingLocation: e.target.value })}
 
-                                  placeholder="e.g. Varanasi HQ, Remote â€“ Delhi, Lucknow Field"
+                                  placeholder="e.g. Varanasi HQ, Remote – Delhi, Lucknow Field"
 
-                                  className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-emerald-900/30 focus:border-emerald-600/60 rounded-xl text-white text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all"
+                                  className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-emerald-900/30 focus:border-emerald-600/60 rounded-xl text-[var(--text-primary)] text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all"
 
                                 />
 
@@ -3648,7 +3648,7 @@ export default function TeamManagementPage() {
 
                                   placeholder="Complete residential address"
 
-                                  className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-emerald-600/50 rounded-xl text-white text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all resize-none"
+                                  className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-emerald-600/50 rounded-xl text-[var(--text-primary)] text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all resize-none"
 
                                 />
 
@@ -3714,7 +3714,7 @@ export default function TeamManagementPage() {
 
                                     placeholder="e.g. Sales Executive, Field Officer"
 
-                                    className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-emerald-600/50 rounded-xl text-white text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all"
+                                    className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-emerald-600/50 rounded-xl text-[var(--text-primary)] text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all"
 
                                   />
 
@@ -3746,9 +3746,9 @@ export default function TeamManagementPage() {
 
                                     onChange={(e) => setForm({ ...form, password: e.target.value })}
 
-                                    placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                                    placeholder="••••••••"
 
-                                    className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-emerald-600/50 rounded-xl text-white text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all"
+                                    className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-emerald-600/50 rounded-xl text-[var(--text-primary)] text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all"
 
                                   />
 
@@ -3891,7 +3891,7 @@ export default function TeamManagementPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
           <div className="w-full max-w-4xl bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
             <div className="p-6 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex justify-between items-center">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-white">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">
                 {selectedMember.id === user?.id ? 'My profile settings' : 'Team Member Profile'}
               </h3>
               <button onClick={closeProfileModal} className="text-[var(--text-secondary)] hover:text-white cursor-pointer">
@@ -3959,7 +3959,7 @@ export default function TeamManagementPage() {
                             required
                             value={editName}
                             onChange={(e) => setEditName(e.target.value)}
-                            className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-emerald-500 focus:outline-none"
+                            className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:ring-emerald-500 focus:outline-none"
                           />
                         ) : (
                           <span className="text-white text-xs font-semibold block bg-[var(--bg-main)]/30 border border-[var(--border-color)] px-3 py-2 rounded-lg opacity-70 truncate" title={selectedMember.name}>
@@ -3975,7 +3975,7 @@ export default function TeamManagementPage() {
                             required
                             value={editEmployeeId}
                             onChange={(e) => setEditEmployeeId(e.target.value)}
-                            className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-emerald-500 focus:outline-none font-mono"
+                            className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:ring-emerald-500 focus:outline-none font-mono"
                           />
                         ) : (
                           <span className="text-white text-xs font-mono block bg-[var(--bg-main)]/30 border border-[var(--border-color)] px-3 py-2 rounded-lg opacity-70 truncate" title={selectedMember.employeeId || 'Not Set'}>
@@ -3991,7 +3991,7 @@ export default function TeamManagementPage() {
                             required
                             value={editEmail}
                             onChange={(e) => setEditEmail(e.target.value)}
-                            className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-emerald-500 focus:outline-none font-mono"
+                            className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:ring-emerald-500 focus:outline-none font-mono"
                           />
                         ) : (
                           <span className="text-[var(--text-primary)] text-xs font-mono block bg-[var(--bg-main)]/30 border border-[var(--border-color)] px-3 py-2 rounded-lg opacity-70 truncate" title={selectedMember.email}>
@@ -4021,7 +4021,7 @@ export default function TeamManagementPage() {
                         value={editPhone}
                         onChange={(e) => setEditPhone(e.target.value)}
                         placeholder="Update mobile number"
-                        className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-emerald-500 focus:outline-none"
+                        className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:ring-emerald-500 focus:outline-none"
                       />
                     </div>
                   </div>
@@ -4119,7 +4119,7 @@ export default function TeamManagementPage() {
                           required
                           value={editMemberForm.name}
                           onChange={(e) => setEditMemberForm({ ...editMemberForm, name: e.target.value })}
-                          className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-emerald-600/50 rounded-xl text-white text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all"
+                          className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-emerald-600/50 rounded-xl text-[var(--text-primary)] text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all"
                         />
                       </div>
                       <div className="space-y-1.5">
@@ -4131,7 +4131,7 @@ export default function TeamManagementPage() {
                           required
                           value={editMemberForm.employeeId}
                           onChange={(e) => setEditMemberForm({ ...editMemberForm, employeeId: e.target.value })}
-                          className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-emerald-600/50 rounded-xl text-white text-xs font-mono placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all"
+                          className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-emerald-600/50 rounded-xl text-[var(--text-primary)] text-xs font-mono placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all"
                         />
                       </div>
                       <div className="space-y-1.5">
@@ -4143,7 +4143,7 @@ export default function TeamManagementPage() {
                           required
                           value={editMemberForm.email}
                           onChange={(e) => setEditMemberForm({ ...editMemberForm, email: e.target.value })}
-                          className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-emerald-600/50 rounded-xl text-white text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all"
+                          className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-emerald-600/50 rounded-xl text-[var(--text-primary)] text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all"
                         />
                       </div>
                       <div className="space-y-1.5">
@@ -4155,7 +4155,7 @@ export default function TeamManagementPage() {
                           required
                           value={editMemberForm.phone}
                           onChange={(e) => setEditMemberForm({ ...editMemberForm, phone: e.target.value })}
-                          className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-emerald-600/50 rounded-xl text-white text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all"
+                          className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-emerald-600/50 rounded-xl text-[var(--text-primary)] text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all"
                         />
                       </div>
                     </div>
@@ -4173,8 +4173,8 @@ export default function TeamManagementPage() {
                         type="text"
                         value={editMemberForm.workingLocation}
                         onChange={(e) => setEditMemberForm({ ...editMemberForm, workingLocation: e.target.value })}
-                        placeholder="e.g. Varanasi HQ, Remote â€“ Delhi, Lucknow Field"
-                        className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-emerald-900/30 focus:border-emerald-600/60 rounded-xl text-white text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all"
+                        placeholder="e.g. Varanasi HQ, Remote – Delhi, Lucknow Field"
+                        className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-emerald-900/30 focus:border-emerald-600/60 rounded-xl text-[var(--text-primary)] text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all"
                       />
                       <p className="text-[10px] text-slate-600">Shown in Employee ID lookup search results.</p>
                     </div>
@@ -4189,7 +4189,7 @@ export default function TeamManagementPage() {
                         value={editMemberForm.address}
                         onChange={(e) => setEditMemberForm({ ...editMemberForm, address: e.target.value })}
                         placeholder="Complete residential address"
-                        className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-emerald-600/50 rounded-xl text-white text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all resize-none"
+                        className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-emerald-600/50 rounded-xl text-[var(--text-primary)] text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all resize-none"
                       />
                     </div>
 
@@ -4208,7 +4208,7 @@ export default function TeamManagementPage() {
                           placeholder="Leave blank to keep current"
                           value={editMemberPassword}
                           onChange={(e) => setEditMemberPassword(e.target.value)}
-                          className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-emerald-600/50 rounded-xl text-white text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all"
+                          className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-emerald-600/50 rounded-xl text-[var(--text-primary)] text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all"
                         />
                       </div>
                       {canEditPermissionsAndRole && (
@@ -4235,7 +4235,7 @@ export default function TeamManagementPage() {
                             value={(editMemberForm as any).designationText !== undefined ? (editMemberForm as any).designationText : (selectedMember.designation?.name || '')}
                             onChange={(e) => setEditMemberForm({ ...editMemberForm, designationText: e.target.value } as any)}
                             placeholder="e.g. Sales Executive, Operations Lead"
-                            className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-emerald-600/50 rounded-xl text-white text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all"
+                            className="block w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-emerald-600/50 rounded-xl text-[var(--text-primary)] text-xs placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-600/30 transition-all"
                           />
                         </div>
                       )}
@@ -4406,7 +4406,7 @@ export default function TeamManagementPage() {
                         <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1.5">Last Login Session</span>
                         {selectedMember.lastLoginAt ? (
                           <div className="space-y-1">
-                            <span className="block text-white text-xs font-mono">
+                            <span className="block text-[var(--text-primary)] text-xs font-mono">
                               {new Date(selectedMember.lastLoginAt).toLocaleString('en-IN', {
                                 dateStyle: 'medium',
                                 timeStyle: 'short',
@@ -4425,7 +4425,7 @@ export default function TeamManagementPage() {
                         <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1.5">Last Logout Session</span>
                         {selectedMember.lastLogoutAt ? (
                           <div className="space-y-1">
-                            <span className="block text-white text-xs font-mono">
+                            <span className="block text-[var(--text-primary)] text-xs font-mono">
                               {new Date(selectedMember.lastLogoutAt).toLocaleString('en-IN', {
                                 dateStyle: 'medium',
                                 timeStyle: 'short',
@@ -4499,7 +4499,7 @@ export default function TeamManagementPage() {
                     )}
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-white leading-none">{selectedMember.name}</h4>
+                    <h4 className="text-sm font-bold text-[var(--text-primary)] leading-none">{selectedMember.name}</h4>
                     <span className={`inline-block text-[9px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider mt-2 ${
                       getRoleClass(selectedMember.role)
                     }`}>
@@ -4514,30 +4514,30 @@ export default function TeamManagementPage() {
                     <>
                       <div>
                         <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1">Employee ID</span>
-                        <span className="text-white font-mono">{selectedMember.employeeId || <span className="text-slate-650 italic">None</span>}</span>
+                        <span className="text-[var(--text-primary)] font-mono">{selectedMember.employeeId || <span className="text-slate-650 italic">None</span>}</span>
                       </div>
                       <div>
                         <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1">Email Address</span>
-                        <span className="text-white font-mono">{selectedMember.email}</span>
+                        <span className="text-[var(--text-primary)] font-mono">{selectedMember.email}</span>
                       </div>
                       <div>
                         <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1">Contact Number</span>
-                        <span className="text-white font-mono">{selectedMember.phone || '-'}</span>
+                        <span className="text-[var(--text-primary)] font-mono">{selectedMember.phone || '-'}</span>
                       </div>
                       <div>
                         <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1">Full Address</span>
-                        <span className="text-white">{selectedMember.address || '-'}</span>
+                        <span className="text-[var(--text-primary)]">{selectedMember.address || '-'}</span>
                       </div>
                       <div>
                         <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1 flex items-center gap-1">
                           <svg className="w-2.5 h-2.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                           Working Location
                         </span>
-                        <span className="text-white">{selectedMember.workingLocation || <span className="text-slate-600 italic text-[10px]">Not set</span>}</span>
+                        <span className="text-[var(--text-primary)]">{selectedMember.workingLocation || <span className="text-slate-600 italic text-[10px]">Not set</span>}</span>
                       </div>
                       <div>
                         <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1">Direct Supervisor</span>
-                        <span className="text-white">{selectedMember.supervisor?.name || <span className="text-slate-600 italic">None</span>}</span>
+                        <span className="text-[var(--text-primary)]">{selectedMember.supervisor?.name || <span className="text-slate-600 italic">None</span>}</span>
                       </div>
                       <div>
                         <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1">Status</span>
@@ -4551,29 +4551,29 @@ export default function TeamManagementPage() {
                       </div>
                       <div>
                         <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1">Years in Company</span>
-                        <span className="text-white">{calculateYearsInCompany(selectedMember.joiningDate)}</span>
+                        <span className="text-[var(--text-primary)]">{calculateYearsInCompany(selectedMember.joiningDate)}</span>
                       </div>
                     </>
                   ) : (
                     <>
                       <div>
                         <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1">Employee ID</span>
-                        <span className="text-white font-mono">{selectedMember.employeeId || <span className="text-slate-650 italic">None</span>}</span>
+                        <span className="text-[var(--text-primary)] font-mono">{selectedMember.employeeId || <span className="text-slate-650 italic">None</span>}</span>
                       </div>
                       <div>
                         <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1">Designation</span>
-                        <span className="text-white capitalize">{getRoleLabel(selectedMember.role)}</span>
+                        <span className="text-[var(--text-primary)] capitalize">{getRoleLabel(selectedMember.role)}</span>
                       </div>
                       <div>
                         <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1 flex items-center gap-1">
                           <svg className="w-2.5 h-2.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                           Working Location
                         </span>
-                        <span className="text-white">{selectedMember.workingLocation || <span className="text-slate-600 italic text-[10px]">Not set</span>}</span>
+                        <span className="text-[var(--text-primary)]">{selectedMember.workingLocation || <span className="text-slate-600 italic text-[10px]">Not set</span>}</span>
                       </div>
                       <div className="col-span-2">
                         <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1">Years in Company</span>
-                        <span className="text-white">{calculateYearsInCompany(selectedMember.joiningDate)}</span>
+                        <span className="text-[var(--text-primary)]">{calculateYearsInCompany(selectedMember.joiningDate)}</span>
                       </div>
                     </>
                   )}
@@ -4589,7 +4589,7 @@ export default function TeamManagementPage() {
                         <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1.5">Last Login Session</span>
                         {selectedMember.lastLoginAt ? (
                           <div className="space-y-1">
-                            <span className="block text-white text-xs font-mono">
+                            <span className="block text-[var(--text-primary)] text-xs font-mono">
                               {new Date(selectedMember.lastLoginAt).toLocaleString('en-IN', {
                                 dateStyle: 'medium',
                                 timeStyle: 'short',
@@ -4609,7 +4609,7 @@ export default function TeamManagementPage() {
                         <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1.5">Last Logout Session</span>
                         {selectedMember.lastLogoutAt ? (
                           <div className="space-y-1">
-                            <span className="block text-white text-xs font-mono">
+                            <span className="block text-[var(--text-primary)] text-xs font-mono">
                               {new Date(selectedMember.lastLogoutAt).toLocaleString('en-IN', {
                                 dateStyle: 'medium',
                                 timeStyle: 'short',
@@ -4656,7 +4656,7 @@ export default function TeamManagementPage() {
           <div className="w-full max-w-2xl bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
             <div className="p-6 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex justify-between items-center">
               <div>
-                <h3 className="text-sm font-bold uppercase tracking-wider text-white">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">
                   Activity Audit Logs
                 </h3>
                 <p className="text-[11px] text-[var(--text-muted)] mt-1">
@@ -4681,7 +4681,7 @@ export default function TeamManagementPage() {
                     value={logsDate}
                     max={getTodayLocalDateStr()}
                     onChange={handleLogsDateChange}
-                    className="block w-full sm:w-auto px-3 py-1.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    className="block w-full sm:w-auto px-3 py-1.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"
                   />
                   <button
                     onClick={() => {
@@ -4791,7 +4791,7 @@ export default function TeamManagementPage() {
                 <div className="flex items-center gap-2.5">
                   <SlidersHorizontal className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                   <div>
-                    <h3 className="text-sm font-bold uppercase tracking-wider text-white">Organization Hierarchy & Custom Designations</h3>
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">Organization Hierarchy & Custom Designations</h3>
                     <p className="text-[11px] text-[var(--text-secondary)]">Configure hierarchy levels, designate departments, and view the visual reporting structure.</p>
                   </div>
                 </div>
@@ -4828,7 +4828,7 @@ export default function TeamManagementPage() {
                 <div className="lg:col-span-3 bg-[var(--bg-main)]/40 p-5 border border-[var(--border-color)] rounded-xl space-y-4 max-h-[70vh] overflow-y-auto">
                   <div className="border-b border-[var(--border-color)]/80 pb-3 flex flex-wrap justify-between items-center gap-3">
                     <div>
-                      <h4 className="text-xs font-bold text-white uppercase tracking-wider">Designation Tiers & Reporting</h4>
+                      <h4 className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider">Designation Tiers & Reporting</h4>
                       <p className="text-[10px] text-[var(--text-muted)]">
                         {designationsViewMode === 'level' 
                           ? 'Designations grouped by reporting authority level (Level 0 to Level 6).' 
@@ -4882,7 +4882,7 @@ export default function TeamManagementPage() {
                                 levelDesigs.map(d => {
                                   const deptName = departmentsList.find(dept => dept.id === d.departmentId)?.name || 'Shared';
                                   return (
-                                    <span key={d.id} className="text-[10px] bg-[var(--bg-main)] border border-[var(--border-color)] px-2.5 py-1.5 rounded-lg text-white font-semibold flex items-center gap-1.5 shadow-sm">
+                                    <span key={d.id} className="text-[10px] bg-[var(--bg-main)] border border-[var(--border-color)] px-2.5 py-1.5 rounded-lg text-[var(--text-primary)] font-semibold flex items-center gap-1.5 shadow-sm">
                                       <span>{d.name}</span>
                                       <span className="text-[8px] bg-[var(--bg-card)] text-[var(--text-secondary)] px-1 rounded uppercase font-bold">{deptName}</span>
                                     </span>
@@ -4926,7 +4926,7 @@ export default function TeamManagementPage() {
                               ) : (
                                 deptDesigs.map(d => {
                                   return (
-                                    <span key={d.id} className="text-[10px] bg-[var(--bg-main)] border border-[var(--border-color)] px-2.5 py-1.5 rounded-lg text-white font-semibold flex items-center gap-1.5 shadow-sm">
+                                    <span key={d.id} className="text-[10px] bg-[var(--bg-main)] border border-[var(--border-color)] px-2.5 py-1.5 rounded-lg text-[var(--text-primary)] font-semibold flex items-center gap-1.5 shadow-sm">
                                       <span>{d.name}</span>
                                       <span className="text-[8px] bg-[var(--bg-card)] text-emerald-600 dark:text-emerald-400 px-1 rounded font-extrabold uppercase tracking-wider">Level {d.level}</span>
                                     </span>
@@ -4945,7 +4945,7 @@ export default function TeamManagementPage() {
                 <div className="lg:col-span-2 space-y-6 max-h-[70vh] overflow-y-auto">
                   {/* Form */}
                   <div className="bg-[var(--bg-card)]/20 p-4 border border-[var(--border-color)] rounded-xl">
-                    <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-[var(--border-color)] pb-2 mb-4">
+                    <h4 className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider border-b border-[var(--border-color)] pb-2 mb-4">
                       {editingDesignation ? 'Edit Designation Details' : 'Create Custom Designation'}
                     </h4>
 
@@ -4958,7 +4958,7 @@ export default function TeamManagementPage() {
                           value={designationName}
                           onChange={(e) => setDesignationName(e.target.value)}
                           placeholder="e.g. Regional Manager, Senior Advisor"
-                          className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-emerald-500 focus:outline-none"
+                          className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:ring-emerald-500 focus:outline-none"
                         />
                       </div>
 
@@ -4967,7 +4967,7 @@ export default function TeamManagementPage() {
                         <select
                           value={designationLevel}
                           onChange={(e) => setDesignationLevel(Number(e.target.value))}
-                          className="block w-full px-3 py-2 bg-slate-955 border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-emerald-500 focus:outline-none"
+                          className="block w-full px-3 py-2 bg-slate-955 border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:ring-emerald-500 focus:outline-none"
                         >
                           <option value={0}>Level 0: Admin</option>
                           <option value={1}>Level 1: Head</option>
@@ -4984,7 +4984,7 @@ export default function TeamManagementPage() {
                         <select
                           value={designationDeptId}
                           onChange={(e) => setDesignationDeptId(e.target.value)}
-                          className="block w-full px-3 py-2 bg-slate-955 border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-emerald-500 focus:outline-none"
+                          className="block w-full px-3 py-2 bg-slate-955 border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:ring-emerald-500 focus:outline-none"
                         >
                           <option value="">Shared / No Department</option>
                           {departmentsList.map((d) => (
@@ -5127,15 +5127,15 @@ export default function TeamManagementPage() {
 
                   {/* List Table */}
                   <div className="bg-[var(--bg-card)]/20 p-4 border border-[var(--border-color)] rounded-xl">
-                    <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-[var(--border-color)] pb-2 mb-3">All Designations</h4>
+                    <h4 className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider border-b border-[var(--border-color)] pb-2 mb-3">All Designations</h4>
                     <div className="max-h-[30vh] overflow-y-auto divide-y divide-slate-850">
                       {designationsList.map(d => {
                         const deptName = departmentsList.find(dept => dept.id === d.departmentId)?.name || 'Shared';
                         return (
                           <div key={d.id} className="py-2.5 flex justify-between items-center gap-4 text-xs">
                             <div>
-                              <p className="font-bold text-white">{d.name}</p>
-                              <p className="text-[10px] text-[var(--text-muted)] font-medium">Level {d.level} â€¢ Department: {deptName}</p>
+                              <p className="font-bold text-[var(--text-primary)]">{d.name}</p>
+                              <p className="text-[10px] text-[var(--text-muted)] font-medium">Level {d.level} • Department: {deptName}</p>
                             </div>
                             <div className="flex gap-1.5">
                               <button
@@ -5188,7 +5188,7 @@ export default function TeamManagementPage() {
                   {/* Controls Panel */}
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[var(--bg-card)]/60 border border-[var(--border-color)] p-4 rounded-xl shadow-xl">
                     <div>
-                      <h4 className="text-xs font-bold text-white uppercase tracking-wider">Visual Designation Hierarchy Tree</h4>
+                      <h4 className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider">Visual Designation Hierarchy Tree</h4>
                       <p className="text-[10px] text-[var(--text-secondary)]">Interactive visual tree representing the company designations and reporting flow. Click a node to edit.</p>
                     </div>
 

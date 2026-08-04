@@ -211,27 +211,52 @@ body {
    LIGHT MODE — FORCE HIGH CONTRAST TEXT & BUTTON READABILITY
    ============================================================ */
 
-/* Guarantee dark text for table cells, links, and buttons in light mode */
+/* Guarantee dark text for table cells, text links, and unstyled table buttons in light mode */
 .light table td,
-.light table th,
-.light table td a,
-.light table td button {
-  color: var(--text-primary) !important;
+.light table th {
+  color: var(--text-primary);
 }
 
-.light table td a:hover,
-.light table td button:hover {
-  color: var(--accent-color) !important;
+.light table td a:not([class*="bg-"]) {
+  color: var(--text-primary);
 }
 
-/* Prevent white-on-white text in secondary buttons or spans */
-.light button:not(.bg-emerald-600):not(.bg-emerald-700):not(.bg-red-600):not(.bg-red-700):not([class*="bg-emerald"]):not([class*="bg-red"]) {
-  color: var(--text-primary) !important;
+.light table td a:not([class*="bg-"]):hover {
+  color: var(--accent-color);
 }
 
-.light button:not(.bg-emerald-600):not(.bg-emerald-700):not(.bg-red-600):not(.bg-red-700):not([class*="bg-emerald"]):not([class*="bg-red"]) svg {
-  color: var(--text-secondary) !important;
+/* Secondary header, filter, and card buttons adapt cleanly to dark text in Light Mode */
+.light button.bg-\[var\(--bg-card\)\],
+.light button.bg-white,
+.light button[class*="border-"]:not([class*="bg-emerald"]):not([class*="bg-red"]):not([class*="bg-blue"]):not([class*="bg-indigo"]):not([class*="bg-slate-800"]):not([class*="bg-slate-900"]):not([class*="bg-zinc-800"]):not([class*="bg-zinc-900"]) {
+  color: var(--text-primary);
 }
+
+.light button.bg-\[var\(--bg-card\)\] svg,
+.light button.bg-white svg,
+.light button[class*="border-"]:not([class*="bg-emerald"]):not([class*="bg-red"]):not([class*="bg-blue"]):not([class*="bg-indigo"]):not([class*="bg-slate-800"]):not([class*="bg-slate-900"]):not([class*="bg-zinc-800"]):not([class*="bg-zinc-900"]) svg {
+  color: var(--text-secondary);
+}
+
+/* Prevent hover:text-white from producing white-on-white text in light mode */
+.light .hover\:text-white:not([class*="bg-emerald"]):not([class*="bg-red"]):not([class*="bg-blue"]):not([class*="bg-indigo"]):not([class*="bg-slate-8"]):not([class*="bg-slate-9"]):hover {
+  color: var(--text-primary);
+}
+
+/* Preserve solid dark/colored button text contrast */
+.light .bg-emerald-600,
+.light .bg-emerald-700,
+.light .bg-red-600,
+.light .bg-red-700,
+.light .bg-blue-600,
+.light .bg-indigo-600,
+.light .bg-slate-800,
+.light .bg-slate-900,
+.light .bg-zinc-800,
+.light .bg-zinc-900 {
+  color: #FFFFFF !important;
+}
+
 
 /* ============================================================
    LIGHT MODE — SEMANTIC COLOR ADJUSTMENTS
