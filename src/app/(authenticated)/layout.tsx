@@ -40,6 +40,7 @@ import {
   Database,
   PackageCheck,
   Sparkles,
+  Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
 import LeaderboardDrawer from '@/components/LeaderboardDrawer';
@@ -122,6 +123,7 @@ export default function AuthenticatedLayout({
   const [broadcastTitle, setBroadcastTitle] = useState('');
   const [broadcastMessage, setBroadcastMessage] = useState('');
   const [broadcasting, setBroadcasting] = useState(false);
+  const [recentBroadcasts, setRecentBroadcasts] = useState<any[]>([]);
 
   const handleBroadcastNews = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -152,6 +154,25 @@ export default function AuthenticatedLayout({
       alert('Failed to broadcast news. Please try again.');
     } finally {
       setBroadcasting(false);
+    }
+  };
+
+  const handleDeleteBroadcast = async (notifId: number) => {
+    if (!confirm('Are you sure you want to delete this broadcast message for all employees?')) return;
+    try {
+      const res = await fetch(`/api/v1/notifications?id=${notifId}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchNotifications();
+        setToasts((prev) => [...prev, { id: Date.now().toString(), message: data.message || 'Broadcast message deleted successfully!', type: 'success' }]);
+      } else {
+        alert(data.message || 'Failed to delete broadcast message.');
+      }
+    } catch (err) {
+      console.error('Delete broadcast error:', err);
+      alert('Failed to delete broadcast message. Please try again.');
     }
   };
 
@@ -433,6 +454,9 @@ export default function AuthenticatedLayout({
       if (data.success && data.data) {
         setNotifications(data.data.notifications);
         setUnreadCount(data.data.unreadCount);
+        if (data.data.recentBroadcasts) {
+          setRecentBroadcasts(data.data.recentBroadcasts);
+        }
       }
     } catch (err) {
       console.error('Fetch notifications error:', err);
@@ -1194,6 +1218,7 @@ export default function AuthenticatedLayout({
                         >
                           <div className="flex items-start gap-2.5">
                             <div className="mt-0.5">
+                              {notif.type === 'announcement' && <Sparkles className="w-4 h-4 text-amber-400" />}
                               {notif.type === 'meeting_booked' && <Calendar className="w-4 h-4 text-cyan-400" />}
                               {notif.type === 'sale_done' && <TrendingUp className="w-4 h-4 text-emerald-400" />}
                               {notif.type === 'unreachable_lead' && <AlertTriangle className="w-4 h-4 text-red-400" />}
@@ -1215,6 +1240,20 @@ export default function AuthenticatedLayout({
                                 })}
                               </p>
                             </div>
+
+                            {isCurrentUserAdmin && (notif.type === 'announcement' || notif.title.startsWith('📢')) && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteBroadcast(notif.id);
+                                }}
+                                className="p-1.5 hover:bg-red-500/20 text-red-400 hover:text-red-300 rounded-lg transition-colors cursor-pointer shrink-0 ml-1 border border-red-500/20 bg-red-500/10"
+                                title="Delete Broadcast Message for All Employees"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
                           </div>
                         </div>
                       ))
@@ -1660,6 +1699,38 @@ export default function AuthenticatedLayout({
                 </button>
               </div>
             </form>
+
+            {/* Admin Broadcast History Control */}
+            {isCurrentUserAdmin && recentBroadcasts.length > 0 && (
+              <div className="pt-4 border-t border-[var(--border-color)] space-y-3">
+                <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Recent Sent Broadcasts</span>
+                </h4>
+                <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
+                  {recentBroadcasts.map((bc) => (
+                    <div key={bc.id} className="p-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold text-white truncate">{bc.title}</p>
+                        <p className="text-[10px] text-[var(--text-secondary)] mt-0.5 line-clamp-2 leading-relaxed">{bc.body}</p>
+                        <span className="text-[9px] text-[var(--text-muted)] font-mono block mt-1">
+                          Sent {new Date(bc.createdAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteBroadcast(bc.id)}
+                        className="p-1.5 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 text-red-400 rounded-lg transition-all text-xs font-bold shrink-0 cursor-pointer flex items-center gap-1"
+                        title="Delete this broadcast announcement for all employees"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Delete</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
