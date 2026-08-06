@@ -65,10 +65,39 @@ export async function GET(req: Request) {
             },
           },
         }),
-      ]).then(([createdCount, closedCount]) => ({
+        prisma.order.count({
+          where: {
+            createdAt: {
+              gte: startOfDay,
+              lte: endOfDay,
+            },
+          },
+        }),
+        prisma.order.count({
+          where: {
+            status: { in: ['verified', 'finance_verified', 'ops_assigned', 'completed'] },
+            updatedAt: {
+              gte: startOfDay,
+              lte: endOfDay,
+            },
+          },
+        }),
+        prisma.order.count({
+          where: {
+            isCommissioned: true,
+            updatedAt: {
+              gte: startOfDay,
+              lte: endOfDay,
+            },
+          },
+        }),
+      ]).then(([createdCount, closedCount, ordersCount, verifiedCount, commissionedCount]) => ({
         date: dateString,
         created: createdCount,
         closed: closedCount,
+        orders: ordersCount,
+        verified: verifiedCount,
+        commissioned: commissionedCount,
       }));
 
       trendPromises.push(dayPromise);

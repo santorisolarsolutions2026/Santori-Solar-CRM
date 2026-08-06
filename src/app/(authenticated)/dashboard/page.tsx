@@ -540,109 +540,140 @@ export default function DashboardPage() {
       {/* Charts & Redesigned Pipeline Distribution Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Trend line graph */}
-        <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 lg:col-span-2 shadow-sm">
+        <div className={`bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 shadow-sm ${
+          (userDept === 'Finance' || userBaseRole === 'finance' || userDept === 'Operations' || userBaseRole === 'operations')
+            ? 'lg:col-span-3'
+            : 'lg:col-span-2'
+        }`}>
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">Sales & Leads Trend (15 Days)</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+              {userDept === 'Finance' || userBaseRole === 'finance'
+                ? 'Finance Trend: Total Orders vs Verified Orders (15 Days)'
+                : userDept === 'Operations' || userBaseRole === 'operations'
+                ? 'Operations Trend: Total Orders vs Plant Commissioned (15 Days)'
+                : 'Sales & Leads Trend (15 Days)'}
+            </h3>
             <div className="flex gap-4 text-xs">
               <span className="flex items-center gap-1.5 text-blue-400 font-semibold">
-                <span className="w-2.5 h-2.5 bg-blue-500 rounded-full" /> Leads Created
+                <span className="w-2.5 h-2.5 bg-blue-500 rounded-full" />
+                {userDept === 'Finance' || userBaseRole === 'finance' || userDept === 'Operations' || userBaseRole === 'operations'
+                  ? 'Total Orders'
+                  : 'Leads Created'}
               </span>
               <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
-                <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full" /> Sales Closed
+                <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />
+                {userDept === 'Finance' || userBaseRole === 'finance'
+                  ? 'Verified Orders'
+                  : userDept === 'Operations' || userBaseRole === 'operations'
+                  ? 'Plant Commissioned'
+                  : 'Sales Closed'}
               </span>
             </div>
           </div>
           <div className="h-80 w-full">
-            <DashboardChart trend={trend} />
+            <DashboardChart
+              trend={trend}
+              type={
+                userDept === 'Finance' || userBaseRole === 'finance'
+                  ? 'finance'
+                  : userDept === 'Operations' || userBaseRole === 'operations'
+                  ? 'ops'
+                  : 'sales'
+              }
+            />
           </div>
         </div>
 
-        {/* Lead Acquisition Channels Pie Chart */}
-        <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 shadow-sm flex flex-col justify-between">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-4">Lead Acquisition Channels</h3>
-          <div className="h-80 w-full flex items-center justify-center">
-            <LeadSourcePieChart leadSourceData={leadSources} colors={COLORS} />
-          </div>
-        </div>
-
-        {/* Redesigned Pipeline Stage Distribution Grid */}
-        <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 shadow-sm flex flex-col justify-between lg:col-span-3">
-          <div>
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] flex items-center gap-2">
-                <Layers className="w-4 h-4 text-emerald-500" />
-                <span>Pipeline Stage Distribution</span>
-              </h3>
-              <span className="text-[11px] text-[var(--text-secondary)] font-semibold font-mono">
-                Total Active Leads: <strong className="text-white">{pipeline.reduce((acc, curr) => acc + curr.count, 0)}</strong>
-              </span>
+        {/* Lead Acquisition Channels Pie Chart (Sales/Admin only) */}
+        {userDept !== 'Finance' && userBaseRole !== 'finance' && userDept !== 'Operations' && userBaseRole !== 'operations' && (
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 shadow-sm flex flex-col justify-between">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-4">Lead Acquisition Channels</h3>
+            <div className="h-80 w-full flex items-center justify-center">
+              <LeadSourcePieChart leadSourceData={leadSources} colors={COLORS} />
             </div>
+          </div>
+        )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
-              {pipeline.map((item) => {
-                const stageInfo = STAGE_NAMES[item.stage] || { name: `Stage ${item.stage}`, color: '#3B82F6' };
-                const totalLeads = pipeline.reduce((acc, curr) => acc + curr.count, 0) || 1;
-                const percent = Math.round((item.count / totalLeads) * 100);
-                const hasLeads = item.count > 0;
+        {/* Redesigned Pipeline Stage Distribution Grid (Sales/Admin only) */}
+        {userDept !== 'Finance' && userBaseRole !== 'finance' && userDept !== 'Operations' && userBaseRole !== 'operations' && (
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 shadow-sm flex flex-col justify-between lg:col-span-3">
+            <div>
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-emerald-500" />
+                  <span>Pipeline Stage Distribution</span>
+                </h3>
+                <span className="text-[11px] text-[var(--text-secondary)] font-semibold font-mono">
+                  Total Active Leads: <strong className="text-white">{pipeline.reduce((acc, curr) => acc + curr.count, 0)}</strong>
+                </span>
+              </div>
 
-                return (
-                  <div
-                    key={item.stage}
-                    className={`p-3.5 rounded-xl border transition-all flex flex-col justify-between space-y-2.5 ${
-                      hasLeads
-                        ? 'bg-[var(--bg-main)] border-[var(--border-color)] shadow-md'
-                        : 'bg-[var(--bg-main)]/40 border-[var(--border-color)]/50 opacity-70'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 min-w-0 pr-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
+                {pipeline.map((item) => {
+                  const stageInfo = STAGE_NAMES[item.stage] || { name: `Stage ${item.stage}`, color: '#3B82F6' };
+                  const totalLeads = pipeline.reduce((acc, curr) => acc + curr.count, 0) || 1;
+                  const percent = Math.round((item.count / totalLeads) * 100);
+                  const hasLeads = item.count > 0;
+
+                  return (
+                    <div
+                      key={item.stage}
+                      className={`p-3.5 rounded-xl border transition-all flex flex-col justify-between space-y-2.5 ${
+                        hasLeads
+                          ? 'bg-[var(--bg-main)] border-[var(--border-color)] shadow-md'
+                          : 'bg-[var(--bg-main)]/40 border-[var(--border-color)]/50 opacity-70'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 min-w-0 pr-1">
+                          <span
+                            className="w-2.5 h-2.5 rounded-full shrink-0"
+                            style={{ backgroundColor: stageInfo.color }}
+                          />
+                          <span className="text-xs font-bold text-[var(--text-primary)] truncate" title={stageInfo.name}>
+                            {stageInfo.name}
+                          </span>
+                        </div>
                         <span
-                          className="w-2.5 h-2.5 rounded-full shrink-0"
-                          style={{ backgroundColor: stageInfo.color }}
-                        />
-                        <span className="text-xs font-bold text-[var(--text-primary)] truncate" title={stageInfo.name}>
-                          {stageInfo.name}
+                          className={`text-xs font-extrabold px-2 py-0.5 rounded-full shrink-0 font-mono ${
+                            hasLeads
+                              ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                              : 'bg-[var(--bg-card)] text-[var(--text-secondary)]'
+                          }`}
+                        >
+                          {item.count}
                         </span>
                       </div>
-                      <span
-                        className={`text-xs font-extrabold px-2 py-0.5 rounded-full shrink-0 font-mono ${
-                          hasLeads
-                            ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                            : 'bg-[var(--bg-card)] text-[var(--text-secondary)]'
-                        }`}
-                      >
-                        {item.count}
-                      </span>
-                    </div>
 
-                    <div className="space-y-1">
-                      <div className="w-full h-1.5 bg-[var(--bg-card)] rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-500"
-                          style={{ width: `${percent}%`, backgroundColor: stageInfo.color }}
-                        />
-                      </div>
-                      <div className="flex justify-between items-center text-[10px] text-[var(--text-secondary)] font-mono">
-                        <span>Share</span>
-                        <span>{percent}%</span>
+                      <div className="space-y-1">
+                        <div className="w-full h-1.5 bg-[var(--bg-card)] rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{ width: `${percent}%`, backgroundColor: stageInfo.color }}
+                          />
+                        </div>
+                        <div className="flex justify-between items-center text-[10px] text-[var(--text-secondary)] font-mono">
+                          <span>Share</span>
+                          <span>{percent}%</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-[var(--border-color)] mt-6 flex justify-center">
+              <Link
+                href="/leads"
+                className="text-xs text-emerald-400 hover:text-emerald-300 font-bold flex items-center justify-center gap-1.5 group"
+              >
+                <span>View Full Interactive Pipeline Grid</span>
+                <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+              </Link>
             </div>
           </div>
-
-          <div className="pt-4 border-t border-[var(--border-color)] mt-6 flex justify-center">
-            <Link
-              href="/leads"
-              className="text-xs text-emerald-400 hover:text-emerald-300 font-bold flex items-center justify-center gap-1.5 group"
-            >
-              <span>View Full Interactive Pipeline Grid</span>
-              <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-            </Link>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Full-Screen Activity Modal for Admin */}

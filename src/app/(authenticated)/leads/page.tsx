@@ -1036,6 +1036,30 @@ export default function LeadsPage() {
               />
             </div>
 
+            {/* Quick Unassigned Toggle Button */}
+            <button
+              type="button"
+              onClick={() => {
+                const nextVal = !unassignedFilter;
+                setUnassignedFilter(nextVal);
+                setPage(1);
+                if (nextVal) {
+                  setConsultantFilter('');
+                  setTlFilter('');
+                  setManagerFilter('');
+                }
+              }}
+              className={`py-2.5 px-3.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer border ${
+                unassignedFilter
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-md shadow-amber-500/10'
+                  : 'bg-slate-955/60 text-[var(--text-secondary)] border-[var(--border-color)] hover:border-amber-500/40 hover:text-white'
+              }`}
+              title="Filter leads that have not been assigned to any team member"
+            >
+              <UserCheck className="w-4 h-4 text-amber-400" />
+              <span>Unassigned Only</span>
+            </button>
+
             {/* Amazon / Flipkart Detailed Filter Trigger Button */}
             <button
               type="button"
@@ -1070,6 +1094,12 @@ export default function LeadsPage() {
             <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center gap-1">
               <Filter className="w-3 h-3 text-emerald-500" /> Active Filters:
             </span>
+            {unassignedFilter && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[11px] font-semibold">
+                Unassigned Leads Only
+                <X className="w-3 h-3 cursor-pointer hover:text-white ml-0.5" onClick={() => setUnassignedFilter(false)} />
+              </span>
+            )}
             {statusFilter && statusFilter.split(',').map(st => (
               <span key={`st-${st}`} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[11px] font-semibold">
                 Stage: {STAGE_BADGES[Number(st)]?.name || st}

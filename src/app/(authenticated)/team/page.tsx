@@ -248,6 +248,12 @@ const ALL_PERMISSIONS = [
     category: 'IT'
   },
   {
+    key: 'admin:team_add',
+    label: 'Administration: Add Team Member',
+    description: 'Allows registering and creating new employee records in the system.',
+    category: 'IT'
+  },
+  {
     key: 'logs:view',
     label: 'IT: View System audit activity logs',
     description: 'Allows checking full database audit trails, status shifts, and logins across the system.',
@@ -321,7 +327,7 @@ function getLocalDefaultPermissionsForRole(role: string): string[] {
         'orders:create', 'orders:submit_installation', 'leads:view_sales_pipeline',
         'orders:finance_access', 'orders:verify', 'finance:manage_ledger', 'reports:view_financials',
         'orders:operations', 'ops:update_stages', 'ops:upload_drawings', 'ops:delivered_orders',
-        'team:view', 'attendance:view', 'team:manage', 'logs:view', 'leads:view_all', 'leads:delete'
+        'team:view', 'attendance:view', 'team:manage', 'logs:view', 'leads:view_all', 'leads:delete', 'admin:team_add'
       ];
     case 'sales_head':
       return [
@@ -2425,6 +2431,7 @@ export default function TeamManagementPage() {
 
   const userBaseRole = user?.role ? (user.role.includes(':') ? user.role.split(':')[0] : user.role) : '';
   const isAdminOrDirectorOrSalesHead = hasPermission('team:manage');
+  const canAddTeamMember = hasPermission('admin:team_add') || hasPermission('team:manage') || user?.role === 'admin' || user?.role?.startsWith('admin:') || user?.role === 'director';
   const hasFullTeamAccess = true;
   const titleText = 'Santori Team';
 
@@ -2483,7 +2490,7 @@ export default function TeamManagementPage() {
           </p>
         </div>
         <div className="flex gap-2 flex-wrap items-center">
-          {activeTab === 'members' && isAdminOrDirectorOrSalesHead && (
+          {activeTab === 'members' && canAddTeamMember && (
             <button
               type="button"
               onClick={() => setShowAddModal(true)}

@@ -11,6 +11,11 @@ export async function GET(req: Request) {
 
     const { role: userRole, permissions: userPermissions } = await getUserSession(userPayload.id);
 
+    const isAdmin = userRole === 'admin' || userRole?.startsWith('admin:') || userRole === 'director';
+    if (!isAdmin) {
+      return NextResponse.json({ success: false, message: 'Forbidden. Downloading attendance details is restricted to Administrators.' }, { status: 403 });
+    }
+
     const { searchParams } = new URL(req.url);
     const month = parseInt(searchParams.get('month') || String(new Date().getMonth() + 1), 10);
     const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()), 10);

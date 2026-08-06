@@ -36,6 +36,7 @@ export const DEPARTMENT_PERMISSIONS: {
     { key: 'ops:delivered_orders', label: 'View Completed Orders', group: 'Operations Chronological Workflow', description: '4. Access completed orders portal and view fully delivered installation records.' },
   ],
   admin: [
+    { key: 'admin:team_add', label: 'Add Team Member', group: 'Administration & Supervision', description: 'Create and register new team members into the system.' },
     { key: 'admin:attendance_view', label: 'View Attendance', group: 'Administration & Supervision', description: 'View check-in & check-out attendance logs of everyone down the hierarchy.' },
     { key: 'admin:designation_change', label: 'Change Subordinate Designation', group: 'Administration & Supervision', description: 'Modify designations of team members below in line of hierarchy.' },
     { key: 'admin:analytics_view', label: 'View Team Analytics', group: 'Administration & Supervision', description: 'Access employee audit logs, team analytics & performance metrics.' },
@@ -120,7 +121,7 @@ export function getDefaultPermissionsForRole(role: string): string[] {
         'orders:create', 'orders:submit_installation', 'leads:view_sales_pipeline',
         'orders:finance_access', 'orders:verify', 'finance:manage_ledger', 'reports:view_financials',
         'orders:operations', 'ops:update_stages', 'ops:upload_drawings',
-        'team:view', 'attendance:view', 'team:manage', 'logs:view', 'leads:view_all', 'leads:delete', 'permissions:manage'
+        'team:view', 'attendance:view', 'team:manage', 'logs:view', 'leads:view_all', 'leads:delete', 'permissions:manage', 'admin:team_add'
       ];
     case 'sales_head':
     case 'manager':

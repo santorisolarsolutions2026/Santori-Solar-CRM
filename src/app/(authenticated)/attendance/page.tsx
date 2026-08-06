@@ -515,15 +515,17 @@ export default function AttendancePage() {
             )}
           </div>
 
-          <button
-            type="button"
-            onClick={() => handleDownloadAttendanceRegister()}
-            className="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-all shadow-md shadow-emerald-500/20 font-sans shrink-0"
-            title="Download Monthwise Attendance Register (School/Company Register Format)"
-          >
-            <FileSpreadsheet className="w-4 h-4 text-white" />
-            <span>Download Attendance Register</span>
-          </button>
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => handleDownloadAttendanceRegister()}
+              className="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-all shadow-md shadow-emerald-500/20 font-sans shrink-0"
+              title="Download Monthwise Attendance Register (School/Company Register Format)"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-white" />
+              <span>Download Attendance Register</span>
+            </button>
+          )}
 
           {user?.role === 'admin' && (
             <button

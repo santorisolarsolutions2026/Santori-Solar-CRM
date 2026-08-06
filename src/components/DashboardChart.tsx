@@ -12,14 +12,18 @@ import {
 } from 'recharts';
 
 interface DashboardChartProps {
+  type?: 'sales' | 'finance' | 'ops';
   trend: {
     date: string;
-    created: number;
-    closed: number;
+    created?: number;
+    closed?: number;
+    orders?: number;
+    verified?: number;
+    commissioned?: number;
   }[];
 }
 
-export default function DashboardChart({ trend }: DashboardChartProps) {
+export default function DashboardChart({ trend, type = 'sales' }: DashboardChartProps) {
   return (
     <ResponsiveContainer width="100%" height="100%">
       <LineChart data={trend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -32,8 +36,22 @@ export default function DashboardChart({ trend }: DashboardChartProps) {
           itemStyle={{ fontSize: '12px', color: 'var(--text-secondary)' }}
           cursor={false}
         />
-        <Line type="monotone" name="Leads Created" dataKey="created" stroke="#3B82F6" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
-        <Line type="monotone" name="Sales Closed" dataKey="closed" stroke="#10B981" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+        {type === 'finance' ? (
+          <>
+            <Line type="monotone" name="Total Orders" dataKey="orders" stroke="#3B82F6" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+            <Line type="monotone" name="Verified Orders" dataKey="verified" stroke="#10B981" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+          </>
+        ) : type === 'ops' ? (
+          <>
+            <Line type="monotone" name="Total Orders" dataKey="orders" stroke="#3B82F6" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+            <Line type="monotone" name="Plant Commissioned" dataKey="commissioned" stroke="#10B981" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+          </>
+        ) : (
+          <>
+            <Line type="monotone" name="Leads Created" dataKey="created" stroke="#3B82F6" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+            <Line type="monotone" name="Sales Closed" dataKey="closed" stroke="#10B981" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+          </>
+        )}
       </LineChart>
     </ResponsiveContainer>
   );
