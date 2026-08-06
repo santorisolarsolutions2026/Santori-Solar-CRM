@@ -132,7 +132,7 @@ export function resolveUserPermissions(user: UserPermissionsInput): string[] {
     'leads:change_status': ['sales:stage_change'],
     'leads:manage_calling_stages': ['sales:stage_change'],
 
-    'sales:designation_change': ['team:change_designation', 'team:manage'],
+    'sales:designation_change': ['team:change_designation'],
     'team:change_designation': ['sales:designation_change'],
 
     'sales:attendance_view': ['attendance:view'],

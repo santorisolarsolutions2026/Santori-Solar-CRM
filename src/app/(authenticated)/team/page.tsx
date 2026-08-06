@@ -2431,7 +2431,7 @@ export default function TeamManagementPage() {
 
   const userBaseRole = user?.role ? (user.role.includes(':') ? user.role.split(':')[0] : user.role) : '';
   const isAdminOrDirectorOrSalesHead = hasPermission('team:manage');
-  const canAddTeamMember = hasPermission('admin:team_add') || hasPermission('team:manage') || user?.role === 'admin' || user?.role?.startsWith('admin:') || user?.role === 'director';
+  const canAddTeamMember = hasPermission('admin:team_add');
   const hasFullTeamAccess = true;
   const titleText = 'Santori Team';
 

@@ -142,12 +142,12 @@ export async function POST(req: Request) {
     const loggedInBaseRole = loggedInRole.includes(':') ? loggedInRole.split(':')[0] : loggedInRole;
     const isEditingUserAdmin = loggedInBaseRole === 'admin';
     const isEditingUserIT = loggedInUserDept?.name === 'IT';
-    const hasTeamManagePermission = userPermissions.includes('team:manage');
+    const hasTeamManagePermission = userPermissions.includes('team:manage') || userPermissions.includes('admin:team_add');
 
     const canManageTeam = isEditingUserAdmin || isEditingUserIT || hasTeamManagePermission;
 
     if (!canManageTeam) {
-      return NextResponse.json({ success: false, message: 'Forbidden. Only IT department members, Admins, or users explicitly granted "team:manage" permission can create users.' }, { status: 403 });
+      return NextResponse.json({ success: false, message: 'Forbidden. Only IT department members, Admins, or users explicitly granted "admin:team_add" permission can create users.' }, { status: 403 });
     }
 
     const body = await req.json();
