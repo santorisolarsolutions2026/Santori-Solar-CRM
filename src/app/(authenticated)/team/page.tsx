@@ -1916,28 +1916,38 @@ export default function TeamManagementPage() {
     }
   };
 
-  // Helper to determine if a candidate is eligible to be a supervisor (Same department, Sales<->PSA cross-assignment, or Admin)
+  // Helper to determine if a candidate is eligible to be a supervisor
   const isEligibleSupervisor = (sup: TeamMember, targetDeptId?: string | number | null, targetUserId?: number | null) => {
     if (targetUserId && sup.id === targetUserId) return false;
-    
+    if (targetUserId && checkIsDescendant(members, sup.id, targetUserId)) return false;
+
     // Admin is always eligible
-    if (sup.role === 'admin' || sup.department?.name === 'Admin') return true;
-    
-    if (!targetDeptId) return false;
-    
+    if (sup.role === 'admin' || sup.role?.startsWith('admin:') || sup.department?.name === 'Admin') return true;
+
+    const targetMember = targetUserId ? members.find(m => m.id === targetUserId) : null;
+    const targetLevel = targetMember?.designation?.level ?? 99;
+    const supLevel = sup.designation?.level ?? 5;
+
+    // Supervisor's designation level cannot be lower rank than target member (supLevel <= targetLevel)
+    if (supLevel > targetLevel) return false;
+
+    // Higher hierarchy rank supervisors (supLevel < targetLevel) are eligible across all departments.
+    if (supLevel < targetLevel) return true;
+
+    // Equal level supervisors (supLevel === targetLevel): eligible if same department or Sales <-> PSA domain
+    if (!targetDeptId) return true;
+
     const targetDeptObj = departmentsList.find(d => String(d.id) === String(targetDeptId));
     const targetDeptName = targetDeptObj?.name || '';
     const supDeptName = sup.department?.name || '';
-    
-    // Exact department match
+
     if (String(sup.departmentId) === String(targetDeptId)) return true;
-    
-    // Combined Sales & PSA domain match: PSA <-> Sales
+
     const isSalesOrPSA = (name: string) => name === 'Sales' || name === 'PSA';
     if (isSalesOrPSA(targetDeptName) && isSalesOrPSA(supDeptName)) {
       return true;
     }
-    
+
     return false;
   };
 
@@ -2971,10 +2981,10 @@ export default function TeamManagementPage() {
         : [];
 
       // Inline Supervisor assignment security validation checks:
-      // Allow only Admin or ancestors above target member in target member's reporting line
+      // Allow Admin, team managers, or ancestors above target member in target member's reporting line
       const canModifySupervisorFn = (targetMember: TeamMember): boolean => {
         if (!user) return false;
-        if (user.role === 'admin' || user.role?.startsWith('admin:')) return true;
+        if (isAdminOrDirectorOrSalesHead || user.role === 'admin' || user.role?.startsWith('admin:')) return true;
 
         let currentId = targetMember.reportsTo;
         const visited = new Set<number>();
@@ -2987,23 +2997,9 @@ export default function TeamManagementPage() {
         return false;
       };
 
-      // Inline list of eligible supervisors: admins or higher hierarchy designation across any department
+      // Inline list of eligible supervisors: using unified isEligibleSupervisor helper
       const eligibleSupervisorsFn = (targetMember: TeamMember): TeamMember[] => {
-        const targetLevel = targetMember.designation?.level ?? 99;
-
-        return members.filter((sup) => {
-          if (sup.id === targetMember.id) return false;
-          const supLevel = sup.designation?.level ?? 0;
-          const isSupAdmin = sup.role === 'admin' || sup.role?.startsWith('admin:');
-          
-          if (isSupAdmin || supLevel === 0) return true;
-
-          if (targetLevel > 1) {
-            return supLevel < targetLevel && supLevel > 0;
-          }
-          
-          return false;
-        });
+        return members.filter((sup) => isEligibleSupervisor(sup, targetMember.departmentId, targetMember.id));
       };
 
       // Handler for live updates of supervisor assignment
