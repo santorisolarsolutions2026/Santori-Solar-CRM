@@ -2424,46 +2424,6 @@ export default function LeadDetailPage({
                           </select>
                         </div>
 
-                        {/* Assignment Controls */}
-                        {hasPermission('leads:edit') && (
-                          <div className="md:col-span-2">
-                            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">Assign Sales or PSA Member</label>
-                            <select
-                              value={editForm.assignedConsultantId || editForm.assignedTlId || editForm.assignedManagerId || ''}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                if (!val) {
-                                  setEditForm({ ...editForm, assignedManagerId: '', assignedTlId: '', assignedConsultantId: '' });
-                                  return;
-                                }
-                                const targetUser = employees.find(u => u.id === parseInt(val, 10));
-                                if (!targetUser) return;
-                                const level = targetUser.designation?.level ?? 6;
-                                if (level <= 3) {
-                                  setEditForm({ ...editForm, assignedManagerId: val, assignedTlId: '', assignedConsultantId: '' });
-                                } else if (level === 4) {
-                                  setEditForm({ ...editForm, assignedManagerId: '', assignedTlId: val, assignedConsultantId: '' });
-                                } else {
-                                  setEditForm({ ...editForm, assignedManagerId: '', assignedTlId: '', assignedConsultantId: val });
-                                }
-                              }}
-                              className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-blue-500"
-                            >
-                              <option value="">Unassigned</option>
-                              {employees.filter((emp) => {
-                                const deptName = (emp.department?.name || '').toLowerCase();
-                                const roleLower = (emp.role || '').toLowerCase();
-                                const isSalesOrPsaDept = deptName.includes('sales') || deptName.includes('marketing') || deptName.includes('psa');
-                                const isSalesOrPsaRole = roleLower.includes('sales') || roleLower.includes('psa') || roleLower.includes('consultant');
-                                return isSalesOrPsaDept || isSalesOrPsaRole;
-                              }).map((emp) => (
-                                <option key={emp.id} value={emp.id}>
-                                  {emp.name} ({emp.department?.name || 'Shared'} - {emp.designation?.name || emp.role.toUpperCase()})
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        )}
                       </div>
 
                       <div className="flex gap-3 border-t border-[var(--border-color)]/80 pt-4">
