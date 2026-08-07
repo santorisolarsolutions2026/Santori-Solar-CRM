@@ -85,14 +85,15 @@ export async function POST(req: Request) {
       const { getSubordinateIds } = await import('@/lib/hierarchy');
       const subordinateIds = await getSubordinateIds(userPayload.id);
 
-      const targetIds = [updateData.assignedManagerId, updateData.assignedTlId, updateData.assignedConsultantId].filter(id => id !== undefined && id !== null);
-      for (const tid of targetIds) {
-        if (tid !== userPayload.id && !subordinateIds.includes(tid)) {
-          return NextResponse.json({
-            success: false,
-            message: 'Forbidden. You can only assign leads to yourself or team members in your hierarchy tree.'
-          }, { status: 403 });
-        }
+      const targetAssigneeId = singleAssigneeId !== undefined && singleAssigneeId !== 'UNCHANGED' && singleAssigneeId !== null && singleAssigneeId !== '' && singleAssigneeId !== 'UNASSIGN'
+        ? Number(singleAssigneeId)
+        : (updateData.assignedConsultantId ?? updateData.assignedTlId ?? updateData.assignedManagerId);
+
+      if (targetAssigneeId && targetAssigneeId !== userPayload.id && !subordinateIds.includes(targetAssigneeId)) {
+        return NextResponse.json({
+          success: false,
+          message: 'Forbidden. You can only assign leads to yourself or team members in your hierarchy tree.'
+        }, { status: 403 });
       }
     }
 
