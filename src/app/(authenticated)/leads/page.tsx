@@ -983,7 +983,7 @@ export default function LeadsPage() {
           {(hasPermission('sales:lead_import') || hasPermission('leads:import')) && (
             <button
               onClick={() => setShowImportModal(true)}
-              className="py-2.5 px-4 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-slate-900 dark:text-white rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
+              className="py-2.5 px-4 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-white rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
             >
               <Upload className="w-4 h-4" />
               <span>Import CSV</span>
