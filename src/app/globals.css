@@ -610,6 +610,13 @@ body {
 .hover\:bg-emerald-600:hover { background-color: #059669 !important; }
 .hover\:bg-emerald-700:hover { background-color: #047857 !important; }
 
+/* Checkbox & Radio Emerald Accent */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: #059669 !important;
+  cursor: pointer;
+}
+
 input:not([type="checkbox"]):not([type="radio"]):focus,
 textarea:focus,
 select:focus {
@@ -640,6 +647,22 @@ textarea::placeholder {
 select option {
   background-color: var(--bg-card-solid) !important;
   color: var(--text-primary) !important;
+  padding: 8px 12px;
+}
+
+select option:hover,
+select option:focus,
+select option:active,
+select option:checked {
+  background-color: #059669 !important;
+  background: #059669 !important;
+  color: #FFFFFF !important;
+}
+
+/* Text & Select Highlight */
+::selection {
+  background-color: #059669 !important;
+  color: #FFFFFF !important;
 }
 
 input[type="date"],

@@ -2740,7 +2740,7 @@ export default function TeamManagementPage() {
                       type="checkbox"
                       onChange={handleSelectAll}
                       checked={displayedMembers.length > 0 && displayedMembers.filter(m => m.id !== user?.id).length > 0 && displayedMembers.filter(m => m.id !== user?.id).every(m => selectedUserIds.includes(m.id))}
-                      className="rounded border-[var(--border-color)] bg-[var(--bg-card)] text-emerald-600 focus:ring-emerald-500/40 cursor-pointer"
+                      className="w-4 h-4 rounded border-[var(--border-color)] bg-[var(--bg-card)] text-emerald-600 accent-emerald-600 focus:ring-emerald-500/40 cursor-pointer"
                     />
                   </th>
                 )}
@@ -2787,7 +2787,7 @@ export default function TeamManagementPage() {
                               type="checkbox"
                               checked={selectedUserIds.includes(member.id)}
                               onChange={() => handleSelectUser(member.id)}
-                              className="rounded border-[var(--border-color)] bg-[var(--bg-card)] text-emerald-600 focus:ring-emerald-500/40 cursor-pointer"
+                              className="w-4 h-4 rounded border-[var(--border-color)] bg-[var(--bg-card)] text-emerald-600 accent-emerald-600 focus:ring-emerald-500/40 cursor-pointer"
                             />
                           )}
                         </td>

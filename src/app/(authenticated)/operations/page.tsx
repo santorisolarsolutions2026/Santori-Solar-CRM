@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
+import CustomDropdown from '@/components/CustomDropdown';
 import {
   Wrench,
   Search,
@@ -1091,34 +1092,35 @@ export default function OperationsPage() {
 
         <div className="w-full sm:w-auto min-w-[150px]">
           <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Assigned To</label>
-          <select
+          <CustomDropdown
             value={filterManagerId}
-            onChange={(e) => setFilterManagerId(e.target.value)}
-            className="w-full px-3 py-2 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--border-color)]"
-          >
-            <option value="all">All Managers</option>
-            {uniqueManagers.map(m => (
-              <option key={m.id || 'unassigned'} value={m.id || 'unassigned'}>{m.name || 'Unassigned'}</option>
-            ))}
-          </select>
+            onChange={(val) => setFilterManagerId(val)}
+            options={[
+              { value: 'all', label: 'All Managers' },
+              ...uniqueManagers.map(m => ({
+                value: String(m.id || 'unassigned'),
+                label: m.name || 'Unassigned'
+              }))
+            ]}
+          />
         </div>
 
-        <div className="w-full sm:w-auto min-w-[180px]">
+        <div className="w-full sm:w-auto min-w-[190px]">
           <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Current Stage</label>
-          <select
+          <CustomDropdown
             value={filterStage}
-            onChange={(e) => setFilterStage(e.target.value)}
-            className="w-full px-3 py-2 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--border-color)]"
-          >
-            <option value="all">All Stages</option>
-            <option value="delivery_scheduled">Delivery Scheduled</option>
-            <option value="delivered">Materials Delivered</option>
-            <option value="installation_scheduled">Installation Scheduled</option>
-            <option value="installed">Solar Installed</option>
-            <option value="meter_installed">Net Meter Installed</option>
-            <option value="commissioned">Plant Commissioned</option>
-            <option value="subsidy_applied">Subsidy Applied</option>
-          </select>
+            onChange={(val) => setFilterStage(val)}
+            options={[
+              { value: 'all', label: 'All Stages' },
+              { value: 'delivery_scheduled', label: 'Delivery Scheduled' },
+              { value: 'delivered', label: 'Materials Delivered' },
+              { value: 'installation_scheduled', label: 'Installation Scheduled' },
+              { value: 'installed', label: 'Solar Installed' },
+              { value: 'meter_installed', label: 'Net Meter Installed' },
+              { value: 'commissioned', label: 'Plant Commissioned' },
+              { value: 'subsidy_applied', label: 'Subsidy Applied' }
+            ]}
+          />
         </div>
 
         <div className="flex gap-4">

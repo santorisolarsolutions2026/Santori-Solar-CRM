@@ -450,6 +450,7 @@ export default function AuthenticatedLayout({
     if (!user) return;
     try {
       const res = await fetch('/api/v1/notifications');
+      if (!res.ok) return;
       const data = await res.json();
       if (data.success && data.data) {
         setNotifications(data.data.notifications);
@@ -458,8 +459,8 @@ export default function AuthenticatedLayout({
           setRecentBroadcasts(data.data.recentBroadcasts);
         }
       }
-    } catch (err) {
-      console.error('Fetch notifications error:', err);
+    } catch {
+      // Suppress network disconnect logs during local dev server restarts
     }
   };
 
@@ -471,12 +472,13 @@ export default function AuthenticatedLayout({
     if (!user) return;
     try {
       const res = await fetch('/api/v1/attendance/today');
+      if (!res.ok) return;
       const data = await res.json();
       if (data.success) {
         setTodayAttendance(data.data);
       }
-    } catch (err) {
-      console.error('Fetch attendance error:', err);
+    } catch {
+      // Suppress network disconnect logs during local dev server restarts
     }
   };
 
@@ -1595,11 +1597,11 @@ export default function AuthenticatedLayout({
       {showLogoutConfirm && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
           <div className="w-full max-w-sm bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
-            <div className="p-5 border-b border-[var(--border-color)] transparent flex justify-between items-center">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-white">Logout Confirmation</h3>
+            <div className="p-5 border-b border-[var(--border-color)] flex justify-between items-center">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">Logout Confirmation</h3>
               <button
                 onClick={() => setShowLogoutConfirm(false)}
-                className="text-[var(--text-secondary)] hover:text-white cursor-pointer"
+                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1612,7 +1614,7 @@ export default function AuthenticatedLayout({
                 <button
                   type="button"
                   onClick={() => setShowLogoutConfirm(false)}
-                  className="px-4 py-2 bg-[var(--bg-card)] hover:bg-[var(--bg-main)] border border-[var(--border-color)] hover:border-[var(--border-color-hover)] rounded-lg text-[var(--text-primary)] hover:text-white transition-all font-semibold text-[11px] cursor-pointer"
+                  className="px-4 py-2 bg-[var(--bg-main)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] transition-all font-semibold text-[11px] cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1622,7 +1624,7 @@ export default function AuthenticatedLayout({
                     setShowLogoutConfirm(false);
                     logout();
                   }}
-                  className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white font-bold rounded-lg transition-all text-[11px] cursor-pointer shadow-lg shadow-blue-500/10"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition-all text-[11px] cursor-pointer shadow-md shadow-emerald-600/20"
                 >
                   Logout
                 </button>

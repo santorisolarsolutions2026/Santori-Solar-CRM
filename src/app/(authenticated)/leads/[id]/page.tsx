@@ -1698,25 +1698,29 @@ export default function LeadDetailPage({
             return (
               <div key={idx} className="flex items-start md:flex-col gap-3 relative">
                 {idx < steps.length - 1 && (
-                  <div className="hidden md:block absolute left-[26px] top-4 w-[calc(100%-36px)] h-0.5 bg-[var(--bg-card)]">
+                  <div className="hidden md:block absolute left-[34px] top-4 w-[calc(100%-12px)] h-0.5 bg-[var(--border-color)] z-0">
                     <div
-                      className="h-full bg-emerald-600 dark:bg-blue-500 transition-all duration-550"
+                      className="h-full bg-emerald-500 transition-all duration-500"
                       style={{ width: isCompleted ? '100%' : '0%' }}
                     />
                   </div>
                 )}
                 
                 <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-xs shrink-0 transition-all duration-300 z-10 ${
-                  isActive
-                    ? 'border-emerald-500 bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 ring-4 ring-emerald-500/15 scale-105'
-                    : isCompleted
-                      ? 'border-blue-500 bg-emerald-500/10 text-emerald-500 dark:text-emerald-400'
-                      : 'border-[var(--border-color)] bg-[var(--bg-main)] text-[var(--text-muted)]'
+                  isCompleted
+                    ? 'border-emerald-600 bg-emerald-600 text-white shadow-sm'
+                    : isActive
+                      ? 'border-emerald-500 bg-transparent text-emerald-500 dark:text-emerald-400 scale-105'
+                      : 'border-[var(--border-color)] bg-transparent text-[var(--text-muted)]'
                 }`}>
-                  {isCompleted ? '✓' : idx + 1}
+                  {isCompleted ? (
+                    <Check className="w-4 h-4 text-white stroke-[3]" stroke="#FFFFFF" />
+                  ) : (
+                    idx + 1
+                  )}
                 </div>
 
-                <div className="min-w-0">
+                <div className="min-w-0 z-10">
                   <p className={`text-[11px] font-extrabold uppercase tracking-wider ${
                     isActive ? 'text-emerald-500 dark:text-emerald-400' : isCompleted ? 'text-emerald-500 dark:text-emerald-400' : 'text-[var(--text-secondary)]'
                   }`}>

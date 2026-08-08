@@ -182,16 +182,7 @@ export default function ReportsPage() {
   };
 
   const getAvatarGradient = (id: number | string) => {
-    const gradients = [
-      'from-blue-600 to-indigo-600 border-emerald-400/30 text-emerald-100',
-      'from-emerald-600 to-teal-600 border-emerald-400/30 text-emerald-100',
-      'from-purple-600 to-indigo-600 border-purple-400/30 text-purple-100',
-      'from-amber-600 to-orange-600 border-amber-400/30 text-amber-100',
-      'from-cyan-600 to-blue-600 border-cyan-400/30 text-cyan-100',
-      'from-rose-600 to-red-600 border-rose-400/30 text-rose-100',
-    ];
-    const num = typeof id === 'number' ? id : (id || '').length;
-    return gradients[num % gradients.length];
+    return 'bg-[var(--bg-card)] border-[var(--border-color)] text-[var(--text-primary)]';
   };
 
   const setPresetRange = (preset: 'today' | 'yesterday' | 'week' | 'month' | 'all') => {
@@ -882,9 +873,18 @@ export default function ReportsPage() {
                         {employeesList.map((emp: any) => (
                           <tr key={emp.id} className="hover:bg-[var(--bg-card)]/40 transition-colors group">
                             <td className="py-3.5 px-4 font-bold text-white flex items-center gap-3">
-                              <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${getAvatarGradient(emp.id)} flex items-center justify-center font-bold text-xs shadow-inner shrink-0 border`}>
-                                {getInitials(emp.name)}
-                              </div>
+                              {emp.photograph ? (
+                                <img
+                                  src={`/api/v1/users/${emp.id}/photograph?t=${Date.now()}`}
+                                  alt={emp.name}
+                                  className="w-8 h-8 rounded-full object-cover border border-[var(--border-color)] shrink-0"
+                                  onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                                />
+                              ) : (
+                                <div className="w-8 h-8 rounded-full bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] flex items-center justify-center font-bold text-xs shadow-sm shrink-0">
+                                  {getInitials(emp.name)}
+                                </div>
+                              )}
                               <div className="flex flex-col min-w-0">
                                 <span className="truncate group-hover:text-emerald-400 transition-colors">{emp.name}</span>
                               </div>
@@ -993,9 +993,18 @@ export default function ReportsPage() {
                         {employeesList.map((emp: any) => (
                           <tr key={emp.id} className="hover:bg-[var(--bg-card)]/40 transition-colors group">
                             <td className="py-3.5 px-4 font-bold text-white flex items-center gap-3">
-                              <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${getAvatarGradient(emp.id)} flex items-center justify-center font-bold text-xs shadow-inner shrink-0 border`}>
-                                {getInitials(emp.name)}
-                              </div>
+                              {emp.photograph ? (
+                                <img
+                                  src={`/api/v1/users/${emp.id}/photograph?t=${Date.now()}`}
+                                  alt={emp.name}
+                                  className="w-8 h-8 rounded-full object-cover border border-[var(--border-color)] shrink-0"
+                                  onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                                />
+                              ) : (
+                                <div className="w-8 h-8 rounded-full bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] flex items-center justify-center font-bold text-xs shadow-sm shrink-0">
+                                  {getInitials(emp.name)}
+                                </div>
+                              )}
                               <div className="flex flex-col min-w-0">
                                 <span className="truncate group-hover:text-emerald-400 transition-colors">{emp.name}</span>
                               </div>
@@ -1077,9 +1086,18 @@ export default function ReportsPage() {
                         {employeesList.map((emp: any) => (
                           <tr key={emp.id} className="hover:bg-[var(--bg-card)]/40 transition-colors group">
                             <td className="py-3.5 px-4 font-bold text-white flex items-center gap-3">
-                              <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${getAvatarGradient(emp.id)} flex items-center justify-center font-bold text-xs shadow-inner shrink-0 border`}>
-                                {getInitials(emp.name)}
-                              </div>
+                              {emp.photograph ? (
+                                <img
+                                  src={`/api/v1/users/${emp.id}/photograph?t=${Date.now()}`}
+                                  alt={emp.name}
+                                  className="w-8 h-8 rounded-full object-cover border border-[var(--border-color)] shrink-0"
+                                  onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                                />
+                              ) : (
+                                <div className="w-8 h-8 rounded-full bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] flex items-center justify-center font-bold text-xs shadow-sm shrink-0">
+                                  {getInitials(emp.name)}
+                                </div>
+                              )}
                               <div className="flex flex-col min-w-0">
                                 <span className="truncate group-hover:text-emerald-400 transition-colors">{emp.name}</span>
                               </div>
@@ -1164,9 +1182,18 @@ export default function ReportsPage() {
                       {employeesList.map((emp: any) => (
                         <tr key={emp.id} className="hover:bg-[var(--bg-card)]/40 transition-colors group">
                           <td className="py-3.5 px-4 font-bold text-white flex items-center gap-3">
-                            <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${getAvatarGradient(emp.id)} flex items-center justify-center font-bold text-xs shadow-inner shrink-0 border`}>
-                              {getInitials(emp.name)}
-                            </div>
+                            {emp.photograph ? (
+                              <img
+                                src={`/api/v1/users/${emp.id}/photograph?t=${Date.now()}`}
+                                alt={emp.name}
+                                className="w-8 h-8 rounded-full object-cover border border-[var(--border-color)] shrink-0"
+                                onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] flex items-center justify-center font-bold text-xs shadow-sm shrink-0">
+                                {getInitials(emp.name)}
+                              </div>
+                            )}
                             <div className="flex flex-col min-w-0">
                               <span className="truncate group-hover:text-emerald-400 transition-colors">{emp.name}</span>
                             </div>
