@@ -820,7 +820,7 @@ export default function AuthenticatedLayout({
                           title={item.name}
                           className={`flex items-center justify-center w-10 h-10 mx-auto rounded-lg transition-all ${
                             isActive
-                              ? 'bg-emerald-500/10 text-emerald-500'
+                              ? 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-400 font-bold'
                               : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--border-color)]'
                           }`}
                         >
@@ -839,14 +839,14 @@ export default function AuthenticatedLayout({
                           <Link
                             key={item.path}
                             href={item.path}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all group ${
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold transition-all group ${
                               isActive
-                                ? 'bg-emerald-500/10 text-emerald-500 border-l-2 border-emerald-500 pl-2.5'
+                                ? 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border-l-2 border-emerald-600 dark:border-emerald-400 pl-2.5 shadow-xs'
                                 : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-color)]'
                             }`}
                           >
-                            <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-emerald-500' : 'text-[var(--text-muted)] group-hover:text-[var(--text-primary)]'}`} />
-                            <span>{item.name}</span>
+                            <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-emerald-800 dark:text-emerald-300' : 'text-[var(--text-muted)] group-hover:text-[var(--text-primary)]'}`} />
+                            <span className={isActive ? 'text-emerald-800 dark:text-emerald-300 font-bold' : ''}>{item.name}</span>
                           </Link>
                         );
                       })}
@@ -865,12 +865,12 @@ export default function AuthenticatedLayout({
           <button
             onClick={() => setShowLogoutConfirm(true)}
             title="Logout"
-            className={`flex items-center justify-center gap-2 py-2.5 rounded-lg bg-[var(--bg-card)] hover:bg-red-950/20 text-[var(--text-secondary)] hover:text-red-500 border border-[var(--border-color)] hover:border-red-900/30 transition-all font-semibold text-sm cursor-pointer ${
+            className={`flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 hover:border-emerald-500/30 transition-all font-bold text-xs cursor-pointer shadow-sm ${
               sidebarCollapsed ? 'w-10 mx-auto px-0' : 'w-full px-4'
             }`}
           >
-            <LogOut className="w-4 h-4 shrink-0" />
-            {!sidebarCollapsed && <span>Logout</span>}
+            <LogOut className="w-4 h-4 shrink-0 text-emerald-700 dark:text-emerald-400" />
+            {!sidebarCollapsed && <span className="text-emerald-700 dark:text-emerald-400 font-bold tracking-wide">Logout</span>}
           </button>
         </div>
       </aside>
@@ -988,14 +988,14 @@ export default function AuthenticatedLayout({
                               key={item.path}
                               onClick={() => setSidebarOpen(false)}
                               href={item.path}
-                              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all group ${
+                              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold transition-all group ${
                                 isActive
-                                  ? 'bg-emerald-500/10 text-emerald-400 border-l-2 border-emerald-500 pl-2.5 font-semibold'
+                                  ? 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border-l-2 border-emerald-600 dark:border-emerald-400 pl-2.5 font-bold shadow-xs'
                                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5'
                               }`}
                             >
-                              <Icon className={`w-4 h-4 transition-transform group-hover:scale-105 duration-200 ${isActive ? 'text-emerald-400' : 'text-[var(--text-muted)] group-hover:text-[var(--text-primary)]'}`} />
-                              <span>{item.name}</span>
+                              <Icon className={`w-4 h-4 transition-transform group-hover:scale-105 duration-200 ${isActive ? 'text-emerald-800 dark:text-emerald-300' : 'text-[var(--text-muted)] group-hover:text-[var(--text-primary)]'}`} />
+                              <span className={isActive ? 'text-emerald-800 dark:text-emerald-300 font-bold' : ''}>{item.name}</span>
                             </Link>
                           );
                         })}
@@ -1011,10 +1011,10 @@ export default function AuthenticatedLayout({
             <div className="p-4 border-t border-[var(--border-color)]">
               <button
                 onClick={() => setShowLogoutConfirm(true)}
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-[var(--bg-card)] hover:bg-red-950/20 text-[var(--text-secondary)] hover:text-red-400 border border-[var(--border-color)] hover:border-red-900/30 transition-all font-semibold text-sm cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 hover:border-emerald-500/30 transition-all font-bold text-xs cursor-pointer shadow-sm"
               >
-                <LogOut className="w-4 h-4" />
-                <span>Logout</span>
+                <LogOut className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+                <span className="text-emerald-700 dark:text-emerald-400 font-bold">Logout</span>
               </button>
             </div>
           </div>
@@ -1043,10 +1043,10 @@ export default function AuthenticatedLayout({
               type="button"
               onClick={() => setLeaderboardOpen(true)}
               title="Santori Standings - View Team Leaderboard"
-              className="py-1.5 px-3 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 transition-all focus:outline-none cursor-pointer flex items-center gap-2 text-xs font-bold shadow-sm"
+              className="py-1.5 px-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 border border-emerald-300 dark:border-emerald-700/50 text-emerald-800 dark:text-emerald-300 transition-all focus:outline-none cursor-pointer flex items-center gap-2 text-xs font-bold shadow-xs group"
             >
-              <Trophy className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" />
-              <span className="hidden sm:inline text-emerald-700 dark:text-emerald-400 font-extrabold">Santori Standings</span>
+              <Trophy className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0 group-hover:scale-110 transition-transform" />
+              <span className="hidden sm:inline text-emerald-800 dark:text-emerald-300 font-bold">Santori Standings</span>
             </button>
 
             {/* Quick Attendance Check-in / Check-out Dropdown */}

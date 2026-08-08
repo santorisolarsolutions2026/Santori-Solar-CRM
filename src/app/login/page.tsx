@@ -23,11 +23,13 @@ function getBrowserLocation(timeoutMs = 5000): Promise<string> {
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
             {
               headers: {
+                'User-Agent': 'SolarCRM/1.0 (contact@santorisolar.com)',
                 'Accept-Language': 'en',
               },
             }
           );
-          if (res.ok) {
+          const contentType = res.headers.get('content-type');
+          if (res.ok && contentType && contentType.includes('application/json')) {
             const data = await res.json();
             const address = data.address || {};
             const city = address.city || address.town || address.village || address.suburb || '';

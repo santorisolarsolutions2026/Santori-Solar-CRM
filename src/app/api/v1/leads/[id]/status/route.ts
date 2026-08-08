@@ -118,6 +118,17 @@ export async function POST(
       return NextResponse.json({ success: false, message: 'Remark is mandatory for status change.' }, { status: 400 });
     }
 
+    // Check if lead is unassigned and locked
+    const isLeadUnassigned = !lead.assignedConsultantId && !lead.assignedTlId && !lead.assignedManagerId;
+    if (isLeadUnassigned && toStatusNum !== 1 && toStatusNum !== 0) {
+      if (!formB?.assignedExecutiveId && !formB?.assignedMemberId) {
+        return NextResponse.json({
+          success: false,
+          message: 'This lead is unassigned and locked. Please assign a team member before changing status or taking actions.'
+        }, { status: 400 });
+      }
+    }
+
     // Verify Department Ownership / Hierarchy Ownership
     const userDeptName = department?.name || '';
     const leadOrder = await prisma.order.findFirst({ where: { leadId } });

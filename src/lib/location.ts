@@ -9,13 +9,24 @@ export async function getCurrentLocationString(): Promise<string> {
       async (position) => {
         const { latitude, longitude } = position.coords;
         try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-          const data = await res.json();
-          if (data && data.display_name) {
-            const parts = data.display_name.split(',');
-            const shortAddress = parts.slice(0, 3).join(',').trim();
-            resolve(shortAddress);
-            return;
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+            {
+              headers: {
+                'User-Agent': 'SolarCRM/1.0 (contact@santorisolar.com)',
+                'Accept-Language': 'en',
+              },
+            }
+          );
+          const contentType = res.headers.get('content-type');
+          if (res.ok && contentType && contentType.includes('application/json')) {
+            const data = await res.json();
+            if (data && data.display_name) {
+              const parts = data.display_name.split(',');
+              const shortAddress = parts.slice(0, 3).join(',').trim();
+              resolve(shortAddress);
+              return;
+            }
           }
         } catch (e) {
           // Fallback to coordinates

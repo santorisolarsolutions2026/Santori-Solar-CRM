@@ -27,6 +27,7 @@ import {
   Zap,
   Truck,
   RotateCcw,
+  Lock,
 } from 'lucide-react';
 import Link from 'next/link';
 import UserSelect from '@/components/UserSelect';
@@ -184,6 +185,11 @@ export default function LeadsPage() {
   const [trackingLoading, setTrackingLoading] = useState(false);
 
   const handleOpenTracker = async (lead: any) => {
+    const isUnassigned = !lead.consultant?.id && !lead.tl?.id && !lead.manager?.id && !lead.consultant && !lead.tl && !lead.manager;
+    if (isUnassigned) {
+      alert('This lead is unassigned and locked. Progress tracking is unavailable until assigned.');
+      return;
+    }
     setTrackingLead(lead);
     setTrackingLoading(true);
     try {
@@ -1411,42 +1417,59 @@ export default function LeadsPage() {
                       </td>
                       <td className="py-3.5 px-4 text-center w-32">
                         <div className="flex items-center justify-center gap-2">
-                          {(hasPermission('sales:lead_track') || hasPermission('leads:track')) && (
-                            <button
-                              onClick={() => handleOpenTracker(lead)}
-                              className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 transition-all cursor-pointer flex items-center justify-center"
-                              title="Track Lead Journey"
-                            >
-                              <Truck className="w-4.5 h-4.5" />
-                            </button>
-                          )}
-                          {hasPermission('leads:edit') && (
-                            <Link
-                              href={`/leads/${lead.id}?edit=true`}
-                              className="p-1.5 rounded-lg bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-[var(--text-secondary)] hover:text-white transition-all"
-                              title="Edit Lead Info"
-                            >
-                              <Edit2 className="w-4.5 h-4.5" />
-                            </Link>
-                          )}
-                          {!lead.isActive && hasPermission('leads:edit') && (
-                            <button
-                              onClick={() => handleActivateLead(lead.id)}
-                              className="p-1.5 rounded-lg bg-[var(--bg-card)] hover:bg-emerald-950/20 border border-[var(--border-color)] hover:border-emerald-900/30 text-[var(--text-secondary)] hover:text-emerald-400 transition-all cursor-pointer"
-                              title="Activate Lead"
-                            >
-                              <Check className="w-4.5 h-4.5" />
-                            </button>
-                          )}
-                          {hasPermission('leads:delete') && (
-                            <button
-                              onClick={() => handleDeleteLead(lead.id)}
-                              className="p-1.5 rounded-lg bg-[var(--bg-card)] hover:bg-red-950/20 border border-[var(--border-color)] hover:border-red-900/30 text-[var(--text-secondary)] hover:text-red-400 transition-all cursor-pointer"
-                              title={lead.isActive ? "Deactivate Opportunity" : "Delete Lead permanently"}
-                            >
-                              <Trash2 className="w-4.5 h-4.5" />
-                            </button>
-                          )}
+                          {(() => {
+                            const isUnassigned = !lead.consultant?.id && !lead.tl?.id && !lead.manager?.id && !lead.consultant && !lead.tl && !lead.manager;
+                            if (isUnassigned) {
+                              return (
+                                <span
+                                  className="p-1.5 rounded-lg bg-slate-800/40 border border-slate-700/40 text-amber-500/80 flex items-center justify-center cursor-not-allowed"
+                                  title="Lead is unassigned — actions & tracking locked"
+                                >
+                                  <Lock className="w-4 h-4" />
+                                </span>
+                              );
+                            }
+                            return (
+                              <>
+                                {(hasPermission('sales:lead_track') || hasPermission('leads:track')) && (
+                                  <button
+                                    onClick={() => handleOpenTracker(lead)}
+                                    className="p-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-700/30 transition-all cursor-pointer flex items-center justify-center shadow-sm active:scale-95"
+                                    title="Track Lead Journey"
+                                  >
+                                    <Truck className="w-4.5 h-4.5 stroke-[2.2] text-white stroke-white" stroke="#FFFFFF" />
+                                  </button>
+                                )}
+                                {hasPermission('leads:edit') && (
+                                  <Link
+                                    href={`/leads/${lead.id}?edit=true`}
+                                    className="p-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-700/30 transition-all flex items-center justify-center shadow-sm active:scale-95"
+                                    title="Edit Lead Info"
+                                  >
+                                    <Edit2 className="w-4.5 h-4.5 stroke-[2.2] text-white stroke-white" stroke="#FFFFFF" />
+                                  </Link>
+                                )}
+                                {!lead.isActive && hasPermission('leads:edit') && (
+                                  <button
+                                    onClick={() => handleActivateLead(lead.id)}
+                                    className="p-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-700/30 transition-all cursor-pointer flex items-center justify-center shadow-sm active:scale-95"
+                                    title="Activate Lead"
+                                  >
+                                    <Check className="w-4.5 h-4.5 stroke-[2.5] text-white stroke-white" stroke="#FFFFFF" />
+                                  </button>
+                                )}
+                                {hasPermission('leads:delete') && (
+                                  <button
+                                    onClick={() => handleDeleteLead(lead.id)}
+                                    className="p-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-700/30 transition-all cursor-pointer flex items-center justify-center shadow-sm active:scale-95"
+                                    title={lead.isActive ? "Deactivate Opportunity" : "Delete Lead permanently"}
+                                  >
+                                    <Trash2 className="w-4.5 h-4.5 stroke-[2.2] text-white stroke-white" stroke="#FFFFFF" />
+                                  </button>
+                                )}
+                              </>
+                            );
+                          })()}
                         </div>
                       </td>
                     </tr>

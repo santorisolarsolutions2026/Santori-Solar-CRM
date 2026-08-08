@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect, useState } from 'react';
 
@@ -48,7 +48,12 @@ export function MeetingLocationDisplay({
         },
       }
     )
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const ct = res.headers.get('content-type');
+        if (!ct || !ct.includes('application/json')) throw new Error('Not JSON');
+        return res.json();
+      })
       .then((data) => {
         if (data && data.address) {
           const addr = data.address;

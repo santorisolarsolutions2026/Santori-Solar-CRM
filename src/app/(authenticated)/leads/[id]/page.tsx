@@ -823,6 +823,16 @@ export default function LeadDetailPage({
     }
   }, [leadId]);
 
+  // Auto-switch to info tab if lead is unassigned
+  useEffect(() => {
+    if (lead) {
+      const isUnassigned = !lead.assignedConsultantId && !lead.assignedTlId && !lead.assignedManagerId && !lead.consultant?.id && !lead.tl?.id && !lead.manager?.id;
+      if (isUnassigned && activeTab !== 'info') {
+        setActiveTab('info');
+      }
+    }
+  }, [lead, activeTab]);
+
   // Save active tab draft
   useEffect(() => {
     if (isDataLoaded && leadId && typeof window !== 'undefined') {
@@ -1577,9 +1587,10 @@ export default function LeadDetailPage({
   const isPsaUser = baseRole === 'psa';
   const isSalesUser = ['consultant', 'tl', 'manager'].includes(baseRole) && !user?.role.includes('finance') && !user?.role.includes('operations') && !user?.role.includes('admin') && !user?.role.includes('it');
   
+  const isLeadUnassigned = !lead.assignedConsultantId && !lead.assignedTlId && !lead.assignedManagerId && !lead.consultant?.id && !lead.tl?.id && !lead.manager?.id;
   const isPsaLocked = isPsaUser && [8, 9, 13].includes(lead.status);
   const isSalesLocked = isSalesUser && lead.order && lead.order.status !== 'draft';
-  const isLeadLocked = isPsaLocked || isSalesLocked;
+  const isLeadLocked = isPsaLocked || isSalesLocked || isLeadUnassigned;
 
   // Calculate dynamic allowed transitions for select input
   const nextStageIds = ALLOWED_TRANSITIONS[lead.status] || [];
@@ -1676,7 +1687,7 @@ export default function LeadDetailPage({
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-64">
       {/* Sequential Department Workflow Stepper */}
       <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-5 shadow-xl">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-6 relative">
@@ -1804,7 +1815,7 @@ export default function LeadDetailPage({
       )}
 
       {/* Main tabs container */}
-      <div className="bg-[#161B22] border border-[var(--border-color)] rounded-xl overflow-hidden shadow-lg">
+      <div className="bg-[#161B22] border border-[var(--border-color)] rounded-xl shadow-lg overflow-visible">
           {/* Tabs selector */}
           <div className="flex border-b border-[var(--border-color)] bg-[var(--bg-card)] text-xs font-semibold overflow-x-auto whitespace-nowrap scrollbar-none">
             <button
@@ -1818,7 +1829,7 @@ export default function LeadDetailPage({
               <User className={`w-4 h-4 ${activeTab === 'info' ? 'text-emerald-600 dark:text-emerald-400' : ''}`} />
               <span className={activeTab === 'info' ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : ''}>Info</span>
             </button>
-            {(lead.status === 9 || roleFilteredNextStages.length > 0) && (
+            {!isLeadUnassigned && (lead.status === 9 || roleFilteredNextStages.length > 0) && (
               <button
                 onClick={() => setActiveTab('action')}
                 className={`px-5 py-4 border-b-2 transition-all flex items-center justify-center gap-2 shrink-0 ${
@@ -1831,46 +1842,46 @@ export default function LeadDetailPage({
                 <span className={activeTab === 'action' ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : ''}>Action</span>
               </button>
             )}
-              {canTrackJourney && (
-                <button
-                  onClick={() => setActiveTab('track')}
-                  className={`px-5 py-4 border-b-2 transition-all flex items-center justify-center gap-2 shrink-0 ${
-                    activeTab === 'track'
-                      ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 font-extrabold bg-emerald-500/[0.04]'
-                      : 'border-transparent text-[var(--text-secondary)] hover:text-emerald-600 dark:hover:text-emerald-400 font-semibold'
-                  }`}
-                >
-                  <Truck className={`w-4 h-4 ${activeTab === 'track' ? 'text-emerald-600 dark:text-emerald-400' : ''}`} />
-                  <span className={activeTab === 'track' ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : ''}>Track Progress</span>
-                </button>
-              )}
-              {lead.status >= 8 && (
-                <button
-                  onClick={() => setActiveTab('meeting')}
-                  className={`px-5 py-4 border-b-2 transition-all flex items-center justify-center gap-2 shrink-0 ${
-                    activeTab === 'meeting'
-                      ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 font-extrabold bg-emerald-500/[0.04]'
-                      : 'border-transparent text-[var(--text-secondary)] hover:text-emerald-600 dark:hover:text-emerald-400 font-semibold'
-                  }`}
-                >
-                  <Calendar className={`w-4 h-4 ${activeTab === 'meeting' ? 'text-emerald-600 dark:text-emerald-400' : ''}`} />
-                  <span className={activeTab === 'meeting' ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : ''}>Meeting Details</span>
-                </button>
-              )}
+            {!isLeadUnassigned && canTrackJourney && (
+              <button
+                onClick={() => setActiveTab('track')}
+                className={`px-5 py-4 border-b-2 transition-all flex items-center justify-center gap-2 shrink-0 ${
+                  activeTab === 'track'
+                    ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 font-extrabold bg-emerald-500/[0.04]'
+                    : 'border-transparent text-[var(--text-secondary)] hover:text-emerald-600 dark:hover:text-emerald-400 font-semibold'
+                }`}
+              >
+                <Truck className={`w-4 h-4 ${activeTab === 'track' ? 'text-emerald-600 dark:text-emerald-400' : ''}`} />
+                <span className={activeTab === 'track' ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : ''}>Track Progress</span>
+              </button>
+            )}
+            {!isLeadUnassigned && lead.status >= 8 && (
+              <button
+                onClick={() => setActiveTab('meeting')}
+                className={`px-5 py-4 border-b-2 transition-all flex items-center justify-center gap-2 shrink-0 ${
+                  activeTab === 'meeting'
+                    ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 font-extrabold bg-emerald-500/[0.04]'
+                    : 'border-transparent text-[var(--text-secondary)] hover:text-emerald-600 dark:hover:text-emerald-400 font-semibold'
+                }`}
+              >
+                <Calendar className={`w-4 h-4 ${activeTab === 'meeting' ? 'text-emerald-600 dark:text-emerald-400' : ''}`} />
+                <span className={activeTab === 'meeting' ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : ''}>Meeting Details</span>
+              </button>
+            )}
               
-              {lead.order && (hasPermission('orders:view') || hasPermission('orders:create')) && (
-                <button
-                  onClick={() => setActiveTab('order')}
-                  className={`px-5 py-4 border-b-2 transition-all flex items-center justify-center gap-2 shrink-0 ${
-                    activeTab === 'order'
-                      ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 font-extrabold bg-emerald-500/[0.04]'
-                      : 'border-transparent text-[var(--text-secondary)] hover:text-emerald-600 dark:hover:text-emerald-400 font-semibold'
-                  }`}
-                >
-                  <FileCheck className={`w-4 h-4 ${activeTab === 'order' ? 'text-emerald-600 dark:text-emerald-400' : ''}`} />
-                  <span className={activeTab === 'order' ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : ''}>Order Punching & Documents</span>
-                </button>
-              )}
+            {!isLeadUnassigned && lead.order && (hasPermission('orders:view') || hasPermission('orders:create')) && (
+              <button
+                onClick={() => setActiveTab('order')}
+                className={`px-5 py-4 border-b-2 transition-all flex items-center justify-center gap-2 shrink-0 ${
+                  activeTab === 'order'
+                    ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 font-extrabold bg-emerald-500/[0.04]'
+                    : 'border-transparent text-[var(--text-secondary)] hover:text-emerald-600 dark:hover:text-emerald-400 font-semibold'
+                }`}
+              >
+                <FileCheck className={`w-4 h-4 ${activeTab === 'order' ? 'text-emerald-600 dark:text-emerald-400' : ''}`} />
+                <span className={activeTab === 'order' ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : ''}>Order Punching & Documents</span>
+              </button>
+            )}
               
             </div>
 
@@ -2142,7 +2153,15 @@ export default function LeadDetailPage({
               {/* 1. INFO TAB */}
               {activeTab === 'info' && (
                 <div>
-                  {isLeadLocked && (
+                  {isLeadUnassigned ? (
+                    <div className="bg-amber-500/10 border border-amber-500/30 text-amber-300 p-4 rounded-xl text-xs flex items-start gap-3 shadow-md mb-6 animate-fade-in-up">
+                      <Lock className="w-5 h-5 shrink-0 text-amber-400 mt-0.5" />
+                      <div>
+                        <strong className="text-white font-bold block mb-0.5">Lead is Unassigned (Locked)</strong>
+                        This lead is currently unassigned. Pipeline actions and progress tracking are locked. Assign a team member below to unlock full workflow actions and tracking.
+                      </div>
+                    </div>
+                  ) : isLeadLocked && (
                     <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-xs flex items-start gap-3 shadow-md mb-6 animate-fade-in-up">
                       <Lock className="w-5 h-5 shrink-0" />
                       <div>
@@ -2254,16 +2273,8 @@ export default function LeadDetailPage({
                                 <UserSelect
                                   users={(() => {
                                     if (!user) return [];
-                                    const salesEmployees = employees.filter((emp) => {
-                                      const deptName = (emp.department?.name || '').toLowerCase().trim();
-                                      const roleLower = (emp.role || '').toLowerCase().trim();
-                                      const isSalesDept = deptName.includes('sales') || deptName.includes('psa') || deptName.includes('marketing');
-                                      const isSalesRole = ['sales_head', 'manager', 'tl', 'psa_tl', 'consultant', 'psa'].includes(roleLower) || roleLower.includes('sales') || roleLower.includes('psa');
-                                      return isSalesDept || isSalesRole;
-                                    });
-
                                     const isTopAdmin = user.role === 'admin' || user.role?.startsWith('admin:') || user.role === 'director' || user.department?.name?.toLowerCase().trim() === 'it';
-                                    if (isTopAdmin) return salesEmployees;
+                                    if (isTopAdmin) return employees;
 
                                     const descendants = new Set<number>();
                                     const queue: number[] = [user.id];
@@ -2277,7 +2288,8 @@ export default function LeadDetailPage({
                                       });
                                     }
 
-                                    return salesEmployees.filter(m => descendants.has(m.id));
+                                    const allowedIds = new Set<number>([user.id, ...Array.from(descendants)]);
+                                    return employees.filter(m => allowedIds.has(m.id));
                                   })()}
                                   value={lead.assignedConsultantId || lead.assignedTlId || lead.assignedManagerId || null}
                                   onChange={(val) => handleSingleMemberAssign(val ? String(val) : '')}
@@ -2710,25 +2722,25 @@ export default function LeadDetailPage({
                                 )}
                               </div>
                               <div>
-                                <span className="text-[var(--text-muted)] uppercase tracking-wider font-semibold">Duration & Timing</span>
-                                <p className="text-sm text-white mt-1">
-                                  <span className="font-bold text-emerald-500 dark:text-emerald-400">
+                                <span className="text-[var(--text-muted)] uppercase tracking-wider font-semibold block text-[10px]">Duration & Timing</span>
+                                <div className="mt-1">
+                                  <span className="font-bold text-xs text-emerald-400 bg-emerald-950/60 border border-emerald-800/40 px-2 py-0.5 rounded-md inline-block shadow-sm">
                                     {meet.meetingDurationSec !== null && meet.meetingDurationSec !== undefined
                                       ? meet.meetingDurationSec >= 60
                                         ? `${Math.floor(meet.meetingDurationSec / 60)}m ${meet.meetingDurationSec % 60}s`
                                         : `${meet.meetingDurationSec}s`
                                       : 'Under 1 minute'}
                                   </span>
-                                  <span className="block text-[9px] text-[var(--text-muted)] mt-1">
+                                  <span className="block text-[10px] text-[var(--text-muted)] mt-1 font-mono">
                                     Started: {new Date(meet.meetingStartedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                                     {meet.meetingEndedAt && (
                                       <>
-                                        {' | '}
+                                        {' • '}
                                         Ended: {new Date(meet.meetingEndedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                                       </>
                                     )}
                                   </span>
-                                </p>
+                                </div>
                               </div>
                               {meet.audioRecordingPath && (
                                 <div className="md:col-span-2">

@@ -63,9 +63,15 @@ export async function POST(
 
     const task = await prisma.leadTask.findUnique({
       where: { id: parseInt(taskId, 10) },
+      include: { lead: true },
     });
     if (!task || task.leadId !== leadId) {
       return NextResponse.json({ success: false, message: 'Task not found for this lead.' }, { status: 404 });
+    }
+
+    const isLeadUnassigned = !task.lead.assignedConsultantId && !task.lead.assignedTlId && !task.lead.assignedManagerId;
+    if (isLeadUnassigned) {
+      return NextResponse.json({ success: false, message: 'Lead is unassigned and locked. Please assign a team member before completing tasks.' }, { status: 400 });
     }
 
     const updatedTask = await prisma.leadTask.update({

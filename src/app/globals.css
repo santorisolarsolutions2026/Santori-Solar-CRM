@@ -191,8 +191,8 @@ body {
    Force all white/light text to dark in light mode
    ============================================================ */
 
-/* Generic white text → dark */
-.light .text-white:not(button):not(.bg-emerald-600):not(.bg-emerald-700):not(.bg-red-600):not(.bg-red-700):not([class*="bg-emerald"]):not([class*="bg-red"]) {
+/* Generic white text → dark (exclude buttons, links, svgs, and elements inside colored backgrounds) */
+.light .text-white:not(button):not(a):not(svg):not([class*="bg-emerald"]):not([class*="bg-red"]):not([class*="bg-blue"]):not([class*="bg-indigo"]) {
   color: var(--text-primary) !important;
 }
 
@@ -261,22 +261,71 @@ body {
   color: var(--text-primary);
 }
 
-/* Preserve solid dark/colored button text contrast */
+/* Preserve solid dark/colored button text and SVG icon contrast (only exact solid 600/700 shades) */
 .light .bg-emerald-600,
+.light .bg-emerald-600 *,
+.light .bg-emerald-600 svg,
 .light .bg-emerald-700,
+.light .bg-emerald-700 *,
+.light .bg-emerald-700 svg,
 .light .bg-red-600,
+.light .bg-red-600 *,
+.light .bg-red-600 svg,
 .light .bg-red-700,
+.light .bg-red-700 *,
+.light .bg-red-700 svg,
 .light .bg-blue-600,
+.light .bg-blue-600 *,
+.light .bg-blue-600 svg,
 .light .bg-indigo-600,
-.light .bg-slate-800,
-.light .bg-slate-900,
-.light .bg-zinc-800,
-.light .bg-zinc-900,
-.light button[class*="bg-emerald"],
-.light button[class*="bg-red"],
-.light button[class*="bg-blue"],
-.light button[class*="bg-indigo"] {
+.light .bg-indigo-600 *,
+.light .bg-indigo-600 svg {
   color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+
+/* ============================================================
+   LIGHT MODE — SIDEBAR ACTIVE NAVIGATION & TOP BUTTONS
+   ============================================================ */
+
+.light aside nav a[class*="border-emerald"],
+.light aside nav a[class*="bg-emerald"],
+.light div[class*="animate-slide-in"] nav a[class*="border-emerald"],
+.light div[class*="animate-slide-in"] nav a[class*="bg-emerald"] {
+  background-color: rgba(16, 185, 129, 0.12) !important;
+  color: #065F46 !important;
+  border-left-color: #059669 !important;
+}
+
+.light aside nav a[class*="border-emerald"] span,
+.light aside nav a[class*="bg-emerald"] span,
+.light div[class*="animate-slide-in"] nav a[class*="border-emerald"] span,
+.light div[class*="animate-slide-in"] nav a[class*="bg-emerald"] span {
+  color: #065F46 !important;
+  font-weight: 700 !important;
+}
+
+.light aside nav a[class*="border-emerald"] svg,
+.light aside nav a[class*="bg-emerald"] svg,
+.light div[class*="animate-slide-in"] nav a[class*="border-emerald"] svg,
+.light div[class*="animate-slide-in"] nav a[class*="bg-emerald"] svg {
+  color: #059669 !important;
+  stroke: #059669 !important;
+}
+
+/* Santori Standings Button in Light Mode */
+.light button[title*="Santori Standings"] {
+  background-color: #ECFDF5 !important;
+  border-color: #A7F3D0 !important;
+  color: #065F46 !important;
+}
+.light button[title*="Santori Standings"] span {
+  color: #065F46 !important;
+  font-weight: 700 !important;
+}
+.light button[title*="Santori Standings"] svg {
+  color: #059669 !important;
+  stroke: #059669 !important;
 }
 
 

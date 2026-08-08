@@ -25,13 +25,19 @@ export function TrendLineChart({ trend }: TrendLineChartProps) {
   return (
     <ResponsiveContainer width="100%" height="100%">
       <LineChart data={trend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
-        <XAxis dataKey="date" stroke="#6E7681" fontSize={10} tickLine={false} />
-        <YAxis stroke="#6E7681" fontSize={10} tickLine={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} opacity={0.6} />
+        <XAxis dataKey="date" stroke="var(--text-muted)" fontSize={10} tickLine={false} axisLine={{ stroke: 'var(--border-color)' }} />
+        <YAxis stroke="var(--text-muted)" fontSize={10} tickLine={false} axisLine={false} />
         <Tooltip
-          contentStyle={{ backgroundColor: '#161B22', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '8px' }}
-          labelStyle={{ color: 'var(--text-primary)', fontSize: '12px', fontWeight: 'bold' }}
-          itemStyle={{ fontSize: '12px', color: 'var(--text-secondary)' }}
+          contentStyle={{
+            backgroundColor: 'var(--bg-card)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '10px',
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.12)',
+            padding: '8px 12px',
+          }}
+          labelStyle={{ color: 'var(--text-primary)', fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}
+          itemStyle={{ fontSize: '12px', color: 'var(--text-secondary)', padding: '2px 0' }}
           cursor={false}
         />
         <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
@@ -70,26 +76,32 @@ export function LeadSourcePieChart({ leadSourceData, colors }: LeadSourcePieChar
               cy="50%"
               innerRadius={48}
               outerRadius={72}
-              paddingAngle={4}
+              paddingAngle={leadSourceData.length > 1 ? 3 : 0}
               dataKey="value"
-              stroke="#0f172a"
-              strokeWidth={2}
+              stroke="none"
+              strokeWidth={0}
             >
               {leadSourceData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                <Cell key={`cell-${index}`} fill={colors[index % colors.length]} stroke="none" />
               ))}
             </Pie>
             <Tooltip
-              contentStyle={{ backgroundColor: '#161B22', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '8px', padding: '8px' }}
-              labelStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}
-              itemStyle={{ fontSize: '12px', color: '#94a3b8' }}
+              contentStyle={{
+                backgroundColor: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '10px',
+                boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.12)',
+                padding: '8px 12px',
+              }}
+              labelStyle={{ color: 'var(--text-primary)', fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}
+              itemStyle={{ fontSize: '12px', color: 'var(--text-secondary)', padding: '2px 0' }}
               formatter={(value: any, name: any) => [`${value} leads (${total > 0 ? ((Number(value) / total) * 100).toFixed(0) : 0}%)`, name]}
             />
           </PieChart>
         </ResponsiveContainer>
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
           <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-wider">Total</span>
-          <span className="text-sm font-extrabold text-white">{total}</span>
+          <span className="text-sm font-extrabold text-[var(--text-primary)]">{total}</span>
         </div>
       </div>
 
@@ -120,13 +132,19 @@ export function PipelineBarChart({ pipelineBarData }: PipelineBarChartProps) {
   return (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={pipelineBarData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
-        <XAxis dataKey="name" stroke="#6E7681" fontSize={8} tickLine={false} />
-        <YAxis stroke="#6E7681" fontSize={10} tickLine={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} opacity={0.6} />
+        <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={8} tickLine={false} axisLine={{ stroke: 'var(--border-color)' }} />
+        <YAxis stroke="var(--text-muted)" fontSize={10} tickLine={false} axisLine={false} />
         <Tooltip
-          contentStyle={{ backgroundColor: '#161B22', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '8px' }}
-          labelStyle={{ color: 'var(--text-primary)', fontSize: '12px', fontWeight: 'bold' }}
-          itemStyle={{ fontSize: '12px', color: 'var(--text-secondary)' }}
+          contentStyle={{
+            backgroundColor: 'var(--bg-card)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '10px',
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.12)',
+            padding: '8px 12px',
+          }}
+          labelStyle={{ color: 'var(--text-primary)', fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}
+          itemStyle={{ fontSize: '12px', color: 'var(--text-secondary)', padding: '2px 0' }}
           cursor={false}
         />
         <Bar dataKey="Leads" fill="#10B981" radius={[4, 4, 0, 0]} />

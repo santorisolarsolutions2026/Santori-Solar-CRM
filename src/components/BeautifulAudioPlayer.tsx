@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useRef, useState, useEffect } from 'react';
 import { Play, Pause, RotateCcw, Volume2, VolumeX, Loader2, Download } from 'lucide-react';
@@ -32,7 +32,7 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.load();
-      audioRef.current.playbackRate = 1;
+      audioRef.current.playbackRate = playbackRate;
     }
   }, [src]);
 
@@ -41,6 +41,11 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
     if (isPlaying) {
       audioRef.current.pause();
     } else {
+      // If at or near the end, restart from beginning
+      if (duration > 0 && (currentTime >= duration || audioRef.current.ended || audioRef.current.currentTime >= duration - 0.1)) {
+        audioRef.current.currentTime = 0;
+        setCurrentTime(0);
+      }
       audioRef.current.play().catch((err) => {
         console.error('Playback error:', err);
         setIsLoading(false);
@@ -50,7 +55,12 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
 
   const handleTimeUpdate = () => {
     if (!audioRef.current) return;
-    setCurrentTime(audioRef.current.currentTime);
+    const cur = audioRef.current.currentTime;
+    if (duration > 0 && cur >= duration) {
+      setCurrentTime(duration);
+    } else {
+      setCurrentTime(cur);
+    }
   };
 
   const handleLoadedMetadata = () => {
@@ -91,9 +101,7 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
     if (!audioRef.current) return;
     audioRef.current.currentTime = 0;
     setCurrentTime(0);
-    if (!isPlaying) {
-      audioRef.current.play().catch((err) => console.error(err));
-    }
+    audioRef.current.play().catch((err) => console.error(err));
   };
 
   const handlePlaybackRateChange = () => {
@@ -115,14 +123,14 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
+  const progressPercent = duration > 0 ? Math.min(100, Math.max(0, (currentTime / duration) * 100)) : 0;
+
   return (
     <div className="bg-[var(--bg-card)] backdrop-blur-md border border-[var(--border-color)] rounded-xl p-4 flex flex-col gap-3 shadow-xl transition-all hover:border-[var(--border-color)] w-full">
       <audio
         ref={audioRef}
         src={src}
-        onPlay={() => {
-          setIsPlaying(true);
-        }}
+        onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
@@ -130,7 +138,12 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
         onCanPlayThrough={() => setIsLoading(false)}
         onWaiting={() => setIsLoading(true)}
         onPlaying={() => setIsLoading(false)}
-        onEnded={() => setIsPlaying(false)}
+        onEnded={() => {
+          setIsPlaying(false);
+          if (duration > 0) {
+            setCurrentTime(duration);
+          }
+        }}
         onError={(e) => {
           console.error('Audio playback/load error:', e);
           setIsLoading(false);
@@ -140,7 +153,7 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
 
       {/* Progress bar and timeline */}
       <div className="flex items-center gap-3 w-full">
-        <span className="text-[10px] font-mono text-[var(--text-secondary)] select-none w-10 text-right">
+        <span className="text-[10px] font-mono font-semibold text-emerald-400 select-none w-10 text-right">
           {formatTime(currentTime)}
         </span>
 
@@ -149,12 +162,13 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
             type="range"
             min="0"
             max={duration || 100}
+            step="0.05"
             value={currentTime}
             onChange={handleSeekChange}
             disabled={isLoading}
-            className="w-full h-1 bg-[var(--bg-card)] rounded-lg appearance-none cursor-pointer accent-blue-600 focus:outline-none disabled:opacity-50"
+            className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500 focus:outline-none disabled:opacity-50"
             style={{
-              background: `linear-gradient(to right, #2563eb 0%, #2563eb ${(currentTime / (duration || 1)) * 100}%, #1e293b ${(currentTime / (duration || 1)) * 100}%, #1e293b 100%)`,
+              background: `linear-gradient(to right, #059669 0%, #10b981 ${progressPercent}%, #1e293b ${progressPercent}%, #1e293b 100%)`,
             }}
           />
         </div>
@@ -172,7 +186,7 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
             type="button"
             onClick={togglePlay}
             disabled={!src}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-tr from-blue-700 to-blue-500 text-white font-semibold shadow-lg hover:shadow-blue-500/20 active:scale-95 transition-all hover:scale-105 disabled:opacity-50 flex-shrink-0"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-tr from-emerald-700 to-emerald-500 hover:from-emerald-600 hover:to-emerald-400 text-white font-semibold shadow-lg shadow-emerald-950/40 active:scale-95 transition-all hover:scale-105 disabled:opacity-50 flex-shrink-0 cursor-pointer"
           >
             {isLoading ? (
               <Loader2 className="w-5 h-5 animate-spin text-white" />
@@ -187,8 +201,8 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
           <button
             type="button"
             onClick={restartAudio}
-            title="Restart"
-            className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] hover:border-[var(--border-color)] bg-[var(--bg-main)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors flex-shrink-0"
+            title="Restart from beginning"
+            className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] hover:border-emerald-500/40 bg-[var(--bg-main)] text-[var(--text-secondary)] hover:text-emerald-400 transition-colors flex-shrink-0 cursor-pointer"
           >
             <RotateCcw className="w-4 h-4" />
           </button>
@@ -198,7 +212,7 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
             type="button"
             onClick={handlePlaybackRateChange}
             title="Speed"
-            className="px-2.5 h-8 text-[10px] font-bold flex items-center justify-center rounded-lg border border-[var(--border-color)] hover:border-[var(--border-color)] bg-[var(--bg-main)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors select-none font-mono flex-shrink-0"
+            className="px-2.5 h-8 text-[10px] font-bold flex items-center justify-center rounded-lg border border-[var(--border-color)] hover:border-emerald-500/40 bg-[var(--bg-main)] text-emerald-400 transition-colors select-none font-mono flex-shrink-0 cursor-pointer"
           >
             {playbackRate.toFixed(2)}x
           </button>
@@ -210,9 +224,9 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
             target="_blank"
             rel="noopener noreferrer"
             title="Download Audio Recording"
-            className="h-8 px-2.5 flex items-center gap-1.5 rounded-lg border border-[var(--border-color)] hover:border-[var(--border-color)] bg-[var(--bg-main)] text-[var(--text-secondary)] hover:text-white transition-colors flex-shrink-0 text-[10px] font-bold"
+            className="h-8 px-2.5 flex items-center gap-1.5 rounded-lg border border-[var(--border-color)] hover:border-emerald-500/40 bg-[var(--bg-main)] text-[var(--text-secondary)] hover:text-emerald-400 transition-colors flex-shrink-0 text-[10px] font-bold"
           >
-            <Download className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+            <Download className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
             <span className="hidden sm:inline">Download Audio</span>
           </a>
         </div>
@@ -222,12 +236,12 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
           <button
             type="button"
             onClick={toggleMute}
-            className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] hover:border-[var(--border-color)] bg-[var(--bg-main)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors flex-shrink-0"
+            className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] hover:border-emerald-500/40 bg-[var(--bg-main)] text-[var(--text-secondary)] hover:text-emerald-400 transition-colors flex-shrink-0 cursor-pointer"
           >
             {isMuted || volume === 0 ? (
               <VolumeX className="w-4 h-4 text-rose-400" />
             ) : (
-              <Volume2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <Volume2 className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
             )}
           </button>
 
@@ -238,9 +252,9 @@ export function BeautifulAudioPlayer({ src, defaultDuration }: BeautifulAudioPla
             step="0.05"
             value={isMuted ? 0 : volume}
             onChange={handleVolumeChange}
-            className="w-16 sm:w-20 md:w-24 h-1 bg-[var(--bg-card)] rounded-lg appearance-none cursor-pointer accent-blue-600 focus:outline-none"
+            className="w-16 sm:w-20 md:w-24 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500 focus:outline-none"
             style={{
-              background: `linear-gradient(to right, #2563eb 0%, #2563eb ${(isMuted ? 0 : volume) * 100}%, #1e293b ${(isMuted ? 0 : volume) * 100}%, #1e293b 100%)`,
+              background: `linear-gradient(to right, #059669 0%, #10b981 ${(isMuted ? 0 : volume) * 100}%, #1e293b ${(isMuted ? 0 : volume) * 100}%, #1e293b 100%)`,
             }}
           />
         </div>

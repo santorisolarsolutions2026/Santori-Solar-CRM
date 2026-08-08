@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -208,15 +208,18 @@ export default function NewLeadPage() {
       try {
         // Fetch city/state from postoffices API (or mock for speed)
         const res = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
-        const data = await res.json();
-        if (data && data[0]?.Status === 'Success') {
-          const postOffice = data[0].PostOffice[0];
-          setForm((prev) => ({
-            ...prev,
-            pinCode: pin,
-            city: postOffice.District,
-            state: postOffice.State,
-          }));
+        const contentType = res.headers.get('content-type');
+        if (res.ok && contentType && contentType.includes('application/json')) {
+          const data = await res.json();
+          if (data && data[0]?.Status === 'Success') {
+            const postOffice = data[0].PostOffice[0];
+            setForm((prev) => ({
+              ...prev,
+              pinCode: pin,
+              city: postOffice.District,
+              state: postOffice.State,
+            }));
+          }
         }
       } catch (err) {
         console.error('Pincode fetch error:', err);

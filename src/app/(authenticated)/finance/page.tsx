@@ -1015,15 +1015,21 @@ export default function FinancePage() {
                           ))}
                         </Pie>
                         <ChartTooltip
-                          contentStyle={{ backgroundColor: '#090b11', border: '1px solid #1f2937', borderRadius: '8px', padding: '8px' }}
-                          itemStyle={{ fontSize: '11px', color: '#fff' }}
+                          contentStyle={{
+                            backgroundColor: 'var(--bg-card)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '8px',
+                            padding: '8px',
+                            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.12)',
+                          }}
+                          itemStyle={{ fontSize: '11px', color: 'var(--text-primary)' }}
                           formatter={(value: any) => [`₹${Number(value).toLocaleString('en-IN')}`, 'Amount']}
                         />
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                       <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase">Methods</span>
-                      <span className="text-xs font-black text-white">{pieChartData.length}</span>
+                      <span className="text-xs font-black text-[var(--text-primary)]">{pieChartData.length}</span>
                     </div>
                   </div>
 

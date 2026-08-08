@@ -20,11 +20,13 @@ function getBrowserLocation(timeoutMs = 5000): Promise<string> {
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
             {
               headers: {
+                'User-Agent': 'SolarCRM/1.0 (contact@santorisolar.com)',
                 'Accept-Language': 'en',
               },
             }
           );
-          if (res.ok) {
+          const contentType = res.headers.get('content-type');
+          if (res.ok && contentType && contentType.includes('application/json')) {
             const data = await res.json();
             const address = data.address || {};
             const city = address.city || address.town || address.village || address.suburb || '';
@@ -67,8 +69,11 @@ interface User {
   permissions?: string[] | string | null;
   departmentId?: number | null;
   teamId?: number | null;
+  reportsTo?: number | null;
+  lastSeenAt?: string | null;
+  createdAt: string;
   department?: { id: number; name: string } | null;
-  designation?: { id: number; name: string; level: number } | null;
+  designation?: { id: number; name: string; level: number; permissions?: string[] } | null;
 }
 
 interface AuthContextType {
@@ -91,14 +96,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchUser = async () => {
     try {
       const res = await fetch('/api/v1/auth/me');
-      const data = await res.json();
-      if (data.success && data.data?.user) {
-        setUser(data.data.user);
-      } else {
-        setUser(null);
-        if (pathname !== '/login' && pathname !== '/') {
-          router.push('/login');
+      const contentType = res.headers.get('content-type');
+      if (res.ok && contentType && contentType.includes('application/json')) {
+        const data = await res.json();
+        if (data.success && data.data?.user) {
+          setUser(data.data.user);
+          return;
         }
+      }
+      setUser(null);
+      if (pathname !== '/login' && pathname !== '/') {
+        router.push('/login');
       }
     } catch (err) {
       console.error('Fetch user error:', err);

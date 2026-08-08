@@ -32,7 +32,22 @@ export default function UserSelect({
 }: UserSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [openUpwards, setOpenUpwards] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Check available viewport space to open upwards or downwards
+  useEffect(() => {
+    if (isOpen && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      if (spaceBelow < 280 && spaceAbove > spaceBelow) {
+        setOpenUpwards(true);
+      } else {
+        setOpenUpwards(false);
+      }
+    }
+  }, [isOpen]);
 
   // Find currently selected user
   const selectedUser = users.find((u) => String(u.id) === String(value));
@@ -127,7 +142,7 @@ export default function UserSelect({
 
       {/* Dropdown Popup */}
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-2xl overflow-hidden animate-fade-in">
+        <div className={`absolute left-0 right-0 ${openUpwards ? 'bottom-full mb-1.5' : 'top-full mt-1.5'} z-[100] bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-2xl overflow-hidden animate-fade-in`}>
           {/* Search Header */}
           <div className="p-2 border-b border-[var(--border-color)] bg-[var(--bg-main)] relative">
             <Search className="w-3.5 h-3.5 text-[var(--text-muted)] absolute left-4 top-3.5" />
