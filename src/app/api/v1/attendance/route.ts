@@ -61,7 +61,9 @@ export async function GET(req: Request) {
       'ops:attendance_view'
     ].includes(p));
 
-    if (!isAdmin && scope !== 'personal' && !hasAttendancePerm) {
+    const isSelfQuery = scope === 'personal' || (targetUserIdStr && parseInt(targetUserIdStr, 10) === userPayload.id);
+
+    if (!isAdmin && !isSelfQuery && !hasAttendancePerm) {
       return NextResponse.json({
         success: false,
         message: 'Forbidden. You do not have permission to view team attendance records.'

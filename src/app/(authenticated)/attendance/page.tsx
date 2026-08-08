@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getCurrentLocationString } from '@/lib/location';
 import {
@@ -102,17 +102,25 @@ export default function AttendancePage() {
   // Holidays and Overrides states
   const isIT = user?.department?.name?.toLowerCase().trim() === 'it';
   const isAdmin = user?.role === 'admin' || user?.role?.startsWith('admin:');
-  const visibleEmployees = getVisibleEmployees(user, employees);
+  const visibleEmployees = useMemo(() => {
+    return getVisibleEmployees(user, employees);
+  }, [user, employees]);
   const isSupervisor = isAdmin || isIT || (visibleEmployees && visibleEmployees.filter((e: any) => e.id !== user?.id).length > 0);
 
   useEffect(() => {
     if (user && employees.length > 0) {
       const hasSubordinates = visibleEmployees.filter((e: any) => e.id !== user.id).length > 0;
-      if (!isAdmin && !isIT && !hasSubordinates) {
+      if (!isAdmin && !isIT && !hasSubordinates && activeTab === 'team') {
         setActiveTab('personal');
       }
     }
-  }, [user, employees, visibleEmployees, isAdmin, isIT]);
+  }, [user?.id, employees.length, isAdmin, isIT]);
+
+  useEffect(() => {
+    if (user && !selectedEmployeeId) {
+      setSelectedEmployeeId(user.id.toString());
+    }
+  }, [user, selectedEmployeeId]);
   const [holidays, setHolidays] = useState<any[]>([]);
   const [showHolidayModal, setShowHolidayModal] = useState(false);
   const [newHolidayName, setNewHolidayName] = useState('');
@@ -139,7 +147,6 @@ export default function AttendancePage() {
     e.preventDefault();
     if (!newHolidayName.trim() || !newHolidayDate) {
       alert('Please fill out all holiday fields.');
-      return;
     }
     try {
       const res = await fetch('/api/v1/attendance/holidays', {
@@ -218,10 +225,6 @@ export default function AttendancePage() {
       const data = await res.json();
       if (data.success && data.data) {
         setEmployees(data.data);
-        // Pre-select the current user
-        if (user) {
-          setSelectedEmployeeId(user.id.toString());
-        }
       }
     } catch (err) {
       console.error('Error fetching employees:', err);
@@ -229,10 +232,12 @@ export default function AttendancePage() {
   };
 
   const fetchMonthlyRecords = async () => {
-    if (!selectedEmployeeId) return;
+    const targetId = selectedEmployeeId || user?.id?.toString();
+    if (!targetId) return;
     try {
       setMonthlyLoading(true);
-      const res = await fetch(`/api/v1/attendance?scope=team&user_id=${selectedEmployeeId}&month=${selectedMonth}&year=${selectedYear}`);
+      const isSelf = targetId === user?.id?.toString();
+      const res = await fetch(`/api/v1/attendance?scope=${isSelf ? 'personal' : 'team'}&user_id=${targetId}&month=${selectedMonth}&year=${selectedYear}`);
       const data = await res.json();
       if (data.success && data.data) {
         setMonthlyRecords(data.data.records || []);
@@ -258,10 +263,10 @@ export default function AttendancePage() {
   }, [user]);
 
   useEffect(() => {
-    if (activeTab === 'monthly' && selectedEmployeeId) {
+    if (activeTab === 'monthly') {
       fetchMonthlyRecords();
     }
-  }, [selectedEmployeeId, selectedMonth, selectedYear, activeTab]);
+  }, [selectedEmployeeId, selectedMonth, selectedYear, activeTab, user?.id]);
 
   // Quick Action states
   const [todayAttendance, setTodayAttendance] = useState<AttendanceRecord | null>(null);
@@ -638,21 +643,23 @@ export default function AttendancePage() {
 
         {activeTab === 'monthly' && (
           <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-            {/* Employee Selector */}
-            <div className="flex items-center gap-2 bg-[var(--bg-main)] border border-[var(--border-color)] px-3 py-1.5 rounded-xl text-xs text-[var(--text-primary)]">
-              <span className="text-[var(--text-muted)] uppercase tracking-wider text-[10px] font-bold">Employee:</span>
-              <select
-                value={selectedEmployeeId}
-                onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                className="bg-transparent text-white focus:outline-none cursor-pointer font-bold font-sans"
-              >
-                {visibleEmployees.map((emp) => (
-                  <option key={emp.id} value={emp.id} className="bg-[var(--bg-main)] text-white">
-                    {emp.name} ({emp.employeeId || 'No ID'})
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Employee Selector (Shown for supervisors / admins with multiple subordinates) */}
+            {isSupervisor && visibleEmployees.length > 1 && (
+              <div className="flex items-center gap-2 bg-[var(--bg-main)] border border-[var(--border-color)] px-3 py-1.5 rounded-xl text-xs text-[var(--text-primary)]">
+                <span className="text-[var(--text-muted)] uppercase tracking-wider text-[10px] font-bold">Employee:</span>
+                <select
+                  value={selectedEmployeeId || user?.id?.toString()}
+                  onChange={(e) => setSelectedEmployeeId(e.target.value)}
+                  className="bg-transparent text-white focus:outline-none cursor-pointer font-bold font-sans"
+                >
+                  {visibleEmployees.map((emp) => (
+                    <option key={emp.id} value={emp.id} className="bg-[var(--bg-main)] text-white">
+                      {emp.name} ({emp.employeeId || 'No ID'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Month Selector */}
             <div className="flex items-center gap-2 bg-[var(--bg-main)] border border-[var(--border-color)] px-3 py-1.5 rounded-xl text-xs text-[var(--text-primary)]">
