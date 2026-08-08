@@ -2197,11 +2197,11 @@ export default function LeadDetailPage({
                       </div>
                       <div>
                         <p className="text-[10px] uppercase font-bold text-[var(--text-muted)] tracking-wider">Assigned To</p>
-                        <p className="text-sm font-bold mt-1.5 text-slate-800 dark:text-[var(--text-primary)]">
+                        <p className="text-sm font-bold mt-1.5 text-[var(--text-primary)]">
                           {(() => {
                             const assigned = getLeadAssignedDisplay(lead, user);
                             return assigned ? (
-                              <Link href={`/team?userId=${assigned.id}`} className="text-slate-800 dark:text-[var(--text-primary)] hover:text-emerald-500 dark:hover:text-emerald-400 hover:underline">
+                              <Link href={`/team?userId=${assigned.id}`} className="text-[var(--text-primary)] hover:text-emerald-400 hover:underline">
                                 {assigned.name}
                               </Link>
                             ) : (

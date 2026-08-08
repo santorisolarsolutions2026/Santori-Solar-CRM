@@ -1401,7 +1401,7 @@ export default function LeadsPage() {
                         {(() => {
                           const assigned = getLeadAssignedDisplay(lead, user);
                           return assigned ? (
-                            <Link href={`/team?userId=${assigned.id}`} className="text-slate-700 dark:text-[var(--text-primary)] hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline font-semibold">
+                            <Link href={`/team?userId=${assigned.id}`} className="text-[var(--text-primary)] hover:text-emerald-400 hover:underline font-semibold">
                               {assigned.name}
                             </Link>
                           ) : (
