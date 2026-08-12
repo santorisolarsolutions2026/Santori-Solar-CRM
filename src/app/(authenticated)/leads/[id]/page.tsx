@@ -490,12 +490,50 @@ export default function LeadDetailPage({
     }
   };
 
-  // Image Lightbox State & Helper
+  // Image / PDF Preview & Download Helpers
   const [previewImage, setPreviewImage] = useState<{ src: string; title: string } | null>(null);
   const isImageFile = (fileName: string) => {
     if (!fileName) return false;
     const ext = fileName.split('.').pop()?.toLowerCase();
     return ext ? ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) : false;
+  };
+  const isPreviewable = (fileName: string) => {
+    if (!fileName) return false;
+    const ext = fileName.split('.').pop()?.toLowerCase();
+    return ext ? ['jpg', 'jpeg', 'png', 'webp', 'gif', 'pdf', 'svg'].includes(ext) : false;
+  };
+
+  const handlePreviewDoc = (url: string, fileName: string, title?: string) => {
+    if (!fileName) return;
+    const ext = fileName.split('.').pop()?.toLowerCase();
+    if (ext === 'pdf') {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } else {
+      setPreviewImage({
+        src: url,
+        title: title || fileName,
+      });
+    }
+  };
+
+  const handleDownloadDoc = async (url: string, fileName: string) => {
+    try {
+      const downloadUrl = url.includes('?') ? `${url}&download=true` : `${url}?download=true`;
+      const res = await fetch(downloadUrl);
+      if (!res.ok) throw new Error('Download failed');
+      const blob = await res.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = fileName || 'document';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000);
+    } catch (err) {
+      const downloadUrl = url.includes('?') ? `${url}&download=true` : `${url}?download=true`;
+      window.open(downloadUrl, '_blank', 'noopener,noreferrer');
+    }
   };
 
   // Form D (Order Punching) Form state
@@ -528,6 +566,7 @@ export default function LeadDetailPage({
   const [isEndingMeeting, setIsEndingMeeting] = useState(false);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const recordingStartTimeRef = useRef<number | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
 
   // Load Lead details
   const fetchLeadDetails = async () => {
@@ -1369,6 +1408,7 @@ export default function LeadDetailPage({
 
     // 3. Initialize MediaRecorder
     try {
+      mediaStreamRef.current = stream;
       const recorderInstance = new MediaRecorder(stream);
       const chunks: Blob[] = [];
 
@@ -1385,6 +1425,7 @@ export default function LeadDetailPage({
         const audioBlob = new Blob(chunks, { type: 'audio/webm' });
         await uploadAudioBlob(meetingId, audioBlob, durationSec);
         stream.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
       };
 
       // 4. Call start API
@@ -1407,6 +1448,7 @@ export default function LeadDetailPage({
       } else {
         alert(data.message || 'Failed to start meeting.');
         stream.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
       }
     } catch (err: any) {
       console.error(err);
@@ -1435,6 +1477,7 @@ export default function LeadDetailPage({
     }
 
     try {
+      mediaStreamRef.current = stream;
       const recorderInstance = new MediaRecorder(stream);
       const chunks: Blob[] = [];
 
@@ -1451,6 +1494,7 @@ export default function LeadDetailPage({
         const audioBlob = new Blob(chunks, { type: 'audio/webm' });
         await uploadAudioBlob(meetingId, audioBlob, durationSec);
         stream.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
       };
 
       recordingStartTimeRef.current = Date.now();
@@ -1471,6 +1515,136 @@ export default function LeadDetailPage({
       mediaRecorder.stop();
       setIsRecording(false);
     }
+  };
+
+  const getMeetingRecordings = (rawPath: string | null | undefined, totalDuration?: number | null, startedAt?: string | null) => {
+    if (!rawPath) return [];
+    try {
+      const parsed = JSON.parse(rawPath);
+      if (Array.isArray(parsed)) {
+        return parsed.map((item: any, idx: number) => ({
+          index: idx,
+          path: typeof item === 'string' ? item : item.path,
+          durationSec: typeof item === 'object' ? item.durationSec : null,
+          createdAt: typeof item === 'object' ? item.createdAt : null,
+        }));
+      }
+      if (typeof parsed === 'string') {
+        return [{ index: 0, path: parsed, durationSec: totalDuration, createdAt: startedAt }];
+      }
+    } catch {
+      // Plain string
+    }
+    return [{ index: 0, path: rawPath, durationSec: totalDuration, createdAt: startedAt }];
+  };
+
+  const handleDeleteIndividualAudio = async (meetingId: number, index: number) => {
+    const proceedServer = async () => {
+      try {
+        const res = await fetch(`/api/v1/meetings/${meetingId}/audio?index=${index}`, {
+          method: 'DELETE',
+        });
+        const data = await res.json();
+        if (data.success) {
+          fetchLeadDetails();
+        } else {
+          alert(data.message || 'Failed to delete audio recording.');
+        }
+      } catch (err) {
+        console.error('Delete audio error:', err);
+        alert('Error deleting audio recording.');
+      }
+    };
+
+    const confirmMsg = `Are you sure you want to delete Recording #${index + 1}?`;
+    if ((window as any).showConfirm) {
+      (window as any).showConfirm(confirmMsg, proceedServer);
+    } else if (window.confirm(confirmMsg)) {
+      proceedServer();
+    }
+  };
+
+  const handleDeleteMeetingAudio = async (meetingId: number) => {
+    // If currently recording in progress, discard local stream without uploading
+    if (isRecording && mediaRecorder) {
+      const proceed = () => {
+        try {
+          mediaRecorder.onstop = null;
+          mediaRecorder.stop();
+          if (mediaStreamRef.current) {
+            mediaStreamRef.current.getTracks().forEach((t) => t.stop());
+            mediaStreamRef.current = null;
+          }
+        } catch (e) {
+          console.warn('Error stopping recorder:', e);
+        }
+        setIsRecording(false);
+        setRecordingElapsed(0);
+        setMediaRecorder(null);
+        setAudioChunks([]);
+      };
+
+      if ((window as any).showConfirm) {
+        (window as any).showConfirm('Are you sure you want to discard this ongoing recording?', proceed);
+      } else if (window.confirm('Are you sure you want to discard this ongoing recording?')) {
+        proceed();
+      }
+      return;
+    }
+
+    // If already saved on server, delete ALL recordings from server
+    const proceedServer = async () => {
+      try {
+        const res = await fetch(`/api/v1/meetings/${meetingId}/audio`, {
+          method: 'DELETE',
+        });
+        const data = await res.json();
+        if (data.success) {
+          setAudioUploaded(false);
+          setRecordingElapsed(0);
+          fetchLeadDetails();
+        } else {
+          alert(data.message || 'Failed to delete audio recordings.');
+        }
+      } catch (err) {
+        console.error('Delete audio error:', err);
+        alert('Error deleting audio recordings.');
+      }
+    };
+
+    const confirmMsg = 'Do you want to delete ALL recordings for this meeting?';
+    if ((window as any).showConfirm) {
+      (window as any).showConfirm(confirmMsg, proceedServer);
+    } else if (window.confirm(confirmMsg)) {
+      proceedServer();
+    }
+  };
+
+  const handleRestartRecording = async (meetingId: number) => {
+    if (isRecording && mediaRecorder) {
+      try {
+        mediaRecorder.onstop = null;
+        mediaRecorder.stop();
+        if (mediaStreamRef.current) {
+          mediaStreamRef.current.getTracks().forEach((t) => t.stop());
+          mediaStreamRef.current = null;
+        }
+      } catch (e) {
+        console.warn('Error restarting recorder:', e);
+      }
+      setIsRecording(false);
+      setRecordingElapsed(0);
+      setMediaRecorder(null);
+      setAudioChunks([]);
+    }
+
+    setTimeout(() => {
+      handleStartRecordingOnly(meetingId);
+    }, 200);
+  };
+
+  const handleAddNewRecording = (meetingId: number) => {
+    handleStartRecordingOnly(meetingId);
   };
 
   const uploadAudioBlob = async (meetingId: number, blob: Blob, durationSec?: number) => {
@@ -1746,9 +1920,19 @@ export default function LeadDetailPage({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold text-white tracking-wide">{lead.customerName}</h1>
-              <span className={`text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${stageBadge.class}`}>
-                {stageBadge.name}
-              </span>
+              {lead.status === 13 && lead.order?.status === 'draft' && lead.order?.rejectionReason ? (
+                <span className="text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider bg-rose-500/10 text-rose-450 border-rose-500/20">
+                  Order Rejected ⚠️
+                </span>
+              ) : lead.status === 13 && lead.order && lead.order.status !== 'draft' ? (
+                <span className="text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-bold">
+                  Order Punched
+                </span>
+              ) : (
+                <span className={`text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${stageBadge.class}`}>
+                  {stageBadge.name}
+                </span>
+              )}
               {lead.isUnreachable && lead.status !== 13 && lead.status !== 6 && (
                 <span className="text-[10px] bg-red-500/10 text-red-400 border border-red-500/20 rounded-full px-2 py-0.5 font-bold uppercase tracking-wider">
                   Unreachable ⚠️
@@ -2634,56 +2818,111 @@ export default function LeadDetailPage({
                                     {Math.floor(recordingElapsed / 60).toString().padStart(2, '0')}:
                                     {(recordingElapsed % 60).toString().padStart(2, '0')}
                                   </div>
-                                </div>
-                                <div className="flex flex-col sm:flex-row flex-wrap gap-3 items-center w-full">
-                                  {canRecordMeeting ? (
-                                    <>
-                                      {isRecording ? (
-                                        <button
-                                          type="button"
-                                          onClick={handleStopRecording}
-                                          className="w-full sm:w-auto py-2.5 px-4 bg-red-600 hover:bg-red-500 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                                        >
-                                          <Square className="w-3.5 h-3.5" />
-                                          <span>Stop Recording</span>
-                                        </button>
-                                      ) : !audioUploaded && !meet.audioRecordingPath ? (
-                                        <button
-                                          type="button"
-                                          onClick={() => handleStartRecordingOnly(meet.id)}
-                                          className="w-full sm:w-auto py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                                        >
-                                          <Mic className="w-3.5 h-3.5" />
-                                          <span>Start Audio Recording</span>
-                                        </button>
-                                      ) : null}
+                                  <div className="flex flex-col sm:flex-row flex-wrap gap-2.5 items-center w-full">
+                                    {canRecordMeeting ? (
+                                      <>
+                                        {isRecording ? (
+                                          <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+                                            <button
+                                              type="button"
+                                              onClick={handleStopRecording}
+                                              className="w-full sm:w-auto py-2.5 px-4 bg-red-600 hover:bg-red-500 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                                            >
+                                              <Square className="w-3.5 h-3.5" />
+                                              <span>Stop Recording</span>
+                                            </button>
 
-                                      {(audioUploaded || meet.audioRecordingPath || (!isRecording && !mediaRecorder)) && (
-                                        <button
-                                          type="button"
-                                          disabled={isEndingMeeting || isUploadingAudio}
-                                          onClick={() => handleStopMeeting(meet.id)}
-                                          className="w-full sm:w-auto py-2.5 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md shadow-emerald-500/20 disabled:opacity-50 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                                        >
-                                          {isEndingMeeting ? (
-                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                          ) : (
-                                            <Square className="w-3.5 h-3.5" />
-                                          )}
-                                          <span>Stop Meeting & Log Outcome</span>
-                                        </button>
-                                      )}
+                                            {/* Restart Ongoing Recording (Icon only) */}
+                                            <button
+                                              type="button"
+                                              onClick={() => handleRestartRecording(meet.id)}
+                                              className="p-2.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)]/80 text-[var(--text-secondary)] hover:text-emerald-400 border border-[var(--border-color)] rounded-lg transition-all shadow-sm flex items-center justify-center cursor-pointer active:scale-95"
+                                              title="Restart Recording"
+                                            >
+                                              <RotateCcw className="w-4 h-4" />
+                                            </button>
 
-                                      {isUploadingAudio && (
-                                        <div className="text-[10px] text-[var(--text-secondary)] flex items-center justify-center gap-1.5 w-full sm:w-auto mt-1 sm:mt-0">
-                                          <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-500" />
-                                          <span>Uploading audio file to server...</span>
-                                        </div>
-                                      )}
-                                    </>
-                                  ) : (
-                                    <span className="text-[10px] text-[var(--text-muted)] italic">🔒 Restricted to Sales team</span>
-                                  )}
+                                            {/* Discard / Delete Ongoing Recording (Icon only) */}
+                                            <button
+                                              type="button"
+                                              onClick={() => handleDeleteMeetingAudio(meet.id)}
+                                              className="p-2.5 bg-[var(--bg-card)] hover:bg-red-500/10 text-[var(--text-secondary)] hover:text-red-400 border border-[var(--border-color)] hover:border-red-500/30 rounded-lg transition-all shadow-sm flex items-center justify-center cursor-pointer active:scale-95"
+                                              title="Discard / Delete Recording"
+                                            >
+                                              <Trash2 className="w-4 h-4" />
+                                            </button>
+                                          </div>
+                                        ) : !audioUploaded && !meet.audioRecordingPath ? (
+                                          <button
+                                            type="button"
+                                            onClick={() => handleStartRecordingOnly(meet.id)}
+                                            className="w-full sm:w-auto py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                                          >
+                                            <Mic className="w-3.5 h-3.5" />
+                                            <span>Start Audio Recording</span>
+                                          </button>
+                                        ) : (
+                                          /* Audio is recorded/uploaded, but meeting is still ongoing (not completed) */
+                                          <div className="flex items-center gap-2 w-full sm:w-auto">
+                                            {/* Add New / Re-record Audio (Icon only) */}
+                                            <button
+                                              type="button"
+                                              onClick={() => handleAddNewRecording(meet.id)}
+                                              className="p-2.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)]/80 text-[var(--text-secondary)] hover:text-emerald-400 border border-[var(--border-color)] rounded-lg transition-all shadow-sm flex items-center justify-center cursor-pointer active:scale-95"
+                                              title="Record New / Additional Audio"
+                                            >
+                                              <Plus className="w-4 h-4" />
+                                            </button>
+
+                                            {/* Restart Recording (Icon only) */}
+                                            <button
+                                              type="button"
+                                              onClick={() => handleRestartRecording(meet.id)}
+                                              className="p-2.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)]/80 text-[var(--text-secondary)] hover:text-emerald-400 border border-[var(--border-color)] rounded-lg transition-all shadow-sm flex items-center justify-center cursor-pointer active:scale-95"
+                                              title="Restart Recording"
+                                            >
+                                              <RotateCcw className="w-4 h-4" />
+                                            </button>
+
+                                            {/* Delete Audio Recording (Icon only) */}
+                                            <button
+                                              type="button"
+                                              onClick={() => handleDeleteMeetingAudio(meet.id)}
+                                              className="p-2.5 bg-[var(--bg-card)] hover:bg-red-500/10 text-[var(--text-secondary)] hover:text-red-400 border border-[var(--border-color)] hover:border-red-500/30 rounded-lg transition-all shadow-sm flex items-center justify-center cursor-pointer active:scale-95"
+                                              title="Delete Audio Recording"
+                                            >
+                                              <Trash2 className="w-4 h-4" />
+                                            </button>
+                                          </div>
+                                        )}
+
+                                        {(audioUploaded || meet.audioRecordingPath || (!isRecording && !mediaRecorder)) && (
+                                          <button
+                                            type="button"
+                                            disabled={isEndingMeeting || isUploadingAudio}
+                                            onClick={() => handleStopMeeting(meet.id)}
+                                            className="w-full sm:w-auto py-2.5 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md shadow-emerald-500/20 disabled:opacity-50 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                                          >
+                                            {isEndingMeeting ? (
+                                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                            ) : (
+                                              <Square className="w-3.5 h-3.5" />
+                                            )}
+                                            <span>Stop Meeting & Log Outcome</span>
+                                          </button>
+                                        )}
+
+                                        {isUploadingAudio && (
+                                          <div className="text-[10px] text-[var(--text-secondary)] flex items-center justify-center gap-1.5 w-full sm:w-auto mt-1 sm:mt-0">
+                                            <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-500" />
+                                            <span>Uploading audio file to server...</span>
+                                          </div>
+                                        )}
+                                      </>
+                                    ) : (
+                                      <span className="text-[10px] text-[var(--text-muted)] italic">🔒 Restricted to Sales team</span>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             ) : null}
@@ -2746,27 +2985,91 @@ export default function LeadDetailPage({
                                   </span>
                                 </div>
                               </div>
-                              {meet.audioRecordingPath && (
-                                <div className="md:col-span-2">
-                                  <div className="flex items-center justify-between mb-2">
-                                    <span className="text-[var(--text-muted)] uppercase tracking-wider font-semibold block">Recorded Audio</span>
-                                    <a
-                                      href={`/api/v1/meetings/${meet.id}/audio`}
-                                      download={`meeting-${meet.id}-audio.webm`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-[11px] font-bold text-emerald-500 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
-                                    >
-                                      <Download className="w-3.5 h-3.5" />
-                                      <span>Download Audio File</span>
-                                    </a>
+                              {meet.audioRecordingPath && (() => {
+                                const recordings = getMeetingRecordings(meet.audioRecordingPath, meet.meetingDurationSec, meet.meetingStartedAt);
+                                if (recordings.length === 0) return null;
+                                return (
+                                  <div className="md:col-span-2 space-y-3 pt-2">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-[var(--text-muted)] uppercase tracking-wider font-semibold block text-xs">
+                                        Recorded Audio Sessions ({recordings.length})
+                                      </span>
+                                      {!meet.meetingEndedAt && recordings.length > 1 && (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleDeleteMeetingAudio(meet.id)}
+                                          className="text-[10px] text-slate-400 hover:text-red-400 flex items-center gap-1 transition-colors cursor-pointer"
+                                          title="Delete all recordings"
+                                        >
+                                          <Trash2 className="w-3 h-3" />
+                                          <span>Delete All</span>
+                                        </button>
+                                      )}
+                                    </div>
+
+                                    <div className="space-y-3">
+                                      {recordings.map((rec, idx) => (
+                                        <div
+                                          key={rec.index ?? idx}
+                                          className="p-3.5 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl space-y-2.5"
+                                        >
+                                          <div className="flex items-center justify-between flex-wrap gap-2">
+                                            <div className="flex items-center gap-2">
+                                              <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-md bg-[var(--bg-main)] text-[var(--text-primary)] border border-[var(--border-color)]">
+                                                Recording #{idx + 1}
+                                              </span>
+                                              {rec.durationSec ? (
+                                                <span className="text-[11px] text-emerald-500 dark:text-emerald-400 font-mono font-bold">
+                                                  {rec.durationSec >= 60
+                                                    ? `${Math.floor(rec.durationSec / 60)}m ${rec.durationSec % 60}s`
+                                                    : `${rec.durationSec}s`}
+                                                </span>
+                                              ) : null}
+                                              {rec.createdAt ? (
+                                                <span className="text-[10px] text-[var(--text-muted)]">
+                                                  {new Date(rec.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                                                </span>
+                                              ) : null}
+                                            </div>
+
+                                            <div className="flex items-center gap-2">
+                                              {/* Download Recording */}
+                                              <a
+                                                href={`/api/v1/meetings/${meet.id}/audio?index=${rec.index}&download=true`}
+                                                download={`meeting-${meet.id}-recording-${idx + 1}.webm`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-[11px] font-bold text-emerald-500 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer py-1 px-2.5 rounded-lg bg-[var(--bg-main)] border border-[var(--border-color)] transition-all"
+                                                title={`Download Recording #${idx + 1}`}
+                                              >
+                                                <Download className="w-3 h-3 text-emerald-500 dark:text-emerald-400" />
+                                                <span>Download</span>
+                                              </a>
+
+                                              {/* Individual Grey Delete Button (Locked when meeting ended) */}
+                                              {!meet.meetingEndedAt && (
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleDeleteIndividualAudio(meet.id, rec.index)}
+                                                  className="p-1.5 bg-[var(--bg-main)] hover:bg-slate-700/30 text-slate-400 hover:text-red-400 border border-[var(--border-color)] rounded-lg transition-all shadow-sm flex items-center justify-center cursor-pointer active:scale-95"
+                                                  title={`Delete Recording #${idx + 1}`}
+                                                >
+                                                  <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                              )}
+                                            </div>
+                                          </div>
+
+                                          <BeautifulAudioPlayer
+                                            src={`/api/v1/meetings/${meet.id}/audio?index=${rec.index}`}
+                                            defaultDuration={rec.durationSec}
+                                          />
+                                        </div>
+                                      ))}
+                                    </div>
                                   </div>
-                                  <BeautifulAudioPlayer
-                                    src={`/api/v1/meetings/${meet.id}/audio`}
-                                    defaultDuration={meet.meetingDurationSec}
-                                  />
-                                </div>
-                              )}
+                                );
+                              })()}
                             </div>
                           </div>
                         )}
@@ -2900,23 +3203,28 @@ export default function LeadDetailPage({
                                 <span className="text-xs text-slate-350 truncate">{getDocStatus('downpayment_receipt').fileName}</span>
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
-                                <a
-                                  href={`/api/v1/orders/${lead.order?.id}/documents/${getDocStatus('downpayment_receipt').id}`}
-                                  download={getDocStatus('downpayment_receipt').fileName || true}
-                                  target="_blank"
-                                  className="py-1 px-2.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] hover:text-white rounded-lg text-[10px] font-semibold flex items-center gap-1.5 transition-all"
+                                <button
+                                  type="button"
+                                  onClick={() => handleDownloadDoc(
+                                    `/api/v1/orders/${lead.order?.id}/documents/${getDocStatus('downpayment_receipt').id}`,
+                                    getDocStatus('downpayment_receipt').fileName || 'downpayment_receipt'
+                                  )}
+                                  className="py-1 px-2.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] hover:text-white rounded-lg text-[10px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
+                                  title="Download Receipt"
                                 >
                                   <Download className="w-3 h-3 text-emerald-500 dark:text-emerald-400" />
                                   <span>Download</span>
-                                </a>
-                                {isImageFile(getDocStatus('downpayment_receipt').fileName) && (
+                                </button>
+                                {isPreviewable(getDocStatus('downpayment_receipt').fileName) && (
                                   <button
                                     type="button"
-                                    onClick={() => setPreviewImage({
-                                      src: `/api/v1/orders/${lead.order?.id}/documents/${getDocStatus('downpayment_receipt').id}`,
-                                      title: `Downpayment Receipt: ${getDocStatus('downpayment_receipt').fileName}`
-                                    })}
+                                    onClick={() => handlePreviewDoc(
+                                      `/api/v1/orders/${lead.order?.id}/documents/${getDocStatus('downpayment_receipt').id}`,
+                                      getDocStatus('downpayment_receipt').fileName,
+                                      `Downpayment Receipt: ${getDocStatus('downpayment_receipt').fileName}`
+                                    )}
                                     className="py-1 px-2.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] text-emerald-500 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-400 rounded-lg text-[10px] font-semibold flex items-center gap-1 transition-all cursor-pointer"
+                                    title="Preview Receipt"
                                   >
                                     <Eye className="w-3 h-3" />
                                     <span>Preview</span>
@@ -2969,6 +3277,110 @@ export default function LeadDetailPage({
                                     setCameraModal({
                                       isOpen: true,
                                       onCapture: (file) => executeDocUpload('downpayment_receipt', file)
+                                    });
+                                  }}
+                                  className="sm:w-48 py-4 px-4 bg-[var(--bg-main)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-[var(--text-primary)] hover:text-white rounded-xl text-xs font-bold transition-all cursor-pointer flex flex-col items-center justify-center gap-2"
+                                >
+                                  <Camera className="w-5 h-5 text-[var(--text-secondary)]" />
+                                  <span>Open Camera</span>
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Order Confirmation Receipt (OCR) */}
+                        <div className="md:col-span-2 p-4 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-350 uppercase tracking-wider">Order Confirmation Receipt (OCR)</span>
+                            {getDocStatus('order_confirmation_receipt').uploaded && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase tracking-wider">
+                                Uploaded
+                              </span>
+                            )}
+                          </div>
+
+                          {getDocStatus('order_confirmation_receipt').uploaded ? (
+                            <div className="p-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <FileText className="w-4 h-4 text-emerald-500 dark:text-emerald-400 shrink-0" />
+                                <span className="text-xs text-slate-350 truncate">{getDocStatus('order_confirmation_receipt').fileName}</span>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => handleDownloadDoc(
+                                    `/api/v1/orders/${lead.order?.id}/documents/${getDocStatus('order_confirmation_receipt').id}`,
+                                    getDocStatus('order_confirmation_receipt').fileName || 'order_confirmation_receipt'
+                                  )}
+                                  className="py-1 px-2.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] hover:text-white rounded-lg text-[10px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
+                                  title="Download Receipt"
+                                >
+                                  <Download className="w-3 h-3 text-emerald-500 dark:text-emerald-400" />
+                                  <span>Download</span>
+                                </button>
+                                {isPreviewable(getDocStatus('order_confirmation_receipt').fileName) && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handlePreviewDoc(
+                                      `/api/v1/orders/${lead.order?.id}/documents/${getDocStatus('order_confirmation_receipt').id}`,
+                                      getDocStatus('order_confirmation_receipt').fileName,
+                                      `Order Confirmation Receipt (OCR): ${getDocStatus('order_confirmation_receipt').fileName}`
+                                    )}
+                                    className="py-1 px-2.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] text-emerald-500 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-400 rounded-lg text-[10px] font-semibold flex items-center gap-1 transition-all cursor-pointer"
+                                    title="Preview Receipt"
+                                  >
+                                    <Eye className="w-3 h-3" />
+                                    <span>Preview</span>
+                                  </button>
+                                )}
+                                {!isOrderFormDisabled && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteDocument('order_confirmation_receipt', getDocStatus('order_confirmation_receipt').id!)}
+                                    className="py-1 px-2 bg-[var(--bg-card)] hover:bg-red-950/20 border border-[var(--border-color)] hover:border-red-900/30 text-red-400 hover:text-red-300 rounded-lg text-[10px] font-semibold flex items-center gap-1 transition-all cursor-pointer"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col sm:flex-row gap-3">
+                              <label className={`flex-1 border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center text-center transition-all ${
+                                isOrderFormDisabled 
+                                  ? 'border-[var(--border-color)] bg-[var(--bg-main)] cursor-not-allowed opacity-60' 
+                                  : uploadingDoc === 'order_confirmation_receipt'
+                                    ? 'border-blue-500/50 bg-emerald-600/[0.02] cursor-wait' 
+                                    : 'border-[var(--border-color)] hover:border-[var(--border-color)] bg-[var(--bg-main)] hover:bg-[var(--bg-card)] cursor-pointer'
+                              }`}>
+                                {uploadingDoc === 'order_confirmation_receipt' ? (
+                                  <div className="flex flex-col items-center gap-1.5 py-1">
+                                    <Loader2 className="w-5 h-5 text-emerald-500 dark:text-emerald-400 animate-spin" />
+                                    <span className="text-xs font-semibold text-emerald-500 dark:text-emerald-400">Uploading receipt...</span>
+                                  </div>
+                                ) : (
+                                  <div className="flex flex-col items-center gap-1.5 py-1">
+                                    <Upload className="w-4 h-4 text-[var(--text-secondary)]" />
+                                    <span className="text-xs font-semibold text-[var(--text-primary)]">Click to upload OCR receipt</span>
+                                    <span className="text-[10px] text-[var(--text-muted)]">PDF, JPG, or PNG (Max 5MB)</span>
+                                  </div>
+                                )}
+                                <input
+                                  type="file"
+                                  className="hidden"
+                                  disabled={uploadingDoc !== null || isOrderFormDisabled}
+                                  onChange={(e) => handleFileChange('order_confirmation_receipt', e)}
+                                />
+                              </label>
+
+                              {!isOrderFormDisabled && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setCameraModal({
+                                      isOpen: true,
+                                      onCapture: (file) => executeDocUpload('order_confirmation_receipt', file)
                                     });
                                   }}
                                   className="sm:w-48 py-4 px-4 bg-[var(--bg-main)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-[var(--text-primary)] hover:text-white rounded-xl text-xs font-bold transition-all cursor-pointer flex flex-col items-center justify-center gap-2"
@@ -3138,27 +3550,31 @@ export default function LeadDetailPage({
                                     <span className="text-xs text-[var(--text-primary)] truncate font-medium">{fileName}</span>
                                   </div>
                                   <div className="flex items-center gap-2 shrink-0">
-                                    <a
-                                      href={`/api/v1/orders/${lead.order?.id}/documents/${id}`}
-                                      download={fileName || true}
-                                      target="_blank"
-                                      className="py-1.5 px-2.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] hover:text-white rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition-all"
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDownloadDoc(
+                                        `/api/v1/orders/${lead.order?.id}/documents/${id}`,
+                                        fileName || item.label
+                                      )}
+                                      className="py-1.5 px-2.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] hover:text-white rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
                                       title="Download Document"
                                     >
                                       <Download className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
                                       <span>Download</span>
-                                    </a>
-                                    {isImageFile(fileName) && (
+                                    </button>
+                                    {isPreviewable(fileName) && (
                                       <button
                                         type="button"
-                                        onClick={() => setPreviewImage({
-                                          src: `/api/v1/orders/${lead.order?.id}/documents/${id}`,
-                                          title: `${item.label}: ${fileName}`
-                                        })}
+                                        onClick={() => handlePreviewDoc(
+                                          `/api/v1/orders/${lead.order?.id}/documents/${id}`,
+                                          fileName,
+                                          `${item.label}: ${fileName}`
+                                        )}
                                         className="py-1.5 px-2.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] text-emerald-500 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-400 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition-all cursor-pointer"
-                                        title="Preview Image"
+                                        title="Preview Document"
                                       >
                                         <Eye className="w-3.5 h-3.5" />
+                                        <span>Preview</span>
                                       </button>
                                     )}
                                   </div>

@@ -7,6 +7,7 @@ export interface SelectOption {
   value: string;
   label: string;
   badge?: string;
+  badgeClass?: string;
   color?: string;
 }
 
@@ -54,12 +55,18 @@ export default function CustomSelect({
       >
         <span className="truncate flex items-center gap-2">
           {selectedOption ? (
-            <>
-              {selectedOption.color && (
-                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: selectedOption.color }} />
-              )}
-              <span className="truncate">{selectedOption.label}</span>
-            </>
+            selectedOption.badgeClass ? (
+              <span className={`text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${selectedOption.badgeClass}`}>
+                {selectedOption.label}
+              </span>
+            ) : (
+              <>
+                {selectedOption.color && (
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: selectedOption.color }} />
+                )}
+                <span className="truncate">{selectedOption.label}</span>
+              </>
+            )
           ) : (
             <span className="text-[var(--text-muted)] truncate">{placeholder}</span>
           )}
@@ -68,7 +75,7 @@ export default function CustomSelect({
       </button>
 
       {isOpen && !disabled && (
-        <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-2xl overflow-hidden py-1 max-h-60 overflow-y-auto backdrop-blur-md animate-fade-in-up">
+        <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-2xl overflow-hidden py-1 max-h-80 overflow-y-auto backdrop-blur-md animate-fade-in-up [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-700 [&::-webkit-scrollbar-thumb]:rounded-full">
           {options.map((opt) => {
             const isSelected = String(opt.value) === String(value);
             return (
@@ -84,11 +91,19 @@ export default function CustomSelect({
                     : 'text-[var(--text-secondary)] hover:bg-[var(--border-color)] hover:text-[var(--text-primary)]'
                 }`}
               >
-                <div className="flex items-center gap-2 truncate">
-                  {opt.color && (
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: opt.color }} />
+                <div className="flex items-center gap-2 min-w-0">
+                  {opt.badgeClass ? (
+                    <span className={`text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${opt.badgeClass}`}>
+                      {opt.label}
+                    </span>
+                  ) : (
+                    <>
+                      {opt.color && (
+                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: opt.color }} />
+                      )}
+                      <span className="truncate">{opt.label}</span>
+                    </>
                   )}
-                  <span className="truncate">{opt.label}</span>
                 </div>
                 {isSelected && <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 ml-2" />}
               </div>

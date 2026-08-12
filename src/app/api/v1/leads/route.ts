@@ -42,12 +42,16 @@ export async function GET(req: Request) {
     const skip = (page - 1) * limit;
 
     let hasInactiveStatusFilter = false;
-    let filteredStatuses: number[] = [];
-    if (statusParam) {
-      filteredStatuses = statusParam.split(',').map((s) => parseInt(s, 10)).filter((n) => !isNaN(n));
-      if (filteredStatuses.some(s => [4, 6, 12].includes(s))) {
-        hasInactiveStatusFilter = true;
-      }
+    const rawStatusList = statusParam ? statusParam.split(',').map((s) => s.trim()).filter(Boolean) : [];
+    const hasOrderPunchedFilter = rawStatusList.includes('order_punched') || rawStatusList.includes('15');
+    const hasSaleDoneFilter = rawStatusList.includes('13');
+    const otherNumericStatuses = rawStatusList
+      .filter((s) => s !== 'order_punched' && s !== '15' && s !== '13')
+      .map((s) => parseInt(s, 10))
+      .filter((n) => !isNaN(n));
+
+    if (otherNumericStatuses.some(s => [4, 6, 12].includes(s))) {
+      hasInactiveStatusFilter = true;
     }
 
     // Define base query conditions (enforce isActive: true to support soft delete / deactivation unless filtering by inactive stage or selecting All pipeline stages)
@@ -73,8 +77,8 @@ export async function GET(req: Request) {
       const hierarchyCondition = await getLeadVisibilityCondition(userPayload.id, userRole, userPermissions);
 
       if (baseRole === 'finance') {
-        // Finance sees only leads at Stage 13+ (Sale Done) by default AND hierarchy matches
-        if (filteredStatuses.length === 0) {
+        // Finance sees only leads at Stage 13+ (Sale Done / Order Punched) by default AND hierarchy matches
+        if (rawStatusList.length === 0) {
           andConditions.push({
             status: { in: [13] },
             ...hierarchyCondition
@@ -84,7 +88,7 @@ export async function GET(req: Request) {
         }
       } else if (baseRole === 'operations') {
         // Operations sees only leads with orders processed by finance by default AND hierarchy matches
-        if (filteredStatuses.length === 0) {
+        if (rawStatusList.length === 0) {
           andConditions.push({
             status: 13,
             order: {
@@ -122,8 +126,55 @@ export async function GET(req: Request) {
       });
     }
 
-    if (filteredStatuses.length > 0) {
-      andConditions.push({ status: { in: filteredStatuses } });
+    if (rawStatusList.length > 0) {
+      if (hasSaleDoneFilter && hasOrderPunchedFilter) {
+        // Both Sale Done and Order Punched selected
+        const allStatuses = [...otherNumericStatuses, 13];
+        andConditions.push({ status: { in: allStatuses } });
+      } else if (hasSaleDoneFilter) {
+        // ONLY Sale Done selected: Show leads at Stage 13 where order is NOT yet submitted (null or draft)
+        const saleDoneCondition: Prisma.LeadWhereInput = {
+          status: 13,
+          OR: [
+            { order: null },
+            { order: { status: 'draft' } },
+          ],
+        };
+
+        if (otherNumericStatuses.length > 0) {
+          andConditions.push({
+            OR: [
+              { status: { in: otherNumericStatuses } },
+              saleDoneCondition,
+            ],
+          });
+        } else {
+          andConditions.push(saleDoneCondition);
+        }
+      } else if (hasOrderPunchedFilter) {
+        // ONLY Order Punched selected: Show leads at Stage 13 where order HAS BEEN SUBMITTED to finance
+        const orderPunchedCondition: Prisma.LeadWhereInput = {
+          status: 13,
+          order: {
+            is: {
+              status: { not: 'draft' },
+            },
+          },
+        };
+
+        if (otherNumericStatuses.length > 0) {
+          andConditions.push({
+            OR: [
+              { status: { in: otherNumericStatuses } },
+              orderPunchedCondition,
+            ],
+          });
+        } else {
+          andConditions.push(orderPunchedCondition);
+        }
+      } else if (otherNumericStatuses.length > 0) {
+        andConditions.push({ status: { in: otherNumericStatuses } });
+      }
     }
 
     if (city) {

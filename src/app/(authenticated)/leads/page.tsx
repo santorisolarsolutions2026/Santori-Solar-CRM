@@ -63,7 +63,7 @@ interface Lead {
   } | null;
 }
 
-const STAGE_BADGES: Record<number, { name: string; class: string }> = {
+const STAGE_BADGES: Record<string | number, { name: string; class: string }> = {
   0: { name: 'Uninitiated', class: 'bg-stone-550/15 text-stone-400 border-stone-500/20 font-bold' },
   1: { name: 'Fresh Lead', class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
   2: { name: 'DNP', class: 'bg-slate-500/10 text-[var(--text-secondary)] border-slate-500/20' },
@@ -78,6 +78,7 @@ const STAGE_BADGES: Record<number, { name: string; class: string }> = {
   11: { name: 'Switch Off', class: 'bg-slate-700/20 text-[var(--text-secondary)] border-[var(--border-color)]' },
   12: { name: 'Can\'t Fit Solar', class: 'bg-stone-900 text-stone-400 border-stone-800/40' },
   13: { name: 'Sale Done', class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-bold' },
+  'order_punched': { name: 'Order Punched', class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-bold' },
 };
 
 const CONNECTION_BADGES: Record<string, string> = {
@@ -1024,13 +1025,14 @@ export default function LeadsPage() {
 
           <div className="flex flex-wrap items-center gap-3 w-full md:w-auto shrink-0 justify-end">
             {/* Quick Stage Select */}
-            <div className="w-48">
+            <div className="w-56">
               <CustomSelect
                 options={[
                   { value: '', label: 'All Pipeline Stages' },
                   ...Object.entries(STAGE_BADGES).map(([id, badge]) => ({
                     value: id,
                     label: badge.name,
+                    badgeClass: badge.class,
                   })),
                 ]}
                 value={statusFilter}
@@ -1108,7 +1110,7 @@ export default function LeadsPage() {
             )}
             {statusFilter && statusFilter.split(',').map(st => (
               <span key={`st-${st}`} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[11px] font-semibold">
-                Stage: {STAGE_BADGES[Number(st)]?.name || st}
+                Stage: {STAGE_BADGES[st]?.name || STAGE_BADGES[Number(st)]?.name || st}
                 <X 
                   className="w-3 h-3 cursor-pointer hover:text-white ml-0.5" 
                   onClick={() => {
@@ -1394,7 +1396,11 @@ export default function LeadsPage() {
                         <div className="flex flex-col gap-1">
                           {lead.status === 13 && lead.order?.status === 'draft' && lead.order?.rejectionReason ? (
                             <span className="inline-block text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider bg-rose-500/10 text-rose-450 border-rose-500/20">
-                              Rejected ⚠️
+                              Rejected ⚠️ 
+                            </span>
+                          ) : lead.status === 13 && lead.order && lead.order.status !== 'draft' ? (
+                            <span className="inline-block text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-bold">
+                              Order Punched
                             </span>
                           ) : (
                             <span className={`inline-block text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${stage.class}`}>
@@ -1890,7 +1896,7 @@ export default function LeadsPage() {
                 >
                   <option value="UNCHANGED">-- Select Target Stage --</option>
                   {Object.entries(STAGE_BADGES)
-                    .filter(([id]) => id !== '1' || (user?.role === 'admin' || user?.role === 'director' || user?.role?.startsWith('admin:')))
+                    .filter(([id]) => !isNaN(Number(id)) && (id !== '1' || (user?.role === 'admin' || user?.role === 'director' || user?.role?.startsWith('admin:'))))
                     .map(([id, badge]) => (
                       <option key={id} value={id}>
                         {badge.name} (Stage {id})

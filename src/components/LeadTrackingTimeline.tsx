@@ -43,6 +43,7 @@ interface Order {
   id: number;
   orderCode: string;
   status: string;
+  rejectionReason?: string | null;
   systemSizeKw: number;
   totalValue: number;
   createdAt?: string;
@@ -82,7 +83,7 @@ const STAGE_NAMES: Record<number, string> = {
   10: 'Disconnected',
   11: 'Switch Off',
   12: 'Can\'t Fit Solar',
-  13: 'Sale Done (Order Punched)',
+  13: 'Sale Done',
 };
 
 const STAGE_BADGES: Record<number, { name: string; class: string }> = {
@@ -375,7 +376,11 @@ export function LeadTrackingTimeline({ lead }: LeadTrackingProps) {
         <div className="text-right">
           <span className="text-[10px] uppercase font-bold text-[var(--text-muted)] block">Current Stage</span>
           <span className={`text-xs font-extrabold px-2.5 py-1 rounded-lg border inline-block mt-0.5 ${STAGE_BADGES[lead.status]?.class || 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-color)]'}`}>
-            {STAGE_NAMES[lead.status] || `Stage ${lead.status}`}
+            {lead.status === 13 && lead.order && lead.order.status !== 'draft'
+              ? 'Order Punched'
+              : lead.status === 13 && lead.order?.status === 'draft' && lead.order?.rejectionReason
+                ? 'Order Rejected ⚠️'
+                : STAGE_NAMES[lead.status] || `Stage ${lead.status}`}
           </span>
         </div>
       </div>

@@ -113,6 +113,7 @@ const DOC_TYPES: Record<string, string> = {
   electricity_bill: 'Electricity Bill',
   bank_passbook: 'Bank Passbook',
   downpayment_receipt: 'Downpayment Receipt',
+  order_confirmation_receipt: 'Order Confirmation Receipt (OCR)',
 };
 
 export default function FinancePage() {

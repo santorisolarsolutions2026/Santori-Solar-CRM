@@ -44,7 +44,26 @@ export async function GET(
       return NextResponse.json({ success: false, message: 'Forbidden. No access to this document.' }, { status: 403 });
     }
 
+    const url = new URL(req.url);
+    const isDownload = url.searchParams.get('download') === 'true';
+
     if (doc.filePath.startsWith('http')) {
+      if (isDownload) {
+        try {
+          const blobResponse = await fetch(doc.filePath);
+          const arrayBuffer = await blobResponse.arrayBuffer();
+          const headers = new Headers();
+          headers.set('Content-Type', doc.mimeType || blobResponse.headers.get('Content-Type') || 'application/octet-stream');
+          headers.set('Content-Disposition', `attachment; filename="${encodeURIComponent(doc.fileName)}"`);
+          return new Response(arrayBuffer, {
+            status: 200,
+            headers,
+          });
+        } catch (fetchErr) {
+          console.error('Error proxying blob download:', fetchErr);
+          return NextResponse.redirect(doc.filePath);
+        }
+      }
       return NextResponse.redirect(doc.filePath);
     }
 
@@ -62,7 +81,7 @@ export async function GET(
     
     const headers = new Headers();
     headers.set('Content-Type', doc.mimeType);
-    headers.set('Content-Disposition', `inline; filename="${doc.fileName}"`);
+    headers.set('Content-Disposition', `${isDownload ? 'attachment' : 'inline'}; filename="${encodeURIComponent(doc.fileName)}"`);
     headers.set('Content-Length', fileBuffer.length.toString());
 
     return new Response(fileBuffer, {

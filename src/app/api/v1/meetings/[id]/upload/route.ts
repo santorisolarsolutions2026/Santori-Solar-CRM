@@ -67,18 +67,43 @@ export async function POST(
 
     const relativePath = blob.url;
 
+    // Parse existing recordings
+    let existingRecordings: Array<{ path: string; durationSec?: number | null; createdAt?: string }> = [];
+    if (meeting.audioRecordingPath) {
+      try {
+        const parsed = JSON.parse(meeting.audioRecordingPath);
+        if (Array.isArray(parsed)) {
+          existingRecordings = parsed;
+        } else if (typeof parsed === 'string') {
+          existingRecordings = [{ path: parsed, durationSec: meeting.meetingDurationSec, createdAt: meeting.meetingStartedAt?.toISOString() || new Date().toISOString() }];
+        }
+      } catch {
+        existingRecordings = [{ path: meeting.audioRecordingPath, durationSec: meeting.meetingDurationSec, createdAt: meeting.meetingStartedAt?.toISOString() || new Date().toISOString() }];
+      }
+    }
+
+    // Append new recording
+    existingRecordings.push({
+      path: relativePath,
+      durationSec: durationSec,
+      createdAt: new Date().toISOString(),
+    });
+
+    const totalDuration = existingRecordings.reduce((sum, item) => sum + (item.durationSec || 0), 0);
+
     // Update meeting record
     const updatedMeeting = await prisma.meetingBooking.update({
       where: { id: meetingId },
       data: {
-        audioRecordingPath: relativePath,
-        ...(durationSec !== null && { meetingDurationSec: durationSec }),
+        audioRecordingPath: JSON.stringify(existingRecordings),
+        meetingDurationSec: totalDuration > 0 ? totalDuration : (durationSec || null),
       },
     });
 
     return NextResponse.json({
       success: true,
       data: updatedMeeting,
+      recordings: existingRecordings,
       message: 'Audio recording uploaded successfully.',
     });
   } catch (error: any) {
