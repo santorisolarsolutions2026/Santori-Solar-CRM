@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser, getUserSession } from '@/lib/auth';
-import { processSystemAutoCheckouts } from '@/lib/attendance-server';
 
 export async function GET(req: Request) {
   try {
@@ -9,9 +8,6 @@ export async function GET(req: Request) {
     if (!userPayload) {
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
-
-    // Process auto checkouts before generating report
-    await processSystemAutoCheckouts();
 
     const { role: userRole, permissions: userPermissions } = await getUserSession(userPayload.id);
 
@@ -111,7 +107,7 @@ export async function GET(req: Request) {
         } else {
           totalWorkingDays++;
           if (rec) {
-            if (['present', 'completed', 'system_completed', 'checked_in'].includes(rec.status) || rec.checkOut) {
+            if (rec.status === 'present') {
               dayStatuses[day] = 'P';
               presentDays++;
             } else if (rec.status === 'half_day') {

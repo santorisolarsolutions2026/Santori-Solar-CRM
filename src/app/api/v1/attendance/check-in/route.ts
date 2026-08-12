@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/auth';
-import { isWithinAttendanceHours } from '@/lib/attendance';
 
 function getAttendanceModel() {
   const model = (prisma as any).attendance;
@@ -16,14 +15,6 @@ export async function POST(req: Request) {
     const userPayload = getAuthenticatedUser(req);
     if (!userPayload) {
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
-    }
-
-    const windowCheck = isWithinAttendanceHours();
-    if (!windowCheck.allowed) {
-      return NextResponse.json(
-        { success: false, message: windowCheck.message },
-        { status: 400 }
-      );
     }
 
     const body = await req.json().catch(() => ({}));
@@ -59,25 +50,10 @@ export async function POST(req: Request) {
       ? location
       : (dbUser?.loginLocation || location || 'Unknown Location');
 
-    const istDateString = now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
-    const istDate = new Date(istDateString);
-    const hours = istDate.getHours();
-    const minutes = istDate.getMinutes();
-    const totalMinutes = hours * 60 + minutes;
-
-    // 10:15 AM = 615 min, 2:00 PM (14:00) = 840 min
-    let initialStatus = 'checked_in';
-    let autoNote = '';
-
-    if (totalMinutes > 840) {
-      // After 2:00 PM -> Absent
-      initialStatus = 'absent';
-      autoNote = 'Late check-in after 2:00 PM (Marked as Absent)';
-    } else if (totalMinutes > 615) {
-      // Between 10:15 AM and 2:00 PM -> Half Day
-      initialStatus = 'half_day';
-      autoNote = 'Late check-in between 10:15 AM and 2:00 PM (Marked as Half Day)';
-    }
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const isLateCheckIn = hours > 10 || (hours === 10 && minutes > 15);
+    const initialStatus = isLateCheckIn ? 'half_day' : 'checked_in';
 
     const attendance = await attendanceModel.create({
       data: {
@@ -86,21 +62,14 @@ export async function POST(req: Request) {
         checkIn: now,
         checkInLocation: resolvedLocation,
         status: initialStatus,
-        notes: notes || (autoNote || undefined),
+        notes: notes || (isLateCheckIn ? 'Late check-in (after 10:15 AM). Automatically marked as Half Day.' : undefined),
       },
     });
-
-    let successMessage = 'Checked in successfully! Have a productive workday.';
-    if (initialStatus === 'absent') {
-      successMessage = 'Checked in after 2:00 PM. Marked as Absent for today.';
-    } else if (initialStatus === 'half_day') {
-      successMessage = 'Checked in after 10:15 AM. Marked as Half Day for today.';
-    }
 
     return NextResponse.json({
       success: true,
       data: attendance,
-      message: successMessage,
+      message: 'Checked in successfully! Have a productive workday.',
     });
   } catch (error: any) {
     console.error('Check-in error:', error);
