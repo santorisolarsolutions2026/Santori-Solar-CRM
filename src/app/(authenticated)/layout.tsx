@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import { getCurrentLocationString } from '@/lib/location';
+import { isWithinAttendanceHours } from '@/lib/attendance';
 import {
   Sun,
   Moon,
@@ -483,6 +484,12 @@ export default function AuthenticatedLayout({
   };
 
   const handleQuickCheckIn = async () => {
+    const windowCheck = isWithinAttendanceHours();
+    if (!windowCheck.allowed) {
+      alert(windowCheck.message);
+      return;
+    }
+
     try {
       setAttendanceActionLoading(true);
       const loc = await getCurrentLocationString();
@@ -506,6 +513,12 @@ export default function AuthenticatedLayout({
   };
 
   const handleQuickCheckOut = async () => {
+    const windowCheck = isWithinAttendanceHours();
+    if (!windowCheck.allowed) {
+      alert(windowCheck.message);
+      return;
+    }
+
     setConfirmModal({
       message: 'Are you sure you want to Check Out for today?',
       onConfirm: async () => {
@@ -1063,11 +1076,27 @@ export default function AuthenticatedLayout({
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider flex items-center gap-1 ${
                   !todayAttendance 
                     ? 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-color)]' 
-                    : todayAttendance.checkOut 
-                      ? 'bg-emerald-500/10 text-emerald-650 dark:text-emerald-400 border-emerald-500/20' 
-                      : 'bg-emerald-500/10 text-emerald-650 dark:text-emerald-400 border-emerald-500/20 animate-pulse'
+                    : todayAttendance.status === 'absent'
+                      ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                      : todayAttendance.status === 'half_day'
+                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                        : todayAttendance.status === 'system_completed' || todayAttendance.checkOutLocation?.includes('System')
+                          ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                          : todayAttendance.checkOut 
+                            ? 'bg-emerald-500/10 text-emerald-650 dark:text-emerald-400 border-emerald-500/20' 
+                            : 'bg-emerald-500/10 text-emerald-650 dark:text-emerald-400 border-emerald-500/20 animate-pulse'
                 }`}>
-                  {!todayAttendance ? 'Pending' : todayAttendance.checkOut ? 'Completed' : 'Active'}
+                  {!todayAttendance
+                    ? 'Pending'
+                    : todayAttendance.status === 'absent'
+                      ? 'Absent'
+                      : todayAttendance.status === 'half_day'
+                        ? 'Half Day'
+                        : todayAttendance.status === 'system_completed' || todayAttendance.checkOutLocation?.includes('System')
+                          ? 'System Checkout'
+                          : todayAttendance.checkOut
+                            ? 'Completed'
+                            : 'Active'}
                 </span>
               </button>
 
@@ -1092,8 +1121,10 @@ export default function AuthenticatedLayout({
                       {todayAttendance.checkOut ? (
                         <div className="flex justify-between">
                           <span>Check Out Time:</span>
-                          <span className="font-mono font-semibold text-[var(--text-primary)]">
-                            {new Date(todayAttendance.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          <span className={`font-mono font-semibold ${todayAttendance.status === 'system_completed' || todayAttendance.checkOutLocation?.includes('System') ? 'text-amber-400' : 'text-[var(--text-primary)]'}`}>
+                            {todayAttendance.status === 'system_completed' || todayAttendance.checkOutLocation?.includes('System')
+                              ? 'System Auto (9:00 PM)'
+                              : new Date(todayAttendance.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
                       ) : (

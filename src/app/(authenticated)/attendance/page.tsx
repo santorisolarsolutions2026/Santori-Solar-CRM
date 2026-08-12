@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getCurrentLocationString } from '@/lib/location';
+import { isWithinAttendanceHours } from '@/lib/attendance';
 import {
   Clock,
   UserCheck,
@@ -306,6 +307,12 @@ export default function AttendancePage() {
   }, [selectedDate, activeTab]);
 
   const handleCheckIn = async () => {
+    const windowCheck = isWithinAttendanceHours();
+    if (!windowCheck.allowed) {
+      alert(windowCheck.message);
+      return;
+    }
+
     try {
       setActionLoading(true);
       const loc = await getCurrentLocationString();
@@ -329,6 +336,12 @@ export default function AttendancePage() {
   };
 
   const handleCheckOut = async () => {
+    const windowCheck = isWithinAttendanceHours();
+    if (!windowCheck.allowed) {
+      alert(windowCheck.message);
+      return;
+    }
+
     const proceed = async () => {
       try {
         setActionLoading(true);
@@ -393,10 +406,10 @@ export default function AttendancePage() {
     return !isMon && !isHol;
   }).length;
   
-  const totalWorkMin = monthlyRecords.reduce((sum, r) => sum + (r.workDurationMin || 0), 0);
+  const completedDays = monthlyRecords.filter(r => r.status !== 'system_completed' && !r.checkOutLocation?.includes('System') && r.workDurationMin && r.workDurationMin > 0);
+  const totalWorkMin = completedDays.reduce((sum, r) => sum + (r.workDurationMin || 0), 0);
   const totalWorkHoursStr = `${Math.floor(totalWorkMin / 60)}h ${totalWorkMin % 60}m`;
   
-  const completedDays = monthlyRecords.filter(r => r.workDurationMin && r.workDurationMin > 0);
   const avgWorkMin = completedDays.length > 0 ? Math.round(totalWorkMin / completedDays.length) : 0;
   const avgWorkHoursStr = `${Math.floor(avgWorkMin / 60)}h ${avgWorkMin % 60}m`;
 
@@ -407,16 +420,28 @@ export default function AttendancePage() {
     const holidayName = holidays.find(h => h.date.split('T')[0] === dayStr)?.name;
 
     if (record) {
-      if (record.status === 'completed' || record.checkOut) {
+      if (record.status === 'absent') {
+        return (
+          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-rose-500/10 text-rose-400 border-rose-500/20 uppercase tracking-wider">
+            Absent ❌
+          </span>
+        );
+      } else if (record.status === 'half_day') {
+        return (
+          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-amber-500/10 text-amber-400 border-amber-500/20 uppercase tracking-wider">
+            Half Day ⚠️ 
+          </span>
+        );
+      } else if (record.status === 'system_completed' || (record.checkOut && (record.checkOutLocation?.includes('System') || record.notes?.includes('System Auto Check-out')))) {
+        return (
+          <span className="text-[9px] font-bold px-2.5 py-0.5 rounded-full border bg-amber-500/10 text-amber-400 border-amber-500/30 uppercase tracking-wider whitespace-nowrap">
+            System Checkout
+          </span>
+        );
+      } else if (record.status === 'completed' || record.checkOut) {
         return (
           <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-emerald-500/10 text-emerald-400 border-emerald-500/20 uppercase tracking-wider">
             Completed
-          </span>
-        );
-       } else if (record.status === 'half_day') {
-        return (
-          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-emerald-500/10 text-emerald-500 border-emerald-500/20 uppercase tracking-wider">
-            Half Day ⚠️
           </span>
         );
       } else {
@@ -489,9 +514,29 @@ export default function AttendancePage() {
             <div className="text-right">
               <span className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block">Today's Status</span>
               <span className={`text-xs font-bold font-mono ${
-                !todayAttendance ? 'text-[var(--text-secondary)]' : todayAttendance.checkOut ? 'text-emerald-400' : 'text-emerald-500'
+                !todayAttendance 
+                  ? 'text-[var(--text-secondary)]' 
+                  : todayAttendance.status === 'absent'
+                    ? 'text-rose-400'
+                    : todayAttendance.status === 'half_day'
+                      ? 'text-amber-400'
+                      : todayAttendance.status === 'system_completed' || todayAttendance.checkOutLocation?.includes('System')
+                        ? 'text-amber-400'
+                        : todayAttendance.checkOut 
+                          ? 'text-emerald-400' 
+                          : 'text-emerald-500'
               }`}>
-                {!todayAttendance ? 'Not Checked In' : todayAttendance.checkOut ? 'Day Completed ✓' : 'Checked In'}
+                {!todayAttendance 
+                  ? 'Not Checked In' 
+                  : todayAttendance.status === 'absent'
+                    ? 'Absent ❌ (Late Login)'
+                    : todayAttendance.status === 'half_day'
+                      ? 'Half Day ⚠️'
+                      : todayAttendance.status === 'system_completed' || todayAttendance.checkOutLocation?.includes('System')
+                        ? 'System Checkout (Auto)'
+                        : todayAttendance.checkOut 
+                          ? 'Day Completed ✓' 
+                          : 'Checked In'}
               </span>
             </div>
 
@@ -777,7 +822,9 @@ export default function AttendancePage() {
                       </td>
 
                       <td className="py-3.5 px-4 font-mono text-[var(--text-primary)] font-semibold">
-                        {attendance?.workDurationMin ? (
+                        {attendance?.status === 'system_completed' || attendance?.checkOutLocation?.includes('System') ? (
+                          <span className="text-slate-600 font-normal">-</span>
+                        ) : attendance?.workDurationMin ? (
                           `${Math.floor(attendance.workDurationMin / 60)}h ${attendance.workDurationMin % 60}m`
                         ) : (
                           <span className="text-slate-600 font-normal">-</span>
@@ -788,6 +835,18 @@ export default function AttendancePage() {
                         {!attendance ? (
                           <span className="text-[10px] font-bold px-2.5 py-1 rounded-full border bg-[var(--bg-card)]/60 text-[var(--text-muted)] border-[var(--border-color)] uppercase tracking-wider flex items-center gap-1 w-fit" title="Not Checked In Yet">
                             <AlertCircle className="w-3 h-3 text-[var(--text-muted)]" /> Pending
+                          </span>
+                        ) : attendance.status === 'absent' ? (
+                          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full border bg-rose-500/10 text-rose-400 border-rose-500/20 uppercase tracking-wider flex items-center gap-1 w-fit" title={attendance.notes || "Marked Absent (Late Login)"}>
+                            <AlertCircle className="w-3 h-3 text-rose-400" /> Absent ❌
+                          </span>
+                        ) : attendance.status === 'half_day' ? (
+                          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full border bg-amber-500/10 text-amber-400 border-amber-500/20 uppercase tracking-wider flex items-center gap-1 w-fit" title={attendance.notes || "Half Day (Login between 10:15 AM and 2:00 PM)"}>
+                            <AlertCircle className="w-3 h-3 text-amber-400" /> Half Day ⚠️
+                          </span>
+                        ) : attendance.status === 'system_completed' || (attendance.checkOut && (attendance.checkOutLocation?.includes('System') || attendance.notes?.includes('System Auto Check-out'))) ? (
+                          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full border bg-amber-500/10 text-amber-400 border-amber-500/30 uppercase tracking-wider flex items-center gap-1.5 w-fit whitespace-nowrap shadow-xs" title="System Auto Check-Out at 9:00 PM">
+                            <Clock className="w-3 h-3 text-amber-400 shrink-0" /> System Checkout
                           </span>
                         ) : attendance.checkOut ? (
                           <span className="text-[10px] font-bold px-2.5 py-1 rounded-full border bg-emerald-500/10 text-emerald-400 border-emerald-500/20 uppercase tracking-wider flex items-center gap-1 w-fit" title="Day Completed & Checked Out">
@@ -843,12 +902,36 @@ export default function AttendancePage() {
                         {att.checkOut ? new Date(att.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
                       </td>
                       <td className="py-3.5 px-4 text-emerald-500 font-bold">
-                        {att.workDurationMin ? `${Math.floor(att.workDurationMin / 60)}h ${att.workDurationMin % 60}m` : '-'}
+                        {att.status === 'system_completed' || att.checkOutLocation?.includes('System') ? (
+                          <span className="text-slate-600 font-normal">-</span>
+                        ) : att.workDurationMin ? (
+                          `${Math.floor(att.workDurationMin / 60)}h ${att.workDurationMin % 60}m`
+                        ) : (
+                          <span className="text-slate-600 font-normal">-</span>
+                        )}
                       </td>
                       <td className="py-3.5 px-4 font-sans">
-                        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full border bg-emerald-500/10 text-emerald-400 border-emerald-500/20 uppercase tracking-wider">
-                          {att.status}
-                        </span>
+                        {att.status === 'absent' ? (
+                          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full border bg-rose-500/10 text-rose-400 border-rose-500/20 uppercase tracking-wider flex items-center gap-1 w-fit">
+                            <AlertCircle className="w-3 h-3 text-rose-400" /> Absent ❌
+                          </span>
+                        ) : att.status === 'half_day' ? (
+                          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full border bg-amber-500/10 text-amber-400 border-amber-500/20 uppercase tracking-wider flex items-center gap-1 w-fit">
+                            <AlertCircle className="w-3 h-3 text-amber-400" /> Half Day ⚠️
+                          </span>
+                        ) : att.status === 'system_completed' || (att.checkOut && (att.checkOutLocation?.includes('System') || att.notes?.includes('System Auto Check-out'))) ? (
+                          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full border bg-amber-500/10 text-amber-400 border-amber-500/30 uppercase tracking-wider flex items-center gap-1.5 w-fit whitespace-nowrap shadow-xs">
+                            <Clock className="w-3 h-3 text-amber-400 shrink-0" /> System Checkout
+                          </span>
+                        ) : att.status === 'completed' || att.checkOut ? (
+                          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full border bg-emerald-500/10 text-emerald-400 border-emerald-500/20 uppercase tracking-wider flex items-center gap-1 w-fit">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Completed
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full border bg-emerald-500/10 text-emerald-500 border-emerald-500/20 uppercase tracking-wider animate-pulse">
+                            Active
+                          </span>
+                        )}
                       </td>
                     </tr>
                   ))
