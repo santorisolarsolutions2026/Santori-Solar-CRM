@@ -547,6 +547,7 @@ export default function LeadDetailPage({
     remainingMethod: 'cash',
     financeProvider: '',
     clientType: 'on_grid',
+    subsidyApplicable: false,
     additionalNotes: '',
   });
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
@@ -638,6 +639,7 @@ export default function LeadDetailPage({
               remainingMethod: data.data.order.remainingMethod || 'cash',
               financeProvider: data.data.order.financeProvider || '',
               clientType: data.data.order.clientType || 'on_grid',
+              subsidyApplicable: data.data.order.subsidyApplicable ?? false,
               additionalNotes: data.data.order.additionalNotes || '',
             });
           } else {
@@ -3428,6 +3430,22 @@ export default function LeadDetailPage({
                             <option value="off_grid">Off-Grid (Connected to Battery Banks)</option>
                             <option value="hybrid">Hybrid (Both)</option>
                           </select>
+                        </div>
+                        <div className="flex items-center gap-2 pt-6">
+                          <input
+                            type="checkbox"
+                            id="subsidyApplicable"
+                            disabled={isOrderFormDisabled}
+                            checked={orderForm.subsidyApplicable}
+                            onChange={(e) => setOrderForm({ ...orderForm, subsidyApplicable: e.target.checked })}
+                            className="w-4 h-4 rounded border-[var(--border-color)] bg-[var(--bg-main)] text-emerald-500 focus:ring-emerald-500/20 cursor-pointer disabled:opacity-50"
+                          />
+                          <label
+                            htmlFor="subsidyApplicable"
+                            className={`text-xs font-semibold text-[var(--text-primary)] select-none ${isOrderFormDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                          >
+                            Subsidy Eligible
+                          </label>
                         </div>
                         <div className="md:col-span-2">
                           <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">Terrestrial/Structural Notes</label>

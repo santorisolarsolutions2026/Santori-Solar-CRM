@@ -1240,6 +1240,14 @@ export default function OperationsPage() {
                           <span className="font-mono font-bold text-white text-xs">{order.orderCode}</span>
                           <Link href={`/leads/${order.lead.id}`} className="text-sm font-bold text-emerald-400 hover:underline mt-1">
                             {order.lead.customerName}
+                            {order.subsidyApplicable && (
+                              <span 
+                                title="Subsidy Eligible" 
+                                className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-yellow-500 text-black text-[9px] font-medium ml-1.5 align-top select-none"
+                              >
+                                S
+                              </span>
+                            )}
                           </Link>
                           <p className="text-[10px] text-[var(--text-muted)] flex items-center gap-1 mt-1 truncate max-w-[250px]">
                             <MapPin className="w-3 h-3" />
@@ -2393,6 +2401,14 @@ export default function OperationsPage() {
                           <span className="font-semibold text-[var(--text-primary)]">
                             <Link href={`/leads/${selectedOrder.lead.id}`} className="text-emerald-600 dark:text-emerald-400 hover:underline">
                               {selectedOrder.lead.customerName}
+                              {selectedOrder.subsidyApplicable && (
+                                <span 
+                                  title="Subsidy Eligible" 
+                                  className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-yellow-500 text-black text-[9px] font-medium ml-1.5 align-top select-none"
+                                >
+                                  S
+                                </span>
+                              )}
                             </Link>
                           </span>
                         </div>

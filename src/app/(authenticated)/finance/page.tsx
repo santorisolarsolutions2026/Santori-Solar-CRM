@@ -1178,6 +1178,14 @@ export default function FinancePage() {
                             className="text-emerald-400 hover:underline cursor-pointer text-left"
                           >
                             {order.lead.customerName}
+                            {order.subsidyApplicable && (
+                              <span 
+                                title="Subsidy Eligible" 
+                                className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-yellow-500 text-black text-[9px] font-medium ml-1.5 align-top select-none"
+                              >
+                                S
+                              </span>
+                            )}
                           </button>
                           {/* Lead Info Popover */}
                           {leadInfoOrder?.id === order.id && (
@@ -1313,6 +1321,14 @@ export default function FinancePage() {
                           className="text-emerald-400 hover:underline cursor-pointer text-left"
                         >
                           {order.lead.customerName}
+                          {order.subsidyApplicable && (
+                            <span 
+                              title="Subsidy Eligible" 
+                              className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-yellow-500 text-black text-[9px] font-medium ml-1.5 align-top select-none"
+                            >
+                              S
+                            </span>
+                          )}
                         </button>
                         {/* Lead Info Popover */}
                         {leadInfoOrder?.id === order.id && (
@@ -1425,6 +1441,14 @@ export default function FinancePage() {
                   Client:{' '}
                   <Link href={`/leads/${selectedOrder.lead.id}`} className="text-emerald-400 hover:underline font-bold">
                     {selectedOrder.lead.customerName}
+                    {selectedOrder.subsidyApplicable && (
+                      <span 
+                        title="Subsidy Eligible" 
+                        className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-yellow-500 text-black text-[9px] font-medium ml-1.5 align-top select-none"
+                      >
+                        S
+                      </span>
+                    )}
                   </Link>{' '}
                   ({selectedOrder.lead.city})
                 </p>

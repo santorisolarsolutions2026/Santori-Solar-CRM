@@ -185,7 +185,7 @@ export async function PATCH(
     // Check what is being updated
     const isPunchingUpdate = [
       connectionNumber, systemSizeKw, totalValue, downPayment, paymentMethod,
-      transactionRef, remainingMethod, financeProvider, clientType
+      transactionRef, remainingMethod, financeProvider, clientType, subsidyApplicable
     ].some(v => v !== undefined);
 
     const isStatusUpdate = status !== undefined || opsStage !== undefined || deliveryDate !== undefined || deliveryTime !== undefined || isDelivered !== undefined || installationDate !== undefined || installationTime !== undefined || isInstalled !== undefined || actualDeliveryAt !== undefined || actualInstallationAt !== undefined || isMeterInstalled !== undefined || actualMeterInstalledAt !== undefined || isCommissioned !== undefined || actualCommissionedAt !== undefined || isSubsidyApplied !== undefined || actualSubsidyAppliedAt !== undefined;
