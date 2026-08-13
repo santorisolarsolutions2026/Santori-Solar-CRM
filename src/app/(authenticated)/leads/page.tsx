@@ -161,8 +161,8 @@ export default function LeadsPage() {
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
 
-  // Filter criteria
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [consultantFilter, setConsultantFilter] = useState('');
   const [tlFilter, setTlFilter] = useState('');
@@ -176,6 +176,7 @@ export default function LeadsPage() {
   const [unassignedFilter, setUnassignedFilter] = useState(false);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(25);
+  const [filtersLoaded, setFiltersLoaded] = useState(false);
 
   // Detailed Filter Modal states
   const [showDetailedFilterModal, setShowDetailedFilterModal] = useState(false);
@@ -313,7 +314,7 @@ export default function LeadsPage() {
       try {
         const params = new URLSearchParams({
           ids_only: 'true',
-          search,
+          search: debouncedSearch,
           status: statusFilter,
           consultant_id: consultantFilter,
           connection_type: connectionFilter,
@@ -575,6 +576,14 @@ export default function LeadsPage() {
     return count;
   };
 
+  // Debounce search state
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [search]);
+
   // Fetch leads based on filters
   const fetchLeads = async () => {
     setLoading(true);
@@ -582,7 +591,7 @@ export default function LeadsPage() {
       const params = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
-        search,
+        search: debouncedSearch,
         status: statusFilter,
         consultant_id: consultantFilter,
         tl_id: tlFilter,
@@ -616,18 +625,77 @@ export default function LeadsPage() {
     }
   }, [user]);
 
+  // Load saved filters on client-side mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedSearch = localStorage.getItem('leads_filter_search');
+      const savedStatus = localStorage.getItem('leads_filter_status');
+      const savedConsultant = localStorage.getItem('leads_filter_consultant');
+      const savedTl = localStorage.getItem('leads_filter_tl');
+      const savedManager = localStorage.getItem('leads_filter_manager');
+      const savedConnection = localStorage.getItem('leads_filter_connection');
+      const savedSource = localStorage.getItem('leads_filter_source');
+      const savedCity = localStorage.getItem('leads_filter_city');
+      const savedState = localStorage.getItem('leads_filter_state');
+      const savedDateFrom = localStorage.getItem('leads_filter_dateFrom');
+      const savedDateTo = localStorage.getItem('leads_filter_dateTo');
+      const savedUnassigned = localStorage.getItem('leads_filter_unassigned');
+      const savedPage = localStorage.getItem('leads_filter_page');
+
+      if (savedSearch !== null) setSearch(savedSearch);
+      if (savedStatus !== null) setStatusFilter(savedStatus);
+      if (savedConsultant !== null) setConsultantFilter(savedConsultant);
+      if (savedTl !== null) setTlFilter(savedTl);
+      if (savedManager !== null) setManagerFilter(savedManager);
+      if (savedConnection !== null) setConnectionFilter(savedConnection);
+      if (savedSource !== null) setSourceFilter(savedSource);
+      if (savedCity !== null) setCityFilter(savedCity);
+      if (savedState !== null) setStateFilter(savedState);
+      if (savedDateFrom !== null) setDateFromFilter(savedDateFrom);
+      if (savedDateTo !== null) setDateToFilter(savedDateTo);
+      if (savedUnassigned !== null) setUnassignedFilter(savedUnassigned === 'true');
+      if (savedPage !== null) setPage(Number(savedPage));
+      
+      setFiltersLoaded(true);
+    }
+  }, []);
+
+  // Save filters to localStorage when they change
+  useEffect(() => {
+    if (!filtersLoaded) return;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('leads_filter_search', search);
+      localStorage.setItem('leads_filter_status', statusFilter);
+      localStorage.setItem('leads_filter_consultant', consultantFilter);
+      localStorage.setItem('leads_filter_tl', tlFilter);
+      localStorage.setItem('leads_filter_manager', managerFilter);
+      localStorage.setItem('leads_filter_connection', connectionFilter);
+      localStorage.setItem('leads_filter_source', sourceFilter);
+      localStorage.setItem('leads_filter_city', cityFilter);
+      localStorage.setItem('leads_filter_state', stateFilter);
+      localStorage.setItem('leads_filter_dateFrom', dateFromFilter);
+      localStorage.setItem('leads_filter_dateTo', dateToFilter);
+      localStorage.setItem('leads_filter_unassigned', unassignedFilter ? 'true' : 'false');
+      localStorage.setItem('leads_filter_page', page.toString());
+    }
+  }, [search, statusFilter, consultantFilter, tlFilter, managerFilter, connectionFilter, sourceFilter, cityFilter, stateFilter, dateFromFilter, dateToFilter, unassignedFilter, page, filtersLoaded]);
+
   // Refetch leads when filters change
   useEffect(() => {
-    if (user) {
+    if (user && filtersLoaded) {
       fetchLeads();
     }
-  }, [page, limit, statusFilter, consultantFilter, tlFilter, managerFilter, connectionFilter, sourceFilter, cityFilter, stateFilter, dateFromFilter, dateToFilter, unassignedFilter, user]);
+  }, [page, limit, statusFilter, consultantFilter, tlFilter, managerFilter, connectionFilter, sourceFilter, cityFilter, stateFilter, dateFromFilter, dateToFilter, unassignedFilter, user, filtersLoaded, debouncedSearch]);
 
   // Handle Search Input (with manual or debounce enter)
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setPage(1);
-    fetchLeads();
+    if (debouncedSearch === search) {
+      fetchLeads();
+    } else {
+      setDebouncedSearch(search);
+    }
   };
 
   const handleClearFilters = () => {
