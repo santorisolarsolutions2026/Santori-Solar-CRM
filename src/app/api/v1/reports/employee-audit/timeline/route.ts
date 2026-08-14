@@ -17,6 +17,7 @@ const STAGE_NAMES: Record<number, string> = {
   11: 'Switch Off',
   12: "Can't Fit Solar",
   13: 'Sale Done',
+  14: 'Meeting Cancelled',
 };
 
 export async function GET(req: Request) {

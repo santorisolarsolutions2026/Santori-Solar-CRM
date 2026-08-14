@@ -377,6 +377,11 @@ export default function LeadDetailPage({
   const [followUpTime, setFollowUpTime] = useState('');
   const [disqualifiedReason, setDisqualifiedReason] = useState('Shading Issue');
   const [cancelledReason, setCancelledReason] = useState('Not Interested');
+  const [rescheduleDate, setRescheduleDate] = useState('');
+  const [rescheduleTime, setRescheduleTime] = useState('11:00');
+  const [isStatusSubmitting, setIsStatusSubmitting] = useState(false);
+  const [isFormBSubmitting, setIsFormBSubmitting] = useState(false);
+  const [isFormCSubmitting, setIsFormCSubmitting] = useState(false);
 
   // Revert to Fresh Lead modal states
   const [showRevertFreshModal, setShowRevertFreshModal] = useState(false);
@@ -1009,11 +1014,13 @@ export default function LeadDetailPage({
       payload.sub_status = disqualifiedReason;
     } else if (statusNum === 14) {
       payload.sub_status = cancelledReason;
-      
-      // If user selected one of the fallback states, we will transition to that instead.
-      // But the user's requirement asked for the reason to just be logged. So we will pass it as sub_status for now.
+      if (cancelledReason === 'Reschedule Meeting') {
+        payload.rescheduleDate = rescheduleDate;
+        payload.rescheduleTime = rescheduleTime;
+      }
     }
 
+    setIsStatusSubmitting(true);
     try {
       const res = await fetch(`/api/v1/leads/${leadId}/status`, {
         method: 'POST',
@@ -1024,6 +1031,8 @@ export default function LeadDetailPage({
       if (data.success) {
         setNewStatus('');
         setStatusRemark('');
+        setRescheduleDate('');
+        setRescheduleTime('11:00');
         fetchLeadDetails();
         alert('Status updated successfully.');
       } else {
@@ -1031,6 +1040,8 @@ export default function LeadDetailPage({
       }
     } catch (err) {
       console.error(err);
+    } finally {
+      setIsStatusSubmitting(false);
     }
   };
 
@@ -1077,6 +1088,7 @@ export default function LeadDetailPage({
   // Submit Form B (Meeting Booked) status change
   const handleFormBSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsFormBSubmitting(true);
     try {
       const finalConnectionType = formBData.connectionType || lead?.connectionType || 'residential';
       const fallbackExecId = lead?.consultant?.id?.toString() || user?.id?.toString() || '';
@@ -1127,6 +1139,8 @@ export default function LeadDetailPage({
       }
     } catch (err) {
       console.error(err);
+    } finally {
+      setIsFormBSubmitting(false);
     }
   };
 
@@ -1138,6 +1152,7 @@ export default function LeadDetailPage({
       return;
     }
 
+    setIsFormCSubmitting(true);
     try {
       const payload: any = {
         to_status: 9,
@@ -1174,6 +1189,8 @@ export default function LeadDetailPage({
       }
     } catch (err) {
       console.error(err);
+    } finally {
+      setIsFormCSubmitting(false);
     }
   };
 
@@ -1845,10 +1862,10 @@ export default function LeadDetailPage({
     if ([1, 2, 3, 5, 7, 10, 11].includes(lead.status)) return 0; // PSA
     if ([8, 9, 14].includes(lead.status)) return 1; // Sales
     if (lead.status === 13) {
-      if (lead.order?.status === 'submitted') return 2; // Finance
-      if (['finance_verified', 'ops_assigned', 'completed'].includes(lead.order?.status || '')) {
-        return lead.order?.status === 'completed' ? 4 : 3; // Completed vs Operations
-      }
+      if (!lead.order || lead.order.status === 'draft') return 1; // Sales (Order Punching in progress)
+      if (lead.order.status === 'submitted') return 2; // Finance
+      if (['finance_verified', 'ops_assigned'].includes(lead.order.status)) return 3; // Operations
+      if (lead.order.status === 'completed') return 4; // Completed / Handover
     }
     if (lead.status === 6 || lead.status === 12) return 4;
     return 0;
@@ -2248,17 +2265,43 @@ export default function LeadDetailPage({
 
                         {/* Conditional Fields: Stage 14 (Meeting Cancelled) details */}
                         {parseInt(newStatus, 10) === 14 && (
-                          <div className="p-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg animate-fade-in">
-                            <label className="block text-[10px] font-semibold text-[var(--text-secondary)] mb-1">Reason for Cancellation</label>
-                            <select
-                              value={cancelledReason}
-                              onChange={(e) => setCancelledReason(e.target.value)}
-                              className="block w-full px-3 py-1.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded text-[var(--text-primary)] text-[11px]"
-                            >
-                              <option value="Not Interested">Not Interested</option>
-                              <option value="Reschedule Meeting">Reschedule Meeting</option>
-                              <option value="Can't Fit Solar">Can't Fit Solar</option>
-                            </select>
+                          <div className="p-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg animate-fade-in space-y-3">
+                            <div>
+                              <label className="block text-[10px] font-semibold text-[var(--text-secondary)] mb-1">Reason for Cancellation</label>
+                              <select
+                                value={cancelledReason}
+                                onChange={(e) => setCancelledReason(e.target.value)}
+                                className="block w-full px-3 py-1.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded text-[var(--text-primary)] text-[11px]"
+                              >
+                                <option value="Not Interested">Not Interested</option>
+                                <option value="Reschedule Meeting">Reschedule Meeting</option>
+                                <option value="Can't Fit Solar">Can't Fit Solar</option>
+                              </select>
+                            </div>
+                            {cancelledReason === 'Reschedule Meeting' && (
+                              <div className="grid grid-cols-2 gap-2 animate-fade-in">
+                                <div>
+                                  <label className="block text-[10px] font-semibold text-[var(--text-secondary)] mb-1">Reschedule Date *</label>
+                                  <input
+                                    type="date"
+                                    required
+                                    value={rescheduleDate}
+                                    onChange={(e) => setRescheduleDate(e.target.value)}
+                                    className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] font-semibold text-[var(--text-secondary)] mb-1">Reschedule Time *</label>
+                                  <input
+                                    type="time"
+                                    required
+                                    value={rescheduleTime}
+                                    onChange={(e) => setRescheduleTime(e.target.value)}
+                                    className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs"
+                                  />
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
 
@@ -2276,10 +2319,17 @@ export default function LeadDetailPage({
 
                         <button
                           type="submit"
-                          disabled={!newStatus}
-                          className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+                          disabled={!newStatus || isStatusSubmitting}
+                          className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
                         >
-                          Save Status Change
+                          {isStatusSubmitting ? (
+                            <>
+                              <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                              <span>Saving Status Change...</span>
+                            </>
+                          ) : (
+                            'Save Status Change'
+                          )}
                         </button>
                       </form>
                     </div>
@@ -3828,9 +3878,17 @@ export default function LeadDetailPage({
                 </button>
                 <button
                   type="submit"
-                  className="py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md"
+                  disabled={isFormBSubmitting}
+                  className="py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
                 >
-                  Confirm Meeting Booking
+                  {isFormBSubmitting ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Booking Meeting...</span>
+                    </>
+                  ) : (
+                    'Confirm Meeting Booking'
+                  )}
                 </button>
               </div>
             </form>
@@ -3978,16 +4036,25 @@ export default function LeadDetailPage({
               <div className="flex gap-3 border-t border-[var(--border-color)]/80 pt-4 justify-end">
                 <button
                   type="button"
+                  disabled={isFormCSubmitting}
                   onClick={handleCancelFormC}
-                  className="py-2 px-4 bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] rounded-lg font-bold text-xs"
+                  className="py-2 px-4 bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] rounded-lg font-bold text-xs disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md"
+                  disabled={isFormCSubmitting}
+                  className="py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
                 >
-                  Save Meeting Outcome
+                  {isFormCSubmitting ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Saving Outcome...</span>
+                    </>
+                  ) : (
+                    'Save Meeting Outcome'
+                  )}
                 </button>
               </div>
             </form>

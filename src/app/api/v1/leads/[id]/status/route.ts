@@ -80,7 +80,7 @@ export async function POST(
     }
 
     const body = await req.json();
-    const { to_status, remark, sub_status, followup_at, formB, formC, clearHistory } = body;
+    const { to_status, remark, sub_status, followup_at, formB, formC, clearHistory, rescheduleDate, rescheduleTime } = body;
 
     const toStatusNum = parseInt(to_status, 10);
     if (isNaN(toStatusNum) || toStatusNum < 1 || toStatusNum > 14) {
@@ -326,6 +326,18 @@ export async function POST(
         resolvedMobileAlt = lead.mobileAlt;
       }
 
+      // Prevent duplicate bookings on same date and time
+      const duplicateBooking = await prisma.meetingBooking.findFirst({
+        where: {
+          leadId,
+          meetingDate,
+          meetingTime,
+        },
+      });
+      if (duplicateBooking) {
+        return NextResponse.json({ success: false, message: 'A meeting is already booked for this customer at the specified date and time.' }, { status: 400 });
+      }
+
       meetingBookingData = {
         address: resolvedAddress,
         pinCode,
@@ -466,7 +478,15 @@ export async function POST(
         finalStatusNum = 4;
         updateData.statusSub = 'Price';
         updateData.isActive = false;
-      } else if (sub_status === 'Reschedule Meeting' || sub_status === 'Book Meeting Again') {
+      } else if (sub_status === 'Reschedule Meeting') {
+        if (!rescheduleDate || !rescheduleTime) {
+          return NextResponse.json({ success: false, message: 'Reschedule Date and Time are required.' }, { status: 422 });
+        }
+        finalStatusNum = 8;
+        updateData.statusSub = null;
+        updateData.followupAt = null;
+        updateData.isActive = true;
+      } else if (sub_status === 'Book Meeting Again') {
         finalStatusNum = 3;
         updateData.statusSub = 'warm';
         updateData.followupAt = new Date(); // prompt them to book ASAP
@@ -547,6 +567,24 @@ export async function POST(
         updateData.followupAt = null;
       }
 
+      // Handle rescheduling: update latest MeetingBooking
+      if (toStatusNum === 14 && sub_status === 'Reschedule Meeting') {
+        const latestBooking = await tx.meetingBooking.findFirst({
+          where: { leadId },
+          orderBy: { createdAt: 'desc' },
+        });
+        if (latestBooking) {
+          await tx.meetingBooking.update({
+            where: { id: latestBooking.id },
+            data: {
+              meetingDate: rescheduleDate,
+              meetingTime: rescheduleTime,
+              notes: remark || null,
+            },
+          });
+        }
+      }
+
       const res = await tx.lead.update({
         where: { id: leadId },
         data: updateData,
@@ -576,7 +614,7 @@ export async function POST(
             userId: userPayload.id,
             fromStatus: 14,
             toStatus: finalStatusNum,
-            remark: `Auto-routed to Stage ${finalStatusNum} from Meeting Cancelled`,
+            remark: finalStatusNum === 8 ? `Meeting Rescheduled to ${rescheduleDate} at ${rescheduleTime}` : `Auto-routed to Stage ${finalStatusNum} from Meeting Cancelled`,
           },
         });
       } else if (isRevertFresh) {

@@ -78,6 +78,7 @@ const STAGE_BADGES: Record<string | number, { name: string; class: string }> = {
   11: { name: 'Switch Off', class: 'bg-slate-700/20 text-[var(--text-secondary)] border-[var(--border-color)]' },
   12: { name: 'Can\'t Fit Solar', class: 'bg-stone-900 text-stone-400 border-stone-800/40' },
   13: { name: 'Sale Done', class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-bold' },
+  14: { name: 'Meeting Cancelled', class: 'bg-red-800/10 text-red-400 border-red-800/20 font-bold' },
   'order_punched': { name: 'Order Punched', class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-bold' },
 };
 

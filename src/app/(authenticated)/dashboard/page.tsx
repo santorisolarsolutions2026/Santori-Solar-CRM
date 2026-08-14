@@ -117,6 +117,7 @@ const STAGE_NAMES: Record<number, { name: string; color: string }> = {
   11: { name: 'Switch Off', color: '#64748B' },
   12: { name: 'Can\'t Fit Solar', color: '#475569' },
   13: { name: 'Sale Done', color: '#10B981' },
+  14: { name: 'Meeting Cancelled', color: '#EF4444' },
 };
 
 export default function DashboardPage() {
