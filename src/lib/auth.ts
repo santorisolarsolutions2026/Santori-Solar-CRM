@@ -168,8 +168,8 @@ export function resolveUserPermissions(user: UserPermissionsInput): string[] {
     // Operations
     'ops:view_all_orders': ['orders:view_all', 'orders:operations'],
     'ops:order_assign': ['orders:assign_ops', 'orders:operations'],
-    'ops:update_stages': ['orders:operations', 'ops:delivery_manage', 'ops:delivered_orders', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:subsidy_manage', 'orders:submit_installation'],
-    'orders:operations': ['ops:update_stages', 'orders:submit_installation'],
+    'ops:update_stages': ['orders:operations', 'ops:delivery_manage', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:subsidy_manage', 'orders:submit_installation'],
+    'orders:operations': ['orders:submit_installation'],
 
     // Administration & Supervision
     'admin:attendance_view': ['attendance:view', 'sales:attendance_view', 'finance:attendance_view', 'ops:attendance_view'],

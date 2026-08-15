@@ -21,47 +21,72 @@ export async function GET(req: Request) {
     const clientType = searchParams.get('client_type') || '';
     const search = searchParams.get('search') || '';
 
+    const hasDeliveredPerm = userPermissions.includes('ops:delivered_orders') || ['admin', 'director'].includes(baseRole);
+
+    const isITOrAdmin = ['admin', 'director'].includes(baseRole);
     const where: Prisma.OrderWhereInput = {};
-    const hasViewAll = userPermissions.includes('orders:view_all');
 
-    // Role-specific filtering
-    // Role-specific and hierarchy-based filtering
-    if (!hasViewAll && !['admin', 'director', 'sales_head'].includes(baseRole)) {
-      const userDetail = await prisma.user.findUnique({
-        where: { id: userPayload.id },
-        select: { teamId: true }
-      });
-
-      const { getSubordinateIds, getAncestorIds } = await import('@/lib/hierarchy');
-      const subIds = await getSubordinateIds(userPayload.id);
-      const ancestorIds = await getAncestorIds(userPayload.id);
-      const allowedIds = [userPayload.id, ...subIds, ...ancestorIds];
-
-      if (baseRole === 'finance') {
+    // 1. Finance Role Filtering
+    if (baseRole === 'finance') {
+      const hasFinanceViewAll = userPermissions.includes('finance:view_all_orders') || isITOrAdmin;
+      if (!hasFinanceViewAll) {
+        const { getSubordinateIds, getAncestorIds } = await import('@/lib/hierarchy');
+        const subIds = await getSubordinateIds(userPayload.id);
+        const ancestorIds = await getAncestorIds(userPayload.id);
+        const allowedIds = [userPayload.id, ...subIds, ...ancestorIds];
         where.OR = [
           { assignedFinanceId: { in: allowedIds } },
           { assignedFinanceId: null }
         ];
-
-        const financeStatuses = ['submitted', 'finance_verified', 'ops_assigned', 'completed'];
-        if (status) {
-          where.status = financeStatuses.includes(status) ? status : { in: financeStatuses };
-        } else {
-          where.status = { in: financeStatuses };
+      }
+      
+      const financeStatuses = hasDeliveredPerm 
+        ? ['submitted', 'finance_verified', 'ops_assigned', 'completed'] 
+        : ['submitted', 'finance_verified', 'ops_assigned'];
+      if (status) {
+        if (status === 'completed' && !hasDeliveredPerm) {
+          return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view completed orders.' }, { status: 403 });
         }
-      } else if (baseRole === 'operations') {
-        where.OR = [
-          { assignedOpsId: { in: allowedIds } },
-          { assignedOpsId: null }
-        ];
-
-        const opsStatuses = ['finance_verified', 'ops_assigned', 'completed'];
-        if (status) {
-          where.status = opsStatuses.includes(status) ? status : { in: opsStatuses };
-        } else {
-          where.status = { in: opsStatuses };
-        }
+        where.status = financeStatuses.includes(status) ? status : { in: financeStatuses };
       } else {
+        where.status = { in: financeStatuses };
+      }
+    } 
+    // 2. Operations Role Filtering
+    else if (baseRole === 'operations') {
+      const hasOpsViewAll = userPermissions.includes('ops:view_all_orders') || isITOrAdmin;
+      if (!hasOpsViewAll) {
+        const { getSubordinateIds } = await import('@/lib/hierarchy');
+        const subIds = await getSubordinateIds(userPayload.id);
+        const opsAllowedIds = [userPayload.id, ...subIds];
+        where.assignedOpsId = { in: opsAllowedIds };
+      }
+
+      const opsStatuses = hasDeliveredPerm 
+        ? ['finance_verified', 'ops_assigned', 'completed'] 
+        : ['finance_verified', 'ops_assigned'];
+      if (status) {
+        if (status === 'completed' && !hasDeliveredPerm) {
+          return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view completed orders.' }, { status: 403 });
+        }
+        where.status = opsStatuses.includes(status) ? status : { in: opsStatuses };
+      } else {
+        where.status = { in: opsStatuses };
+      }
+    } 
+    // 3. Other Roles (Sales, etc.)
+    else {
+      const hasSalesViewAll = userPermissions.includes('orders:view_all') || ['sales_head'].includes(baseRole) || isITOrAdmin;
+      if (!hasSalesViewAll) {
+        const userDetail = await prisma.user.findUnique({
+          where: { id: userPayload.id },
+          select: { teamId: true }
+        });
+        const { getSubordinateIds, getAncestorIds } = await import('@/lib/hierarchy');
+        const subIds = await getSubordinateIds(userPayload.id);
+        const ancestorIds = await getAncestorIds(userPayload.id);
+        const allowedIds = [userPayload.id, ...subIds, ...ancestorIds];
+
         const leadConditions: Prisma.LeadWhereInput = {
           OR: [
             { assignedConsultantId: { in: allowedIds } },
@@ -70,35 +95,19 @@ export async function GET(req: Request) {
             { createdById: userPayload.id }
           ]
         };
-
         if (userDetail?.teamId) {
           (leadConditions.OR as any).push({ assignedTeamId: userDetail.teamId });
         }
         where.lead = leadConditions;
-
-        if (status) {
-          where.status = status;
-        }
       }
-    } else {
-      if (baseRole === 'finance') {
-        const financeStatuses = ['submitted', 'finance_verified', 'ops_assigned', 'completed'];
-        if (status) {
-          where.status = financeStatuses.includes(status) ? status : { in: financeStatuses };
-        } else {
-          where.status = { in: financeStatuses };
+
+      if (status) {
+        if (status === 'completed' && !hasDeliveredPerm) {
+          return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view completed orders.' }, { status: 403 });
         }
-      } else if (baseRole === 'operations') {
-        const opsStatuses = ['finance_verified', 'ops_assigned', 'completed'];
-        if (status) {
-          where.status = opsStatuses.includes(status) ? status : { in: opsStatuses };
-        } else {
-          where.status = { in: opsStatuses };
-        }
-      } else {
-        if (status) {
-          where.status = status;
-        }
+        where.status = status;
+      } else if (!hasDeliveredPerm) {
+        where.status = { not: 'completed' };
       }
     }
 

@@ -15,9 +15,11 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { orderIds, targetUserId, department } = body; // department: 'finance' | 'ops'
 
-    if (!Array.isArray(orderIds) || orderIds.length === 0 || !targetUserId || !department) {
-      return NextResponse.json({ success: false, message: 'Invalid payload. orderIds array, targetUserId, and department required.' }, { status: 400 });
+    if (!Array.isArray(orderIds) || orderIds.length === 0 || !department) {
+      return NextResponse.json({ success: false, message: 'Invalid payload. orderIds array and department required.' }, { status: 400 });
     }
+
+    const isUnassign = targetUserId === '' || targetUserId === null || targetUserId === undefined || targetUserId === 'unassigned';
 
     const userPermissions = await getUserPermissions(userPayload.id);
 
@@ -26,20 +28,24 @@ export async function POST(req: Request) {
     const subordinateIds = await getSubordinateIds(userPayload.id);
     const allowedUserIds = [userPayload.id, ...subordinateIds];
 
-    if (!isITOrAdmin && !allowedUserIds.includes(Number(targetUserId))) {
+    if (!isUnassign && !isITOrAdmin && !allowedUserIds.includes(Number(targetUserId))) {
       return NextResponse.json({
         success: false,
         message: 'Forbidden. You can only assign orders to yourself or team members below you in your hierarchy.'
       }, { status: 403 });
     }
 
-    const targetUser = await prisma.user.findUnique({
-      where: { id: Number(targetUserId) },
-      select: { id: true, name: true }
-    });
+    let targetUserName = 'Unassigned';
+    if (!isUnassign) {
+      const targetUser = await prisma.user.findUnique({
+        where: { id: Number(targetUserId) },
+        select: { id: true, name: true }
+      });
 
-    if (!targetUser) {
-      return NextResponse.json({ success: false, message: 'Target team member not found.' }, { status: 404 });
+      if (!targetUser) {
+        return NextResponse.json({ success: false, message: 'Target team member not found.' }, { status: 404 });
+      }
+      targetUserName = targetUser.name;
     }
 
     if (department === 'finance') {
@@ -50,33 +56,45 @@ export async function POST(req: Request) {
 
       await prisma.order.updateMany({
         where: { id: { in: orderIds.map(Number) } },
-        data: { assignedFinanceId: Number(targetUserId) }
+        data: { assignedFinanceId: isUnassign ? null : Number(targetUserId) }
       });
     } else if (department === 'ops') {
-      const hasOpsAssignPerm = userPermissions.includes('finance:ops_assign') || userPermissions.includes('orders:operations') || userPermissions.includes('ops:order_assign') || isITOrAdmin;
+      const hasOpsAssignPerm = userPermissions.includes('finance:ops_assign') || userPermissions.includes('ops:order_assign') || isITOrAdmin;
       if (!hasOpsAssignPerm) {
         return NextResponse.json({ success: false, message: 'Permission denied: ops assignment required.' }, { status: 403 });
       }
 
       await prisma.order.updateMany({
         where: { id: { in: orderIds.map(Number) } },
-        data: { assignedOpsId: Number(targetUserId) }
+        data: { assignedOpsId: isUnassign ? null : Number(targetUserId) }
       });
 
-      await prisma.order.updateMany({
-        where: {
-          id: { in: orderIds.map(Number) },
-          status: 'finance_verified'
-        },
-        data: { status: 'ops_assigned' }
-      });
+      if (!isUnassign) {
+        await prisma.order.updateMany({
+          where: {
+            id: { in: orderIds.map(Number) },
+            status: 'finance_verified'
+          },
+          data: { status: 'ops_assigned' }
+        });
+      } else {
+        await prisma.order.updateMany({
+          where: {
+            id: { in: orderIds.map(Number) },
+            status: 'ops_assigned'
+          },
+          data: { status: 'finance_verified' }
+        });
+      }
     } else {
       return NextResponse.json({ success: false, message: 'Invalid department specified.' }, { status: 400 });
     }
 
     return NextResponse.json({
       success: true,
-      message: `Successfully assigned ${orderIds.length} order(s) to ${targetUser.name}.`
+      message: isUnassign 
+        ? `Successfully unassigned ${orderIds.length} order(s).` 
+        : `Successfully assigned ${orderIds.length} order(s) to ${targetUserName}.`
     });
 
   } catch (error: any) {

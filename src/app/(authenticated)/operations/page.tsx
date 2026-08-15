@@ -130,7 +130,8 @@ export default function OperationsPage() {
   const [assignTargetUserId, setAssignTargetUserId] = useState('');
   const [assignLoading, setAssignLoading] = useState(false);
 
-  const canAssignOps = user?.role === 'admin' || user?.role === 'director' || user?.department?.name === 'IT' || hasPermission('ops:order_assign') || hasPermission('finance:ops_assign') || hasPermission('orders:operations') || hasPermission('orders:assign');
+  const canAssignOps = user?.role === 'admin' || user?.role === 'director' || user?.department?.name === 'IT' || user?.permissions?.includes('ops:order_assign') || user?.permissions?.includes('finance:ops_assign');
+  const hasUpdateStages = user?.role === 'admin' || user?.role === 'director' || user?.department?.name === 'IT' || user?.permissions?.includes('ops:update_stages');
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -488,9 +489,13 @@ export default function OperationsPage() {
       const res = await fetch(`/api/v1/orders?${params.toString()}`);
       const data = await res.json();
       if (data.success && data.data) {
-        // Only show orders that are finance_verified, ops_assigned, or completed
+        const hasDeliveredPerm = hasPermission('ops:delivered_orders') || user?.role === 'admin' || user?.role === 'director';
+        const allowedStatuses = hasDeliveredPerm 
+          ? ['finance_verified', 'ops_assigned', 'completed'] 
+          : ['finance_verified', 'ops_assigned'];
+        // Only show orders that are allowed
         const opsOrders = data.data.filter((o: Order) => 
-          ['finance_verified', 'ops_assigned', 'completed'].includes(o.status)
+          allowedStatuses.includes(o.status)
         );
         setOrders(opsOrders);
       }
@@ -1195,7 +1200,9 @@ export default function OperationsPage() {
                   <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Assigned To</th>
                   <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Current Stage</th>
                   <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Order Date</th>
-                  <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold text-right">Actions</th>
+                  {hasUpdateStages && (
+                    <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold text-right">Actions</th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
@@ -1310,15 +1317,30 @@ export default function OperationsPage() {
                       <td className="px-5 py-4 text-xs text-[var(--text-secondary)] font-mono">
                         {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : ''}
                       </td>
-                      <td className="px-5 py-4 text-right">
-                        <button
-                          onClick={() => { setSelectedOrder(order); setShowScheduleForm(false); setShowInstallForm(false); setShowActualDeliveryForm(false); setShowActualInstallForm(false); setShowActualMeterForm(false); setShowActualCommissionForm(false); setNewSubsidyAmount(''); }}
-                          className="px-3 py-1.5 bg-[var(--bg-card)] border border-[var(--border-color)] hover:bg-[var(--bg-card)] text-emerald-400 rounded-lg font-bold text-xs transition-all cursor-pointer inline-flex items-center gap-1.5"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>Manage</span>
-                        </button>
-                      </td>
+                      {hasUpdateStages && (
+                        <td className="px-5 py-4 text-right">
+                          <button
+                            onClick={() => { 
+                              if (!hasUpdateStages) {
+                                showAlert('Forbidden. You do not have permission to manage operations stages.', 'error');
+                                return;
+                              }
+                              setSelectedOrder(order); 
+                              setShowScheduleForm(false); 
+                              setShowInstallForm(false); 
+                              setShowActualDeliveryForm(false); 
+                              setShowActualInstallForm(false); 
+                              setShowActualMeterForm(false); 
+                              setShowActualCommissionForm(false); 
+                              setNewSubsidyAmount(''); 
+                            }}
+                            className="px-3 py-1.5 bg-[var(--bg-card)] border border-[var(--border-color)] hover:bg-[var(--bg-card)] text-emerald-400 rounded-lg font-bold text-xs transition-all cursor-pointer inline-flex items-center gap-1.5"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>Manage</span>
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   );
                 })}

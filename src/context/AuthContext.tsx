@@ -238,10 +238,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       'finance:manage_ledger': ['finance:ledger_record'],
 
       // Operations
-      'ops:view_all_orders': ['orders:view_all', 'orders:operations'],
-      'ops:order_assign': ['orders:assign_ops', 'orders:operations'],
+      'ops:view_all_orders': ['orders:view_all'],
+      'ops:order_assign': ['orders:assign_ops'],
       'orders:assign_ops': ['ops:order_assign'],
-      'ops:update_stages': ['orders:operations', 'ops:delivery_manage', 'ops:delivered_orders', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:subsidy_manage'],
+      'ops:update_stages': ['ops:delivery_manage', 'ops:installation_manage', 'ops:meter_manage', 'ops:commission_manage', 'ops:subsidy_manage'],
       'orders:operations': ['ops:update_stages'],
 
       // Administration & Supervision

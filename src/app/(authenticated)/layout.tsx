@@ -540,8 +540,8 @@ export default function AuthenticatedLayout({
       if (data.success) {
         setTopPerformers(data.data.slice(0, 3));
       }
-    } catch (err) {
-      console.error('Fetch top performers error:', err);
+    } catch {
+      // Suppress network disconnect logs during local dev server restarts
     }
   };
 
