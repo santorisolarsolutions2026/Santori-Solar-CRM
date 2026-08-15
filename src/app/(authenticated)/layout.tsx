@@ -157,23 +157,28 @@ export default function AuthenticatedLayout({
     }
   };
 
-  const handleDeleteBroadcast = async (notifId: number) => {
-    if (!confirm('Are you sure you want to delete this broadcast message for all employees?')) return;
-    try {
-      const res = await fetch(`/api/v1/notifications?id=${notifId}`, {
-        method: 'DELETE',
-      });
-      const data = await res.json();
-      if (data.success) {
-        fetchNotifications();
-        setToasts((prev) => [...prev, { id: Date.now().toString(), message: data.message || 'Broadcast message deleted successfully!', type: 'success' }]);
-      } else {
-        alert(data.message || 'Failed to delete broadcast message.');
-      }
-    } catch (err) {
-      console.error('Delete broadcast error:', err);
-      alert('Failed to delete broadcast message. Please try again.');
-    }
+  const handleDeleteBroadcast = (notifId: number) => {
+    setConfirmModal({
+      message: 'Are you sure you want to delete this broadcast message for all employees?',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/v1/notifications?id=${notifId}`, {
+            method: 'DELETE',
+          });
+          const data = await res.json();
+          if (data.success) {
+            fetchNotifications();
+            setToasts((prev) => [...prev, { id: Date.now().toString(), message: data.message || 'Broadcast message deleted successfully!', type: 'success' }]);
+          } else {
+            alert(data.message || 'Failed to delete broadcast message.');
+          }
+        } catch (err) {
+          console.error('Delete broadcast error:', err);
+          alert('Failed to delete broadcast message. Please try again.');
+        }
+      },
+      onCancel: () => {},
+    });
   };
 
   // Toast state
