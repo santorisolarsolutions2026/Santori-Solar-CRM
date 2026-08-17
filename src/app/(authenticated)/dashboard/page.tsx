@@ -639,7 +639,8 @@ export default function DashboardPage() {
                 {pipeline.map((item) => {
                   const stageInfo = STAGE_NAMES[item.stage] || { name: `Stage ${item.stage}`, color: '#3B82F6' };
                   const totalLeads = pipeline.reduce((acc, curr) => acc + curr.count, 0) || 1;
-                  const percent = Math.round((item.count / totalLeads) * 100);
+                  const percentVal = (item.count / totalLeads) * 100;
+                  const precisePercent = percentVal.toFixed(2);
                   const hasLeads = item.count > 0;
 
                   return (
@@ -676,12 +677,12 @@ export default function DashboardPage() {
                         <div className="w-full h-1.5 bg-[var(--bg-card)] rounded-full overflow-hidden">
                           <div
                             className="h-full rounded-full transition-all duration-500"
-                            style={{ width: `${percent}%`, backgroundColor: stageInfo.color }}
+                            style={{ width: `${percentVal}%`, backgroundColor: stageInfo.color }}
                           />
                         </div>
                         <div className="flex justify-between items-center text-[10px] text-[var(--text-secondary)] font-mono">
                           <span>Share</span>
-                          <span>{percent}%</span>
+                          <span>{precisePercent}%</span>
                         </div>
                       </div>
                     </div>
