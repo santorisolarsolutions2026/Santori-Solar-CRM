@@ -21,21 +21,119 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view reports.' }, { status: 403 });
     }
 
-    // Employee-specific upcoming task reminders
-    const leadWhere: any = {};
-    let allowedIds: number[] = [userPayload.id];
+    const { getUserSession } = await import('@/lib/auth');
+    const { role: userRole, department } = await getUserSession(userPayload.id);
+    const userDeptName = department?.name || '';
+    const baseRole = userRole.includes(':') ? userRole.split(':')[0] : userRole;
 
-    if (userPayload.role !== 'admin' && userPayload.role !== 'director') {
-      const { getSubordinateIds } = await import('@/lib/hierarchy');
-      const subIds = await getSubordinateIds(userPayload.id);
-      allowedIds = [userPayload.id, ...subIds];
-      leadWhere.OR = [
-        { assignedConsultantId: { in: allowedIds } },
-        { assignedTlId: { in: allowedIds } },
-        { assignedManagerId: { in: allowedIds } },
-        { assignedPsaId: { in: allowedIds } },
-        { createdById: { in: allowedIds } },
-      ];
+    if (userDeptName === 'Operations' || baseRole === 'operations') {
+      const allowedOpsIds = [userPayload.id];
+      if (userPayload.role !== 'admin' && userPayload.role !== 'director' && baseRole !== 'operations_head') {
+        const { getSubordinateIds } = await import('@/lib/hierarchy');
+        const subIds = await getSubordinateIds(userPayload.id);
+        allowedOpsIds.push(...subIds);
+      }
+
+      // Fetch orders with scheduled deliveries, installations, or pending commissioning
+      const orders = await prisma.order.findMany({
+        where: {
+          OR: [
+            {
+              assignedOpsId: { in: allowedOpsIds },
+              isDelivered: false,
+              deliveryDate: { not: null },
+            },
+            {
+              assignedOpsId: { in: allowedOpsIds },
+              isInstalled: false,
+              installationDate: { not: null },
+            },
+            {
+              assignedOpsId: { in: allowedOpsIds },
+              isMeterInstalled: true,
+              isCommissioned: false,
+            }
+          ]
+        },
+        include: {
+          lead: {
+            select: {
+              customerName: true,
+              leadCode: true,
+            }
+          }
+        }
+      });
+
+      const formattedReminders: any[] = [];
+      const nowMs = Date.now();
+      const cutOffTime = nowMs - 2 * 60 * 60 * 1000;
+
+      for (const ord of orders) {
+        // 1. Delivery Reminder
+        if (ord.deliveryDate && !ord.isDelivered) {
+          const timePart = ord.deliveryTime || '12:00';
+          const datetime = new Date(`${ord.deliveryDate}T${timePart}:00`);
+          if (!isNaN(datetime.getTime()) && datetime.getTime() >= cutOffTime) {
+            formattedReminders.push({
+              id: `delivery-${ord.id}`,
+              type: 'delivery',
+              title: 'Delivery Scheduled',
+              datetime,
+              leadId: ord.leadId,
+              customerName: ord.lead.customerName,
+              leadCode: ord.lead.leadCode,
+              subtitle: `Deliver materials to site. Order ID: ${ord.id}`,
+              priority: 'high',
+            });
+          }
+        }
+
+        // 2. Installation Reminder
+        if (ord.installationDate && !ord.isInstalled) {
+          const timePart = ord.installationTime || '12:00';
+          const datetime = new Date(`${ord.installationDate}T${timePart}:00`);
+          if (!isNaN(datetime.getTime()) && datetime.getTime() >= cutOffTime) {
+            formattedReminders.push({
+              id: `install-${ord.id}`,
+              type: 'installation',
+              title: 'Installation Scheduled',
+              datetime,
+              leadId: ord.leadId,
+              customerName: ord.lead.customerName,
+              leadCode: ord.lead.leadCode,
+              subtitle: `Solar plant installation. Order ID: ${ord.id}`,
+              priority: 'high',
+            });
+          }
+        }
+
+        // 3. Commissioning Reminder
+        if (ord.isMeterInstalled && !ord.isCommissioned) {
+          const datetime = ord.actualMeterInstalledAt || ord.actualInstallationAt || ord.createdAt;
+          if (datetime && datetime.getTime() >= cutOffTime) {
+            formattedReminders.push({
+              id: `commission-${ord.id}`,
+              type: 'commissioning',
+              title: 'Plant Commissioning Pending',
+              datetime,
+              leadId: ord.leadId,
+              customerName: ord.lead.customerName,
+              leadCode: ord.lead.leadCode,
+              subtitle: `Verify net metering and commission plant. Order ID: ${ord.id}`,
+              priority: 'high',
+            });
+          }
+        }
+      }
+
+      // Sort by datetime ascending
+      formattedReminders.sort((a, b) => a.datetime.getTime() - b.datetime.getTime());
+
+      return NextResponse.json({
+        success: true,
+        data: formattedReminders,
+      });
     }
 
     // Concurrent database fetches using Promise.all
@@ -43,9 +141,11 @@ export async function GET(req: Request) {
       prisma.meetingBooking.findMany({
         where: {
           lead: {
-            ...leadWhere,
             isActive: true,
           },
+          ...(userPayload.role !== 'admin' && userPayload.role !== 'director'
+            ? { assignedExecutiveId: userPayload.id }
+            : {}),
         },
         include: {
           lead: {
@@ -63,12 +163,21 @@ export async function GET(req: Request) {
       }),
       prisma.lead.findMany({
         where: {
-          ...leadWhere,
           isActive: true,
           followupAt: {
             not: null,
             gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Today onwards / last 24h
           },
+          ...(userPayload.role !== 'admin' && userPayload.role !== 'director'
+            ? {
+                OR: [
+                  { assignedConsultantId: userPayload.id },
+                  { assignedTlId: userPayload.id },
+                  { assignedManagerId: userPayload.id },
+                  { createdById: userPayload.id },
+                ],
+              }
+            : {}),
         },
         select: {
           id: true,
@@ -121,17 +230,8 @@ export async function GET(req: Request) {
     const cutOffTime = Date.now() - 2 * 60 * 60 * 1000;
     const activeReminders = allReminders.filter((r) => r.datetime.getTime() >= cutOffTime);
 
-    // Sort by priority first (high > medium), then by datetime ascending (closer first)
-    activeReminders.sort((a, b) => {
-      const priorityWeight = { high: 2, medium: 1 };
-      const weightA = priorityWeight[a.priority as 'high' | 'medium'] || 0;
-      const weightB = priorityWeight[b.priority as 'high' | 'medium'] || 0;
-      
-      if (weightB !== weightA) {
-        return weightB - weightA;
-      }
-      return a.datetime.getTime() - b.datetime.getTime();
-    });
+    // Sort by datetime ascending (earliest/closest first)
+    activeReminders.sort((a, b) => a.datetime.getTime() - b.datetime.getTime());
 
     return NextResponse.json({
       success: true,

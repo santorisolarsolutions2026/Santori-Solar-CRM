@@ -21,6 +21,7 @@ import {
   Maximize2,
   Search,
   X,
+  Zap,
 } from 'lucide-react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -396,8 +397,11 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div className="divide-y divide-slate-800/60 overflow-y-auto pr-1 flex-1">
-              {reminders.map((rem) => {
+               {reminders.map((rem) => {
                 const isMeeting = rem.type === 'meeting';
+                const isDelivery = rem.type === 'delivery';
+                const isInstallation = rem.type === 'installation';
+                const isCommissioning = rem.type === 'commissioning';
                 return (
                   <div
                     key={rem.id}
@@ -408,6 +412,18 @@ export default function DashboardPage() {
                         <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
                           <Calendar className="w-4 h-4" />
                         </div>
+                      ) : isDelivery ? (
+                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20">
+                          <Truck className="w-4 h-4" />
+                        </div>
+                      ) : isInstallation ? (
+                        <div className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center border border-purple-500/20">
+                          <Hammer className="w-4 h-4" />
+                        </div>
+                      ) : isCommissioning ? (
+                        <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20">
+                          <Zap className="w-4 h-4" />
+                        </div>
                       ) : (
                         <div className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-400 flex items-center justify-center border border-teal-500/20">
                           <Clock className="w-4 h-4" />
@@ -416,8 +432,12 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start gap-2">
-                        <Link
-                          href={`/leads/${rem.leadId}`}
+                         <Link
+                          href={
+                            rem.type === 'delivery' || rem.type === 'installation' || rem.type === 'commissioning'
+                              ? `/operations?leadId=${rem.leadId}`
+                              : `/leads/${rem.leadId}`
+                          }
                           className="text-xs font-bold text-white hover:text-emerald-400 truncate"
                         >
                           {rem.customerName}
@@ -438,7 +458,13 @@ export default function DashboardPage() {
                         <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.25 rounded-md border ${
                           isMeeting 
                             ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
-                            : 'bg-teal-500/10 text-teal-400 border-teal-500/20'
+                            : isDelivery
+                              ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                              : isInstallation
+                                ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                                : isCommissioning
+                                  ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                  : 'bg-teal-500/10 text-teal-400 border-teal-500/20'
                         }`}>
                           {rem.title}
                         </span>

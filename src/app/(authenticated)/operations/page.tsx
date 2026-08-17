@@ -512,6 +512,27 @@ export default function OperationsPage() {
     }
   }, [user, search]);
 
+  // Automatically select order from query parameters on load
+  useEffect(() => {
+    if (orders.length > 0) {
+      const params = new URLSearchParams(window.location.search);
+      const queryLeadId = params.get('leadId');
+      const queryOrderId = params.get('orderId');
+      
+      if (queryOrderId) {
+        const found = orders.find(o => o.id === parseInt(queryOrderId));
+        if (found) {
+          setSelectedOrder(found);
+        }
+      } else if (queryLeadId) {
+        const found = orders.find(o => o.leadId === parseInt(queryLeadId));
+        if (found) {
+          setSelectedOrder(found);
+        }
+      }
+    }
+  }, [orders]);
+
   useEffect(() => {
     if (selectedOrder) {
       fetchMedia(selectedOrder.id);
@@ -1207,20 +1228,20 @@ export default function OperationsPage() {
               </thead>
               <tbody className="divide-y divide-slate-800/60">
                 {filteredOrders.map((order) => {
-                  let stageText = 'Awaiting Schedule â³';
+                  let stageText = 'Awaiting Schedule ⏳';
                   let stageClass = 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-color)]';
 
                   if (order.isSubsidyApplied || (order.isCommissioned && !order.subsidyApplicable)) {
-                    stageText = 'Completed ✍…';
+                    stageText = 'Completed ✅';
                     stageClass = 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
                   } else if (order.isCommissioned) {
-                    stageText = 'Subsidy Pending â³';
+                    stageText = 'Subsidy Pending ⏳';
                     stageClass = 'bg-purple-500/10 text-purple-400 border-purple-500/20';
                   } else if (order.isMeterInstalled) {
-                    stageText = 'Commissioning Pending ⚠️¡';
+                    stageText = 'Commissioning Pending ⚡';
                     stageClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
                   } else if (order.isInstalled) {
-                    stageText = 'Meter Pending ⚠️¡';
+                    stageText = 'Meter Pending ⚠️';
                     stageClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
                   } else if (order.isDelivered) {
                     stageText = 'Delivered 🚚';
@@ -2421,7 +2442,7 @@ export default function OperationsPage() {
                         <div>
                           <span className="text-[10px] text-[var(--text-muted)] font-bold block uppercase tracking-wider">Customer Name</span>
                           <span className="font-semibold text-[var(--text-primary)]">
-                            <Link href={`/leads/${selectedOrder.lead.id}`} className="text-emerald-600 dark:text-emerald-400 hover:underline">
+                            <span className="text-white font-bold">
                               {selectedOrder.lead.customerName}
                               {selectedOrder.subsidyApplicable && (
                                 <span 
@@ -2431,7 +2452,7 @@ export default function OperationsPage() {
                                   S
                                 </span>
                               )}
-                            </Link>
+                            </span>
                           </span>
                         </div>
                         <div>
@@ -2442,9 +2463,9 @@ export default function OperationsPage() {
                         </div>
                         <div>
                           <span className="text-[10px] text-[var(--text-muted)] font-bold block uppercase tracking-wider">Mobile Number</span>
-                          <a href={`tel:${selectedOrder.lead.mobile}`} className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline block mt-0.5">
+                          <span className="text-white font-bold block mt-0.5">
                             {selectedOrder.lead.mobile}
-                          </a>
+                          </span>
                         </div>
                       </div>
                     </div>

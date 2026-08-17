@@ -45,7 +45,10 @@ export async function GET(req: Request) {
       };
 
       if (userPayload.role !== 'admin' && userPayload.role !== 'director' && baseRole !== 'finance_head') {
-        ordersWhere.lead = leadWhere;
+        const { getSubordinateIds } = await import('@/lib/hierarchy');
+        const subIds = await getSubordinateIds(userPayload.id);
+        const allowedFinanceIds = [userPayload.id, ...subIds];
+        ordersWhere.assignedFinanceId = { in: allowedFinanceIds };
       }
 
       const [totalOrdersPending, ordersVerified, ordersList, payments] = await Promise.all([
@@ -100,7 +103,10 @@ export async function GET(req: Request) {
       };
 
       if (userPayload.role !== 'admin' && userPayload.role !== 'director' && baseRole !== 'operations_head') {
-        ordersWhere.lead = leadWhere;
+        const { getSubordinateIds } = await import('@/lib/hierarchy');
+        const subIds = await getSubordinateIds(userPayload.id);
+        const allowedOpsIds = [userPayload.id, ...subIds];
+        ordersWhere.assignedOpsId = { in: allowedOpsIds };
       }
 
       const [totalJobsAssigned, deliveredJobs, installedJobs, commissionedJobs, subsidyJobs] = await Promise.all([

@@ -18,6 +18,33 @@ export async function GET(req: Request) {
     const startStr = searchParams.get('startDate');
     const endStr = searchParams.get('endDate');
 
+    // Fetch full profile from DB to verify role and department (IT check)
+    const currentUser = await prisma.user.findUnique({
+      where: { id: userPayload.id },
+      select: {
+        role: true,
+        department: { select: { name: true } },
+      },
+    });
+
+    if (!currentUser) {
+      return NextResponse.json({ success: false, message: 'User profile not found.' }, { status: 404 });
+    }
+
+    const baseRole = currentUser.role.includes(':') ? currentUser.role.split(':')[0] : currentUser.role;
+    const isSuperUser = ['admin', 'director'].includes(baseRole) || currentUser.department?.name === 'IT';
+
+    let enforcedDept = department;
+    if (!isSuperUser) {
+      if (baseRole === 'finance') {
+        enforcedDept = 'finance';
+      } else if (baseRole === 'operations') {
+        enforcedDept = 'operations';
+      } else {
+        enforcedDept = 'sales';
+      }
+    }
+
     // Determine date filter
     let dateFilter: any = undefined;
     if (startStr && endStr) {
@@ -40,11 +67,11 @@ export async function GET(req: Request) {
     const operationsRoles = ['operations'];
 
     let rolesToFetch: string[] = [];
-    if (department === 'sales') {
+    if (enforcedDept === 'sales') {
       rolesToFetch = salesRoles;
-    } else if (department === 'finance') {
+    } else if (enforcedDept === 'finance') {
       rolesToFetch = financeRoles;
-    } else if (department === 'operations') {
+    } else if (enforcedDept === 'operations') {
       rolesToFetch = operationsRoles;
     } else {
       rolesToFetch = [...salesRoles, ...financeRoles, ...operationsRoles];
@@ -191,16 +218,16 @@ export async function GET(req: Request) {
       let primaryWorkValue = 0;
       let primaryMetricLabel = 'Sales Closed';
 
-      if (metricFilter === 'salesClosed' || (metricFilter === 'auto' && (department === 'sales' || department === 'all'))) {
+      if (metricFilter === 'salesClosed' || (metricFilter === 'auto' && (enforcedDept === 'sales' || enforcedDept === 'all'))) {
         primaryWorkValue = salesClosedCount;
         primaryMetricLabel = 'Sales Closed';
       } else if (metricFilter === 'meetingsConducted') {
         primaryWorkValue = meetingsConductedCount;
         primaryMetricLabel = 'Meetings Recorded';
-      } else if (metricFilter === 'ordersVerified' || (metricFilter === 'auto' && department === 'finance')) {
+      } else if (metricFilter === 'ordersVerified' || (metricFilter === 'auto' && enforcedDept === 'finance')) {
         primaryWorkValue = financeVerifiedCount;
         primaryMetricLabel = 'Orders Verified';
-      } else if (metricFilter === 'opsMilestones' || (metricFilter === 'auto' && department === 'operations')) {
+      } else if (metricFilter === 'opsMilestones' || (metricFilter === 'auto' && enforcedDept === 'operations')) {
         primaryWorkValue = opsMilestonesCount;
         primaryMetricLabel = 'Ops Milestones';
       } else if (metricFilter === 'leadsWorked') {

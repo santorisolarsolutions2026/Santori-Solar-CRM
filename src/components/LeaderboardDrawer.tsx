@@ -1,6 +1,7 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import { 
   X, 
   Trophy, 
@@ -57,6 +58,19 @@ interface LeaderboardDrawerProps {
 }
 
 export default function LeaderboardDrawer({ isOpen, onClose }: LeaderboardDrawerProps) {
+  const { user } = useAuth();
+
+  const baseRole = user?.role ? (user.role.includes(':') ? user.role.split(':')[0] : user.role) : '';
+  const isSuperUser = baseRole === 'admin' || baseRole === 'director' || user?.department?.name === 'IT';
+  
+  const allowedDepts = isSuperUser 
+    ? (['all', 'sales', 'finance', 'operations'] as const)
+    : baseRole === 'finance'
+      ? (['finance'] as const)
+      : baseRole === 'operations'
+        ? (['operations'] as const)
+        : (['sales'] as const);
+
   const [timeframe, setTimeframe] = useState<'week' | 'month' | 'all' | 'custom'>('month');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
@@ -70,6 +84,23 @@ export default function LeaderboardDrawer({ isOpen, onClose }: LeaderboardDrawer
   const [expandedUserId, setExpandedUserId] = useState<number | null>(null);
   
   const drawerRef = useRef<HTMLDivElement>(null);
+
+  // Sync default department based on user permissions when loaded
+  useEffect(() => {
+    if (user) {
+      const baseRole = user.role.includes(':') ? user.role.split(':')[0] : user.role;
+      const isSuperUser = baseRole === 'admin' || baseRole === 'director' || user.department?.name === 'IT';
+      if (!isSuperUser) {
+        if (baseRole === 'finance') {
+          setDepartment('finance');
+        } else if (baseRole === 'operations') {
+          setDepartment('operations');
+        } else {
+          setDepartment('sales');
+        }
+      }
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -226,24 +257,26 @@ export default function LeaderboardDrawer({ isOpen, onClose }: LeaderboardDrawer
           )}
 
           {/* Department Selectors */}
-          <div className="flex flex-wrap gap-1.5 items-center">
-            {(['all', 'sales', 'finance', 'operations'] as const).map((d) => (
-              <button
-                key={d}
-                onClick={() => {
-                  setDepartment(d);
-                  setSelectedDesignation('all');
-                }}
-                className={`py-1 px-3 text-[10px] font-bold border rounded-full uppercase tracking-wider transition-all cursor-pointer ${
-                  department === d
-                    ? 'bg-emerald-600 text-white border-emerald-600'
-                    : 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-color)] hover:border-[var(--border-color)] hover:text-[var(--text-primary)]'
-                }`}
-              >
-                {d === 'all' ? 'All Departments' : d === 'sales' ? 'Sales' : d}
-              </button>
-            ))}
-          </div>
+          {allowedDepts.length > 1 && (
+            <div className="flex flex-wrap gap-1.5 items-center">
+              {allowedDepts.map((d) => (
+                <button
+                  key={d}
+                  onClick={() => {
+                    setDepartment(d);
+                    setSelectedDesignation('all');
+                  }}
+                  className={`py-1 px-3 text-[10px] font-bold border rounded-full uppercase tracking-wider transition-all cursor-pointer ${
+                    department === d
+                      ? 'bg-emerald-600 text-white border-emerald-600'
+                      : 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-color)] hover:border-[var(--border-color)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  {d === 'all' ? 'All Departments' : d === 'sales' ? 'Sales' : d}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Designation & Primary Metric Filters */}
           <div className="grid grid-cols-2 gap-2">

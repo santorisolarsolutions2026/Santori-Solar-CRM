@@ -1415,12 +1415,14 @@ export default function ReportsPage() {
                               )}
                             </td>
                             <td className="py-3.5 px-4">
-                              {item.leadId ? (
+                              {item.leadId && !['deliveries_completed', 'installations_completed', 'commissioned_completed', 'subsidies_applied'].includes(activeDetailType) ? (
                                 <a href={`/leads/${item.leadId}`} className="hover:underline text-emerald-500 font-bold block transition-colors">
                                   {item.customerName || `Lead #${item.leadCode}`}
                                 </a>
                               ) : (
-                                <span className="text-[var(--text-secondary)] font-medium">{item.customerName || '-'}</span>
+                                <span className="text-white font-bold block">
+                                  {item.customerName || `Lead #${item.leadCode}`}
+                                </span>
                               )}
                               {item.leadCode && <span className="text-[9px] text-[var(--text-muted)] font-mono block mt-0.5">#{item.leadCode}</span>}
                             </td>

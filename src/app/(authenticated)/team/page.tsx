@@ -2713,7 +2713,7 @@ export default function TeamManagementPage() {
                           </span>
                         </div>
                         <span className={`inline-block text-[9px] font-bold px-3 py-1 border rounded-full uppercase tracking-wider ${member.isActive ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
-                          {member.isActive ? 'â— Active' : 'â—‹ Deactivated'}
+                          {member.isActive ? '● Active' : '○ Deactivated'}
                         </span>
                       </div>
                     );
@@ -3377,7 +3377,7 @@ export default function TeamManagementPage() {
 
               
 
-                            {/* â”€â”€â”€ Photo + Identity Section â”€â”€â”€ */}
+                            {/* ─── Photo + Identity Section ─── */}
 
                             <div className="p-6 space-y-5">
 
@@ -3423,7 +3423,7 @@ export default function TeamManagementPage() {
 
                                   <p className="text-xs font-bold text-[var(--text-primary)]">Profile Photograph</p>
 
-                                  <p className="text-[10px] text-[var(--text-muted)]">Upload a clear photo. Recommended: square, min 200Ã—200px.</p>
+                                  <p className="text-[10px] text-[var(--text-muted)]">Upload a clear photo. Recommended: square, min 200×200px.</p>
 
                                   <input type="file" accept="image/*" id="add-photo-input" onChange={handleAddPhotoUpload} className="hidden" />
 
@@ -4293,7 +4293,7 @@ export default function TeamManagementPage() {
                               })}
                             </span>
                             <span className="block text-[10px] text-[var(--text-secondary)] italic font-semibold leading-normal">
-                              ðŸ“ {selectedMember.loginLocation || 'Unknown location'}
+                              📍 {selectedMember.loginLocation || 'Unknown location'}
                             </span>
                           </div>
                         ) : (
@@ -4312,7 +4312,7 @@ export default function TeamManagementPage() {
                               })}
                             </span>
                             <span className="block text-[10px] text-[var(--text-secondary)] italic font-semibold leading-normal">
-                              ðŸ“ {selectedMember.logoutLocation || 'Unknown location'}
+                              📍 {selectedMember.logoutLocation || 'Unknown location'}
                             </span>
                           </div>
                         ) : (
@@ -4476,7 +4476,7 @@ export default function TeamManagementPage() {
                               })}
                             </span>
                             <span className="block text-[10px] text-[var(--text-secondary)] italic font-semibold leading-normal">
-                              ðŸ“ {selectedMember.loginLocation || 'Unknown location'}
+                              📍 {selectedMember.loginLocation || 'Unknown location'}
                             </span>
                           </div>
                         ) : (
@@ -4496,7 +4496,7 @@ export default function TeamManagementPage() {
                               })}
                             </span>
                             <span className="block text-[10px] text-[var(--text-secondary)] italic font-semibold leading-normal">
-                              ðŸ“ {selectedMember.logoutLocation || 'Unknown location'}
+                              📍 {selectedMember.logoutLocation || 'Unknown location'}
                             </span>
                           </div>
                         ) : (
@@ -4625,7 +4625,7 @@ export default function TeamManagementPage() {
                                 <span className={`inline-block text-[8px] font-bold px-1.5 py-0.5 border rounded uppercase tracking-wider ${fromStage.class}`}>
                                   {fromStage.name}
                                 </span>
-                                <span className="text-[var(--text-muted)] text-[10px]">âž”</span>
+                                <span className="text-[var(--text-muted)] text-[10px]">➔</span>
                               </>
                             ) : (
                               <span className="text-[var(--text-muted)] italic text-[10px]">New Lead Created</span>
