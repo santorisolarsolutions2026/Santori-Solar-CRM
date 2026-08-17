@@ -142,10 +142,21 @@ export async function GET(req: Request) {
         where: {
           lead: {
             isActive: true,
+            status: { lt: 13 },
+            ...(userPayload.role !== 'admin' && userPayload.role !== 'director'
+              ? {
+                  OR: [
+                    { assignedConsultantId: userPayload.id },
+                    { assignedTlId: userPayload.id },
+                    { assignedManagerId: userPayload.id },
+                    {
+                      createdById: userPayload.id,
+                      assignedConsultantId: null,
+                    },
+                  ],
+                }
+              : {}),
           },
-          ...(userPayload.role !== 'admin' && userPayload.role !== 'director'
-            ? { assignedExecutiveId: userPayload.id }
-            : {}),
         },
         include: {
           lead: {
@@ -164,6 +175,7 @@ export async function GET(req: Request) {
       prisma.lead.findMany({
         where: {
           isActive: true,
+          status: { lt: 13 },
           followupAt: {
             not: null,
             gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Today onwards / last 24h
@@ -174,7 +186,10 @@ export async function GET(req: Request) {
                   { assignedConsultantId: userPayload.id },
                   { assignedTlId: userPayload.id },
                   { assignedManagerId: userPayload.id },
-                  { createdById: userPayload.id },
+                  {
+                    createdById: userPayload.id,
+                    assignedConsultantId: null,
+                  },
                 ],
               }
             : {}),
