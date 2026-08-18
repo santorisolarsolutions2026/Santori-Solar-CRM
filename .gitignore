@@ -42,3 +42,16 @@ yarn-error.log*
 
 # uploads (customer documents, avatars, installation photos, audio recordings)
 /uploads
+
+# local databases
+/dev.db
+/dev.db-journal
+*.db
+*.db-journal
+
+# backups
+/backups/
+
+# lead spreadsheets and client lists
+/PrayagLeads.csv
+/input.xlsx
