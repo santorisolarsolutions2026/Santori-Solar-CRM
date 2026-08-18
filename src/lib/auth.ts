@@ -4,7 +4,11 @@ import { DEPARTMENT_PERMISSIONS, getDefaultPermissionsForRole } from './permissi
 
 export { DEPARTMENT_PERMISSIONS, getDefaultPermissionsForRole };
 
-const JWT_SECRET = process.env.JWT_SECRET || 'solarcrm-super-secret-key-2026';
+const rawSecret = process.env.JWT_SECRET;
+if (!rawSecret) {
+  throw new Error('JWT_SECRET environment variable is required but not defined!');
+}
+const JWT_SECRET: string = rawSecret;
 
 export interface UserJWTPayload {
   id: number;
@@ -19,7 +23,7 @@ export function signToken(payload: UserJWTPayload): string {
 
 export function verifyToken(token: string): UserJWTPayload | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as UserJWTPayload;
+    return jwt.verify(token, JWT_SECRET) as any as UserJWTPayload;
   } catch (error) {
     return null;
   }
