@@ -46,6 +46,30 @@ export async function POST(
       }, { status: 400 });
     }
 
+    // Authorization check (Section 4.1 IDOR Prevention)
+    let hasAccess = false;
+    if (userPermissions.includes('leads:view_all') || userPermissions.includes('orders:view_all') || ['admin', 'director'].includes(baseRole) || department?.name === 'IT') {
+      hasAccess = true;
+    } else if (meeting.assignedExecutiveId === userPayload.id) {
+      hasAccess = true;
+    } else if (lead) {
+      const { getSubordinateIds, getAncestorIds } = await import('@/lib/hierarchy');
+      const subordinateIds = await getSubordinateIds(userPayload.id);
+      const ancestorIds = await getAncestorIds(userPayload.id);
+      const allowedIds = [userPayload.id, ...subordinateIds, ...ancestorIds];
+
+      const assignedPeople = [lead.assignedConsultantId, lead.assignedTlId, lead.assignedManagerId, lead.createdById].filter((id) => id !== null);
+      const isAssignedToHierarchy = assignedPeople.some((id) => allowedIds.includes(id));
+
+      if (isAssignedToHierarchy) {
+        hasAccess = true;
+      }
+    }
+
+    if (!hasAccess) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to upload audio for this meeting.' }, { status: 403 });
+    }
+
     const formData = await req.formData();
     const file = formData.get('file') as File;
     const durationStr = formData.get('duration') as string | null;

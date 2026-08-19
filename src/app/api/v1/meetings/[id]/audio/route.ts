@@ -48,10 +48,42 @@ export async function GET(
 
     const meeting = await prisma.meetingBooking.findUnique({
       where: { id: meetingId },
+      include: {
+        lead: true,
+      },
     });
 
     if (!meeting) {
       return NextResponse.json({ success: false, message: 'Meeting not found.' }, { status: 404 });
+    }
+
+    // Authorization check (Section 4.1 IDOR Prevention)
+    const { getUserSession } = await import('@/lib/auth');
+    const { role: userRole, permissions } = await getUserSession(userPayload.id);
+    const baseRole = userRole.includes(':') ? userRole.split(':')[0] : userRole;
+
+    let hasAccess = false;
+    if (permissions.includes('leads:view_all') || permissions.includes('orders:view_all')) {
+      hasAccess = true;
+    } else if (meeting.assignedExecutiveId === userPayload.id) {
+      hasAccess = true;
+    } else if (meeting.lead) {
+      const { getSubordinateIds, getAncestorIds } = await import('@/lib/hierarchy');
+      const subordinateIds = await getSubordinateIds(userPayload.id);
+      const ancestorIds = await getAncestorIds(userPayload.id);
+      const allowedIds = [userPayload.id, ...subordinateIds, ...ancestorIds];
+
+      const lead = meeting.lead;
+      const assignedPeople = [lead.assignedConsultantId, lead.assignedTlId, lead.assignedManagerId, lead.createdById].filter((id) => id !== null);
+      const isAssignedToHierarchy = assignedPeople.some((id) => allowedIds.includes(id));
+
+      if (isAssignedToHierarchy) {
+        hasAccess = true;
+      }
+    }
+
+    if (!hasAccess) {
+      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to access this meeting audio.' }, { status: 403 });
     }
 
     const url = new URL(req.url);
