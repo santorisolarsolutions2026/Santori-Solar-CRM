@@ -2060,7 +2060,7 @@ export default function LeadDetailPage({
                 <span className={activeTab === 'track' ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : ''}>Track Progress</span>
               </button>
             )}
-            {!isLeadUnassigned && lead.status >= 8 && (
+            {!isLeadUnassigned && (lead.status >= 8 || lead.meetings.length > 0) && (
               <button
                 onClick={() => setActiveTab('meeting')}
                 className={`px-5 py-4 border-b-2 transition-all flex items-center justify-center gap-2 shrink-0 ${
