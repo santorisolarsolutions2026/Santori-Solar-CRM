@@ -437,3 +437,13 @@ model AuditLog {
   ip         String?
 }
 
+model FailedLoginAttempt {
+  id          Int      @id @default(autoincrement())
+  ipAddress   String
+  email       String
+  attemptedAt DateTime @default(now())
+
+  @@index([ipAddress])
+  @@index([email])
+}
+

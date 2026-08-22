@@ -37,7 +37,24 @@ export async function GET(
     }
 
     if (image.filePath.startsWith('http')) {
-      return NextResponse.redirect(image.filePath);
+      try {
+        const blobResponse = await fetch(image.filePath);
+        if (!blobResponse.ok) {
+          throw new Error(`Failed to fetch from Vercel Blob: ${blobResponse.status}`);
+        }
+        const arrayBuffer = await blobResponse.arrayBuffer();
+        const headers = new Headers();
+        headers.set('Content-Type', blobResponse.headers.get('Content-Type') || 'image/png');
+        headers.set('Content-Length', arrayBuffer.byteLength.toString());
+        headers.set('Cache-Control', 'private, max-age=86400');
+        return new Response(arrayBuffer, {
+          status: 200,
+          headers,
+        });
+      } catch (fetchErr) {
+        console.error('Error proxying installation image:', fetchErr);
+        return NextResponse.redirect(image.filePath);
+      }
     }
 
     // Resolve local path

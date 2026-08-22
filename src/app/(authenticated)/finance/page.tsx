@@ -248,6 +248,7 @@ export default function FinancePage() {
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptUrl, setReceiptUrl] = useState('');
   const [receiptUploading, setReceiptUploading] = useState(false);
+  const [previewImage, setPreviewImage] = useState<{ src: string; title: string; isPdf?: boolean } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -1694,15 +1695,24 @@ export default function FinancePage() {
                               {(pmt.receiptUrl || (pmt.remarks?.includes('Initial Down Payment') && downpaymentDoc)) ? (
                                 <div className="flex items-center gap-1.5 pt-0.5">
                                   <span className="text-[10px] text-[var(--text-secondary)]">Receipt copy:</span>
-                                  <a 
-                                    href={pmt.receiptUrl || `/api/v1/orders/${selectedOrder.id}/documents/${downpaymentDoc?.id}`} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer" 
-                                    className="text-[10px] text-emerald-400 hover:underline font-bold flex items-center gap-1"
+                                  <button 
+                                    type="button"
+                                    onClick={() => {
+                                      const url = pmt.receiptUrl ? `/api/v1/finance/payments/${pmt.id}/receipt` : `/api/v1/orders/${selectedOrder.id}/documents/${downpaymentDoc?.id}`;
+                                      const fileName = pmt.receiptUrl ? pmt.receiptUrl : (downpaymentDoc?.fileName || 'receipt.pdf');
+                                      const ext = fileName.split('.').pop()?.toLowerCase();
+                                      const isPdf = ext === 'pdf';
+                                      setPreviewImage({
+                                        src: url,
+                                        title: pmt.receiptUrl ? 'Payment Receipt' : 'Downpayment Receipt',
+                                        isPdf,
+                                      });
+                                    }}
+                                    className="text-[10px] text-emerald-400 hover:underline font-bold flex items-center gap-1 cursor-pointer bg-transparent border-0 p-0"
                                   >
                                     <FileText className="w-3 h-3 text-emerald-400" />
                                     <span>{pmt.receiptUrl ? 'View Image' : 'View Receipt'}</span>
-                                  </a>
+                                  </button>
                                 </div>
                               ) : null}
 
@@ -2120,6 +2130,47 @@ export default function FinancePage() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Photo Lightbox Modal */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[999] animate-fade-in"
+          onClick={() => setPreviewImage(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setPreviewImage(null)}
+            className="absolute top-4 right-4 p-2 rounded-full bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-card)] transition-all cursor-pointer shadow-lg z-[1000]"
+            title="Close Preview"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          
+          <div
+            className="relative max-w-4xl max-h-[85vh] overflow-hidden rounded-2xl border border-[var(--border-color)] bg-[var(--bg-main)] shadow-2xl flex flex-col items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {previewImage.isPdf ? (
+              <iframe
+                src={previewImage.src}
+                className="w-[80vw] max-w-4xl h-[70vh] border-0 rounded-t-2xl bg-[var(--bg-main)]"
+                title={previewImage.title}
+              />
+            ) : (
+              <img
+                src={previewImage.src}
+                alt={previewImage.title}
+                className="max-w-full max-h-[80vh] object-contain rounded-t-2xl"
+              />
+            )}
+            {previewImage.title && (
+              <div className="w-full bg-[var(--bg-card)] backdrop-blur-sm border-t border-[var(--border-color)]/60 p-3 text-xs font-semibold text-[var(--text-primary)] text-center tracking-wide rounded-b-2xl">
+                {previewImage.title}
+              </div>
+            )}
           </div>
         </div>
       )}

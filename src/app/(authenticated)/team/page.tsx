@@ -3925,13 +3925,29 @@ export default function TeamManagementPage() {
                         onChange={handleEditPhotoUpload}
                         className="hidden"
                       />
-                      <label
-                        htmlFor="edit-photo-input"
-                        className="py-1.5 px-3 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-[var(--text-primary)] rounded-lg text-xs font-semibold flex items-center gap-1.5 w-fit cursor-pointer transition-all"
-                      >
-                        <Upload className="w-3.5 h-3.5 text-[var(--text-secondary)]" />
-                        <span>Change photo</span>
-                      </label>
+                      <div className="flex gap-2">
+                        <label
+                          htmlFor="edit-photo-input"
+                          className="py-1.5 px-3 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-[var(--text-primary)] rounded-lg text-xs font-semibold flex items-center gap-1.5 w-fit cursor-pointer transition-all"
+                        >
+                          <Upload className="w-3.5 h-3.5 text-[var(--text-secondary)]" />
+                          <span>Change photo</span>
+                        </label>
+                        {(editPhotoPreviewUrl || editPhotoPath) && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (editPhotoPreviewUrl) URL.revokeObjectURL(editPhotoPreviewUrl);
+                              setEditPhotoPreviewUrl('');
+                              setEditPhotoPath('');
+                            }}
+                            className="py-1.5 px-3 bg-rose-500/10 border border-rose-500/20 text-rose-450 hover:bg-rose-500/20 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-all animate-fade-in"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Remove photo</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -4077,13 +4093,29 @@ export default function TeamManagementPage() {
                         onChange={handleEditMemberPhotoUpload}
                         className="hidden"
                       />
-                      <label
-                        htmlFor="edit-member-photo-input"
-                        className="py-1.5 px-3 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-[var(--text-primary)] rounded-lg text-xs font-semibold flex items-center gap-1.5 w-fit cursor-pointer transition-all"
-                      >
-                        <Upload className="w-3.5 h-3.5 text-[var(--text-secondary)]" />
-                        <span>Change photo</span>
-                      </label>
+                      <div className="flex gap-2">
+                        <label
+                          htmlFor="edit-member-photo-input"
+                          className="py-1.5 px-3 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-[var(--text-primary)] rounded-lg text-xs font-semibold flex items-center gap-1.5 w-fit cursor-pointer transition-all"
+                        >
+                          <Upload className="w-3.5 h-3.5 text-[var(--text-secondary)]" />
+                          <span>Change photo</span>
+                        </label>
+                        {(editMemberPhotoPreviewUrl || editMemberForm.photograph) && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (editMemberPhotoPreviewUrl) URL.revokeObjectURL(editMemberPhotoPreviewUrl);
+                              setEditMemberPhotoPreviewUrl('');
+                              setEditMemberForm(prev => ({ ...prev, photograph: '' }));
+                            }}
+                            className="py-1.5 px-3 bg-rose-500/10 border border-rose-500/20 text-rose-450 hover:bg-rose-500/20 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-all animate-fade-in"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Remove photo</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
 

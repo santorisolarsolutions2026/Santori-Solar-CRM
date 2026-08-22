@@ -16,6 +16,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'Photograph file is required.' }, { status: 400 });
     }
 
+    // Validate file size (max 2MB)
+    const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+    if (file.size > MAX_SIZE) {
+      return NextResponse.json({ success: false, message: 'File size exceeds the 2MB limit.' }, { status: 400 });
+    }
+
     // Validate MIME type to ensure it's an image
     if (!file.type.startsWith('image/')) {
       return NextResponse.json({ success: false, message: 'Only image files are allowed.' }, { status: 400 });

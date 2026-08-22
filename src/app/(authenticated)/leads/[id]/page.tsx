@@ -496,7 +496,7 @@ export default function LeadDetailPage({
   };
 
   // Image / PDF Preview & Download Helpers
-  const [previewImage, setPreviewImage] = useState<{ src: string; title: string } | null>(null);
+  const [previewImage, setPreviewImage] = useState<{ src: string; title: string; isPdf?: boolean } | null>(null);
   const isImageFile = (fileName: string) => {
     if (!fileName) return false;
     const ext = fileName.split('.').pop()?.toLowerCase();
@@ -511,14 +511,12 @@ export default function LeadDetailPage({
   const handlePreviewDoc = (url: string, fileName: string, title?: string) => {
     if (!fileName) return;
     const ext = fileName.split('.').pop()?.toLowerCase();
-    if (ext === 'pdf') {
-      window.open(url, '_blank', 'noopener,noreferrer');
-    } else {
-      setPreviewImage({
-        src: url,
-        title: title || fileName,
-      });
-    }
+    const isPdf = ext === 'pdf';
+    setPreviewImage({
+      src: url,
+      title: title || fileName,
+      isPdf,
+    });
   };
 
   const handleDownloadDoc = async (url: string, fileName: string) => {
@@ -4081,11 +4079,19 @@ export default function LeadDetailPage({
             className="relative max-w-4xl max-h-[85vh] overflow-hidden rounded-2xl border border-[var(--border-color)] bg-[var(--bg-main)] shadow-2xl flex flex-col items-center justify-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <img
-              src={previewImage.src}
-              alt={previewImage.title}
-              className="max-w-full max-h-[80vh] object-contain rounded-t-2xl"
-            />
+            {previewImage.isPdf ? (
+              <iframe
+                src={previewImage.src}
+                className="w-[80vw] max-w-4xl h-[70vh] border-0 rounded-t-2xl bg-[var(--bg-main)]"
+                title={previewImage.title}
+              />
+            ) : (
+              <img
+                src={previewImage.src}
+                alt={previewImage.title}
+                className="max-w-full max-h-[80vh] object-contain rounded-t-2xl"
+              />
+            )}
             {previewImage.title && (
               <div className="w-full bg-[var(--bg-card)] backdrop-blur-sm border-t border-[var(--border-color)]/60 p-3 text-xs font-semibold text-[var(--text-primary)] text-center tracking-wide rounded-b-2xl">
                 {previewImage.title}

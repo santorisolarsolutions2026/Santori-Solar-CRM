@@ -48,23 +48,23 @@ export async function GET(
     const isDownload = url.searchParams.get('download') === 'true';
 
     if (doc.filePath.startsWith('http')) {
-      if (isDownload) {
-        try {
-          const blobResponse = await fetch(doc.filePath);
-          const arrayBuffer = await blobResponse.arrayBuffer();
-          const headers = new Headers();
-          headers.set('Content-Type', doc.mimeType || blobResponse.headers.get('Content-Type') || 'application/octet-stream');
-          headers.set('Content-Disposition', `attachment; filename="${encodeURIComponent(doc.fileName)}"`);
-          return new Response(arrayBuffer, {
-            status: 200,
-            headers,
-          });
-        } catch (fetchErr) {
-          console.error('Error proxying blob download:', fetchErr);
-          return NextResponse.redirect(doc.filePath);
+      try {
+        const blobResponse = await fetch(doc.filePath);
+        if (!blobResponse.ok) {
+          throw new Error(`Failed to fetch from Vercel Blob: ${blobResponse.status}`);
         }
+        const arrayBuffer = await blobResponse.arrayBuffer();
+        const headers = new Headers();
+        headers.set('Content-Type', doc.mimeType || blobResponse.headers.get('Content-Type') || 'application/octet-stream');
+        headers.set('Content-Disposition', `${isDownload ? 'attachment' : 'inline'}; filename="${encodeURIComponent(doc.fileName)}"`);
+        return new Response(arrayBuffer, {
+          status: 200,
+          headers,
+        });
+      } catch (fetchErr) {
+        console.error('Error proxying blob:', fetchErr);
+        return NextResponse.redirect(doc.filePath);
       }
-      return NextResponse.redirect(doc.filePath);
     }
 
     // Resolve file path

@@ -30,7 +30,24 @@ export async function GET(
     }
 
     if (user.photograph.startsWith('http')) {
-      return NextResponse.redirect(user.photograph);
+      try {
+        const blobResponse = await fetch(user.photograph);
+        if (!blobResponse.ok) {
+          throw new Error(`Failed to fetch from Vercel Blob: ${blobResponse.status}`);
+        }
+        const arrayBuffer = await blobResponse.arrayBuffer();
+        const headers = new Headers();
+        headers.set('Content-Type', blobResponse.headers.get('Content-Type') || 'image/png');
+        headers.set('Content-Length', arrayBuffer.byteLength.toString());
+        headers.set('Cache-Control', 'private, max-age=3600');
+        return new Response(arrayBuffer, {
+          status: 200,
+          headers,
+        });
+      } catch (fetchErr) {
+        console.error('Error proxying photograph:', fetchErr);
+        return NextResponse.redirect(user.photograph);
+      }
     }
 
     // Resolve local path
