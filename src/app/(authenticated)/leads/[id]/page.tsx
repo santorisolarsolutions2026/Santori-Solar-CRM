@@ -3972,12 +3972,13 @@ export default function LeadDetailPage({
                 >
                   <option value="sale_done">Sale Done</option>
                   <option value="follow_up">Follow Up</option>
+                  <option value="meeting_done">Meeting Done (Stay in Negotiation)</option>
                   <option value="not_interested">Not Interested</option>
                 </select>
               </div>
 
               {/* Conditional outcome fields */}
-              {formCOutcome === 'follow_up' && (
+              {(formCOutcome === 'follow_up' || formCOutcome === 'meeting_done') && (
                 <div className="space-y-4 p-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg">
                   <div>
                     <label className="block text-[10px] font-semibold text-slate-450 mb-1">Sub-Type</label>

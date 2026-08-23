@@ -441,6 +441,17 @@ export async function POST(
         updateData.status = 4;
         updateData.statusSub = formCSubStatus || 'Price'; // Dropdown reason
         updateData.isActive = false;
+      } else if (outcome === 'meeting_done') {
+        finalStatusNum = 9;
+        updateData.status = 9;
+        if (!formCSubStatus || !['warm', 'hot'].includes(formCSubStatus)) {
+          return NextResponse.json({ success: false, message: 'Sub-status (warm/hot) is required for Meeting Done outcome.' }, { status: 422 });
+        }
+        if (!formCFollowUpAt) {
+          return NextResponse.json({ success: false, message: 'Follow Up Date & Time is required.' }, { status: 422 });
+        }
+        updateData.statusSub = formCSubStatus;
+        updateData.followupAt = new Date(formCFollowUpAt);
       } else {
         return NextResponse.json({ success: false, message: 'Invalid outcome selected.' }, { status: 422 });
       }

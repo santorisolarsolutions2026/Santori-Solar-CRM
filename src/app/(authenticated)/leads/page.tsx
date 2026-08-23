@@ -210,7 +210,7 @@ export default function LeadsPage() {
 
   // Dropdown lists
   const [consultants, setConsultants] = useState<{ id: number; name: string }[]>([]);
-  const [teamMembers, setTeamMembers] = useState<{ id: number; name: string; role: string }[]>([]);
+  const [teamMembers, setTeamMembers] = useState<{ id: number; name: string; role: string; designation?: { name: string; level?: number } }[]>([]);
 
   // Multiple selection and bulk actions states
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -419,7 +419,11 @@ export default function LeadsPage() {
       const res = await fetch('/api/v1/users', { cache: 'no-store' });
       const data = await res.json();
       if (data.success && data.data) {
-        setTeamMembers(data.data);
+        const cleanData = data.data.map((u: any) => ({
+          ...u,
+          designation: u.designation || undefined
+        }));
+        setTeamMembers(cleanData);
       }
     } catch (err) {
       console.error(err);
@@ -2403,7 +2407,7 @@ export default function LeadsPage() {
                       <div>
                         <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1">Assigned Manager</label>
                         <UserSelect
-                          users={teamMembers.filter(m => ['manager', 'sales_head', 'admin', 'director'].includes(m.role))}
+                          users={teamMembers.filter(m => ['manager', 'sales_head', 'admin', 'director'].includes(m.role) || (m.designation?.level && m.designation.level <= 3))}
                           value={managerFilter}
                           onChange={(val) => { setManagerFilter(val ? String(val) : ''); setPage(1); }}
                           placeholder="All Managers"
