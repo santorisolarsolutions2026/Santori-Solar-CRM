@@ -27,9 +27,9 @@ export async function GET(req: Request) {
     }
 
     const { searchParams } = new URL(req.url);
-    const search = searchParams.get('search') || '';
+    const search = (searchParams.get('search') || '').trim();
     const statusParam = searchParams.get('status') || '';
-    const city = searchParams.get('city') || '';
+    const city = (searchParams.get('city') || '').trim();
     const consultantIdStr = searchParams.get('consultant_id') || '';
     const connectionType = searchParams.get('connection_type') || '';
     const leadSource = searchParams.get('lead_source') || '';
@@ -110,7 +110,7 @@ export async function GET(req: Request) {
     }
 
     // 2. Extra Filters
-    const state = searchParams.get('state') || '';
+    const state = (searchParams.get('state') || '').trim();
     const tlIdStr = searchParams.get('tl_id') || '';
     const managerIdStr = searchParams.get('manager_id') || '';
     const dateFromStr = searchParams.get('date_from') || '';

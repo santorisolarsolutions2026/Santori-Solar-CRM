@@ -243,12 +243,12 @@ export default function LeadsPage() {
       const params = new URLSearchParams({
         page: '1',
         limit: count.toString(),
-        search,
+        search: search.trim(),
         status: statusFilter,
         consultant_id: consultantFilter,
         connection_type: connectionFilter,
         lead_source: sourceFilter,
-        city: cityFilter,
+        city: cityFilter.trim(),
         unassigned: unassignedFilter ? 'true' : 'false',
       });
 
@@ -279,17 +279,17 @@ export default function LeadsPage() {
 
   useEffect(() => {
     const filtersChanged =
-      lastFiltersRef.current.search !== search ||
+      lastFiltersRef.current.search.trim() !== search.trim() ||
       lastFiltersRef.current.statusFilter !== statusFilter ||
       lastFiltersRef.current.consultantFilter !== consultantFilter ||
       lastFiltersRef.current.connectionFilter !== connectionFilter ||
       lastFiltersRef.current.sourceFilter !== sourceFilter ||
-      lastFiltersRef.current.cityFilter !== cityFilter;
+      lastFiltersRef.current.cityFilter.trim() !== cityFilter.trim();
 
     if (filtersChanged) {
       setSelectedIds([]);
       lastFiltersRef.current = {
-        search,
+        search: search.trim(),
         statusFilter,
         consultantFilter,
         connectionFilter,
@@ -315,12 +315,12 @@ export default function LeadsPage() {
       try {
         const params = new URLSearchParams({
           ids_only: 'true',
-          search: debouncedSearch,
+          search: debouncedSearch.trim(),
           status: statusFilter,
           consultant_id: consultantFilter,
           connection_type: connectionFilter,
           lead_source: sourceFilter,
-          city: cityFilter,
+          city: cityFilter.trim(),
         });
         const res = await fetch(`/api/v1/leads?${params.toString()}`);
         const data = await res.json();
@@ -592,15 +592,15 @@ export default function LeadsPage() {
       const params = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
-        search: debouncedSearch,
+        search: debouncedSearch.trim(),
         status: statusFilter,
         consultant_id: consultantFilter,
         tl_id: tlFilter,
         manager_id: managerFilter,
         connection_type: connectionFilter,
         lead_source: sourceFilter,
-        city: cityFilter,
-        state: stateFilter,
+        city: cityFilter.trim(),
+        state: stateFilter.trim(),
         date_from: dateFromFilter,
         date_to: dateToFilter,
         unassigned: unassignedFilter ? 'true' : 'false',
@@ -627,21 +627,23 @@ export default function LeadsPage() {
   }, [user]);
 
   // Load saved filters on client-side mount
+  // Load saved filters on client-side mount when user is available
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedSearch = localStorage.getItem('leads_filter_search');
-      const savedStatus = localStorage.getItem('leads_filter_status');
-      const savedConsultant = localStorage.getItem('leads_filter_consultant');
-      const savedTl = localStorage.getItem('leads_filter_tl');
-      const savedManager = localStorage.getItem('leads_filter_manager');
-      const savedConnection = localStorage.getItem('leads_filter_connection');
-      const savedSource = localStorage.getItem('leads_filter_source');
-      const savedCity = localStorage.getItem('leads_filter_city');
-      const savedState = localStorage.getItem('leads_filter_state');
-      const savedDateFrom = localStorage.getItem('leads_filter_dateFrom');
-      const savedDateTo = localStorage.getItem('leads_filter_dateTo');
-      const savedUnassigned = localStorage.getItem('leads_filter_unassigned');
-      const savedPage = localStorage.getItem('leads_filter_page');
+    if (typeof window !== 'undefined' && user && !filtersLoaded) {
+      const userId = user.id;
+      const savedSearch = localStorage.getItem(`leads_filter_${userId}_search`);
+      const savedStatus = localStorage.getItem(`leads_filter_${userId}_status`);
+      const savedConsultant = localStorage.getItem(`leads_filter_${userId}_consultant`);
+      const savedTl = localStorage.getItem(`leads_filter_${userId}_tl`);
+      const savedManager = localStorage.getItem(`leads_filter_${userId}_manager`);
+      const savedConnection = localStorage.getItem(`leads_filter_${userId}_connection`);
+      const savedSource = localStorage.getItem(`leads_filter_${userId}_source`);
+      const savedCity = localStorage.getItem(`leads_filter_${userId}_city`);
+      const savedState = localStorage.getItem(`leads_filter_${userId}_state`);
+      const savedDateFrom = localStorage.getItem(`leads_filter_${userId}_dateFrom`);
+      const savedDateTo = localStorage.getItem(`leads_filter_${userId}_dateTo`);
+      const savedUnassigned = localStorage.getItem(`leads_filter_${userId}_unassigned`);
+      const savedPage = localStorage.getItem(`leads_filter_${userId}_page`);
 
       if (savedSearch !== null) setSearch(savedSearch);
       if (savedStatus !== null) setStatusFilter(savedStatus);
@@ -659,27 +661,28 @@ export default function LeadsPage() {
       
       setFiltersLoaded(true);
     }
-  }, []);
+  }, [user, filtersLoaded]);
 
   // Save filters to localStorage when they change
   useEffect(() => {
-    if (!filtersLoaded) return;
+    if (!filtersLoaded || !user) return;
     if (typeof window !== 'undefined') {
-      localStorage.setItem('leads_filter_search', search);
-      localStorage.setItem('leads_filter_status', statusFilter);
-      localStorage.setItem('leads_filter_consultant', consultantFilter);
-      localStorage.setItem('leads_filter_tl', tlFilter);
-      localStorage.setItem('leads_filter_manager', managerFilter);
-      localStorage.setItem('leads_filter_connection', connectionFilter);
-      localStorage.setItem('leads_filter_source', sourceFilter);
-      localStorage.setItem('leads_filter_city', cityFilter);
-      localStorage.setItem('leads_filter_state', stateFilter);
-      localStorage.setItem('leads_filter_dateFrom', dateFromFilter);
-      localStorage.setItem('leads_filter_dateTo', dateToFilter);
-      localStorage.setItem('leads_filter_unassigned', unassignedFilter ? 'true' : 'false');
-      localStorage.setItem('leads_filter_page', page.toString());
+      const userId = user.id;
+      localStorage.setItem(`leads_filter_${userId}_search`, search);
+      localStorage.setItem(`leads_filter_${userId}_status`, statusFilter);
+      localStorage.setItem(`leads_filter_${userId}_consultant`, consultantFilter);
+      localStorage.setItem(`leads_filter_${userId}_tl`, tlFilter);
+      localStorage.setItem(`leads_filter_${userId}_manager`, managerFilter);
+      localStorage.setItem(`leads_filter_${userId}_connection`, connectionFilter);
+      localStorage.setItem(`leads_filter_${userId}_source`, sourceFilter);
+      localStorage.setItem(`leads_filter_${userId}_city`, cityFilter);
+      localStorage.setItem(`leads_filter_${userId}_state`, stateFilter);
+      localStorage.setItem(`leads_filter_${userId}_dateFrom`, dateFromFilter);
+      localStorage.setItem(`leads_filter_${userId}_dateTo`, dateToFilter);
+      localStorage.setItem(`leads_filter_${userId}_unassigned`, unassignedFilter ? 'true' : 'false');
+      localStorage.setItem(`leads_filter_${userId}_page`, page.toString());
     }
-  }, [search, statusFilter, consultantFilter, tlFilter, managerFilter, connectionFilter, sourceFilter, cityFilter, stateFilter, dateFromFilter, dateToFilter, unassignedFilter, page, filtersLoaded]);
+  }, [search, statusFilter, consultantFilter, tlFilter, managerFilter, connectionFilter, sourceFilter, cityFilter, stateFilter, dateFromFilter, dateToFilter, unassignedFilter, page, filtersLoaded, user]);
 
   // Refetch leads when filters change
   useEffect(() => {
@@ -1087,9 +1090,21 @@ export default function LeadsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search Customer Name / Mobile / Lead Code..."
-              className="block w-full pl-9 pr-4 py-2.5 bg-slate-955/60 border border-[var(--border-color)] rounded-xl text-[var(--text-primary)] placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-600 text-xs transition-all shadow-inner"
+              className="block w-full pl-9 pr-10 py-2.5 bg-slate-955/60 border border-[var(--border-color)] rounded-xl text-[var(--text-primary)] placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-600 text-xs transition-all shadow-inner"
             />
-            <Search className="w-4 h-4 text-[var(--text-muted)] absolute left-3 top-3" />
+            <Search className="w-4 h-4 text-[var(--text-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
+            {search && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch('');
+                  setPage(1);
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] hover:text-white transition-all cursor-pointer p-0.5 rounded-full hover:bg-white/10 flex items-center justify-center"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-3 w-full md:w-auto shrink-0 justify-end">
