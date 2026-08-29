@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '@/context/AuthContext';
 import {
   Layers,
@@ -28,6 +29,7 @@ import {
   Truck,
   RotateCcw,
   Lock,
+  Settings,
 } from 'lucide-react';
 import Link from 'next/link';
 import UserSelect from '@/components/UserSelect';
@@ -35,6 +37,7 @@ import CustomSelect from '@/components/CustomSelect';
 import { LeadTrackingTimeline } from '@/components/LeadTrackingTimeline';
 import { getLeadAssignedDisplay } from '@/lib/permissions';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import AdvancedQueryBuilder, { Group } from '@/components/AdvancedQueryBuilder';
 
 interface Lead {
   id: number;
@@ -175,13 +178,21 @@ export default function LeadsPage() {
   const [dateFromFilter, setDateFromFilter] = useState('');
   const [dateToFilter, setDateToFilter] = useState('');
   const [unassignedFilter, setUnassignedFilter] = useState(false);
+  const [isAdvancedFilterActive, setIsAdvancedFilterActive] = useState(false);
+  const [advancedQueryObj, setAdvancedQueryObj] = useState<Group | null>(null);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(25);
   const [filtersLoaded, setFiltersLoaded] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Detailed Filter Modal states
   const [showDetailedFilterModal, setShowDetailedFilterModal] = useState(false);
   const [activeFilterTab, setActiveFilterTab] = useState<'stages' | 'connection' | 'sources' | 'location' | 'team' | 'dates'>('stages');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Track Lead Modal State
   const [trackingLead, setTrackingLead] = useState<any | null>(null);
@@ -229,42 +240,18 @@ export default function LeadsPage() {
   const [bulkRevertClearHistory, setBulkRevertClearHistory] = useState(true);
   const [bulkRevertRemark, setBulkRevertRemark] = useState('');
 
-  const handleArbitrarySelectSubmit = async (e: React.FormEvent) => {
+  const shouldSelectAllOnNextFetchRef = useRef(false);
+
+  const handleArbitrarySelectSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const count = parseInt(customSelectVal, 10);
     if (isNaN(count) || count <= 0) {
       alert('Please enter a valid positive number of leads.');
       return;
     }
-    setLoading(true);
-    try {
-      setLimit(count);
-      setPage(1);
-      const params = new URLSearchParams({
-        page: '1',
-        limit: count.toString(),
-        search: search.trim(),
-        status: statusFilter,
-        consultant_id: consultantFilter,
-        connection_type: connectionFilter,
-        lead_source: sourceFilter,
-        city: cityFilter.trim(),
-        unassigned: unassignedFilter ? 'true' : 'false',
-      });
-
-      const res = await fetch(`/api/v1/leads?${params.toString()}`);
-      const data = await res.json();
-      if (data.success && data.data) {
-        setLeads(data.data.leads);
-        setTotal(data.data.pagination.total);
-        const fetchedIds = data.data.leads.map((l: any) => l.id);
-        setSelectedIds(fetchedIds);
-      }
-    } catch (err) {
-      console.error('Failed to select leads:', err);
-    } finally {
-      setLoading(false);
-    }
+    shouldSelectAllOnNextFetchRef.current = true;
+    setLimit(count);
+    setPage(1);
   };
 
   // Keep track of the last active filters to clear selected IDs only when filters change
@@ -313,19 +300,35 @@ export default function LeadsPage() {
     } else {
       setLoading(true);
       try {
-        const params = new URLSearchParams({
-          ids_only: 'true',
-          search: debouncedSearch.trim(),
-          status: statusFilter,
-          consultant_id: consultantFilter,
-          connection_type: connectionFilter,
-          lead_source: sourceFilter,
-          city: cityFilter.trim(),
-        });
-        const res = await fetch(`/api/v1/leads?${params.toString()}`);
-        const data = await res.json();
-        if (data.success && Array.isArray(data.data)) {
-          setSelectedIds(data.data);
+        if (isAdvancedFilterActive) {
+          const res = await fetch('/api/v1/leads/advanced-query', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              queryObj: advancedQueryObj,
+              search: debouncedSearch.trim(),
+              ids_only: true
+            })
+          });
+          const data = await res.json();
+          if (data.success && Array.isArray(data.data)) {
+            setSelectedIds(data.data);
+          }
+        } else {
+          const params = new URLSearchParams({
+            ids_only: 'true',
+            search: debouncedSearch.trim(),
+            status: statusFilter,
+            consultant_id: consultantFilter,
+            connection_type: connectionFilter,
+            lead_source: sourceFilter,
+            city: cityFilter.trim(),
+          });
+          const res = await fetch(`/api/v1/leads?${params.toString()}`);
+          const data = await res.json();
+          if (data.success && Array.isArray(data.data)) {
+            setSelectedIds(data.data);
+          }
         }
       } catch (err) {
         console.error('Failed to select all leads across pages:', err);
@@ -591,35 +594,79 @@ export default function LeadsPage() {
 
   // Fetch leads based on filters
   const fetchLeads = async () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
-        search: debouncedSearch.trim(),
-        status: statusFilter,
-        consultant_id: consultantFilter,
-        tl_id: tlFilter,
-        manager_id: managerFilter,
-        connection_type: connectionFilter,
-        lead_source: sourceFilter,
-        city: cityFilter.trim(),
-        state: stateFilter.trim(),
-        date_from: dateFromFilter,
-        date_to: dateToFilter,
-        unassigned: unassignedFilter ? 'true' : 'false',
-      });
+      if (isAdvancedFilterActive) {
+        const res = await fetch('/api/v1/leads/advanced-query', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            queryObj: advancedQueryObj,
+            search: debouncedSearch.trim(),
+            page,
+            limit
+          }),
+          signal: controller.signal
+        });
+        const data = await res.json();
+        if (data.success && data.data) {
+          setLeads(data.data);
+          setTotal(data.pagination.total);
+          if (shouldSelectAllOnNextFetchRef.current) {
+            const fetchedIds = data.data.map((l: any) => l.id);
+            setSelectedIds(fetchedIds);
+            shouldSelectAllOnNextFetchRef.current = false;
+          }
+        }
+      } else {
+        const params = new URLSearchParams({
+          page: page.toString(),
+          limit: limit.toString(),
+          search: debouncedSearch.trim(),
+          status: statusFilter,
+          consultant_id: consultantFilter,
+          tl_id: tlFilter,
+          manager_id: managerFilter,
+          connection_type: connectionFilter,
+          lead_source: sourceFilter,
+          city: cityFilter.trim(),
+          state: stateFilter.trim(),
+          date_from: dateFromFilter,
+          date_to: dateToFilter,
+          unassigned: unassignedFilter ? 'true' : 'false',
+        });
 
-      const res = await fetch(`/api/v1/leads?${params.toString()}`);
-      const data = await res.json();
-      if (data.success && data.data) {
-        setLeads(data.data.leads);
-        setTotal(data.data.pagination.total);
+        const res = await fetch(`/api/v1/leads?${params.toString()}`, {
+          signal: controller.signal
+        });
+        const data = await res.json();
+        if (data.success && data.data) {
+          setLeads(data.data.leads);
+          setTotal(data.data.pagination.total);
+          if (shouldSelectAllOnNextFetchRef.current) {
+            const fetchedIds = data.data.leads.map((l: any) => l.id);
+            setSelectedIds(fetchedIds);
+            shouldSelectAllOnNextFetchRef.current = false;
+          }
+        }
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        return;
+      }
+      shouldSelectAllOnNextFetchRef.current = false;
       console.error('Fetch leads error:', err);
     } finally {
-      setLoading(false);
+      if (abortControllerRef.current === controller) {
+        setLoading(false);
+      }
     }
   };
 
@@ -629,6 +676,14 @@ export default function LeadsPage() {
       fetchTeamMembers();
     }
   }, [user]);
+
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   // Load saved filters on client-side mount
   // Load saved filters on client-side mount when user is available
@@ -648,6 +703,8 @@ export default function LeadsPage() {
       const savedDateTo = localStorage.getItem(`leads_filter_${userId}_dateTo`);
       const savedUnassigned = localStorage.getItem(`leads_filter_${userId}_unassigned`);
       const savedPage = localStorage.getItem(`leads_filter_${userId}_page`);
+      const savedAdvancedActive = localStorage.getItem(`leads_filter_${userId}_isAdvancedActive`);
+      const savedAdvancedQuery = localStorage.getItem(`leads_filter_${userId}_advancedQueryObj`);
 
       if (savedSearch !== null) setSearch(savedSearch);
       if (savedStatus !== null) setStatusFilter(savedStatus);
@@ -662,6 +719,14 @@ export default function LeadsPage() {
       if (savedDateTo !== null) setDateToFilter(savedDateTo);
       if (savedUnassigned !== null) setUnassignedFilter(savedUnassigned === 'true');
       if (savedPage !== null) setPage(Number(savedPage));
+      if (savedAdvancedActive !== null) setIsAdvancedFilterActive(savedAdvancedActive === 'true');
+      if (savedAdvancedQuery !== null && savedAdvancedQuery.trim() !== '') {
+        try {
+          setAdvancedQueryObj(JSON.parse(savedAdvancedQuery));
+        } catch (e) {
+          console.error('Error parsing advanced query from localStorage:', e);
+        }
+      }
       
       setFiltersLoaded(true);
     }
@@ -685,15 +750,17 @@ export default function LeadsPage() {
       localStorage.setItem(`leads_filter_${userId}_dateTo`, dateToFilter);
       localStorage.setItem(`leads_filter_${userId}_unassigned`, unassignedFilter ? 'true' : 'false');
       localStorage.setItem(`leads_filter_${userId}_page`, page.toString());
+      localStorage.setItem(`leads_filter_${userId}_isAdvancedActive`, isAdvancedFilterActive ? 'true' : 'false');
+      localStorage.setItem(`leads_filter_${userId}_advancedQueryObj`, advancedQueryObj ? JSON.stringify(advancedQueryObj) : '');
     }
-  }, [search, statusFilter, consultantFilter, tlFilter, managerFilter, connectionFilter, sourceFilter, cityFilter, stateFilter, dateFromFilter, dateToFilter, unassignedFilter, page, filtersLoaded, user]);
+  }, [search, statusFilter, consultantFilter, tlFilter, managerFilter, connectionFilter, sourceFilter, cityFilter, stateFilter, dateFromFilter, dateToFilter, unassignedFilter, page, filtersLoaded, user, isAdvancedFilterActive, advancedQueryObj]);
 
   // Refetch leads when filters change
   useEffect(() => {
     if (user && filtersLoaded) {
       fetchLeads();
     }
-  }, [page, limit, statusFilter, consultantFilter, tlFilter, managerFilter, connectionFilter, sourceFilter, cityFilter, stateFilter, dateFromFilter, dateToFilter, unassignedFilter, user, filtersLoaded, debouncedSearch]);
+  }, [page, limit, statusFilter, consultantFilter, tlFilter, managerFilter, connectionFilter, sourceFilter, cityFilter, stateFilter, dateFromFilter, dateToFilter, unassignedFilter, user, filtersLoaded, debouncedSearch, isAdvancedFilterActive, advancedQueryObj]);
 
   // Handle Search Input (with manual or debounce enter)
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -719,6 +786,8 @@ export default function LeadsPage() {
     setDateFromFilter('');
     setDateToFilter('');
     setUnassignedFilter(false);
+    setIsAdvancedFilterActive(false);
+    setAdvancedQueryObj(null);
     setPage(1);
   };
 
@@ -1115,6 +1184,7 @@ export default function LeadsPage() {
             {/* Quick Stage Select */}
             <div className="w-56">
               <CustomSelect
+                disabled={isAdvancedFilterActive}
                 options={[
                   { value: '', label: 'All Pipeline Stages' },
                   ...Object.entries(STAGE_BADGES).map(([id, badge]) => ({
@@ -1135,6 +1205,7 @@ export default function LeadsPage() {
             {/* Quick Unassigned Toggle Button */}
             <button
               type="button"
+              disabled={isAdvancedFilterActive}
               onClick={() => {
                 const nextVal = !unassignedFilter;
                 setUnassignedFilter(nextVal);
@@ -1145,10 +1216,12 @@ export default function LeadsPage() {
                   setManagerFilter('');
                 }
               }}
-              className={`py-2.5 px-3.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer border ${
-                unassignedFilter
-                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-md shadow-amber-500/10'
-                  : 'bg-slate-955/60 text-[var(--text-secondary)] border-[var(--border-color)] hover:border-amber-500/40 hover:text-white'
+              className={`py-2.5 px-3.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all border ${
+                isAdvancedFilterActive
+                  ? 'opacity-40 cursor-not-allowed bg-slate-955/60 text-[var(--text-muted)] border-[var(--border-color)]'
+                  : unassignedFilter
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-md shadow-amber-500/10 cursor-pointer'
+                  : 'bg-slate-955/60 text-[var(--text-secondary)] border-[var(--border-color)] hover:border-amber-500/40 hover:text-white cursor-pointer'
               }`}
               title="Filter leads that have not been assigned to any team member"
             >
@@ -1159,8 +1232,13 @@ export default function LeadsPage() {
             {/* Amazon / Flipkart Detailed Filter Trigger Button */}
             <button
               type="button"
+              disabled={isAdvancedFilterActive}
               onClick={() => setShowDetailedFilterModal(true)}
-              className="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-md flex items-center gap-2 transition-all cursor-pointer"
+              className={`py-2.5 px-4 rounded-xl font-bold text-xs shadow-md flex items-center gap-2 transition-all ${
+                isAdvancedFilterActive
+                  ? 'opacity-40 cursor-not-allowed bg-emerald-650 text-white'
+                  : 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer'
+              }`}
             >
               <SlidersHorizontal className="w-4 h-4" />
               <span>Filters</span>
@@ -1171,8 +1249,26 @@ export default function LeadsPage() {
               )}
             </button>
 
+            {/* Advanced Filters Button */}
+            <button
+              type="button"
+              onClick={() => {
+                const nextVal = !isAdvancedFilterActive;
+                setIsAdvancedFilterActive(nextVal);
+                setPage(1);
+              }}
+              className={`py-2.5 px-4 rounded-xl font-bold text-xs shadow-md flex items-center gap-2 transition-all cursor-pointer border ${
+                isAdvancedFilterActive
+                  ? 'bg-blue-600/25 border-blue-500 text-blue-300'
+                  : 'bg-[var(--bg-card)] border-[var(--border-color)] hover:border-blue-500/40 text-slate-200 hover:text-white'
+              }`}
+            >
+              <Settings className="w-4 h-4 animate-spin-slow" />
+              <span>Advanced Filters</span>
+            </button>
+
             {/* Clear All Button */}
-            {getActiveFilterCount() > 0 || search ? (
+            {getActiveFilterCount() > 0 || search || isAdvancedFilterActive ? (
               <button
                 type="button"
                 onClick={handleClearFilters}
@@ -1184,12 +1280,47 @@ export default function LeadsPage() {
           </div>
         </form>
 
+        {isAdvancedFilterActive && (
+          <div className="pt-4 border-t border-[var(--border-color)]/60 animate-fade-in-down">
+            <div className="bg-slate-900/30 rounded-xl p-4 sm:p-5 border border-[var(--border-color)]/40 space-y-4 relative z-20">
+              <div className="flex justify-between items-center">
+                <h3 className="text-xs font-extrabold text-blue-400 uppercase tracking-widest">Advanced Query Compiler</h3>
+                <span className="text-[10px] text-slate-500">Construct nested logical AND/OR groups</span>
+              </div>
+              <AdvancedQueryBuilder
+                onChange={(query) => {
+                  setAdvancedQueryObj(query);
+                  setPage(1);
+                }}
+                onClear={() => {
+                  setAdvancedQueryObj(null);
+                  setPage(1);
+                }}
+                initialQuery={advancedQueryObj || undefined}
+              />
+            </div>
+          </div>
+        )}
+
         {/* Active Applied Filter Tags Bar */}
-        {getActiveFilterCount() > 0 && (
+        {(getActiveFilterCount() > 0 || isAdvancedFilterActive) && (
           <div className="pt-3 border-t border-[var(--border-color)] flex flex-wrap items-center gap-2 text-xs">
             <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center gap-1">
               <Filter className="w-3 h-3 text-emerald-500" /> Active Filters:
             </span>
+            {isAdvancedFilterActive && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-450 text-[11px] font-semibold">
+                Advanced Rules Active
+                <X 
+                  className="w-3 h-3 cursor-pointer hover:text-white ml-0.5" 
+                  onClick={() => {
+                    setIsAdvancedFilterActive(false);
+                    setAdvancedQueryObj(null);
+                    setPage(1);
+                  }} 
+                />
+              </span>
+            )}
             {unassignedFilter && (
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[11px] font-semibold">
                 Unassigned Leads Only
@@ -2117,7 +2248,7 @@ export default function LeadsPage() {
       )}
 
       {/* Amazon / Flipkart Style Detailed Filter Modal Drawer */}
-      {showDetailedFilterModal && (
+      {mounted && showDetailedFilterModal && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md px-4 py-6">
           <div className="w-full max-w-4xl bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[85vh]">
             {/* Modal Header */}
@@ -2468,7 +2599,8 @@ export default function LeadsPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Track Lead Progress Modal (Amazon Delivery Tracking Style) */}

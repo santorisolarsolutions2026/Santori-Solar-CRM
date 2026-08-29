@@ -409,44 +409,44 @@ export default function AttendancePage() {
     if (record) {
       if (record.status === 'completed' || record.checkOut) {
         return (
-          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-emerald-500/10 text-emerald-400 border-emerald-500/20 uppercase tracking-wider">
+          <span className="text-[9px] font-extrabold px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400">
             Completed
           </span>
         );
        } else if (record.status === 'half_day') {
         return (
-          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-emerald-500/10 text-emerald-500 border-emerald-500/20 uppercase tracking-wider">
-            Half Day ⚠️
+          <span className="text-[9px] font-extrabold px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-500">
+            Half Day
           </span>
         );
       } else {
         return (
-          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-emerald-500/10 text-emerald-500 border-emerald-500/20 uppercase tracking-wider animate-pulse">
+          <span className="text-[9px] font-extrabold px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-500 animate-pulse">
             Active
           </span>
         );
       }
     } else if (isFuture) {
       return (
-        <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full border bg-[var(--bg-card)]/40 text-emerald-500/60 uppercase tracking-wider">
+        <span className="text-[9px] font-semibold px-2.5 py-1 rounded-lg bg-slate-800/60 text-slate-350">
           Future
         </span>
       );
     } else if (isHoliday) {
       return (
-        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-emerald-500/10 text-emerald-500 border-emerald-500/20 uppercase tracking-wider" title={holidayName}>
-          Holiday 🌟
+        <span className="text-[9px] font-extrabold px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-500" title={holidayName}>
+          Holiday
         </span>
       );
     } else if (isWeekend) {
       return (
-        <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full border bg-[var(--bg-main)] text-[var(--text-muted)] border-[var(--border-color)] uppercase tracking-wider">
+        <span className="text-[9px] font-semibold px-2.5 py-1 rounded-lg bg-[var(--bg-main)] text-[var(--text-muted)]">
           Weekly Off
         </span>
       );
     } else {
       return (
-        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border bg-rose-500/10 text-rose-450 border-rose-500/20 uppercase tracking-wider">
+        <span className="text-[9px] font-extrabold px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-450">
           Absent
         </span>
       );
@@ -751,7 +751,7 @@ export default function AttendancePage() {
                             <div className="flex items-center gap-2 mt-0.5">
                               <span className="text-[10px] text-[var(--text-secondary)] capitalize">{member.role}</span>
                               {member.employeeId && (
-                                <span className="text-[9px] font-mono text-emerald-500 bg-emerald-500/10 px-1.5 py-0.25 rounded border border-emerald-500/20">
+                                <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-md font-bold">
                                   {member.employeeId}
                                 </span>
                               )}
@@ -786,16 +786,16 @@ export default function AttendancePage() {
 
                       <td className="py-3.5 px-4">
                         {!attendance ? (
-                          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full border bg-[var(--bg-card)]/60 text-[var(--text-muted)] border-[var(--border-color)] uppercase tracking-wider flex items-center gap-1 w-fit" title="Not Checked In Yet">
-                            <AlertCircle className="w-3 h-3 text-[var(--text-muted)]" /> Pending
+                          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-slate-800/60 text-slate-350 flex items-center gap-1.5 w-fit" title="Not Checked In Yet">
+                            <AlertCircle className="w-3.5 h-3.5 text-slate-400" /> Pending
                           </span>
                         ) : attendance.checkOut ? (
-                          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full border bg-emerald-500/10 text-emerald-400 border-emerald-500/20 uppercase tracking-wider flex items-center gap-1 w-fit" title="Day Completed & Checked Out">
-                            <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Completed
+                          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center gap-1.5 w-fit" title="Day Completed & Checked Out">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Completed
                           </span>
                         ) : (
-                          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full border bg-emerald-500/10 text-emerald-500 border-emerald-500/20 uppercase tracking-wider flex items-center gap-1 w-fit animate-pulse" title="Currently Checked In">
-                            <UserCheck className="w-3 h-3 text-emerald-500" /> Active
+                          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center gap-1.5 w-fit animate-pulse" title="Currently Checked In">
+                            <UserCheck className="w-3.5 h-3.5 text-emerald-400" /> Active
                           </span>
                         )}
                       </td>
@@ -846,7 +846,7 @@ export default function AttendancePage() {
                         {att.workDurationMin ? `${Math.floor(att.workDurationMin / 60)}h ${att.workDurationMin % 60}m` : '-'}
                       </td>
                       <td className="py-3.5 px-4 font-sans">
-                        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full border bg-emerald-500/10 text-emerald-400 border-emerald-500/20 uppercase tracking-wider">
+                        <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 capitalize">
                           {att.status}
                         </span>
                       </td>

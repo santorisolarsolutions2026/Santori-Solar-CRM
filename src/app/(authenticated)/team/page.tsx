@@ -37,6 +37,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import AccessControlManager from '@/components/AccessControlManager';
+import CustomDropdown from '@/components/CustomDropdown';
 
 
 interface TeamMember {
@@ -68,15 +69,15 @@ interface TeamMember {
 }
 
 const ROLE_LABELS: Record<string, { label: string; class: string }> = {
-  admin: { label: 'Admin', class: 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20' },
-  director: { label: 'Director', class: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' },
-  sales_head: { label: 'Sales Head', class: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
-  finance: { label: 'Finance Manager', class: 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20' },
-  operations: { label: 'Operations Manager', class: 'bg-pink-500/10 text-pink-400 border-pink-500/20' },
-  psa_tl: { label: 'PSA Team Leader', class: 'bg-sky-500/10 text-sky-400 border-sky-500/20' },
-  psa: { label: 'PSA Consultant', class: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20' },
-  tl: { label: 'Sales Team Leader', class: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
-  consultant: { label: 'Sales Consultant', class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+  admin: { label: 'Admin', class: 'bg-teal-500/10 text-teal-400' },
+  director: { label: 'Director', class: 'bg-indigo-500/10 text-indigo-400' },
+  sales_head: { label: 'Sales Head', class: 'bg-purple-500/10 text-purple-400' },
+  finance: { label: 'Finance Manager', class: 'bg-teal-500/10 text-teal-400' },
+  operations: { label: 'Operations Manager', class: 'bg-pink-500/10 text-pink-400' },
+  psa_tl: { label: 'PSA Team Leader', class: 'bg-sky-500/10 text-sky-400' },
+  psa: { label: 'PSA Consultant', class: 'bg-sky-500/10 text-sky-450' },
+  tl: { label: 'Sales Team Leader', class: 'bg-cyan-500/10 text-cyan-400' },
+  consultant: { label: 'Sales Consultant', class: 'bg-emerald-500/10 text-emerald-400' },
 };
 
 export function getRoleLabel(role: string): string {
@@ -90,7 +91,7 @@ export function getRoleLabel(role: string): string {
 export function getRoleClass(role: string): string {
   if (!role) return 'bg-slate-500/15';
   const baseRole = role.includes(':') ? role.split(':')[0] : role;
-  return ROLE_LABELS[baseRole]?.class || 'bg-slate-500/15 text-[var(--text-secondary)] border-slate-500/20';
+  return ROLE_LABELS[baseRole]?.class || 'bg-slate-500/15 text-[var(--text-secondary)]';
 }
 
 const ALL_PERMISSIONS = [
@@ -443,13 +444,16 @@ const HierarchyTreeNodeComponent = ({
   const hasChildren = node.children && node.children.length > 0;
   const canEdit = canModifySupervisorFn(node.member);
   const eligibleSupervisors = canEdit ? eligibleSupervisorsFn(node.member) : [];
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   return (
     <div className="flex flex-col items-center select-none animate-fade-in">
       {/* Node Card */}
       <div 
         onClick={() => onSelectNode(node.id)}
-        className="group relative flex flex-col gap-2.5 p-3.5 bg-[var(--bg-card)]/80 hover:bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-emerald-500/40 rounded-xl transition-all duration-300 cursor-pointer shadow-lg w-64 transform hover:-translate-y-0.5 hover:shadow-emerald-500/[0.04]"
+        className={`group relative flex flex-col gap-2.5 p-3.5 bg-[var(--bg-card)]/80 hover:bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-emerald-500/40 rounded-xl transition-all duration-300 cursor-pointer shadow-lg w-64 transform hover:-translate-y-0.5 hover:shadow-emerald-500/[0.04] ${
+          isDropdownOpen ? 'z-[60]' : 'z-10 hover:z-20'
+        }`}
       >
         <div className="flex items-center gap-3">
           {/* Avatar with hierarchy level border color indicator */}
@@ -495,18 +499,19 @@ const HierarchyTreeNodeComponent = ({
             <label className="block text-[8px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1 font-mono">
               Assign Supervisor
             </label>
-            <select
-              value={node.member.reportsTo || ''}
-              onChange={(e) => onSupervisorChange(node.id, e.target.value)}
-              className="w-full text-[10px] py-1 px-2 bg-slate-955 border border-[var(--border-color)] rounded-lg text-slate-350 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 cursor-pointer font-sans"
-            >
-              <option value="">No Supervisor (Admin)</option>
-              {eligibleSupervisors.map(sup => (
-                <option key={sup.id} value={sup.id}>
-                  {sup.name} ({sup.designation?.name || 'Supervisor'})
-                </option>
-              ))}
-            </select>
+            <CustomDropdown
+              options={[
+                { value: '', label: 'No Supervisor (Admin)' },
+                ...eligibleSupervisors.map(sup => ({
+                  value: String(sup.id),
+                  label: `${sup.name} (${sup.designation?.name || 'Supervisor'})`
+                }))
+              ]}
+              value={String(node.member.reportsTo || '')}
+              onChange={(val) => onSupervisorChange(node.id, val)}
+              onOpenChange={(val) => setIsDropdownOpen(val)}
+              className="w-full text-[10px]"
+            />
           </div>
         )}
 
@@ -2835,7 +2840,7 @@ export default function TeamManagementPage() {
 
                       {/* Designation/Role Column */}
                       <td className="py-4 px-4 w-40">
-                        <span className={`inline-block text-[9px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${roleConfig.class}`}>
+                        <span className={`inline-block text-[9px] font-extrabold px-2.5 py-1 rounded-lg capitalize ${roleConfig.class}`}>
                           {(() => {
                             const desName = member.designation?.name?.trim();
                             const deptName = member.department?.name?.trim();
@@ -2870,10 +2875,10 @@ export default function TeamManagementPage() {
                       </td>
                       <td className="py-4 px-4 text-center w-28">
                         <span
-                          className={`inline-block text-[9px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${
+                          className={`inline-block text-[9px] font-extrabold px-2.5 py-1 rounded-lg ${
                             member.isActive
-                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                              : 'bg-red-500/10 text-red-400 border-red-500/20'
+                              ? 'bg-emerald-500/10 text-emerald-400'
+                              : 'bg-red-500/10 text-red-400'
                           }`}
                         >
                           {member.isActive ? 'Active' : 'Deactivated'}
@@ -2884,7 +2889,7 @@ export default function TeamManagementPage() {
                           {hasPermission('logs:view') && (
                             <button
                               onClick={() => handleOpenActivityLogs(member)}
-                              className="p-1.5 rounded-lg border bg-[var(--bg-card)] hover:bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border-slate-805 hover:border-[var(--border-color)] transition-all cursor-pointer flex items-center justify-center"
+                              className="p-1.5 rounded-lg bg-[#1c2128] hover:bg-[#2d333b] text-slate-400 hover:text-white border border-slate-800/80 transition-all cursor-pointer flex items-center justify-center"
                               title="View Activity Logs"
                             >
                               <History className="w-4 h-4" />
@@ -2897,8 +2902,8 @@ export default function TeamManagementPage() {
                                 onClick={() => handleToggleActive(member)}
                                 className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
                                   member.isActive
-                                    ? 'bg-red-950/20 text-red-400 border-red-900/30 hover:bg-red-950/40'
-                                    : 'bg-emerald-950/20 text-emerald-400 border-emerald-900/30 hover:bg-emerald-950/40'
+                                    ? 'bg-red-950/40 text-red-400 border-red-900/50 hover:bg-red-900/30'
+                                    : 'bg-emerald-950/40 text-emerald-450 border-emerald-900/50 hover:bg-emerald-900/30'
                                 }`}
                                 title={member.isActive ? 'Deactivate Account' : 'Reactivate Account'}
                               >
@@ -2909,7 +2914,7 @@ export default function TeamManagementPage() {
                                 <button
                                   type="button"
                                   onClick={() => handleDeleteUser(member)}
-                                  className="p-1.5 rounded-lg border bg-rose-950/20 text-rose-455 border-rose-900/30 hover:bg-rose-950/40 transition-all cursor-pointer"
+                                  className="p-1.5 rounded-lg border bg-rose-950/40 text-rose-400 border-rose-900/50 hover:bg-rose-900/30 transition-all cursor-pointer"
                                   title="Permanently Delete User"
                                 >
                                   <Trash2 className="w-4 h-4" />

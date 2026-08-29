@@ -1,0 +1,11026 @@
+{
+  "where": {
+    "AND": [
+      {
+        "AND": []
+      },
+      {
+        "isActive": true
+      }
+    ]
+  },
+  "totalLeadsReturned": 25,
+  "totalCount": 33180
+}
+{
+  "timestamp": "2026-08-28T11:36:12.753Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-28T11:36:22.486Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "dqs70dc",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T11:37:09.304Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "dqs70dc",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T11:37:28.432Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "dqs70dc",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "120"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:00:57.878Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": [
+      {
+        "id": "3xlp5yz",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "131"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:01:01.398Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": [
+      {
+        "id": "3xlp5yz",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:01:04.901Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": [
+      {
+        "id": "3xlp5yz",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "120"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:01:11.644Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": [
+      {
+        "id": "3xlp5yz",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "130"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:01:18.011Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": [
+      {
+        "id": "3xlp5yz",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "131"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:01:41.191Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "dqs70dc",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "120"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:01:44.641Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "dqs70dc",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "120"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:01:52.689Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "dqs70dc",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "130"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:01:58.662Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "dqs70dc",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "131"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:02:10.481Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "dqs70dc",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "120"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:09:15.912Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "3xlp5yz",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "131"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:09:17.194Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "3xlp5yz",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "131"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:09:18.342Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": [
+      {
+        "id": "3xlp5yz",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "131"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:09:19.310Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "3xlp5yz",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "131"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:09:20.475Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "3xlp5yz",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "131"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:09:23.221Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": [
+      {
+        "id": "3xlp5yz",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "131"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:09:24.235Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "3xlp5yz",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "131"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:09:25.507Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "3xlp5yz",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "131"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:10:27.844Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "dqs70dc",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "120"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:11:10.751Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "dqs70dc",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "120"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:12:07.880Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "dqs70dc",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "120"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:12:34.198Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "dqs70dc",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "120"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:12:59.236Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "dqs70dc",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "120"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:13:36.874Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "dqs70dc",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "120"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:13:42.854Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "dqs70dc",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "120"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:18:58.757Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "dqs70dc",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "131"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:21:09.028Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "dqs70dc",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "131"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:23:17.701Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "dqs70dc",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "131"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:23:33.082Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-28T12:24:21.035Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-28T12:24:48.718Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-28T12:24:58.976Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ozi22oj",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:25:30.824Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ozi22oj",
+        "field": "city",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:25:51.462Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ozi22oj",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:26:31.576Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-28T12:27:50.799Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-28T12:28:10.385Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-28T12:28:21.757Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "9jf2h08",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:28:52.706Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "9jf2h08",
+        "field": "city",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:29:14.654Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "9jf2h08",
+        "field": "city",
+        "operator": "equals",
+        "value": "Delhi"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:31:22.502Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "rule_120",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "120"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:31:24.959Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "rule_130",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "130"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:31:27.311Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "rule_131",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "131"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T12:36:13.700Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "9jf2h08",
+        "field": "city",
+        "operator": "equals",
+        "value": "Delhi"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T13:25:00.923Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T13:25:54.834Z"
+}
+---
+{
+  "timestamp": "2026-08-28T13:25:56.352Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T15:26:55.473Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "9jf2h08",
+        "field": "city",
+        "operator": "equals",
+        "value": "Delhi"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T15:39:07.560Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-28T15:39:13.353Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "rq82zqe",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T15:39:19.252Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "rq82zqe",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T15:39:26.754Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "rq82zqe",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T15:39:32.522Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "rq82zqe",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "120"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T15:39:38.685Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "rq82zqe",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "130"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T15:39:42.392Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "rq82zqe",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "131"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T15:39:54.473Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "rq82zqe",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T15:39:58.983Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "rq82zqe",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "134"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T15:40:07.190Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "rq82zqe",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "133"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T15:40:18.572Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "rq82zqe",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "134"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T15:40:32.825Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "rq82zqe",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "135"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T15:40:43.300Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "rq82zqe",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "133"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T15:40:54.179Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "rq82zqe",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T15:41:13.738Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "rq82zqe",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "120"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T15:54:03.300Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "rq82zqe",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "120"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T15:54:31.272Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "rq82zqe",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T15:54:35.501Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "rq82zqe",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "131"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T15:54:43.195Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "rq82zqe",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "134"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T15:55:02.471Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "rq82zqe",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "134"
+      },
+      {
+        "id": "ns4rifc",
+        "logicalOperator": "AND",
+        "rules": [
+          {
+            "id": "nld1pkv",
+            "field": "customerName",
+            "operator": "equals",
+            "value": ""
+          }
+        ]
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T15:55:02.877Z"
+}
+---
+{
+  "timestamp": "2026-08-28T15:55:30.656Z"
+}
+---
+{
+  "timestamp": "2026-08-28T15:55:30.666Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "rq82zqe",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "134"
+      },
+      {
+        "id": "ns4rifc",
+        "logicalOperator": "AND",
+        "rules": [
+          {
+            "id": "nld1pkv",
+            "field": "assignedConsultantId",
+            "operator": "is_assigned_to",
+            "value": "133"
+          }
+        ]
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T15:55:53.762Z"
+}
+---
+{
+  "timestamp": "2026-08-28T15:55:56.233Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "rq82zqe",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "134"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T15:55:56.246Z"
+}
+---
+{
+  "timestamp": "2026-08-28T15:55:59.086Z"
+}
+---
+{
+  "timestamp": "2026-08-28T15:56:04.726Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "rq82zqe",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "134"
+      },
+      {
+        "id": "2jwryck",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T15:56:11.025Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "rq82zqe",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "134"
+      },
+      {
+        "id": "2jwryck",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T15:56:14.237Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "rq82zqe",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "134"
+      },
+      {
+        "id": "2jwryck",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "133"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T15:57:58.190Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "rq82zqe",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "134"
+      },
+      {
+        "id": "2jwryck",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "133"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T15:58:21.366Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "rq82zqe",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "134"
+      },
+      {
+        "id": "2jwryck",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "133"
+      },
+      {
+        "id": "2ogevps",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T15:58:26.471Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "rq82zqe",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "134"
+      },
+      {
+        "id": "2jwryck",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "133"
+      },
+      {
+        "id": "2ogevps",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T15:58:32.203Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "rq82zqe",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "134"
+      },
+      {
+        "id": "2jwryck",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "133"
+      },
+      {
+        "id": "2ogevps",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "135"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T15:58:48.919Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": [
+      {
+        "id": "rq82zqe",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "134"
+      },
+      {
+        "id": "2jwryck",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "133"
+      },
+      {
+        "id": "2ogevps",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "135"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T15:59:06.321Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "rq82zqe",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "134"
+      },
+      {
+        "id": "2jwryck",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "133"
+      },
+      {
+        "id": "2ogevps",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "135"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:01:46.856Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-28T16:01:49.940Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "19yy4ph",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:02:00.195Z"
+}
+---
+{
+  "timestamp": "2026-08-28T16:02:07.262Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "19yy4ph",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": ""
+      },
+      {
+        "id": "ht15w74",
+        "field": "assignedConsultantId",
+        "operator": "does_not_exist",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:02:08.115Z"
+}
+---
+{
+  "timestamp": "2026-08-28T16:02:08.223Z"
+}
+---
+{
+  "timestamp": "2026-08-28T16:02:25.841Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "19yy4ph",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "131"
+      },
+      {
+        "id": "ht15w74",
+        "field": "assignedConsultantId",
+        "operator": "does_not_exist",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:03:14.381Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "19yy4ph",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "131"
+      },
+      {
+        "id": "ht15w74",
+        "field": "assignedConsultantId",
+        "operator": "does_not_exist",
+        "value": ""
+      },
+      {
+        "id": "s9sapam",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:03:24.203Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "19yy4ph",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "131"
+      },
+      {
+        "id": "ht15w74",
+        "field": "assignedConsultantId",
+        "operator": "does_not_exist",
+        "value": ""
+      },
+      {
+        "id": "s9sapam",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:03:51.185Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "19yy4ph",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "131"
+      },
+      {
+        "id": "ht15w74",
+        "field": "assignedConsultantId",
+        "operator": "does_not_exist",
+        "value": ""
+      },
+      {
+        "id": "s9sapam",
+        "field": "isActive",
+        "operator": "is_true",
+        "value": "true"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:04:09.968Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "19yy4ph",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "131"
+      },
+      {
+        "id": "s9sapam",
+        "field": "isActive",
+        "operator": "is_true",
+        "value": "true"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:04:16.046Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "19yy4ph",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": ""
+      },
+      {
+        "id": "s9sapam",
+        "field": "isActive",
+        "operator": "is_true",
+        "value": "true"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:04:31.829Z"
+}
+---
+{
+  "timestamp": "2026-08-28T16:04:32.747Z"
+}
+---
+{
+  "timestamp": "2026-08-28T16:04:35.475Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "olp2rx6",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:04:36.628Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "olp2rx6",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:04:41.135Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "olp2rx6",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "134"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:04:45.070Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "olp2rx6",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "133"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:04:50.642Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "olp2rx6",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "133"
+      },
+      {
+        "id": "0eku7oe",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:04:54.693Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "olp2rx6",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "133"
+      },
+      {
+        "id": "0eku7oe",
+        "field": "isActive",
+        "operator": "is_true",
+        "value": "true"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:05:29.832Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "olp2rx6",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "133"
+      },
+      {
+        "id": "0eku7oe",
+        "field": "isActive",
+        "operator": "is_false",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:07:41.171Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "olp2rx6",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "133"
+      },
+      {
+        "id": "0eku7oe",
+        "field": "isActive",
+        "operator": "is_true",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:07:50.781Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "olp2rx6",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "133"
+      },
+      {
+        "id": "0eku7oe",
+        "field": "isActive",
+        "operator": "is_true",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:07:51.959Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "olp2rx6",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "133"
+      },
+      {
+        "id": "0eku7oe",
+        "field": "isActive",
+        "operator": "is_true",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:07:53.207Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": [
+      {
+        "id": "olp2rx6",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "133"
+      },
+      {
+        "id": "0eku7oe",
+        "field": "isActive",
+        "operator": "is_true",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:15:09.804Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": [
+      {
+        "id": "0eku7oe",
+        "field": "isActive",
+        "operator": "is_true",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:15:11.573Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:18:17.389Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:18:20.016Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:18:21.555Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:18:22.762Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:18:24.184Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:18:28.153Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:38:59.995Z"
+}
+---
+{
+  "timestamp": "2026-08-28T16:39:52.852Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "isUnreachable",
+        "operator": "is_true",
+        "value": "true"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:40:10.465Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "isActive",
+        "operator": "is_true",
+        "value": "true"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:40:12.854Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "isActive",
+        "operator": "is_false",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:40:22.703Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "mobile",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:40:25.807Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "mobile",
+        "operator": "not_equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:40:35.103Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "mobile",
+        "operator": "is_empty",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:40:52.318Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "mobile",
+        "operator": "is_not_empty",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:41:08.780Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "mobile",
+        "operator": "starts_with",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:41:11.112Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "mobile",
+        "operator": "starts_with",
+        "value": "77"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:41:23.069Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "mobile",
+        "operator": "does_not_contain",
+        "value": "77"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:42:11.647Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "mobile",
+        "operator": "does_not_contain",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:42:12.982Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "mobile",
+        "operator": "contains",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:42:15.914Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "mobile",
+        "operator": "contains",
+        "value": "45"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:42:22.433Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "mobile",
+        "operator": "contains",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:42:25.644Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "mobile",
+        "operator": "not_equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:42:52.628Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "mobile",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:43:11.725Z"
+}
+---
+{
+  "timestamp": "2026-08-28T16:43:12.749Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "mobile",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:43:15.846Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "mobile",
+        "operator": "equals",
+        "value": ": 9648152841"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:43:18.059Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "mobile",
+        "operator": "equals",
+        "value": ":9648152841"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:43:19.128Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "mobile",
+        "operator": "equals",
+        "value": "9648152841"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:43:24.725Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "mobile",
+        "operator": "equals",
+        "value": "964815284"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:43:27.316Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "mobile",
+        "operator": "equals",
+        "value": "96481528"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:43:28.183Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "mobile",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:43:34.140Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "mobile",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:43:36.692Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "mobile",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:43:43.716Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "mobile",
+        "operator": "starts_with",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:43:47.460Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "mobile",
+        "operator": "starts_with",
+        "value": "77"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:43:54.684Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "mobile",
+        "operator": "starts_with",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:43:57.380Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "mobile",
+        "operator": "starts_with",
+        "value": ": 9648152841"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:43:59.012Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "mobile",
+        "operator": "starts_with",
+        "value": " 9648152841"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:44:09.115Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "mobile",
+        "operator": "starts_with",
+        "value": " 964815284"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:44:11.927Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:44:11.963Z"
+}
+---
+{
+  "timestamp": "2026-08-28T16:44:16.848Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "customerName",
+        "operator": "contains",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:44:19.604Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "customerName",
+        "operator": "contains",
+        "value": "Test"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:44:30.338Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "customerName",
+        "operator": "contains",
+        "value": "Test"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:45:03.578Z"
+}
+---
+{
+  "timestamp": "2026-08-28T16:45:04.055Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "customerName",
+        "operator": "contains",
+        "value": "Test"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:46:04.361Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-28T16:46:12.965Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "a3wfjux",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:46:16.955Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "a3wfjux",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:46:19.412Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "a3wfjux",
+        "field": "customerName",
+        "operator": "contains",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:46:21.615Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "a3wfjux",
+        "field": "customerName",
+        "operator": "contains",
+        "value": "T"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:46:23.194Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "a3wfjux",
+        "field": "customerName",
+        "operator": "contains",
+        "value": "Test"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:46:27.398Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "a3wfjux",
+        "field": "customerName",
+        "operator": "contains",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:46:32.059Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "a3wfjux",
+        "field": "customerName",
+        "operator": "contains",
+        "value": ": 9648152841"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:46:34.392Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "a3wfjux",
+        "field": "customerName",
+        "operator": "contains",
+        "value": ":9648152841"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:46:37.948Z"
+}
+---
+{
+  "timestamp": "2026-08-28T16:46:38.214Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "a3wfjux",
+        "field": "mobile",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:46:41.037Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "a3wfjux",
+        "field": "mobile",
+        "operator": "equals",
+        "value": ": 9648152841"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:46:44.094Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "a3wfjux",
+        "field": "mobile",
+        "operator": "equals",
+        "value": ":9648152841"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:46:44.997Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "a3wfjux",
+        "field": "mobile",
+        "operator": "equals",
+        "value": "9648152841"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:46:52.195Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "a3wfjux",
+        "field": "mobile",
+        "operator": "equals",
+        "value": "964815284"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:46:54.652Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "a3wfjux",
+        "field": "mobile",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:46:57.763Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:48:10.946Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "customerName",
+        "operator": "contains",
+        "value": "Test"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:48:16.944Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zgdbmvt",
+        "field": "customerName",
+        "operator": "contains",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:48:28.722Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-28T16:48:34.677Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:48:35.587Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:48:45.471Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:49:35.711Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T16:49:36.794Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T17:01:46.406Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T17:01:48.403Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T17:14:03.273Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T17:14:59.118Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T17:19:23.518Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T17:19:25.197Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T18:53:27.132Z"
+}
+---
+{
+  "timestamp": "2026-08-28T18:53:27.554Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T18:59:23.363Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "lz0y473",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:04:34.170Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "lz0y473",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:04:43.156Z"
+}
+---
+{
+  "timestamp": "2026-08-28T19:05:03.698Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "lz0y473",
+        "field": "assignedTlId",
+        "operator": "is_assigned_to",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:05:06.111Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "lz0y473",
+        "field": "assignedTlId",
+        "operator": "is_assigned_to",
+        "value": "null"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:05:09.602Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "lz0y473",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:05:15.229Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "lz0y473",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "120"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:05:19.870Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "lz0y473",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "131"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:05:32.185Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "lz0y473",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:05:56.195Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "lz0y473",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": "3"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:06:22.531Z"
+}
+---
+{
+  "timestamp": "2026-08-28T19:07:53.487Z"
+}
+---
+{
+  "timestamp": "2026-08-28T19:07:54.970Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:07:55.475Z"
+}
+---
+{
+  "timestamp": "2026-08-28T19:07:56.842Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:07:58.138Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:08:01.539Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "leadCode",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:08:06.725Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "leadCode",
+        "operator": "contains",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:08:11.172Z"
+}
+---
+{
+  "timestamp": "2026-08-28T19:08:11.563Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "leadCode",
+        "operator": "contains",
+        "value": "SL"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:08:22.447Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "leadCode",
+        "operator": "contains",
+        "value": "SL-"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:08:27.819Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "leadCode",
+        "operator": "contains",
+        "value": "SL-77"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:08:32.688Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "leadCode",
+        "operator": "contains",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:08:34.278Z"
+}
+---
+{
+  "timestamp": "2026-08-28T19:08:35.093Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "leadCode",
+        "operator": "contains",
+        "value": "89"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:08:50.785Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "leadCode",
+        "operator": "contains",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:10:11.322Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "createdAt",
+        "operator": "on",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:11:35.956Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "createdAt",
+        "operator": "on",
+        "value": "2026-08-28"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:11:47.027Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "createdAt",
+        "operator": "before",
+        "value": "2026-08-28"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:11:56.793Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "createdAt",
+        "operator": "before",
+        "value": "2026-08-29"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:12:14.146Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "createdAt",
+        "operator": "after",
+        "value": "2026-08-29"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:12:18.524Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "createdAt",
+        "operator": "after",
+        "value": "2026-08-27"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:12:24.706Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "createdAt",
+        "operator": "between",
+        "value": "2026-08-27"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:12:29.314Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "createdAt",
+        "operator": "today",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:12:34.029Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "createdAt",
+        "operator": "yesterday",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:12:37.506Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "createdAt",
+        "operator": "tomorrow",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:12:46.161Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "createdAt",
+        "operator": "this_month",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:13:08.484Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "createdAt",
+        "operator": "in_the_last_x_days",
+        "value": "2026-08-28"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:13:09.752Z"
+}
+---
+{
+  "timestamp": "2026-08-28T19:13:27.491Z"
+}
+---
+{
+  "timestamp": "2026-08-28T19:13:28.619Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "createdAt",
+        "operator": "this_week",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:13:39.346Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "createdAt",
+        "operator": "today",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:13:44.322Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "createdAt",
+        "operator": "last_week",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:14:03.751Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "createdAt",
+        "operator": "this_month",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:14:05.555Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "createdAt",
+        "operator": "last_month",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:14:15.077Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "createdAt",
+        "operator": "this_year",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:14:30.417Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "createdAt",
+        "operator": "is_overdue",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:14:47.828Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "createdAt",
+        "operator": "is_due_today",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:14:53.054Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "createdAt",
+        "operator": "is_due_today",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:14:56.841Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "createdAt",
+        "operator": "changed_since",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:15:03.016Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "createdAt",
+        "operator": "changed_since",
+        "value": "2026-08-27"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:15:27.409Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "createdAt",
+        "operator": "changed_before",
+        "value": "2026-08-27"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:22:05.919Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:22:30.160Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": [
+      {
+        "id": "gbfpuz0",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:23:04.024Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": [
+      {
+        "id": "gbfpuz0",
+        "field": "createdAt",
+        "operator": "on",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:23:29.180Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": [
+      {
+        "id": "gbfpuz0",
+        "field": "createdAt",
+        "operator": "in_the_last_x_days",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:23:39.279Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": [
+      {
+        "id": "gbfpuz0",
+        "field": "createdAt",
+        "operator": "in_the_last_x_days",
+        "value": "30"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:42:46.551Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "createdAt",
+        "operator": "changed_before",
+        "value": "2026-08-27"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:42:47.139Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "createdAt",
+        "operator": "changed_before",
+        "value": "2026-08-27"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:42:56.647Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ba1zjuy",
+        "field": "createdAt",
+        "operator": "changed_before",
+        "value": "2026-08-27"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-28T19:43:05.246Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-29T08:06:15.084Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-29T08:06:20.330Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:06:35.384Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "createdAt",
+        "operator": "on",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:06:40.800Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "createdAt",
+        "operator": "on",
+        "value": "2026-08-19"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:06:58.936Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "createdAt",
+        "operator": "on",
+        "value": "2026-08-12"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:07:03.951Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "createdAt",
+        "operator": "on",
+        "value": "2026-08-20"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:07:14.401Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "createdAt",
+        "operator": "on",
+        "value": "2026-08-21"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:07:35.329Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "updatedAt",
+        "operator": "on",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:07:48.089Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "updatedAt",
+        "operator": "in_the_last_x_days",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:07:52.762Z"
+}
+---
+{
+  "timestamp": "2026-08-29T08:07:53.051Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "updatedAt",
+        "operator": "in_the_last_x_days",
+        "value": "10"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:07:58.780Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "updatedAt",
+        "operator": "in_the_last_x_days",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:08:00.671Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "updatedAt",
+        "operator": "in_the_last_x_days",
+        "value": "5"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:08:18.839Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "createdAt",
+        "operator": "on",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:08:41.076Z"
+}
+---
+{
+  "timestamp": "2026-08-29T08:08:43.244Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "createdAt",
+        "operator": "in_the_last_x_days",
+        "value": "2"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:08:48.812Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "createdAt",
+        "operator": "in_the_last_x_days",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:08:50.090Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "createdAt",
+        "operator": "in_the_last_x_days",
+        "value": "5"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:08:54.742Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "createdAt",
+        "operator": "in_the_last_x_days",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:08:56.430Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "createdAt",
+        "operator": "in_the_last_x_days",
+        "value": "10"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:08:57.713Z"
+}
+---
+{
+  "timestamp": "2026-08-29T08:09:01.449Z"
+}
+---
+{
+  "timestamp": "2026-08-29T08:09:01.942Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "createdAt",
+        "operator": "in_the_last_x_days",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:09:03.050Z"
+}
+---
+{
+  "timestamp": "2026-08-29T08:09:04.125Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "createdAt",
+        "operator": "in_the_last_x_days",
+        "value": "30"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:09:08.923Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "createdAt",
+        "operator": "in_the_last_x_days",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:09:11.514Z"
+}
+---
+{
+  "timestamp": "2026-08-29T08:09:11.905Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "createdAt",
+        "operator": "in_the_last_x_days",
+        "value": "25"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:09:16.759Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "createdAt",
+        "operator": "in_the_last_x_days",
+        "value": "2"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:09:17.596Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "createdAt",
+        "operator": "in_the_last_x_days",
+        "value": "20"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:09:33.608Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "createdAt",
+        "operator": "in_the_last_x_days",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:09:35.656Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "createdAt",
+        "operator": "in_the_next_x_days",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:09:38.787Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "createdAt",
+        "operator": "in_the_next_x_days",
+        "value": "5"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:09:41.635Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "createdAt",
+        "operator": "in_the_next_x_days",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:10:01.260Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "createdAt",
+        "operator": "changed_since",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:10:07.279Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "createdAt",
+        "operator": "is_due_today",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:12:57.657Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "followupAt",
+        "operator": "on",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:13:00.684Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "followupAt",
+        "operator": "on",
+        "value": "2026-08-28"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:13:06.321Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "followupAt",
+        "operator": "on",
+        "value": "2026-08-29"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:14:08.934Z"
+}
+---
+{
+  "timestamp": "2026-08-29T08:14:09.956Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "followupAt",
+        "operator": "on",
+        "value": "2026-08-29"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:14:18.685Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "followupAt",
+        "operator": "on",
+        "value": "2026-08-26"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:14:27.837Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "followupAt",
+        "operator": "on",
+        "value": "2026-08-13"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:14:35.934Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "followupAt",
+        "operator": "on",
+        "value": "2026-08-15"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:14:44.901Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "followupAt",
+        "operator": "on",
+        "value": "2026-08-18"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:14:50.494Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "followupAt",
+        "operator": "on",
+        "value": "2026-08-17"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:14:55.087Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "followupAt",
+        "operator": "on",
+        "value": "2026-08-24"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:15:00.304Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "followupAt",
+        "operator": "on",
+        "value": "2026-09-01"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:15:04.872Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "followupAt",
+        "operator": "on",
+        "value": "2026-08-01"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:15:07.740Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "followupAt",
+        "operator": "on",
+        "value": "2026-08-25"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:15:17.566Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "followupAt",
+        "operator": "on",
+        "value": "2026-08-24"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:15:21.968Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "followupAt",
+        "operator": "on",
+        "value": "2026-08-28"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:15:27.659Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "followupAt",
+        "operator": "on",
+        "value": "2026-08-26"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:15:58.043Z"
+}
+---
+{
+  "timestamp": "2026-08-29T08:16:00.030Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "followupAt",
+        "operator": "on",
+        "value": "2026-08-26"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:16:09.017Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "followupAt",
+        "operator": "in_the_last_x_days",
+        "value": "2026-08-26"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:16:11.364Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "followupAt",
+        "operator": "in_the_last_x_days",
+        "value": "10"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:16:14.396Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "followupAt",
+        "operator": "in_the_last_x_days",
+        "value": "0"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:16:17.629Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "followupAt",
+        "operator": "in_the_last_x_days",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:16:20.641Z"
+}
+---
+{
+  "timestamp": "2026-08-29T08:16:21.101Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "followupAt",
+        "operator": "in_the_last_x_days",
+        "value": "0"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:16:22.576Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "followupAt",
+        "operator": "in_the_last_x_days",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:16:23.452Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "followupAt",
+        "operator": "in_the_last_x_days",
+        "value": "10"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:16:39.171Z"
+}
+---
+{
+  "timestamp": "2026-08-29T08:16:39.187Z"
+}
+---
+{
+  "timestamp": "2026-08-29T08:16:40.146Z"
+}
+---
+{
+  "timestamp": "2026-08-29T08:16:41.628Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "followupAt",
+        "operator": "in_the_last_x_days",
+        "value": "30"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:16:49.267Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "followupAt",
+        "operator": "in_the_last_x_days",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:17:07.898Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "updatedAt",
+        "operator": "on",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:17:17.743Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "updatedAt",
+        "operator": "on",
+        "value": "2026-08-26"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:17:38.043Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "leadSource",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:17:44.312Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "leadSource",
+        "operator": "in_list",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:17:50.381Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "leadSource",
+        "operator": "in_list",
+        "value": "whatsapp"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:17:56.228Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "leadSource",
+        "operator": "not_in_list",
+        "value": "whatsapp"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:18:05.843Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "leadSource",
+        "operator": "not_equals",
+        "value": "whatsapp"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:18:10.890Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "leadSource",
+        "operator": "equals",
+        "value": "whatsapp"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:18:37.528Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:18:48.834Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "134"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:20:08.871Z"
+}
+---
+{
+  "timestamp": "2026-08-29T08:20:08.992Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "134"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:20:12.991Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "134"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:20:17.840Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "134"
+      },
+      {
+        "id": "v5p5y4u",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:23:18.087Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-29T08:23:26.167Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1pw0ibc",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:23:32.402Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1pw0ibc",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      },
+      {
+        "id": "6z0ilbu",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:25:13.971Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "status",
+        "operator": "equals",
+        "value": ""
+      },
+      {
+        "id": "v5p5y4u",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:25:17.854Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "status",
+        "operator": "equals",
+        "value": "1"
+      },
+      {
+        "id": "v5p5y4u",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:25:22.988Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "status",
+        "operator": "equals",
+        "value": "1"
+      },
+      {
+        "id": "v5p5y4u",
+        "field": "status",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:25:27.906Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "status",
+        "operator": "equals",
+        "value": "1"
+      },
+      {
+        "id": "v5p5y4u",
+        "field": "status",
+        "operator": "equals",
+        "value": "3"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:25:43.476Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "status",
+        "operator": "equals",
+        "value": "9"
+      },
+      {
+        "id": "v5p5y4u",
+        "field": "status",
+        "operator": "equals",
+        "value": "3"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:25:46.971Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "status",
+        "operator": "equals",
+        "value": "9"
+      },
+      {
+        "id": "v5p5y4u",
+        "field": "status",
+        "operator": "equals",
+        "value": "13"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:29:52.490Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "status",
+        "operator": "equals",
+        "value": "9"
+      },
+      {
+        "id": "v5p5y4u",
+        "field": "status",
+        "operator": "equals",
+        "value": "13"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:30:12.219Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "status",
+        "operator": "equals",
+        "value": "order_punched"
+      },
+      {
+        "id": "v5p5y4u",
+        "field": "status",
+        "operator": "equals",
+        "value": "13"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:30:24.086Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "status",
+        "operator": "equals",
+        "value": "order_punched"
+      },
+      {
+        "id": "v5p5y4u",
+        "field": "status",
+        "operator": "equals",
+        "value": "13"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:30:32.046Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "ngt0z6d",
+        "field": "status",
+        "operator": "equals",
+        "value": "order_punched"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:30:35.823Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:30:37.215Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "tr32gfo",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:30:43.259Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "tr32gfo",
+        "field": "status",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:30:46.933Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "tr32gfo",
+        "field": "status",
+        "operator": "equals",
+        "value": "order_punched"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:30:54.715Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "tr32gfo",
+        "field": "status",
+        "operator": "equals",
+        "value": "order_punched"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:31:07.057Z"
+}
+---
+{
+  "timestamp": "2026-08-29T08:31:23.381Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-29T08:31:23.410Z"
+}
+---
+{
+  "timestamp": "2026-08-29T08:31:28.698Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ipdiisa",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:32:06.913Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ipdiisa",
+        "field": "status",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:32:10.605Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ipdiisa",
+        "field": "status",
+        "operator": "equals",
+        "value": "order_punched"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:36:11.240Z"
+}
+---
+{
+  "timestamp": "2026-08-29T08:36:15.808Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:36:24.804Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:36:26.441Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "wzdnemx",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:36:35.405Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "wzdnemx",
+        "field": "status",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:36:40.935Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "wzdnemx",
+        "field": "status",
+        "operator": "equals",
+        "value": "order_punched"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:38:46.134Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-29T08:38:47.184Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1rt6jqo",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:38:52.268Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1rt6jqo",
+        "field": "status",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:39:01.533Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1rt6jqo",
+        "field": "status",
+        "operator": "equals",
+        "value": "order_punched"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:39:11.521Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1rt6jqo",
+        "field": "status",
+        "operator": "equals",
+        "value": "13"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:41:02.719Z"
+}
+---
+{
+  "timestamp": "2026-08-29T08:41:04.985Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:41:17.963Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "status",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:41:25.871Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "status",
+        "operator": "equals",
+        "value": "13"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:41:37.437Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "status",
+        "operator": "equals",
+        "value": "order_punched"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:48:01.893Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "status",
+        "operator": "equals",
+        "value": "order_punched"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:48:10.207Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "status",
+        "operator": "equals",
+        "value": "13"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:48:27.979Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "status",
+        "operator": "equals",
+        "value": "4"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:48:47.159Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "status",
+        "operator": "equals",
+        "value": "5"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:49:52.568Z"
+}
+---
+{
+  "timestamp": "2026-08-29T08:49:53.368Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "isActive",
+        "operator": "is_false",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:50:02.368Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "isActive",
+        "operator": "is_false",
+        "value": ""
+      },
+      {
+        "id": "qd5oris",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:50:05.291Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "isActive",
+        "operator": "is_false",
+        "value": ""
+      },
+      {
+        "id": "qd5oris",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:50:14.016Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "isActive",
+        "operator": "is_false",
+        "value": ""
+      },
+      {
+        "id": "qd5oris",
+        "field": "status",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:50:18.091Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "isActive",
+        "operator": "is_false",
+        "value": ""
+      },
+      {
+        "id": "qd5oris",
+        "field": "status",
+        "operator": "equals",
+        "value": "4"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:50:26.738Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "isActive",
+        "operator": "is_false",
+        "value": ""
+      },
+      {
+        "id": "qd5oris",
+        "field": "status",
+        "operator": "equals",
+        "value": "4"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:50:30.842Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "isActive",
+        "operator": "is_false",
+        "value": ""
+      },
+      {
+        "id": "qd5oris",
+        "field": "status",
+        "operator": "equals",
+        "value": "4"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:50:38.823Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "isActive",
+        "operator": "is_false",
+        "value": ""
+      },
+      {
+        "id": "qd5oris",
+        "field": "status",
+        "operator": "equals",
+        "value": "4"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:50:42.354Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "isActive",
+        "operator": "is_false",
+        "value": ""
+      },
+      {
+        "id": "qd5oris",
+        "field": "status",
+        "operator": "equals",
+        "value": "4"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:50:46.252Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "isActive",
+        "operator": "is_false",
+        "value": ""
+      },
+      {
+        "id": "qd5oris",
+        "field": "status",
+        "operator": "equals",
+        "value": "4"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:50:51.070Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "isActive",
+        "operator": "is_false",
+        "value": ""
+      },
+      {
+        "id": "qd5oris",
+        "field": "status",
+        "operator": "equals",
+        "value": "4"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:50:56.637Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "isActive",
+        "operator": "is_false",
+        "value": ""
+      },
+      {
+        "id": "qd5oris",
+        "field": "status",
+        "operator": "equals",
+        "value": "4"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:51:04.794Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "isActive",
+        "operator": "is_false",
+        "value": ""
+      },
+      {
+        "id": "qd5oris",
+        "field": "status",
+        "operator": "equals",
+        "value": "4"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:51:23.271Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "isActive",
+        "operator": "is_false",
+        "value": ""
+      },
+      {
+        "id": "qd5oris",
+        "field": "status",
+        "operator": "equals",
+        "value": "4"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:51:36.935Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "isActive",
+        "operator": "is_false",
+        "value": ""
+      },
+      {
+        "id": "qd5oris",
+        "field": "status",
+        "operator": "equals",
+        "value": "4"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:51:48.405Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "isActive",
+        "operator": "is_false",
+        "value": ""
+      },
+      {
+        "id": "qd5oris",
+        "field": "status",
+        "operator": "equals",
+        "value": "4"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:51:55.140Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "isActive",
+        "operator": "is_false",
+        "value": ""
+      },
+      {
+        "id": "qd5oris",
+        "field": "status",
+        "operator": "equals",
+        "value": "4"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:52:11.346Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "isActive",
+        "operator": "is_false",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:52:27.970Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "isActive",
+        "operator": "is_false",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:53:00.087Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "status",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:53:09.066Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "status",
+        "operator": "equals",
+        "value": "order_punched"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:53:17.595Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "status",
+        "operator": "equals",
+        "value": "13"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:57:14.623Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "status",
+        "operator": "equals",
+        "value": "13"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T08:57:23.059Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "status",
+        "operator": "equals",
+        "value": "1"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T09:00:12.270Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "3uqrshl",
+        "field": "status",
+        "operator": "equals",
+        "value": "0"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T09:01:18.472Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-29T09:01:23.341Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "8zwt6ky",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T09:01:33.373Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "8zwt6ky",
+        "field": "status",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T09:01:38.251Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "8zwt6ky",
+        "field": "status",
+        "operator": "equals",
+        "value": "1"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T09:01:54.632Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "8zwt6ky",
+        "field": "status",
+        "operator": "equals",
+        "value": "2"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T09:01:55.403Z"
+}
+---
+{
+  "timestamp": "2026-08-29T09:02:13.235Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "8zwt6ky",
+        "field": "status",
+        "operator": "equals",
+        "value": "3"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T09:02:39.890Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "8zwt6ky",
+        "field": "status",
+        "operator": "equals",
+        "value": "4"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T09:03:10.841Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "8zwt6ky",
+        "field": "status",
+        "operator": "equals",
+        "value": "5"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T09:03:57.451Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "8zwt6ky",
+        "field": "status",
+        "operator": "equals",
+        "value": "5"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T10:54:50.176Z"
+}
+---
+{
+  "timestamp": "2026-08-29T10:54:51.748Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "n39b1nk",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T10:54:54.863Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "n39b1nk",
+        "field": "status",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T10:54:55.933Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "n39b1nk",
+        "field": "status",
+        "operator": "equals",
+        "value": "1"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T10:56:46.887Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "n39b1nk",
+        "field": "status",
+        "operator": "equals",
+        "value": "2"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T10:56:55.637Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "n39b1nk",
+        "field": "status",
+        "operator": "equals",
+        "value": "3"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T10:57:04.588Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "n39b1nk",
+        "field": "status",
+        "operator": "equals",
+        "value": "4"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T10:57:15.690Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "n39b1nk",
+        "field": "status",
+        "operator": "equals",
+        "value": "4"
+      },
+      {
+        "id": "kh3h3n6",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T10:57:25.329Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "n39b1nk",
+        "field": "status",
+        "operator": "equals",
+        "value": "4"
+      },
+      {
+        "id": "kh3h3n6",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T10:57:31.051Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "n39b1nk",
+        "field": "status",
+        "operator": "equals",
+        "value": "4"
+      },
+      {
+        "id": "kh3h3n6",
+        "field": "status",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T10:57:44.962Z"
+}
+---
+{
+  "timestamp": "2026-08-29T10:57:46.828Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "n39b1nk",
+        "field": "status",
+        "operator": "equals",
+        "value": "4"
+      },
+      {
+        "id": "kh3h3n6",
+        "field": "isActive",
+        "operator": "is_true",
+        "value": "true"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T10:57:48.227Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "n39b1nk",
+        "field": "status",
+        "operator": "equals",
+        "value": "4"
+      },
+      {
+        "id": "kh3h3n6",
+        "field": "isActive",
+        "operator": "is_false",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T10:58:14.457Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "n39b1nk",
+        "field": "status",
+        "operator": "equals",
+        "value": "5"
+      },
+      {
+        "id": "kh3h3n6",
+        "field": "isActive",
+        "operator": "is_false",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T10:58:27.720Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "n39b1nk",
+        "field": "status",
+        "operator": "equals",
+        "value": "5"
+      },
+      {
+        "id": "kh3h3n6",
+        "field": "isActive",
+        "operator": "is_true",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:00:07.009Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "n39b1nk",
+        "field": "status",
+        "operator": "equals",
+        "value": "5"
+      },
+      {
+        "id": "kh3h3n6",
+        "field": "isActive",
+        "operator": "is_true",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:00:18.201Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "n39b1nk",
+        "field": "status",
+        "operator": "equals",
+        "value": "5"
+      },
+      {
+        "id": "kh3h3n6",
+        "field": "isActive",
+        "operator": "is_true",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:00:21.230Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "n39b1nk",
+        "field": "status",
+        "operator": "equals",
+        "value": "5"
+      },
+      {
+        "id": "kh3h3n6",
+        "field": "isActive",
+        "operator": "is_true",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:00:37.886Z"
+}
+---
+{
+  "timestamp": "2026-08-29T11:00:39.002Z"
+}
+---
+{
+  "timestamp": "2026-08-29T11:00:40.108Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "n39b1nk",
+        "field": "status",
+        "operator": "equals",
+        "value": "5"
+      },
+      {
+        "id": "kh3h3n6",
+        "field": "isActive",
+        "operator": "is_true",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:00:40.925Z"
+}
+---
+{
+  "timestamp": "2026-08-29T11:00:41.420Z"
+}
+---
+{
+  "timestamp": "2026-08-29T11:01:24.515Z"
+}
+---
+{
+  "timestamp": "2026-08-29T11:01:25.732Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "n39b1nk",
+        "field": "status",
+        "operator": "equals",
+        "value": "5"
+      },
+      {
+        "id": "kh3h3n6",
+        "field": "isActive",
+        "operator": "is_true",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:01:26.790Z"
+}
+---
+{
+  "timestamp": "2026-08-29T11:01:35.340Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "n39b1nk",
+        "field": "status",
+        "operator": "equals",
+        "value": "5"
+      },
+      {
+        "id": "kh3h3n6",
+        "field": "isActive",
+        "operator": "is_true",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:03:28.903Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "n39b1nk",
+        "field": "status",
+        "operator": "equals",
+        "value": "5"
+      },
+      {
+        "id": "kh3h3n6",
+        "field": "isActive",
+        "operator": "is_true",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:03:51.235Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "n39b1nk",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": ""
+      },
+      {
+        "id": "kh3h3n6",
+        "field": "isActive",
+        "operator": "is_true",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:03:58.016Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "n39b1nk",
+        "field": "sanctionedLoadKw",
+        "operator": "is_positive",
+        "value": ""
+      },
+      {
+        "id": "kh3h3n6",
+        "field": "isActive",
+        "operator": "is_true",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:03:59.788Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "n39b1nk",
+        "field": "sanctionedLoadKw",
+        "operator": "is_positive",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:04:08.669Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "n39b1nk",
+        "field": "sanctionedLoadKw",
+        "operator": "is_negative",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:04:14.179Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "n39b1nk",
+        "field": "sanctionedLoadKw",
+        "operator": "is_zero",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:04:28.031Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "n39b1nk",
+        "field": "address",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:05:53.629Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "n39b1nk",
+        "field": "address",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:13:59.904Z"
+}
+---
+{
+  "timestamp": "2026-08-29T11:13:59.991Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "480dadf",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:14:07.999Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "480dadf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:14:11.872Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "480dadf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": "3"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:14:18.124Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "480dadf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": "3"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:14:23.762Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "480dadf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:14:28.943Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "480dadf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": "3"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:14:30.503Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "480dadf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": "3"
+      },
+      {
+        "id": "m3lu4xj",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:14:38.790Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "480dadf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": "3"
+      },
+      {
+        "id": "m3lu4xj",
+        "field": "isActive",
+        "operator": "is_true",
+        "value": "true"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:14:53.748Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "480dadf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": "3"
+      },
+      {
+        "id": "m3lu4xj",
+        "field": "city",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:14:56.781Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "480dadf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": "3"
+      },
+      {
+        "id": "m3lu4xj",
+        "field": "city",
+        "operator": "equals",
+        "value": "P"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:14:59.232Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "480dadf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": "3"
+      },
+      {
+        "id": "m3lu4xj",
+        "field": "city",
+        "operator": "equals",
+        "value": "Prayagraj"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:14:59.524Z"
+}
+---
+{
+  "timestamp": "2026-08-29T11:15:07.633Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "480dadf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": "3"
+      },
+      {
+        "id": "m3lu4xj",
+        "field": "city",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:15:10.160Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "480dadf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": "3"
+      },
+      {
+        "id": "m3lu4xj",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:15:27.106Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "480dadf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": "3"
+      },
+      {
+        "id": "m3lu4xj",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:18:49.551Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "480dadf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": "3"
+      },
+      {
+        "id": "m3lu4xj",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:18:54.793Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "480dadf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": "3"
+      },
+      {
+        "id": "m3lu4xj",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:18:57.918Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "480dadf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": "3"
+      },
+      {
+        "id": "m3lu4xj",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:19:07.271Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "m3lu4xj",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:19:08.517Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:19:09.654Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "r76uu0q",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:19:26.884Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "r76uu0q",
+        "field": "status",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:19:29.571Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "r76uu0q",
+        "field": "status",
+        "operator": "equals",
+        "value": "5"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:20:15.249Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-29T11:20:16.220Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "13vkndp",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:20:20.237Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "13vkndp",
+        "field": "status",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:20:23.686Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "13vkndp",
+        "field": "status",
+        "operator": "equals",
+        "value": "5"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:20:35.057Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "13vkndp",
+        "field": "status",
+        "operator": "equals",
+        "value": "5"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:20:35.932Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "13vkndp",
+        "field": "status",
+        "operator": "equals",
+        "value": "5"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:20:39.503Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "13vkndp",
+        "field": "status",
+        "operator": "equals",
+        "value": "5"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:20:40.874Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "13vkndp",
+        "field": "status",
+        "operator": "equals",
+        "value": "5"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:20:51.489Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "13vkndp",
+        "field": "status",
+        "operator": "equals",
+        "value": "5"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:21:00.736Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "13vkndp",
+        "field": "status",
+        "operator": "equals",
+        "value": "5"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:21:26.287Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "13vkndp",
+        "field": "status",
+        "operator": "equals",
+        "value": "5"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:33:03.569Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-29T11:33:42.527Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-29T11:33:59.082Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-29T11:34:26.722Z"
+}
+---
+{
+  "timestamp": "2026-08-29T11:34:27.838Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ug05x9u",
+        "field": "leadCode",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:34:29.368Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ug05x9u",
+        "field": "leadCode",
+        "operator": "equals",
+        "value": "33"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:34:31.634Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ug05x9u",
+        "field": "leadCode",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:34:36.930Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ug05x9u",
+        "field": "city",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:34:40.342Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ug05x9u",
+        "field": "city",
+        "operator": "equals",
+        "value": "Pr"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:34:41.569Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ug05x9u",
+        "field": "city",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:34:43.155Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ug05x9u",
+        "field": "city",
+        "operator": "equals",
+        "value": "jhund"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:34:43.957Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ug05x9u",
+        "field": "city",
+        "operator": "equals",
+        "value": "jhun"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:34:46.440Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ug05x9u",
+        "field": "city",
+        "operator": "equals",
+        "value": "jhunsi"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:34:54.193Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "ug05x9u",
+        "field": "city",
+        "operator": "equals",
+        "value": "jhunsi"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:50:58.619Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:50:59.334Z"
+}
+---
+{
+  "timestamp": "2026-08-29T11:51:00.720Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:51:03.334Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "y9xl7ka",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:51:39.132Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "y9xl7ka",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:51:44.306Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "y9xl7ka",
+        "field": "assignedConsultantId",
+        "operator": "does_not_exist",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:51:58.991Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "y9xl7ka",
+        "field": "assignedConsultantId",
+        "operator": "does_not_exist",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:52:09.193Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "y9xl7ka",
+        "field": "assignedConsultantId",
+        "operator": "does_not_exist",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:52:26.573Z"
+}
+---
+{
+  "timestamp": "2026-08-29T11:52:28.004Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "y9xl7ka",
+        "field": "assignedConsultantId",
+        "operator": "does_not_exist",
+        "value": ""
+      },
+      {
+        "id": "sq2flqw",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:52:29.277Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "y9xl7ka",
+        "field": "assignedConsultantId",
+        "operator": "does_not_exist",
+        "value": ""
+      },
+      {
+        "id": "sq2flqw",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:52:31.968Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "y9xl7ka",
+        "field": "assignedConsultantId",
+        "operator": "does_not_exist",
+        "value": ""
+      },
+      {
+        "id": "sq2flqw",
+        "field": "assignedManagerId",
+        "operator": "does_not_exist",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T11:53:17.693Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "y9xl7ka",
+        "field": "assignedConsultantId",
+        "operator": "does_not_exist",
+        "value": ""
+      },
+      {
+        "id": "sq2flqw",
+        "field": "assignedManagerId",
+        "operator": "does_not_exist",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:08:56.612Z"
+}
+---
+{
+  "timestamp": "2026-08-29T12:48:36.503Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-29T12:49:17.287Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:49:23.589Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "connectionNumber",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:49:25.393Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "connectionNumber",
+        "operator": "not_equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:49:28.027Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "connectionNumber",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:50:03.812Z"
+}
+---
+{
+  "timestamp": "2026-08-29T12:50:05.004Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "connectionNumber",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:50:09.995Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "connectionNumber",
+        "operator": "is_empty",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:50:20.726Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "connectionNumber",
+        "operator": "is_not_empty",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:50:48.538Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "connectionNumber",
+        "operator": "is_not_empty",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:50:49.838Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "connectionNumber",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:51:00.104Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "connectionNumber",
+        "operator": "equals",
+        "value": "2197119000"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:51:11.807Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "connectionNumber",
+        "operator": "not_equals",
+        "value": "2197119000"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:51:32.706Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "connectionNumber",
+        "operator": "contains",
+        "value": "2197119000"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:51:41.011Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "connectionNumber",
+        "operator": "starts_with",
+        "value": "2197119000"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:51:44.031Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "connectionNumber",
+        "operator": "starts_with",
+        "value": "21971"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:51:53.405Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "connectionNumber",
+        "operator": "starts_with",
+        "value": "2197"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:51:53.975Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "connectionNumber",
+        "operator": "starts_with",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:54:36.745Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "discomName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:54:45.504Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "discomName",
+        "operator": "equals",
+        "value": "U"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:54:46.072Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "discomName",
+        "operator": "equals",
+        "value": "UPP"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:54:47.250Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "discomName",
+        "operator": "equals",
+        "value": "UPPCL"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:54:56.686Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "discomName",
+        "operator": "is_empty",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:55:13.612Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "discomName",
+        "operator": "starts_with",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:55:15.652Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "discomName",
+        "operator": "starts_with",
+        "value": "A"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:55:20.103Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "discomName",
+        "operator": "starts_with",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:55:20.872Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "discomName",
+        "operator": "starts_with",
+        "value": "u"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:55:42.801Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "discomName",
+        "operator": "starts_with",
+        "value": "u"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:56:03.147Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "discomName",
+        "operator": "starts_with",
+        "value": "u"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:56:05.878Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "discomName",
+        "operator": "starts_with",
+        "value": "u"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:56:08.186Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "discomName",
+        "operator": "starts_with",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:58:09.342Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "statusSub",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:59:19.856Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "statusSub",
+        "operator": "equals",
+        "value": "hot"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:59:25.707Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "statusSub",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:59:28.582Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "statusSub",
+        "operator": "equals",
+        "value": "war"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T12:59:31.926Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "statusSub",
+        "operator": "equals",
+        "value": "warm"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:01:49.844Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "b0snl4u",
+        "field": "statusSub",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:01:54.169Z"
+}
+---
+{
+  "timestamp": "2026-08-29T13:01:54.686Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "jl1okg8",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:02:46.363Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "jl1okg8",
+        "field": "status",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:03:21.303Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "jl1okg8",
+        "field": "status",
+        "operator": "equals",
+        "value": "4"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:03:36.988Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "jl1okg8",
+        "field": "status",
+        "operator": "equals",
+        "value": "4"
+      },
+      {
+        "id": "w9uzsac",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:03:40.066Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "jl1okg8",
+        "field": "status",
+        "operator": "equals",
+        "value": "4"
+      },
+      {
+        "id": "w9uzsac",
+        "field": "statusSub",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:03:43.513Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "jl1okg8",
+        "field": "status",
+        "operator": "equals",
+        "value": "4"
+      },
+      {
+        "id": "w9uzsac",
+        "field": "statusSub",
+        "operator": "contains",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:03:44.975Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "jl1okg8",
+        "field": "status",
+        "operator": "equals",
+        "value": "4"
+      },
+      {
+        "id": "w9uzsac",
+        "field": "statusSub",
+        "operator": "contains",
+        "value": "p"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:03:46.173Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "jl1okg8",
+        "field": "status",
+        "operator": "equals",
+        "value": "4"
+      },
+      {
+        "id": "w9uzsac",
+        "field": "statusSub",
+        "operator": "contains",
+        "value": "price"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:04:02.254Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "jl1okg8",
+        "field": "status",
+        "operator": "equals",
+        "value": "14"
+      },
+      {
+        "id": "w9uzsac",
+        "field": "statusSub",
+        "operator": "contains",
+        "value": "price"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:04:22.361Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "w9uzsac",
+        "field": "statusSub",
+        "operator": "contains",
+        "value": "price"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:04:27.140Z"
+}
+---
+{
+  "timestamp": "2026-08-29T13:04:27.156Z"
+}
+---
+{
+  "timestamp": "2026-08-29T13:04:27.465Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "w9uzsac",
+        "field": "statusSub",
+        "operator": "contains",
+        "value": "price high"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:04:35.873Z"
+}
+---
+{
+  "timestamp": "2026-08-29T13:04:36.401Z"
+}
+---
+{
+  "timestamp": "2026-08-29T13:04:36.711Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "w9uzsac",
+        "field": "statusSub",
+        "operator": "contains",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:04:38.550Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "w9uzsac",
+        "field": "statusSub",
+        "operator": "contains",
+        "value": "abhi"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:04:41.869Z"
+}
+---
+{
+  "timestamp": "2026-08-29T13:04:42.364Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "w9uzsac",
+        "field": "statusSub",
+        "operator": "contains",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:06:00.803Z"
+}
+---
+{
+  "timestamp": "2026-08-29T13:06:02.122Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "w9uzsac",
+        "field": "statusSub",
+        "operator": "contains",
+        "value": "abhi koi plan nhi"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:06:02.157Z"
+}
+---
+{
+  "timestamp": "2026-08-29T13:06:02.917Z"
+}
+---
+{
+  "timestamp": "2026-08-29T13:06:03.511Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "w9uzsac",
+        "field": "statusSub",
+        "operator": "contains",
+        "value": "abhi koi plan nhi hai "
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:06:05.965Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "w9uzsac",
+        "field": "statusSub",
+        "operator": "contains",
+        "value": "abhi koi plan nhi hai"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:06:07.523Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "w9uzsac",
+        "field": "statusSub",
+        "operator": "contains",
+        "value": "abhi "
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:06:09.092Z"
+}
+---
+{
+  "timestamp": "2026-08-29T13:06:09.663Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "w9uzsac",
+        "field": "statusSub",
+        "operator": "contains",
+        "value": "abhi  koi "
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:06:10.490Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "w9uzsac",
+        "field": "statusSub",
+        "operator": "contains",
+        "value": "abhi  koi  "
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:06:12.033Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "w9uzsac",
+        "field": "statusSub",
+        "operator": "contains",
+        "value": "abhi  koi  pln"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:06:13.992Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "w9uzsac",
+        "field": "statusSub",
+        "operator": "contains",
+        "value": "abhi  koi  plan nhi hai"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:06:19.004Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "w9uzsac",
+        "field": "statusSub",
+        "operator": "contains",
+        "value": "abhi  koi  plan nhi ha"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:06:20.785Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "w9uzsac",
+        "field": "statusSub",
+        "operator": "contains",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:06:47.989Z"
+}
+---
+{
+  "timestamp": "2026-08-29T13:06:48.242Z"
+}
+---
+{
+  "timestamp": "2026-08-29T13:06:48.570Z"
+}
+---
+{
+  "timestamp": "2026-08-29T13:06:49.306Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "w9uzsac",
+        "field": "statusSub",
+        "operator": "equals",
+        "value": "price"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:06:53.154Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "w9uzsac",
+        "field": "statusSub",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:07:07.032Z"
+}
+---
+{
+  "timestamp": "2026-08-29T13:07:08.424Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "w9uzsac",
+        "field": "statusSub",
+        "operator": "equals",
+        "value": "Reschedule meeting"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:07:08.832Z"
+}
+---
+{
+  "timestamp": "2026-08-29T13:07:10.650Z"
+}
+---
+{
+  "timestamp": "2026-08-29T13:07:12.619Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "w9uzsac",
+        "field": "statusSub",
+        "operator": "equals",
+        "value": "Reschedule meetin"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:07:13.672Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "w9uzsac",
+        "field": "statusSub",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:07:15.101Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "w9uzsac",
+        "field": "statusSub",
+        "operator": "equals",
+        "value": "hot"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:20:49.718Z"
+}
+---
+{
+  "timestamp": "2026-08-29T13:43:49.182Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-29T13:43:56.240Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "mcbl1s3",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:44:02.321Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "mcbl1s3",
+        "field": "city",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:44:06.044Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "mcbl1s3",
+        "field": "city",
+        "operator": "equals",
+        "value": "V"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:44:07.903Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "mcbl1s3",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varansi"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:44:10.174Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "mcbl1s3",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:44:10.616Z"
+}
+---
+{
+  "timestamp": "2026-08-29T13:48:19.480Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "mcbl1s3",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "0w7g8pf",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:48:23.397Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "mcbl1s3",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "0w7g8pf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:48:25.736Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "mcbl1s3",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "0w7g8pf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": "3"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:48:27.786Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "mcbl1s3",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "0w7g8pf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": "3"
+      },
+      {
+        "id": "5dq9qa1",
+        "logicalOperator": "AND",
+        "rules": []
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:48:30.646Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "mcbl1s3",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "0w7g8pf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": "3"
+      },
+      {
+        "id": "5dq9qa1",
+        "logicalOperator": "OR",
+        "rules": []
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:48:31.185Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "mcbl1s3",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "0w7g8pf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": "3"
+      },
+      {
+        "id": "5dq9qa1",
+        "logicalOperator": "OR",
+        "rules": []
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:48:32.928Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "mcbl1s3",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "0w7g8pf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": "3"
+      },
+      {
+        "id": "5dq9qa1",
+        "logicalOperator": "NOT",
+        "rules": []
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:48:41.470Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "mcbl1s3",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "0w7g8pf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": "3"
+      },
+      {
+        "id": "5dq9qa1",
+        "logicalOperator": "NOT",
+        "rules": []
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:48:44.809Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "mcbl1s3",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "0w7g8pf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": "3"
+      },
+      {
+        "id": "5dq9qa1",
+        "logicalOperator": "NOT",
+        "rules": []
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:48:45.947Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "mcbl1s3",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "0w7g8pf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": "3"
+      },
+      {
+        "id": "5dq9qa1",
+        "logicalOperator": "OR",
+        "rules": []
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:48:51.266Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "mcbl1s3",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "0w7g8pf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": "3"
+      },
+      {
+        "id": "5dq9qa1",
+        "logicalOperator": "OR",
+        "rules": [
+          {
+            "id": "oyq2bq0",
+            "field": "customerName",
+            "operator": "equals",
+            "value": ""
+          }
+        ]
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:49:19.471Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "mcbl1s3",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "0w7g8pf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": "3"
+      },
+      {
+        "id": "5dq9qa1",
+        "logicalOperator": "AND",
+        "rules": [
+          {
+            "id": "oyq2bq0",
+            "field": "customerName",
+            "operator": "equals",
+            "value": ""
+          }
+        ]
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:49:43.648Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "mcbl1s3",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "0w7g8pf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": "3"
+      },
+      {
+        "id": "5dq9qa1",
+        "logicalOperator": "AND",
+        "rules": [
+          {
+            "id": "oyq2bq0",
+            "field": "customerName",
+            "operator": "equals",
+            "value": ""
+          },
+          {
+            "id": "ahn4s39",
+            "logicalOperator": "AND",
+            "rules": []
+          }
+        ]
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:49:47.934Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "mcbl1s3",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "0w7g8pf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": "3"
+      },
+      {
+        "id": "5dq9qa1",
+        "logicalOperator": "AND",
+        "rules": [
+          {
+            "id": "oyq2bq0",
+            "field": "customerName",
+            "operator": "equals",
+            "value": ""
+          }
+        ]
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:49:49.575Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "mcbl1s3",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "0w7g8pf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": "3"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:50:19.324Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "mcbl1s3",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "0w7g8pf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": "3"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:50:26.346Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "mcbl1s3",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "0w7g8pf",
+        "field": "sanctionedLoadKw",
+        "operator": "equals",
+        "value": "3"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:50:41.285Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-29T13:50:43.936Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "wda5n5s",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:50:47.980Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "wda5n5s",
+        "field": "discomName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:50:50.595Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "wda5n5s",
+        "field": "discomName",
+        "operator": "equals",
+        "value": "upp"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:50:51.330Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "wda5n5s",
+        "field": "discomName",
+        "operator": "equals",
+        "value": "uppl"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:50:52.971Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "wda5n5s",
+        "field": "discomName",
+        "operator": "equals",
+        "value": "upp"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:50:54.280Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "wda5n5s",
+        "field": "discomName",
+        "operator": "equals",
+        "value": "uppcl"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:50:59.886Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "wda5n5s",
+        "field": "discomName",
+        "operator": "equals",
+        "value": "u"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:51:00.752Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "wda5n5s",
+        "field": "discomName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:51:04.080Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "wda5n5s",
+        "field": "discomName",
+        "operator": "is_empty",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:51:21.608Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "wda5n5s",
+        "field": "discomName",
+        "operator": "contains",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:51:24.077Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "wda5n5s",
+        "field": "discomName",
+        "operator": "contains",
+        "value": "p"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:52:02.771Z"
+}
+---
+{
+  "timestamp": "2026-08-29T13:52:03.199Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "wda5n5s",
+        "field": "discomName",
+        "operator": "contains",
+        "value": "poorva"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:52:04.013Z"
+}
+---
+{
+  "timestamp": "2026-08-29T13:52:04.561Z"
+}
+---
+{
+  "timestamp": "2026-08-29T13:52:04.798Z"
+}
+---
+{
+  "timestamp": "2026-08-29T13:52:05.583Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "wda5n5s",
+        "field": "discomName",
+        "operator": "contains",
+        "value": "poorvachal"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:52:12.809Z"
+}
+---
+{
+  "timestamp": "2026-08-29T13:52:13.089Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "wda5n5s",
+        "field": "discomName",
+        "operator": "contains",
+        "value": "poorva"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:52:21.961Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "wda5n5s",
+        "field": "discomName",
+        "operator": "contains",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:54:52.262Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-29T13:54:55.190Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1loc7g8",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:55:04.286Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1loc7g8",
+        "field": "city",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:55:06.665Z"
+}
+---
+{
+  "timestamp": "2026-08-29T13:55:07.144Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1loc7g8",
+        "field": "city",
+        "operator": "equals",
+        "value": "Vra"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:55:09.044Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1loc7g8",
+        "field": "city",
+        "operator": "equals",
+        "value": "Va"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:55:10.738Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1loc7g8",
+        "field": "city",
+        "operator": "equals",
+        "value": "Vaarabsi"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:55:12.330Z"
+}
+---
+{
+  "timestamp": "2026-08-29T13:55:12.573Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1loc7g8",
+        "field": "city",
+        "operator": "equals",
+        "value": "Va"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:55:14.102Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1loc7g8",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varans"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:55:15.124Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1loc7g8",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varan"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:55:16.725Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1loc7g8",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:56:01.025Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1loc7g8",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "b70paz4",
+        "logicalOperator": "OR",
+        "rules": []
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:56:01.543Z"
+}
+---
+{
+  "timestamp": "2026-08-29T13:56:04.390Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1loc7g8",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "b70paz4",
+        "logicalOperator": "OR",
+        "rules": [
+          {
+            "id": "rf0htye",
+            "field": "customerName",
+            "operator": "equals",
+            "value": ""
+          }
+        ]
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:56:21.159Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1loc7g8",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "b70paz4",
+        "logicalOperator": "OR",
+        "rules": [
+          {
+            "id": "rf0htye",
+            "field": "discomName",
+            "operator": "equals",
+            "value": "UPPCL"
+          }
+        ]
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:56:21.975Z"
+}
+---
+{
+  "timestamp": "2026-08-29T13:56:22.345Z"
+}
+---
+{
+  "timestamp": "2026-08-29T13:56:27.244Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1loc7g8",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "b70paz4",
+        "logicalOperator": "OR",
+        "rules": [
+          {
+            "id": "rf0htye",
+            "field": "discomName",
+            "operator": "equals",
+            "value": "UPPCL"
+          }
+        ]
+      },
+      {
+        "id": "g6p4st2",
+        "logicalOperator": "AND",
+        "rules": []
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:56:37.114Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1loc7g8",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "b70paz4",
+        "logicalOperator": "AND",
+        "rules": [
+          {
+            "id": "rf0htye",
+            "field": "discomName",
+            "operator": "equals",
+            "value": "UPPCL"
+          }
+        ]
+      },
+      {
+        "id": "g6p4st2",
+        "logicalOperator": "AND",
+        "rules": []
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:56:38.525Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1loc7g8",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "b70paz4",
+        "logicalOperator": "OR",
+        "rules": [
+          {
+            "id": "rf0htye",
+            "field": "discomName",
+            "operator": "equals",
+            "value": "UPPCL"
+          }
+        ]
+      },
+      {
+        "id": "g6p4st2",
+        "logicalOperator": "AND",
+        "rules": []
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:56:47.999Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "1loc7g8",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "b70paz4",
+        "logicalOperator": "OR",
+        "rules": [
+          {
+            "id": "rf0htye",
+            "field": "discomName",
+            "operator": "equals",
+            "value": "UPPCL"
+          }
+        ]
+      },
+      {
+        "id": "g6p4st2",
+        "logicalOperator": "AND",
+        "rules": []
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:56:49.373Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1loc7g8",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "b70paz4",
+        "logicalOperator": "OR",
+        "rules": [
+          {
+            "id": "rf0htye",
+            "field": "discomName",
+            "operator": "equals",
+            "value": "UPPCL"
+          }
+        ]
+      },
+      {
+        "id": "g6p4st2",
+        "logicalOperator": "AND",
+        "rules": []
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:56:52.237Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": [
+      {
+        "id": "1loc7g8",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "b70paz4",
+        "logicalOperator": "OR",
+        "rules": [
+          {
+            "id": "rf0htye",
+            "field": "discomName",
+            "operator": "equals",
+            "value": "UPPCL"
+          }
+        ]
+      },
+      {
+        "id": "g6p4st2",
+        "logicalOperator": "AND",
+        "rules": []
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:57:21.570Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1loc7g8",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "b70paz4",
+        "logicalOperator": "OR",
+        "rules": [
+          {
+            "id": "rf0htye",
+            "field": "discomName",
+            "operator": "equals",
+            "value": "UPPCL"
+          },
+          {
+            "id": "d7ujsch",
+            "field": "customerName",
+            "operator": "equals",
+            "value": ""
+          }
+        ]
+      },
+      {
+        "id": "g6p4st2",
+        "logicalOperator": "AND",
+        "rules": []
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:57:22.509Z"
+}
+---
+{
+  "timestamp": "2026-08-29T13:57:36.920Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1loc7g8",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "b70paz4",
+        "logicalOperator": "OR",
+        "rules": [
+          {
+            "id": "rf0htye",
+            "field": "discomName",
+            "operator": "equals",
+            "value": "UPPCL"
+          },
+          {
+            "id": "d7ujsch",
+            "field": "customerName",
+            "operator": "equals",
+            "value": ""
+          }
+        ]
+      },
+      {
+        "id": "g6p4st2",
+        "logicalOperator": "OR",
+        "rules": []
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:57:39.260Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1loc7g8",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "b70paz4",
+        "logicalOperator": "OR",
+        "rules": [
+          {
+            "id": "rf0htye",
+            "field": "discomName",
+            "operator": "equals",
+            "value": "UPPCL"
+          },
+          {
+            "id": "d7ujsch",
+            "field": "customerName",
+            "operator": "equals",
+            "value": ""
+          }
+        ]
+      },
+      {
+        "id": "g6p4st2",
+        "logicalOperator": "OR",
+        "rules": [
+          {
+            "id": "msfa683",
+            "field": "customerName",
+            "operator": "equals",
+            "value": ""
+          }
+        ]
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:57:44.166Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1loc7g8",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "b70paz4",
+        "logicalOperator": "OR",
+        "rules": [
+          {
+            "id": "rf0htye",
+            "field": "discomName",
+            "operator": "equals",
+            "value": "UPPCL"
+          },
+          {
+            "id": "d7ujsch",
+            "field": "customerName",
+            "operator": "equals",
+            "value": ""
+          }
+        ]
+      },
+      {
+        "id": "g6p4st2",
+        "logicalOperator": "OR",
+        "rules": [
+          {
+            "id": "msfa683",
+            "field": "connectionNumber",
+            "operator": "equals",
+            "value": ""
+          }
+        ]
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:57:49.100Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1loc7g8",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "b70paz4",
+        "logicalOperator": "OR",
+        "rules": [
+          {
+            "id": "rf0htye",
+            "field": "discomName",
+            "operator": "equals",
+            "value": "UPPCL"
+          },
+          {
+            "id": "d7ujsch",
+            "field": "customerName",
+            "operator": "equals",
+            "value": ""
+          }
+        ]
+      },
+      {
+        "id": "g6p4st2",
+        "logicalOperator": "OR",
+        "rules": [
+          {
+            "id": "msfa683",
+            "field": "connectionNumber",
+            "operator": "equals",
+            "value": ""
+          },
+          {
+            "id": "c7fbkjl",
+            "field": "customerName",
+            "operator": "equals",
+            "value": ""
+          }
+        ]
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:57:59.225Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1loc7g8",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "b70paz4",
+        "logicalOperator": "OR",
+        "rules": [
+          {
+            "id": "rf0htye",
+            "field": "discomName",
+            "operator": "equals",
+            "value": "UPPCL"
+          },
+          {
+            "id": "d7ujsch",
+            "field": "customerName",
+            "operator": "equals",
+            "value": ""
+          }
+        ]
+      },
+      {
+        "id": "g6p4st2",
+        "logicalOperator": "OR",
+        "rules": [
+          {
+            "id": "msfa683",
+            "field": "connectionNumber",
+            "operator": "equals",
+            "value": ""
+          }
+        ]
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:58:00.875Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1loc7g8",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "b70paz4",
+        "logicalOperator": "OR",
+        "rules": [
+          {
+            "id": "rf0htye",
+            "field": "discomName",
+            "operator": "equals",
+            "value": "UPPCL"
+          },
+          {
+            "id": "d7ujsch",
+            "field": "customerName",
+            "operator": "equals",
+            "value": ""
+          }
+        ]
+      },
+      {
+        "id": "g6p4st2",
+        "logicalOperator": "OR",
+        "rules": []
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:58:04.353Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1loc7g8",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "b70paz4",
+        "logicalOperator": "OR",
+        "rules": [
+          {
+            "id": "rf0htye",
+            "field": "discomName",
+            "operator": "equals",
+            "value": "UPPCL"
+          },
+          {
+            "id": "d7ujsch",
+            "field": "customerName",
+            "operator": "equals",
+            "value": ""
+          }
+        ]
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:58:05.489Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1loc7g8",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      },
+      {
+        "id": "b70paz4",
+        "logicalOperator": "OR",
+        "rules": [
+          {
+            "id": "rf0htye",
+            "field": "discomName",
+            "operator": "equals",
+            "value": "UPPCL"
+          }
+        ]
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:58:07.736Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "1loc7g8",
+        "field": "city",
+        "operator": "equals",
+        "value": "Varanasi"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T13:58:09.015Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:00:11.653Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-29T18:00:13.677Z"
+}
+---
+{
+  "timestamp": "2026-08-29T18:00:13.709Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:00:15.035Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:06:28.251Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-29T18:06:38.179Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "vcml7nw",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:06:53.401Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "vcml7nw",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:07:06.663Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "vcml7nw",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "134"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:07:43.447Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "vcml7nw",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "134"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:07:48.706Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "vcml7nw",
+        "field": "assignedConsultantId",
+        "operator": "does_not_exist",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:07:52.482Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "vcml7nw",
+        "field": "assignedConsultantId",
+        "operator": "does_not_exist",
+        "value": ""
+      },
+      {
+        "id": "pdgeoop",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:07:55.819Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "vcml7nw",
+        "field": "assignedConsultantId",
+        "operator": "does_not_exist",
+        "value": ""
+      },
+      {
+        "id": "pdgeoop",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:07:59.093Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "vcml7nw",
+        "field": "assignedConsultantId",
+        "operator": "does_not_exist",
+        "value": ""
+      },
+      {
+        "id": "pdgeoop",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "131"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:12:19.513Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-29T18:12:22.533Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:12:24.285Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:12:24.778Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:12:25.912Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:13:09.415Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-29T18:13:10.401Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:13:11.372Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:13:12.444Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:14:25.123Z"
+}
+---
+{
+  "timestamp": "2026-08-29T18:14:26.369Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:14:27.124Z"
+}
+---
+{
+  "timestamp": "2026-08-29T18:14:27.414Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:14:31.803Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-29T18:14:33.531Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:14:34.580Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:15:06.213Z"
+}
+---
+{
+  "timestamp": "2026-08-29T18:15:29.060Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-29T18:16:05.261Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-29T18:16:38.197Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-08-29T18:16:40.848Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zn4hbpj",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:17:13.873Z"
+}
+---
+{
+  "timestamp": "2026-08-29T18:17:15.518Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zn4hbpj",
+        "field": "status",
+        "operator": "equals",
+        "value": "2"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:17:39.403Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zn4hbpj",
+        "field": "status",
+        "operator": "equals",
+        "value": "2"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:22:13.534Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zn4hbpj",
+        "field": "status",
+        "operator": "equals",
+        "value": "2"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:24:09.573Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zn4hbpj",
+        "field": "status",
+        "operator": "equals",
+        "value": "2"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:24:21.376Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zn4hbpj",
+        "field": "status",
+        "operator": "equals",
+        "value": "2"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:24:53.059Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zn4hbpj",
+        "field": "status",
+        "operator": "equals",
+        "value": "2"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:25:07.476Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zn4hbpj",
+        "field": "status",
+        "operator": "equals",
+        "value": "2"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:25:15.231Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zn4hbpj",
+        "field": "status",
+        "operator": "equals",
+        "value": "2"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:25:47.228Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zn4hbpj",
+        "field": "status",
+        "operator": "equals",
+        "value": "2"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:25:58.813Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zn4hbpj",
+        "field": "status",
+        "operator": "equals",
+        "value": "2"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:26:06.682Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zn4hbpj",
+        "field": "status",
+        "operator": "equals",
+        "value": "2"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:26:30.117Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zn4hbpj",
+        "field": "status",
+        "operator": "equals",
+        "value": "2"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-08-29T18:26:49.204Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "zn4hbpj",
+        "field": "status",
+        "operator": "equals",
+        "value": "2"
+      }
+    ]
+  }
+}
+---

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser, getUserPermissions, getUserSession } from '@/lib/auth';
+import { normalizeLocation } from '@/lib/location';
 
 // Helper to check lead access based on user role and hierarchy
 async function canAccessLead(userId: number, lead: any): Promise<boolean> {
@@ -251,8 +252,14 @@ export async function PATCH(
     if (sanctionedLoadKw !== undefined) updateData.sanctionedLoadKw = sanctionedLoadKw ? parseFloat(sanctionedLoadKw) : null;
     if (address) updateData.address = address;
     if (pinCode) updateData.pinCode = pinCode;
-    if (city) updateData.city = city;
-    if (state) updateData.state = state;
+    if (city !== undefined || state !== undefined) {
+      const norm = normalizeLocation(
+        city !== undefined ? city : lead.city,
+        state !== undefined ? state : lead.state
+      );
+      updateData.city = norm.city;
+      updateData.state = norm.state;
+    }
     if (leadSource) updateData.leadSource = leadSource;
     if (discomName !== undefined) updateData.discomName = discomName || null;
     if (connectionNumber !== undefined) updateData.connectionNumber = connectionNumber || null;
@@ -265,33 +272,22 @@ export async function PATCH(
       let finalConsId = (assignedConsultantId && assignedConsultantId !== 'unassigned') ? parseInt(assignedConsultantId, 10) : null;
       let finalManagerId = (assignedManagerId && assignedManagerId !== 'unassigned') ? parseInt(assignedManagerId, 10) : null;
 
-      // If we are setting exactly one assignee, let's clear the others and auto-resolve the supervisors
+      const { resolveHierarchyAssignments } = await import('@/lib/hierarchy');
       if (finalConsId) {
-        finalTlId = null;
-        finalManagerId = null;
-        const consUser = await prisma.user.findUnique({
-          where: { id: finalConsId },
-          select: { reportsTo: true },
-        });
-        if (consUser?.reportsTo) {
-          finalTlId = consUser.reportsTo;
-          const tlUser = await prisma.user.findUnique({
-            where: { id: finalTlId },
-            select: { reportsTo: true },
-          });
-          finalManagerId = tlUser?.reportsTo || null;
-        }
+        const resolved = await resolveHierarchyAssignments(finalConsId);
+        finalConsId = resolved.assignedConsultantId;
+        finalTlId = resolved.assignedTlId;
+        finalManagerId = resolved.assignedManagerId;
       } else if (finalTlId) {
-        finalConsId = null;
-        finalManagerId = null;
-        const tlUser = await prisma.user.findUnique({
-          where: { id: finalTlId },
-          select: { reportsTo: true },
-        });
-        finalManagerId = tlUser?.reportsTo || null;
+        const resolved = await resolveHierarchyAssignments(finalTlId);
+        finalConsId = resolved.assignedConsultantId;
+        finalTlId = resolved.assignedTlId;
+        finalManagerId = resolved.assignedManagerId;
       } else if (finalManagerId) {
-        finalConsId = null;
-        finalTlId = null;
+        const resolved = await resolveHierarchyAssignments(finalManagerId);
+        finalConsId = resolved.assignedConsultantId;
+        finalTlId = resolved.assignedTlId;
+        finalManagerId = resolved.assignedManagerId;
       }
 
       updateData.assignedTlId = finalTlId;

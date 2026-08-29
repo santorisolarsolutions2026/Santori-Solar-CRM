@@ -133,20 +133,20 @@ interface Lead {
 }
 
 const STAGE_BADGES: Record<number, { name: string; class: string }> = {
-  0: { name: 'Uninitiated', class: 'bg-[#3b3a37] text-[#c9c5ba] border-[#4f4d45] font-bold' },
-  1: { name: 'Fresh Lead', class: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-  2: { name: 'DNP (No Answer)', class: 'bg-slate-500/10 text-[var(--text-secondary)] border-slate-500/20' },
-  3: { name: 'Follow Up', class: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' },
-  4: { name: 'Not Interested', class: 'bg-red-800/10 text-red-400 border-red-800/20' },
-  5: { name: 'Call Later', class: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
-  6: { name: 'Already Installed', class: 'bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border-color)]/30' },
-  7: { name: 'Decision Pending', class: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' },
-  8: { name: 'Meeting Booked', class: 'bg-teal-500/10 text-teal-400 border-teal-500/20' },
-  9: { name: 'Meeting Done', class: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
-  10: { name: 'Disconnected', class: 'bg-slate-600/15 text-[var(--text-secondary)] border-slate-600/20' },
-  11: { name: 'Switch Off', class: 'bg-slate-700/20 text-[var(--text-secondary)] border-[var(--border-color)]' },
-  12: { name: 'Can\'t Fit Solar', class: 'bg-stone-900 text-stone-400 border-stone-800/40' },
-  13: { name: 'Sale Done', class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-bold' },
+  0: { name: 'Uninitiated', class: 'bg-slate-800/60 text-slate-350' },
+  1: { name: 'Fresh Lead', class: 'bg-emerald-500/10 text-emerald-400' },
+  2: { name: 'DNP (No Answer)', class: 'bg-blue-500/10 text-blue-450' },
+  3: { name: 'Follow Up', class: 'bg-blue-600/10 text-blue-400' },
+  4: { name: 'Not Interested', class: 'bg-red-500/10 text-red-400' },
+  5: { name: 'Call Later', class: 'bg-purple-500/10 text-purple-400' },
+  6: { name: 'Already Installed', class: 'bg-slate-700/20 text-slate-300' },
+  7: { name: 'Decision Pending', class: 'bg-purple-600/10 text-purple-400' },
+  8: { name: 'Meeting Booked', class: 'bg-teal-500/10 text-teal-400' },
+  9: { name: 'Meeting Done', class: 'bg-cyan-500/10 text-cyan-400' },
+  10: { name: 'Disconnected', class: 'bg-slate-700/30 text-slate-400' },
+  11: { name: 'Switch Off', class: 'bg-slate-800/80 text-slate-400' },
+  12: { name: 'Can\'t Fit Solar', class: 'bg-stone-900/80 text-stone-400' },
+  13: { name: 'Sale Done', class: 'bg-emerald-500/10 text-emerald-400 font-bold' },
 };
 
 // Transition matrix for select dropdown option filters
@@ -1935,24 +1935,31 @@ export default function LeadDetailPage({
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>
+            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">
+              <Link href="/leads" className="hover:text-emerald-400 transition-colors">Leads</Link>
+              <span>/</span>
+              <span>{isEditing ? 'Edit Lead' : 'Lead Workspace'}</span>
+              <span>/</span>
+              <span className="text-[var(--text-secondary)] font-mono">{lead.leadCode}</span>
+            </div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold text-white tracking-wide">{lead.customerName}</h1>
               {lead.status === 13 && lead.order?.status === 'draft' && lead.order?.rejectionReason ? (
-                <span className="text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider bg-rose-500/10 text-rose-450 border-rose-500/20">
-                  Order Rejected ⚠️
+                <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-450">
+                  Order Rejected
                 </span>
               ) : lead.status === 13 && lead.order && lead.order.status !== 'draft' ? (
-                <span className="text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-bold">
+                <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 font-bold">
                   Order Punched
                 </span>
               ) : (
-                <span className={`text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${stageBadge.class}`}>
+                <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg ${stageBadge.class}`}>
                   {stageBadge.name}
                 </span>
               )}
               {lead.isUnreachable && lead.status !== 13 && lead.status !== 6 && (
-                <span className="text-[10px] bg-red-500/10 text-red-400 border border-red-500/20 rounded-full px-2 py-0.5 font-bold uppercase tracking-wider">
-                  Unreachable ⚠️
+                <span className="text-[10px] bg-red-500/10 text-red-400 rounded-lg px-2.5 py-1 font-extrabold">
+                  Unreachable
                 </span>
               )}
             </div>

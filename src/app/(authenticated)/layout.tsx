@@ -246,24 +246,17 @@ export default function AuthenticatedLayout({
 
   // Initialize theme from localStorage on mount
   useEffect(() => {
-    const savedTheme = localStorage.getItem('solar-crm-theme') as 'dark' | 'light' | null;
-    if (savedTheme === 'light' || savedTheme === 'dark') {
-      setTheme(savedTheme);
-      if (savedTheme === 'light') {
-        document.documentElement.classList.add('light');
-      } else {
-        document.documentElement.classList.remove('light');
-      }
-    } else {
-      document.documentElement.classList.remove('light');
-    }
+    setTheme('dark');
+    localStorage.setItem('solar-crm-theme', 'dark');
   }, []);
 
   // Synchronize document.documentElement class and localStorage whenever theme changes
   useEffect(() => {
     if (theme === 'light') {
       document.documentElement.classList.add('light');
+      document.documentElement.classList.remove('dark');
     } else {
+      document.documentElement.classList.add('dark');
       document.documentElement.classList.remove('light');
     }
     localStorage.setItem('solar-crm-theme', theme);
@@ -872,12 +865,12 @@ export default function AuthenticatedLayout({
           <button
             onClick={() => setShowLogoutConfirm(true)}
             title="Logout"
-            className={`flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 hover:border-emerald-500/30 transition-all font-bold text-xs cursor-pointer shadow-sm ${
+            className={`flex items-center justify-center gap-2 py-2.5 rounded-lg bg-[#1c2128] hover:bg-[#2d333b] text-slate-200 hover:text-white border border-slate-800/80 transition-all font-semibold text-xs cursor-pointer shadow-sm ${
               sidebarCollapsed ? 'w-10 mx-auto px-0' : 'w-full px-4'
             }`}
           >
-            <LogOut className="w-4 h-4 shrink-0 text-emerald-700 dark:text-emerald-400" />
-            {!sidebarCollapsed && <span className="text-emerald-700 dark:text-emerald-400 font-bold tracking-wide">Logout</span>}
+            <LogOut className="w-4 h-4 shrink-0 text-slate-400" />
+            {!sidebarCollapsed && <span className="font-semibold tracking-wide">Logout</span>}
           </button>
         </div>
       </aside>
@@ -986,7 +979,7 @@ export default function AuthenticatedLayout({
                     </button>
 
                     {isExpanded && (
-                      <div className="space-y-0.5 pl-1.5">
+                      <div className="space-y-0.5 pl-1.5 animate-fade-in-down">
                         {group.items.map((item) => {
                           const isActive = pathname === item.path || pathname.startsWith(item.path + '/');
                           const Icon = item.icon;
@@ -1018,10 +1011,10 @@ export default function AuthenticatedLayout({
             <div className="p-4 border-t border-[var(--border-color)]">
               <button
                 onClick={() => setShowLogoutConfirm(true)}
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 hover:border-emerald-500/30 transition-all font-bold text-xs cursor-pointer shadow-sm"
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-[#1c2128] hover:bg-[#2d333b] text-slate-200 hover:text-white border border-slate-800/80 transition-all font-semibold text-xs cursor-pointer shadow-sm"
               >
-                <LogOut className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
-                <span className="text-emerald-700 dark:text-emerald-400 font-bold">Logout</span>
+                <LogOut className="w-4 h-4 text-slate-400" />
+                <span className="font-semibold">Logout</span>
               </button>
             </div>
           </div>
@@ -1031,7 +1024,7 @@ export default function AuthenticatedLayout({
       {/* 3. Main Workspace Container */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Header */}
-        <header className="h-16 bg-[var(--bg-sidebar)] border-b border-[var(--border-color)] flex items-center justify-between px-6 z-10 relative">
+        <header className="h-16 bg-[var(--bg-sidebar)] border-b border-[var(--border-color)] flex items-center justify-between px-6 z-30 relative">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setSidebarOpen(true)}
@@ -1050,27 +1043,30 @@ export default function AuthenticatedLayout({
               type="button"
               onClick={() => setLeaderboardOpen(true)}
               title="Santori Standings - View Team Leaderboard"
-              className="py-1.5 px-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 border border-emerald-300 dark:border-emerald-700/50 text-emerald-800 dark:text-emerald-300 transition-all focus:outline-none cursor-pointer flex items-center gap-2 text-xs font-bold shadow-xs group"
+              className="py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-all focus:outline-none cursor-pointer flex items-center gap-2 text-xs font-bold shadow-md shadow-emerald-500/10 group"
             >
-              <Trophy className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0 group-hover:scale-110 transition-transform" />
-              <span className="hidden sm:inline text-emerald-800 dark:text-emerald-300 font-bold">Santori Standings</span>
+              <Trophy className="w-4 h-4 text-white shrink-0 group-hover:scale-110 transition-transform" />
+              <span className="hidden sm:inline text-white font-bold">Santori Standings</span>
             </button>
 
             {/* Quick Attendance Check-in / Check-out Dropdown */}
             <div className="relative" ref={attendanceRef}>
               <button
-                onClick={() => setAttendanceDropdownOpen(!attendanceDropdownOpen)}
+                onClick={() => {
+                  setAttendanceDropdownOpen(!attendanceDropdownOpen);
+                  setNotifDropdownOpen(false);
+                }}
                 title="Daily Attendance Status"
                 className="py-1.5 px-3 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-white transition-all relative focus:outline-none cursor-pointer flex items-center gap-2 text-xs font-semibold"
               >
                 <Clock className="w-4 h-4 text-emerald-500" />
                 <span className="hidden sm:inline">Attendance:</span>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider flex items-center gap-1 ${
+                <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg flex items-center gap-1 ${
                   !todayAttendance 
-                    ? 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-color)]' 
+                    ? 'bg-slate-800/60 text-slate-350' 
                     : todayAttendance.checkOut 
-                      ? 'bg-emerald-500/10 text-emerald-650 dark:text-emerald-400 border-emerald-500/20' 
-                      : 'bg-emerald-500/10 text-emerald-650 dark:text-emerald-400 border-emerald-500/20 animate-pulse'
+                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' 
+                      : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 animate-pulse'
                 }`}>
                   {!todayAttendance ? 'Pending' : todayAttendance.checkOut ? 'Completed' : 'Active'}
                 </span>
@@ -1151,20 +1147,23 @@ export default function AuthenticatedLayout({
               )}
             </div>
 
-            {/* Dark/Light Mode Switcher Toggle Button */}
+            {/* Dark/Light Mode Switcher Toggle Button (Disabled to enforce Dark Mode) */}
             <button
               type="button"
-              onClick={toggleTheme}
-              className="p-2 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all cursor-pointer focus:outline-none"
-              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+              disabled
+              className="p-2 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] opacity-40 cursor-not-allowed transition-all focus:outline-none"
+              title="Light mode is disabled"
             >
-              {theme === 'dark' ? <Sun className="w-4 h-4 text-emerald-500" /> : <Moon className="w-4 h-4 text-emerald-500" />}
+              <Sun className="w-4 h-4 text-emerald-500" />
             </button>
 
             {/* Notification Bell Dropdown */}
             <div className="relative" ref={notifRef}>
               <button
-                onClick={() => setNotifDropdownOpen(!notifDropdownOpen)}
+                onClick={() => {
+                  setNotifDropdownOpen(!notifDropdownOpen);
+                  setAttendanceDropdownOpen(false);
+                }}
                 className="p-2 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all relative focus:outline-none cursor-pointer"
               >
                 <Bell className="w-4 h-4" />
@@ -1298,8 +1297,15 @@ export default function AuthenticatedLayout({
         </header>
 
         {/* Page Content Workspace Area */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-[var(--bg-main)]">
-          {children}
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-[var(--bg-main)] relative overflow-x-hidden">
+          {/* Aurora Glow Backdrops */}
+          <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-emerald-500/[0.04] blur-[130px] pointer-events-none z-0 animate-aurora-1" />
+          <div className="absolute top-[40%] left-[50%] -translate-x-1/2 w-[450px] h-[450px] rounded-full bg-teal-500/[0.015] blur-[140px] pointer-events-none z-0 animate-pulse" style={{ animationDuration: '8s' }} />
+          <div className="absolute bottom-[-15%] right-[-15%] w-[600px] h-[600px] rounded-full bg-emerald-600/[0.02] blur-[150px] pointer-events-none z-0 animate-aurora-2" />
+          
+          <div key={pathname} className="relative z-10 animate-fade-in-up">
+            {children}
+          </div>
         </main>
       </div>
 

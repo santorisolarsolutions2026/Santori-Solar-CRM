@@ -1,22 +1,17 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #F7FAF8;
-  --foreground: #111827;
+  --background: #0D1117;
+  --foreground: #F0F6FC;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
+  --font-sans: var(--font-plus-jakarta-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0D1117;
-    --foreground: #F0F6FC;
-  }
 }
 
 body {
@@ -38,6 +33,15 @@ body {
   animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+@keyframes fade-in-down {
+  0% { opacity: 0; transform: translateY(-8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-down {
+  animation: fade-in-down 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 .animation-delay-200 { animation-delay: 200ms; }
 .animation-delay-400 { animation-delay: 400ms; }
 
@@ -55,12 +59,53 @@ body {
   100% { background-position: 200% 0; }
 }
 
+@keyframes aurora-pulse-1 {
+  0%, 100% { opacity: 0.25; transform: scale(1) translate(0px, 0px); }
+  50% { opacity: 0.45; transform: scale(1.15) translate(30px, -20px); }
+}
+
+.animate-aurora-1 {
+  animation: aurora-pulse-1 12s ease-in-out infinite;
+}
+
+@keyframes aurora-pulse-2 {
+  0%, 100% { opacity: 0.18; transform: scale(1.1) translate(0px, 0px); }
+  50% { opacity: 0.32; transform: scale(0.9) translate(-40px, 30px); }
+}
+
+.animate-aurora-2 {
+  animation: aurora-pulse-2 18s ease-in-out infinite;
+}
+
 /* ============================================================
-   SCROLLBAR — Hidden globally
+   SCROLLBAR — Modern Custom Translucent Design
    ============================================================ */
 
-::-webkit-scrollbar { display: none; width: 0; height: 0; }
-* { -ms-overflow-style: none; scrollbar-width: none; }
+/* Webkit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(16, 185, 129, 0.16);
+  border-radius: 10px;
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(16, 185, 129, 0.4);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(16, 185, 129, 0.16) transparent;
+}
 
 /* ============================================================
    DESIGN SYSTEM — CSS Variables
@@ -74,8 +119,8 @@ body {
   --bg-card:              #161B22;
   --bg-card-solid:        #161B22;
   --bg-input:             #0D1117;
-  --border-color:         rgba(255, 255, 255, 0.08);
-  --border-color-hover:   rgba(255, 255, 255, 0.16);
+  --border-color:         rgba(255, 255, 255, 0.035);
+  --border-color-hover:   rgba(255, 255, 255, 0.07);
   --text-primary:         #F0F6FC;
   --text-secondary:       #8B949E;
   --text-muted:           #6E7681;
@@ -96,8 +141,8 @@ body {
   --bg-card:              #FFFFFF;
   --bg-card-solid:        #FFFFFF;
   --bg-input:             #F9FAFB;
-  --border-color:         #E2E8E4;
-  --border-color-hover:   #9CA3AF;
+  --border-color:         rgba(0, 0, 0, 0.045);
+  --border-color-hover:   rgba(0, 0, 0, 0.08);
   --text-primary:         #111827;
   --text-secondary:       #374151;
   --text-muted:           #6B7280;
@@ -781,4 +826,11 @@ aside {
 .light .sidebar-toggle-btn:hover {
   background-color: #E5E7EB !important;
   color: var(--text-primary) !important;
+}
+
+/* ============================================================
+   GLOBAL ICON STYLING & PREMIUM REFINEMENTS
+   ============================================================ */
+.lucide {
+  stroke-width: 1.5px !important;
 }

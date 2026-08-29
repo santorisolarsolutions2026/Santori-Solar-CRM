@@ -49,14 +49,14 @@ export default function CustomSelect({
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full px-3 py-2 bg-[var(--bg-card-solid)] border border-[var(--border-color)] hover:bg-[var(--border-color)]/30 rounded-xl text-xs text-left font-medium text-[var(--text-primary)] transition-all flex items-center justify-between gap-2 shadow-inner focus:outline-none focus:ring-2 focus:ring-emerald-500/40 ${
+        className={`w-full px-3 py-2 bg-[var(--bg-card-solid)] border border-[var(--border-color)] hover:bg-[var(--border-color)]/30 rounded-xl text-xs text-left font-semibold text-[var(--text-primary)] transition-all flex items-center justify-between gap-2 shadow-inner focus:outline-none focus:ring-2 focus:ring-slate-700/40 ${
           disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
         }`}
       >
         <span className="truncate flex items-center gap-2">
           {selectedOption ? (
             selectedOption.badgeClass ? (
-              <span className={`text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${selectedOption.badgeClass}`}>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-slate-800 text-slate-350 border-none capitalize">
                 {selectedOption.label}
               </span>
             ) : (
@@ -64,18 +64,18 @@ export default function CustomSelect({
                 {selectedOption.color && (
                   <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: selectedOption.color }} />
                 )}
-                <span className="truncate">{selectedOption.label}</span>
+                <span className="truncate font-semibold">{selectedOption.label}</span>
               </>
             )
           ) : (
             <span className="text-[var(--text-muted)] truncate">{placeholder}</span>
           )}
         </span>
-        <ChevronDown className={`w-3.5 h-3.5 text-[var(--text-muted)] transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180 text-emerald-600 dark:text-emerald-400' : ''}`} />
+        <ChevronDown className={`w-3.5 h-3.5 text-[var(--text-muted)] transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180 text-white' : ''}`} />
       </button>
 
       {isOpen && !disabled && (
-        <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-2xl overflow-hidden py-1 max-h-80 overflow-y-auto backdrop-blur-md animate-fade-in-up [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-700 [&::-webkit-scrollbar-thumb]:rounded-full">
+        <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-black border border-slate-800/80 rounded-xl shadow-2xl overflow-hidden py-1 max-h-80 overflow-y-auto backdrop-blur-md animate-fade-in-up [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-700 [&::-webkit-scrollbar-thumb]:rounded-full">
           {options.map((opt) => {
             const isSelected = String(opt.value) === String(value);
             return (
@@ -85,15 +85,15 @@ export default function CustomSelect({
                   onChange(opt.value);
                   setIsOpen(false);
                 }}
-                className={`px-3 py-2 text-xs flex items-center justify-between cursor-pointer transition-colors ${
+                className={`px-3 py-2 text-xs font-semibold flex items-center justify-between cursor-pointer transition-colors ${
                   isSelected
-                    ? 'bg-emerald-500/10 text-emerald-400 font-bold border-l-2 border-emerald-600'
-                    : 'text-[var(--text-secondary)] hover:bg-[var(--border-color)] hover:text-[var(--text-primary)]'
+                    ? 'text-white font-bold border-l-2 border-slate-500 hover:bg-slate-800'
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                 }`}
               >
                 <div className="flex items-center gap-2 min-w-0">
                   {opt.badgeClass ? (
-                    <span className={`text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${opt.badgeClass}`}>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-slate-800 text-slate-350 border-none capitalize">
                       {opt.label}
                     </span>
                   ) : (
@@ -105,7 +105,7 @@ export default function CustomSelect({
                     </>
                   )}
                 </div>
-                {isSelected && <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 ml-2" />}
+                {isSelected && <Check className="w-3.5 h-3.5 text-white shrink-0 ml-2" />}
               </div>
             );
           })}

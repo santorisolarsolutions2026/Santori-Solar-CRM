@@ -100,12 +100,11 @@ export async function POST(req: Request) {
     // Fetch leads to inspect their current statuses and assignments
     const leads = await prisma.lead.findMany({
       where: { id: { in: leadIds } },
-      select: { id: true, status: true, assignedManagerId: true, assignedTlId: true, assignedConsultantId: true },
+      select: { id: true, status: true, leadCode: true, assignedManagerId: true, assignedTlId: true, assignedConsultantId: true },
     });
 
     // Update leads inside a database transaction to calculate promotion individually
     const result = await prisma.$transaction(async (tx) => {
-      let count = 0;
       const logEntries: any[] = [];
 
       if (Number(status) === 1) {
@@ -144,25 +143,23 @@ export async function POST(req: Request) {
         updateData.followupAt = null;
       }
 
+      const autoPromoteLeadIds: number[] = [];
+      const standardLeadIds: number[] = [];
+
       for (const lead of leads) {
         const finalManagerId = assignedManagerId !== undefined ? (assignedManagerId === null || assignedManagerId === '' ? null : Number(assignedManagerId)) : lead.assignedManagerId;
         const finalTlId = assignedTlId !== undefined ? (assignedTlId === null || assignedTlId === '' ? null : Number(assignedTlId)) : lead.assignedTlId;
         const finalConsId = assignedConsultantId !== undefined ? (assignedConsultantId === null || assignedConsultantId === '' ? null : Number(assignedConsultantId)) : lead.assignedConsultantId;
 
-        const individualUpdate: any = { ...updateData };
-        let newStatus = status !== undefined && status !== null && status !== 'UNCHANGED' ? Number(status) : lead.status;
+        const willAutoPromote = lead.status === 0 && (finalManagerId !== null || finalTlId !== null || finalConsId !== null) && (status === undefined || status === null || status === 'UNCHANGED');
 
-        // Auto-promote from Uninitiated (0) to Fresh Lead (1) when any coordinator gets assigned
-        if (lead.status === 0 && (finalManagerId !== null || finalTlId !== null || finalConsId !== null) && (status === undefined || status === null || status === 'UNCHANGED')) {
-          individualUpdate.status = 1;
-          newStatus = 1;
+        if (willAutoPromote) {
+          autoPromoteLeadIds.push(lead.id);
+        } else {
+          standardLeadIds.push(lead.id);
         }
 
-        await tx.lead.update({
-          where: { id: lead.id },
-          data: individualUpdate,
-        });
-        count++;
+        const newStatus = willAutoPromote ? 1 : (status !== undefined && status !== null && status !== 'UNCHANGED' ? Number(status) : lead.status);
 
         if (Number(status) === 1) {
           logEntries.push({
@@ -170,7 +167,7 @@ export async function POST(req: Request) {
             userId: userPayload.id,
             fromStatus: null,
             toStatus: 1,
-            remark: `Lead #${(lead as any).leadCode || lead.id} created in system.`,
+            remark: `Lead #${lead.leadCode || lead.id} created in system.`,
           });
         } else {
           logEntries.push({
@@ -185,13 +182,30 @@ export async function POST(req: Request) {
         }
       }
 
+      if (autoPromoteLeadIds.length > 0) {
+        await tx.lead.updateMany({
+          where: { id: { in: autoPromoteLeadIds } },
+          data: { ...updateData, status: 1 },
+        });
+      }
+
+      if (standardLeadIds.length > 0) {
+        await tx.lead.updateMany({
+          where: { id: { in: standardLeadIds } },
+          data: updateData,
+        });
+      }
+
       if (logEntries.length > 0) {
         await tx.leadActivityLog.createMany({
           data: logEntries,
         });
       }
 
-      return { count };
+      return { count: leads.length };
+    }, {
+      maxWait: 10000,
+      timeout: 30000,
     });
 
     return NextResponse.json({

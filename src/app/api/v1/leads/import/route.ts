@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
+import { normalizeLocation } from '@/lib/location';
 
 export async function POST(req: Request) {
   try {
@@ -134,6 +135,8 @@ export async function POST(req: Request) {
         currentIdIndex += 1;
         const leadCode = `SL-${String(currentIdIndex).padStart(5, '0')}`;
 
+        const norm = normalizeLocation(city, state);
+
         // Create the simple lead
         const newLead = await tx.lead.create({
           data: {
@@ -145,8 +148,8 @@ export async function POST(req: Request) {
             sanctionedLoadKw: sanctionedLoadKw ? parseFloat(sanctionedLoadKw) : null,
             address: address || '',
             pinCode: pinCode || '',
-            city: city || '',
-            state: state || '',
+            city: norm.city,
+            state: norm.state,
             leadSource: leadSource || 'other',
             status: 1, // 1 = Fresh Lead
             createdById: userPayload.id,

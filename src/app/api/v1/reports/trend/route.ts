@@ -24,7 +24,26 @@ export async function GET(req: Request) {
     const { getUserSession } = await import('@/lib/auth');
     const { role: userRole } = await getUserSession(userPayload.id);
     const { getLeadVisibilityCondition } = await import('@/lib/hierarchy');
-    const leadWhere = await getLeadVisibilityCondition(userPayload.id, userRole, userPermissions);
+    const leadWhere: any = await getLeadVisibilityCondition(userPayload.id, userRole, userPermissions);
+
+    const url = new URL(req.url);
+    const stateFilter = url.searchParams.get('state');
+    const cityFilter = url.searchParams.get('city');
+
+    if (stateFilter) {
+      leadWhere.state = { equals: stateFilter, mode: 'insensitive' };
+    }
+    if (cityFilter) {
+      leadWhere.city = { equals: cityFilter, mode: 'insensitive' };
+    }
+
+    const orderFilter: any = {};
+    if (stateFilter || cityFilter) {
+      orderFilter.lead = {
+        state: stateFilter ? { equals: stateFilter, mode: 'insensitive' } : undefined,
+        city: cityFilter ? { equals: cityFilter, mode: 'insensitive' } : undefined,
+      };
+    }
 
     // Batch daily queries concurrently using Promise.all
     const trendPromises = [];
@@ -67,6 +86,7 @@ export async function GET(req: Request) {
         }),
         prisma.order.count({
           where: {
+            ...orderFilter,
             createdAt: {
               gte: startOfDay,
               lte: endOfDay,
@@ -75,6 +95,7 @@ export async function GET(req: Request) {
         }),
         prisma.order.count({
           where: {
+            ...orderFilter,
             status: { in: ['verified', 'finance_verified', 'ops_assigned', 'completed'] },
             updatedAt: {
               gte: startOfDay,
@@ -84,6 +105,7 @@ export async function GET(req: Request) {
         }),
         prisma.order.count({
           where: {
+            ...orderFilter,
             isCommissioned: true,
             updatedAt: {
               gte: startOfDay,

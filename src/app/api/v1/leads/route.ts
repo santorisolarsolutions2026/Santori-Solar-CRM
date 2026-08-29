@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma, Prisma } from '@/lib/db';
 import { getAuthenticatedUser, getUserPermissions, getUserSession } from '@/lib/auth';
+import { normalizeLocation } from '@/lib/location';
 
 // Helper to generate lead code
 async function generateLeadCode() {
@@ -470,34 +471,22 @@ export async function POST(req: Request) {
       finalManagerId = managerId;
     }
 
+    const { resolveHierarchyAssignments } = await import('@/lib/hierarchy');
     if (finalConsultantId) {
-      finalTlId = null;
-      finalManagerId = null;
-      // Auto-resolve if consultant is assigned and TL/Manager are not explicitly chosen
-      const consUser = await prisma.user.findUnique({
-        where: { id: finalConsultantId },
-        select: { reportsTo: true },
-      });
-      if (consUser?.reportsTo) {
-        finalTlId = consUser.reportsTo;
-        const tlUser = await prisma.user.findUnique({
-          where: { id: finalTlId },
-          select: { reportsTo: true },
-        });
-        finalManagerId = tlUser?.reportsTo || null;
-      }
+      const resolved = await resolveHierarchyAssignments(finalConsultantId);
+      finalConsultantId = resolved.assignedConsultantId;
+      finalTlId = resolved.assignedTlId;
+      finalManagerId = resolved.assignedManagerId;
     } else if (finalTlId) {
-      finalConsultantId = null;
-      finalManagerId = null;
-      // Auto-resolve if TL is assigned and Manager is not explicitly chosen
-      const tlUser = await prisma.user.findUnique({
-        where: { id: finalTlId },
-        select: { reportsTo: true },
-      });
-      finalManagerId = tlUser?.reportsTo || null;
+      const resolved = await resolveHierarchyAssignments(finalTlId);
+      finalConsultantId = resolved.assignedConsultantId;
+      finalTlId = resolved.assignedTlId;
+      finalManagerId = resolved.assignedManagerId;
     } else if (finalManagerId) {
-      finalConsultantId = null;
-      finalTlId = null;
+      const resolved = await resolveHierarchyAssignments(finalManagerId);
+      finalConsultantId = resolved.assignedConsultantId;
+      finalTlId = resolved.assignedTlId;
+      finalManagerId = resolved.assignedManagerId;
     }
 
     let parsedLoadKw = null;
@@ -508,6 +497,8 @@ export async function POST(req: Request) {
 
     const leadCode = await generateLeadCode();
     const statusToSet = 1;
+
+    const norm = normalizeLocation(city, state);
 
     // Create lead inside a database transaction
     const lead = await prisma.$transaction(async (tx) => {
@@ -521,8 +512,8 @@ export async function POST(req: Request) {
           sanctionedLoadKw: parsedLoadKw,
           address: address || '',
           pinCode: pinCode || '',
-          city: city || '',
-          state: state || '',
+          city: norm.city,
+          state: norm.state,
           leadSource: leadSource || 'other',
           status: statusToSet,
           assignedManagerId: finalManagerId,

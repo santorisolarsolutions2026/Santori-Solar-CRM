@@ -292,6 +292,11 @@ export default function NewLeadPage() {
           <ArrowLeft className="w-4 h-4" />
         </Link>
         <div>
+          <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">
+            <Link href="/leads" className="hover:text-emerald-400 transition-colors">Leads</Link>
+            <span>/</span>
+            <span className="text-[var(--text-secondary)]">Create Lead</span>
+          </div>
           <h1 className="text-xl font-bold text-white tracking-wide">Create New Sales Lead</h1>
           <p className="text-xs text-emerald-400 mt-1">Form A: Add Lead details and assign team pool.</p>
         </div>

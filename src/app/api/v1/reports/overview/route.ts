@@ -25,7 +25,27 @@ export async function GET(req: Request) {
     }
 
     const { getLeadVisibilityCondition } = await import('@/lib/hierarchy');
-    const leadWhere = await getLeadVisibilityCondition(userPayload.id, userRole, userPermissions);
+    const leadWhere: any = await getLeadVisibilityCondition(userPayload.id, userRole, userPermissions);
+
+    const url = new URL(req.url);
+    const stateFilter = url.searchParams.get('state');
+    const cityFilter = url.searchParams.get('city');
+    const startDate = url.searchParams.get('startDate');
+    const endDate = url.searchParams.get('endDate');
+
+    if (stateFilter) {
+      leadWhere.state = { equals: stateFilter, mode: 'insensitive' };
+    }
+    if (cityFilter) {
+      leadWhere.city = { equals: cityFilter, mode: 'insensitive' };
+    }
+
+    let dateRangeFilter: any = null;
+    if (startDate && endDate) {
+      const sDate = new Date(`${startDate}T00:00:00`);
+      const eDate = new Date(`${endDate}T23:59:59.999`);
+      dateRangeFilter = { gte: sDate, lte: eDate };
+    }
 
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
@@ -49,6 +69,16 @@ export async function GET(req: Request) {
         const subIds = await getSubordinateIds(userPayload.id);
         const allowedFinanceIds = [userPayload.id, ...subIds];
         ordersWhere.assignedFinanceId = { in: allowedFinanceIds };
+      }
+
+      if (stateFilter || cityFilter) {
+        ordersWhere.lead = {
+          state: stateFilter ? { equals: stateFilter, mode: 'insensitive' } : undefined,
+          city: cityFilter ? { equals: cityFilter, mode: 'insensitive' } : undefined,
+        };
+      }
+      if (dateRangeFilter) {
+        ordersWhere.createdAt = dateRangeFilter;
       }
 
       const [totalOrdersPending, ordersVerified, ordersList, payments] = await Promise.all([
@@ -109,6 +139,16 @@ export async function GET(req: Request) {
         ordersWhere.assignedOpsId = { in: allowedOpsIds };
       }
 
+      if (stateFilter || cityFilter) {
+        ordersWhere.lead = {
+          state: stateFilter ? { equals: stateFilter, mode: 'insensitive' } : undefined,
+          city: cityFilter ? { equals: cityFilter, mode: 'insensitive' } : undefined,
+        };
+      }
+      if (dateRangeFilter) {
+        ordersWhere.createdAt = dateRangeFilter;
+      }
+
       const [totalJobsAssigned, deliveredJobs, installedJobs, commissionedJobs, subsidyJobs] = await Promise.all([
         prisma.order.count({ where: ordersWhere }),
         prisma.order.count({ where: { ...ordersWhere, isDelivered: true } }),
@@ -141,6 +181,7 @@ export async function GET(req: Request) {
           where: {
             ...leadWhere,
             status: { gte: 1 },
+            ...(dateRangeFilter ? { createdAt: dateRangeFilter } : {}),
           },
         }),
         prisma.lead.count({
@@ -154,18 +195,21 @@ export async function GET(req: Request) {
           where: {
             ...leadWhere,
             status: { in: [8, 9, 13] },
+            ...(dateRangeFilter ? { createdAt: dateRangeFilter } : {}),
           },
         }),
         prisma.meetingBooking.count({
           where: {
             lead: leadWhere,
             audioRecordingPath: { not: null },
+            ...(dateRangeFilter ? { createdAt: dateRangeFilter } : {}),
           },
         }),
         prisma.lead.count({
           where: {
             ...leadWhere,
             status: 13,
+            ...(dateRangeFilter ? { updatedAt: dateRangeFilter } : {}),
           },
         }),
         prisma.lead.count({

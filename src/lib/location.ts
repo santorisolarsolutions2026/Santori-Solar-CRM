@@ -41,3 +41,26 @@ export async function getCurrentLocationString(): Promise<string> {
     );
   });
 }
+
+export function normalizeLocation(city: string | null | undefined, state: string | null | undefined) {
+  let normalizedCity = city ? city.trim() : '';
+  let normalizedState = state ? state.trim() : '';
+
+  const lowerState = normalizedState.toLowerCase();
+  if (lowerState === 'up' || lowerState === 'u.p.' || lowerState === 'u p') {
+    normalizedState = 'Uttar Pradesh';
+  }
+
+  const lowerCity = normalizedCity.toLowerCase();
+  if (lowerCity === 'allahabad') {
+    normalizedCity = 'Prayagraj';
+    if (!normalizedState) {
+      normalizedState = 'Uttar Pradesh';
+    }
+  }
+
+  return {
+    city: normalizedCity,
+    state: normalizedState,
+  };
+}

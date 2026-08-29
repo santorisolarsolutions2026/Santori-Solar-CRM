@@ -1,6 +1,6 @@
-﻿'use client';
+'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import {
   PackageCheck,
@@ -22,8 +22,11 @@ import {
   Loader2,
   SlidersHorizontal,
   ChevronRight,
-  ShieldAlert
+  ShieldAlert,
+  ChevronDown,
+  Check
 } from 'lucide-react';
+import CustomDropdown from '@/components/CustomDropdown';
 
 interface CompletedOrder {
   id: number;
@@ -134,14 +137,78 @@ export default function CompletedOrdersPage() {
   const [endDate, setEndDate] = useState('');
   const [selectedMemberFilter, setSelectedMemberFilter] = useState('');
   const [teamMembers, setTeamMembers] = useState<{ id: number; name: string; department?: { name: string } }[]>([]);
+  
+  const [stateFilter, setStateFilter] = useState('');
+  const [cityFilter, setCityFilter] = useState('');
+  const [stateCitiesMap, setStateCitiesMap] = useState<Record<string, string[]>>({});
+  const [dateShortcut, setDateShortcut] = useState('all');
 
   useEffect(() => {
-    fetchTeamMembers();
-  }, []);
+    if (user) {
+      fetchTeamMembers();
+      fetchLocations();
+    }
+  }, [user]);
+
+  const fetchLocations = async () => {
+    try {
+      const cached = sessionStorage.getItem('stateCitiesMap');
+      if (cached) {
+        setStateCitiesMap(JSON.parse(cached));
+        return;
+      }
+      const res = await fetch('/api/v1/leads/locations');
+      const data = await res.json();
+      if (data.success && data.data) {
+        setStateCitiesMap(data.data);
+        sessionStorage.setItem('stateCitiesMap', JSON.stringify(data.data));
+      }
+    } catch (e) {
+      console.error('Failed to fetch locations', e);
+    }
+  };
+
+  const applyDateShortcut = (shortcut: string) => {
+    setDateShortcut(shortcut);
+
+    if (shortcut === 'all' || shortcut === 'custom') {
+      if (shortcut === 'all') {
+        setStartDate('');
+        setEndDate('');
+      }
+      return;
+    }
+
+    const today = new Date();
+    const formatDate = (d: Date) => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    if (shortcut === 'today') {
+      const dateStr = formatDate(today);
+      setStartDate(dateStr);
+      setEndDate(dateStr);
+    } else if (shortcut === 'this_week') {
+      const dayOfWeek = today.getDay();
+      const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+      const startOfWeek = new Date(today.setDate(diff));
+      const endOfWeek = new Date();
+      setStartDate(formatDate(startOfWeek));
+      setEndDate(formatDate(endOfWeek));
+    } else if (shortcut === 'this_month') {
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      const endOfMonth = new Date();
+      setStartDate(formatDate(startOfMonth));
+      setEndDate(formatDate(endOfMonth));
+    }
+  };
 
   useEffect(() => {
     fetchCompletedOrders();
-  }, [scope, clientType, startDate, endDate, selectedMemberFilter]);
+  }, [scope, clientType, startDate, endDate, selectedMemberFilter, stateFilter, cityFilter]);
 
   const fetchTeamMembers = async () => {
     try {
@@ -164,6 +231,8 @@ export default function CompletedOrdersPage() {
       if (clientType !== 'all') params.append('clientType', clientType);
       if (startDate) params.append('startDate', startDate);
       if (endDate) params.append('endDate', endDate);
+      if (stateFilter) params.append('state', stateFilter);
+      if (cityFilter) params.append('city', cityFilter);
       if (selectedMemberFilter) params.append('memberId', selectedMemberFilter);
       if (search.trim()) params.append('search', search.trim());
 
@@ -282,59 +351,117 @@ export default function CompletedOrdersPage() {
           </form>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 text-xs">
           {/* Team Member Filter */}
           <div>
             <label className="block text-[10px] font-mono text-[var(--text-secondary)] uppercase mb-1">Filter by Team Member</label>
-            <select
+            <CustomDropdown
+              options={[
+                { value: '', label: 'All Team Members' },
+                ...teamMembers.map(m => ({ value: String(m.id), label: m.name }))
+              ]}
               value={selectedMemberFilter}
-              onChange={(e) => setSelectedMemberFilter(e.target.value)}
-              className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-emerald-500/50"
-            >
-              <option value="">All Team Members</option>
-              {teamMembers.map(m => (
-                <option key={m.id} value={m.id}>{m.name}</option>
-              ))}
-            </select>
+              onChange={(val) => setSelectedMemberFilter(val)}
+              className="w-full"
+            />
           </div>
 
           {/* Client Type Filter */}
           <div>
             <label className="block text-[10px] font-mono text-[var(--text-secondary)] uppercase mb-1">Client / System Type</label>
-            <select
+            <CustomDropdown
+              options={[
+                { value: 'all', label: 'All System Types' },
+                { value: 'on_grid', label: 'On-Grid Solar' },
+                { value: 'off_grid', label: 'Off-Grid Solar' },
+                { value: 'hybrid', label: 'Hybrid Solar' }
+              ]}
               value={clientType}
-              onChange={(e) => setClientType(e.target.value)}
-              className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-emerald-500/50"
-            >
-              <option value="all">All System Types</option>
-              <option value="on_grid">On-Grid Solar</option>
-              <option value="off_grid">Off-Grid Solar</option>
-              <option value="hybrid">Hybrid Solar</option>
-            </select>
-          </div>
-
-          {/* Date Range Start */}
-          <div>
-            <label className="block text-[10px] font-mono text-[var(--text-secondary)] uppercase mb-1">From Date</label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-emerald-500/50"
+              onChange={(val) => setClientType(val)}
+              className="w-full"
             />
           </div>
 
-          {/* Date Range End */}
+          {/* Date Shortcut Select */}
           <div>
-            <label className="block text-[10px] font-mono text-[var(--text-secondary)] uppercase mb-1">To Date</label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-emerald-500/50"
+            <label className="block text-[10px] font-mono text-[var(--text-secondary)] uppercase mb-1">Date Shortcut</label>
+            <CustomDropdown
+              options={[
+                { value: 'all', label: 'All Time' },
+                { value: 'today', label: 'Today' },
+                { value: 'this_week', label: 'This Week' },
+                { value: 'this_month', label: 'This Month' },
+                { value: 'custom', label: 'Custom Range' },
+              ]}
+              value={dateShortcut}
+              onChange={(val) => applyDateShortcut(val)}
+              className="w-full"
+            />
+          </div>
+
+          {/* Custom State Dropdown */}
+          <div>
+            <label className="block text-[10px] font-mono text-[var(--text-secondary)] uppercase mb-1">State Name</label>
+            <CustomDropdown
+              options={[
+                { value: '', label: 'All States' },
+                ...Object.keys(stateCitiesMap).map(state => ({ value: state, label: state }))
+              ]}
+              value={stateFilter}
+              onChange={(val) => {
+                setStateFilter(val);
+                if (val && stateCitiesMap[val] && !stateCitiesMap[val].includes(cityFilter)) {
+                  setCityFilter('');
+                }
+              }}
+              className="w-full"
+              placeholder="All States"
+            />
+          </div>
+
+          {/* Custom City Dropdown */}
+          <div>
+            <label className="block text-[10px] font-mono text-[var(--text-secondary)] uppercase mb-1">City Name</label>
+            <CustomDropdown
+              options={[
+                { value: '', label: 'All Cities' },
+                ...(stateFilter && stateCitiesMap[stateFilter]
+                  ? stateCitiesMap[stateFilter]
+                  : Array.from(new Set(Object.values(stateCitiesMap).flat()))
+                ).map(city => ({ value: city, label: city }))
+              ]}
+              value={cityFilter}
+              onChange={(val) => setCityFilter(val)}
+              className="w-full"
+              placeholder="All Cities"
             />
           </div>
         </div>
+
+        {/* Custom Date Range Picker inputs (Only shown when dateShortcut === 'custom') */}
+        {dateShortcut === 'custom' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs pt-3 border-t border-[var(--border-color)]/60 animate-fade-in">
+            <div>
+              <label className="block text-[10px] font-mono text-[var(--text-secondary)] uppercase mb-1">From Date</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-emerald-500/50 outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-mono text-[var(--text-secondary)] uppercase mb-1">To Date</label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-emerald-500/50 outline-none"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Orders Table */}

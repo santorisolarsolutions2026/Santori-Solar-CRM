@@ -78,6 +78,12 @@ export function getLeadAssignedDisplay(
 
   const currentUserId = currentUser?.id;
   const roleLower = (currentUser?.role || '').toLowerCase().trim();
+  const baseRole = roleLower.includes(':') ? roleLower.split(':')[0] : roleLower;
+
+  // 0. Admin/Director/IT sees the Manager first
+  if (['admin', 'director', 'it'].includes(baseRole)) {
+    return lead.manager || lead.tl || lead.consultant || null;
+  }
 
   // 1. Direct ID matches
   if (currentUserId) {

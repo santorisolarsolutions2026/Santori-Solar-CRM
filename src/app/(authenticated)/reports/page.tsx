@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import dynamic from 'next/dynamic';
 
@@ -136,6 +136,7 @@ export default function ReportsPage() {
   const [filterEndDate, setFilterEndDate] = useState<string>('');
   const [filterStartTime, setFilterStartTime] = useState<string>('00:00');
   const [filterEndTime, setFilterEndTime] = useState<string>('23:59');
+
   const [auditData, setAuditData] = useState<{ departments: Record<string, any[]>; designations?: string[] } | null>(null);
   const [auditLoading, setAuditLoading] = useState(false);
 
@@ -226,6 +227,8 @@ export default function ReportsPage() {
     }
   };
 
+
+
   const fetchTimelineData = async (empId: number) => {
     try {
       setTimelineLoading(true);
@@ -285,15 +288,25 @@ export default function ReportsPage() {
 
   const fetchData = async () => {
     try {
+      let query = '';
+      const params = new URLSearchParams();
+      if (filterStartDate && filterEndDate) {
+        params.append('startDate', filterStartDate);
+        params.append('endDate', filterEndDate);
+      }
+      if (params.toString()) {
+        query = `?${params.toString()}`;
+      }
+
       const fetchPromises: Promise<any>[] = [
-        fetch('/api/v1/reports/overview'),
-        fetch('/api/v1/reports/pipeline'),
-        fetch('/api/v1/reports/trend'),
+        fetch(`/api/v1/reports/overview${query}`),
+        fetch(`/api/v1/reports/pipeline${query}`),
+        fetch(`/api/v1/reports/trend${query}`),
       ];
 
       const userHasReportsView = hasPermission('reports:view');
       if (userHasReportsView) {
-        fetchPromises.push(fetch('/api/v1/reports/team-performance'));
+        fetchPromises.push(fetch(`/api/v1/reports/team-performance${query}`));
       }
 
       const results = await Promise.all(fetchPromises);
@@ -325,15 +338,20 @@ export default function ReportsPage() {
     if (user) {
       fetchData();
     }
-  }, [user]);
+  }, [user, filterStartDate, filterEndDate]);
 
   const fetchAuditData = async () => {
     setAuditLoading(true);
     try {
-      let url = `/api/v1/reports/employee-audit?designation=${encodeURIComponent(filterDesignation)}`;
+      const params = new URLSearchParams();
+      params.append('designation', filterDesignation);
       if (filterStartDate && filterEndDate) {
-        url += `&startDate=${filterStartDate}&endDate=${filterEndDate}&startTime=${filterStartTime}&endTime=${filterEndTime}`;
+        params.append('startDate', filterStartDate);
+        params.append('endDate', filterEndDate);
+        params.append('startTime', filterStartTime);
+        params.append('endTime', filterEndTime);
       }
+      const url = `/api/v1/reports/employee-audit?${params.toString()}`;
       const res = await fetch(url);
       const data = await res.json();
       if (data.success) {

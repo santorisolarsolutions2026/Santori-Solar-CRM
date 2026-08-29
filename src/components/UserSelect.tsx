@@ -99,27 +99,27 @@ export default function UserSelect({
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full py-2 px-3 rounded-lg border text-left flex items-center justify-between gap-2 transition-all outline-none cursor-pointer text-xs ${
+        className={`w-full py-2 px-3 rounded-lg border text-left flex items-center justify-between gap-2 transition-all outline-none cursor-pointer text-xs font-semibold ${
           disabled
             ? 'bg-[var(--bg-main)] border-[var(--border-color)] text-[var(--text-muted)] cursor-not-allowed'
             : isOpen
-            ? 'bg-[var(--bg-card-solid)] border-emerald-500 ring-1 ring-emerald-500/30 text-[var(--text-primary)]'
+            ? 'bg-[var(--bg-card-solid)] border-slate-700 ring-1 ring-slate-800/40 text-[var(--text-primary)]'
             : 'bg-[var(--bg-card-solid)] hover:bg-[var(--border-color)] border-[var(--border-color)] text-[var(--text-primary)]'
         }`}
       >
         <div className="flex items-center gap-2 min-w-0">
           {selectedUser ? (
             <>
-              <div className="w-5 h-5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold text-[10px] flex items-center justify-center shrink-0 uppercase">
+              <div className="w-5 h-5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 font-bold text-[10px] flex items-center justify-center shrink-0 uppercase">
                 {selectedUser.name.charAt(0)}
               </div>
               <span className="font-semibold text-slate-900 dark:text-[var(--text-primary)] truncate">{selectedUser.name}</span>
-              <span className="text-[9px] designation-badge px-1.5 py-0.2 rounded font-mono truncate hidden sm:inline-block">
+              <span className="text-[9px] designation-badge px-1.5 py-0.5 rounded-md bg-slate-800 text-slate-350 border-none capitalize font-semibold font-mono truncate hidden sm:inline-block">
                 {getDesignationText(selectedUser)}
               </span>
             </>
           ) : (
-            <span className="text-[var(--text-muted)] italic">{placeholder}</span>
+            <span className="text-[var(--text-muted)] italic font-semibold">{placeholder}</span>
           )}
         </div>
 
@@ -142,9 +142,9 @@ export default function UserSelect({
 
       {/* Dropdown Popup */}
       {isOpen && (
-        <div className={`absolute left-0 right-0 ${openUpwards ? 'bottom-full mb-1.5' : 'top-full mt-1.5'} z-[100] bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-2xl overflow-hidden animate-fade-in`}>
+        <div className={`absolute left-0 right-0 ${openUpwards ? 'bottom-full mb-1.5' : 'top-full mt-1.5'} z-[100] bg-black border border-slate-800/80 rounded-xl shadow-2xl overflow-hidden animate-fade-in`}>
           {/* Search Header */}
-          <div className="p-2 border-b border-[var(--border-color)] bg-[var(--bg-main)] relative">
+          <div className="p-2 border-b border-slate-800 bg-black relative">
             <Search className="w-3.5 h-3.5 text-[var(--text-muted)] absolute left-4 top-3.5" />
             <input
               type="text"
@@ -152,14 +152,14 @@ export default function UserSelect({
               placeholder="Search by name, role..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 bg-[var(--bg-card-solid)] border border-[var(--border-color)] focus:border-emerald-500 focus:outline-none rounded-lg text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)]"
+              className="w-full pl-8 pr-3 py-1.5 bg-[var(--bg-card-solid)] border border-slate-800 focus:border-slate-750 focus:outline-none rounded-lg text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] font-semibold"
             />
           </div>
 
           {/* User List */}
           <div className="max-h-56 overflow-y-auto p-1 divide-y divide-slate-100 dark:divide-slate-850/40 custom-scrollbar">
             {filteredUsers.length === 0 ? (
-              <div className="p-4 text-center text-xs text-[var(--text-muted)] italic">
+              <div className="p-4 text-center text-xs text-[var(--text-muted)] italic font-semibold">
                 No matching team members
               </div>
             ) : (
@@ -176,27 +176,27 @@ export default function UserSelect({
                       setIsOpen(false);
                       setSearch('');
                     }}
-                    className={`w-full p-2 text-left rounded-lg transition-colors flex items-center justify-between gap-2 cursor-pointer ${
+                    className={`w-full p-2 text-left rounded-lg transition-colors flex items-center justify-between gap-2 cursor-pointer text-xs font-semibold group ${
                       isSelected
-                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/20'
-                        : 'hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 text-slate-700 dark:text-[var(--text-primary)]'
+                        ? 'text-white font-bold hover:bg-slate-800'
+                        : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-6 h-6 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold text-[10px] flex items-center justify-center shrink-0 uppercase">
+                      <div className="w-6 h-6 rounded-full bg-slate-850 border border-slate-800 text-slate-400 group-hover:text-white font-bold text-[10px] flex items-center justify-center shrink-0 uppercase">
                         {u.name.charAt(0)}
                       </div>
-                      <div className="min-w-0">
-                        <span className="text-xs font-semibold block truncate text-slate-900 dark:text-[var(--text-primary)]">{u.name}</span>
-                        {u.email && <span className="text-[10px] text-[var(--text-muted)] dark:text-[var(--text-muted)] block truncate">{u.email}</span>}
+                      <div className="min-w-0 font-semibold">
+                        <span className={`text-xs font-semibold block truncate ${isSelected ? 'text-white' : 'text-slate-400 group-hover:text-white'}`}>{u.name}</span>
+                        {u.email && <span className="text-[10px] text-slate-500 block truncate font-medium">{u.email}</span>}
                       </div>
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0">
-                      <span className="text-[9px] designation-badge px-1.5 py-0.5 rounded font-mono">
+                      <span className="text-[9px] designation-badge px-1.5 py-0.5 rounded bg-slate-850 text-slate-350 font-semibold font-mono">
                         {des}
                       </span>
-                      {isSelected && <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
+                      {isSelected && <Check className="w-3.5 h-3.5 text-white shrink-0" />}
                     </div>
                   </button>
                 );

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import CustomDropdown from '@/components/CustomDropdown';
@@ -30,6 +31,8 @@ import {
   ChevronRight,
   AlertTriangle,
   Users,
+  ChevronDown,
+  Check,
 } from 'lucide-react';
 
 interface Order {
@@ -124,30 +127,95 @@ export default function OperationsPage() {
   const [filterDateFrom, setFilterDateFrom] = useState<string>('');
   const [filterDateTo, setFilterDateTo] = useState<string>('');
 
+  const [stateFilter, setStateFilter] = useState('');
+  const [cityFilter, setCityFilter] = useState('');
+  const [stateCitiesMap, setStateCitiesMap] = useState<Record<string, string[]>>({});
+  const [dateShortcut, setDateShortcut] = useState('all');
+
   const [employees, setEmployees] = useState<any[]>([]);
   const [selectedOrderIds, setSelectedOrderIds] = useState<number[]>([]);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [assignTargetUserId, setAssignTargetUserId] = useState('');
   const [assignLoading, setAssignLoading] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   const canAssignOps = user?.role === 'admin' || user?.role === 'director' || user?.department?.name === 'IT' || user?.permissions?.includes('ops:order_assign') || user?.permissions?.includes('finance:ops_assign');
   const hasUpdateStages = user?.role === 'admin' || user?.role === 'director' || user?.department?.name === 'IT' || user?.permissions?.includes('ops:update_stages');
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const res = await fetch('/api/v1/users');
-        const data = await res.json();
-        if (data.success) {
-          const activeEmployees = data.data.filter((u: any) => u.isActive);
-          setEmployees(activeEmployees);
+    setIsMounted(true);
+    if (user) {
+      fetchOrders();
+      const fetchUsers = async () => {
+        try {
+          const res = await fetch('/api/v1/users');
+          const data = await res.json();
+          if (data.success) {
+            setEmployees(data.data);
+          }
+        } catch (err) {
+          console.error(err);
         }
-      } catch (err) {
-        console.error(err);
+      };
+      const fetchLocations = async () => {
+        try {
+          const cached = sessionStorage.getItem('stateCitiesMap');
+          if (cached) {
+            setStateCitiesMap(JSON.parse(cached));
+            return;
+          }
+          const res = await fetch('/api/v1/leads/locations');
+          const data = await res.json();
+          if (data.success && data.data) {
+            setStateCitiesMap(data.data);
+            sessionStorage.setItem('stateCitiesMap', JSON.stringify(data.data));
+          }
+        } catch (e) {
+          console.error('Failed to fetch locations', e);
+        }
+      };
+      fetchUsers();
+      fetchLocations();
+    }
+  }, [user]);
+
+  const applyDateShortcut = (shortcut: string) => {
+    setDateShortcut(shortcut);
+
+    if (shortcut === 'all' || shortcut === 'custom') {
+      if (shortcut === 'all') {
+        setFilterDateFrom('');
+        setFilterDateTo('');
       }
+      return;
+    }
+
+    const today = new Date();
+    const formatDate = (d: Date) => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
     };
-    fetchUsers();
-  }, []);
+
+    if (shortcut === 'today') {
+      const dateStr = formatDate(today);
+      setFilterDateFrom(dateStr);
+      setFilterDateTo(dateStr);
+    } else if (shortcut === 'this_week') {
+      const dayOfWeek = today.getDay();
+      const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+      const startOfWeek = new Date(today.setDate(diff));
+      const endOfWeek = new Date();
+      setFilterDateFrom(formatDate(startOfWeek));
+      setFilterDateTo(formatDate(endOfWeek));
+    } else if (shortcut === 'this_month') {
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      const endOfMonth = new Date();
+      setFilterDateFrom(formatDate(startOfMonth));
+      setFilterDateTo(formatDate(endOfMonth));
+    }
+  };
 
   const getClientSubordinateIds = (userId: number): number[] => {
     const result: number[] = [];
@@ -1084,9 +1152,21 @@ export default function OperationsPage() {
       toDate.setHours(23, 59, 59, 999);
       if (orderDate > toDate) return false;
     }
+
+    // 5. State Filter
+    if (stateFilter) {
+      if (o.lead.state?.toLowerCase() !== stateFilter.toLowerCase()) return false;
+    }
+
+    // 6. City Filter
+    if (cityFilter) {
+      if (o.lead.city?.toLowerCase() !== cityFilter.toLowerCase()) return false;
+    }
     
     return true;
   });
+
+  const portalNode = isMounted && typeof window !== 'undefined' ? document.body : null;
 
   return (
     <div className="space-y-6">
@@ -1101,74 +1181,133 @@ export default function OperationsPage() {
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-4 flex flex-wrap gap-4 items-end shadow-lg">
-        <div className="flex-1 min-w-[200px]">
-          <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Search Orders</label>
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search by client or order code..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--border-color)] placeholder-slate-500"
+      <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-4 space-y-4 shadow-lg animate-fade-in">
+        <div className="flex flex-wrap gap-4 items-end">
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Search Orders</label>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search by client or order code..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--border-color)] placeholder-slate-500 outline-none"
+              />
+              <Search className="w-4 h-4 text-[var(--text-muted)] absolute left-3 top-2.5" />
+            </div>
+          </div>
+
+          <div className="w-full sm:w-auto min-w-[150px]">
+            <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Assigned To</label>
+            <CustomDropdown
+              value={filterManagerId}
+              onChange={(val) => setFilterManagerId(val)}
+              options={[
+                { value: 'all', label: 'All Managers' },
+                ...uniqueManagers.map(m => ({
+                  value: String(m.id || 'unassigned'),
+                  label: m.name || 'Unassigned'
+                }))
+              ]}
             />
-            <Search className="w-4 h-4 text-[var(--text-muted)] absolute left-3 top-2.5" />
+          </div>
+
+          <div className="w-full sm:w-auto min-w-[190px]">
+            <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Current Stage</label>
+            <CustomDropdown
+              value={filterStage}
+              onChange={(val) => setFilterStage(val)}
+              options={[
+                { value: 'all', label: 'All Stages' },
+                { value: 'delivery_scheduled', label: 'Delivery Scheduled' },
+                { value: 'delivered', label: 'Materials Delivered' },
+                { value: 'installation_scheduled', label: 'Installation Scheduled' },
+                { value: 'installed', label: 'Solar Installed' },
+                { value: 'meter_installed', label: 'Net Meter Installed' },
+                { value: 'commissioned', label: 'Plant Commissioned' },
+                { value: 'subsidy_applied', label: 'Subsidy Applied' }
+              ]}
+            />
+          </div>
+
+          <div className="w-full sm:w-auto min-w-[140px]">
+            <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Date Shortcut</label>
+            <CustomDropdown
+              options={[
+                { value: 'all', label: 'All Time' },
+                { value: 'today', label: 'Today' },
+                { value: 'this_week', label: 'This Week' },
+                { value: 'this_month', label: 'This Month' },
+                { value: 'custom', label: 'Custom Range' },
+              ]}
+              value={dateShortcut}
+              onChange={(val) => applyDateShortcut(val)}
+              className="w-full"
+            />
+          </div>
+
+          {/* Custom State Dropdown */}
+          <div className="w-full sm:w-auto min-w-[140px]">
+            <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">State Name</label>
+            <CustomDropdown
+              options={[
+                { value: '', label: 'All States' },
+                ...Object.keys(stateCitiesMap).map(state => ({ value: state, label: state }))
+              ]}
+              value={stateFilter}
+              onChange={(val) => {
+                setStateFilter(val);
+                if (val && stateCitiesMap[val] && !stateCitiesMap[val].includes(cityFilter)) {
+                  setCityFilter('');
+                }
+              }}
+              className="w-full"
+              placeholder="All States"
+            />
+          </div>
+
+          {/* Custom City Dropdown */}
+          <div className="w-full sm:w-auto min-w-[140px]">
+            <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">City Name</label>
+            <CustomDropdown
+              options={[
+                { value: '', label: 'All Cities' },
+                ...(stateFilter && stateCitiesMap[stateFilter]
+                  ? stateCitiesMap[stateFilter]
+                  : Array.from(new Set(Object.values(stateCitiesMap).flat()))
+                ).map(city => ({ value: city, label: city }))
+              ]}
+              value={cityFilter}
+              onChange={(val) => setCityFilter(val)}
+              className="w-full"
+              placeholder="All Cities"
+            />
           </div>
         </div>
 
-        <div className="w-full sm:w-auto min-w-[150px]">
-          <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Assigned To</label>
-          <CustomDropdown
-            value={filterManagerId}
-            onChange={(val) => setFilterManagerId(val)}
-            options={[
-              { value: 'all', label: 'All Managers' },
-              ...uniqueManagers.map(m => ({
-                value: String(m.id || 'unassigned'),
-                label: m.name || 'Unassigned'
-              }))
-            ]}
-          />
-        </div>
-
-        <div className="w-full sm:w-auto min-w-[190px]">
-          <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Current Stage</label>
-          <CustomDropdown
-            value={filterStage}
-            onChange={(val) => setFilterStage(val)}
-            options={[
-              { value: 'all', label: 'All Stages' },
-              { value: 'delivery_scheduled', label: 'Delivery Scheduled' },
-              { value: 'delivered', label: 'Materials Delivered' },
-              { value: 'installation_scheduled', label: 'Installation Scheduled' },
-              { value: 'installed', label: 'Solar Installed' },
-              { value: 'meter_installed', label: 'Net Meter Installed' },
-              { value: 'commissioned', label: 'Plant Commissioned' },
-              { value: 'subsidy_applied', label: 'Subsidy Applied' }
-            ]}
-          />
-        </div>
-
-        <div className="flex gap-4">
-          <div>
-            <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Order Date From</label>
-            <input
-              type="date"
-              value={filterDateFrom}
-              onChange={(e) => setFilterDateFrom(e.target.value)}
-              className="w-full px-3 py-2 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--border-color)]"
-            />
+        {/* Custom Date Range Picker inputs (Only shown when dateShortcut === 'custom') */}
+        {dateShortcut === 'custom' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs pt-3 border-t border-[var(--border-color)]/60 animate-fade-in">
+            <div>
+              <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Order Date From</label>
+              <input
+                type="date"
+                value={filterDateFrom}
+                onChange={(e) => setFilterDateFrom(e.target.value)}
+                className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg px-3 py-2 text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--border-color)] outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Order Date To</label>
+              <input
+                type="date"
+                value={filterDateTo}
+                onChange={(e) => setFilterDateTo(e.target.value)}
+                className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg px-3 py-2 text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--border-color)] outline-none"
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Order Date To</label>
-            <input
-              type="date"
-              value={filterDateTo}
-              onChange={(e) => setFilterDateTo(e.target.value)}
-              className="w-full px-3 py-2 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--border-color)]"
-            />
-          </div>
-        </div>
+        )}
       </div>
 
       {/* List View */}
@@ -1201,179 +1340,271 @@ export default function OperationsPage() {
               </button>
             </div>
           )}
-
           <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl overflow-hidden shadow-2xl">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-[var(--bg-card)]/50 border-b border-[var(--border-color)]">
-                  {canAssignOps && (
-                    <th className="px-3 py-3 w-10 text-center">
-                      <input
-                        type="checkbox"
-                        checked={filteredOrders.length > 0 && selectedOrderIds.length === filteredOrders.length}
-                        onChange={toggleAllOrders}
-                        className="accent-emerald-500 w-3.5 h-3.5 cursor-pointer"
-                      />
-                    </th>
-                  )}
-                  <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Order Details</th>
-                  <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Assigned To</th>
-                  <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Current Stage</th>
-                  <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Order Date</th>
-                  {hasUpdateStages && (
-                    <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold text-right">Actions</th>
-                  )}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {filteredOrders.map((order) => {
-                  let stageText = 'Awaiting Schedule ⏳';
-                  let stageClass = 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-color)]';
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-[var(--bg-card)]/50 border-b border-[var(--border-color)]">
+                    {canAssignOps && (
+                      <th className="px-3 py-3 w-10 text-center">
+                        <input
+                          type="checkbox"
+                          checked={filteredOrders.length > 0 && selectedOrderIds.length === filteredOrders.length}
+                          onChange={toggleAllOrders}
+                          className="accent-emerald-500 w-3.5 h-3.5 cursor-pointer"
+                        />
+                      </th>
+                    )}
+                    <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Order Details</th>
+                    <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Assigned To</th>
+                    <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Current Stage</th>
+                    <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">Order Date</th>
+                    {hasUpdateStages && (
+                      <th className="px-5 py-3 text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-bold text-right">Actions</th>
+                    )}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {filteredOrders.map((order) => {
+                    let stageText = 'Awaiting Schedule';
+                    let stageClass = 'bg-slate-800/60 text-slate-350';
 
-                  if (order.isSubsidyApplied || (order.isCommissioned && !order.subsidyApplicable)) {
-                    stageText = 'Completed ✅';
-                    stageClass = 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
-                  } else if (order.isCommissioned) {
-                    stageText = 'Subsidy Pending ⏳';
-                    stageClass = 'bg-purple-500/10 text-purple-400 border-purple-500/20';
-                  } else if (order.isMeterInstalled) {
-                    stageText = 'Commissioning Pending ⚡';
-                    stageClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-                  } else if (order.isInstalled) {
-                    stageText = 'Meter Pending ⚠️';
-                    stageClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-                  } else if (order.isDelivered) {
-                    stageText = 'Delivered 🚚';
-                    stageClass = 'bg-teal-500/10 text-teal-400 border-teal-500/20';
-                  } else if (order.deliveryDate) {
-                    stageText = 'Scheduled 🚚';
-                    stageClass = 'bg-teal-500/10 text-teal-400 border-teal-500/20';
-                  }
+                    if (order.isSubsidyApplied || (order.isCommissioned && !order.subsidyApplicable)) {
+                      stageText = 'Completed';
+                      stageClass = 'bg-emerald-500/10 text-emerald-500 font-bold';
+                    } else if (order.isCommissioned) {
+                      stageText = 'Subsidy Pending';
+                      stageClass = 'bg-purple-600/10 text-purple-400';
+                    } else if (order.isMeterInstalled) {
+                      stageText = 'Commissioning Pending';
+                      stageClass = 'bg-emerald-600/10 text-emerald-405';
+                    } else if (order.isInstalled) {
+                      stageText = 'Meter Pending';
+                      stageClass = 'bg-blue-500/10 text-blue-400';
+                    } else if (order.isDelivered) {
+                      stageText = 'Delivered';
+                      stageClass = 'bg-teal-500/10 text-teal-450';
+                    } else if (order.deliveryDate) {
+                      stageText = 'Scheduled';
+                      stageClass = 'bg-teal-600/10 text-teal-400';
+                    }
 
-                  return (
-                    <tr key={order.id} className={`hover:bg-[var(--bg-card)]/30 transition-colors group ${selectedOrderIds.includes(order.id) ? 'bg-emerald-500/5' : ''}`}>
-                      {canAssignOps && (
-                        <td className="px-3 py-4 text-center">
-                          <input
-                            type="checkbox"
-                            checked={selectedOrderIds.includes(order.id)}
-                            onChange={() => toggleOrderSelection(order.id)}
-                            className="accent-emerald-500 w-3.5 h-3.5 cursor-pointer"
-                          />
-                        </td>
-                      )}
-                      <td className="px-5 py-4">
-                        <div className="flex flex-col">
-                          <span className="font-mono font-bold text-white text-xs">{order.orderCode}</span>
-                          <Link href={`/leads/${order.lead.id}`} className="text-sm font-bold text-emerald-400 hover:underline mt-1">
-                            {order.lead.customerName}
-                            {order.subsidyApplicable && (
-                              <span 
-                                title="Subsidy Eligible" 
-                                className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-yellow-500 text-black text-[9px] font-medium ml-1.5 align-top select-none"
-                              >
-                                S
-                              </span>
-                            )}
-                          </Link>
-                          <p className="text-[10px] text-[var(--text-muted)] flex items-center gap-1 mt-1 truncate max-w-[250px]">
-                            <MapPin className="w-3 h-3" />
-                            <span>{order.lead.address}, {order.lead.city}</span>
-                          </p>
-                        </div>
-                      </td>
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full bg-[var(--bg-card)] flex items-center justify-center border border-[var(--border-color)] shrink-0">
-                            <User className="w-3 h-3 text-[var(--text-secondary)]" />
-                          </div>
-                          <div className="flex flex-col gap-1">
-                            {canAssignOps ? (
-                              <select
-                                value={order.assignedOpsId || ''}
-                                onChange={(e) => handleSingleAssign(order.id, e.target.value)}
-                                className="bg-[var(--bg-main)] border border-[var(--border-color)] rounded px-2.5 py-1.5 text-xs text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
-                              >
-                                <option value="">-- Unassigned --</option>
-                                {eligibleAssignees.map((emp) => (
-                                  <option key={emp.id} value={emp.id}>
-                                    {emp.name} {emp.designation?.name ? `(${emp.designation.name})` : emp.role ? `(${emp.role.toUpperCase()})` : ''} {emp.id === user?.id ? '(You)' : ''}
-                                  </option>
-                                ))}
-                              </select>
-                            ) : (
-                              <span className="text-xs font-semibold text-[var(--text-primary)]">
-                                {order.assignedOps?.name || 'Unassigned'}
-                              </span>
-                            )}
-                            {(() => {
-                              const currentAssignee = employees.find(e => e.id === order.assignedOpsId) || (order.assignedOps as any);
-                              const desig = currentAssignee?.designation?.name || currentAssignee?.role;
-                              if (!desig || !order.assignedOpsId) return null;
-                              return (
-                                <span className="inline-block text-[9px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full w-fit uppercase tracking-wider">
-                                  {desig}
+                    return (
+                      <tr key={order.id} className={`hover:bg-[var(--bg-card)]/30 transition-colors group ${selectedOrderIds.includes(order.id) ? 'bg-emerald-500/5' : ''}`}>
+                        {canAssignOps && (
+                          <td className="px-3 py-4 text-center">
+                            <input
+                              type="checkbox"
+                              checked={selectedOrderIds.includes(order.id)}
+                              onChange={() => toggleOrderSelection(order.id)}
+                              className="accent-emerald-500 w-3.5 h-3.5 cursor-pointer"
+                            />
+                          </td>
+                        )}
+                        <td className="px-5 py-4">
+                          <div className="flex flex-col">
+                            <span className="font-mono font-bold text-white text-xs">{order.orderCode}</span>
+                            <Link href={`/leads/${order.lead.id}`} className="text-sm font-bold text-emerald-400 hover:underline mt-1">
+                              {order.lead.customerName}
+                              {order.subsidyApplicable && (
+                                <span 
+                                  title="Subsidy Eligible" 
+                                  className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-yellow-500 text-black text-[9px] font-medium ml-1.5 align-top select-none"
+                                >
+                                  S
                                 </span>
-                              );
-                            })()}
+                              )}
+                            </Link>
+                            <p className="text-[10px] text-[var(--text-muted)] flex items-center gap-1 mt-1 truncate max-w-[250px]">
+                              <MapPin className="w-3 h-3" />
+                              <span>{order.lead.address}, {order.lead.city}</span>
+                            </p>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-5 py-4">
-                        <span className={`text-[10px] font-bold px-2.5 py-1 border rounded-full uppercase tracking-wider whitespace-nowrap ${stageClass}`}>
-                          {stageText}
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-full bg-[var(--bg-card)] flex items-center justify-center border border-[var(--border-color)] shrink-0">
+                              <User className="w-3 h-3 text-[var(--text-secondary)]" />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              {canAssignOps ? (
+                                <CustomDropdown
+                                  options={[
+                                    { value: '', label: '-- Unassigned --' },
+                                    ...eligibleAssignees.map((emp) => ({
+                                      value: String(emp.id),
+                                      label: `${emp.name} ${emp.designation?.name ? `(${emp.designation.name})` : emp.role ? `(${emp.role.toUpperCase()})` : ''} ${emp.id === user?.id ? '(You)' : ''}`
+                                    }))
+                                  ]}
+                                  value={order.assignedOpsId ? String(order.assignedOpsId) : ''}
+                                  onChange={(val) => handleSingleAssign(order.id, val)}
+                                  className="w-full min-w-[170px]"
+                                />
+                              ) : (
+                                <span className="text-xs font-semibold text-[var(--text-primary)]">
+                                  {order.assignedOps?.name || 'Unassigned'}
+                                </span>
+                              )}
+                              {(() => {
+                                const currentAssignee = employees.find(e => e.id === order.assignedOpsId) || (order.assignedOps as any);
+                                const desig = currentAssignee?.designation?.name || currentAssignee?.role;
+                                if (!desig || !order.assignedOpsId) return null;
+                                return (
+                                  <span className="inline-block text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md w-fit">
+                                    {desig}
+                                  </span>
+                                );
+                              })()}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-5 py-4">
+                          <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg whitespace-nowrap ${stageClass}`}>
+                            {stageText}
+                          </span>
+                          {order.deliveryDate && !order.isDelivered && (
+                            <div className="text-[10px] text-[var(--text-secondary)] mt-2">
+                              Scheduled: {order.deliveryDate} {order.deliveryTime}
+                            </div>
+                          )}
+                          {order.installationDate && !order.isInstalled && order.isDelivered && (
+                            <div className="text-[10px] text-[var(--text-secondary)] mt-2">
+                              Install: {order.installationDate} {order.installationTime}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-5 py-4 text-xs text-[var(--text-secondary)] font-mono">
+                          {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : ''}
+                        </td>
+                        {hasUpdateStages && (
+                          <td className="px-5 py-4 text-right">
+                            <button
+                              onClick={() => { 
+                                if (!hasUpdateStages) {
+                                  showAlert('Forbidden. You do not have permission to manage operations stages.', 'error');
+                                  return;
+                                }
+                                setSelectedOrder(order); 
+                                setShowScheduleForm(false); 
+                                setShowInstallForm(false); 
+                                setShowActualDeliveryForm(false); 
+                                setShowActualInstallForm(false); 
+                                setShowActualMeterForm(false); 
+                                setShowActualCommissionForm(false); 
+                                setNewSubsidyAmount(''); 
+                              }}
+                              className="px-3 py-1.5 bg-[var(--bg-card)] border border-[var(--border-color)] hover:bg-[var(--bg-card)] text-emerald-400 rounded-lg font-bold text-xs transition-all cursor-pointer inline-flex items-center gap-1.5"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>Manage</span>
+                            </button>
+                          </td>
+                        )}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Cards Fallback Layout */}
+            <div className="block md:hidden divide-y divide-slate-800/40 bg-[var(--bg-card)]/30 text-sm">
+              {filteredOrders.map((order) => {
+                let stageText = 'Awaiting Schedule';
+                let stageClass = 'bg-slate-800/60 text-slate-350';
+
+                if (order.isSubsidyApplied || (order.isCommissioned && !order.subsidyApplicable)) {
+                  stageText = 'Completed';
+                  stageClass = 'bg-emerald-500/10 text-emerald-500 font-bold';
+                } else if (order.isCommissioned) {
+                  stageText = 'Subsidy Pending';
+                  stageClass = 'bg-purple-600/10 text-purple-400';
+                } else if (order.isMeterInstalled) {
+                  stageText = 'Commissioning Pending';
+                  stageClass = 'bg-emerald-600/10 text-emerald-405';
+                } else if (order.isInstalled) {
+                  stageText = 'Meter Pending';
+                  stageClass = 'bg-blue-500/10 text-blue-400';
+                } else if (order.isDelivered) {
+                  stageText = 'Delivered';
+                  stageClass = 'bg-teal-500/10 text-teal-450';
+                } else if (order.deliveryDate) {
+                  stageText = 'Scheduled';
+                  stageClass = 'bg-teal-600/10 text-teal-400';
+                }
+
+                const assignedName = order.assignedOps?.name || 'Unassigned';
+
+                return (
+                  <div
+                    key={order.id}
+                    className="p-4 hover:bg-[var(--bg-card)]/35 active:bg-[var(--bg-card)]/50 transition-all flex flex-col gap-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono font-bold text-xs text-[var(--text-primary)]">
+                        {order.orderCode}
+                      </span>
+                      <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg whitespace-nowrap ${stageClass}`}>
+                        {stageText}
+                      </span>
+                    </div>
+
+                    <div>
+                      <Link href={`/leads/${order.lead.id}`} className="font-bold text-emerald-400 hover:underline text-base block">
+                        {order.lead.customerName}
+                        {order.subsidyApplicable && (
+                          <span 
+                            title="Subsidy Eligible" 
+                            className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-yellow-500 text-black text-[9px] font-medium ml-1.5 align-top select-none"
+                          >
+                            S
+                          </span>
+                        )}
+                      </Link>
+                      <p className="text-xs text-[var(--text-secondary)] mt-0.5 flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5 text-emerald-500" /> {order.lead.address}, {order.lead.city}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[var(--border-color)]/40">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)]">Assigned Ops</span>
+                        <span className="text-xs font-semibold text-white">
+                          {assignedName}
                         </span>
-                        {order.deliveryDate && !order.isDelivered && (
-                          <div className="text-[10px] text-[var(--text-secondary)] mt-2">
-                            Scheduled: {order.deliveryDate} {order.deliveryTime}
-                          </div>
-                        )}
-                        {order.installationDate && !order.isInstalled && order.isDelivered && (
-                          <div className="text-[10px] text-[var(--text-secondary)] mt-2">
-                            Install: {order.installationDate} {order.installationTime}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-5 py-4 text-xs text-[var(--text-secondary)] font-mono">
-                        {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : ''}
-                      </td>
-                      {hasUpdateStages && (
-                        <td className="px-5 py-4 text-right">
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {hasUpdateStages && (
                           <button
-                            onClick={() => { 
-                              if (!hasUpdateStages) {
-                                showAlert('Forbidden. You do not have permission to manage operations stages.', 'error');
-                                return;
-                              }
-                              setSelectedOrder(order); 
-                              setShowScheduleForm(false); 
-                              setShowInstallForm(false); 
-                              setShowActualDeliveryForm(false); 
-                              setShowActualInstallForm(false); 
-                              setShowActualMeterForm(false); 
-                              setShowActualCommissionForm(false); 
-                              setNewSubsidyAmount(''); 
+                            onClick={() => {
+                              setSelectedOrder(order);
+                              setShowScheduleForm(false);
+                              setShowInstallForm(false);
+                              setShowActualDeliveryForm(false);
+                              setShowActualInstallForm(false);
+                              setShowActualMeterForm(false);
+                              setShowActualCommissionForm(false);
+                              setNewSubsidyAmount('');
                             }}
-                            className="px-3 py-1.5 bg-[var(--bg-card)] border border-[var(--border-color)] hover:bg-[var(--bg-card)] text-emerald-400 rounded-lg font-bold text-xs transition-all cursor-pointer inline-flex items-center gap-1.5"
+                            className="px-3 py-1.5 bg-[var(--bg-card)] border border-[var(--border-color)] hover:bg-[var(--bg-card)] text-emerald-400 rounded-lg font-bold text-xs transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-sm active:scale-95"
                           >
                             <Eye className="w-3.5 h-3.5" />
                             <span>Manage</span>
                           </button>
-                        </td>
-                      )}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
         </>
       )}
 
       {/* Selected Order Detail Modal - Widescreen dual column layout */}
-      {selectedOrder && (() => {
+      {portalNode && selectedOrder && createPortal((() => {
         // Calculate financial state
         const totalPaid = selectedOrder.payments ? selectedOrder.payments.reduce((sum, p) => sum + p.amount, 0) : selectedOrder.downPayment;
         const balanceOutstanding = Math.max(0, selectedOrder.totalValue - totalPaid);
@@ -2348,7 +2579,7 @@ export default function OperationsPage() {
                           <div className="py-3 px-4 bg-[var(--bg-card)]/15 border border-red-500/20 text-red-400 rounded-lg text-xs flex items-center gap-2.5">
                             <Info className="w-4 h-4 shrink-0 text-red-400" />
                             <span>
-                              ⚠️ Subsidy cannot be applied because there is an outstanding balance of <strong>₹{balanceOutstanding.toLocaleString('en-IN')}</strong>. Please clear all remaining payments first.
+                              ⚠️  Subsidy cannot be applied because there is an outstanding balance of <strong>₹{balanceOutstanding.toLocaleString('en-IN')}</strong>. Please clear all remaining payments first.
                             </span>
                           </div>
                         ) : (
@@ -2518,7 +2749,7 @@ export default function OperationsPage() {
             </div>
           </div>
         );
-      })()}
+      })(), portalNode)}
 
       {/* Media Lightbox Preview */}
       {previewImage && (
@@ -2724,7 +2955,7 @@ export default function OperationsPage() {
         </>
       )}
       {/* Custom Alert Modal */}
-      {customAlert.isOpen && (
+      {portalNode && customAlert.isOpen && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
           <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-5 shadow-2xl max-w-sm w-full space-y-4 text-center animate-fade-in-up">
             <div className="flex justify-center">
@@ -2768,11 +2999,12 @@ export default function OperationsPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        portalNode
       )}
 
       {/* Custom Confirm Modal */}
-      {customConfirm.isOpen && (
+      {portalNode && customConfirm.isOpen && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
           <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-5 shadow-2xl max-w-sm w-full space-y-4 text-center animate-fade-in-up">
             <div className="flex justify-center">
@@ -2808,10 +3040,11 @@ export default function OperationsPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        portalNode
       )}
       {/* WebRTC Camera Modal */}
-      {cameraModal.isOpen && (
+      {portalNode && cameraModal.isOpen && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 px-4 backdrop-blur-sm">
           <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-5 shadow-2xl max-w-md w-full space-y-4 text-center text-white animate-fade-in-up">
             <div className="flex justify-between items-center pb-2 border-b border-[var(--border-color)]">
@@ -2881,11 +3114,12 @@ export default function OperationsPage() {
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        portalNode
       )}
 
       {/* Bulk Assign Operations Member Modal */}
-      {showAssignModal && (
+      {portalNode && showAssignModal && createPortal(
         <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
           <div className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-2xl overflow-hidden p-6 animate-fade-in-up space-y-4">
             <div className="flex justify-between items-center pb-3 border-b border-[var(--border-color)]">
@@ -2901,18 +3135,18 @@ export default function OperationsPage() {
 
             <div className="space-y-1.5">
               <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Select Team Member</label>
-              <select
+              <CustomDropdown
+                options={[
+                  { value: '', label: '-- Choose Team Member --' },
+                  ...eligibleAssignees.map((emp) => ({
+                    value: String(emp.id),
+                    label: `${emp.name} ${emp.designation?.name ? `(${emp.designation.name})` : ''} ${emp.id === user?.id ? '(You)' : ''}`
+                  }))
+                ]}
                 value={assignTargetUserId}
-                onChange={(e) => setAssignTargetUserId(e.target.value)}
-                className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-emerald-500 focus:outline-none"
-              >
-                <option value="">-- Choose Team Member --</option>
-                {eligibleAssignees.map((emp) => (
-                  <option key={emp.id} value={emp.id}>
-                    {emp.name} {emp.designation?.name ? `(${emp.designation.name})` : ''} {emp.id === user?.id ? '(You)' : ''}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setAssignTargetUserId(val)}
+                className="w-full"
+              />
             </div>
 
             <div className="flex justify-end gap-3 pt-3 border-t border-[var(--border-color)]">
@@ -2934,7 +3168,8 @@ export default function OperationsPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        portalNode
       )}
 
     </div>

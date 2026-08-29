@@ -66,11 +66,37 @@ export async function GET(req: Request) {
       })
     );
 
-    // Build date filters for queries
-    const logDateFilter = dateRangeFilter ? { createdAt: dateRangeFilter } : {};
-    const meetingDateFilter = dateRangeFilter ? { createdAt: dateRangeFilter } : {};
-    const orderDateFilter = dateRangeFilter ? { createdAt: dateRangeFilter } : {};
-    const paymentDateFilter = dateRangeFilter ? { createdAt: dateRangeFilter } : {};
+    const stateFilter = url.searchParams.get('state');
+    const cityFilter = url.searchParams.get('city');
+
+    const leadFilter: any = {};
+    if (stateFilter) {
+      leadFilter.state = { equals: stateFilter, mode: 'insensitive' };
+    }
+    if (cityFilter) {
+      leadFilter.city = { equals: cityFilter, mode: 'insensitive' };
+    }
+
+    // Build filters for queries
+    const logDateFilter: any = dateRangeFilter ? { createdAt: dateRangeFilter } : {};
+    if (stateFilter || cityFilter) {
+      logDateFilter.lead = leadFilter;
+    }
+
+    const meetingDateFilter: any = dateRangeFilter ? { createdAt: dateRangeFilter } : {};
+    if (stateFilter || cityFilter) {
+      meetingDateFilter.lead = leadFilter;
+    }
+
+    const orderDateFilter: any = dateRangeFilter ? { createdAt: dateRangeFilter } : {};
+    if (stateFilter || cityFilter) {
+      orderDateFilter.lead = leadFilter;
+    }
+
+    const paymentDateFilter: any = dateRangeFilter ? { createdAt: dateRangeFilter } : {};
+    if (stateFilter || cityFilter) {
+      paymentDateFilter.order = { lead: leadFilter };
+    }
 
     // Fetch master dataset for calculation
     const [allLogs, allMeetings, allOrders, allPayments] = await Promise.all([

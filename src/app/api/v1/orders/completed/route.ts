@@ -19,6 +19,8 @@ export async function GET(req: Request) {
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
     const clientType = searchParams.get('clientType');
+    const city = searchParams.get('city');
+    const state = searchParams.get('state');
 
     const userPermissions = await getUserPermissions(userPayload.id);
     const hasDeliveredPerm = userPermissions.includes('ops:delivered_orders') || userPayload.role === 'admin' || userPayload.role === 'director';
@@ -106,6 +108,20 @@ export async function GET(req: Request) {
     // Client Type filter
     if (clientType && clientType !== 'all') {
       whereClause.clientType = clientType;
+    }
+
+    // Location filters
+    if (city && city.trim() !== '') {
+      whereClause.lead = {
+        ...(whereClause.lead || {}),
+        city: { equals: city.trim(), mode: 'insensitive' }
+      };
+    }
+    if (state && state.trim() !== '') {
+      whereClause.lead = {
+        ...(whereClause.lead || {}),
+        state: { equals: state.trim(), mode: 'insensitive' }
+      };
     }
 
     // Date range filter

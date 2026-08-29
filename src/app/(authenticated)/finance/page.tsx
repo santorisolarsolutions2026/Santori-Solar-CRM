@@ -30,6 +30,7 @@ import {
   Hash,
 } from 'lucide-react';
 import Link from 'next/link';
+import CustomDropdown from '@/components/CustomDropdown';
 import {
   PieChart,
   Pie,
@@ -783,94 +784,100 @@ export default function FinancePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
             {/* Date Range Filter */}
             <div className="space-y-1">
-              <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Date Created</label>
-              <select
+              <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Date Created</label>
+              <CustomDropdown
+                options={[
+                  { value: 'all', label: 'All Time' },
+                  { value: 'today', label: 'Today' },
+                  { value: 'yesterday', label: 'Yesterday' },
+                  { value: 'last7', label: 'Last 7 Days' },
+                  { value: 'last30', label: 'Last 30 Days' },
+                  { value: 'custom', label: 'Custom Range...' }
+                ]}
                 value={filterDateRange}
-                onChange={(e) => setFilterDateRange(e.target.value)}
-                className="w-full px-2.5 py-1.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)] capitalize"
-              >
-                <option value="all">All Time</option>
-                <option value="today">Today</option>
-                <option value="yesterday">Yesterday</option>
-                <option value="last7">Last 7 Days</option>
-                <option value="last30">Last 30 Days</option>
-                <option value="custom">Custom Range...</option>
-              </select>
+                onChange={(val) => setFilterDateRange(val)}
+                className="w-full"
+              />
             </div>
 
             {/* Payment Method Filter */}
             <div className="space-y-1">
-              <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Payment Method</label>
-              <select
+              <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Payment Method</label>
+              <CustomDropdown
+                options={[
+                  { value: 'all', label: 'All Methods' },
+                  ...PAYMENT_METHODS.map((m) => ({ value: m.value, label: m.label }))
+                ]}
                 value={filterPaymentMethod}
-                onChange={(e) => setFilterPaymentMethod(e.target.value)}
-                className="w-full px-2.5 py-1.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)] capitalize"
-              >
-                <option value="all">All Methods</option>
-                {PAYMENT_METHODS.map((m) => (
-                  <option key={m.value} value={m.value}>{m.label}</option>
-                ))}
-              </select>
+                onChange={(val) => setFilterPaymentMethod(val)}
+                className="w-full animate-capitalize"
+              />
             </div>
 
             {/* Outstanding Balance Filter */}
             <div className="space-y-1">
-              <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Balance Status</label>
-              <select
+              <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Balance Status</label>
+              <CustomDropdown
+                options={[
+                  { value: 'all', label: 'All Ledgers' },
+                  { value: 'cleared', label: 'Fully Cleared (Paid)' },
+                  { value: 'outstanding', label: 'Outstanding Balance' }
+                ]}
                 value={filterBalanceStatus}
-                onChange={(e) => setFilterBalanceStatus(e.target.value)}
-                className="w-full px-2.5 py-1.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)]"
-              >
-                <option value="all">All Ledgers</option>
-                <option value="cleared">Fully Cleared (Paid)</option>
-                <option value="outstanding">Outstanding Balance</option>
-              </select>
+                onChange={(val) => setFilterBalanceStatus(val)}
+                className="w-full"
+              />
             </div>
 
             {/* Order Status Filter */}
             <div className="space-y-1">
-              <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Order Status</label>
-              <select
+              <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Order Status</label>
+              <CustomDropdown
+                options={[
+                  { value: 'all', label: 'All Statuses' },
+                  { value: 'submitted', label: 'Submitted (Awaiting)' },
+                  { value: 'finance_verified', label: 'Verified' },
+                  { value: 'ops_assigned', label: 'Scheduled' },
+                  { value: 'completed', label: 'Completed' }
+                ]}
                 value={filterOrderStatus}
-                onChange={(e) => setFilterOrderStatus(e.target.value)}
-                className="w-full px-2.5 py-1.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)] capitalize"
-              >
-                <option value="all">All Statuses</option>
-                <option value="submitted">Submitted (Awaiting)</option>
-                <option value="finance_verified">Verified</option>
-                <option value="ops_assigned">Scheduled</option>
-                <option value="completed">Completed</option>
-              </select>
+                onChange={(val) => setFilterOrderStatus(val)}
+                className="w-full animate-capitalize"
+              />
             </div>
 
             {/* Submitted By Filter */}
             <div className="space-y-1">
-              <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Submitted By</label>
-              <select
+              <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Submitted By</label>
+              <CustomDropdown
+                options={[
+                  { value: 'all', label: 'All Submitters' },
+                  ...Array.from(new Map(orders.filter(o => o.submittedBy).map(o => [o.submittedBy.id, o.submittedBy])).values()).map(sub => ({
+                    value: sub.id.toString(),
+                    label: sub.name
+                  }))
+                ]}
                 value={filterSubmittedBy}
-                onChange={(e) => setFilterSubmittedBy(e.target.value)}
-                className="w-full px-2.5 py-1.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)] capitalize"
-              >
-                <option value="all">All Submitters</option>
-                {Array.from(new Map(orders.filter(o => o.submittedBy).map(o => [o.submittedBy.id, o.submittedBy])).values()).map(sub => (
-                  <option key={sub.id} value={sub.id.toString()}>{sub.name}</option>
-                ))}
-              </select>
+                onChange={(val) => setFilterSubmittedBy(val)}
+                className="w-full animate-capitalize"
+              />
             </div>
 
             {/* Verified By Filter */}
             <div className="space-y-1">
-              <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Verified By</label>
-              <select
+              <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Verified By</label>
+              <CustomDropdown
+                options={[
+                  { value: 'all', label: 'All Verifiers' },
+                  ...Array.from(new Map(orders.filter(o => o.financeProcessedBy).map(o => [o.financeProcessedBy!.id, o.financeProcessedBy!])).values()).map(ver => ({
+                    value: ver.id.toString(),
+                    label: ver.name
+                  }))
+                ]}
                 value={filterVerifiedBy}
-                onChange={(e) => setFilterVerifiedBy(e.target.value)}
-                className="w-full px-2.5 py-1.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)] capitalize"
-              >
-                <option value="all">All Verifiers</option>
-                {Array.from(new Map(orders.filter(o => o.financeProcessedBy).map(o => [o.financeProcessedBy!.id, o.financeProcessedBy!])).values()).map(ver => (
-                  <option key={ver.id} value={ver.id.toString()}>{ver.name}</option>
-                ))}
-              </select>
+                onChange={(val) => setFilterVerifiedBy(val)}
+                className="w-full animate-capitalize"
+              />
             </div>
           </div>
 
@@ -949,7 +956,7 @@ export default function FinancePage() {
           <div className="space-y-4">
             {/* Top Key Metric Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="p-4 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl flex items-center justify-between shadow-lg">
+              <div className="p-4 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl flex items-center justify-between shadow-lg hover:shadow-[0_12px_24px_-10px_rgba(16,185,129,0.12)] hover:border-emerald-500/25 md:hover:-translate-y-1 transition-all duration-350 ease-out">
                 <div>
                   <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-wider block">Total Order Value</span>
                   <span className="text-xl font-extrabold text-white mt-1 block">₹{totalValue.toLocaleString('en-IN')}</span>
@@ -959,7 +966,7 @@ export default function FinancePage() {
                 </div>
               </div>
 
-              <div className="p-4 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl flex items-center justify-between shadow-lg">
+              <div className="p-4 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl flex items-center justify-between shadow-lg hover:shadow-[0_12px_24px_-10px_rgba(16,185,129,0.12)] hover:border-emerald-500/25 md:hover:-translate-y-1 transition-all duration-350 ease-out">
                 <div>
                   <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-wider block">Payments Collected</span>
                   <span className="text-xl font-extrabold text-emerald-400 mt-1 block">₹{totalCollected.toLocaleString('en-IN')}</span>
@@ -969,7 +976,7 @@ export default function FinancePage() {
                 </div>
               </div>
 
-              <div className="p-4 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl flex items-center justify-between shadow-lg">
+              <div className="p-4 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl flex items-center justify-between shadow-lg hover:shadow-[0_12px_24px_-10px_rgba(16,185,129,0.12)] hover:border-emerald-500/25 md:hover:-translate-y-1 transition-all duration-350 ease-out">
                 <div>
                   <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-wider block">Outstanding Balance</span>
                   <span className="text-xl font-extrabold text-emerald-400 mt-1 block">₹{totalOutstanding.toLocaleString('en-IN')}</span>
@@ -981,7 +988,7 @@ export default function FinancePage() {
             </div>
 
             {/* Payment Methods Breakdown Card */}
-            <div className="p-5 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-xl space-y-3">
+            <div className="p-5 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-xl space-y-3 hover:shadow-[0_12px_24px_-10px_rgba(16,185,129,0.10)] hover:border-emerald-500/20 md:hover:-translate-y-0.5 transition-all duration-350 ease-out">
               <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-2.5">
                 <div className="flex items-center gap-2">
                   <PieChartIcon className="w-4 h-4 text-emerald-400" />
@@ -1062,13 +1069,13 @@ export default function FinancePage() {
       })()}
 
       {/* Tabs */}
-      <div className="flex border-b border-[var(--border-color)]">
+      <div className="flex border-b border-[var(--border-color)] relative w-full sm:w-fit p-1 bg-[var(--bg-card)]/30 rounded-xl gap-1">
         <button
           onClick={() => { setActiveTab('pending'); setSelectedOrderIds([]); }}
-          className={`px-6 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 ${
+          className={`flex-1 sm:flex-none px-6 py-2.5 text-xs font-bold uppercase tracking-wider transition-all duration-300 rounded-lg flex items-center justify-center gap-2 relative z-10 cursor-pointer ${
             activeTab === 'pending'
-              ? 'border-emerald-500 text-emerald-400'
-              : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              ? 'text-emerald-450 bg-emerald-500/[0.06] shadow-sm border border-emerald-500/15'
+              : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5 border'
           }`}
         >
           <span>Awaiting Verification</span>
@@ -1080,10 +1087,10 @@ export default function FinancePage() {
         </button>
         <button
           onClick={() => { setActiveTab('ledger'); setSelectedOrderIds([]); }}
-          className={`px-6 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 ${
+          className={`flex-1 sm:flex-none px-6 py-2.5 text-xs font-bold uppercase tracking-wider transition-all duration-300 rounded-lg flex items-center justify-center gap-2 relative z-10 cursor-pointer ${
             activeTab === 'ledger'
-              ? 'border-emerald-500 text-emerald-400'
-              : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              ? 'text-emerald-450 bg-emerald-500/[0.06] shadow-sm border border-emerald-500/15'
+              : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5 border'
           }`}
         >
           <span>Active Ledgers</span>
@@ -1134,7 +1141,7 @@ export default function FinancePage() {
         ) : (
           <div className="space-y-3">
             <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl overflow-hidden shadow-xl">
-              <div className="overflow-x-auto">
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
                     <tr className="border-b border-[var(--border-color)] bg-[var(--bg-card)]/40 text-[var(--text-secondary)] font-semibold">
@@ -1263,6 +1270,77 @@ export default function FinancePage() {
                   </tbody>
                 </table>
               </div>
+
+              {/* Mobile Cards Fallback Layout */}
+              <div className="block md:hidden divide-y divide-slate-800/40 bg-[var(--bg-card)]/30 text-sm">
+                {pendingOrders.map((order) => {
+                  const assignedName = order.assignedFinance ? order.assignedFinance.name : 'Unassigned';
+                  return (
+                    <div
+                      key={order.id}
+                      className="p-4 hover:bg-[var(--bg-card)]/35 active:bg-[var(--bg-card)]/50 transition-all cursor-pointer flex flex-col gap-3"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono font-bold text-xs text-[var(--text-primary)]">
+                          {order.orderCode}
+                        </span>
+                        <span className="text-xs text-[var(--text-secondary)] font-semibold">
+                          {order.systemSizeKw} kW
+                        </span>
+                      </div>
+
+                      <div>
+                        <h4 className="font-bold text-white text-base">
+                          {order.lead.customerName}
+                          {order.subsidyApplicable && (
+                            <span 
+                              title="Subsidy Eligible" 
+                              className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-yellow-500 text-black text-[9px] font-medium ml-1.5 align-top select-none"
+                            >
+                              S
+                            </span>
+                          )}
+                        </h4>
+                        <p className="text-xs text-[var(--text-muted)] mt-0.5 flex items-center gap-1">
+                          <MapPin className="w-3.5 h-3.5 text-emerald-500" /> {order.lead.city}
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-xs py-2 border-t border-[var(--border-color)]/40">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)]">Contract Value</span>
+                          <span className="text-xs font-black text-white">₹{order.totalValue.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex flex-col gap-0.5 items-end">
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)]">Down Payment</span>
+                          <span className="text-xs font-bold text-emerald-400">₹{order.downPayment.toLocaleString('en-IN')}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[var(--border-color)]/40">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)]">Assigned Finance</span>
+                          <span className="text-xs font-semibold text-white">
+                            {assignedName}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {canVerifyOrder && (
+                            <button
+                              onClick={() => { setSelectedOrder(order); setModalMode('verify'); }}
+                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1 shadow-sm active:scale-95"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>Verify Order</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )
@@ -1276,7 +1354,7 @@ export default function FinancePage() {
           </div>
         ) : (
           <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl overflow-hidden shadow-xl">
-            <div className="overflow-x-auto">
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="border-b border-[var(--border-color)] bg-[var(--bg-card)]/40 text-[var(--text-secondary)] font-semibold">
@@ -1373,7 +1451,7 @@ export default function FinancePage() {
                       <td className="py-4 px-4 font-extrabold text-emerald-400">
                         ₹{order.balanceOutstanding.toLocaleString('en-IN')}
                         {order.balanceOutstanding === 0 && (
-                          <span className="inline-block text-[9px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20 ml-2">Paid</span>
+                          <span className="inline-block text-[9px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded-md ml-2 font-bold">Paid</span>
                         )}
                       </td>
                       <td className="py-4 px-4 font-medium text-[var(--text-primary)]">
@@ -1397,12 +1475,12 @@ export default function FinancePage() {
                         )}
                       </td>
                       <td className="py-4 px-4 capitalize">
-                        <span className={`inline-block text-[9px] font-bold px-2 py-0.5 border rounded-full ${
+                        <span className={`inline-block text-[9px] font-extrabold px-2.5 py-1 rounded-lg ${
                           order.status === 'finance_verified' 
-                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                            ? 'bg-emerald-500/10 text-emerald-400'
                             : order.status === 'ops_assigned'
-                              ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
-                              : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                              ? 'bg-purple-500/10 text-purple-400'
+                              : 'bg-emerald-500/10 text-emerald-400'
                         }`}>
                           {order.status === 'finance_verified' ? 'verified' : order.status === 'ops_assigned' ? 'scheduled' : order.status}
                         </span>
@@ -1422,6 +1500,94 @@ export default function FinancePage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile Cards Fallback Layout */}
+            <div className="block md:hidden divide-y divide-slate-800/40 bg-[var(--bg-card)]/30 text-sm">
+              {verifiedOrders.map((order) => {
+                const assignedName = order.assignedFinance 
+                  ? order.assignedFinance.name 
+                  : order.assignedOps 
+                    ? order.assignedOps.name 
+                    : order.submittedBy 
+                      ? order.submittedBy.name 
+                      : 'Unassigned';
+
+                const statusText = order.status === 'finance_verified' ? 'verified' : order.status === 'ops_assigned' ? 'scheduled' : order.status;
+                const statusClass = order.status === 'finance_verified' 
+                  ? 'bg-emerald-500/10 text-emerald-400'
+                  : order.status === 'ops_assigned'
+                    ? 'bg-purple-500/10 text-purple-400'
+                    : 'bg-emerald-500/10 text-emerald-400';
+
+                return (
+                  <div
+                    key={order.id}
+                    className="p-4 hover:bg-[var(--bg-card)]/35 active:bg-[var(--bg-card)]/50 transition-all cursor-pointer flex flex-col gap-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono font-bold text-xs text-[var(--text-primary)]">
+                        {order.orderCode}
+                      </span>
+                      <span className={`inline-block text-[9px] font-extrabold px-2.5 py-1 rounded-lg capitalize ${statusClass}`}>
+                        {statusText}
+                      </span>
+                    </div>
+
+                    <div>
+                      <h4 className="font-bold text-white text-base">
+                        {order.lead.customerName}
+                        {order.subsidyApplicable && (
+                          <span 
+                            title="Subsidy Eligible" 
+                            className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-yellow-500 text-black text-[9px] font-medium ml-1.5 align-top select-none"
+                          >
+                            S
+                          </span>
+                        )}
+                      </h4>
+                      <p className="text-xs text-[var(--text-muted)] mt-0.5 flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5 text-emerald-500" /> {order.lead.city}
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs py-2 border-t border-[var(--border-color)]/40">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)]">Total Contract</span>
+                        <span className="text-xs font-black text-white">₹{order.totalValue.toLocaleString('en-IN')}</span>
+                      </div>
+                      <div className="flex flex-col gap-0.5 items-end">
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)]">Outstanding Balance</span>
+                        <span className="text-xs font-black text-emerald-400">
+                          ₹{order.balanceOutstanding.toLocaleString('en-IN')}
+                          {order.balanceOutstanding === 0 && <span className="text-[8px] bg-emerald-500/10 text-emerald-450 border border-emerald-500/25 px-1 py-0.25 ml-1 rounded">Paid</span>}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[var(--border-color)]/40">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)]">Assigned To</span>
+                        <span className="text-xs font-semibold text-white">
+                          {assignedName}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {canMaintainLedger && (
+                          <button
+                            onClick={() => { setSelectedOrder(order); setModalMode('ledger_detail'); }}
+                            className="px-3 py-1.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-slate-650 text-[var(--text-primary)] rounded font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1 shadow-sm active:scale-95"
+                          >
+                            <CreditCard className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>View Ledger</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )

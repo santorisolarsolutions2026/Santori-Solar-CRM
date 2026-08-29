@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import {
   Layers,
@@ -22,9 +22,12 @@ import {
   Search,
   X,
   Zap,
+  ChevronDown,
+  Check,
 } from 'lucide-react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import CustomDropdown from '@/components/CustomDropdown';
 
 const DashboardChart = dynamic(() => import('@/components/DashboardChart'), {
   ssr: false,
@@ -121,6 +124,13 @@ const STAGE_NAMES: Record<number, { name: string; color: string }> = {
   14: { name: 'Meeting Cancelled', color: '#EF4444' },
 };
 
+const REMINDER_HEX_COLORS: Record<string, string> = {
+  meeting: '#10B981',      // Green
+  delivery: '#3B82F6',     // Blue
+  installation: '#8B5CF6', // Purple
+  commissioning: '#F59E0B', // Amber
+};
+
 export default function DashboardPage() {
   const { user, hasPermission } = useAuth();
   const [stats, setStats] = useState<OverviewStats | null>(null);
@@ -131,12 +141,63 @@ export default function DashboardPage() {
   const [reminders, setReminders] = useState<any[]>([]);
   const [leadSources, setLeadSources] = useState<{ name: string; value: number }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [stateFilter, setStateFilter] = useState('');
+  const [cityFilter, setCityFilter] = useState('');
+  const [stateCitiesMap, setStateCitiesMap] = useState<Record<string, string[]>>({});
+  const [dateShortcut, setDateShortcut] = useState('all');
+  const [filterStartDate, setFilterStartDate] = useState<string>('');
+  const [filterEndDate, setFilterEndDate] = useState<string>('');
+  const [showFilters, setShowFilters] = useState(false);
 
   // Activity Stream full screen modal state for Admin
   const [activityModalOpen, setActivityModalOpen] = useState(false);
   const [activitySearchQuery, setActivitySearchQuery] = useState('');
 
   const isAdmin = user?.role === 'admin' || user?.role?.startsWith('admin:') || user?.role === 'director';
+
+  const applyDateShortcut = (shortcut: string) => {
+    setDateShortcut(shortcut);
+
+    if (shortcut === 'all' || shortcut === 'custom') {
+      if (shortcut === 'all') {
+        setFilterStartDate('');
+        setFilterEndDate('');
+      }
+      return;
+    }
+
+    const today = new Date();
+    const formatDate = (d: Date) => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    if (shortcut === 'today') {
+      const dateStr = formatDate(today);
+      setFilterStartDate(dateStr);
+      setFilterEndDate(dateStr);
+    } else if (shortcut === 'yesterday') {
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const dateStr = formatDate(yesterday);
+      setFilterStartDate(dateStr);
+      setFilterEndDate(dateStr);
+    } else if (shortcut === 'this_week') {
+      const dayOfWeek = today.getDay();
+      const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+      const startOfWeek = new Date(today.setDate(diff));
+      const endOfWeek = new Date();
+      setFilterStartDate(formatDate(startOfWeek));
+      setFilterEndDate(formatDate(endOfWeek));
+    } else if (shortcut === 'this_month') {
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      const endOfMonth = new Date();
+      setFilterStartDate(formatDate(startOfMonth));
+      setFilterEndDate(formatDate(endOfMonth));
+    }
+  };
 
   const filteredActivities = activities.filter((log) => {
     if (!activitySearchQuery.trim()) return true;
@@ -151,6 +212,18 @@ export default function DashboardPage() {
 
   const fetchData = async () => {
     try {
+      let query = '';
+      const params = new URLSearchParams();
+      if (stateFilter) params.append('state', stateFilter);
+      if (cityFilter) params.append('city', cityFilter);
+      if (filterStartDate && filterEndDate) {
+        params.append('startDate', filterStartDate);
+        params.append('endDate', filterEndDate);
+      }
+      if (params.toString()) {
+        query = `?${params.toString()}`;
+      }
+
       const [
         statsRes,
         pipelineRes,
@@ -160,13 +233,13 @@ export default function DashboardPage() {
         remindersRes,
         sourcesRes,
       ] = await Promise.all([
-        fetch('/api/v1/reports/overview'),
-        fetch('/api/v1/reports/pipeline'),
-        fetch('/api/v1/reports/trend'),
-        fetch('/api/v1/reports/team-performance'),
-        fetch('/api/v1/reports/recent-activity'),
-        fetch('/api/v1/reports/reminders'),
-        fetch('/api/v1/reports/lead-sources'),
+        fetch(`/api/v1/reports/overview${query}`),
+        fetch(`/api/v1/reports/pipeline${query}`),
+        fetch(`/api/v1/reports/trend${query}`),
+        fetch(`/api/v1/reports/team-performance${query}`),
+        fetch(`/api/v1/reports/recent-activity${query}`),
+        fetch(`/api/v1/reports/reminders${query}`),
+        fetch(`/api/v1/reports/lead-sources${query}`),
       ]);
 
       const [
@@ -202,8 +275,28 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    fetchData();
-  }, [user]);
+    const fetchLocations = async () => {
+      try {
+        const cached = sessionStorage.getItem('stateCitiesMap');
+        if (cached) {
+          setStateCitiesMap(JSON.parse(cached));
+          return;
+        }
+        const res = await fetch('/api/v1/leads/locations');
+        const data = await res.json();
+        if (data.success && data.data) {
+          setStateCitiesMap(data.data);
+          sessionStorage.setItem('stateCitiesMap', JSON.stringify(data.data));
+        }
+      } catch (err) {
+        console.error('Failed to fetch locations:', err);
+      }
+    };
+    if (user) {
+      fetchLocations();
+      fetchData();
+    }
+  }, [user, stateFilter, cityFilter, filterStartDate, filterEndDate]);
 
   if (loading) {
     return (
@@ -360,6 +453,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
+
+
       {/* KPI Cards Grid */}
       <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-${activeCards.length} gap-6`}>
         {activeCards.map((card, index) => {
@@ -367,7 +462,7 @@ export default function DashboardPage() {
           return (
             <div
               key={index}
-              className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-5 shadow-sm hover:shadow-md flex justify-between items-center h-28 transition-all duration-200"
+              className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-5 shadow-sm hover:shadow-[0_12px_24px_-10px_rgba(16,185,129,0.12)] hover:border-emerald-500/25 md:hover:-translate-y-1 flex justify-between items-center h-28 transition-all duration-350 ease-out"
             >
               <div className="flex flex-col justify-between h-full">
                 <span className="text-xs font-semibold text-[var(--text-secondary)] tracking-wider uppercase leading-snug">
@@ -386,7 +481,7 @@ export default function DashboardPage() {
       {/* Reminders & Activity Feed Section (Placed right below Leads Data) */}
       <div className={`grid grid-cols-1 ${isAdmin ? 'lg:grid-cols-2' : ''} gap-6`}>
         {/* Column 1: Upcoming Task Reminders */}
-        <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 shadow-sm flex flex-col h-[28rem]">
+        <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 shadow-sm hover:shadow-[0_12px_24px_-10px_rgba(16,185,129,0.10)] hover:border-emerald-500/20 md:hover:-translate-y-0.5 flex flex-col h-[28rem] transition-all duration-350 ease-out">
           <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-6 flex items-center gap-2">
             <Clock className="w-5 h-5 text-emerald-500" />
             <span>Upcoming Task Reminders</span>
@@ -402,6 +497,7 @@ export default function DashboardPage() {
                 const isDelivery = rem.type === 'delivery';
                 const isInstallation = rem.type === 'installation';
                 const isCommissioning = rem.type === 'commissioning';
+                const remColor = REMINDER_HEX_COLORS[rem.type] || '#94A3B8';
                 return (
                   <div
                     key={rem.id}
@@ -455,18 +551,14 @@ export default function DashboardPage() {
                       </div>
                       
                       <div className="flex justify-between items-center mt-1">
-                        <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.25 rounded-md border ${
-                          isMeeting 
-                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
-                            : isDelivery
-                              ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                              : isInstallation
-                                ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
-                                : isCommissioning
-                                  ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                                  : 'bg-teal-500/10 text-teal-400 border-teal-500/20'
-                        }`}>
-                          {rem.title}
+                        <span
+                          className="text-[9px] font-extrabold px-2.5 py-1 rounded-lg"
+                          style={{
+                            backgroundColor: `${remColor}15`,
+                            color: remColor,
+                          }}
+                        >
+                          {rem.title.toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase())}
                         </span>
                         
                         <span className="text-[9px] text-[var(--text-secondary)] font-bold font-mono">
@@ -490,7 +582,7 @@ export default function DashboardPage() {
 
         {/* Column 2: Recent Activity Stream (Strictly Admin / Director Only) */}
         {isAdmin && (
-          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 shadow-sm h-[28rem] flex flex-col">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 shadow-sm h-[28rem] flex flex-col hover:shadow-[0_12px_24px_-10px_rgba(16,185,129,0.10)] hover:border-emerald-500/20 md:hover:-translate-y-0.5 transition-all duration-350 ease-out">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] flex items-center gap-2">
                 <Clock className="w-5 h-5 text-emerald-500" />
@@ -567,7 +659,7 @@ export default function DashboardPage() {
       {/* Charts & Redesigned Pipeline Distribution Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Trend line graph */}
-        <div className={`bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 shadow-sm ${
+        <div className={`bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 shadow-sm hover:shadow-[0_12px_24px_-10px_rgba(16,185,129,0.10)] hover:border-emerald-500/20 md:hover:-translate-y-0.5 transition-all duration-350 ease-out ${
           (userDept === 'Finance' || userBaseRole === 'finance' || userDept === 'Operations' || userBaseRole === 'operations')
             ? 'lg:col-span-3'
             : 'lg:col-span-2'
@@ -613,7 +705,7 @@ export default function DashboardPage() {
 
         {/* Lead Acquisition Channels Pie Chart (Sales/Admin only) */}
         {userDept !== 'Finance' && userBaseRole !== 'finance' && userDept !== 'Operations' && userBaseRole !== 'operations' && (
-          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 shadow-sm flex flex-col justify-between">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 shadow-sm flex flex-col justify-between hover:shadow-[0_12px_24px_-10px_rgba(16,185,129,0.10)] hover:border-emerald-500/20 md:hover:-translate-y-0.5 transition-all duration-350 ease-out">
             <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-4">Lead Acquisition Channels</h3>
             <div className="h-80 w-full flex items-center justify-center">
               <LeadSourcePieChart leadSourceData={leadSources} colors={COLORS} />
@@ -623,7 +715,7 @@ export default function DashboardPage() {
 
         {/* Redesigned Pipeline Stage Distribution Grid (Sales/Admin only) */}
         {userDept !== 'Finance' && userBaseRole !== 'finance' && userDept !== 'Operations' && userBaseRole !== 'operations' && (
-          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 shadow-sm flex flex-col justify-between lg:col-span-3">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 shadow-sm flex flex-col justify-between lg:col-span-3 hover:shadow-[0_12px_24px_-10px_rgba(16,185,129,0.10)] hover:border-emerald-500/20 md:hover:-translate-y-0.5 transition-all duration-350 ease-out">
             <div>
               <div className="flex items-center justify-between mb-5">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] flex items-center gap-2">
@@ -663,9 +755,9 @@ export default function DashboardPage() {
                           </span>
                         </div>
                         <span
-                          className={`text-xs font-extrabold px-2 py-0.5 rounded-full shrink-0 font-mono ${
+                          className={`text-xs font-extrabold px-2 py-0.5 rounded-md shrink-0 font-mono ${
                             hasLeads
-                              ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                              ? 'bg-blue-500/20 text-blue-400'
                               : 'bg-[var(--bg-card)] text-[var(--text-secondary)]'
                           }`}
                         >
@@ -717,7 +809,7 @@ export default function DashboardPage() {
                 <div>
                   <h3 className="text-base font-bold text-white tracking-wide flex items-center gap-2">
                     <span>Full System Activity Stream</span>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono">
+                    <span className="text-xs px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-400 font-mono font-bold">
                       {activities.length} logs
                     </span>
                   </h3>
@@ -790,11 +882,10 @@ export default function DashboardPage() {
                           <div className="flex flex-wrap items-center gap-2 text-xs">
                             <span className="text-[var(--text-secondary)]">Moved to</span>
                             <span
-                              className="px-2 py-0.5 rounded text-[11px] font-bold border"
+                              className="px-2.5 py-1 rounded-md text-[11px] font-bold"
                               style={{
                                 backgroundColor: `${stage.color}15`,
                                 color: stage.color,
-                                borderColor: `${stage.color}30`,
                               }}
                             >
                               {stage.name}

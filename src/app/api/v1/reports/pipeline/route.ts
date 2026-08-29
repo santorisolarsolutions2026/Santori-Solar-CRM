@@ -24,7 +24,26 @@ export async function GET(req: Request) {
     const { getUserSession } = await import('@/lib/auth');
     const { role: userRole } = await getUserSession(userPayload.id);
     const { getLeadVisibilityCondition } = await import('@/lib/hierarchy');
-    const leadWhere = await getLeadVisibilityCondition(userPayload.id, userRole, userPermissions);
+    const leadWhere: any = await getLeadVisibilityCondition(userPayload.id, userRole, userPermissions);
+
+    const url = new URL(req.url);
+    const stateFilter = url.searchParams.get('state');
+    const cityFilter = url.searchParams.get('city');
+    const startDate = url.searchParams.get('startDate');
+    const endDate = url.searchParams.get('endDate');
+
+    if (stateFilter) {
+      leadWhere.state = { equals: stateFilter, mode: 'insensitive' };
+    }
+    if (cityFilter) {
+      leadWhere.city = { equals: cityFilter, mode: 'insensitive' };
+    }
+
+    if (startDate && endDate) {
+      const sDate = new Date(`${startDate}T00:00:00`);
+      const eDate = new Date(`${endDate}T23:59:59.999`);
+      leadWhere.createdAt = { gte: sDate, lte: eDate };
+    }
 
     // Group by status and count
     const stagesCounts = await prisma.lead.groupBy({
