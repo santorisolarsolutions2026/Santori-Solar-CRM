@@ -80,7 +80,7 @@ export default function AuthenticatedLayout({
   const { user, loading, logout, refreshUser, hasPermission } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -101,7 +101,7 @@ export default function AuthenticatedLayout({
     hr: true,
     admin: true,
   });
-  
+
   const toggleGroup = (groupId: string) => {
     setExpandedGroups(prev => ({ ...prev, [groupId]: !prev[groupId] }));
   };
@@ -177,7 +177,7 @@ export default function AuthenticatedLayout({
           alert('Failed to delete broadcast message. Please try again.');
         }
       },
-      onCancel: () => {},
+      onCancel: () => { },
     });
   };
 
@@ -201,16 +201,16 @@ export default function AuthenticatedLayout({
 
   useEffect(() => {
     (window as any).showToast = addToast;
-    
+
     // Override window.alert
     window.alert = (message: string) => {
       let type: 'success' | 'error' | 'info' = 'info';
       const msg = String(message).toLowerCase();
       if (
-        msg.includes('success') || 
-        msg.includes('done') || 
-        msg.includes('recorded') || 
-        msg.includes('booked') || 
+        msg.includes('success') ||
+        msg.includes('done') ||
+        msg.includes('recorded') ||
+        msg.includes('booked') ||
         msg.includes('saved') ||
         msg.includes('uploaded') ||
         msg.includes('verified') ||
@@ -220,12 +220,12 @@ export default function AuthenticatedLayout({
       ) {
         type = 'success';
       } else if (
-        msg.includes('error') || 
-        msg.includes('fail') || 
-        msg.includes('invalid') || 
-        msg.includes('require') || 
-        msg.includes('could not') || 
-        msg.includes('cannot') || 
+        msg.includes('error') ||
+        msg.includes('fail') ||
+        msg.includes('invalid') ||
+        msg.includes('require') ||
+        msg.includes('could not') ||
+        msg.includes('cannot') ||
         msg.includes('permission') ||
         msg.includes('warning')
       ) {
@@ -239,7 +239,7 @@ export default function AuthenticatedLayout({
       setConfirmModal({
         message,
         onConfirm,
-        onCancel: onCancel || (() => {}),
+        onCancel: onCancel || (() => { }),
       });
     };
   }, []);
@@ -528,7 +528,7 @@ export default function AuthenticatedLayout({
           setAttendanceActionLoading(false);
         }
       },
-      onCancel: () => {},
+      onCancel: () => { },
     });
   };
   const fetchTopPerformers = async () => {
@@ -742,9 +742,8 @@ export default function AuthenticatedLayout({
         {/* User Card */}
         <button
           onClick={handleOpenProfile}
-          className={`bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color-hover)] rounded-xl text-left cursor-pointer transition-all focus:outline-none ${
-            sidebarCollapsed ? 'p-2 mx-2 my-3 flex items-center justify-center' : 'p-4 mx-4 my-6 block w-[calc(100%-2rem)]'
-          }`}
+          className={`bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color-hover)] rounded-xl text-left cursor-pointer transition-all focus:outline-none ${sidebarCollapsed ? 'p-2 mx-2 my-3 flex items-center justify-center' : 'p-4 mx-4 my-6 block w-[calc(100%-2rem)]'
+            }`}
         >
           {sidebarCollapsed ? (
             <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-[var(--border-color)] flex items-center justify-center text-emerald-500 shrink-0">
@@ -818,11 +817,10 @@ export default function AuthenticatedLayout({
                           key={item.path}
                           href={item.path}
                           title={item.name}
-                          className={`flex items-center justify-center w-10 h-10 mx-auto rounded-lg transition-all ${
-                            isActive
+                          className={`flex items-center justify-center w-10 h-10 mx-auto rounded-lg transition-all ${isActive
                               ? 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-400 font-bold'
                               : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--border-color)]'
-                          }`}
+                            }`}
                         >
                           <Icon className="w-4.5 h-4.5" />
                         </Link>
@@ -839,11 +837,10 @@ export default function AuthenticatedLayout({
                           <Link
                             key={item.path}
                             href={item.path}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold transition-all group ${
-                              isActive
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold transition-all group ${isActive
                                 ? 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border-l-2 border-emerald-600 dark:border-emerald-400 pl-2.5 shadow-xs'
                                 : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-color)]'
-                            }`}
+                              }`}
                           >
                             <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-emerald-800 dark:text-emerald-300' : 'text-[var(--text-muted)] group-hover:text-[var(--text-primary)]'}`} />
                             <span className={isActive ? 'text-emerald-800 dark:text-emerald-300 font-bold' : ''}>{item.name}</span>
@@ -865,9 +862,8 @@ export default function AuthenticatedLayout({
           <button
             onClick={() => setShowLogoutConfirm(true)}
             title="Logout"
-            className={`flex items-center justify-center gap-2 py-2.5 rounded-lg bg-[#1c2128] hover:bg-[#2d333b] text-slate-200 hover:text-white border border-slate-800/80 transition-all font-semibold text-xs cursor-pointer shadow-sm ${
-              sidebarCollapsed ? 'w-10 mx-auto px-0' : 'w-full px-4'
-            }`}
+            className={`flex items-center justify-center gap-2 py-2.5 rounded-lg bg-[#1c2128] hover:bg-[#2d333b] text-slate-200 hover:text-white border border-slate-800/80 transition-all font-semibold text-xs cursor-pointer shadow-sm ${sidebarCollapsed ? 'w-10 mx-auto px-0' : 'w-full px-4'
+              }`}
           >
             <LogOut className="w-4 h-4 shrink-0 text-slate-400" />
             {!sidebarCollapsed && <span className="font-semibold tracking-wide">Logout</span>}
@@ -988,11 +984,10 @@ export default function AuthenticatedLayout({
                               key={item.path}
                               onClick={() => setSidebarOpen(false)}
                               href={item.path}
-                              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold transition-all group ${
-                                isActive
+                              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold transition-all group ${isActive
                                   ? 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border-l-2 border-emerald-600 dark:border-emerald-400 pl-2.5 font-bold shadow-xs'
                                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5'
-                              }`}
+                                }`}
                             >
                               <Icon className={`w-4 h-4 transition-transform group-hover:scale-105 duration-200 ${isActive ? 'text-emerald-800 dark:text-emerald-300' : 'text-[var(--text-muted)] group-hover:text-[var(--text-primary)]'}`} />
                               <span className={isActive ? 'text-emerald-800 dark:text-emerald-300 font-bold' : ''}>{item.name}</span>
@@ -1061,13 +1056,12 @@ export default function AuthenticatedLayout({
               >
                 <Clock className="w-4 h-4 text-emerald-500" />
                 <span className="hidden sm:inline">Attendance:</span>
-                <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg flex items-center gap-1 ${
-                  !todayAttendance 
-                    ? 'bg-slate-800/60 text-slate-350' 
-                    : todayAttendance.checkOut 
-                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' 
+                <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg flex items-center gap-1 ${!todayAttendance
+                    ? 'bg-slate-800/60 text-slate-350'
+                    : todayAttendance.checkOut
+                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                       : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 animate-pulse'
-                }`}>
+                  }`}>
                   {!todayAttendance ? 'Pending' : todayAttendance.checkOut ? 'Completed' : 'Active'}
                 </span>
               </button>
@@ -1147,14 +1141,14 @@ export default function AuthenticatedLayout({
               )}
             </div>
 
-            {/* Dark/Light Mode Switcher Toggle Button (Disabled to enforce Dark Mode) */}
+            {/* Dark/Light Mode Switcher Toggle Button */}
             <button
               type="button"
-              disabled
-              className="p-2 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] opacity-40 cursor-not-allowed transition-all focus:outline-none"
-              title="Light mode is disabled"
+              onClick={toggleTheme}
+              className="p-2 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all cursor-pointer focus:outline-none"
+              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
             >
-              <Sun className="w-4 h-4 text-emerald-500" />
+              {theme === 'dark' ? <Sun className="w-4 h-4 text-emerald-500" /> : <Moon className="w-4 h-4 text-emerald-500" />}
             </button>
 
             {/* Notification Bell Dropdown */}
@@ -1218,9 +1212,8 @@ export default function AuthenticatedLayout({
                         <div
                           key={notif.id}
                           onClick={() => handleNotifClick(notif)}
-                          className={`p-4 hover:bg-[var(--bg-card)] dark:hover:bg-[var(--bg-card)] active:bg-slate-700/30 dark:active:bg-[var(--bg-card)] cursor-pointer transition-colors ${
-                            !notif.isRead ? 'bg-emerald-500/[0.04] dark:bg-emerald-500/[0.02]' : ''
-                          }`}
+                          className={`p-4 hover:bg-[var(--bg-card)] dark:hover:bg-[var(--bg-card)] active:bg-slate-700/30 dark:active:bg-[var(--bg-card)] cursor-pointer transition-colors ${!notif.isRead ? 'bg-emerald-500/[0.04] dark:bg-emerald-500/[0.02]' : ''
+                            }`}
                         >
                           <div className="flex items-start gap-2.5">
                             <div className="mt-0.5">
@@ -1302,7 +1295,7 @@ export default function AuthenticatedLayout({
           <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-emerald-500/[0.04] blur-[130px] pointer-events-none z-0 animate-aurora-1" />
           <div className="absolute top-[40%] left-[50%] -translate-x-1/2 w-[450px] h-[450px] rounded-full bg-teal-500/[0.015] blur-[140px] pointer-events-none z-0 animate-pulse" style={{ animationDuration: '8s' }} />
           <div className="absolute bottom-[-15%] right-[-15%] w-[600px] h-[600px] rounded-full bg-emerald-600/[0.02] blur-[150px] pointer-events-none z-0 animate-aurora-2" />
-          
+
           <div key={pathname} className="relative z-10 animate-fade-in-up">
             {children}
           </div>

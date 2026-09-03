@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, ChevronDown, Check, X, User } from 'lucide-react';
 
 export interface UserOption {
@@ -32,21 +33,41 @@ export default function UserSelect({
 }: UserSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const [openUpwards, setOpenUpwards] = useState(false);
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0, openUpwards: false });
+  const [mounted, setMounted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Check available viewport space to open upwards or downwards
   useEffect(() => {
-    if (isOpen && containerRef.current) {
+    setMounted(true);
+  }, []);
+
+  const updateCoords = () => {
+    if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
       const spaceAbove = rect.top;
-      if (spaceBelow < 280 && spaceAbove > spaceBelow) {
-        setOpenUpwards(true);
-      } else {
-        setOpenUpwards(false);
-      }
+      const openUpwards = spaceBelow < 280 && spaceAbove > spaceBelow;
+
+      setCoords({
+        top: openUpwards ? rect.top - 6 : rect.bottom + 6,
+        left: rect.left,
+        width: rect.width,
+        openUpwards,
+      });
     }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      updateCoords();
+      window.addEventListener('scroll', updateCoords, true);
+      window.addEventListener('resize', updateCoords);
+    }
+    return () => {
+      window.removeEventListener('scroll', updateCoords, true);
+      window.removeEventListener('resize', updateCoords);
+    };
   }, [isOpen]);
 
   // Find currently selected user
@@ -69,13 +90,19 @@ export default function UserSelect({
   // Handle click outside to close dropdown
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      const insideTrigger = containerRef.current && containerRef.current.contains(target);
+      const insideDropdown = dropdownRef.current && dropdownRef.current.contains(target);
+
+      if (!insideTrigger && !insideDropdown) {
         setIsOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [isOpen]);
 
   const getDesignationText = (u: UserOption) => {
     let des = '';
@@ -92,6 +119,7 @@ export default function UserSelect({
     }
     return des || dept || 'Staff';
   };
+
   return (
     <div ref={containerRef} className={`relative w-full ${className}`}>
       {/* Trigger Button */}
@@ -140,9 +168,19 @@ export default function UserSelect({
         </div>
       </button>
 
-      {/* Dropdown Popup */}
-      {isOpen && (
-        <div className={`absolute left-0 right-0 ${openUpwards ? 'bottom-full mb-1.5' : 'top-full mt-1.5'} z-[100] bg-black border border-slate-800/80 rounded-xl shadow-2xl overflow-hidden animate-fade-in`}>
+      {/* Dropdown Popup via Portal */}
+      {mounted && isOpen && createPortal(
+        <div
+          ref={dropdownRef}
+          style={{
+            position: 'fixed',
+            top: coords.openUpwards ? undefined : `${coords.top}px`,
+            bottom: coords.openUpwards ? `${window.innerHeight - coords.top}px` : undefined,
+            left: `${coords.left}px`,
+            width: `${coords.width}px`,
+          }}
+          className="z-[99999] bg-black border border-slate-800/80 rounded-xl shadow-2xl overflow-hidden animate-fade-in"
+        >
           {/* Search Header */}
           <div className="p-2 border-b border-slate-800 bg-black relative">
             <Search className="w-3.5 h-3.5 text-[var(--text-muted)] absolute left-4 top-3.5" />
@@ -203,7 +241,8 @@ export default function UserSelect({
               })
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

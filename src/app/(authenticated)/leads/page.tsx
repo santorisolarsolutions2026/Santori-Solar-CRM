@@ -250,8 +250,12 @@ export default function LeadsPage() {
       return;
     }
     shouldSelectAllOnNextFetchRef.current = true;
-    setLimit(count);
-    setPage(1);
+    if (limit === count && page === 1) {
+      fetchLeads();
+    } else {
+      setLimit(count);
+      setPage(1);
+    }
   };
 
   // Keep track of the last active filters to clear selected IDs only when filters change
@@ -297,6 +301,11 @@ export default function LeadsPage() {
     const allSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedIds.includes(id));
     if (allSelected) {
       setSelectedIds([]);
+      setCustomSelectVal('');
+      if (limit !== 25 || page !== 1) {
+        setLimit(25);
+        setPage(1);
+      }
     } else {
       setLoading(true);
       try {
@@ -350,7 +359,13 @@ export default function LeadsPage() {
         if (data.success) {
           alert(data.message || 'Leads deleted successfully.');
           setSelectedIds([]);
-          fetchLeads();
+          setCustomSelectVal('');
+          if (limit === 25 && page === 1) {
+            fetchLeads();
+          } else {
+            setLimit(25);
+            setPage(1);
+          }
         } else {
           alert(data.message || 'Failed to delete leads.');
         }
@@ -471,7 +486,13 @@ export default function LeadsPage() {
         setShowBulkAssignModal(false);
         setSelectedIds([]);
         setBulkAssigneeId('UNCHANGED');
-        fetchLeads();
+        setCustomSelectVal('');
+        if (limit === 25 && page === 1) {
+          fetchLeads();
+        } else {
+          setLimit(25);
+          setPage(1);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -516,7 +537,13 @@ export default function LeadsPage() {
       if (data.success) {
         setShowBulkStageModal(false);
         setSelectedIds([]);
-        fetchLeads();
+        setCustomSelectVal('');
+        if (limit === 25 && page === 1) {
+          fetchLeads();
+        } else {
+          setLimit(25);
+          setPage(1);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -555,7 +582,13 @@ export default function LeadsPage() {
         setShowBulkRevertFreshModal(false);
         setBulkRevertRemark('');
         setSelectedIds([]);
-        fetchLeads();
+        setCustomSelectVal('');
+        if (limit === 25 && page === 1) {
+          fetchLeads();
+        } else {
+          setLimit(25);
+          setPage(1);
+        }
       } else {
         alert(data.message || 'Failed to revert selected leads.');
       }
@@ -1466,7 +1499,17 @@ export default function LeadsPage() {
                 min="1"
                 placeholder="Enter count (e.g. 100)..."
                 value={customSelectVal}
-                onChange={(e) => setCustomSelectVal(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setCustomSelectVal(val);
+                  if (val === '') {
+                    setSelectedIds([]);
+                    if (limit !== 25 || page !== 1) {
+                      setLimit(25);
+                      setPage(1);
+                    }
+                  }
+                }}
                 className="w-40 px-3 py-1.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-l-lg text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-500 text-xs"
               />
               <button
@@ -1481,7 +1524,16 @@ export default function LeadsPage() {
           {selectedIds.length > 0 && (
             <button
               type="button"
-              onClick={() => setSelectedIds([])}
+              onClick={() => {
+                setSelectedIds([]);
+                setCustomSelectVal('');
+                if (limit !== 25 || page !== 1) {
+                  setLimit(25);
+                  setPage(1);
+                } else {
+                  fetchLeads();
+                }
+              }}
               className="py-1.5 px-3 bg-red-950/20 border border-red-900/30 hover:bg-red-950/40 text-red-400 hover:text-red-300 rounded-lg text-xs font-medium transition-all cursor-pointer"
             >
               Clear Selection ({selectedIds.length})
@@ -1734,7 +1786,7 @@ export default function LeadsPage() {
       </div>
 
       {/* CSV IMPORT MODAL */}
-      {showImportModal && (hasPermission('sales:lead_import') || hasPermission('leads:import')) && (
+      {mounted && showImportModal && (hasPermission('sales:lead_import') || hasPermission('leads:import')) && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4 overflow-y-auto">
           <div className="w-full max-w-4xl bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden my-8 animate-fade-in-up">
             <div className="p-6 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex justify-between items-center">
@@ -1990,11 +2042,12 @@ export default function LeadsPage() {
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Bulk Reassign Team Modal */}
-      {showBulkAssignModal && (
+      {mounted && showBulkAssignModal && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
           <div className="w-full max-w-lg bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
             <div className="p-6 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex justify-between items-center">
@@ -2081,11 +2134,12 @@ export default function LeadsPage() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Bulk Pipeline Stage Shift Modal */}
-      {showBulkStageModal && (
+      {mounted && showBulkStageModal && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
           <div className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
             <div className="p-6 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex justify-between items-center">
@@ -2152,11 +2206,12 @@ export default function LeadsPage() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Bulk Revert to Fresh Lead Modal */}
-      {showBulkRevertFreshModal && (
+      {mounted && showBulkRevertFreshModal && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
           <div className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
             <div className="p-5 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex justify-between items-center">
@@ -2244,7 +2299,8 @@ export default function LeadsPage() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Amazon / Flipkart Style Detailed Filter Modal Drawer */}
@@ -2604,7 +2660,7 @@ export default function LeadsPage() {
       )}
 
       {/* Track Lead Progress Modal (Amazon Delivery Tracking Style) */}
-      {trackingLead && (
+      {mounted && trackingLead && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md px-4 py-6">
           <div className="w-full max-w-2xl bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]">
             <div className="p-4 border-b border-[var(--border-color)] bg-[var(--bg-card)]/40 flex justify-between items-center shrink-0">
@@ -2646,7 +2702,8 @@ export default function LeadsPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
       {bulkConfirmModal && (
         <ConfirmationModal
