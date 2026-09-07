@@ -92,6 +92,7 @@ async function request(endpoint: string, options: RequestInit = {}) {
       success: true,
       status: response.status,
       data: data.data,
+      pagination: data.pagination,
       message: data.message
     };
   } catch (error: any) {
@@ -171,11 +172,28 @@ export const api = {
     }
   },
 
-  // Dashboard Stats
+  // Dashboard & Reports Stats
   dashboard: {
     getStats: async () => {
-      // Endpoint to fetch leaderboard and basic stats
-      return request('/api/v1/leaderboard');
+      return request('/api/v1/reports/overview');
+    }
+  },
+
+  reports: {
+    getOverview: async () => {
+      return request('/api/v1/reports/overview');
+    },
+    getTrend: async () => {
+      return request('/api/v1/reports/trend');
+    },
+    getLeadSources: async () => {
+      return request('/api/v1/reports/lead-sources');
+    },
+    getPipeline: async () => {
+      return request('/api/v1/reports/pipeline');
+    },
+    getRecentActivity: async () => {
+      return request('/api/v1/reports/recent-activity');
     }
   },
 
@@ -237,5 +255,33 @@ export const api = {
         body: JSON.stringify(data),
       });
     }
-  }
+  },
+
+  // Notifications & Broadcasts
+  notifications: {
+    list: async () => {
+      return request('/api/v1/notifications');
+    },
+    markAsRead: async (notificationId?: number) => {
+      return request('/api/v1/notifications', {
+        method: 'POST',
+        body: JSON.stringify(notificationId ? { notificationId } : {}),
+      });
+    },
+    broadcast: async (title: string, message: string) => {
+      return request('/api/v1/notifications', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'broadcast',
+          title,
+          message,
+        }),
+      });
+    },
+    deleteBroadcast: async (notificationId: number) => {
+      return request(`/api/v1/notifications?id=${notificationId}`, {
+        method: 'DELETE',
+      });
+    }
+  },
 };

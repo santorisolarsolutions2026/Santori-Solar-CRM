@@ -11,10 +11,12 @@ import {
   Platform,
 } from 'react-native';
 import { api } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { COLORS, GLOBAL_STYLES, FONTS, SIZES } from '../theme';
-import { Calendar, Clock, MapPin, CheckCircle, HelpCircle } from 'lucide-react-native';
+import { Calendar, Clock, MapPin, CheckCircle, HelpCircle, LogOut, User } from 'lucide-react-native';
 
 export const AttendanceScreen = () => {
+  const { user, logout } = useAuth();
   const [attendance, setAttendance] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [notes, setNotes] = useState('');
@@ -228,6 +230,44 @@ export const AttendanceScreen = () => {
           </Text>
         </View>
       )}
+
+      {/* User Account & Logout Section */}
+      <View style={styles.accountCard}>
+        <View style={styles.accountCardHeader}>
+          <View style={styles.accountAvatar}>
+            <Text style={styles.accountAvatarText}>
+              {(user?.name || 'DP')
+                .split(' ')
+                .map((n: string) => n[0])
+                .join('')
+                .substring(0, 2)
+                .toUpperCase()}
+            </Text>
+          </View>
+          <View style={{ flex: 1, minWidth: 0, marginLeft: 12 }}>
+            <Text style={styles.accountUserName} numberOfLines={1}>
+              {user?.name || 'Deepak Pandey'}
+            </Text>
+            <Text style={styles.accountUserRole}>
+              {(user?.role || 'admin').toUpperCase().replace('_', ' ')} • {user?.email || 'Logged In'}
+            </Text>
+          </View>
+        </View>
+
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={() => {
+            Alert.alert('Log Out', 'Are you sure you want to log out of your session?', [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Log Out', style: 'destructive', onPress: logout },
+            ]);
+          }}
+          activeOpacity={0.8}
+        >
+          <LogOut size={16} color="#ef4444" style={{ marginRight: 8 }} />
+          <Text style={styles.logoutButtonText}>LOG OUT OF ACCOUNT</Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 };
@@ -396,5 +436,67 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 18,
+  },
+  accountCard: {
+    marginTop: 18,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1.5 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+  accountCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  accountAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#0e1d3e',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  accountAvatarText: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#ffffff',
+  },
+  accountUserName: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0f172a',
+    marginBottom: 2,
+  },
+  accountUserRole: {
+    fontFamily: 'Outfit-Medium',
+    fontSize: 12,
+    color: '#64748b',
+    fontWeight: '500',
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fef2f2',
+    borderWidth: 1,
+    borderColor: '#fee2e2',
+    paddingVertical: 12,
+    borderRadius: 10,
+  },
+  logoutButtonText: {
+    fontFamily: 'Outfit-Bold',
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#ef4444',
+    letterSpacing: 0.4,
   },
 });

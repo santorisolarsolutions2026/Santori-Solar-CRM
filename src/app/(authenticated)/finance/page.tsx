@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '@/context/AuthContext';
 import {
   CreditCard,
@@ -252,6 +253,23 @@ export default function FinancePage() {
   const [previewImage, setPreviewImage] = useState<{ src: string; title: string; isPdf?: boolean } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isAnyModalOpen = Boolean(selectedOrder || editingPayment || discardingPayment || showAssignModal || previewImage);
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isAnyModalOpen]);
 
   // Filter States
   const [showFilters, setShowFilters] = useState(false);
@@ -1594,9 +1612,9 @@ export default function FinancePage() {
       )}
 
       {/* Modal dialogs */}
-      {selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="w-full max-w-4xl bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]">
+      {mounted && selectedOrder && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md px-4 overflow-y-auto">
+          <div className="w-full max-w-4xl bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh] my-auto">
             
             {/* Header */}
             <div className="p-5 border-b border-[var(--border-color)] bg-[var(--bg-card)]/30 flex justify-between items-center">
@@ -2096,13 +2114,14 @@ export default function FinancePage() {
             </div>
 
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Edit Payment Modal */}
-      {editingPayment && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/75 backdrop-blur-sm px-4">
-          <div className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+      {mounted && editingPayment && createPortal(
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 backdrop-blur-md px-4 overflow-y-auto">
+          <div className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up my-auto">
             <div className="p-6 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex justify-between items-center">
               <h3 className="text-sm font-bold uppercase tracking-wider text-white">Modify Payment Record</h3>
               <button type="button" onClick={() => setEditingPayment(null)} className="text-[var(--text-secondary)] hover:text-white cursor-pointer border border-transparent">
@@ -2187,13 +2206,14 @@ export default function FinancePage() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Discard Payment Modal */}
-      {discardingPayment && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/75 backdrop-blur-sm px-4">
-          <div className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+      {mounted && discardingPayment && createPortal(
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 backdrop-blur-md px-4 overflow-y-auto">
+          <div className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up my-auto">
             <div className="p-6 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex justify-between items-center">
               <h3 className="text-sm font-bold uppercase tracking-wider text-rose-500 flex items-center gap-1.5">
                 <AlertTriangle className="w-4 h-4 text-rose-500" />
@@ -2238,13 +2258,14 @@ export default function FinancePage() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Bulk Assign Finance Member Modal */}
-      {showAssignModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="w-full max-w-lg bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+      {mounted && showAssignModal && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md px-4 overflow-y-auto">
+          <div className="w-full max-w-lg bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up my-auto">
             <div className="p-6 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex justify-between items-center">
               <h3 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
                 <UsersRound className="w-4 h-4 text-emerald-400" />
@@ -2297,13 +2318,14 @@ export default function FinancePage() {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Photo Lightbox Modal */}
-      {previewImage && (
+      {mounted && previewImage && createPortal(
         <div
-          className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[999] animate-fade-in"
+          className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-[10001] animate-fade-in"
           onClick={() => setPreviewImage(null)}
         >
           <button
@@ -2338,7 +2360,8 @@ export default function FinancePage() {
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>

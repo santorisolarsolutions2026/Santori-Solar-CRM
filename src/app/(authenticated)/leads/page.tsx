@@ -32,6 +32,7 @@ import {
   Settings,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import UserSelect from '@/components/UserSelect';
 import CustomSelect from '@/components/CustomSelect';
 import { LeadTrackingTimeline } from '@/components/LeadTrackingTimeline';
@@ -136,6 +137,7 @@ function parseCSV(text: string): string[][] {
 }
 
 export default function LeadsPage() {
+  const router = useRouter();
   const { user, loading: authLoading, hasPermission } = useAuth();
 
   if (authLoading) {
@@ -1621,7 +1623,7 @@ export default function LeadsPage() {
                           alert('Access Restricted: You do not have permission to view detailed lead information.');
                           return;
                         }
-                        window.location.href = `/leads/${lead.id}`;
+                        router.push(`/leads/${lead.id}`);
                       }}
                       className={`hover:bg-[var(--bg-card)]/30 transition-all cursor-pointer ${
                         lead.isUnreachable ? 'bg-red-500/[0.01] border-l-2 border-l-red-500' : ''

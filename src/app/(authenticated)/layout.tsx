@@ -244,10 +244,12 @@ export default function AuthenticatedLayout({
     };
   }, []);
 
-  // Initialize theme from localStorage on mount
+  // Enforce Dark Mode on mount for all users while Light Mode is under development
   useEffect(() => {
-    setTheme('dark');
+    document.documentElement.classList.add('dark');
+    document.documentElement.classList.remove('light');
     localStorage.setItem('solar-crm-theme', 'dark');
+    setTheme('dark');
   }, []);
 
   // Synchronize document.documentElement class and localStorage whenever theme changes
@@ -263,7 +265,7 @@ export default function AuthenticatedLayout({
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme((prevTheme) => (prevTheme === 'dark' ? 'light' : 'dark'));
+    addToast('Please use Dark Mode. Light Mode is currently under development.', 'info');
   };
 
   // Global click listener for date and time inputs to open showPicker() on click
@@ -1146,9 +1148,9 @@ export default function AuthenticatedLayout({
               type="button"
               onClick={toggleTheme}
               className="p-2 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all cursor-pointer focus:outline-none"
-              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+              title="Light Mode (Under Development)"
             >
-              {theme === 'dark' ? <Sun className="w-4 h-4 text-emerald-500" /> : <Moon className="w-4 h-4 text-emerald-500" />}
+              <Sun className="w-4 h-4 text-emerald-500" />
             </button>
 
             {/* Notification Bell Dropdown */}

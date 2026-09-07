@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import UserSelect from '@/components/UserSelect';
@@ -412,6 +413,11 @@ export default function LeadDetailPage({
   const [formCSubStatus, setFormCSubStatus] = useState('warm'); // warm/hot or reason
   const [formCFollowUpAt, setFormCFollowUpAt] = useState('');
   const [formCRemark, setFormCRemark] = useState('');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Helper to check if employee belongs to Sales & Marketing department and is NOT in a PSA role
   const isSalesNonPsaOrAdmin = (emp: any) => {
@@ -571,6 +577,29 @@ export default function LeadDetailPage({
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const recordingStartTimeRef = useRef<number | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
+
+  // Lock background scroll when any modal or lightbox is active
+  const isAnyModalOpen = Boolean(
+    showFormB ||
+    showFinanceModal ||
+    showFormC ||
+    previewImage ||
+    cameraModal.isOpen ||
+    showPostMeetingAssignModal ||
+    showRevertFreshModal ||
+    assignConfirmModal
+  );
+
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isAnyModalOpen]);
 
   // Load Lead details
   const fetchLeadDetails = async () => {
@@ -3779,12 +3808,12 @@ export default function LeadDetailPage({
 
       {/* ============================================================== */}
       {/* Form B Modal: Meeting Booking Form */}
-      {showFormB && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="w-full max-w-xl bg-[#161B22] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+      {mounted && showFormB && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md px-4 overflow-y-auto">
+          <div className="w-full max-w-xl bg-[#161B22] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up my-auto">
             <div className="p-6 border-b border-[var(--border-color)] bg-[var(--bg-card)] flex justify-between items-center">
               <h3 className="text-sm font-bold uppercase tracking-wider text-white">Form B: Schedule Meeting / Site Visit</h3>
-              <button onClick={handleCancelFormB} className="text-[var(--text-secondary)] hover:text-white">
+              <button onClick={handleCancelFormB} className="text-[var(--text-secondary)] hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -3877,14 +3906,14 @@ export default function LeadDetailPage({
                 <button
                   type="button"
                   onClick={handleCancelFormB}
-                  className="py-2 px-4 bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] rounded-lg font-bold text-xs"
+                  className="py-2 px-4 bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] rounded-lg font-bold text-xs cursor-pointer hover:text-white"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isFormBSubmitting}
-                  className="py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                  className="py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   {isFormBSubmitting ? (
                     <>
@@ -3898,16 +3927,17 @@ export default function LeadDetailPage({
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Finance Allocation Modal */}
-      {showFinanceModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="w-full max-w-lg bg-[#161B22] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+      {mounted && showFinanceModal && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md px-4 overflow-y-auto">
+          <div className="w-full max-w-lg bg-[#161B22] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up my-auto">
             <div className="p-6 border-b border-[var(--border-color)] bg-[var(--bg-card)] flex justify-between items-center">
               <h3 className="text-sm font-bold uppercase tracking-wider text-white">Assign Finance Team</h3>
-              <button onClick={() => setShowFinanceModal(false)} className="text-[var(--text-secondary)] hover:text-white">
+              <button onClick={() => setShowFinanceModal(false)} className="text-[var(--text-secondary)] hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -3940,7 +3970,7 @@ export default function LeadDetailPage({
                 <button
                   type="button"
                   onClick={() => setShowFinanceModal(false)}
-                  className="py-2 px-4 bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] rounded-lg font-bold text-xs"
+                  className="py-2 px-4 bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] rounded-lg font-bold text-xs cursor-pointer hover:text-white"
                 >
                   Cancel
                 </button>
@@ -3953,17 +3983,18 @@ export default function LeadDetailPage({
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ============================================================== */}
       {/* Form C Modal: Meeting Done Outcomes */}
-      {showFormC && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="w-full max-w-lg bg-[#161B22] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+      {mounted && showFormC && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md px-4 overflow-y-auto">
+          <div className="w-full max-w-lg bg-[#161B22] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up my-auto">
             <div className="p-6 border-b border-[var(--border-color)] bg-[var(--bg-card)] flex justify-between items-center">
               <h3 className="text-sm font-bold uppercase tracking-wider text-white">Form C: Document Meeting Outcome</h3>
-              <button onClick={handleCancelFormC} className="text-[var(--text-secondary)] hover:text-white">
+              <button onClick={handleCancelFormC} className="text-[var(--text-secondary)] hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -4044,14 +4075,14 @@ export default function LeadDetailPage({
                   type="button"
                   disabled={isFormCSubmitting}
                   onClick={handleCancelFormC}
-                  className="py-2 px-4 bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] rounded-lg font-bold text-xs disabled:opacity-50"
+                  className="py-2 px-4 bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] rounded-lg font-bold text-xs disabled:opacity-50 cursor-pointer hover:text-white"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isFormCSubmitting}
-                  className="py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                  className="py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   {isFormCSubmitting ? (
                     <>
@@ -4065,26 +4096,27 @@ export default function LeadDetailPage({
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Photo Lightbox Modal */}
-      {previewImage && (
+      {mounted && previewImage && createPortal(
         <div
-          className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[999] animate-fade-in"
+          className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-[9999] animate-fade-in overflow-y-auto"
           onClick={() => setPreviewImage(null)}
         >
           <button
             type="button"
             onClick={() => setPreviewImage(null)}
-            className="absolute top-4 right-4 p-2 rounded-full bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-card)] transition-all cursor-pointer shadow-lg z-[1000]"
+            className="absolute top-4 right-4 p-2 rounded-full bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-card)] transition-all cursor-pointer shadow-lg z-[10000]"
             title="Close Preview"
           >
             <X className="w-5 h-5" />
           </button>
           
           <div
-            className="relative max-w-4xl max-h-[85vh] overflow-hidden rounded-2xl border border-[var(--border-color)] bg-[var(--bg-main)] shadow-2xl flex flex-col items-center justify-center"
+            className="relative max-w-4xl max-h-[85vh] overflow-hidden rounded-2xl border border-[var(--border-color)] bg-[var(--bg-main)] shadow-2xl flex flex-col items-center justify-center my-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {previewImage.isPdf ? (
@@ -4106,12 +4138,14 @@ export default function LeadDetailPage({
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
+
       {/* WebRTC Camera Modal */}
-      {cameraModal.isOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 px-4 backdrop-blur-sm">
-          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-5 shadow-2xl max-w-md w-full space-y-4 text-center text-white animate-fade-in-up">
+      {mounted && cameraModal.isOpen && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 px-4 backdrop-blur-md overflow-y-auto">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-5 shadow-2xl max-w-md w-full space-y-4 text-center text-white animate-fade-in-up my-auto">
             <div className="flex justify-between items-center pb-2 border-b border-[var(--border-color)]">
               <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">Capture Proof Photo</span>
               <button 
@@ -4179,12 +4213,14 @@ export default function LeadDetailPage({
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
+
       {/* Separate Post-Meeting Sales Team Assign Modal */}
-      {showPostMeetingAssignModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="w-full max-w-lg bg-[#161B22] border border-emerald-500/30 rounded-2xl shadow-2xl overflow-hidden transform animate-fade-in-up">
+      {mounted && showPostMeetingAssignModal && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in overflow-y-auto">
+          <div className="w-full max-w-lg bg-[#161B22] border border-emerald-500/30 rounded-2xl shadow-2xl overflow-hidden transform animate-fade-in-up my-auto">
             <div className="px-6 py-4 border-b border-[var(--border-color)] bg-[var(--bg-card)] flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 bg-emerald-500/20 border border-emerald-500/30 rounded-xl">
@@ -4290,7 +4326,8 @@ export default function LeadDetailPage({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {assignConfirmModal && (
@@ -4327,10 +4364,11 @@ export default function LeadDetailPage({
           }}
         />
       )}
+
       {/* Revert to Fresh Lead Modal */}
-      {showRevertFreshModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="w-full max-w-md bg-[#161B22] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+      {mounted && showRevertFreshModal && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md px-4 overflow-y-auto">
+          <div className="w-full max-w-md bg-[#161B22] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up my-auto">
             <div className="p-5 border-b border-[var(--border-color)] bg-[var(--bg-card)] flex justify-between items-center">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
@@ -4415,7 +4453,8 @@ export default function LeadDetailPage({
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '@/context/AuthContext';
 import {
   Layers,
@@ -152,6 +153,22 @@ export default function DashboardPage() {
   // Activity Stream full screen modal state for Admin
   const [activityModalOpen, setActivityModalOpen] = useState(false);
   const [activitySearchQuery, setActivitySearchQuery] = useState('');
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (activityModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [activityModalOpen]);
 
   const isAdmin = user?.role === 'admin' || user?.role?.startsWith('admin:') || user?.role === 'director';
 
@@ -672,20 +689,20 @@ export default function DashboardPage() {
                 ? 'Operations Trend: Total Orders vs Plant Commissioned (15 Days)'
                 : 'Sales & Leads Trend (15 Days)'}
             </h3>
-            <div className="flex gap-4 text-xs">
+            <div className="flex items-center gap-4 text-xs">
               <span className="flex items-center gap-1.5 text-blue-400 font-semibold">
-                <span className="w-2.5 h-2.5 bg-blue-500 rounded-full" />
+                <span className="w-2.5 h-3 bg-blue-500 rounded-xs opacity-80" />
                 {userDept === 'Finance' || userBaseRole === 'finance' || userDept === 'Operations' || userBaseRole === 'operations'
-                  ? 'Total Orders'
-                  : 'Leads Created'}
+                  ? 'Total Orders (Bars)'
+                  : 'Leads Created (Bars)'}
               </span>
               <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
-                <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />
+                <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full shadow-xs" />
                 {userDept === 'Finance' || userBaseRole === 'finance'
-                  ? 'Verified Orders'
+                  ? 'Verified Orders (Line)'
                   : userDept === 'Operations' || userBaseRole === 'operations'
-                  ? 'Plant Commissioned'
-                  : 'Sales Closed'}
+                  ? 'Plant Commissioned (Line)'
+                  : 'Sales Closed (Line)'}
               </span>
             </div>
           </div>
@@ -797,9 +814,9 @@ export default function DashboardPage() {
       </div>
 
       {/* Full-Screen Activity Modal for Admin */}
-      {activityModalOpen && isAdmin && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8 bg-black/80 backdrop-blur-md animate-fade-in font-sans">
-          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl w-full max-w-5xl h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+      {mounted && activityModalOpen && isAdmin && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-8 bg-black/80 backdrop-blur-md animate-fade-in font-sans overflow-y-auto">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl w-full max-w-5xl h-[85vh] flex flex-col shadow-2xl overflow-hidden my-auto">
             {/* Modal Header */}
             <div className="p-5 border-b border-[var(--border-color)] bg-[var(--bg-main)] flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
@@ -921,7 +938,8 @@ export default function DashboardPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

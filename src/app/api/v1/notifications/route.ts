@@ -64,12 +64,133 @@ export async function GET(req: Request) {
       recentBroadcasts = Array.from(map.values());
     }
 
+    // Fetch Upcoming Tasks & Meeting Reminders
+    const todayStr = new Date().toISOString().split('T')[0];
+    const meetingWhere: any = {
+      meetingDate: { gte: todayStr },
+    };
+    if (!isAdmin) {
+      meetingWhere.assignedExecutiveId = userPayload.id;
+    }
+    const upcomingMeetings = await prisma.meetingBooking.findMany({
+      where: meetingWhere,
+      include: {
+        lead: {
+          select: {
+            id: true,
+            customerName: true,
+            leadCode: true,
+            mobile: true,
+            city: true,
+            state: true,
+            address: true,
+          },
+        },
+        executive: {
+          select: {
+            id: true,
+            name: true,
+            role: true,
+          },
+        },
+      },
+      orderBy: [{ meetingDate: 'asc' }, { meetingTime: 'asc' }],
+      take: 20,
+    });
+
+    const now = new Date();
+    const leadWhere: any = {
+      isActive: true,
+      followupAt: { gte: new Date(now.getTime() - 24 * 3600 * 1000) },
+    };
+    if (!isAdmin) {
+      leadWhere.OR = [
+        { assignedConsultantId: userPayload.id },
+        { assignedTlId: userPayload.id },
+        { assignedManagerId: userPayload.id },
+      ];
+    }
+    const upcomingFollowups = await prisma.lead.findMany({
+      where: leadWhere,
+      select: {
+        id: true,
+        customerName: true,
+        leadCode: true,
+        mobile: true,
+        status: true,
+        statusSub: true,
+        city: true,
+        followupAt: true,
+        sanctionedLoadKw: true,
+        connectionType: true,
+      },
+      orderBy: { followupAt: 'asc' },
+      take: 20,
+    });
+
+    const cutOffTime = Date.now() - 2 * 60 * 60 * 1000;
+
+    const formattedMeetings = upcomingMeetings
+      .map((m) => {
+        const timePart = m.meetingTime || '12:00';
+        const dt = new Date(`${m.meetingDate}T${timePart}:00`);
+        const timestamp = !isNaN(dt.getTime()) ? dt.getTime() : Infinity;
+        return {
+          id: `meeting-${m.id}`,
+          type: 'meeting' as const,
+          title: `Site Visit: ${m.lead?.customerName || 'Customer'}`,
+          leadCode: m.lead?.leadCode || '',
+          leadId: m.leadId,
+          customerName: m.lead?.customerName || 'Customer',
+          mobile: m.mobile || m.lead?.mobile,
+          location: `${m.address || m.lead?.address || ''}, ${m.lead?.city || ''}`.replace(/^,\s*|,\s*$/g, ''),
+          dueDateTime: !isNaN(dt.getTime()) ? dt.toISOString() : `${m.meetingDate} ${m.meetingTime}`,
+          formattedDue: `${m.meetingDate === todayStr ? 'Today' : m.meetingDate} at ${m.meetingTime}`,
+          notes: m.notes || `Avg bill ₹${m.avgMonthlyBill || 0}`,
+          assignedTo: m.executive?.name,
+          isUrgent: m.meetingDate === todayStr,
+          timestamp,
+        };
+      })
+      .filter((m) => m.timestamp >= cutOffTime);
+
+    const formattedFollowups = upcomingFollowups
+      .map((f) => {
+        const fDate = f.followupAt ? new Date(f.followupAt) : new Date();
+        const timestamp = !isNaN(fDate.getTime()) ? fDate.getTime() : Infinity;
+        const isToday = fDate.toISOString().split('T')[0] === todayStr;
+        return {
+          id: `followup-${f.id}`,
+          type: 'follow_up' as const,
+          title: `Follow Up Call: ${f.customerName}`,
+          leadCode: f.leadCode,
+          leadId: f.id,
+          customerName: f.customerName,
+          mobile: f.mobile,
+          location: f.city || '',
+          dueDateTime: f.followupAt ? new Date(f.followupAt).toISOString() : '',
+          formattedDue: isToday
+            ? `Today at ${fDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+            : fDate.toLocaleDateString([], { month: 'short', day: 'numeric' }),
+          notes: f.statusSub ? `Priority: ${f.statusSub.toUpperCase()}` : 'Customer quotation discussion',
+          isUrgent: isToday,
+          timestamp,
+        };
+      })
+      .filter((f) => f.timestamp >= cutOffTime);
+
+    // Combine and sort chronologically ascending (earliest first, exact same order as Web CRM)
+    const upcomingTasks = [...formattedMeetings, ...formattedFollowups].sort(
+      (a, b) => a.timestamp - b.timestamp
+    );
+
     return NextResponse.json({
       success: true,
       data: {
         notifications,
         unreadCount,
         recentBroadcasts,
+        upcomingTasks,
       },
     });
   } catch (error: any) {

@@ -144,9 +144,7 @@ export const LeadDetailsScreen = () => {
           <View style={GLOBAL_STYLES.card}>
             <View style={styles.statusHeader}>
               <Text style={styles.sectionHeading}>Customer Details</Text>
-              <View style={[styles.badge, { backgroundColor: `${stage.color}15`, borderColor: `${stage.color}40` }]}>
-                <Text style={[styles.badgeText, { color: stage.color }]}>{stage.name}</Text>
-              </View>
+              <Text style={[styles.badgeText, { color: stage.color }]}>{stage.name}</Text>
             </View>
 
             <Text style={styles.customerName}>{lead.customerName}</Text>
@@ -253,9 +251,7 @@ export const LeadDetailsScreen = () => {
                   <View style={[GLOBAL_STYLES.card, styles.timelineCard]}>
                     <View style={styles.timelineCardHeader}>
                       <Text style={styles.timelineDate}>{logDate}</Text>
-                      <View style={[styles.miniBadge, { backgroundColor: `${toStage.color}15`, borderColor: `${toStage.color}30` }]}>
-                        <Text style={[styles.miniBadgeText, { color: toStage.color }]}>{toStage.name}</Text>
-                      </View>
+                      <Text style={[styles.miniBadgeText, { color: toStage.color }]}>{toStage.name}</Text>
                     </View>
 
                     <Text style={styles.timelineUser}>By: {log.user?.name} ({log.user?.role})</Text>
@@ -424,14 +420,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
-  badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
-    borderWidth: 1,
-  },
   badgeText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
   },
   sectionHeading: {
@@ -545,14 +535,8 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: COLORS.textMuted,
   },
-  miniBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    borderWidth: 1,
-  },
   miniBadgeText: {
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: '700',
   },
   timelineUser: {

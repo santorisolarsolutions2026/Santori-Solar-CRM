@@ -11024,3 +11024,89 @@
   }
 }
 ---
+{
+  "timestamp": "2026-09-06T15:32:31.858Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-09-06T15:32:38.610Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "OR",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-09-06T15:32:40.044Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "NOT",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-09-06T15:32:40.770Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-09-06T15:32:44.159Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "rg9rgpr",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-09-06T15:32:45.690Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": []
+  }
+}
+---
+{
+  "timestamp": "2026-09-07T18:16:54.627Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-09-07T18:37:26.237Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-09-07T18:37:31.740Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-09-07T18:37:41.637Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-09-07T19:01:20.442Z",
+  "queryObj": null
+}
+---
+{
+  "timestamp": "2026-09-07T19:01:22.188Z"
+}
+---

@@ -21,15 +21,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view reports.' }, { status: 403 });
     }
 
-    const isAdmin = userPayload.role === 'admin' || userPayload.role?.startsWith('admin:') || userPayload.role === 'director';
-    if (!isAdmin) {
-      return NextResponse.json({
-        success: true,
-        data: { logs: [] },
-      });
-    }
-
-    // Fetch latest 50 activity logs for Admin review across the entire system
+    // Fetch latest 50 activity logs across the entire system
     const logs = await prisma.leadActivityLog.findMany({
       orderBy: { createdAt: 'desc' },
       take: 50,
