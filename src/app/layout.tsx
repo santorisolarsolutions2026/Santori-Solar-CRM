@@ -18,6 +18,17 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "SolarCRM — Sales CRM Pipeline",
   description: "Sales CRM Pipeline application for Solar sales operations.",
+  manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/icon.png" },
+      { url: "/logo.png", type: "image/png" },
+    ],
+    shortcut: ["/logo.png"],
+    apple: [
+      { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
 };
 
 export default function RootLayout({
