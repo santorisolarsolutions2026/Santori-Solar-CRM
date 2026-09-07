@@ -57,6 +57,8 @@ export async function GET(req: Request) {
     const todayEnd = new Date();
     todayEnd.setHours(23, 59, 59, 999);
 
+    const todayDateStr = new Date().toLocaleDateString('en-CA');
+
     if (userDeptName === 'Finance' || baseRole === 'finance') {
       // Finance metrics query
       const financeStatuses = ['submitted', 'finance_verified', 'ops_assigned', 'completed'];
@@ -175,7 +177,8 @@ export async function GET(req: Request) {
         meetingsBookedThisMonth,
         meetingsDoneThisMonth,
         salesDoneThisMonth,
-        todayFollowUps
+        todayFollowUps,
+        todayMeetings
       ] = await Promise.all([
         prisma.lead.count({
           where: {
@@ -222,9 +225,20 @@ export async function GET(req: Request) {
             },
           },
         }),
+        prisma.meetingBooking.count({
+          where: {
+            meetingDate: todayDateStr,
+            lead: {
+              ...leadWhere,
+              isActive: true,
+              status: { lt: 13 },
+            },
+          },
+        }),
       ]);
 
       const conversionRate = totalFreshLeads > 0 ? parseFloat(((salesDoneThisMonth / totalFreshLeads) * 100).toFixed(2)) : 0.0;
+      const todayScheduledActions = todayFollowUps + todayMeetings;
 
       return NextResponse.json({
         success: true,
@@ -234,7 +248,7 @@ export async function GET(req: Request) {
           meetingsBookedThisMonth,
           meetingsDoneThisMonth,
           salesDoneThisMonth,
-          todayFollowUps,
+          todayFollowUps: todayScheduledActions,
           conversionRate,
         },
       });
