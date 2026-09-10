@@ -446,13 +446,13 @@ export default function NewLeadPage() {
             </div>
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
-                Connection Number
+                Account ID / Connection No / Consumer No
               </label>
               <input
                 type="text"
                 value={form.connectionNumber}
                 onChange={(e) => setForm({ ...form, connectionNumber: e.target.value })}
-                placeholder="Consumer/Connection Number"
+                placeholder="e.g. 7419012345 / CA Number"
                 className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:border-emerald-500 focus:outline-none font-mono"
               />
             </div>

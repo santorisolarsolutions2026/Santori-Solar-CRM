@@ -2716,7 +2716,7 @@ export default function OperationsPage() {
                           </span>
                         </div>
                         <div>
-                          <span className="text-[10px] text-[var(--text-muted)] font-bold block uppercase tracking-wider">Connection Number</span>
+                          <span className="text-[10px] text-[var(--text-muted)] font-bold block uppercase tracking-wider">Account ID / Connection No</span>
                           <span className="font-mono text-[var(--text-primary)] block mt-0.5">{selectedOrder.connectionNumber}</span>
                         </div>
                         <div>

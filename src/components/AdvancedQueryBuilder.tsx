@@ -25,7 +25,7 @@ const FIELD_OPTIONS = [
   { value: 'customerName', label: 'Customer Name', type: 'text' },
   { value: 'mobile', label: 'Mobile Number', type: 'text' },
   { value: 'leadCode', label: 'Lead Code', type: 'text' },
-  { value: 'connectionNumber', label: 'CA Connection Number', type: 'text' },
+  { value: 'connectionNumber', label: 'Account ID / Connection No / Consumer No', type: 'text' },
   { value: 'discomName', label: 'DISCOM / Electricity Board', type: 'text' },
   { value: 'connectionType', label: 'Connection Type', type: 'dropdown', options: [
       { value: 'residential', label: 'Residential' },

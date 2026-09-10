@@ -30,6 +30,7 @@ import {
   RotateCcw,
   Lock,
   Settings,
+  Download,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -56,6 +57,8 @@ interface Lead {
   updatedAt: string;
   isUnreachable: boolean;
   isActive: boolean;
+  otherData?: string | null;
+  connectionNumber?: string | null;
   consultant: { id: number; name: string } | null;
   tl: { id: number; name: string } | null;
   manager: { id: number; name: string } | null;
@@ -931,7 +934,13 @@ export default function LeadsPage() {
         initialMapping.connectionType = findBestHeader(['connection type', 'type']);
         initialMapping.leadSource = findBestHeader(['source', 'lead source']);
         initialMapping.discomName = findBestHeader(['discom name', 'discom', 'utility', 'electricity board']);
-        initialMapping.connectionNumber = findBestHeader(['connection number', 'consumer number', 'consumer no', 'ca number', 'connection no']);
+        initialMapping.connectionNumber = findBestHeader([
+          'acct id', 'acct_id', 'acctid', 'account id', 'account_id', 'accountid',
+          'connection number', 'connection no', 'connection_no', 'connectionno', 'conn no', 'conn_no', 'conn number',
+          'consumer number', 'consumer no', 'consumer_no', 'consumerno', 'consumer id', 'consumer_id', 'consumerid',
+          'ca number', 'ca no', 'ca_no', 'cano', 'canumber',
+          'k number', 'k no', 'k_no', 'kno', 'knumber'
+        ]);
 
         setColumnMapping(initialMapping);
       }
@@ -947,8 +956,8 @@ export default function LeadsPage() {
     }
     if (csvRows.length === 0) return;
 
-    if (!columnMapping.customerName || !columnMapping.mobile) {
-      alert("Please map the required columns: Customer Name and Contact Number (Mobile).");
+    if (!columnMapping.customerName || (!columnMapping.mobile && !columnMapping.connectionNumber)) {
+      alert("Please map Customer Name and at least Contact Number (Mobile) or Account ID / Connection Number.");
       return;
     }
 
@@ -980,37 +989,75 @@ export default function LeadsPage() {
           return idx !== -1 ? row[idx] : undefined;
         };
 
-        // Helper to clean mobile values client-side (e.g. stripping .0 from float representation)
+        // Helper to clean mobile values client-side (e.g. stripping +91, 0 prefixes, spaces, dashes, brackets, scientific notation, float .0)
         const cleanPhoneClient = (val: any) => {
-          if (!val) return undefined;
-          let str = String(val).trim().replace(/[\s-]/g, '');
-          if (str.includes('.')) {
+          if (!val && val !== 0) return undefined;
+          let str = String(val).trim();
+          if (/[eE][+-]?\d+/.test(str)) {
+            const num = Number(str.replace(/[^0-9eE.+-]/g, ''));
+            if (!isNaN(num) && num > 0) {
+              str = BigInt(Math.round(num)).toString();
+            }
+          } else if (str.includes('.')) {
             str = str.split('.')[0];
+          }
+          str = str.replace(/\D/g, '');
+          if (str.length === 12 && str.startsWith('91')) {
+            str = str.slice(2);
+          } else if (str.length === 11 && str.startsWith('0')) {
+            str = str.slice(1);
+          }
+          return str;
+        };
+
+        const cleanExcelText = (val: any) => {
+          if (!val && val !== 0) return undefined;
+          let str = String(val).trim();
+          if (str.endsWith('.0')) {
+            str = str.slice(0, -2);
           }
           return str;
         };
 
         // Core fields mapping
-        item.customerName = getRowVal('customerName');
-        
+        const rawCustomerName = getRowVal('customerName');
         const rawMobile = getRowVal('mobile');
-        item.mobile = rawMobile ? cleanPhoneClient(rawMobile) : undefined;
+        const cleanMobileVal = rawMobile ? cleanPhoneClient(rawMobile) : undefined;
+        const cleanConnNumVal = cleanExcelText(getRowVal('connectionNumber'));
+
+        item.customerName = (rawCustomerName && String(rawCustomerName).trim())
+          ? String(rawCustomerName).trim()
+          : (cleanMobileVal && cleanMobileVal.length >= 4 
+              ? `Solar Prospect - ${cleanMobileVal.slice(-4)}` 
+              : (cleanConnNumVal && cleanConnNumVal.length >= 4 
+                  ? `Solar Prospect - ${cleanConnNumVal.slice(-4)}` 
+                  : (rawCustomerName || 'Solar Prospect')));
+        item.mobile = cleanMobileVal;
         
         const rawMobileAlt = getRowVal('mobileAlt');
         item.mobileAlt = rawMobileAlt ? cleanPhoneClient(rawMobileAlt) : undefined;
         item.address = getRowVal('address');
-        item.pinCode = getRowVal('pinCode');
+        item.pinCode = cleanExcelText(getRowVal('pinCode'));
         item.city = getRowVal('city');
         item.state = getRowVal('state');
         item.leadSource = getRowVal('leadSource');
         item.connectionType = getRowVal('connectionType') || 'residential';
         item.discomName = getRowVal('discomName');
-        item.connectionNumber = getRowVal('connectionNumber');
+        item.connectionNumber = cleanConnNumVal;
 
         const rawCapacity = getRowVal('sanctionedLoadKw');
-        if (rawCapacity) {
-          const parsedCapacity = parseFloat(rawCapacity.replace(/[^0-9.]/g, ''));
-          item.sanctionedLoadKw = isNaN(parsedCapacity) ? null : parsedCapacity;
+        if (rawCapacity !== null && rawCapacity !== undefined && rawCapacity !== '') {
+          if (typeof rawCapacity === 'number') {
+            item.sanctionedLoadKw = isNaN(rawCapacity) ? null : rawCapacity;
+          } else {
+            const match = String(rawCapacity).trim().match(/([0-9]+(?:\.[0-9]+)?)/);
+            if (match && match[1]) {
+              const parsed = parseFloat(match[1]);
+              item.sanctionedLoadKw = isNaN(parsed) ? null : parsed;
+            } else {
+              item.sanctionedLoadKw = null;
+            }
+          }
         }
 
         // Save all OTHER unmapped columns as an object inside otherData
@@ -1028,7 +1075,7 @@ export default function LeadsPage() {
         return item;
       });
 
-      const BATCH_SIZE = 1000;
+      const BATCH_SIZE = 100;
       let totalImported = 0;
       let totalSkipped = 0;
       const accumulatedSkipped: any[] = [];
@@ -1122,6 +1169,24 @@ export default function LeadsPage() {
     setImportResult(null);
     setImportProgress(null);
     cancelRef.current = false;
+  };
+
+  const handleDownloadSkippedCsv = () => {
+    if (!importResult?.skipped || importResult.skipped.length === 0) return;
+    const headers = ['Customer Name', 'Mobile Number', 'Skip Reason'];
+    const rows = importResult.skipped.map((s: any) => [
+      `"${(s.customerName || '').replace(/"/g, '""')}"`,
+      `"${(s.mobile || '').replace(/"/g, '""')}"`,
+      `"${(s.reason || '').replace(/"/g, '""')}"`,
+    ]);
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `skipped_leads_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const totalPages = Math.ceil(total / limit);
@@ -1645,6 +1710,21 @@ export default function LeadsPage() {
                       <td className="py-3.5 px-4 font-bold text-white w-48">
                         <div className="flex flex-wrap items-center gap-1.5">
                           <span>{lead.customerName}</span>
+                          {(() => {
+                            try {
+                              if (lead.otherData) {
+                                const parsed = typeof lead.otherData === 'string' ? JSON.parse(lead.otherData) : lead.otherData;
+                                if (parsed && parsed.linkedLeadCode) {
+                                  return (
+                                    <span className="text-[9px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 rounded-full px-1.5 py-0.25 font-bold flex items-center gap-0.5 shrink-0" title={`Linked to Lead #${parsed.linkedLeadCode}`}>
+                                      🔗 Linked
+                                    </span>
+                                  );
+                                }
+                              }
+                            } catch (e) {}
+                            return null;
+                          })()}
                           {lead.isUnreachable && (
                             <span className="text-[9px] bg-red-500/10 text-red-400 border border-red-500/20 rounded-full px-2 py-0.25 font-bold uppercase tracking-wider flex items-center gap-0.5 shrink-0">
                               <AlertCircle className="w-2.5 h-2.5" />
@@ -1658,7 +1738,9 @@ export default function LeadsPage() {
                           )}
                         </div>
                       </td>
-                      <td className="py-3.5 px-4 text-[var(--text-primary)] font-mono text-xs w-32">{lead.mobile}</td>
+                      <td className="py-3.5 px-4 text-[var(--text-primary)] font-mono text-xs w-32">
+                        {lead.mobile?.startsWith('AID-') ? 'N/A' : (lead.mobile?.includes('-#') ? lead.mobile.split('-#')[0] : lead.mobile)}
+                      </td>
                       <td className="py-3.5 px-4 text-[var(--text-primary)] w-28">{lead.city}</td>
                       <td className="py-3.5 px-4 w-32">
                         <span className={`inline-block text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${connectionClass}`}>
@@ -1899,7 +1981,7 @@ export default function LeadsPage() {
                           { key: 'connectionType', label: 'Connection Type', req: false },
                           { key: 'leadSource', label: 'Lead Source', req: false },
                           { key: 'discomName', label: 'DisCom Name', req: false },
-                          { key: 'connectionNumber', label: 'Connection Number', req: false },
+                          { key: 'connectionNumber', label: 'Account ID / Connection No / Consumer No', req: false },
                         ].map((field) => (
                           <div key={field.key} className="space-y-1 bg-[var(--bg-main)]/20 p-3 border border-[var(--border-color)] rounded-lg">
                             <label className="block text-[11px] font-bold text-[var(--text-primary)]">
@@ -1988,9 +2070,19 @@ export default function LeadsPage() {
                       {/* Skipped Details Log */}
                       {importResult.skipped.length > 0 && (
                         <div className="space-y-3">
-                          <h4 className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider">
-                            Skipped Records Logs ({importResult.skipped.length})
-                          </h4>
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider">
+                              Skipped Records Logs ({importResult.skipped.length})
+                            </h4>
+                            <button
+                              type="button"
+                              onClick={handleDownloadSkippedCsv}
+                              className="py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs flex items-center gap-1.5 shadow-md transition-all cursor-pointer"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              <span>Download Skipped (.csv)</span>
+                            </button>
+                          </div>
                           <div className="max-h-56 overflow-y-auto border border-[var(--border-color)]/80 rounded-xl bg-[var(--bg-main)]/20 text-xs divide-y divide-slate-850">
                             {importResult.skipped.map((skipItem, index) => (
                               <div key={index} className="p-3 flex justify-between gap-4 hover:bg-[var(--bg-card)]/10 transition-all">

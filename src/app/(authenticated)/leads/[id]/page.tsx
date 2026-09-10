@@ -2477,9 +2477,42 @@ export default function LeadDetailPage({
                         <p className="text-sm text-white mt-1.5">{lead.discomName || '-'}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] uppercase font-bold text-[var(--text-muted)] tracking-wider">Connection Number</p>
+                        <p className="text-[10px] uppercase font-bold text-[var(--text-muted)] tracking-wider">Account ID / Connection No / Consumer No</p>
                         <p className="text-sm font-mono text-white mt-1.5">{lead.connectionNumber || '-'}</p>
                       </div>
+                      {(() => {
+                        let linkedData: { linkedLeadCode?: string; linkedAccountId?: string } | null = null;
+                        try {
+                          if (lead.otherData) {
+                            const parsed = typeof lead.otherData === 'string' ? JSON.parse(lead.otherData) : lead.otherData;
+                            if (parsed && parsed.linkedLeadCode) {
+                              linkedData = {
+                                linkedLeadCode: parsed.linkedLeadCode,
+                                linkedAccountId: parsed.linkedAccountId,
+                              };
+                            }
+                          }
+                        } catch (e) {}
+
+                        if (!linkedData) return null;
+
+                        return (
+                          <div className="md:col-span-3 mt-2 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-emerald-400 font-bold text-xs">🔗 Linked Connection:</span>
+                              <span className="text-xs text-[var(--text-secondary)]">
+                                Account ID: <strong className="text-white font-mono">{linkedData.linkedAccountId || '-'}</strong> (Lead #{linkedData.linkedLeadCode})
+                              </span>
+                            </div>
+                            <Link
+                              href={`/leads?search=${linkedData.linkedLeadCode}`}
+                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition-all shrink-0"
+                            >
+                              View Linked Lead →
+                            </Link>
+                          </div>
+                        );
+                      })()}
                       <div className="md:col-span-2">
                         <p className="text-[10px] uppercase font-bold text-[var(--text-muted)] tracking-wider">Full Address</p>
                         <p className="text-sm text-white mt-1.5 leading-relaxed">{lead.address}</p>
@@ -2651,11 +2684,12 @@ export default function LeadDetailPage({
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">Connection Number</label>
+                          <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">Account ID / Connection No / Consumer No</label>
                           <input
                             type="text"
                             value={editForm.connectionNumber}
                             onChange={(e) => setEditForm({ ...editForm, connectionNumber: e.target.value })}
+                            placeholder="e.g. 7419012345 / CA Number"
                             className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-blue-500 font-mono"
                           />
                         </div>
@@ -3201,7 +3235,7 @@ export default function LeadDetailPage({
                     <form onSubmit={handleOrderDetailsSave} className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">Electricity Connection Number *</label>
+                          <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">Account ID / Connection No / Consumer No *</label>
                           <input
                             type="text"
                             required
