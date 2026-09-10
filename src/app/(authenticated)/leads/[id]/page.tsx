@@ -77,6 +77,14 @@ interface Lead {
   otherData?: string | null;
   discomName?: string | null;
   connectionNumber?: string | null;
+  siblingLeads?: {
+    id: number;
+    leadCode: string;
+    customerName: string;
+    connectionNumber: string | null;
+    status: number;
+    sanctionedLoadKw: number | null;
+  }[];
   activityLogs: {
     id: number;
     remark: string | null;
@@ -217,7 +225,7 @@ export default function LeadDetailPage({
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const [leadId, setLeadId] = useState<number | null>(null);
+  const [leadId, setLeadId] = useState<number | string | null>(null);
   const [lead, setLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
@@ -822,8 +830,10 @@ export default function LeadDetailPage({
   useEffect(() => {
     params.then((p) => {
       const parsedId = parseInt(p.id, 10);
-      if (!isNaN(parsedId)) {
+      if (!isNaN(parsedId) && String(parsedId) === p.id.trim()) {
         setLeadId(parsedId);
+      } else if (p.id) {
+        setLeadId(p.id.trim());
       }
     });
   }, [params]);
@@ -2481,35 +2491,95 @@ export default function LeadDetailPage({
                         <p className="text-sm font-mono text-white mt-1.5">{lead.connectionNumber || '-'}</p>
                       </div>
                       {(() => {
-                        let linkedData: { linkedLeadCode?: string; linkedAccountId?: string } | null = null;
-                        try {
-                          if (lead.otherData) {
+                        const siblings = lead.siblingLeads || [];
+                        let fallbackLinked: { linkedLeadCode?: string; linkedAccountId?: string } | null = null;
+                        if (siblings.length === 0 && lead.otherData) {
+                          try {
                             const parsed = typeof lead.otherData === 'string' ? JSON.parse(lead.otherData) : lead.otherData;
                             if (parsed && parsed.linkedLeadCode) {
-                              linkedData = {
+                              fallbackLinked = {
                                 linkedLeadCode: parsed.linkedLeadCode,
                                 linkedAccountId: parsed.linkedAccountId,
                               };
                             }
-                          }
-                        } catch (e) {}
+                          } catch (e) {}
+                        }
 
-                        if (!linkedData) return null;
+                        if (siblings.length === 0 && !fallbackLinked) return null;
 
+                        // Single Linked Sibling Case
+                        if (siblings.length === 1 || (siblings.length === 0 && fallbackLinked)) {
+                          const targetCode = siblings[0]?.leadCode || fallbackLinked?.linkedLeadCode;
+                          const targetAccId = siblings[0]?.connectionNumber || fallbackLinked?.linkedAccountId || '-';
+                          const targetStatus = siblings[0]?.status !== undefined ? STAGE_BADGES[siblings[0].status]?.name : null;
+
+                          return (
+                            <div className="md:col-span-3 mt-2 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-emerald-400 font-bold text-xs">🔗 Linked Connection:</span>
+                                <span className="text-xs text-[var(--text-secondary)]">
+                                  Account ID: <strong className="text-white font-mono">{targetAccId}</strong> (Lead #{targetCode})
+                                </span>
+                                {targetStatus && (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-semibold">
+                                    {targetStatus}
+                                  </span>
+                                )}
+                              </div>
+                              <Link
+                                href={`/leads/${targetCode}`}
+                                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition-all shrink-0"
+                              >
+                                View Linked Lead →
+                              </Link>
+                            </div>
+                          );
+                        }
+
+                        // Multi-Meter Family Case (2 or more other connections)
                         return (
-                          <div className="md:col-span-3 mt-2 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between gap-3">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-emerald-400 font-bold text-xs">🔗 Linked Connection:</span>
-                              <span className="text-xs text-[var(--text-secondary)]">
-                                Account ID: <strong className="text-white font-mono">{linkedData.linkedAccountId || '-'}</strong> (Lead #{linkedData.linkedLeadCode})
+                          <div className="md:col-span-3 mt-2 p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex flex-col gap-2.5">
+                            <div className="flex items-center justify-between">
+                              <span className="text-emerald-400 font-bold text-xs flex items-center gap-1.5">
+                                <span>🔗</span> Linked Connections ({siblings.length} other meters):
+                              </span>
+                              <span className="text-[11px] text-[var(--text-muted)] font-medium">
+                                Multi-Meter Customer
                               </span>
                             </div>
-                            <Link
-                              href={`/leads?search=${linkedData.linkedLeadCode}`}
-                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition-all shrink-0"
-                            >
-                              View Linked Lead →
-                            </Link>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 pt-1">
+                              {siblings.map((sib) => {
+                                const stageInfo = STAGE_BADGES[sib.status];
+                                return (
+                                  <div
+                                    key={sib.id}
+                                    className="p-2.5 bg-[var(--bg-card)]/90 border border-emerald-500/20 hover:border-emerald-500/40 rounded-lg flex items-center justify-between gap-2 transition-all"
+                                  >
+                                    <div className="min-w-0 flex-1">
+                                      <div className="text-xs font-mono font-bold text-white truncate">
+                                        Account: {sib.connectionNumber || '-'}
+                                      </div>
+                                      <div className="flex items-center gap-1.5 mt-0.5">
+                                        <span className="text-[10px] text-emerald-400 font-mono font-semibold">
+                                          #{sib.leadCode}
+                                        </span>
+                                        {stageInfo && (
+                                          <span className="text-[9px] px-1 py-0.2 rounded bg-slate-800/80 text-slate-300 font-medium">
+                                            {stageInfo.name}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <Link
+                                      href={`/leads/${sib.leadCode}`}
+                                      className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold rounded transition-all shrink-0"
+                                    >
+                                      View →
+                                    </Link>
+                                  </div>
+                                );
+                              })}
+                            </div>
                           </div>
                         );
                       })()}

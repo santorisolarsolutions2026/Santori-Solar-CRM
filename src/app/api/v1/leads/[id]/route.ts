@@ -56,13 +56,11 @@ export async function GET(
     }
 
     const { id } = await params;
-    const leadId = parseInt(id, 10);
-    if (isNaN(leadId)) {
-      return NextResponse.json({ success: false, message: 'Invalid Lead ID.' }, { status: 400 });
-    }
+    const leadIdNum = parseInt(id, 10);
+    const isNum = !isNaN(leadIdNum) && String(leadIdNum) === id.trim();
 
     const lead = await prisma.lead.findUnique({
-      where: { id: leadId },
+      where: isNum ? { id: leadIdNum } : { leadCode: id.trim() },
       include: {
         consultant: { select: { id: true, name: true, phone: true } },
         tl: { select: { id: true, name: true } },
@@ -124,7 +122,59 @@ export async function GET(
 
 
 
-    return NextResponse.json({ success: true, data: lead });
+    // Fetch any sibling leads sharing the same base phone number (multi-meter connections)
+    const basePhone = lead.mobile.includes('-#') ? lead.mobile.split('-#')[0] : lead.mobile;
+    let siblingLeads: any[] = [];
+    if (basePhone && !basePhone.startsWith('AID-')) {
+      siblingLeads = await prisma.lead.findMany({
+        where: {
+          OR: [
+            { mobile: basePhone },
+            { mobile: { startsWith: `${basePhone}-#` } },
+          ],
+          id: { not: lead.id },
+        },
+        select: {
+          id: true,
+          leadCode: true,
+          customerName: true,
+          connectionNumber: true,
+          status: true,
+          sanctionedLoadKw: true,
+        },
+        orderBy: { id: 'asc' },
+      });
+    }
+
+    if (siblingLeads.length === 0 && lead.otherData) {
+      try {
+        const parsed = typeof lead.otherData === 'string' ? JSON.parse(lead.otherData) : lead.otherData;
+        if (parsed?.linkedLeadCode) {
+          const linkedObj = await prisma.lead.findUnique({
+            where: { leadCode: parsed.linkedLeadCode },
+            select: {
+              id: true,
+              leadCode: true,
+              customerName: true,
+              connectionNumber: true,
+              status: true,
+              sanctionedLoadKw: true,
+            },
+          });
+          if (linkedObj && linkedObj.id !== lead.id) {
+            siblingLeads.push(linkedObj);
+          }
+        }
+      } catch (e) {}
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        ...lead,
+        siblingLeads,
+      },
+    });
   } catch (error: any) {
     console.error('Get lead details error:', error);
     return NextResponse.json(
@@ -145,18 +195,18 @@ export async function PATCH(
     }
 
     const { id } = await params;
-    const leadId = parseInt(id, 10);
-    if (isNaN(leadId)) {
-      return NextResponse.json({ success: false, message: 'Invalid Lead ID.' }, { status: 400 });
-    }
+    const leadIdNum = parseInt(id, 10);
+    const isNum = !isNaN(leadIdNum) && String(leadIdNum) === id.trim();
 
     const lead = await prisma.lead.findUnique({
-      where: { id: leadId },
+      where: isNum ? { id: leadIdNum } : { leadCode: id.trim() },
     });
 
     if (!lead) {
       return NextResponse.json({ success: false, message: 'Lead not found.' }, { status: 404 });
     }
+
+    const leadId = lead.id;
 
     // Enforce update permissions
     const { role: userRole, permissions: userPermissions } = await getUserSession(userPayload.id);
@@ -397,14 +447,20 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const leadId = parseInt(id, 10);
-    if (isNaN(leadId)) {
-      return NextResponse.json({ success: false, message: 'Invalid Lead ID.' }, { status: 400 });
+    const leadIdNum = parseInt(id, 10);
+    const isNum = !isNaN(leadIdNum) && String(leadIdNum) === id.trim();
+
+    const lead = await prisma.lead.findUnique({
+      where: isNum ? { id: leadIdNum } : { leadCode: id.trim() },
+    });
+
+    if (!lead) {
+      return NextResponse.json({ success: false, message: 'Lead not found.' }, { status: 404 });
     }
 
     // Hard delete lead from PostgreSQL (cascade deletes activity logs, meetings, orders)
     const deletedLead = await prisma.lead.delete({
-      where: { id: leadId },
+      where: { id: lead.id },
     });
 
     return NextResponse.json({
