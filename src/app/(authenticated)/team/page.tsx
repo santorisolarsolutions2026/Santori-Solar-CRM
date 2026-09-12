@@ -88,6 +88,23 @@ export function getRoleLabel(role: string): string {
   return ROLE_LABELS[role]?.label || role;
 }
 
+const getMemberOnlineStatus = (lastSeenAt?: string | null) => {
+  if (!lastSeenAt) return { isOnline: false, label: 'Offline', timeText: 'No recent activity recorded' };
+  const diffMs = Date.now() - new Date(lastSeenAt).getTime();
+  if (diffMs < 3 * 60 * 1000) {
+    return { isOnline: true, label: 'Currently Online', timeText: 'Active on CRM right now' };
+  }
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 60) {
+    return { isOnline: false, label: 'Offline / Idle', timeText: `Last active ${mins} mins ago` };
+  }
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) {
+    return { isOnline: false, label: 'Offline', timeText: `Last active ${hours} hours ago` };
+  }
+  return { isOnline: false, label: 'Offline', timeText: `Last active ${new Date(lastSeenAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}` };
+};
+
 export function getRoleClass(role: string): string {
   if (!role) return 'bg-slate-500/15';
   const baseRole = role.includes(':') ? role.split(':')[0] : role;
@@ -2802,7 +2819,7 @@ export default function TeamManagementPage() {
                       <td className="py-4 px-4 text-center w-20">
                         {member.photograph ? (
                           <img
-                            src={`/api/v1/users/${member.id}/photograph?t=${Date.now()}`}
+                            src={`/api/v1/users/${member.id}/photograph`}
                             alt={member.name}
                             className="w-8 h-8 rounded-full object-cover border border-[var(--border-color)] mx-auto"
                             onError={(e) => {
@@ -3906,7 +3923,7 @@ export default function TeamManagementPage() {
                     <div className="relative w-16 h-16 rounded-xl bg-[var(--bg-main)] border border-[var(--border-color)] flex items-center justify-center overflow-hidden">
                       {editPhotoPreviewUrl || editPhotoPath ? (
                         <img
-                          src={editPhotoPreviewUrl || `/api/v1/users/${user?.id}/photograph?t=${Date.now()}`}
+                          src={editPhotoPreviewUrl || `/api/v1/users/${user?.id}/photograph`}
                           alt={selectedMember.name}
                           className="w-full h-full object-cover"
                         />
@@ -4074,7 +4091,7 @@ export default function TeamManagementPage() {
                     <div className="relative w-16 h-16 rounded-xl bg-[var(--bg-main)] border border-[var(--border-color)] flex items-center justify-center overflow-hidden">
                       {editMemberPhotoPreviewUrl || editMemberForm.photograph ? (
                         <img
-                          src={editMemberPhotoPreviewUrl || `/api/v1/users/${selectedMember.id}/photograph?t=${Date.now()}`}
+                          src={editMemberPhotoPreviewUrl || `/api/v1/users/${selectedMember.id}/photograph`}
                           alt={editMemberForm.name}
                           className="w-full h-full object-cover"
                         />
@@ -4318,7 +4335,26 @@ export default function TeamManagementPage() {
                   {/* Access Logs */}
                   <div className="border-t border-[var(--border-color)] pt-4 space-y-4">
                     <h5 className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Access Logs</h5>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      {/* Live Online Status */}
+                      <div className="p-3 bg-[var(--bg-main)]/40 border border-[var(--border-color)] rounded-lg">
+                        <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1.5">Live CRM Status</span>
+                        {(() => {
+                          const status = getMemberOnlineStatus(selectedMember.lastSeenAt);
+                          return (
+                            <div className="space-y-1">
+                              <span className={`inline-flex items-center gap-1.5 text-xs font-bold ${status.isOnline ? 'text-emerald-400' : 'text-slate-400'}`}>
+                                <span className={`w-2 h-2 rounded-full ${status.isOnline ? 'bg-emerald-400' : 'bg-slate-600'}`} />
+                                {status.label}
+                              </span>
+                              <span className="block text-[10px] text-[var(--text-secondary)] italic font-semibold leading-normal">
+                                {status.timeText}
+                              </span>
+                            </div>
+                          );
+                        })()}
+                      </div>
+
                       <div className="p-3 bg-[var(--bg-main)]/40 border border-[var(--border-color)] rounded-lg">
                         <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1.5">Last Login Session</span>
                         {selectedMember.lastLoginAt ? (
@@ -4405,7 +4441,7 @@ export default function TeamManagementPage() {
                   <div className="w-16 h-16 rounded-xl bg-[var(--bg-main)] border border-[var(--border-color)] flex items-center justify-center overflow-hidden">
                     {selectedMember.photograph ? (
                       <img
-                        src={`/api/v1/users/${selectedMember.id}/photograph?t=${Date.now()}`}
+                        src={`/api/v1/users/${selectedMember.id}/photograph`}
                         alt={selectedMember.name}
                         className="w-full h-full object-cover"
                       />
@@ -4500,7 +4536,26 @@ export default function TeamManagementPage() {
                 {isAdminOrDirectorOrSalesHead && (
                   <div className="border-t border-[var(--border-color)] pt-4 space-y-4">
                     <h5 className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Access Logs</h5>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      {/* Live Online Status */}
+                      <div className="p-3 bg-[var(--bg-main)]/40 border border-[var(--border-color)] rounded-lg">
+                        <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1.5">Live CRM Status</span>
+                        {(() => {
+                          const status = getMemberOnlineStatus(selectedMember.lastSeenAt);
+                          return (
+                            <div className="space-y-1">
+                              <span className={`inline-flex items-center gap-1.5 text-xs font-bold ${status.isOnline ? 'text-emerald-400' : 'text-slate-400'}`}>
+                                <span className={`w-2 h-2 rounded-full ${status.isOnline ? 'bg-emerald-400' : 'bg-slate-600'}`} />
+                                {status.label}
+                              </span>
+                              <span className="block text-[10px] text-[var(--text-secondary)] italic font-semibold leading-normal">
+                                {status.timeText}
+                              </span>
+                            </div>
+                          );
+                        })()}
+                      </div>
+
                       {/* Last Login Info */}
                       <div className="p-3 bg-[var(--bg-main)]/40 border border-[var(--border-color)] rounded-lg">
                         <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1.5">Last Login Session</span>

@@ -3,6 +3,16 @@ import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/auth';
 import { getSubordinateIds } from '@/lib/hierarchy';
 
+interface LeaderboardCacheEntry {
+  timestamp: number;
+  data: any[];
+  designations: any[];
+}
+
+// 60-Second In-Memory Cache Map
+const LEADERBOARD_CACHE = new Map<string, LeaderboardCacheEntry>();
+const CACHE_TTL_MS = 60 * 1000; // 60 seconds
+
 export async function GET(req: Request) {
   try {
     const userPayload = getAuthenticatedUser(req);
@@ -43,6 +53,17 @@ export async function GET(req: Request) {
       } else {
         enforcedDept = 'sales';
       }
+    }
+
+    // Check 60-second in-memory cache using composite key
+    const cacheKey = `${enforcedDept}:${timeframe}:${designationFilter}:${metricFilter}:${startStr || ''}:${endStr || ''}`;
+    const cached = LEADERBOARD_CACHE.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp < CACHE_TTL_MS)) {
+      return NextResponse.json({
+        success: true,
+        data: cached.data,
+        designations: cached.designations,
+      });
     }
 
     // Determine date filter
@@ -282,6 +303,23 @@ export async function GET(req: Request) {
       select: { id: true, name: true, departmentId: true },
       orderBy: { name: 'asc' }
     });
+
+    // Save into 60-second in-memory cache
+    LEADERBOARD_CACHE.set(cacheKey, {
+      timestamp: Date.now(),
+      data: leaderboardData,
+      designations: availableDesignations,
+    });
+
+    // Keep cache bounded to prevent memory growth (max 50 filter combinations)
+    if (LEADERBOARD_CACHE.size > 50) {
+      const now = Date.now();
+      for (const [key, entry] of LEADERBOARD_CACHE.entries()) {
+        if (now - entry.timestamp > CACHE_TTL_MS) {
+          LEADERBOARD_CACHE.delete(key);
+        }
+      }
+    }
 
     return NextResponse.json({
       success: true,

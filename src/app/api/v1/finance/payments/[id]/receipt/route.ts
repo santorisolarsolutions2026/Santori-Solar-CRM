@@ -41,27 +41,28 @@ export async function GET(
       return NextResponse.json({ success: false, message: 'Receipt not found for this payment.' }, { status: 404 });
     }
 
-    if (payment.receiptUrl.startsWith('http')) {
+    if (payment.receiptUrl.startsWith('http') || payment.receiptUrl.includes('blob.vercel-storage.com')) {
       try {
-        const response = await fetch(payment.receiptUrl);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch receipt from blob: ${response.status}`);
-        }
-        const arrayBuffer = await response.arrayBuffer();
-        const contentType = response.headers.get('content-type') || 'image/png';
+        const { fetchBlobContent } = await import('@/lib/blob');
+        const content = await fetchBlobContent(payment.receiptUrl);
         
         const headers = new Headers();
-        headers.set('Content-Type', contentType);
-        headers.set('Content-Length', arrayBuffer.byteLength.toString());
+        headers.set('Content-Type', content.contentType || 'image/png');
+        if (content.contentLength) {
+          headers.set('Content-Length', content.contentLength);
+        }
         headers.set('Cache-Control', 'private, max-age=3600');
         
-        return new Response(arrayBuffer, {
+        return new Response((content.stream || content.buffer) as any, {
           status: 200,
           headers,
         });
       } catch (err) {
         console.error('Proxy payment receipt error:', err);
-        return NextResponse.redirect(payment.receiptUrl);
+        if (payment.receiptUrl.startsWith('http')) {
+          return NextResponse.redirect(payment.receiptUrl);
+        }
+        return NextResponse.json({ success: false, message: 'Receipt could not be retrieved from storage.' }, { status: 404 });
       }
     }
 

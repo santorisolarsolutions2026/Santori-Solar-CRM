@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
-import { put } from '@vercel/blob';
+import { uploadPrivateBlob } from '@/lib/blob';
 
 // GET: List installation images metadata for a specific order
 export async function GET(
@@ -106,13 +106,11 @@ export async function POST(
       return NextResponse.json({ success: false, message: 'Only image and video files are allowed.' }, { status: 400 });
     }
 
-    // Upload to Vercel Blob
+    // Upload to Private Vercel Blob
     const fileExt = file.name.split('.').pop() || 'png';
     const blobPath = `installations/install_${orderId}_${status}_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
     
-    const blob = await put(blobPath, file, {
-      access: 'public',
-    });
+    const blob = await uploadPrivateBlob(blobPath, file);
 
     const relativePath = blob.url;
 

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/auth';
-import { put } from '@vercel/blob';
+import { uploadPrivateBlob } from '@/lib/blob';
 
 const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'application/pdf'];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -108,12 +108,10 @@ export async function POST(
     });
     const nextVersion = latestDoc ? latestDoc.version + 1 : 1;
 
-    // Upload to Vercel Blob
+    // Upload to Private Vercel Blob
     const fileExt = file.name.split('.').pop() || 'dat';
     const blobPath = `leads/lead_${leadId}_${docType}_v${nextVersion}_${Date.now()}.${fileExt}`;
-    const blob = await put(blobPath, file, {
-      access: 'public',
-    });
+    const blob = await uploadPrivateBlob(blobPath, file);
 
     // Mark previous active documents of same type as inactive
     await prisma.leadDocument.updateMany({

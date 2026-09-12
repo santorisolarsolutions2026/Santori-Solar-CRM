@@ -39,6 +39,7 @@ interface AttendanceRecord {
     employeeId: string | null;
     photograph: string | null;
     loginLocation: string | null;
+    lastSeenAt?: string | null;
   };
 }
 
@@ -51,9 +52,27 @@ interface TeamRosterItem {
     employeeId: string | null;
     photograph: string | null;
     loginLocation: string | null;
+    lastSeenAt?: string | null;
   };
   attendance: AttendanceRecord | null;
 }
+
+const getOnlineStatus = (lastSeenAt?: string | null) => {
+  if (!lastSeenAt) return { isOnline: false, label: 'Offline' };
+  const diffMs = Date.now() - new Date(lastSeenAt).getTime();
+  if (diffMs < 3 * 60 * 1000) {
+    return { isOnline: true, label: 'Online' };
+  }
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 60) {
+    return { isOnline: false, label: `Last active ${mins}m ago` };
+  }
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) {
+    return { isOnline: false, label: `Last active ${hours}h ago` };
+  }
+  return { isOnline: false, label: `Last active ${new Date(lastSeenAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}` };
+};
 
 const getVisibleEmployees = (currentUser: any, allEmployees: any[]): any[] => {
   if (!currentUser) return [];
@@ -734,18 +753,33 @@ export default function AttendancePage() {
                     <tr key={member.id} className="hover:bg-[var(--bg-card)]/30 transition-all">
                       <td className="py-3.5 px-5">
                         <div className="flex items-center gap-3">
-                          {member.photograph ? (
-                            <img
-                              src={`/api/v1/users/${member.id}/photograph?t=${Date.now()}`}
-                              alt={member.name}
-                              className="w-9 h-9 rounded-full object-cover border border-[var(--border-color)] shrink-0"
-                              onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-                            />
-                          ) : (
-                            <div className="w-9 h-9 rounded-full bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-center text-emerald-500 shrink-0">
-                              <User className="w-5 h-5" />
-                            </div>
-                          )}
+                          <div className="relative shrink-0">
+                            {member.photograph ? (
+                              <img
+                                src={`/api/v1/users/${member.id}/photograph`}
+                                alt={member.name}
+                                className="w-9 h-9 rounded-full object-cover border border-[var(--border-color)] shrink-0"
+                                onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                              />
+                            ) : (
+                              <div className="w-9 h-9 rounded-full bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-center text-emerald-500 shrink-0">
+                                <User className="w-5 h-5" />
+                              </div>
+                            )}
+                            {isAdmin && (() => {
+                              const status = getOnlineStatus(member.lastSeenAt);
+                              return (
+                                <span
+                                  title={status.label}
+                                  className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-[var(--bg-card)] ${
+                                    status.isOnline
+                                      ? 'bg-emerald-400'
+                                      : 'bg-slate-600'
+                                  }`}
+                                />
+                              );
+                            })()}
+                          </div>
                           <div className="min-w-0">
                             <span className="font-bold text-white block truncate">{member.name}</span>
                             <div className="flex items-center gap-2 mt-0.5">
@@ -756,6 +790,16 @@ export default function AttendancePage() {
                                 </span>
                               )}
                             </div>
+                            {isAdmin && (() => {
+                              const status = getOnlineStatus(member.lastSeenAt);
+                              return (
+                                <div className="mt-1 flex items-center gap-1.5">
+                                  <span className={`text-[9px] font-medium leading-none ${status.isOnline ? 'text-emerald-400' : 'text-slate-500'}`}>
+                                    {status.label}
+                                  </span>
+                                </div>
+                              );
+                            })()}
                           </div>
                         </div>
                       </td>

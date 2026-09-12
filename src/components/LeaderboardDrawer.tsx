@@ -113,11 +113,14 @@ export default function LeaderboardDrawer({ isOpen, onClose }: LeaderboardDrawer
           url += `&startDate=${startDate}&endDate=${endDate}`;
         }
         const res = await fetch(url);
-        const result = await res.json();
-        if (result.success) {
-          setData(result.data);
-          if (result.designations) {
-            setDesignations(result.designations);
+        const contentType = res.headers.get('content-type');
+        if (res.ok && contentType && contentType.includes('application/json')) {
+          const result = await res.json();
+          if (result.success) {
+            setData(result.data);
+            if (result.designations) {
+              setDesignations(result.designations);
+            }
           }
         }
       } catch (err) {
@@ -370,7 +373,7 @@ export default function LeaderboardDrawer({ isOpen, onClose }: LeaderboardDrawer
                       {/* Profile photograph */}
                       {user.photograph ? (
                         <img
-                          src={`/api/v1/users/${user.id}/photograph?t=${Date.now()}`}
+                          src={`/api/v1/users/${user.id}/photograph`}
                           alt={user.name}
                           className="w-9 h-9 rounded-lg object-cover border border-[var(--border-color)] shrink-0"
                           onError={(e) => {

@@ -55,7 +55,20 @@ export async function GET(req: Request) {
             }
           ]
         },
-        include: {
+        select: {
+          id: true,
+          leadId: true,
+          deliveryDate: true,
+          deliveryTime: true,
+          isDelivered: true,
+          installationDate: true,
+          installationTime: true,
+          isInstalled: true,
+          isMeterInstalled: true,
+          isCommissioned: true,
+          actualMeterInstalledAt: true,
+          actualInstallationAt: true,
+          createdAt: true,
           lead: {
             select: {
               customerName: true,
@@ -158,7 +171,12 @@ export async function GET(req: Request) {
               : {}),
           },
         },
-        include: {
+        select: {
+          id: true,
+          meetingDate: true,
+          meetingTime: true,
+          leadId: true,
+          notes: true,
           lead: {
             select: {
               customerName: true,

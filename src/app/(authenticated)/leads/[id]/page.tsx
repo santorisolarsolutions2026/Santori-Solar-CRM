@@ -48,6 +48,7 @@ import { MeetingLocationDisplay } from '@/components/MeetingLocationDisplay';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import { LeadTrackingTimeline } from '@/components/LeadTrackingTimeline';
 import { getLeadAssignedDisplay } from '@/lib/permissions';
+import { compressImageClient } from '@/lib/image-compress';
 
 interface Lead {
   id: number;
@@ -1259,11 +1260,13 @@ export default function LeadDetailPage({
   const executeDocUpload = async (docType: string, file: File) => {
     if (!lead?.order) return;
     setUploadingDoc(docType);
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('doc_type', docType);
 
     try {
+      const fileToUpload = await compressImageClient(file);
+      const formData = new FormData();
+      formData.append('file', fileToUpload);
+      formData.append('doc_type', docType);
+
       const res = await fetch(`/api/v1/orders/${lead.order.id}/documents`, {
         method: 'POST',
         body: formData,
@@ -1451,21 +1454,42 @@ export default function LeadDetailPage({
       alert('Location access is required to verify the meeting location. Proceeding with location payload marked as null.');
     }
 
-    // 2. Start audio media stream
+    // 2. Start audio media stream with AI Noise Suppression, Echo Cancellation, and Auto Gain
     let stream: MediaStream;
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch (err) {
-      console.error('Microphone access denied:', err);
-      alert('Microphone access is required to start the meeting recording.');
-      setIsStartingMeeting(false);
-      return;
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          channelCount: 1,
+        },
+      });
+    } catch {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (err) {
+        console.error('Microphone access denied:', err);
+        alert('Microphone access is required to start the meeting recording.');
+        setIsStartingMeeting(false);
+        return;
+      }
     }
 
-    // 3. Initialize MediaRecorder
+    // 3. Initialize MediaRecorder with optimized voice bitrate (32kbps Opus)
     try {
       mediaStreamRef.current = stream;
-      const recorderInstance = new MediaRecorder(stream);
+      const recorderOptions: MediaRecorderOptions = { audioBitsPerSecond: 32000 };
+      if (typeof MediaRecorder !== 'undefined' && typeof MediaRecorder.isTypeSupported === 'function') {
+        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+          recorderOptions.mimeType = 'audio/webm;codecs=opus';
+        } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+          recorderOptions.mimeType = 'audio/webm';
+        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+          recorderOptions.mimeType = 'audio/mp4';
+        }
+      }
+      const recorderInstance = new MediaRecorder(stream, recorderOptions);
       const chunks: Blob[] = [];
 
       recorderInstance.ondataavailable = (e) => {
@@ -1478,7 +1502,7 @@ export default function LeadDetailPage({
         const durationSec = recordingStartTimeRef.current
           ? Math.round((Date.now() - recordingStartTimeRef.current) / 1000)
           : 0;
-        const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+        const audioBlob = new Blob(chunks, { type: recorderOptions.mimeType || 'audio/webm' });
         await uploadAudioBlob(meetingId, audioBlob, durationSec);
         stream.getTracks().forEach((track) => track.stop());
         mediaStreamRef.current = null;
@@ -1525,16 +1549,37 @@ export default function LeadDetailPage({
     }
     let stream: MediaStream;
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch (err) {
-      console.error('Microphone access denied:', err);
-      alert('Microphone access is required to start recording.');
-      return;
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          channelCount: 1,
+        },
+      });
+    } catch {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (err) {
+        console.error('Microphone access denied:', err);
+        alert('Microphone access is required to start recording.');
+        return;
+      }
     }
 
     try {
       mediaStreamRef.current = stream;
-      const recorderInstance = new MediaRecorder(stream);
+      const recorderOptions: MediaRecorderOptions = { audioBitsPerSecond: 32000 };
+      if (typeof MediaRecorder !== 'undefined' && typeof MediaRecorder.isTypeSupported === 'function') {
+        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+          recorderOptions.mimeType = 'audio/webm;codecs=opus';
+        } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+          recorderOptions.mimeType = 'audio/webm';
+        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+          recorderOptions.mimeType = 'audio/mp4';
+        }
+      }
+      const recorderInstance = new MediaRecorder(stream, recorderOptions);
       const chunks: Blob[] = [];
 
       recorderInstance.ondataavailable = (e) => {
@@ -1547,7 +1592,7 @@ export default function LeadDetailPage({
         const durationSec = recordingStartTimeRef.current
           ? Math.round((Date.now() - recordingStartTimeRef.current) / 1000)
           : 0;
-        const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+        const audioBlob = new Blob(chunks, { type: recorderOptions.mimeType || 'audio/webm' });
         await uploadAudioBlob(meetingId, audioBlob, durationSec);
         stream.getTracks().forEach((track) => track.stop());
         mediaStreamRef.current = null;

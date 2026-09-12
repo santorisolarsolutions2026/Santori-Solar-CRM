@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import CustomDropdown from '@/components/CustomDropdown';
+import { compressImageClient } from '@/lib/image-compress';
 import {
   Wrench,
   Search,
@@ -1049,12 +1050,13 @@ export default function OperationsPage() {
 
   const executeUpload = async (file: File, uploadStatus: 'delivered_items' | 'installation_done' | 'meter_sealing_paper' | 'plant_commissioned') => {
     if (!selectedOrder) return;
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('status', uploadStatus);
-
     setUploadingFile(true);
     try {
+      const fileToUpload = await compressImageClient(file);
+      const formData = new FormData();
+      formData.append('file', fileToUpload);
+      formData.append('status', uploadStatus);
+
       const res = await fetch(`/api/v1/orders/${selectedOrder.id}/installation-images`, {
         method: 'POST',
         body: formData,
@@ -2752,9 +2754,9 @@ export default function OperationsPage() {
       })(), portalNode)}
 
       {/* Media Lightbox Preview */}
-      {previewImage && (
+      {portalNode && previewImage && createPortal(
         <div 
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur"
+          className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/90 backdrop-blur"
           onClick={() => setPreviewImage(null)}
         >
           <button 
@@ -2772,7 +2774,8 @@ export default function OperationsPage() {
             />
             <span className="text-[var(--text-secondary)] text-xs font-mono">{previewImage.title}</span>
           </div>
-        </div>
+        </div>,
+        portalNode
       )}
 
       {/* Custom Right-Click Date / Time Picker Popup */}

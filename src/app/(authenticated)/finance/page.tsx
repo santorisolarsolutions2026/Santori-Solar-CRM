@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '@/context/AuthContext';
+import { compressImageClient } from '@/lib/image-compress';
 import {
   CreditCard,
   Search,
@@ -104,9 +105,9 @@ const PAYMENT_METHODS = [
 const METHOD_LABELS: Record<string, string> = {
   cash: 'Cash 💵',
   upi: 'UPI 📱',
-  cheque: 'Cheque ✍ï¸',
-  neft: 'NEFT ðŸ¦',
-  bank_transfer: 'Bank Transfer ðŸ›ï¸',
+  cheque: 'Cheque ✍️',
+  neft: 'NEFT 🏦',
+  bank_transfer: 'Bank Transfer 🏛️',
 };
 
 const DOC_TYPES: Record<string, string> = {
@@ -464,14 +465,16 @@ export default function FinancePage() {
       return;
     }
 
-    setReceiptFile(file);
     setReceiptUploading(true);
     setReceiptUrl('');
 
-    const formData = new FormData();
-    formData.append('file', file);
-
     try {
+      const fileToUpload = await compressImageClient(file);
+      setReceiptFile(fileToUpload);
+
+      const formData = new FormData();
+      formData.append('file', fileToUpload);
+
       const res = await fetch('/api/v1/finance/receipt-upload', {
         method: 'POST',
         body: formData,

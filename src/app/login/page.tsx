@@ -78,9 +78,12 @@ export default function LoginPage() {
     async function checkSetup() {
       try {
         const res = await fetch('/api/v1/auth/setup');
-        const data = await res.json();
-        if (data.success && data.isSetupRequired) {
-          setIsSetupRequired(true);
+        const contentType = res.headers.get('content-type');
+        if (res.ok && contentType && contentType.includes('application/json')) {
+          const data = await res.json();
+          if (data.success && data.isSetupRequired) {
+            setIsSetupRequired(true);
+          }
         }
       } catch (err) {
         console.error('Error checking setup:', err);

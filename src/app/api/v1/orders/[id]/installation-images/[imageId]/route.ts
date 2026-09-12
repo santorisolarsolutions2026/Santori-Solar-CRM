@@ -36,24 +36,26 @@ export async function GET(
       return NextResponse.json({ success: false, message: 'Image not found.' }, { status: 404 });
     }
 
-    if (image.filePath.startsWith('http')) {
+    if (image.filePath.startsWith('http') || image.filePath.includes('blob.vercel-storage.com')) {
       try {
-        const blobResponse = await fetch(image.filePath);
-        if (!blobResponse.ok) {
-          throw new Error(`Failed to fetch from Vercel Blob: ${blobResponse.status}`);
-        }
-        const arrayBuffer = await blobResponse.arrayBuffer();
+        const { fetchBlobContent } = await import('@/lib/blob');
+        const content = await fetchBlobContent(image.filePath);
         const headers = new Headers();
-        headers.set('Content-Type', blobResponse.headers.get('Content-Type') || 'image/png');
-        headers.set('Content-Length', arrayBuffer.byteLength.toString());
+        headers.set('Content-Type', content.contentType || 'image/png');
+        if (content.contentLength) {
+          headers.set('Content-Length', content.contentLength);
+        }
         headers.set('Cache-Control', 'private, max-age=86400');
-        return new Response(arrayBuffer, {
+        return new Response((content.stream || content.buffer) as any, {
           status: 200,
           headers,
         });
       } catch (fetchErr) {
-        console.error('Error proxying installation image:', fetchErr);
-        return NextResponse.redirect(image.filePath);
+        console.error('Error fetching installation image from blob:', fetchErr);
+        if (image.filePath.startsWith('http')) {
+          return NextResponse.redirect(image.filePath);
+        }
+        return NextResponse.json({ success: false, message: 'Image could not be retrieved from storage.' }, { status: 404 });
       }
     }
 
@@ -133,9 +135,10 @@ export async function DELETE(
     });
 
     // Delete file from Vercel Blob or disk
-    if (image.filePath.startsWith('http')) {
+    if (image.filePath.startsWith('http') || image.filePath.includes('blob.vercel-storage.com')) {
       try {
-        await del(image.filePath);
+        const { deleteBlobFile } = await import('@/lib/blob');
+        await deleteBlobFile(image.filePath);
       } catch (err) {
         console.error('Failed to delete file from Vercel Blob:', err);
       }

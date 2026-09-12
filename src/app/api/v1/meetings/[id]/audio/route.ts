@@ -115,24 +115,33 @@ export async function GET(
     let fileBuffer: Uint8Array;
     let contentType = 'audio/webm';
 
-    if (audioPath.startsWith('http://') || audioPath.startsWith('https://')) {
-      const response = await fetch(audioPath);
-      if (!response.ok) {
-        return NextResponse.json({ success: false, message: 'Audio recording file not found in blob storage.' }, { status: 404 });
-      }
-      const arrayBuffer = await response.arrayBuffer();
-      fileBuffer = Buffer.from(arrayBuffer);
+    if (audioPath.startsWith('http://') || audioPath.startsWith('https://') || audioPath.includes('blob.vercel-storage.com')) {
+      try {
+        const { fetchBlobContent } = await import('@/lib/blob');
+        const content = await fetchBlobContent(audioPath);
+        
+        let arrayBuf: ArrayBuffer;
+        if (content.stream) {
+          arrayBuf = await new Response(content.stream).arrayBuffer();
+        } else if (content.buffer) {
+          arrayBuf = content.buffer;
+        } else {
+          throw new Error('No content returned from blob');
+        }
 
-      // Determine content type from headers or URL
-      const contentTypeHeader = response.headers.get('content-type');
-      if (contentTypeHeader) {
-        contentType = contentTypeHeader;
-      } else {
-        const ext = path.extname(audioPath).toLowerCase();
-        if (ext === '.wav') contentType = 'audio/wav';
-        if (ext === '.ogg') contentType = 'audio/ogg';
-        if (ext === '.mp3') contentType = 'audio/mpeg';
-        if (ext === '.m4a') contentType = 'audio/mp4';
+        fileBuffer = Buffer.from(arrayBuf);
+        if (content.contentType) {
+          contentType = content.contentType;
+        } else {
+          const ext = path.extname(audioPath).toLowerCase();
+          if (ext === '.wav') contentType = 'audio/wav';
+          if (ext === '.ogg') contentType = 'audio/ogg';
+          if (ext === '.mp3') contentType = 'audio/mpeg';
+          if (ext === '.m4a') contentType = 'audio/mp4';
+        }
+      } catch (blobErr) {
+        console.error('Error fetching audio from blob storage:', blobErr);
+        return NextResponse.json({ success: false, message: 'Audio recording file not found in storage.' }, { status: 404 });
       }
     } else {
       // Resolve local path
@@ -162,6 +171,7 @@ export async function GET(
           'Content-Type': contentType,
           'Content-Length': fileBuffer.length.toString(),
           'Content-Disposition': `attachment; filename="${fileName}"`,
+          'Cache-Control': 'private, max-age=86400',
         },
       });
     }
@@ -193,6 +203,7 @@ export async function GET(
           'Accept-Ranges': 'bytes',
           'Content-Length': chunksize.toString(),
           'Content-Type': contentType,
+          'Cache-Control': 'private, max-age=86400',
         },
       });
     }
@@ -203,6 +214,7 @@ export async function GET(
         'Content-Type': contentType,
         'Content-Length': fileSize.toString(),
         'Accept-Ranges': 'bytes',
+        'Cache-Control': 'private, max-age=86400',
       },
     });
   } catch (error: any) {
@@ -215,10 +227,10 @@ export async function GET(
 }
 
 async function deleteSingleFile(filePath: string) {
-  if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
+  if (filePath.startsWith('http://') || filePath.startsWith('https://') || filePath.includes('blob.vercel-storage.com')) {
     try {
-      const { del } = await import('@vercel/blob');
-      await del(filePath);
+      const { deleteBlobFile } = await import('@/lib/blob');
+      await deleteBlobFile(filePath);
     } catch (delErr) {
       console.warn('Blob delete warning:', delErr);
     }

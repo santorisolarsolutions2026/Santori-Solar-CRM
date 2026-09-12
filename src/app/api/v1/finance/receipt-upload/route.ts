@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
-import { put } from '@vercel/blob';
+import { uploadPrivateBlob } from '@/lib/blob';
 
 export async function POST(req: Request) {
   try {
@@ -29,13 +29,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'Only image files are allowed.' }, { status: 400 });
     }
 
-    // Upload to Vercel Blob
+    // Upload to Private Vercel Blob
     const fileExt = file.name.split('.').pop() || 'png';
     const blobPath = `receipts/receipt_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
 
-    const blob = await put(blobPath, file, {
-      access: 'public',
-    });
+    const blob = await uploadPrivateBlob(blobPath, file);
 
     return NextResponse.json({
       success: true,

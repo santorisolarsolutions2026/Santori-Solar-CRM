@@ -294,10 +294,13 @@ export default function AuthenticatedLayout({
       const fetchAlerts = async () => {
         try {
           const res = await fetch('/api/v1/users/my-today-alerts');
-          const data = await res.json();
-          if (data.success && data.data.length > 0) {
-            setTodayAlerts(data.data);
-            setShowTodayAlertModal(true);
+          const contentType = res.headers.get('content-type');
+          if (res.ok && contentType && contentType.includes('application/json')) {
+            const data = await res.json();
+            if (data.success && data.data && data.data.length > 0) {
+              setTodayAlerts(data.data);
+              setShowTodayAlertModal(true);
+            }
           }
           sessionStorage.setItem('solar-crm-login-notified', 'true');
         } catch (err) {
@@ -536,9 +539,12 @@ export default function AuthenticatedLayout({
   const fetchTopPerformers = async () => {
     try {
       const res = await fetch('/api/v1/leaderboard?timeframe=month&department=all');
-      const data = await res.json();
-      if (data.success) {
-        setTopPerformers(data.data.slice(0, 3));
+      const contentType = res.headers.get('content-type');
+      if (res.ok && contentType && contentType.includes('application/json')) {
+        const data = await res.json();
+        if (data.success && data.data) {
+          setTopPerformers(data.data.slice(0, 3));
+        }
       }
     } catch {
       // Suppress network disconnect logs during local dev server restarts
@@ -550,12 +556,34 @@ export default function AuthenticatedLayout({
       fetchNotifications();
       fetchTodayAttendance();
       fetchTopPerformers();
-      // Poll notifications every 20 seconds, and leaderboard every 60 seconds
-      const interval = setInterval(fetchNotifications, 20000);
-      const leaderboardInterval = setInterval(fetchTopPerformers, 60000);
+
+      // Smart Polling: Skip when document is hidden (user switched tabs or minimized browser)
+      const pollNotifications = () => {
+        if (typeof document !== 'undefined' && document.hidden) return;
+        fetchNotifications();
+      };
+
+      const pollLeaderboard = () => {
+        if (typeof document !== 'undefined' && document.hidden) return;
+        fetchTopPerformers();
+      };
+
+      // Poll notifications every 60s, and leaderboard every 180s (3 mins) when tab is active
+      const interval = setInterval(pollNotifications, 60000);
+      const leaderboardInterval = setInterval(pollLeaderboard, 180000);
+
+      // Instantly refresh notifications when user switches back to this tab
+      const handleVisibilityChange = () => {
+        if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+          fetchNotifications();
+        }
+      };
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+
       return () => {
         clearInterval(interval);
         clearInterval(leaderboardInterval);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
       };
     }
   }, [user]);
@@ -751,7 +779,7 @@ export default function AuthenticatedLayout({
             <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-[var(--border-color)] flex items-center justify-center text-emerald-500 shrink-0">
               {user.photograph ? (
                 <img
-                  src={`/api/v1/users/${user.id}/photograph?t=${Date.now()}`}
+                  src={`/api/v1/users/${user.id}/photograph`}
                   alt={user.name}
                   className="w-8 h-8 rounded-full object-cover"
                   onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
@@ -765,7 +793,7 @@ export default function AuthenticatedLayout({
               <div className="flex items-center gap-3">
                 {user.photograph ? (
                   <img
-                    src={`/api/v1/users/${user.id}/photograph?t=${Date.now()}`}
+                    src={`/api/v1/users/${user.id}/photograph`}
                     alt={user.name}
                     className="w-8 h-8 rounded-full object-cover border border-[var(--border-color)]"
                     onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
@@ -905,7 +933,7 @@ export default function AuthenticatedLayout({
               <div className="flex items-center gap-3">
                 {user.photograph ? (
                   <img
-                    src={`/api/v1/users/${user.id}/photograph?t=${Date.now()}`}
+                    src={`/api/v1/users/${user.id}/photograph`}
                     alt={user.name}
                     className="w-8 h-8 rounded-full object-cover border border-[var(--border-color)]"
                     onError={(e) => {
@@ -1271,7 +1299,7 @@ export default function AuthenticatedLayout({
             >
               {user.photograph ? (
                 <img
-                  src={`/api/v1/users/${user.id}/photograph?t=${Date.now()}`}
+                  src={`/api/v1/users/${user.id}/photograph`}
                   alt={user.name}
                   className="w-8 h-8 rounded-full object-cover border border-[var(--border-color)]"
                   onError={(e) => {
@@ -1328,7 +1356,7 @@ export default function AuthenticatedLayout({
                   <div className="relative w-16 h-16 rounded-xl bg-[var(--bg-main)] border border-[var(--border-color)] flex items-center justify-center overflow-hidden">
                     {editPhotoPreviewUrl || editPhotoPath ? (
                       <img
-                        src={editPhotoPreviewUrl || `/api/v1/users/${user.id}/photograph?t=${Date.now()}`}
+                        src={editPhotoPreviewUrl || `/api/v1/users/${user.id}/photograph`}
                         alt={user.name}
                         className="w-full h-full object-cover"
                       />

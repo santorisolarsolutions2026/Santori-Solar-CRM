@@ -138,6 +138,7 @@ export async function GET(req: Request) {
             employeeId: true,
             photograph: true,
             loginLocation: true,
+            lastSeenAt: true,
           },
         },
       },
@@ -160,6 +161,7 @@ export async function GET(req: Request) {
           employeeId: true,
           photograph: true,
           loginLocation: true,
+          lastSeenAt: true,
         },
         orderBy: { name: 'asc' },
       });

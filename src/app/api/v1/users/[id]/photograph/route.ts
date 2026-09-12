@@ -29,24 +29,26 @@ export async function GET(
       return NextResponse.json({ success: false, message: 'Photograph not found.' }, { status: 404 });
     }
 
-    if (user.photograph.startsWith('http')) {
+    if (user.photograph.startsWith('http') || user.photograph.includes('blob.vercel-storage.com')) {
       try {
-        const blobResponse = await fetch(user.photograph);
-        if (!blobResponse.ok) {
-          throw new Error(`Failed to fetch from Vercel Blob: ${blobResponse.status}`);
-        }
-        const arrayBuffer = await blobResponse.arrayBuffer();
+        const { fetchBlobContent } = await import('@/lib/blob');
+        const content = await fetchBlobContent(user.photograph);
         const headers = new Headers();
-        headers.set('Content-Type', blobResponse.headers.get('Content-Type') || 'image/png');
-        headers.set('Content-Length', arrayBuffer.byteLength.toString());
+        headers.set('Content-Type', content.contentType || 'image/png');
+        if (content.contentLength) {
+          headers.set('Content-Length', content.contentLength);
+        }
         headers.set('Cache-Control', 'private, max-age=3600');
-        return new Response(arrayBuffer, {
+        return new Response((content.stream || content.buffer) as any, {
           status: 200,
           headers,
         });
       } catch (fetchErr) {
-        console.error('Error proxying photograph:', fetchErr);
-        return NextResponse.redirect(user.photograph);
+        console.error('Error proxying photograph from blob:', fetchErr);
+        if (user.photograph.startsWith('http')) {
+          return NextResponse.redirect(user.photograph);
+        }
+        return NextResponse.json({ success: false, message: 'Photograph could not be retrieved from storage.' }, { status: 404 });
       }
     }
 

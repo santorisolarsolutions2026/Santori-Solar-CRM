@@ -2,8 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
 import fs from 'node:fs';
-import path from 'node:path';
-import { put, del } from '@vercel/blob';
+import { uploadPrivateBlob, deleteBlobFile } from '@/lib/blob';
 
 // Define allowed mime types and size limit (5MB)
 const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'application/pdf'];
@@ -81,9 +80,7 @@ export async function POST(
     const fileExt = file.name.split('.').pop() || 'dat';
     const blobPath = `orders/order_${orderId}_${docType}_${Date.now()}.${fileExt}`;
     
-    const blob = await put(blobPath, file, {
-      access: 'public',
-    });
+    const blob = await uploadPrivateBlob(blobPath, file);
 
     const fileUrl = blob.url;
 
@@ -94,11 +91,11 @@ export async function POST(
         where: { orderId, docType },
       });
 
-            if (existingDoc) {
+      if (existingDoc) {
         // Cleanup old file from Vercel Blob
         try {
-          if (existingDoc.filePath.startsWith('http')) {
-            await del(existingDoc.filePath);
+          if (existingDoc.filePath.startsWith('http') || existingDoc.filePath.includes('blob.vercel-storage.com')) {
+            await deleteBlobFile(existingDoc.filePath);
           }
         } catch (err) {
           console.error('Error removing old blob file:', err);

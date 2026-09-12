@@ -47,23 +47,26 @@ export async function GET(
     const url = new URL(req.url);
     const isDownload = url.searchParams.get('download') === 'true';
 
-    if (doc.filePath.startsWith('http')) {
+    if (doc.filePath.startsWith('http') || doc.filePath.includes('blob.vercel-storage.com')) {
       try {
-        const blobResponse = await fetch(doc.filePath);
-        if (!blobResponse.ok) {
-          throw new Error(`Failed to fetch from Vercel Blob: ${blobResponse.status}`);
-        }
-        const arrayBuffer = await blobResponse.arrayBuffer();
+        const { fetchBlobContent } = await import('@/lib/blob');
+        const content = await fetchBlobContent(doc.filePath);
         const headers = new Headers();
-        headers.set('Content-Type', doc.mimeType || blobResponse.headers.get('Content-Type') || 'application/octet-stream');
+        headers.set('Content-Type', doc.mimeType || content.contentType || 'application/octet-stream');
         headers.set('Content-Disposition', `${isDownload ? 'attachment' : 'inline'}; filename="${encodeURIComponent(doc.fileName)}"`);
-        return new Response(arrayBuffer, {
+        if (content.contentLength) {
+          headers.set('Content-Length', content.contentLength);
+        }
+        return new Response((content.stream || content.buffer) as any, {
           status: 200,
           headers,
         });
       } catch (fetchErr) {
-        console.error('Error proxying blob:', fetchErr);
-        return NextResponse.redirect(doc.filePath);
+        console.error('Error fetching blob document:', fetchErr);
+        if (doc.filePath.startsWith('http')) {
+          return NextResponse.redirect(doc.filePath);
+        }
+        return NextResponse.json({ success: false, message: 'Document could not be retrieved from storage.' }, { status: 404 });
       }
     }
 
@@ -140,7 +143,17 @@ export async function DELETE(
       return NextResponse.json({ success: false, message: 'Forbidden. No permission to delete this document.' }, { status: 403 });
     }
 
-    // Delete local file
+    // Delete blob file if it is stored in Vercel Blob
+    if (doc.filePath.startsWith('http') || doc.filePath.includes('blob.vercel-storage.com')) {
+      try {
+        const { deleteBlobFile } = await import('@/lib/blob');
+        await deleteBlobFile(doc.filePath);
+      } catch (blobErr) {
+        console.error('Failed to delete blob file:', blobErr);
+      }
+    }
+
+    // Delete local file if present on disk
     const uploadsDir = path.join(process.cwd(), 'uploads');
     const localFileName = path.basename(doc.filePath);
     const localPath = path.join(uploadsDir, localFileName);

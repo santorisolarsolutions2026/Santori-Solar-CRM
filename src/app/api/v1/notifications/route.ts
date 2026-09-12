@@ -2,6 +2,31 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/auth';
 
+// 24-Hour Throttled In-Memory Purge
+// Runs deleteMany at most ONCE in 24 hours to keep the Notification table clean
+// while converting 99.99% of polling requests into zero-write read-only queries.
+let lastPurgeTimestamp = 0;
+const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+
+async function triggerDailyNotificationPurgeIfNeeded() {
+  const now = Date.now();
+  if (now - lastPurgeTimestamp > TWENTY_FOUR_HOURS_MS) {
+    lastPurgeTimestamp = now;
+    try {
+      const twentyFourHoursAgo = new Date(now - 24 * 60 * 60 * 1000);
+      await prisma.notification.deleteMany({
+        where: {
+          createdAt: {
+            lt: twentyFourHoursAgo,
+          },
+        },
+      });
+    } catch (e) {
+      console.error('Daily notification purge error:', e);
+    }
+  }
+}
+
 export async function GET(req: Request) {
   try {
     const userPayload = getAuthenticatedUser(req);
@@ -9,20 +34,15 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
-    // Automatically purge notifications older than 48 hours
-    const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
-    await prisma.notification.deleteMany({
-      where: {
-        createdAt: {
-          lt: fortyEightHoursAgo,
-        },
-      },
-    });
+    // Trigger daily throttled cleanup asynchronously in the background
+    triggerDailyNotificationPurgeIfNeeded().catch(() => {});
+
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
     const notifications = await prisma.notification.findMany({
       where: {
         userId: userPayload.id,
-        createdAt: { gte: fortyEightHoursAgo },
+        createdAt: { gte: twentyFourHoursAgo },
       },
       orderBy: { createdAt: 'desc' },
       take: 50,
@@ -32,7 +52,7 @@ export async function GET(req: Request) {
       where: {
         userId: userPayload.id,
         isRead: false,
-        createdAt: { gte: fortyEightHoursAgo },
+        createdAt: { gte: twentyFourHoursAgo },
       },
     });
 
@@ -43,7 +63,7 @@ export async function GET(req: Request) {
       const announcements = await prisma.notification.findMany({
         where: {
           type: 'announcement',
-          createdAt: { gte: fortyEightHoursAgo },
+          createdAt: { gte: twentyFourHoursAgo },
         },
         orderBy: { createdAt: 'desc' },
         take: 100,
@@ -209,15 +229,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
     }
 
-    // Automatically purge notifications older than 48 hours
-    const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
-    await prisma.notification.deleteMany({
-      where: {
-        createdAt: {
-          lt: fortyEightHoursAgo,
-        },
-      },
-    });
+    // Trigger daily throttled cleanup in the background
+    triggerDailyNotificationPurgeIfNeeded().catch(() => {});
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
     const body = await req.json();
     const { action, title, message, notificationId } = body;
@@ -310,7 +324,7 @@ export async function POST(req: Request) {
         where: {
           userId: userPayload.id,
           isRead: false,
-          createdAt: { gte: fortyEightHoursAgo },
+          createdAt: { gte: twentyFourHoursAgo },
         },
         data: { isRead: true },
       });

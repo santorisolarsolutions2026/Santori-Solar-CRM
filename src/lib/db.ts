@@ -23,7 +23,13 @@ function createPrismaClient() {
     ? { rejectUnauthorized: false }
     : undefined;
 
-  const poolConfig: pg.PoolConfig = { connectionString, ssl };
+  const poolConfig: pg.PoolConfig = { 
+    connectionString, 
+    ssl,
+    max: process.env.NODE_ENV === 'production' ? 1 : 10,
+    idleTimeoutMillis: 5000,
+    connectionTimeoutMillis: 10000,
+  };
   if (dbPassword) {
     poolConfig.password = dbPassword;
   } else {

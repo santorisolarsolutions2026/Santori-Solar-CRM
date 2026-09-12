@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/auth';
-import { put } from '@vercel/blob';
+import { uploadPrivateBlob } from '@/lib/blob';
 
 export async function POST(
   req: Request,
@@ -81,13 +81,11 @@ export async function POST(
     if (!file) {
       return NextResponse.json({ success: false, message: 'Audio recording file is required.' }, { status: 400 });
     }
-        // Upload to Vercel Blob
+    // Upload to Private Vercel Blob
     const fileExt = file.name.split('.').pop() || 'webm';
     const blobPath = `meetings/meeting_${meetingId}_${Date.now()}.${fileExt}`;
     
-    const blob = await put(blobPath, file, {
-      access: 'public',
-    });
+    const blob = await uploadPrivateBlob(blobPath, file);
 
     const relativePath = blob.url;
 

@@ -894,7 +894,7 @@ export default function ReportsPage() {
                             <td className="py-3.5 px-4 font-bold text-white flex items-center gap-3">
                               {emp.photograph ? (
                                 <img
-                                  src={`/api/v1/users/${emp.id}/photograph?t=${Date.now()}`}
+                                  src={`/api/v1/users/${emp.id}/photograph`}
                                   alt={emp.name}
                                   className="w-8 h-8 rounded-full object-cover border border-[var(--border-color)] shrink-0"
                                   onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
@@ -1014,7 +1014,7 @@ export default function ReportsPage() {
                             <td className="py-3.5 px-4 font-bold text-white flex items-center gap-3">
                               {emp.photograph ? (
                                 <img
-                                  src={`/api/v1/users/${emp.id}/photograph?t=${Date.now()}`}
+                                  src={`/api/v1/users/${emp.id}/photograph`}
                                   alt={emp.name}
                                   className="w-8 h-8 rounded-full object-cover border border-[var(--border-color)] shrink-0"
                                   onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
@@ -1107,7 +1107,7 @@ export default function ReportsPage() {
                             <td className="py-3.5 px-4 font-bold text-white flex items-center gap-3">
                               {emp.photograph ? (
                                 <img
-                                  src={`/api/v1/users/${emp.id}/photograph?t=${Date.now()}`}
+                                  src={`/api/v1/users/${emp.id}/photograph`}
                                   alt={emp.name}
                                   className="w-8 h-8 rounded-full object-cover border border-[var(--border-color)] shrink-0"
                                   onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
@@ -1203,7 +1203,7 @@ export default function ReportsPage() {
                           <td className="py-3.5 px-4 font-bold text-white flex items-center gap-3">
                             {emp.photograph ? (
                               <img
-                                src={`/api/v1/users/${emp.id}/photograph?t=${Date.now()}`}
+                                src={`/api/v1/users/${emp.id}/photograph`}
                                 alt={emp.name}
                                 className="w-8 h-8 rounded-full object-cover border border-[var(--border-color)] shrink-0"
                                 onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}

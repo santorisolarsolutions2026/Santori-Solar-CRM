@@ -120,18 +120,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     fetchUser();
   }, [pathname]);
 
-  // Heartbeat tracking (Section 6.4)
+  // Heartbeat tracking (Smart Activity & Visibility Aware)
   useEffect(() => {
     if (!user) return;
 
-    // Send immediately on mount/login
-    fetch('/api/v1/auth/heartbeat', { method: 'POST' }).catch(() => {});
+    let lastActivityTime = Date.now();
+    const handleUserActivity = () => {
+      lastActivityTime = Date.now();
+    };
 
-    const interval = setInterval(() => {
+    const activityEvents = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
+    activityEvents.forEach((ev) => {
+      window.addEventListener(ev, handleUserActivity, { passive: true });
+    });
+
+    const sendHeartbeat = () => {
+      if (typeof document !== 'undefined' && document.hidden) return; // Tab is minimized/hidden
+      if (Date.now() - lastActivityTime > 5 * 60 * 1000) return; // Inactive for >5m
       fetch('/api/v1/auth/heartbeat', { method: 'POST' }).catch(() => {});
-    }, 60000); // every 60s
+    };
 
-    return () => clearInterval(interval);
+    // Send immediately on mount/login
+    sendHeartbeat();
+
+    const interval = setInterval(sendHeartbeat, 60000); // every 60s
+
+    const handleVisibilityChange = () => {
+      if (typeof document !== 'undefined' && !document.hidden && Date.now() - lastActivityTime < 5 * 60 * 1000) {
+        sendHeartbeat();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      activityEvents.forEach((ev) => {
+        window.removeEventListener(ev, handleUserActivity);
+      });
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [user]);
 
   const login = (token: string, userData: User) => {
