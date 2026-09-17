@@ -17,6 +17,25 @@ export async function GET(req: Request) {
       return res;
     }
 
+    if (userPayload.sessionToken) {
+      const activeSession = await prisma.userSession.findUnique({
+        where: { sessionToken: userPayload.sessionToken },
+        select: { id: true },
+      });
+
+      if (!activeSession) {
+        const res = NextResponse.json(
+          { success: false, message: 'Session terminated or expired.' },
+          { status: 401 }
+        );
+        res.headers.append(
+          'Set-Cookie',
+          'token=; Path=/; HttpOnly; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT'
+        );
+        return res;
+      }
+    }
+
     const user = await prisma.user.findUnique({
       where: { id: userPayload.id },
       select: {
