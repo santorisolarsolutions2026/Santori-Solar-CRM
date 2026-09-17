@@ -15,6 +15,42 @@ export interface UserJWTPayload {
   name: string;
   email: string;
   role: string;
+  sessionToken?: string;
+}
+
+// In-Memory Set of Revoked/Killed Session Tokens for instant, zero-latency blocking
+const KILLED_SESSIONS_CACHE = new Set<string>();
+
+export function markSessionKilled(sessionToken: string) {
+  if (sessionToken) {
+    KILLED_SESSIONS_CACHE.add(sessionToken);
+  }
+}
+
+export function isSessionKilled(sessionToken?: string): boolean {
+  if (!sessionToken) return false;
+  return KILLED_SESSIONS_CACHE.has(sessionToken);
+}
+
+export function parseUserAgent(ua: string | null): string {
+  if (!ua) return 'Unknown Device (Web Browser)';
+
+  let os = 'Desktop PC';
+  if (/windows/i.test(ua)) os = 'Windows PC';
+  else if (/macintosh|mac os x/i.test(ua)) os = 'Mac / macOS';
+  else if (/android/i.test(ua)) os = 'Android Phone';
+  else if (/iphone/i.test(ua)) os = 'iPhone';
+  else if (/ipad/i.test(ua)) os = 'iPad';
+  else if (/linux/i.test(ua)) os = 'Linux PC';
+
+  let browser = 'Browser';
+  if (/edg/i.test(ua)) browser = 'Edge';
+  else if (/chrome|crios/i.test(ua)) browser = 'Chrome';
+  else if (/firefox|fxios/i.test(ua)) browser = 'Firefox';
+  else if (/safari/i.test(ua) && !/chrome/i.test(ua)) browser = 'Safari';
+  else if (/opera|opr/i.test(ua)) browser = 'Opera';
+
+  return `${os} (${browser})`;
 }
 
 export function signToken(payload: UserJWTPayload): string {
@@ -23,7 +59,11 @@ export function signToken(payload: UserJWTPayload): string {
 
 export function verifyToken(token: string): UserJWTPayload | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as any as UserJWTPayload;
+    const payload = jwt.verify(token, JWT_SECRET) as any as UserJWTPayload;
+    if (payload && payload.sessionToken && isSessionKilled(payload.sessionToken)) {
+      return null;
+    }
+    return payload;
   } catch (error) {
     return null;
   }

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
+import crypto from 'node:crypto';
 import { prisma } from '@/lib/db';
-import { signToken, resolveUserPermissions } from '@/lib/auth';
+import { signToken, resolveUserPermissions, parseUserAgent, markSessionKilled } from '@/lib/auth';
 
 export async function POST(req: Request) {
   try {
@@ -18,6 +19,8 @@ export async function POST(req: Request) {
     const ipAddress = forwardedFor 
       ? forwardedFor.split(',')[0].trim() 
       : req.headers.get('x-real-ip') || '127.0.0.1';
+    const userAgent = req.headers.get('user-agent');
+    const deviceInfo = parseUserAgent(userAgent);
 
     // Clean up old attempts (older than 24 hours) to keep the DB clean
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -140,11 +143,49 @@ export async function POST(req: Request) {
       },
     });
 
+    // Session Management: Strict Max 3 Active Sessions per account
+    const sessionToken = crypto.randomUUID();
+
+    try {
+      const existingSessions = await prisma.userSession.findMany({
+        where: { userId: user.id },
+        orderBy: { createdAt: 'asc' },
+      });
+
+      // If user already has >= 3 active sessions, prune oldest so new total is strictly max 3
+      if (existingSessions.length >= 3) {
+        const pruneCount = existingSessions.length - 2; // Keep at most 2, new one makes 3
+        const sessionsToPrune = existingSessions.slice(0, pruneCount);
+        const idsToPrune = sessionsToPrune.map((s) => s.id);
+
+        // Mark pruned tokens as killed in memory for instant invalidation
+        sessionsToPrune.forEach((s) => markSessionKilled(s.sessionToken));
+
+        await prisma.userSession.deleteMany({
+          where: { id: { in: idsToPrune } },
+        });
+      }
+
+      // Create new session record
+      await prisma.userSession.create({
+        data: {
+          userId: user.id,
+          sessionToken,
+          deviceInfo,
+          location: location || null,
+          ipAddress,
+        },
+      });
+    } catch (sessionErr) {
+      console.error('Session tracking error:', sessionErr);
+    }
+
     const token = signToken({
       id: user.id,
       name: user.name,
       email: user.email,
       role: user.role,
+      sessionToken,
     });
 
     const permissionsList = resolveUserPermissions(user);

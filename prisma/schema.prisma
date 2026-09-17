@@ -73,6 +73,7 @@ model User {
   notifications        Notification[]
   attendances          Attendance[]
   recordedPayments     Payment[]
+  sessions             UserSession[]
 }
 
 model Lead {
@@ -445,5 +446,19 @@ model FailedLoginAttempt {
 
   @@index([ipAddress])
   @@index([email])
+}
+
+model UserSession {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  sessionToken String   @unique
+  deviceInfo   String
+  location     String?
+  ipAddress    String?
+  createdAt    DateTime @default(now())
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 

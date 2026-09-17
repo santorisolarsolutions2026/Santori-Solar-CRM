@@ -6,10 +6,15 @@ export async function GET(req: Request) {
   try {
     const userPayload = getAuthenticatedUser(req);
     if (!userPayload) {
-      return NextResponse.json(
+      const res = NextResponse.json(
         { success: false, message: 'Unauthorized.' },
         { status: 401 }
       );
+      res.headers.append(
+        'Set-Cookie',
+        'token=; Path=/; HttpOnly; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT'
+      );
+      return res;
     }
 
     const user = await prisma.user.findUnique({
@@ -36,10 +41,15 @@ export async function GET(req: Request) {
     });
 
     if (!user || !user.isActive) {
-      return NextResponse.json(
+      const res = NextResponse.json(
         { success: false, message: 'User not found or deactivated.' },
         { status: 401 }
       );
+      res.headers.append(
+        'Set-Cookie',
+        'token=; Path=/; HttpOnly; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT'
+      );
+      return res;
     }
 
     const permissionsList = resolveUserPermissions(user);

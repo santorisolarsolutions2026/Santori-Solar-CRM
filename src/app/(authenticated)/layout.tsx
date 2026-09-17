@@ -41,6 +41,10 @@ import {
   PackageCheck,
   Sparkles,
   Trash2,
+  Laptop,
+  Smartphone,
+  Globe,
+  ShieldAlert,
 } from 'lucide-react';
 import Link from 'next/link';
 import LeaderboardDrawer from '@/components/LeaderboardDrawer';
@@ -357,6 +361,48 @@ export default function AuthenticatedLayout({
   const [editPhotoPreviewUrl, setEditPhotoPreviewUrl] = useState('');
   const [updatingProfile, setUpdatingProfile] = useState(false);
   const [updateError, setUpdateError] = useState('');
+  const [userSessions, setUserSessions] = useState<any[]>([]);
+  const [loadingSessions, setLoadingSessions] = useState(false);
+  const [killingSessionId, setKillingSessionId] = useState<number | null>(null);
+
+  const fetchMySessions = async () => {
+    try {
+      setLoadingSessions(true);
+      const res = await fetch('/api/v1/auth/sessions');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.data)) {
+        setUserSessions(data.data);
+      }
+    } catch (err) {
+      console.error('Fetch sessions error:', err);
+    } finally {
+      setLoadingSessions(false);
+    }
+  };
+
+  const handleKillSession = async (sessionId: number, isCurrent = false) => {
+    try {
+      setKillingSessionId(sessionId);
+      const res = await fetch(`/api/v1/auth/sessions?id=${sessionId}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        setUserSessions((prev) => prev.filter((s) => s.id !== sessionId));
+        addToast(data.message || 'Session killed successfully.', 'success');
+        if (isCurrent) {
+          logout();
+        }
+      } else {
+        alert(data.message || 'Failed to kill session.');
+      }
+    } catch (err) {
+      console.error('Kill session error:', err);
+      alert('Failed to kill session.');
+    } finally {
+      setKillingSessionId(null);
+    }
+  };
 
   const handleOpenProfile = () => {
     if (!user) return;
@@ -368,6 +414,7 @@ export default function AuthenticatedLayout({
     setEditPhotoPreviewUrl('');
     setUpdateError('');
     setProfileModalOpen(true);
+    fetchMySessions();
   };
 
   const closeProfileModal = () => {
@@ -631,6 +678,10 @@ export default function AuthenticatedLayout({
   }
 
   if (!user) {
+    if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+      document.cookie = 'token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+      window.location.href = '/login';
+    }
     return null;
   }
 
@@ -1335,16 +1386,16 @@ export default function AuthenticatedLayout({
       {/* Profile Modal */}
       {profileModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="w-full max-w-lg bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
-            <div className="p-6 border-b border-[var(--border-color)] transparent flex justify-between items-center">
+          <div className="w-full max-w-lg bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]">
+            <div className="p-6 border-b border-[var(--border-color)] transparent flex justify-between items-center shrink-0">
               <h3 className="text-sm font-bold uppercase tracking-wider text-white">My Profile Settings</h3>
               <button onClick={closeProfileModal} className="text-[var(--text-secondary)] hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveProfile}>
-              <div className="p-6 space-y-6">
+            <form onSubmit={handleSaveProfile} className="flex flex-col flex-1 overflow-hidden">
+              <div className="p-6 space-y-6 overflow-y-auto flex-1">
                 {updateError && (
                   <div className="p-4 rounded-lg bg-red-950/50 border border-red-800 text-red-200 text-xs font-semibold">
                     {updateError}
@@ -1467,9 +1518,96 @@ export default function AuthenticatedLayout({
                     />
                   </div>
                 </div>
+
+                {/* Active Login Sessions Section */}
+                <div className="space-y-3 pt-4 border-t border-[var(--border-color)]">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <ShieldAlert className="w-4 h-4 text-emerald-500" />
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-white">
+                          Active Login Sessions ({userSessions.length} / 3)
+                        </h4>
+                      </div>
+                      <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">
+                        Max 3 simultaneous logins allowed across devices & browsers.
+                      </p>
+                    </div>
+                    {loadingSessions && <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-500" />}
+                  </div>
+
+                  <div className="space-y-2">
+                    {userSessions.length === 0 && !loadingSessions && (
+                      <div className="p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-color)] text-center text-xs text-[var(--text-secondary)]">
+                        No registered active sessions found.
+                      </div>
+                    )}
+
+                    {userSessions.map((s) => {
+                      const isMobile = s.deviceInfo?.toLowerCase().includes('mobile') || s.deviceInfo?.toLowerCase().includes('android') || s.deviceInfo?.toLowerCase().includes('iphone');
+                      return (
+                        <div
+                          key={s.id}
+                          className="p-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl flex items-center justify-between gap-3 hover:border-[var(--border-color-hover)] transition-all"
+                        >
+                          <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                            <div className="w-8 h-8 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-secondary)] shrink-0 mt-0.5">
+                              {isMobile ? <Smartphone className="w-4 h-4 text-emerald-400" /> : <Laptop className="w-4 h-4 text-emerald-400" />}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-xs font-bold text-white truncate">
+                                  {s.deviceInfo || 'Unknown Browser / Device'}
+                                </span>
+                                {s.isCurrentSession && (
+                                  <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded">
+                                    Current Device
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-3 text-[10px] text-[var(--text-secondary)] mt-1 flex-wrap">
+                                <span className="flex items-center gap-1 truncate">
+                                  <Globe className="w-3 h-3 text-[var(--text-muted)] shrink-0" />
+                                  <span>{s.location || 'Unknown Location'}</span>
+                                </span>
+                                <span className="flex items-center gap-1 font-mono text-[9px] text-[var(--text-muted)]">
+                                  <Clock className="w-3 h-3 text-[var(--text-muted)] shrink-0" />
+                                  <span>
+                                    {new Date(s.createdAt).toLocaleString('en-IN', {
+                                      day: 'numeric',
+                                      month: 'short',
+                                      year: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })}
+                                  </span>
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            disabled={killingSessionId === s.id}
+                            onClick={() => handleKillSession(s.id, s.isCurrentSession)}
+                            className="px-2.5 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 text-red-400 font-bold text-xs rounded-lg transition-all flex items-center gap-1 shrink-0 cursor-pointer disabled:opacity-50"
+                            title={s.isCurrentSession ? 'Kill this session and log out' : 'Kill this session'}
+                          >
+                            {killingSessionId === s.id ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-3 h-3" />
+                            )}
+                            <span>Kill Session</span>
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
 
-              <div className="p-6 border-t border-[var(--border-color)] transparent flex justify-end gap-3">
+              <div className="p-6 border-t border-[var(--border-color)] transparent flex justify-end gap-3 shrink-0">
                 <button
                   type="button"
                   onClick={closeProfileModal}

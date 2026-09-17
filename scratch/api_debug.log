@@ -11110,3 +11110,159 @@
   "timestamp": "2026-09-07T19:01:22.188Z"
 }
 ---
+{
+  "timestamp": "2026-09-17T10:38:27.909Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "j58j5fj",
+        "field": "customerName",
+        "operator": "equals",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-09-17T10:38:29.006Z"
+}
+---
+{
+  "timestamp": "2026-09-17T10:38:29.971Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "j58j5fj",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-09-17T10:38:35.551Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "j58j5fj",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "133"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-09-17T10:39:08.973Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "j58j5fj",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "135"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-09-17T10:39:29.201Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "j58j5fj",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": "131"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-09-17T10:39:46.323Z"
+}
+---
+{
+  "timestamp": "2026-09-17T10:39:49.688Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "j58j5fj",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "131"
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-09-17T10:40:06.257Z"
+}
+---
+{
+  "timestamp": "2026-09-17T10:40:08.272Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "j58j5fj",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "131"
+      },
+      {
+        "id": "fp57m6m",
+        "field": "assignedConsultantId",
+        "operator": "is_assigned_to",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-09-17T10:40:09.062Z",
+  "queryObj": {
+    "id": "root",
+    "logicalOperator": "AND",
+    "rules": [
+      {
+        "id": "j58j5fj",
+        "field": "assignedManagerId",
+        "operator": "is_assigned_to",
+        "value": "131"
+      },
+      {
+        "id": "fp57m6m",
+        "field": "assignedConsultantId",
+        "operator": "does_not_exist",
+        "value": ""
+      }
+    ]
+  }
+}
+---
+{
+  "timestamp": "2026-09-17T10:40:38.121Z"
+}
+---

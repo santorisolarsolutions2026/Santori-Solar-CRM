@@ -105,12 +105,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
       setUser(null);
-      if (pathname !== '/login' && pathname !== '/') {
-        router.push('/login');
+      if (typeof window !== 'undefined') {
+        document.cookie = 'token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+        if (window.location.pathname !== '/login' && window.location.pathname !== '/') {
+          window.location.href = '/login';
+        }
       }
     } catch (err) {
       console.error('Fetch user error:', err);
       setUser(null);
+      if (typeof window !== 'undefined') {
+        document.cookie = 'token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+        if (window.location.pathname !== '/login' && window.location.pathname !== '/') {
+          window.location.href = '/login';
+        }
+      }
     } finally {
       setLoading(false);
     }
@@ -137,7 +146,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const sendHeartbeat = () => {
       if (typeof document !== 'undefined' && document.hidden) return; // Tab is minimized/hidden
       if (Date.now() - lastActivityTime > 5 * 60 * 1000) return; // Inactive for >5m
-      fetch('/api/v1/auth/heartbeat', { method: 'POST' }).catch(() => {});
+      fetch('/api/v1/auth/heartbeat', { method: 'POST' })
+        .then((res) => {
+          if (res.status === 401) {
+            setUser(null);
+            if (typeof window !== 'undefined') {
+              document.cookie = 'token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+              if (window.location.pathname !== '/login') {
+                window.location.href = '/login';
+              }
+            }
+          }
+        })
+        .catch(() => {});
     };
 
     // Send immediately on mount/login
@@ -208,7 +229,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Logout error:', err);
     } finally {
       setUser(null);
-      router.push('/login');
+      if (typeof window !== 'undefined') {
+        document.cookie = 'token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+        window.location.href = '/login';
+      }
     }
   };
 

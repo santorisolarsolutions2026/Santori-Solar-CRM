@@ -35,6 +35,11 @@ import {
   Maximize2,
   Minimize2,
   RotateCcw,
+  Clock,
+  Laptop,
+  Smartphone,
+  Globe,
+  ShieldAlert,
 } from 'lucide-react';
 import AccessControlManager from '@/components/AccessControlManager';
 import CustomDropdown from '@/components/CustomDropdown';
@@ -1512,6 +1517,18 @@ export default function TeamManagementPage() {
   const [designationPermissions, setDesignationPermissions] = useState<string[]>([]);
   const [selectedDesignationPermissionCategory, setSelectedDesignationPermissionCategory] = useState<string>('PSA');
 
+  const isAnyModalOpen = Boolean(showCreateTeamModal || editingReportingUser || showAddModal || selectedMember || (showLogsModal && logsMember) || showHierarchyModal);
+
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isAnyModalOpen]);
 
   const canvasRef = React.useRef<HTMLDivElement>(null);
   const desigCanvasRef = React.useRef<HTMLDivElement>(null);
@@ -2010,9 +2027,51 @@ export default function TeamManagementPage() {
     }
   }, [searchParams, members]);
 
+  // Session Management States for Team Modal
+  const [memberSessions, setMemberSessions] = useState<any[]>([]);
+  const [loadingMemberSessions, setLoadingMemberSessions] = useState(false);
+  const [killingMemberSessionId, setKillingMemberSessionId] = useState<number | null>(null);
+
+  const fetchMemberSessions = async (userId: number) => {
+    try {
+      setLoadingMemberSessions(true);
+      const res = await fetch(`/api/v1/auth/sessions?userId=${userId}`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.data)) {
+        setMemberSessions(data.data);
+      }
+    } catch (err) {
+      console.error('Fetch member sessions error:', err);
+    } finally {
+      setLoadingMemberSessions(false);
+    }
+  };
+
+  const handleKillMemberSession = async (sessionId: number) => {
+    try {
+      setKillingMemberSessionId(sessionId);
+      const res = await fetch(`/api/v1/auth/sessions?id=${sessionId}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMemberSessions((prev) => prev.filter((s) => s.id !== sessionId));
+        alert(data.message || 'Session terminated successfully.');
+      } else {
+        alert(data.message || 'Failed to terminate session.');
+      }
+    } catch (err) {
+      console.error('Kill member session error:', err);
+      alert('Failed to terminate session.');
+    } finally {
+      setKillingMemberSessionId(null);
+    }
+  };
+
   // Handle opening profile view
   const handleOpenProfile = (member: TeamMember) => {
     setSelectedMember(member);
+    fetchMemberSessions(member.id);
     if (member.id === user?.id) {
       setEditName(member.name);
       setEditEmail(member.email);
@@ -3243,8 +3302,8 @@ export default function TeamManagementPage() {
 
 
     {/* Create Team Modal */}
-    {showCreateTeamModal && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+    {isMounted && showCreateTeamModal && createPortal(
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md px-4 overflow-y-auto">
         <div className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
           <div className="p-5 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex justify-between items-center">
             <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">Form New Clan (Team)</h3>
@@ -3297,12 +3356,13 @@ export default function TeamManagementPage() {
             </div>
           </form>
         </div>
-      </div>
+      </div>,
+      document.body
     )}
 
     {/* Edit Reporting Connection Modal */}
-    {editingReportingUser && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+    {isMounted && editingReportingUser && createPortal(
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md px-4 overflow-y-auto">
         <div className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
           <div className="p-5 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex justify-between items-center">
             <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">Edit Reporting Structure</h3>
@@ -3374,13 +3434,14 @@ export default function TeamManagementPage() {
             </div>
           </form>
         </div>
-      </div>
+      </div>,
+      document.body
     )}
 
       {/* ============================================================== */}
       {/* Add User Modal Dialog */}
-      {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+      {isMounted && showAddModal && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md px-4 overflow-y-auto">
           <div className="w-full max-w-3xl bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
             <div className="p-6 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex justify-between items-center">
               <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">Register New Team Member</h3>
@@ -3891,13 +3952,14 @@ export default function TeamManagementPage() {
 
                           </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ============================================================== */}
       {/* View User Modal Dialog / Edit Own Profile Modal */}
-      {selectedMember && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+      {isMounted && selectedMember && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md px-4 overflow-y-auto">
           <div className="w-full max-w-4xl bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
             <div className="p-6 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex justify-between items-center">
               <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">
@@ -4048,6 +4110,93 @@ export default function TeamManagementPage() {
                         placeholder="Update mobile number"
                         className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:ring-emerald-500 focus:outline-none"
                       />
+                    </div>
+                  </div>
+
+                  {/* Active Login Sessions Section */}
+                  <div className="space-y-3 pt-4 border-t border-[var(--border-color)]">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <ShieldAlert className="w-4 h-4 text-emerald-500" />
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">
+                            Active Login Sessions ({memberSessions.length} / 3)
+                          </h4>
+                        </div>
+                        <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">
+                          Max 3 simultaneous logins allowed across devices & browsers.
+                        </p>
+                      </div>
+                      {loadingMemberSessions && <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-500" />}
+                    </div>
+
+                    <div className="space-y-2">
+                      {memberSessions.length === 0 && !loadingMemberSessions && (
+                        <div className="p-3 rounded-xl bg-[var(--bg-main)]/50 border border-[var(--border-color)] text-center text-xs text-[var(--text-secondary)]">
+                          No registered active sessions found.
+                        </div>
+                      )}
+
+                      {memberSessions.map((s) => {
+                        const isMobile = s.deviceInfo?.toLowerCase().includes('mobile') || s.deviceInfo?.toLowerCase().includes('android') || s.deviceInfo?.toLowerCase().includes('iphone');
+                        return (
+                          <div
+                            key={s.id}
+                            className="p-3 bg-[var(--bg-main)]/50 border border-[var(--border-color)] rounded-xl flex items-center justify-between gap-3 hover:border-[var(--border-color-hover)] transition-all"
+                          >
+                            <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                              <div className="w-8 h-8 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-secondary)] shrink-0 mt-0.5">
+                                {isMobile ? <Smartphone className="w-4 h-4 text-emerald-400" /> : <Laptop className="w-4 h-4 text-emerald-400" />}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-xs font-bold text-[var(--text-primary)] truncate">
+                                    {s.deviceInfo || 'Unknown Browser / Device'}
+                                  </span>
+                                  {s.isCurrentSession && (
+                                    <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded">
+                                      Current Device
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-3 text-[10px] text-[var(--text-secondary)] mt-1 flex-wrap">
+                                  <span className="flex items-center gap-1 truncate">
+                                    <Globe className="w-3 h-3 text-[var(--text-muted)] shrink-0" />
+                                    <span>{s.location || 'Unknown Location'}</span>
+                                  </span>
+                                  <span className="flex items-center gap-1 font-mono text-[9px] text-[var(--text-muted)]">
+                                    <Clock className="w-3 h-3 text-[var(--text-muted)] shrink-0" />
+                                    <span>
+                                      {new Date(s.createdAt).toLocaleString('en-IN', {
+                                        day: 'numeric',
+                                        month: 'short',
+                                        year: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                      })}
+                                    </span>
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              disabled={killingMemberSessionId === s.id}
+                              onClick={() => handleKillMemberSession(s.id)}
+                              className="px-2.5 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 text-red-400 font-bold text-xs rounded-lg transition-all flex items-center gap-1 shrink-0 cursor-pointer disabled:opacity-50"
+                              title="Kill this session"
+                            >
+                              {killingMemberSessionId === s.id ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-3 h-3" />
+                              )}
+                              <span>Kill Session</span>
+                            </button>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
@@ -4393,6 +4542,93 @@ export default function TeamManagementPage() {
                         )}
                       </div>
                     </div>
+
+                    {/* Active Login Sessions for Team Member */}
+                    <div className="space-y-3 pt-3 border-t border-[var(--border-color)]">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <ShieldAlert className="w-4 h-4 text-emerald-500" />
+                            <h5 className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                              Active Login Sessions ({memberSessions.length} / 3)
+                            </h5>
+                          </div>
+                          <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">
+                            Max 3 simultaneous logins allowed across devices & browsers.
+                          </p>
+                        </div>
+                        {loadingMemberSessions && <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-500" />}
+                      </div>
+
+                      <div className="space-y-2">
+                        {memberSessions.length === 0 && !loadingMemberSessions && (
+                          <div className="p-3 rounded-xl bg-[var(--bg-main)]/50 border border-[var(--border-color)] text-center text-xs text-[var(--text-secondary)]">
+                            No registered active sessions found for this member.
+                          </div>
+                        )}
+
+                        {memberSessions.map((s) => {
+                          const isMobile = s.deviceInfo?.toLowerCase().includes('mobile') || s.deviceInfo?.toLowerCase().includes('android') || s.deviceInfo?.toLowerCase().includes('iphone');
+                          return (
+                            <div
+                              key={s.id}
+                              className="p-3 bg-[var(--bg-main)]/50 border border-[var(--border-color)] rounded-xl flex items-center justify-between gap-3 hover:border-[var(--border-color-hover)] transition-all"
+                            >
+                              <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                                <div className="w-8 h-8 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-secondary)] shrink-0 mt-0.5">
+                                  {isMobile ? <Smartphone className="w-4 h-4 text-emerald-400" /> : <Laptop className="w-4 h-4 text-emerald-400" />}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-xs font-bold text-[var(--text-primary)] truncate">
+                                      {s.deviceInfo || 'Unknown Browser / Device'}
+                                    </span>
+                                    {s.isCurrentSession && (
+                                      <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded">
+                                        Current Device
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-3 text-[10px] text-[var(--text-secondary)] mt-1 flex-wrap">
+                                    <span className="flex items-center gap-1 truncate">
+                                      <Globe className="w-3 h-3 text-[var(--text-muted)] shrink-0" />
+                                      <span>{s.location || 'Unknown Location'}</span>
+                                    </span>
+                                    <span className="flex items-center gap-1 font-mono text-[9px] text-[var(--text-muted)]">
+                                      <Clock className="w-3 h-3 text-[var(--text-muted)] shrink-0" />
+                                      <span>
+                                        {new Date(s.createdAt).toLocaleString('en-IN', {
+                                          day: 'numeric',
+                                          month: 'short',
+                                          year: 'numeric',
+                                          hour: '2-digit',
+                                          minute: '2-digit',
+                                        })}
+                                      </span>
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <button
+                                type="button"
+                                disabled={killingMemberSessionId === s.id}
+                                onClick={() => handleKillMemberSession(s.id)}
+                                className="px-2.5 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 text-red-400 font-bold text-xs rounded-lg transition-all flex items-center gap-1 shrink-0 cursor-pointer disabled:opacity-50"
+                                title="Kill this session"
+                              >
+                                {killingMemberSessionId === s.id ? (
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                ) : (
+                                  <Trash2 className="w-3 h-3" />
+                                )}
+                                <span>Kill Session</span>
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -4619,12 +4855,13 @@ export default function TeamManagementPage() {
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
       {/* ============================================================== */}
       {/* Activity Logs Modal Dialog */}
-      {showLogsModal && logsMember && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+      {isMounted && showLogsModal && logsMember && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md px-4 overflow-y-auto">
           <div className="w-full max-w-2xl bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
             <div className="p-6 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex justify-between items-center">
               <div>
@@ -4751,12 +4988,13 @@ export default function TeamManagementPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Org Hierarchy & Designation management Modal */}
-      {showHierarchyModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md px-4 py-6 overflow-y-auto">
+      {isMounted && showHierarchyModal && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md px-4 py-6 overflow-y-auto">
           <div className="w-full max-w-5xl bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden my-8 flex flex-col max-h-[90vh] animate-fade-in-up">
             <div className="p-6 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex flex-col gap-4">
               <div className="flex justify-between items-center">
@@ -5264,7 +5502,8 @@ export default function TeamManagementPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

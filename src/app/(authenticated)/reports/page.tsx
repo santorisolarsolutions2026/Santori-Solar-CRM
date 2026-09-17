@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '@/context/AuthContext';
 import dynamic from 'next/dynamic';
 
@@ -157,6 +158,24 @@ export default function ReportsPage() {
   // Hierarchy modal states
   const [hierarchyModalData, setHierarchyModalData] = useState<any>(null);
   const [hierarchyLoading, setHierarchyLoading] = useState(false);
+
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const isAnyModalOpen = Boolean(selectedAuditEmpId !== null || selectedTimelineEmpId !== null || hierarchyModalData !== null);
+
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isAnyModalOpen]);
 
   // Sorting and preset states for Employee Audit
   const [sortField, setSortField] = useState<string>('name');
@@ -1255,8 +1274,8 @@ export default function ReportsPage() {
         </div>
 
       {/* Employee Detail Audit Modal */}
-      {selectedAuditEmpId !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-955/80 backdrop-blur-sm animate-fade-in">
+      {isMounted && selectedAuditEmpId !== null && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto animate-fade-in">
           <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl w-full max-w-5xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
             {/* Modal Header */}
             <div className="p-6 border-b border-[var(--border-color)] flex justify-between items-start gap-4">
@@ -1306,7 +1325,7 @@ export default function ReportsPage() {
                 let filteredResults = modalData?.results || [];
                 if (auditSearchQuery) {
                   const q = auditSearchQuery.toLowerCase();
-                  filteredResults = filteredResults.filter((item: any) => 
+                  filteredResults = filteredResults.filter((item: any) =>
                     (item.customerName || '').toLowerCase().includes(q) ||
                     (item.leadCode || '').toLowerCase().includes(q) ||
                     (item.detail1 || '').toLowerCase().includes(q) ||
@@ -1474,12 +1493,13 @@ export default function ReportsPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Activity Timeline Calendar Modal */}
-      {selectedTimelineEmpId !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--bg-main)] backdrop-blur-sm animate-fade-in font-sans">
+      {isMounted && selectedTimelineEmpId !== null && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto animate-fade-in font-sans">
           <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
             {/* Modal Header */}
             <div className="p-6 border-b border-[var(--border-color)] flex justify-between items-start gap-4">
@@ -1563,12 +1583,13 @@ export default function ReportsPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Team Hierarchy Modal */}
-      {hierarchyModalData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--bg-main)] backdrop-blur-sm animate-fade-in font-sans">
+      {isMounted && hierarchyModalData && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto animate-fade-in font-sans">
           <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
             {/* Modal Header */}
             <div className="p-6 border-b border-[var(--border-color)] flex justify-between items-start gap-4">
@@ -1640,7 +1661,8 @@ export default function ReportsPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

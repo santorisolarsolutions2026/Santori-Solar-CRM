@@ -65,10 +65,10 @@ export interface CurrentUserTarget {
 
 /**
  * Returns the single assignee to display for a lead based on the viewer's position in the hierarchy.
- * - Manager sees the TL they assigned to (or Manager if unassigned down).
- * - TL sees the Consultant they assigned to (or TL if unassigned down).
- * - Consultant sees the Consultant.
- * - Admin/Director (who allotted to Manager) sees the Manager.
+ * Priority: Bottom-most active handler first (Consultant -> TL -> Manager).
+ * - If lead is assigned to a Consultant/Caller, shows the Consultant.
+ * - If not assigned to a Consultant but assigned to a TL, shows the TL.
+ * - If not assigned down to TL/Consultant yet, shows the Manager.
  */
 export function getLeadAssignedDisplay(
   lead: LeadAssignmentTarget | null | undefined,
@@ -80,9 +80,9 @@ export function getLeadAssignedDisplay(
   const roleLower = (currentUser?.role || '').toLowerCase().trim();
   const baseRole = roleLower.includes(':') ? roleLower.split(':')[0] : roleLower;
 
-  // 0. Admin/Director/IT sees the Manager first
+  // 0. Admin/Director/IT sees the bottom-most active assignee first (Consultant -> TL -> Manager)
   if (['admin', 'director', 'it'].includes(baseRole)) {
-    return lead.manager || lead.tl || lead.consultant || null;
+    return lead.consultant || lead.tl || lead.manager || null;
   }
 
   // 1. Direct ID matches
@@ -94,7 +94,7 @@ export function getLeadAssignedDisplay(
       return lead.consultant || lead.tl || lead.manager || null;
     }
     if (lead.assignedManagerId && currentUserId === lead.assignedManagerId) {
-      return lead.tl || lead.consultant || lead.manager || null;
+      return lead.consultant || lead.tl || lead.manager || null;
     }
   }
 
@@ -106,11 +106,11 @@ export function getLeadAssignedDisplay(
     return lead.consultant || lead.tl || lead.manager || null;
   }
   if (['manager', 'sales_head'].includes(roleLower)) {
-    return lead.tl || lead.consultant || lead.manager || null;
+    return lead.consultant || lead.tl || lead.manager || null;
   }
 
   // 3. Top-level / Admin / Director / IT / Default fallback:
-  return lead.manager || lead.tl || lead.consultant || null;
+  return lead.consultant || lead.tl || lead.manager || null;
 }
 
 export function getDefaultPermissionsForRole(role: string): string[] {

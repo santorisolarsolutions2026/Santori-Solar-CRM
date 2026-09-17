@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getAuthenticatedUser } from '@/lib/auth';
+import { getAuthenticatedUser, markSessionKilled } from '@/lib/auth';
 
 export async function POST(req: Request) {
   try {
@@ -25,6 +25,14 @@ export async function POST(req: Request) {
           logoutLocation: location,
         },
       });
+
+      // Remove session from UserSession table and memory cache on logout
+      if (userPayload.sessionToken) {
+        markSessionKilled(userPayload.sessionToken);
+        await prisma.userSession.deleteMany({
+          where: { sessionToken: userPayload.sessionToken },
+        });
+      }
     }
 
     const response = NextResponse.json({

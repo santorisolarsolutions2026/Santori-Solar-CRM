@@ -6,7 +6,12 @@ export async function POST(req: Request) {
   try {
     const userPayload = getAuthenticatedUser(req);
     if (!userPayload) {
-      return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
+      const res = NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
+      res.headers.append(
+        'Set-Cookie',
+        'token=; Path=/; HttpOnly; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT'
+      );
+      return res;
     }
 
     await prisma.user.update({
