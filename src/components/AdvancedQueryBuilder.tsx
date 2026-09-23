@@ -185,13 +185,16 @@ export default function AdvancedQueryBuilder({ onChange, onClear, initialQuery }
     const fetchUsers = async () => {
       try {
         const res = await fetch('/api/v1/users');
-        const data = await res.json();
-        if (data.success) {
-          const cleanData = data.data.map((u: any) => ({
-            ...u,
-            designation: u.designation || undefined
-          }));
-          setUsers(cleanData);
+        const contentType = res.headers.get('content-type');
+        if (res.ok && contentType && contentType.includes('application/json')) {
+          const data = await res.json();
+          if (data.success && data.data) {
+            const cleanData = data.data.map((u: any) => ({
+              ...u,
+              designation: u.designation || undefined
+            }));
+            setUsers(cleanData);
+          }
         }
       } catch (err) {
         console.error(err);

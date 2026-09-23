@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '@/context/AuthContext';
 import { getCurrentLocationString } from '@/lib/location';
 import {
@@ -149,6 +150,24 @@ export default function AttendancePage() {
   const [overrideDate, setOverrideDate] = useState('');
   const [overrideStatus, setOverrideStatus] = useState('');
   const [showOverrideModal, setShowOverrideModal] = useState(false);
+
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const isAnyModalOpen = Boolean(showHolidayModal || showOverrideModal);
+
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isAnyModalOpen]);
 
   const fetchHolidays = async () => {
     try {
@@ -426,16 +445,35 @@ export default function AttendancePage() {
     const holidayName = holidays.find(h => h.date.split('T')[0] === dayStr)?.name;
 
     if (record) {
-      if (record.status === 'completed' || record.checkOut) {
+      if (record.notes?.includes('Auto-closed') || record.notes?.includes('Missed') || record.status === 'auto_checkout') {
+        return (
+          <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-md bg-orange-500/15 text-orange-400 border border-orange-500/30 whitespace-nowrap inline-flex items-center gap-1">
+            <AlertCircle className="w-2.5 h-2.5 shrink-0" />
+            <span>Auto Checkout (Half Day)</span>
+          </span>
+        );
+      } else if (record.status === 'half_day') {
+        return (
+          <span className="text-[9px] font-extrabold px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-500">
+            Half Day
+          </span>
+        );
+      } else if (record.status === 'absent') {
+        return (
+          <span className="text-[9px] font-extrabold px-2.5 py-1 rounded-lg bg-red-500/10 text-red-400">
+            Absent
+          </span>
+        );
+      } else if (record.status === 'completed' || record.checkOut) {
         return (
           <span className="text-[9px] font-extrabold px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400">
             Completed
           </span>
         );
-       } else if (record.status === 'half_day') {
+      } else if (record.status === 'late') {
         return (
-          <span className="text-[9px] font-extrabold px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-500">
-            Half Day
+          <span className="text-[9px] font-extrabold px-2.5 py-1 rounded-lg bg-yellow-500/10 text-yellow-400">
+            Late
           </span>
         );
       } else {
@@ -508,9 +546,35 @@ export default function AttendancePage() {
             <div className="text-right">
               <span className="text-[9px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block">Today's Status</span>
               <span className={`text-xs font-bold font-mono ${
-                !todayAttendance ? 'text-[var(--text-secondary)]' : todayAttendance.checkOut ? 'text-emerald-400' : 'text-emerald-500'
+                !todayAttendance
+                  ? 'text-[var(--text-secondary)]'
+                  : todayAttendance.notes?.includes('Auto-closed') || todayAttendance.notes?.includes('Missed 07:30 PM')
+                  ? 'text-amber-400'
+                  : todayAttendance.status === 'half_day'
+                  ? 'text-amber-400'
+                  : todayAttendance.status === 'absent'
+                  ? 'text-red-400'
+                  : todayAttendance.checkOut
+                  ? 'text-emerald-400'
+                  : todayAttendance.status === 'late'
+                  ? 'text-yellow-400'
+                  : 'text-emerald-500'
               }`}>
-                {!todayAttendance ? 'Not Checked In' : todayAttendance.checkOut ? 'Day Completed ✓' : 'Checked In'}
+                {!todayAttendance
+                  ? 'Not Checked In'
+                  : todayAttendance.notes?.includes('Auto-closed') || todayAttendance.notes?.includes('Missed 07:30 PM')
+                  ? 'Auto Checkout (Half Day)'
+                  : todayAttendance.status === 'half_day' && todayAttendance.checkOut
+                  ? 'Half Day Completed'
+                  : todayAttendance.status === 'half_day'
+                  ? 'Checked In (Half Day)'
+                  : todayAttendance.status === 'absent'
+                  ? 'Absent'
+                  : todayAttendance.checkOut
+                  ? 'Full Day Completed ✓'
+                  : todayAttendance.status === 'late'
+                  ? 'Checked In (Late Mark)'
+                  : 'Checked In (On-Time)'}
               </span>
             </div>
 
@@ -833,9 +897,25 @@ export default function AttendancePage() {
                           <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-slate-800/60 text-slate-350 flex items-center gap-1.5 w-fit" title="Not Checked In Yet">
                             <AlertCircle className="w-3.5 h-3.5 text-slate-400" /> Pending
                           </span>
+                        ) : (attendance.notes?.includes('Auto-closed') || attendance.notes?.includes('Missed 07:30 PM') || attendance.status === 'auto_checkout') ? (
+                          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-orange-500/15 text-orange-400 border border-orange-500/30 flex items-center gap-1.5 w-fit" title={attendance.notes || "Auto Checkout"}>
+                            <AlertCircle className="w-3.5 h-3.5 text-orange-400" /> Auto Checkout (Half Day)
+                          </span>
+                        ) : attendance.status === 'half_day' ? (
+                          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-500 flex items-center gap-1.5 w-fit" title={attendance.notes || "Half Day"}>
+                            <AlertCircle className="w-3.5 h-3.5 text-amber-500" /> Half Day
+                          </span>
+                        ) : attendance.status === 'late' && !attendance.checkOut ? (
+                          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-yellow-500/10 text-yellow-400 flex items-center gap-1.5 w-fit animate-pulse" title="Late Check-in (Active)">
+                            <Clock className="w-3.5 h-3.5 text-yellow-400" /> Late (Active)
+                          </span>
+                        ) : attendance.status === 'absent' ? (
+                          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-red-500/10 text-red-400 flex items-center gap-1.5 w-fit" title={attendance.notes || "Absent"}>
+                            <AlertCircle className="w-3.5 h-3.5 text-red-400" /> Absent
+                          </span>
                         ) : attendance.checkOut ? (
-                          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center gap-1.5 w-fit" title="Day Completed & Checked Out">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Completed
+                          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center gap-1.5 w-fit" title="Full Day Completed">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Full Day
                           </span>
                         ) : (
                           <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center gap-1.5 w-fit animate-pulse" title="Currently Checked In">
@@ -959,7 +1039,7 @@ export default function AttendancePage() {
                   <thead>
                     <tr className="border-b border-[var(--border-color)] bg-[var(--bg-card)]/40 text-[var(--text-secondary)] text-xs font-semibold uppercase tracking-wider">
                       <th className="py-3 px-5 w-48">Date & Day</th>
-                      <th className="py-3 px-4 w-32">Status</th>
+                      <th className="py-3 px-4 w-44">Status</th>
                       <th className="py-3 px-4 w-32">Check In</th>
                       <th className="py-3 px-4 w-32">Check Out</th>
                       <th className="py-3 px-4 w-32">Hours Worked</th>
@@ -1018,11 +1098,13 @@ export default function AttendancePage() {
                               <span className="text-slate-655 font-normal">-</span>
                             )}
                           </td>
-                          <td className="py-3 px-4 text-emerald-500 font-bold">
+                          <td className="py-3 px-4 font-mono font-bold">
                             {record && record.workDurationMin ? (
-                              `${Math.floor(record.workDurationMin / 60)}h ${record.workDurationMin % 60}m`
-                            ) : record && !record.checkOut ? (
-                              <span className="text-[var(--text-muted)] font-normal italic">Active...</span>
+                              <span className={record.workDurationMin >= 510 ? "text-emerald-400" : "text-amber-400"}>
+                                {Math.floor(record.workDurationMin / 60)}h {record.workDurationMin % 60}m
+                              </span>
+                            ) : isToday && record && !record.checkOut ? (
+                              <span className="text-emerald-500/80 font-normal italic animate-pulse">Active...</span>
                             ) : (
                               <span className="text-slate-655 font-normal">-</span>
                             )}
@@ -1033,11 +1115,11 @@ export default function AttendancePage() {
                                 {record.checkInLocation && (
                                   <span className="text-[var(--text-primary)] truncate">
                                     <span className="text-[var(--text-muted)] font-semibold text-[9px] uppercase tracking-wide mr-1">In Loc:</span>
-                                    {record.checkInLocation.replace('Web Portal check-in at ', '')}
+                                    {record.checkInLocation.includes('@') ? record.checkInLocation.split('@')[0] : record.checkInLocation.replace('Web Portal check-in at ', '')}
                                   </span>
                                 )}
                                 {record.notes && (
-                                  <span className="text-emerald-500 italic text-[11px]">
+                                  <span className={record.notes.includes('Auto-closed') || record.notes.includes('Missed') ? "text-amber-400/90 italic text-[11px]" : "text-emerald-500 italic text-[11px]"}>
                                     &ldquo;{record.notes}&rdquo;
                                   </span>
                                 )}
@@ -1058,9 +1140,9 @@ export default function AttendancePage() {
       </div>
 
       {/* Manage Holidays Modal */}
-      {showHolidayModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md px-4 py-6 overflow-y-auto font-sans">
-          <div className="w-full max-w-2xl bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden my-8 flex flex-col max-h-[85vh] animate-fade-in-up">
+      {isMounted && showHolidayModal && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto animate-fade-in font-sans">
+          <div className="w-full max-w-2xl bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-fade-in-up">
             <div className="p-5 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-emerald-500" />
@@ -1142,12 +1224,13 @@ export default function AttendancePage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Attendance Override Modal */}
-      {showOverrideModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md px-4 py-6 font-sans">
+      {isMounted && showOverrideModal && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto animate-fade-in font-sans">
           <div className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
             <div className="p-5 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex justify-between items-center">
               <div className="flex items-center gap-2">
@@ -1199,7 +1282,8 @@ export default function AttendancePage() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

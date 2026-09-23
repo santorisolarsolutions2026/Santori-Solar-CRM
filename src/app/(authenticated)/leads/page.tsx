@@ -324,9 +324,12 @@ export default function LeadsPage() {
               ids_only: true
             })
           });
-          const data = await res.json();
-          if (data.success && Array.isArray(data.data)) {
-            setSelectedIds(data.data);
+          const contentType = res.headers.get('content-type');
+          if (res.ok && contentType && contentType.includes('application/json')) {
+            const data = await res.json();
+            if (data.success && Array.isArray(data.data)) {
+              setSelectedIds(data.data);
+            }
           }
         } else {
           const params = new URLSearchParams({
@@ -339,9 +342,12 @@ export default function LeadsPage() {
             city: cityFilter.trim(),
           });
           const res = await fetch(`/api/v1/leads?${params.toString()}`);
-          const data = await res.json();
-          if (data.success && Array.isArray(data.data)) {
-            setSelectedIds(data.data);
+          const contentType = res.headers.get('content-type');
+          if (res.ok && contentType && contentType.includes('application/json')) {
+            const data = await res.json();
+            if (data.success && Array.isArray(data.data)) {
+              setSelectedIds(data.data);
+            }
           }
         }
       } catch (err) {
@@ -427,9 +433,12 @@ export default function LeadsPage() {
   const fetchConsultants = async () => {
     try {
       const res = await fetch('/api/v1/users?role=consultant,psa');
-      const data = await res.json();
-      if (data.success) {
-        setConsultants(data.data);
+      const contentType = res.headers.get('content-type');
+      if (res.ok && contentType && contentType.includes('application/json')) {
+        const data = await res.json();
+        if (data.success && data.data) {
+          setConsultants(data.data);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -440,13 +449,16 @@ export default function LeadsPage() {
   const fetchTeamMembers = async () => {
     try {
       const res = await fetch('/api/v1/users', { cache: 'no-store' });
-      const data = await res.json();
-      if (data.success && data.data) {
-        const cleanData = data.data.map((u: any) => ({
-          ...u,
-          designation: u.designation || undefined
-        }));
-        setTeamMembers(cleanData);
+      const contentType = res.headers.get('content-type');
+      if (res.ok && contentType && contentType.includes('application/json')) {
+        const data = await res.json();
+        if (data.success && data.data) {
+          const cleanData = data.data.map((u: any) => ({
+            ...u,
+            designation: u.designation || undefined
+          }));
+          setTeamMembers(cleanData);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -653,14 +665,17 @@ export default function LeadsPage() {
           }),
           signal: controller.signal
         });
-        const data = await res.json();
-        if (data.success && data.data) {
-          setLeads(data.data);
-          setTotal(data.pagination.total);
-          if (shouldSelectAllOnNextFetchRef.current) {
-            const fetchedIds = data.data.map((l: any) => l.id);
-            setSelectedIds(fetchedIds);
-            shouldSelectAllOnNextFetchRef.current = false;
+        const contentType = res.headers.get('content-type');
+        if (res.ok && contentType && contentType.includes('application/json')) {
+          const data = await res.json();
+          if (data.success && data.data) {
+            setLeads(data.data);
+            setTotal(data.pagination.total);
+            if (shouldSelectAllOnNextFetchRef.current) {
+              const fetchedIds = data.data.map((l: any) => l.id);
+              setSelectedIds(fetchedIds);
+              shouldSelectAllOnNextFetchRef.current = false;
+            }
           }
         }
       } else {
@@ -684,14 +699,17 @@ export default function LeadsPage() {
         const res = await fetch(`/api/v1/leads?${params.toString()}`, {
           signal: controller.signal
         });
-        const data = await res.json();
-        if (data.success && data.data) {
-          setLeads(data.data.leads);
-          setTotal(data.data.pagination.total);
-          if (shouldSelectAllOnNextFetchRef.current) {
-            const fetchedIds = data.data.leads.map((l: any) => l.id);
-            setSelectedIds(fetchedIds);
-            shouldSelectAllOnNextFetchRef.current = false;
+        const contentType = res.headers.get('content-type');
+        if (res.ok && contentType && contentType.includes('application/json')) {
+          const data = await res.json();
+          if (data.success && data.data) {
+            setLeads(data.data.leads);
+            setTotal(data.data.pagination.total);
+            if (shouldSelectAllOnNextFetchRef.current) {
+              const fetchedIds = data.data.leads.map((l: any) => l.id);
+              setSelectedIds(fetchedIds);
+              shouldSelectAllOnNextFetchRef.current = false;
+            }
           }
         }
       }

@@ -107,7 +107,7 @@ export async function GET(req: Request) {
         } else {
           totalWorkingDays++;
           if (rec) {
-            if (rec.status === 'present') {
+            if (rec.status === 'present' || rec.status === 'completed') {
               dayStatuses[day] = 'P';
               presentDays++;
             } else if (rec.status === 'half_day') {
@@ -116,6 +116,9 @@ export async function GET(req: Request) {
             } else if (rec.status === 'leave') {
               dayStatuses[day] = 'L';
               absentDays++;
+            } else if (rec.status === 'late' || rec.status === 'checked_in') {
+              dayStatuses[day] = 'P';
+              presentDays++;
             } else {
               dayStatuses[day] = 'A';
               absentDays++;

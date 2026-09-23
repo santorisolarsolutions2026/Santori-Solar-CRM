@@ -122,6 +122,91 @@ export async function GET(req: Request) {
     }
 
     const attendanceModel = getAttendanceModel();
+
+    // Global Auto-close: Check all unclosed records across the organization
+    const now = new Date();
+    const istDateParts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(now);
+    const todayDate = new Date(`${istDateParts}T00:00:00.000Z`);
+
+    const istFormatted = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Kolkata',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: false,
+    }).format(now);
+    const [hoursStr, minutesStr] = istFormatted.split(':');
+    const totalMinutesOfDay = parseInt(hoursStr, 10) * 60 + parseInt(minutesStr, 10);
+
+    // 1. Auto-close unclosed records from past days
+    const unclosedPast = await attendanceModel.findMany({
+      where: {
+        date: { lt: todayDate },
+        checkOut: null,
+      },
+    });
+
+    for (const rec of unclosedPast) {
+      const recDateStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date(rec.date));
+      const windowStart = new Date(`${recDateStr}T10:00:00+05:30`).getTime();
+      const windowEnd = new Date(`${recDateStr}T19:30:00+05:30`).getTime();
+      const autoOut = new Date(`${recDateStr}T19:30:00+05:30`);
+
+      const checkInTime = new Date(rec.checkIn).getTime();
+      const effectiveStart = Math.max(checkInTime, windowStart);
+      const effectiveEnd = Math.min(autoOut.getTime(), windowEnd);
+      const durationMin = effectiveEnd > effectiveStart
+        ? Math.round((effectiveEnd - effectiveStart) / (1000 * 60))
+        : 1;
+
+      const autoNote = 'Auto-closed: Missed check-out on previous day.';
+      await attendanceModel.update({
+        where: { id: rec.id },
+        data: {
+          checkOut: autoOut,
+          checkOutLocation: rec.checkInLocation || 'Office / Web Portal',
+          workDurationMin: durationMin,
+          status: 'half_day',
+          notes: rec.notes ? `${rec.notes} | ${autoNote}` : autoNote,
+        },
+      }).catch(() => {});
+    }
+
+    // 2. If past 07:30 PM (1170 mins), auto-close all unclosed records for today
+    if (totalMinutesOfDay > 1170) {
+      const unclosedToday = await attendanceModel.findMany({
+        where: {
+          date: todayDate,
+          checkOut: null,
+        },
+      });
+
+      const windowStart = new Date(`${istDateParts}T10:00:00+05:30`).getTime();
+      const windowEnd = new Date(`${istDateParts}T19:30:00+05:30`).getTime();
+      const autoCheckOutTime = new Date(`${istDateParts}T19:30:00+05:30`);
+
+      for (const rec of unclosedToday) {
+        const checkInTime = new Date(rec.checkIn).getTime();
+        const effectiveStart = Math.max(checkInTime, windowStart);
+        const effectiveEnd = Math.min(autoCheckOutTime.getTime(), windowEnd);
+        const durationMin = effectiveEnd > effectiveStart
+          ? Math.round((effectiveEnd - effectiveStart) / (1000 * 60))
+          : 1;
+
+        const status = durationMin >= 270 ? 'half_day' : 'absent';
+        const note = 'Auto-closed: Missed 07:30 PM check-out deadline.';
+        await attendanceModel.update({
+          where: { id: rec.id },
+          data: {
+            checkOut: autoCheckOutTime,
+            checkOutLocation: rec.checkInLocation || 'Office / Web Portal',
+            workDurationMin: durationMin,
+            status,
+            notes: rec.notes ? `${rec.notes} | ${note}` : note,
+          },
+        }).catch(() => {});
+      }
+    }
+
     const records = await attendanceModel.findMany({
       where,
       orderBy: [

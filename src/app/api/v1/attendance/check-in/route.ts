@@ -50,10 +50,50 @@ export async function POST(req: Request) {
       ? location
       : (dbUser?.loginLocation || location || 'Unknown Location');
 
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
-    const isLateCheckIn = hours > 10 || (hours === 10 && minutes > 15);
-    const initialStatus = isLateCheckIn ? 'half_day' : 'checked_in';
+    // IST Timezone calculations
+    const istFormatted = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Kolkata',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: false,
+    }).format(now);
+    const [hoursStr, minutesStr] = istFormatted.split(':');
+    const hours = parseInt(hoursStr, 10);
+    const minutes = parseInt(minutesStr, 10);
+    const totalMinutesOfDay = hours * 60 + minutes;
+
+    // 1. Before 09:30 AM (570 mins) Lock
+    if (totalMinutesOfDay < 570) {
+      return NextResponse.json(
+        { success: false, message: 'Check-in window opens at 09:30 AM. Early check-in is not allowed.' },
+        { status: 400 }
+      );
+    }
+
+    // 2. After 02:00 PM (840 mins) Cut-off
+    if (totalMinutesOfDay >= 840) {
+      return NextResponse.json(
+        { success: false, message: 'Check-in window closed at 02:00 PM. Please contact Admin for attendance regularization.' },
+        { status: 400 }
+      );
+    }
+
+    // 3. Status classification
+    let initialStatus = 'checked_in';
+    let autoNote: string | undefined = undefined;
+
+    if (totalMinutesOfDay <= 615) {
+      // 09:30 AM - 10:15 AM: On-Time
+      initialStatus = 'checked_in';
+    } else if (totalMinutesOfDay <= 645) {
+      // 10:16 AM - 10:45 AM: Late Mark
+      initialStatus = 'late';
+      autoNote = 'Late check-in (between 10:16 AM - 10:45 AM). Late Mark recorded.';
+    } else {
+      // 10:46 AM - 02:00 PM: Half Day
+      initialStatus = 'half_day';
+      autoNote = 'Late check-in (after 10:45 AM). Automatically marked as Half Day.';
+    }
 
     const attendance = await attendanceModel.create({
       data: {
@@ -62,7 +102,7 @@ export async function POST(req: Request) {
         checkIn: now,
         checkInLocation: resolvedLocation,
         status: initialStatus,
-        notes: notes || (isLateCheckIn ? 'Late check-in (after 10:15 AM). Automatically marked as Half Day.' : undefined),
+        notes: notes ? (autoNote ? `${autoNote} | ${notes}` : notes) : autoNote,
       },
     });
 

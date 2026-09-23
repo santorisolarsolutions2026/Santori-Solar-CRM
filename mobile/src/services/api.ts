@@ -11,7 +11,7 @@ const TOKEN_KEY = 'solarcrm_auth_token';
 // To find your IP:
 // - Windows cmd: ipconfig (Look for IPv4 Address)
 // - macOS terminal: ipconfig getifaddr en0
-const LOCAL_IP = '192.168.1.7'; 
+const LOCAL_IP = '192.168.1.90'; 
 const DEV_PORT = '3000';
 
 export const BASE_URL = `http://${LOCAL_IP}:${DEV_PORT}`;
