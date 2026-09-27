@@ -12,7 +12,7 @@ const TRANSITIONS: Record<number, { to: number[]; roles: string[] }> = {
   6: { to: [], roles: [] }, // terminal
   7: { to: [3, 4, 5, 6, 8], roles: ['consultant', 'tl', 'manager'] },
   8: { to: [9, 14], roles: ['consultant', 'tl'] },
-  9: { to: [3, 4, 9, 13, 14], roles: ['consultant', 'tl', 'manager'] },
+  9: { to: [3, 4, 8, 9, 13, 14], roles: ['consultant', 'tl', 'manager'] },
   10: { to: [2, 3, 4, 5, 6, 8], roles: ['consultant', 'psa'] },
   11: { to: [2, 3, 4, 5, 6, 8], roles: ['consultant', 'psa'] },
   12: { to: [], roles: [] }, // terminal

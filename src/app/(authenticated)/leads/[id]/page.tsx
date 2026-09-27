@@ -41,6 +41,7 @@ import {
   Users,
   UserCheck,
   RotateCcw,
+  Save,
 } from 'lucide-react';
 import Link from 'next/link';
 import { BeautifulAudioPlayer } from '@/components/BeautifulAudioPlayer';
@@ -170,7 +171,7 @@ const ALLOWED_TRANSITIONS: Record<number, number[]> = {
   6: [],
   7: [3, 4, 5, 6, 8],
   8: [9, 14],
-  9: [3, 4, 13],
+  9: [3, 4, 8, 13],
   10: [2, 3, 4, 5, 6, 8],
   11: [2, 3, 4, 5, 6, 8],
   12: [],
@@ -581,8 +582,15 @@ export default function LeadDetailPage({
   const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
   const [isUploadingAudio, setIsUploadingAudio] = useState(false);
   const [audioUploaded, setAudioUploaded] = useState(false);
+  const [unsavedAudioPreview, setUnsavedAudioPreview] = useState<{
+    meetingId: number;
+    blob: Blob;
+    url: string;
+    durationSec: number;
+  } | null>(null);
   const [isStartingMeeting, setIsStartingMeeting] = useState(false);
   const [isEndingMeeting, setIsEndingMeeting] = useState(false);
+  const [isRetryingLocation, setIsRetryingLocation] = useState<number | null>(null);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const recordingStartTimeRef = useRef<number | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -609,6 +617,95 @@ export default function LeadDetailPage({
       document.body.style.overflow = '';
     };
   }, [isAnyModalOpen]);
+
+  // Meeting Recording Timer
+  useEffect(() => {
+    if (isRecording) {
+      timerIntervalRef.current = setInterval(() => {
+        if (recordingStartTimeRef.current) {
+          const elapsed = Math.floor((Date.now() - recordingStartTimeRef.current) / 1000);
+          setRecordingElapsed(elapsed);
+        } else {
+          setRecordingElapsed((prev) => prev + 1);
+        }
+      }, 1000);
+    } else {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+    }
+    return () => {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+    };
+  }, [isRecording]);
+
+  // Screen Wake Lock API (keeps mobile/desktop screen awake during meeting recording)
+  useEffect(() => {
+    let wakeLockSentinel: any = null;
+
+    const requestWakeLock = async () => {
+      try {
+        if (typeof navigator !== 'undefined' && 'wakeLock' in navigator && (navigator as any).wakeLock?.request) {
+          wakeLockSentinel = await (navigator as any).wakeLock.request('screen');
+        }
+      } catch (err) {
+        console.warn('Screen Wake Lock not active / not supported:', err);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible' && isRecording) {
+        requestWakeLock();
+      }
+    };
+
+    if (isRecording) {
+      requestWakeLock();
+      if (typeof document !== 'undefined') {
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+      }
+    }
+
+    return () => {
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }
+      if (wakeLockSentinel && typeof wakeLockSentinel.release === 'function') {
+        wakeLockSentinel.release().catch(() => {});
+        wakeLockSentinel = null;
+      }
+    };
+  }, [isRecording]);
+
+  // Page Unload / Tab Close Safety (prevents accidental tab closure during active recording or unsaved preview)
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isRecording || unsavedAudioPreview || isUploadingAudio) {
+        e.preventDefault();
+        e.returnValue = 'Meeting recording or upload is currently in progress. Leaving this page will discard unsaved audio.';
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isRecording, unsavedAudioPreview, isUploadingAudio]);
+
+  // Cleanup microphone streams on unmount
+  useEffect(() => {
+    return () => {
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((t) => t.stop());
+        mediaStreamRef.current = null;
+      }
+    };
+  }, []);
 
   // Load Lead details
   const fetchLeadDetails = async () => {
@@ -1185,6 +1282,13 @@ export default function LeadDetailPage({
   // Submit Form C (Meeting Ended Outcomes) status change
   const handleFormCSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (formCOutcome === 're_meeting') {
+      setShowFormC(false);
+      setShowFormB(true);
+      return;
+    }
+
     if (!formCRemark) {
       alert('Remarks are required for saving outcome.');
       return;
@@ -1426,6 +1530,34 @@ export default function LeadDetailPage({
   const canAssignSalesTeam = hasPermission('sales:assign_team') || hasPermission('sales:lead_assign') || hasPermission('leads:assign') || ['admin', 'director'].includes(baseRole) || user?.department?.name === 'IT';
   const hasAssignedSalesMember = !!(lead?.assignedConsultantId || lead?.assignedTlId || lead?.assignedManagerId || lead?.consultant?.id || lead?.tl?.id || lead?.manager?.id);
 
+  const syncMeetingLocation = async (meetingId: number) => {
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 8000,
+        });
+      });
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      if (lat && lng) {
+        const res = await fetch(`/api/v1/meetings/${meetingId}/location`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ latitude: lat, longitude: lng }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          fetchLeadDetails();
+          return true;
+        }
+      }
+    } catch (err) {
+      console.warn('Geolocation sync skipped / failed:', err);
+    }
+    return false;
+  };
+
   const handleStartMeeting = async (meetingId: number) => {
     if (!canRecordMeeting) {
       alert('Forbidden. You do not have permission to start or record meetings.');
@@ -1498,12 +1630,18 @@ export default function LeadDetailPage({
         }
       };
 
-      recorderInstance.onstop = async () => {
+      recorderInstance.onstop = () => {
         const durationSec = recordingStartTimeRef.current
           ? Math.round((Date.now() - recordingStartTimeRef.current) / 1000)
           : 0;
         const audioBlob = new Blob(chunks, { type: recorderOptions.mimeType || 'audio/webm' });
-        await uploadAudioBlob(meetingId, audioBlob, durationSec);
+        const previewUrl = URL.createObjectURL(audioBlob);
+        setUnsavedAudioPreview({
+          meetingId,
+          blob: audioBlob,
+          url: previewUrl,
+          durationSec,
+        });
         stream.getTracks().forEach((track) => track.stop());
         mediaStreamRef.current = null;
       };
@@ -1547,6 +1685,12 @@ export default function LeadDetailPage({
       alert('Forbidden. A sales team member must be assigned to this lead before starting or recording the meeting.');
       return;
     }
+
+    // Attempt location sync if not recorded yet
+    const currentMeet = lead?.meetings?.find((m: any) => m.id === meetingId);
+    if (currentMeet && !currentMeet.meetingLatitude) {
+      syncMeetingLocation(meetingId);
+    }
     let stream: MediaStream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({
@@ -1588,12 +1732,18 @@ export default function LeadDetailPage({
         }
       };
 
-      recorderInstance.onstop = async () => {
+      recorderInstance.onstop = () => {
         const durationSec = recordingStartTimeRef.current
           ? Math.round((Date.now() - recordingStartTimeRef.current) / 1000)
           : 0;
         const audioBlob = new Blob(chunks, { type: recorderOptions.mimeType || 'audio/webm' });
-        await uploadAudioBlob(meetingId, audioBlob, durationSec);
+        const previewUrl = URL.createObjectURL(audioBlob);
+        setUnsavedAudioPreview({
+          meetingId,
+          blob: audioBlob,
+          url: previewUrl,
+          durationSec,
+        });
         stream.getTracks().forEach((track) => track.stop());
         mediaStreamRef.current = null;
       };
@@ -1748,26 +1898,91 @@ export default function LeadDetailPage({
     handleStartRecordingOnly(meetingId);
   };
 
+  const handleSaveAudioPreview = async () => {
+    if (!unsavedAudioPreview) return;
+    const { meetingId, blob, durationSec } = unsavedAudioPreview;
+    await uploadAudioBlob(meetingId, blob, durationSec);
+    try {
+      URL.revokeObjectURL(unsavedAudioPreview.url);
+    } catch {}
+    setUnsavedAudioPreview(null);
+  };
+
+  const handleDiscardAudioPreview = () => {
+    if (!unsavedAudioPreview) return;
+    try {
+      URL.revokeObjectURL(unsavedAudioPreview.url);
+    } catch {}
+    setUnsavedAudioPreview(null);
+  };
+
+  const handleRestartFromPreview = (meetingId: number) => {
+    handleDiscardAudioPreview();
+    handleStartRecordingOnly(meetingId);
+  };
+
   const uploadAudioBlob = async (meetingId: number, blob: Blob, durationSec?: number) => {
     setIsUploadingAudio(true);
-    const formData = new FormData();
-    formData.append('file', blob, 'meeting_recording.webm');
-    if (durationSec !== undefined) {
-      formData.append('duration', durationSec.toString());
+    // If meeting location is not recorded yet, attempt background location sync
+    const currentMeet = lead?.meetings?.find((m: any) => m.id === meetingId);
+    if (currentMeet && !currentMeet.meetingLatitude) {
+      syncMeetingLocation(meetingId);
     }
-
     try {
-      const res = await fetch(`/api/v1/meetings/${meetingId}/upload`, {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await res.json();
-      if (data.success) {
-        setAudioUploaded(true);
-        alert('Audio recording saved successfully!');
-        fetchLeadDetails();
+      let finalBlobUrl = '';
+
+      // 1. Try Direct Vercel Blob Client Upload (bypasses 4.5 MB serverless limit for 1.5+ hour files)
+      try {
+        const { upload } = await import('@vercel/blob/client');
+        const fileExt = blob.type.includes('mp4') ? 'mp4' : 'webm';
+        const clientUploadResult = await upload(
+          `meetings/meeting_${meetingId}_${Date.now()}.${fileExt}`,
+          blob,
+          {
+            access: 'private',
+            handleUploadUrl: '/api/v1/meetings/upload-token',
+          }
+        );
+        finalBlobUrl = clientUploadResult.url;
+      } catch (clientUploadErr) {
+        console.warn('Direct client upload fallback to server API:', clientUploadErr);
+      }
+
+      // 2. If direct client upload succeeded, send JSON payload; otherwise fallback to multipart FormData
+      let res: Response;
+      if (finalBlobUrl) {
+        res = await fetch(`/api/v1/meetings/${meetingId}/upload`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            blobUrl: finalBlobUrl,
+            durationSec: durationSec || null,
+          }),
+        });
       } else {
-        alert(data.message || 'Failed to upload audio recording.');
+        const formData = new FormData();
+        formData.append('file', blob, 'meeting_recording.webm');
+        if (durationSec !== undefined) {
+          formData.append('duration', durationSec.toString());
+        }
+        res = await fetch(`/api/v1/meetings/${meetingId}/upload`, {
+          method: 'POST',
+          body: formData,
+        });
+      }
+
+      const contentType = res.headers.get('content-type');
+      if (res.ok && contentType && contentType.includes('application/json')) {
+        const data = await res.json();
+        if (data.success) {
+          setAudioUploaded(true);
+          alert('Audio recording saved successfully!');
+          fetchLeadDetails();
+        } else {
+          alert(data.message || 'Failed to upload audio recording.');
+        }
+      } else {
+        alert('Failed to upload audio recording.');
       }
     } catch (err) {
       console.error('Audio upload error:', err);
@@ -1778,6 +1993,17 @@ export default function LeadDetailPage({
   };
 
   const handleStopMeeting = async (meetingId: number) => {
+    if (unsavedAudioPreview && unsavedAudioPreview.meetingId === meetingId) {
+      const shouldSave = window.confirm(
+        'You have an unsaved audio recording. Would you like to save and upload it before ending the meeting?\n\n• Click OK to Save & Upload\n• Click Cancel to Discard preview'
+      );
+      if (shouldSave) {
+        await handleSaveAudioPreview();
+      } else {
+        handleDiscardAudioPreview();
+      }
+    }
+
     setIsEndingMeeting(true);
     try {
       const res = await fetch(`/api/v1/meetings/${meetingId}/end`, {
@@ -2186,10 +2412,10 @@ export default function LeadDetailPage({
               {/* ACTION TAB */}
               {activeTab === 'action' && (
                 <div className="space-y-6">
-                  {lead.status === 9 ? (
+                  {lead.status === 9 && (
                     <div className="bg-[#161B22] border border-[var(--border-color)] rounded-xl p-6 space-y-3">
                       <p className="text-xs text-[var(--text-secondary)] leading-normal">
-                        The site meeting has been completed. Please document the client's final outcome to advance the lead.
+                        The site meeting has been completed. Please document the client's final outcome or update the pipeline stage below.
                       </p>
                       <button
                         type="button"
@@ -2200,7 +2426,9 @@ export default function LeadDetailPage({
                         <span className="text-white font-bold">Document Meeting Outcome</span>
                       </button>
                     </div>
-                  ) : roleFilteredNextStages.length > 0 ? (
+                  )}
+
+                  {roleFilteredNextStages.length > 0 ? (
                     <div className="bg-[#161B22] border border-[var(--border-color)] rounded-xl p-6 space-y-6">
                       <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)] border-b border-[var(--border-color)] pb-3 flex items-center gap-2">
                         <Layers className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
@@ -3056,7 +3284,71 @@ export default function LeadDetailPage({
                                   <div className="flex flex-col sm:flex-row flex-wrap gap-2.5 items-center w-full">
                                     {canRecordMeeting ? (
                                       <>
-                                        {isRecording ? (
+                                        {/* Unsaved Audio Recording Preview Card */}
+                                        {unsavedAudioPreview && unsavedAudioPreview.meetingId === meet.id ? (
+                                          <div className="w-full p-4 bg-emerald-950/30 border border-emerald-500/40 rounded-xl space-y-3 shadow-inner">
+                                            <div className="flex items-center justify-between flex-wrap gap-2">
+                                              <div className="flex items-center gap-2">
+                                                <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                                                  <Mic className="w-4 h-4 text-emerald-400 animate-pulse" />
+                                                  <span>Recorded Audio Preview (Unsaved)</span>
+                                                </span>
+                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                                                  Review Before Saving
+                                                </span>
+                                              </div>
+                                              <div className="text-xs font-mono font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/40">
+                                                {Math.floor(unsavedAudioPreview.durationSec / 60).toString().padStart(2, '0')}:
+                                                {(unsavedAudioPreview.durationSec % 60).toString().padStart(2, '0')}
+                                              </div>
+                                            </div>
+
+                                            {/* Custom Audio Player with preview URL */}
+                                            <BeautifulAudioPlayer
+                                              src={unsavedAudioPreview.url}
+                                              defaultDuration={unsavedAudioPreview.durationSec}
+                                            />
+
+                                            {/* Preview Action Buttons */}
+                                            <div className="flex flex-wrap items-center gap-2 pt-1">
+                                              <button
+                                                type="button"
+                                                disabled={isUploadingAudio}
+                                                onClick={handleSaveAudioPreview}
+                                                className="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/20 disabled:opacity-50 transition-all cursor-pointer"
+                                              >
+                                                {isUploadingAudio ? (
+                                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                ) : (
+                                                  <Save className="w-3.5 h-3.5" />
+                                                )}
+                                                <span>{isUploadingAudio ? 'Uploading to Server...' : 'Save & Upload Audio'}</span>
+                                              </button>
+
+                                              <button
+                                                type="button"
+                                                disabled={isUploadingAudio}
+                                                onClick={() => handleRestartFromPreview(meet.id)}
+                                                className="py-2.5 px-3 bg-[var(--bg-card)] hover:bg-[var(--bg-card)]/80 text-[var(--text-secondary)] hover:text-amber-400 border border-[var(--border-color)] hover:border-amber-500/30 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                                                title="Discard current recording and start fresh"
+                                              >
+                                                <RotateCcw className="w-3.5 h-3.5" />
+                                                <span>Discard & Re-Record</span>
+                                              </button>
+
+                                              <button
+                                                type="button"
+                                                disabled={isUploadingAudio}
+                                                onClick={handleDiscardAudioPreview}
+                                                className="py-2.5 px-3 bg-[var(--bg-card)] hover:bg-red-500/10 text-[var(--text-secondary)] hover:text-red-400 border border-[var(--border-color)] hover:border-red-500/30 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                                                title="Discard this recording"
+                                              >
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                                <span>Discard</span>
+                                              </button>
+                                            </div>
+                                          </div>
+                                        ) : isRecording ? (
                                           <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
                                             <button
                                               type="button"
@@ -3147,7 +3439,7 @@ export default function LeadDetailPage({
                                           </button>
                                         )}
 
-                                        {isUploadingAudio && (
+                                        {isUploadingAudio && !unsavedAudioPreview && (
                                           <div className="text-[10px] text-[var(--text-secondary)] flex items-center justify-center gap-1.5 w-full sm:w-auto mt-1 sm:mt-0">
                                             <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-500" />
                                             <span>Uploading audio file to server...</span>
@@ -3196,7 +3488,32 @@ export default function LeadDetailPage({
                                     <span className="block text-[9px] text-[var(--text-muted)] mt-1">({meet.meetingLatitude.toFixed(6)}, {meet.meetingLongitude.toFixed(6)})</span>
                                   </div>
                                 ) : (
-                                  <p className="text-sm text-[var(--text-muted)] mt-1 italic">Location permission was denied.</p>
+                                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                    <p className="text-xs text-[var(--text-muted)] italic">Location permission was denied.</p>
+                                    {canRecordMeeting && !meet.meetingEndedAt && (
+                                      <button
+                                        type="button"
+                                        disabled={isRetryingLocation === meet.id}
+                                        onClick={async () => {
+                                          setIsRetryingLocation(meet.id);
+                                          const ok = await syncMeetingLocation(meet.id);
+                                          setIsRetryingLocation(null);
+                                          if (!ok) {
+                                            alert('Could not retrieve GPS location. Please ensure device GPS is turned ON and browser location permission is allowed.');
+                                          }
+                                        }}
+                                        className="py-1 px-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-md text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer"
+                                        title="Retry fetching GPS location"
+                                      >
+                                        {isRetryingLocation === meet.id ? (
+                                          <Loader2 className="w-3 h-3 animate-spin" />
+                                        ) : (
+                                          <MapPin className="w-3 h-3" />
+                                        )}
+                                        <span>Retry Location</span>
+                                      </button>
+                                    )}
+                                  </div>
                                 )}
                               </div>
                               <div>
@@ -4157,12 +4474,20 @@ export default function LeadDetailPage({
                   onChange={(e) => setFormCOutcome(e.target.value)}
                   className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-slate-350 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 text-xs"
                 >
-                  <option value="sale_done">Sale Done</option>
-                  <option value="follow_up">Follow Up</option>
                   <option value="meeting_done">Meeting Done (Stay in Negotiation)</option>
+                  <option value="re_meeting">Re-Meeting (Schedule Next Visit)</option>
+                  <option value="follow_up">Follow Up</option>
+                  <option value="sale_done">Sale Done</option>
                   <option value="not_interested">Not Interested</option>
                 </select>
               </div>
+
+              {/* Re-Meeting Notice */}
+              {formCOutcome === 're_meeting' && (
+                <div className="p-3 bg-emerald-950/20 border border-emerald-500/30 rounded-lg text-xs text-emerald-400 animate-fade-in">
+                  <span>📅 Submitting will open the Meeting Scheduler (Form B) to set the date and time for Visit #2.</span>
+                </div>
+              )}
 
               {/* Conditional outcome fields */}
               {(formCOutcome === 'follow_up' || formCOutcome === 'meeting_done') && (

@@ -70,24 +70,39 @@ export async function POST(
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to upload audio for this meeting.' }, { status: 403 });
     }
 
-    const formData = await req.formData();
-    const file = formData.get('file') as File;
-    const durationStr = formData.get('duration') as string | null;
-    let durationSec = durationStr ? parseInt(durationStr, 10) : null;
-    if (durationSec !== null && (isNaN(durationSec) || durationSec < 0)) {
-      durationSec = null;
-    }
+    let relativePath: string = '';
+    let durationSec: number | null = null;
 
-    if (!file) {
-      return NextResponse.json({ success: false, message: 'Audio recording file is required.' }, { status: 400 });
-    }
-    // Upload to Private Vercel Blob
-    const fileExt = file.name.split('.').pop() || 'webm';
-    const blobPath = `meetings/meeting_${meetingId}_${Date.now()}.${fileExt}`;
-    
-    const blob = await uploadPrivateBlob(blobPath, file);
+    const reqContentType = req.headers.get('content-type') || '';
+    if (reqContentType.includes('application/json')) {
+      const body = await req.json();
+      relativePath = body.blobUrl || body.url || '';
+      durationSec = body.durationSec !== undefined ? parseInt(body.durationSec, 10) : null;
+      if (durationSec !== null && (isNaN(durationSec) || durationSec < 0)) {
+        durationSec = null;
+      }
+      if (!relativePath) {
+        return NextResponse.json({ success: false, message: 'Audio recording URL (blobUrl) is required.' }, { status: 400 });
+      }
+    } else {
+      const formData = await req.formData();
+      const file = formData.get('file') as File;
+      const durationStr = formData.get('duration') as string | null;
+      durationSec = durationStr ? parseInt(durationStr, 10) : null;
+      if (durationSec !== null && (isNaN(durationSec) || durationSec < 0)) {
+        durationSec = null;
+      }
 
-    const relativePath = blob.url;
+      if (!file) {
+        return NextResponse.json({ success: false, message: 'Audio recording file is required.' }, { status: 400 });
+      }
+
+      // Upload to Private Vercel Blob
+      const fileExt = file.name.split('.').pop() || 'webm';
+      const blobPath = `meetings/meeting_${meetingId}_${Date.now()}.${fileExt}`;
+      const blob = await uploadPrivateBlob(blobPath, file);
+      relativePath = blob.url;
+    }
 
     // Parse existing recordings
     let existingRecordings: Array<{ path: string; durationSec?: number | null; createdAt?: string }> = [];
