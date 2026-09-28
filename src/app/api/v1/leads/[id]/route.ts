@@ -248,6 +248,7 @@ export async function PATCH(
       address,
       pinCode,
       city,
+      division,
       state,
       leadSource,
       assignedTlId,
@@ -302,6 +303,7 @@ export async function PATCH(
     if (sanctionedLoadKw !== undefined) updateData.sanctionedLoadKw = sanctionedLoadKw ? parseFloat(sanctionedLoadKw) : null;
     if (address) updateData.address = address;
     if (pinCode) updateData.pinCode = pinCode;
+    if (division !== undefined) updateData.division = division ? String(division).trim() : null;
     if (city !== undefined || state !== undefined) {
       const norm = normalizeLocation(
         city !== undefined ? city : lead.city,
@@ -380,7 +382,7 @@ export async function PATCH(
       // Log all changed fields in AuditLog
       const fieldsToTrack = [
         'customerName', 'mobileAlt', 'connectionType', 'sanctionedLoadKw', 
-        'address', 'pinCode', 'city', 'state', 'leadSource', 'discomName', 'connectionNumber'
+        'address', 'pinCode', 'city', 'division', 'state', 'leadSource', 'discomName', 'connectionNumber'
       ];
       for (const field of fieldsToTrack) {
         if (body[field] !== undefined && String(body[field]) !== String((lead as any)[field] || '')) {

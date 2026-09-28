@@ -62,6 +62,7 @@ interface Lead {
   address: string;
   pinCode: string;
   city: string;
+  division?: string | null;
   state: string;
   status: number;
   statusSub: string | null;
@@ -351,6 +352,7 @@ export default function LeadDetailPage({
     address: '',
     pinCode: '',
     city: '',
+    division: '',
     state: '',
     leadSource: '',
     assignedManagerId: '',
@@ -734,6 +736,7 @@ export default function LeadDetailPage({
             address: data.data.address,
             pinCode: data.data.pinCode,
             city: data.data.city,
+            division: data.data.division || '',
             state: data.data.state,
             leadSource: data.data.leadSource || 'whatsapp',
             assignedManagerId: data.data.assignedManagerId?.toString() || '',
@@ -2283,6 +2286,12 @@ export default function LeadDetailPage({
                   <span>Alt Mobile: <strong className="text-white font-mono">{lead.mobileAlt}</strong></span>
                 </>
               )}
+              {lead.city && (
+                <>
+                  <span className="text-slate-650">•</span>
+                  <span>Location: <strong className="text-white">{lead.city}</strong>{lead.division ? ` (${lead.division})` : ''}</span>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -2861,8 +2870,15 @@ export default function LeadDetailPage({
                         <p className="text-sm text-white mt-1.5 leading-relaxed">{lead.address}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] uppercase font-bold text-[var(--text-muted)] tracking-wider">Pincode / City</p>
-                        <p className="text-sm text-white mt-1.5">{lead.pinCode} - {lead.city}, {lead.state}</p>
+                        <p className="text-[10px] uppercase font-bold text-[var(--text-muted)] tracking-wider">Pincode / Location</p>
+                        <p className="text-sm text-white mt-1.5 flex items-center gap-1.5 flex-wrap">
+                          <span>{lead.pinCode} - {lead.city}, {lead.state}</span>
+                          {lead.division && (
+                            <span className="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-md font-mono">
+                              {lead.division} Division
+                            </span>
+                          )}
+                        </p>
                       </div>
                       <div>
                         <p className="text-[10px] uppercase font-bold text-[var(--text-muted)] tracking-wider">Assigned To</p>
@@ -3059,6 +3075,17 @@ export default function LeadDetailPage({
                             type="text"
                             value={editForm.city}
                             onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+                            placeholder="e.g. Varanasi"
+                            className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">Division / Area</label>
+                          <input
+                            type="text"
+                            value={editForm.division}
+                            onChange={(e) => setEditForm({ ...editForm, division: e.target.value })}
+                            placeholder="e.g. Bhelupur, Sigra, Naini"
                             className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-blue-500"
                           />
                         </div>
@@ -3068,6 +3095,7 @@ export default function LeadDetailPage({
                             type="text"
                             value={editForm.state}
                             onChange={(e) => setEditForm({ ...editForm, state: e.target.value })}
+                            placeholder="e.g. Uttar Pradesh"
                             className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-blue-500"
                           />
                         </div>

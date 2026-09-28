@@ -87,6 +87,7 @@ model Lead {
   address              String
   pinCode              String
   city                 String
+  division             String?
   state                String
   leadSource           String?             // whatsapp | cold_call | referral | walk_in | google_ad | other
   status               Int                 @default(1) // 1 to 14

@@ -49,6 +49,7 @@ interface Lead {
   mobileAlt: string | null;
   connectionType: string;
   city: string;
+  division?: string | null;
   state: string;
   status: number;
   statusSub: string | null;
@@ -179,6 +180,7 @@ export default function LeadsPage() {
   const [connectionFilter, setConnectionFilter] = useState('');
   const [sourceFilter, setSourceFilter] = useState('');
   const [cityFilter, setCityFilter] = useState('');
+  const [divisionFilter, setDivisionFilter] = useState('');
   const [stateFilter, setStateFilter] = useState('');
   const [dateFromFilter, setDateFromFilter] = useState('');
   const [dateToFilter, setDateToFilter] = useState('');
@@ -270,7 +272,8 @@ export default function LeadsPage() {
     consultantFilter: '',
     connectionFilter: '',
     sourceFilter: '',
-    cityFilter: ''
+    cityFilter: '',
+    divisionFilter: ''
   });
 
   useEffect(() => {
@@ -280,7 +283,8 @@ export default function LeadsPage() {
       lastFiltersRef.current.consultantFilter !== consultantFilter ||
       lastFiltersRef.current.connectionFilter !== connectionFilter ||
       lastFiltersRef.current.sourceFilter !== sourceFilter ||
-      lastFiltersRef.current.cityFilter.trim() !== cityFilter.trim();
+      lastFiltersRef.current.cityFilter.trim() !== cityFilter.trim() ||
+      lastFiltersRef.current.divisionFilter.trim() !== divisionFilter.trim();
 
     if (filtersChanged) {
       setSelectedIds([]);
@@ -290,10 +294,11 @@ export default function LeadsPage() {
         consultantFilter,
         connectionFilter,
         sourceFilter,
-        cityFilter
+        cityFilter,
+        divisionFilter
       };
     }
-  }, [search, statusFilter, consultantFilter, connectionFilter, sourceFilter, cityFilter]);
+  }, [search, statusFilter, consultantFilter, connectionFilter, sourceFilter, cityFilter, divisionFilter]);
 
   const handleSelectToggle = (id: number) => {
     setSelectedIds((prev) =>
@@ -340,6 +345,7 @@ export default function LeadsPage() {
             connection_type: connectionFilter,
             lead_source: sourceFilter,
             city: cityFilter.trim(),
+            division: divisionFilter.trim(),
           });
           const res = await fetch(`/api/v1/leads?${params.toString()}`);
           const contentType = res.headers.get('content-type');
@@ -406,6 +412,7 @@ export default function LeadsPage() {
     address: '',
     pinCode: '',
     city: '',
+    division: '',
     state: '',
     leadSource: '',
     discomName: '',
@@ -690,6 +697,7 @@ export default function LeadsPage() {
           connection_type: connectionFilter,
           lead_source: sourceFilter,
           city: cityFilter.trim(),
+          division: divisionFilter.trim(),
           state: stateFilter.trim(),
           date_from: dateFromFilter,
           date_to: dateToFilter,
@@ -1057,6 +1065,7 @@ export default function LeadsPage() {
         item.address = getRowVal('address');
         item.pinCode = cleanExcelText(getRowVal('pinCode'));
         item.city = getRowVal('city');
+        item.division = getRowVal('division');
         item.state = getRowVal('state');
         item.leadSource = getRowVal('leadSource');
         item.connectionType = getRowVal('connectionType') || 'residential';
@@ -1475,6 +1484,12 @@ export default function LeadsPage() {
                 <X className="w-3 h-3 cursor-pointer hover:text-white ml-0.5" onClick={() => setCityFilter('')} />
               </span>
             )}
+            {divisionFilter && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-500/10 border border-teal-500/20 text-teal-400 text-[11px] font-semibold">
+                Division: {divisionFilter}
+                <X className="w-3 h-3 cursor-pointer hover:text-white ml-0.5" onClick={() => setDivisionFilter('')} />
+              </span>
+            )}
             {stateFilter && (
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-455 text-[11px] font-semibold">
                 State: {stateFilter}
@@ -1639,9 +1654,9 @@ export default function LeadsPage() {
                   />
                 </th>
                 <th className="py-4 px-4 w-28">Lead ID</th>
-                <th className="py-4 px-4 w-48">Customer</th>
+                <th className="py-4 px-4 w-28">Customer</th>
                 <th className="py-4 px-4 w-32">Mobile</th>
-                <th className="py-4 px-4 w-28">City</th>
+                <th className="py-4 px-4 w-36">City / Division</th>
                 <th className="py-4 px-4 w-32">Connection</th>
                 <th className="py-4 px-4 w-44">Pipeline Stage</th>
                 <th className="py-4 px-4 w-40">Assigned to</th>
@@ -1759,7 +1774,17 @@ export default function LeadsPage() {
                       <td className="py-3.5 px-4 text-[var(--text-primary)] font-mono text-xs w-32">
                         {lead.mobile?.startsWith('AID-') ? 'N/A' : (lead.mobile?.includes('-#') ? lead.mobile.split('-#')[0] : lead.mobile)}
                       </td>
-                      <td className="py-3.5 px-4 text-[var(--text-primary)] w-28">{lead.city}</td>
+                      <td className="py-3.5 px-4 text-[var(--text-primary)] w-36">
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-white">{lead.city || '—'}</span>
+                          {lead.division && (
+                            <span className="text-[10px] text-emerald-400 font-mono tracking-tight flex items-center gap-0.5 mt-0.5" title={`Division: ${lead.division}`}>
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 inline-block"></span>
+                              <span className="truncate max-w-[130px]">{lead.division}</span>
+                            </span>
+                          )}
+                        </div>
+                      </td>
                       <td className="py-3.5 px-4 w-32">
                         <span className={`inline-block text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${connectionClass}`}>
                           {lead.connectionType}
@@ -1994,6 +2019,7 @@ export default function LeadsPage() {
                           { key: 'address', label: 'Complete Address', req: false },
                           { key: 'pinCode', label: 'Pin Code / Zip', req: false },
                           { key: 'city', label: 'City', req: false },
+                          { key: 'division', label: 'Division / Area', req: false },
                           { key: 'state', label: 'State', req: false },
                           { key: 'sanctionedLoadKw', label: 'PV Capacity (kW)', req: false },
                           { key: 'connectionType', label: 'Connection Type', req: false },
@@ -2629,14 +2655,24 @@ export default function LeadsPage() {
                       <p className="text-[11px] text-[var(--text-secondary)]">Search leads by customer city or state.</p>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div>
                         <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1">City Name</label>
                         <input
                           type="text"
                           value={cityFilter}
                           onChange={(e) => { setCityFilter(e.target.value); setPage(1); }}
-                          placeholder="e.g. Delhi, Jaipur, Mumbai..."
+                          placeholder="e.g. Varanasi, Prayagraj..."
+                          className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-white text-xs focus:ring-emerald-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1">Division / Area</label>
+                        <input
+                          type="text"
+                          value={divisionFilter}
+                          onChange={(e) => { setDivisionFilter(e.target.value); setPage(1); }}
+                          placeholder="e.g. Bhelupur, Sigra, Naini..."
                           className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-white text-xs focus:ring-emerald-500"
                         />
                       </div>
@@ -2646,7 +2682,7 @@ export default function LeadsPage() {
                           type="text"
                           value={stateFilter}
                           onChange={(e) => { setStateFilter(e.target.value); setPage(1); }}
-                          placeholder="e.g. Rajasthan, Haryana..."
+                          placeholder="e.g. Uttar Pradesh..."
                           className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-white text-xs focus:ring-emerald-500"
                         />
                       </div>

@@ -19,6 +19,7 @@ export default function NewLeadPage() {
     address: '',
     pinCode: '',
     city: '',
+    division: '',
     state: '',
     leadSource: 'meta',
     assignedManagerId: '',
@@ -461,8 +462,8 @@ export default function NewLeadPage() {
           {/* Address details */}
           <div className="space-y-4 border-t border-[var(--border-color)]/80 pt-6">
             <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">Site Location Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="md:col-span-3">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="md:col-span-4">
                 <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
                   Full Street Address
                 </label>
@@ -493,6 +494,19 @@ export default function NewLeadPage() {
                   type="text"
                   value={form.city}
                   onChange={(e) => setForm({ ...form, city: e.target.value })}
+                  placeholder="e.g. Varanasi"
+                  className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:border-emerald-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
+                  Division / Area
+                </label>
+                <input
+                  type="text"
+                  value={form.division}
+                  onChange={(e) => setForm({ ...form, division: e.target.value })}
+                  placeholder="e.g. Bhelupur, Sigra, Naini"
                   className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:border-emerald-500 focus:outline-none"
                 />
               </div>
@@ -504,6 +518,7 @@ export default function NewLeadPage() {
                   type="text"
                   value={form.state}
                   onChange={(e) => setForm({ ...form, state: e.target.value })}
+                  placeholder="e.g. Uttar Pradesh"
                   className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:border-emerald-500 focus:outline-none"
                 />
               </div>

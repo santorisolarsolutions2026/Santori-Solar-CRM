@@ -31,6 +31,7 @@ export async function GET(req: Request) {
     const search = (searchParams.get('search') || '').trim();
     const statusParam = searchParams.get('status') || '';
     const city = (searchParams.get('city') || '').trim();
+    const division = (searchParams.get('division') || '').trim();
     const consultantIdStr = searchParams.get('consultant_id') || '';
     const connectionType = searchParams.get('connection_type') || '';
     const leadSource = searchParams.get('lead_source') || '';
@@ -180,6 +181,10 @@ export async function GET(req: Request) {
 
     if (city) {
       andConditions.push({ city: { contains: city, mode: 'insensitive' } });
+    }
+
+    if (division) {
+      andConditions.push({ division: { contains: division, mode: 'insensitive' } });
     }
 
     if (state) {
@@ -377,6 +382,7 @@ export async function POST(req: Request) {
       address,
       pinCode,
       city,
+      division,
       state,
       leadSource,
       assignedTlId,
@@ -513,6 +519,7 @@ export async function POST(req: Request) {
           address: address || '',
           pinCode: pinCode || '',
           city: norm.city,
+          division: division ? String(division).trim() : null,
           state: norm.state,
           leadSource: leadSource || 'other',
           status: statusToSet,

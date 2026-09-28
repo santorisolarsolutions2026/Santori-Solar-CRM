@@ -235,7 +235,7 @@ async function deleteSingleFile(filePath: string) {
       console.warn('Blob delete warning:', delErr);
     }
   } else {
-    const localPath = path.join(process.cwd(), filePath);
+    const localPath = path.join(/*turbopackIgnore: true*/ process.cwd(), filePath);
     if (fs.existsSync(localPath)) {
       try {
         fs.unlinkSync(localPath);
