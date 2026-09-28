@@ -1778,9 +1778,9 @@ export default function LeadsPage() {
                         <div className="flex flex-col">
                           <span className="font-semibold text-white">{lead.city || '—'}</span>
                           {lead.division && (
-                            <span className="text-[10px] text-emerald-400 font-mono tracking-tight flex items-center gap-0.5 mt-0.5" title={`Division: ${lead.division}`}>
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 inline-block"></span>
-                              <span className="truncate max-w-[130px]">{lead.division}</span>
+                            <span className="text-xs text-emerald-400 font-semibold tracking-tight flex items-center gap-1 mt-0.5" title={`Division: ${lead.division}`}>
+                              <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0 stroke-[2.2]" />
+                              <span className="truncate max-w-[140px]">{lead.division}</span>
                             </span>
                           )}
                         </div>
