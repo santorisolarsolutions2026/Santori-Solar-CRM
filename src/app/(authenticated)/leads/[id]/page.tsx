@@ -2874,7 +2874,7 @@ export default function LeadDetailPage({
                         <p className="text-sm text-white mt-1.5 flex items-center gap-1.5 flex-wrap">
                           <span>{lead.pinCode} - {lead.city}, {lead.state}</span>
                           {lead.division && (
-                            <span className="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-md font-mono">
+                            <span className="text-xs bg-purple-500/10 text-purple-300 border border-purple-500/20 px-2 py-0.5 rounded-md font-mono">
                               {lead.division} Division
                             </span>
                           )}

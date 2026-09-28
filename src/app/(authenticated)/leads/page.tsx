@@ -1485,7 +1485,7 @@ export default function LeadsPage() {
               </span>
             )}
             {divisionFilter && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-500/10 border border-teal-500/20 text-teal-400 text-[11px] font-semibold">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[11px] font-semibold">
                 Division: {divisionFilter}
                 <X className="w-3 h-3 cursor-pointer hover:text-white ml-0.5" onClick={() => setDivisionFilter('')} />
               </span>
@@ -1778,8 +1778,8 @@ export default function LeadsPage() {
                         <div className="flex flex-col">
                           <span className="font-semibold text-white">{lead.city || '—'}</span>
                           {lead.division && (
-                            <span className="text-xs text-emerald-400 font-semibold tracking-tight flex items-center gap-1 mt-0.5" title={`Division: ${lead.division}`}>
-                              <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0 stroke-[2.2]" />
+                            <span className="text-xs text-purple-400 font-semibold tracking-tight flex items-center gap-1 mt-0.5" title={`Division: ${lead.division}`}>
+                              <MapPin className="w-3.5 h-3.5 text-purple-400 shrink-0 stroke-[2.2]" />
                               <span className="truncate max-w-[140px]">{lead.division}</span>
                             </span>
                           )}
