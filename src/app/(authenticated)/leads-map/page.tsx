@@ -116,7 +116,7 @@ function getCityCoordinates(cityName: string, index: number, total: number) {
 }
 
 export default function LeadsMapPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, hasPermission } = useAuth();
 
   const [data, setData] = useState<GeoDataResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -129,7 +129,10 @@ export default function LeadsMapPage() {
   const isAdmin =
     user?.role === 'admin' ||
     user?.role === 'director' ||
-    user?.department?.name === 'IT';
+    user?.department?.name === 'IT' ||
+    hasPermission('admin:access') ||
+    hasPermission('admin:analytics_view') ||
+    hasPermission('reports:view');
 
   const fetchData = async () => {
     setLoading(true);
