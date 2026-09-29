@@ -64,6 +64,7 @@ interface CompletedOrder {
     mobile: string;
     mobileAlt: string | null;
     city: string;
+    division?: string | null;
     state: string;
     address: string;
     pinCode: string;
@@ -140,33 +141,14 @@ export default function CompletedOrdersPage() {
   
   const [stateFilter, setStateFilter] = useState('');
   const [cityFilter, setCityFilter] = useState('');
-  const [stateCitiesMap, setStateCitiesMap] = useState<Record<string, string[]>>({});
+  const [divisionFilter, setDivisionFilter] = useState('');
   const [dateShortcut, setDateShortcut] = useState('all');
 
   useEffect(() => {
     if (user) {
       fetchTeamMembers();
-      fetchLocations();
     }
   }, [user]);
-
-  const fetchLocations = async () => {
-    try {
-      const cached = sessionStorage.getItem('stateCitiesMap');
-      if (cached) {
-        setStateCitiesMap(JSON.parse(cached));
-        return;
-      }
-      const res = await fetch('/api/v1/leads/locations');
-      const data = await res.json();
-      if (data.success && data.data) {
-        setStateCitiesMap(data.data);
-        sessionStorage.setItem('stateCitiesMap', JSON.stringify(data.data));
-      }
-    } catch (e) {
-      console.error('Failed to fetch locations', e);
-    }
-  };
 
   const applyDateShortcut = (shortcut: string) => {
     setDateShortcut(shortcut);
@@ -208,7 +190,7 @@ export default function CompletedOrdersPage() {
 
   useEffect(() => {
     fetchCompletedOrders();
-  }, [scope, clientType, startDate, endDate, selectedMemberFilter, stateFilter, cityFilter]);
+  }, [scope, clientType, startDate, endDate, selectedMemberFilter, stateFilter, cityFilter, divisionFilter]);
 
   const fetchTeamMembers = async () => {
     try {
@@ -231,8 +213,9 @@ export default function CompletedOrdersPage() {
       if (clientType !== 'all') params.append('clientType', clientType);
       if (startDate) params.append('startDate', startDate);
       if (endDate) params.append('endDate', endDate);
-      if (stateFilter) params.append('state', stateFilter);
-      if (cityFilter) params.append('city', cityFilter);
+      if (stateFilter.trim()) params.append('state', stateFilter.trim());
+      if (cityFilter.trim()) params.append('city', cityFilter.trim());
+      if (divisionFilter.trim()) params.append('division', divisionFilter.trim());
       if (selectedMemberFilter) params.append('memberId', selectedMemberFilter);
       if (search.trim()) params.append('search', search.trim());
 
@@ -351,7 +334,7 @@ export default function CompletedOrdersPage() {
           </form>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
           {/* Team Member Filter */}
           <div>
             <label className="block text-[10px] font-mono text-[var(--text-secondary)] uppercase mb-1">Filter by Team Member</label>
@@ -399,42 +382,76 @@ export default function CompletedOrdersPage() {
             />
           </div>
 
-          {/* Custom State Dropdown */}
+          {/* State Text Input */}
           <div>
-            <label className="block text-[10px] font-mono text-[var(--text-secondary)] uppercase mb-1">State Name</label>
-            <CustomDropdown
-              options={[
-                { value: '', label: 'All States' },
-                ...Object.keys(stateCitiesMap).map(state => ({ value: state, label: state }))
-              ]}
-              value={stateFilter}
-              onChange={(val) => {
-                setStateFilter(val);
-                if (val && stateCitiesMap[val] && !stateCitiesMap[val].includes(cityFilter)) {
-                  setCityFilter('');
-                }
-              }}
-              className="w-full"
-              placeholder="All States"
-            />
+            <label className="block text-[10px] font-mono text-[var(--text-secondary)] uppercase mb-1">State</label>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Filter State..."
+                value={stateFilter}
+                onChange={(e) => setStateFilter(e.target.value)}
+                className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl pl-3 pr-7 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+              />
+              {stateFilter && (
+                <button
+                  type="button"
+                  onClick={() => setStateFilter('')}
+                  className="absolute right-2 top-2.5 text-[var(--text-muted)] hover:text-white"
+                  title="Clear State"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Custom City Dropdown */}
+          {/* City Text Input */}
           <div>
-            <label className="block text-[10px] font-mono text-[var(--text-secondary)] uppercase mb-1">City Name</label>
-            <CustomDropdown
-              options={[
-                { value: '', label: 'All Cities' },
-                ...(stateFilter && stateCitiesMap[stateFilter]
-                  ? stateCitiesMap[stateFilter]
-                  : Array.from(new Set(Object.values(stateCitiesMap).flat()))
-                ).map(city => ({ value: city, label: city }))
-              ]}
-              value={cityFilter}
-              onChange={(val) => setCityFilter(val)}
-              className="w-full"
-              placeholder="All Cities"
-            />
+            <label className="block text-[10px] font-mono text-[var(--text-secondary)] uppercase mb-1">City</label>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Filter City..."
+                value={cityFilter}
+                onChange={(e) => setCityFilter(e.target.value)}
+                className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl pl-3 pr-7 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+              />
+              {cityFilter && (
+                <button
+                  type="button"
+                  onClick={() => setCityFilter('')}
+                  className="absolute right-2 top-2.5 text-[var(--text-muted)] hover:text-white"
+                  title="Clear City"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Division Text Input */}
+          <div>
+            <label className="block text-[10px] font-mono text-[var(--text-secondary)] uppercase mb-1">Division / Area</label>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Filter Division..."
+                value={divisionFilter}
+                onChange={(e) => setDivisionFilter(e.target.value)}
+                className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl pl-3 pr-7 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+              />
+              {divisionFilter && (
+                <button
+                  type="button"
+                  onClick={() => setDivisionFilter('')}
+                  className="absolute right-2 top-2.5 text-[var(--text-muted)] hover:text-white"
+                  title="Clear Division"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -500,7 +517,10 @@ export default function CompletedOrdersPage() {
                     </td>
                     <td className="p-4">
                       <div className="font-semibold text-white">{order.lead.customerName}</div>
-                      <div className="text-[11px] text-[var(--text-secondary)]">{order.lead.mobile} • {order.lead.city}</div>
+                      <div className="text-[11px] text-[var(--text-secondary)]">
+                        {order.lead.mobile} • {order.lead.city}
+                        {order.lead.division ? ` (${order.lead.division})` : ''}
+                      </div>
                     </td>
                     <td className="p-4 font-mono font-bold text-emerald-400">
                       {order.systemSizeKw} kW
@@ -566,7 +586,10 @@ export default function CompletedOrdersPage() {
                 <h4 className="font-bold text-emerald-400 uppercase font-mono text-[10px]">Customer & Site Info</h4>
                 <div className="text-white font-semibold">{selectedOrder.lead.customerName}</div>
                 <div className="text-[var(--text-secondary)]">Phone: {selectedOrder.lead.mobile}</div>
-                <div className="text-[var(--text-secondary)]">Address: {selectedOrder.lead.address}, {selectedOrder.lead.city}, {selectedOrder.lead.state} - {selectedOrder.lead.pinCode}</div>
+                <div className="text-[var(--text-secondary)]">
+                  Address: {selectedOrder.lead.address}
+                  {selectedOrder.lead.division ? `, ${selectedOrder.lead.division}` : ''}, {selectedOrder.lead.city}, {selectedOrder.lead.state} - {selectedOrder.lead.pinCode}
+                </div>
                 {selectedOrder.lead.discomName && <div className="text-[var(--text-secondary)]">Discom: {selectedOrder.lead.discomName}</div>}
               </div>
 

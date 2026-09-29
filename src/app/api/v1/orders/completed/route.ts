@@ -21,6 +21,7 @@ export async function GET(req: Request) {
     const clientType = searchParams.get('clientType');
     const city = searchParams.get('city');
     const state = searchParams.get('state');
+    const division = searchParams.get('division');
 
     const userPermissions = await getUserPermissions(userPayload.id);
     const hasDeliveredPerm = userPermissions.includes('ops:delivered_orders') || userPayload.role === 'admin' || userPayload.role === 'director';
@@ -99,6 +100,7 @@ export async function GET(req: Request) {
             { lead: { customerName: { contains: q, mode: 'insensitive' } } },
             { lead: { mobile: { contains: q, mode: 'insensitive' } } },
             { lead: { city: { contains: q, mode: 'insensitive' } } },
+            { lead: { division: { contains: q, mode: 'insensitive' } } },
             { lead: { leadCode: { contains: q, mode: 'insensitive' } } },
           ]
         }
@@ -114,13 +116,19 @@ export async function GET(req: Request) {
     if (city && city.trim() !== '') {
       whereClause.lead = {
         ...(whereClause.lead || {}),
-        city: { equals: city.trim(), mode: 'insensitive' }
+        city: { contains: city.trim(), mode: 'insensitive' }
       };
     }
     if (state && state.trim() !== '') {
       whereClause.lead = {
         ...(whereClause.lead || {}),
-        state: { equals: state.trim(), mode: 'insensitive' }
+        state: { contains: state.trim(), mode: 'insensitive' }
+      };
+    }
+    if (division && division.trim() !== '') {
+      whereClause.lead = {
+        ...(whereClause.lead || {}),
+        division: { contains: division.trim(), mode: 'insensitive' }
       };
     }
 
@@ -146,6 +154,7 @@ export async function GET(req: Request) {
             mobile: true,
             mobileAlt: true,
             city: true,
+            division: true,
             state: true,
             address: true,
             pinCode: true,
