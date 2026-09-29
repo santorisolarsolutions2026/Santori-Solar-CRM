@@ -96,117 +96,7 @@ interface InstallationImage {
   uploadedAt: string;
 }
 
-const CITY_DIVISIONS_MAP: Record<string, string[]> = {
-  varanasi: [
-    'Bhelupur',
-    'Sigra',
-    'Shivpur',
-    'Lanka',
-    'Mahmoorganj',
-    'Ramnagar',
-    'Babatpur',
-    'Rohania',
-    'Raja Talab',
-    'Lohta',
-    'Sarnath',
-    'Ashapur',
-    'Pandeypur',
-    'Chowk',
-    'Cantt',
-    'Chaubeypur',
-    'Chitaipur',
-  ],
-  prayagraj: [
-    'Jhunsi',
-    'Naini',
-    'Civil Lines',
-    'Phaphamau',
-    'Katra',
-    'Tagore Town',
-    'George Town',
-    'Allahpur',
-    'Dhoomanganj',
-    'Kareli',
-    'Teliyarganj',
-    'Govindpur',
-    'Shantipuram',
-  ],
-  allahabad: [
-    'Jhunsi',
-    'Naini',
-    'Civil Lines',
-    'Phaphamau',
-    'Katra',
-    'Tagore Town',
-    'George Town',
-    'Allahpur',
-    'Dhoomanganj',
-    'Kareli',
-    'Teliyarganj',
-    'Govindpur',
-    'Shantipuram',
-  ],
-  lucknow: [
-    'Gomti Nagar',
-    'Alambagh',
-    'Hazratganj',
-    'Indira Nagar',
-    'Mahanagar',
-    'Aliganj',
-    'Vikas Nagar',
-    'Chinhat',
-    'Jankipuram',
-    'Ashiyana',
-    'Rajajipuram',
-  ],
-  kanpur: [
-    'Civil Lines',
-    'Kakadeo',
-    'Govind Nagar',
-    'Kalyanpur',
-    'Kidwai Nagar',
-    'Swaroop Nagar',
-    'Shyam Nagar',
-    'Barra',
-    'Panki',
-  ],
-  gorakhpur: [
-    'Civil Lines',
-    'Golghar',
-    'Shahpur',
-    'Medical College',
-    'Taramandal',
-    'Rustampur',
-    'Basharatpur',
-  ],
-  jaunpur: [
-    'Shahganj',
-    'Line Bazar',
-    'Badlapur',
-    'Machhlishahr',
-    'Mariahu',
-    'Kerakat',
-  ],
-  mirzapur: [
-    'City Area',
-    'Chunar',
-    'Vindhyachal',
-    'Lalganj',
-    'Ahraura',
-  ],
-  chandauli: [
-    'Mughalsarai',
-    'Chakia',
-    'Sakaldiha',
-    'DDU Nagar',
-  ],
-  bhadohi: [
-    'Gopiganj',
-    'Gyanpur',
-    'Suriyawan',
-    'Khamaria',
-  ],
-};
+
 
 export default function OperationsPage() {
   const { user, loading: authLoading, hasPermission } = useAuth();
@@ -244,23 +134,7 @@ export default function OperationsPage() {
   const [stateFilter, setStateFilter] = useState('');
   const [cityFilter, setCityFilter] = useState('');
   const [divisionFilter, setDivisionFilter] = useState('');
-  const [stateCitiesMap, setStateCitiesMap] = useState<Record<string, string[]>>({});
   const [dateShortcut, setDateShortcut] = useState('all');
-
-  // Available divisions for selected city
-  const availableDivisions = React.useMemo(() => {
-    if (!cityFilter) return [];
-    const cityKey = cityFilter.trim().toLowerCase();
-    const presetList = CITY_DIVISIONS_MAP[cityKey] || [];
-    const dynamicList = orders
-      .filter((o) => o.lead.city?.toLowerCase() === cityKey && o.lead.division)
-      .map((o) => o.lead.division!.trim())
-      .filter(Boolean);
-
-    return Array.from(new Set([...presetList, ...dynamicList])).sort((a, b) =>
-      a.localeCompare(b, undefined, { sensitivity: 'base' })
-    );
-  }, [cityFilter, orders]);
 
   const [employees, setEmployees] = useState<any[]>([]);
   const [selectedOrderIds, setSelectedOrderIds] = useState<number[]>([]);
@@ -287,25 +161,7 @@ export default function OperationsPage() {
           console.error(err);
         }
       };
-      const fetchLocations = async () => {
-        try {
-          const cached = sessionStorage.getItem('stateCitiesMap');
-          if (cached) {
-            setStateCitiesMap(JSON.parse(cached));
-            return;
-          }
-          const res = await fetch('/api/v1/leads/locations');
-          const data = await res.json();
-          if (data.success && data.data) {
-            setStateCitiesMap(data.data);
-            sessionStorage.setItem('stateCitiesMap', JSON.stringify(data.data));
-          }
-        } catch (e) {
-          console.error('Failed to fetch locations', e);
-        }
-      };
       fetchUsers();
-      fetchLocations();
     }
   }, [user]);
 
@@ -1285,18 +1141,21 @@ export default function OperationsPage() {
     }
 
     // 5. State Filter
-    if (stateFilter) {
-      if (o.lead.state?.toLowerCase() !== stateFilter.toLowerCase()) return false;
+    if (stateFilter.trim()) {
+      const sf = stateFilter.trim().toLowerCase();
+      if (!o.lead.state?.toLowerCase().includes(sf)) return false;
     }
 
     // 6. City Filter
-    if (cityFilter) {
-      if (o.lead.city?.toLowerCase() !== cityFilter.toLowerCase()) return false;
+    if (cityFilter.trim()) {
+      const cf = cityFilter.trim().toLowerCase();
+      if (!o.lead.city?.toLowerCase().includes(cf)) return false;
     }
 
     // 7. Division Filter
-    if (divisionFilter) {
-      if (!o.lead.division || !o.lead.division.toLowerCase().includes(divisionFilter.toLowerCase())) return false;
+    if (divisionFilter.trim()) {
+      const df = divisionFilter.trim().toLowerCase();
+      if (!o.lead.division || !o.lead.division.toLowerCase().includes(df)) return false;
     }
     
     return true;
@@ -1382,64 +1241,76 @@ export default function OperationsPage() {
             />
           </div>
 
-          {/* Custom State Dropdown */}
-          <div className="w-full sm:w-auto min-w-[140px]">
-            <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">State Name</label>
-            <CustomDropdown
-              options={[
-                { value: '', label: 'All States' },
-                ...Object.keys(stateCitiesMap).map(state => ({ value: state, label: state }))
-              ]}
-              value={stateFilter}
-              onChange={(val) => {
-                setStateFilter(val);
-                if (val && stateCitiesMap[val] && !stateCitiesMap[val].includes(cityFilter)) {
-                  setCityFilter('');
-                  setDivisionFilter('');
-                }
-              }}
-              className="w-full"
-              placeholder="All States"
-            />
+          {/* State Text Input */}
+          <div className="w-full sm:w-auto min-w-[130px]">
+            <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">State</label>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Filter State..."
+                value={stateFilter}
+                onChange={(e) => setStateFilter(e.target.value)}
+                className="w-full pl-3 pr-7 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--border-color)] placeholder-slate-500 outline-none"
+              />
+              {stateFilter && (
+                <button
+                  type="button"
+                  onClick={() => setStateFilter('')}
+                  className="absolute right-2 top-2.5 text-[var(--text-muted)] hover:text-white"
+                  title="Clear State"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Custom City Dropdown */}
-          <div className="w-full sm:w-auto min-w-[140px]">
-            <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">City Name</label>
-            <CustomDropdown
-              options={[
-                { value: '', label: 'All Cities' },
-                ...(stateFilter && stateCitiesMap[stateFilter]
-                  ? stateCitiesMap[stateFilter]
-                  : Array.from(new Set(Object.values(stateCitiesMap).flat()))
-                ).map(city => ({ value: city, label: city }))
-              ]}
-              value={cityFilter}
-              onChange={(val) => {
-                setCityFilter(val);
-                setDivisionFilter('');
-              }}
-              className="w-full"
-              placeholder="All Cities"
-            />
+          {/* City Text Input */}
+          <div className="w-full sm:w-auto min-w-[130px]">
+            <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">City</label>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Filter City..."
+                value={cityFilter}
+                onChange={(e) => setCityFilter(e.target.value)}
+                className="w-full pl-3 pr-7 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--border-color)] placeholder-slate-500 outline-none"
+              />
+              {cityFilter && (
+                <button
+                  type="button"
+                  onClick={() => setCityFilter('')}
+                  className="absolute right-2 top-2.5 text-[var(--text-muted)] hover:text-white"
+                  title="Clear City"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Custom Division Dropdown (Only opens when City is selected) */}
-          <div className="w-full sm:w-auto min-w-[150px]">
-            <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">
-              Division / Area
-            </label>
-            <CustomDropdown
-              options={[
-                { value: '', label: 'All Divisions' },
-                ...availableDivisions.map((div) => ({ value: div, label: div }))
-              ]}
-              value={divisionFilter}
-              onChange={(val) => setDivisionFilter(val)}
-              disabled={!cityFilter}
-              placeholder={cityFilter ? 'All Divisions' : 'Select City First'}
-              className="w-full"
-            />
+          {/* Division Text Input */}
+          <div className="w-full sm:w-auto min-w-[140px]">
+            <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Division / Area</label>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Filter Division..."
+                value={divisionFilter}
+                onChange={(e) => setDivisionFilter(e.target.value)}
+                className="w-full pl-3 pr-7 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--border-color)] placeholder-slate-500 outline-none"
+              />
+              {divisionFilter && (
+                <button
+                  type="button"
+                  onClick={() => setDivisionFilter('')}
+                  className="absolute right-2 top-2.5 text-[var(--text-muted)] hover:text-white"
+                  title="Clear Division"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
