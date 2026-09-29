@@ -634,6 +634,7 @@ export default function LeadsPage() {
     if (tlFilter) count += tlFilter.split(',').filter(Boolean).length;
     if (managerFilter) count += managerFilter.split(',').filter(Boolean).length;
     if (cityFilter) count++;
+    if (divisionFilter) count++;
     if (stateFilter) count++;
     if (dateFromFilter) count++;
     if (dateToFilter) count++;
@@ -762,6 +763,7 @@ export default function LeadsPage() {
       const savedConnection = localStorage.getItem(`leads_filter_${userId}_connection`);
       const savedSource = localStorage.getItem(`leads_filter_${userId}_source`);
       const savedCity = localStorage.getItem(`leads_filter_${userId}_city`);
+      const savedDivision = localStorage.getItem(`leads_filter_${userId}_division`);
       const savedState = localStorage.getItem(`leads_filter_${userId}_state`);
       const savedDateFrom = localStorage.getItem(`leads_filter_${userId}_dateFrom`);
       const savedDateTo = localStorage.getItem(`leads_filter_${userId}_dateTo`);
@@ -778,6 +780,7 @@ export default function LeadsPage() {
       if (savedConnection !== null) setConnectionFilter(savedConnection);
       if (savedSource !== null) setSourceFilter(savedSource);
       if (savedCity !== null) setCityFilter(savedCity);
+      if (savedDivision !== null) setDivisionFilter(savedDivision);
       if (savedState !== null) setStateFilter(savedState);
       if (savedDateFrom !== null) setDateFromFilter(savedDateFrom);
       if (savedDateTo !== null) setDateToFilter(savedDateTo);
@@ -809,6 +812,7 @@ export default function LeadsPage() {
       localStorage.setItem(`leads_filter_${userId}_connection`, connectionFilter);
       localStorage.setItem(`leads_filter_${userId}_source`, sourceFilter);
       localStorage.setItem(`leads_filter_${userId}_city`, cityFilter);
+      localStorage.setItem(`leads_filter_${userId}_division`, divisionFilter);
       localStorage.setItem(`leads_filter_${userId}_state`, stateFilter);
       localStorage.setItem(`leads_filter_${userId}_dateFrom`, dateFromFilter);
       localStorage.setItem(`leads_filter_${userId}_dateTo`, dateToFilter);
@@ -817,14 +821,14 @@ export default function LeadsPage() {
       localStorage.setItem(`leads_filter_${userId}_isAdvancedActive`, isAdvancedFilterActive ? 'true' : 'false');
       localStorage.setItem(`leads_filter_${userId}_advancedQueryObj`, advancedQueryObj ? JSON.stringify(advancedQueryObj) : '');
     }
-  }, [search, statusFilter, consultantFilter, tlFilter, managerFilter, connectionFilter, sourceFilter, cityFilter, stateFilter, dateFromFilter, dateToFilter, unassignedFilter, page, filtersLoaded, user, isAdvancedFilterActive, advancedQueryObj]);
+  }, [search, statusFilter, consultantFilter, tlFilter, managerFilter, connectionFilter, sourceFilter, cityFilter, divisionFilter, stateFilter, dateFromFilter, dateToFilter, unassignedFilter, page, filtersLoaded, user, isAdvancedFilterActive, advancedQueryObj]);
 
   // Refetch leads when filters change
   useEffect(() => {
     if (user && filtersLoaded) {
       fetchLeads();
     }
-  }, [page, limit, statusFilter, consultantFilter, tlFilter, managerFilter, connectionFilter, sourceFilter, cityFilter, stateFilter, dateFromFilter, dateToFilter, unassignedFilter, user, filtersLoaded, debouncedSearch, isAdvancedFilterActive, advancedQueryObj]);
+  }, [page, limit, statusFilter, consultantFilter, tlFilter, managerFilter, connectionFilter, sourceFilter, cityFilter, divisionFilter, stateFilter, dateFromFilter, dateToFilter, unassignedFilter, user, filtersLoaded, debouncedSearch, isAdvancedFilterActive, advancedQueryObj]);
 
   // Handle Search Input (with manual or debounce enter)
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -846,6 +850,7 @@ export default function LeadsPage() {
     setConnectionFilter('');
     setSourceFilter('');
     setCityFilter('');
+    setDivisionFilter('');
     setStateFilter('');
     setDateFromFilter('');
     setDateToFilter('');
@@ -2476,7 +2481,7 @@ export default function LeadsPage() {
                   { id: 'stages', label: 'Pipeline Stages', icon: Layers, count: statusFilter ? statusFilter.split(',').filter(Boolean).length : 0 },
                   { id: 'connection', label: 'Connection Type', icon: Zap, count: connectionFilter ? connectionFilter.split(',').filter(Boolean).length : 0 },
                   { id: 'sources', label: 'Lead Source', icon: Tag, count: sourceFilter ? sourceFilter.split(',').filter(Boolean).length : 0 },
-                  { id: 'location', label: 'City & Location', icon: MapPin, count: (cityFilter ? 1 : 0) + (stateFilter ? 1 : 0) },
+                  { id: 'location', label: 'City & Location', icon: MapPin, count: (cityFilter ? 1 : 0) + (divisionFilter ? 1 : 0) + (stateFilter ? 1 : 0) },
                   { id: 'team', label: 'Team Allocation', icon: Users, count: (consultantFilter ? 1 : 0) + (tlFilter ? 1 : 0) + (managerFilter ? 1 : 0) },
                   { id: 'dates', label: 'Created Date', icon: Calendar, count: (dateFromFilter ? 1 : 0) + (dateToFilter ? 1 : 0) },
                 ].map((tab) => {

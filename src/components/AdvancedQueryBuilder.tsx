@@ -37,6 +37,7 @@ const FIELD_OPTIONS = [
   { value: 'address', label: 'Address', type: 'text' },
   { value: 'pinCode', label: 'PIN Code', type: 'text' },
   { value: 'city', label: 'City', type: 'text' },
+  { value: 'division', label: 'Division / Area', type: 'text' },
   { value: 'state', label: 'State', type: 'text' },
   { value: 'leadSource', label: 'Lead Source', type: 'dropdown', options: [
       { value: 'meta', label: 'Meta' },
