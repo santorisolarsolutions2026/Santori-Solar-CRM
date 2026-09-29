@@ -938,6 +938,49 @@ export default function AuthenticatedLayout({
 
 
 
+        {/* Territory Map Widget (Admin Only) */}
+        {(user?.role === 'admin' || user?.role === 'director' || user?.department?.name === 'IT') && (
+          <div className={`border-t border-[var(--border-color)] ${sidebarCollapsed ? 'p-2' : 'px-3 py-2.5'}`}>
+            {sidebarCollapsed ? (
+              <Link
+                href="/leads-map"
+                title="Territory Map (Admin Reference)"
+                className={`w-10 h-10 mx-auto flex items-center justify-center rounded-lg transition-all ${
+                  pathname === '/leads-map'
+                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                    : 'bg-[#161b22] hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800'
+                }`}
+              >
+                <Globe className="w-4 h-4 text-emerald-400" />
+              </Link>
+            ) : (
+              <Link
+                href="/leads-map"
+                className={`group flex items-center justify-between p-2.5 rounded-xl border transition-all ${
+                  pathname === '/leads-map'
+                    ? 'bg-emerald-500/15 border-emerald-500/30 text-white shadow-xs'
+                    : 'bg-[#161b22] hover:bg-slate-800/80 border-slate-800/90 text-slate-300 hover:text-white'
+                }`}
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 group-hover:scale-105 transition-transform shrink-0">
+                    <Globe className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                      Territory Map
+                    </div>
+                    <div className="text-[10px] text-[var(--text-muted)] truncate">
+                      Geo Distribution & Insights
+                    </div>
+                  </div>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all shrink-0" />
+              </Link>
+            )}
+          </div>
+        )}
+
         {/* Logout */}
         <div className={`border-t border-[var(--border-color)] ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
           <button
@@ -1083,6 +1126,36 @@ export default function AuthenticatedLayout({
             </nav>
 
 
+
+            {/* Territory Map Widget (Mobile - Admin Only) */}
+            {(user?.role === 'admin' || user?.role === 'director' || user?.department?.name === 'IT') && (
+              <div className="px-4 py-2 border-t border-[var(--border-color)]">
+                <Link
+                  href="/leads-map"
+                  onClick={() => setSidebarOpen(false)}
+                  className={`group flex items-center justify-between p-2.5 rounded-xl border transition-all ${
+                    pathname === '/leads-map'
+                      ? 'bg-emerald-500/15 border-emerald-500/30 text-white shadow-xs'
+                      : 'bg-[#161b22] hover:bg-slate-800/80 border-slate-800/90 text-slate-300 hover:text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 shrink-0">
+                      <Globe className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">
+                        Territory Map
+                      </div>
+                      <div className="text-[10px] text-[var(--text-muted)] truncate">
+                        Geo Distribution & Insights
+                      </div>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-emerald-400 transition-all shrink-0" />
+                </Link>
+              </div>
+            )}
 
             <div className="p-4 border-t border-[var(--border-color)]">
               <button
