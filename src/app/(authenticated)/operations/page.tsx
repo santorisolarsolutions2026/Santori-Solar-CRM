@@ -74,6 +74,7 @@ interface Order {
     customerName: string;
     mobile: string;
     city: string;
+    division?: string | null;
     state: string;
     address: string;
     pinCode: string;
@@ -130,6 +131,7 @@ export default function OperationsPage() {
 
   const [stateFilter, setStateFilter] = useState('');
   const [cityFilter, setCityFilter] = useState('');
+  const [divisionFilter, setDivisionFilter] = useState('');
   const [stateCitiesMap, setStateCitiesMap] = useState<Record<string, string[]>>({});
   const [dateShortcut, setDateShortcut] = useState('all');
 
@@ -1164,6 +1166,11 @@ export default function OperationsPage() {
     if (cityFilter) {
       if (o.lead.city?.toLowerCase() !== cityFilter.toLowerCase()) return false;
     }
+
+    // 7. Division Filter
+    if (divisionFilter) {
+      if (!o.lead.division || !o.lead.division.toLowerCase().includes(divisionFilter.toLowerCase())) return false;
+    }
     
     return true;
   });
@@ -1284,6 +1291,29 @@ export default function OperationsPage() {
               className="w-full"
               placeholder="All Cities"
             />
+          </div>
+
+          {/* Custom Division Filter */}
+          <div className="w-full sm:w-auto min-w-[140px]">
+            <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Division / Area</label>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="e.g. Bhelupur, Jhunsi..."
+                value={divisionFilter}
+                onChange={(e) => setDivisionFilter(e.target.value)}
+                className="w-full pl-3 pr-7 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--border-color)] placeholder-slate-500 outline-none"
+              />
+              {divisionFilter && (
+                <button
+                  type="button"
+                  onClick={() => setDivisionFilter('')}
+                  className="absolute right-2 top-2.5 text-[var(--text-muted)] hover:text-white"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -1418,8 +1448,8 @@ export default function OperationsPage() {
                               )}
                             </Link>
                             <p className="text-[10px] text-[var(--text-muted)] flex items-center gap-1 mt-1 truncate max-w-[250px]">
-                              <MapPin className="w-3 h-3" />
-                              <span>{order.lead.address}, {order.lead.city}</span>
+                              <MapPin className="w-3 h-3 text-emerald-500" />
+                              <span>{order.lead.address}{order.lead.division ? ` (${order.lead.division})` : ''}, {order.lead.city}</span>
                             </p>
                           </div>
                         </td>
@@ -1564,7 +1594,7 @@ export default function OperationsPage() {
                         )}
                       </Link>
                       <p className="text-xs text-[var(--text-secondary)] mt-0.5 flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5 text-emerald-500" /> {order.lead.address}, {order.lead.city}
+                        <MapPin className="w-3.5 h-3.5 text-emerald-500" /> {order.lead.address}{order.lead.division ? ` (${order.lead.division})` : ''}, {order.lead.city}
                       </p>
                     </div>
 

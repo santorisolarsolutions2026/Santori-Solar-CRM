@@ -132,6 +132,7 @@ export async function GET(req: Request) {
             customerName: true,
             mobile: true,
             city: true,
+            division: true,
             state: true,
             address: true,
             pinCode: true,

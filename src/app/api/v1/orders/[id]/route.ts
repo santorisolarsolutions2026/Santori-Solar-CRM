@@ -70,6 +70,7 @@ export async function GET(
             customerName: true,
             mobile: true,
             city: true,
+            division: true,
             state: true,
             address: true,
             pinCode: true,
