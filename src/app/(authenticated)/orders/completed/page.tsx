@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '@/context/AuthContext';
 import {
   PackageCheck,
@@ -107,6 +108,11 @@ export default function CompletedOrdersPage() {
   const [orders, setOrders] = useState<CompletedOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<CompletedOrder | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   if (authLoading) {
     return (
@@ -138,7 +144,7 @@ export default function CompletedOrdersPage() {
   const [endDate, setEndDate] = useState('');
   const [selectedMemberFilter, setSelectedMemberFilter] = useState('');
   const [teamMembers, setTeamMembers] = useState<{ id: number; name: string; department?: { name: string } }[]>([]);
-  
+
   const [stateFilter, setStateFilter] = useState('');
   const [cityFilter, setCityFilter] = useState('');
   const [divisionFilter, setDivisionFilter] = useState('');
@@ -149,6 +155,35 @@ export default function CompletedOrdersPage() {
       fetchTeamMembers();
     }
   }, [user]);
+
+  // Lock background scroll when Order Detail Modal is open
+  useEffect(() => {
+    if (selectedOrder) {
+      document.body.style.overflow = 'hidden';
+      const mainEl = document.querySelector('main');
+      if (mainEl) mainEl.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+      const mainEl = document.querySelector('main');
+      if (mainEl) mainEl.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      const mainEl = document.querySelector('main');
+      if (mainEl) mainEl.style.overflow = '';
+    };
+  }, [selectedOrder]);
+
+  // Escape key handler to close modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && selectedOrder) {
+        setSelectedOrder(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedOrder]);
 
   const applyDateShortcut = (shortcut: string) => {
     setDateShortcut(shortcut);
@@ -288,26 +323,23 @@ export default function CompletedOrdersPage() {
           <div className="flex items-center bg-[var(--bg-main)] p-1 rounded-xl border border-[var(--border-color)] text-xs">
             <button
               onClick={() => setScope('team')}
-              className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
-                scope === 'team' ? 'bg-emerald-600 text-white shadow' : 'text-[var(--text-secondary)] hover:text-white'
-              }`}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${scope === 'team' ? 'bg-emerald-600 text-white shadow' : 'text-[var(--text-secondary)] hover:text-white'
+                }`}
             >
               My Team's Orders
             </button>
             <button
               onClick={() => setScope('my')}
-              className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
-                scope === 'my' ? 'bg-emerald-600 text-white shadow' : 'text-[var(--text-secondary)] hover:text-white'
-              }`}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${scope === 'my' ? 'bg-emerald-600 text-white shadow' : 'text-[var(--text-secondary)] hover:text-white'
+                }`}
             >
               My Assigned
             </button>
             {(user?.role === 'admin' || user?.role === 'director' || user?.department?.name === 'IT') && (
               <button
                 onClick={() => setScope('all')}
-                className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
-                  scope === 'all' ? 'bg-emerald-600 text-white shadow' : 'text-[var(--text-secondary)] hover:text-white'
-                }`}
+                className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${scope === 'all' ? 'bg-emerald-600 text-white shadow' : 'text-[var(--text-secondary)] hover:text-white'
+                  }`}
               >
                 All System Orders
               </button>
@@ -556,127 +588,155 @@ export default function CompletedOrdersPage() {
       </div>
 
       {/* Comprehensive Order Detail Modal */}
-      {selectedOrder && (
-        <div className="fixed inset-0 z-50 bg-[var(--bg-main)] backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl space-y-6 p-6 md:p-8 relative">
-            <button
-              onClick={() => setSelectedOrder(null)}
-              className="absolute top-6 right-6 p-2 bg-[var(--bg-card)] hover:bg-slate-700 rounded-full text-[var(--text-secondary)] hover:text-white transition-all cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="flex items-center gap-4 border-b border-[var(--border-color)] pb-5">
-              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
-                <CheckCircle2 className="w-8 h-8 text-emerald-400" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-bold text-white">{selectedOrder.orderCode}</h2>
-                  <span className="px-2.5 py-0.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-[10px] font-bold uppercase rounded-full">Completed & Commissioned</span>
+      {isMounted && selectedOrder && createPortal(
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedOrder(null);
+          }}
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md px-4 py-6 overflow-y-auto"
+        >
+          <div className="w-full max-w-4xl bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh] my-auto">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-[var(--border-color)] bg-[var(--bg-card)]/40 flex justify-between items-center shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                  <PackageCheck className="w-5 h-5 text-emerald-400" />
                 </div>
-                <p className="text-xs text-[var(--text-secondary)]">Lead Reference: {selectedOrder.lead.leadCode} • Customer: {selectedOrder.lead.customerName}</p>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">
+                      Order Details: {selectedOrder.orderCode}
+                    </h3>
+                    <span className="px-2.5 py-0.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-[10px] font-bold uppercase rounded-full">
+                      Completed & Commissioned
+                    </span>
+                  </div>
+                  <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+                    Lead: {selectedOrder.lead.leadCode} • Customer: {selectedOrder.lead.customerName}
+                  </p>
+                </div>
               </div>
+              <button
+                onClick={() => setSelectedOrder(null)}
+                className="text-[var(--text-secondary)] hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
+                title="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            {/* Grid Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-              {/* Customer Info */}
-              <div className="bg-[var(--bg-main)] p-4 rounded-2xl border border-[var(--border-color)] space-y-2">
-                <h4 className="font-bold text-emerald-400 uppercase font-mono text-[10px]">Customer & Site Info</h4>
-                <div className="text-white font-semibold">{selectedOrder.lead.customerName}</div>
-                <div className="text-[var(--text-secondary)]">Phone: {selectedOrder.lead.mobile}</div>
-                <div className="text-[var(--text-secondary)]">
-                  Address: {selectedOrder.lead.address}
-                  {selectedOrder.lead.division ? `, ${selectedOrder.lead.division}` : ''}, {selectedOrder.lead.city}, {selectedOrder.lead.state} - {selectedOrder.lead.pinCode}
+            {/* Modal Content - Scrollable */}
+            <div className="p-6 space-y-6 overflow-y-auto flex-1">
+              {/* Grid Overview */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                {/* Customer Info */}
+                <div className="bg-[var(--bg-main)] p-4 rounded-xl border border-[var(--border-color)] space-y-2">
+                  <h4 className="font-bold text-emerald-400 uppercase font-mono text-[10px]">Customer & Site Info</h4>
+                  <div className="text-[var(--text-primary)] font-semibold text-sm">{selectedOrder.lead.customerName}</div>
+                  <div className="text-[var(--text-secondary)]">Phone: {selectedOrder.lead.mobile}</div>
+                  <div className="text-[var(--text-secondary)] leading-relaxed">
+                    Address: {selectedOrder.lead.address}
+                    {selectedOrder.lead.division ? `, ${selectedOrder.lead.division}` : ''}, {selectedOrder.lead.city}, {selectedOrder.lead.state} - {selectedOrder.lead.pinCode}
+                  </div>
+                  {selectedOrder.lead.discomName && <div className="text-[var(--text-secondary)]">Discom: {selectedOrder.lead.discomName}</div>}
                 </div>
-                {selectedOrder.lead.discomName && <div className="text-[var(--text-secondary)]">Discom: {selectedOrder.lead.discomName}</div>}
+
+                {/* System Info */}
+                <div className="bg-[var(--bg-main)] p-4 rounded-xl border border-[var(--border-color)] space-y-2">
+                  <h4 className="font-bold text-emerald-400 uppercase font-mono text-[10px]">Solar System Specification</h4>
+                  <div className="text-[var(--text-primary)] font-semibold text-sm">{selectedOrder.systemSizeKw} kW Solar Plant</div>
+                  <div className="text-[var(--text-secondary)]">Type: {selectedOrder.clientType.replace('_', ' ').toUpperCase()}</div>
+                  <div className="text-[var(--text-secondary)]">Connection #: {selectedOrder.connectionNumber}</div>
+                  <div className="text-[var(--text-secondary)]">Subsidy: {selectedOrder.subsidyApplicable ? `Applicable (₹${(selectedOrder.subsidyAmount || 0).toLocaleString()})` : 'Not Applicable'}</div>
+                </div>
+
+                {/* Stakeholders */}
+                <div className="bg-[var(--bg-main)] p-4 rounded-xl border border-[var(--border-color)] space-y-2">
+                  <h4 className="font-bold text-emerald-400 uppercase font-mono text-[10px]">Department Handlers</h4>
+                  <div className="text-[var(--text-primary)]"><span className="text-[var(--text-muted)]">Sales Member:</span> {selectedOrder.submittedBy?.name || '-'}</div>
+                  <div className="text-[var(--text-primary)]"><span className="text-[var(--text-muted)]">Finance Member:</span> {selectedOrder.assignedFinance?.name || selectedOrder.financeProcessedBy?.name || '-'}</div>
+                  <div className="text-[var(--text-primary)]"><span className="text-[var(--text-muted)]">Operations Member:</span> {selectedOrder.assignedOps?.name || '-'}</div>
+                </div>
               </div>
 
-              {/* System Info */}
-              <div className="bg-[var(--bg-main)] p-4 rounded-2xl border border-[var(--border-color)] space-y-2">
-                <h4 className="font-bold text-emerald-400 uppercase font-mono text-[10px]">Solar System Specification</h4>
-                <div className="text-white font-semibold">{selectedOrder.systemSizeKw} kW Solar Plant</div>
-                <div className="text-[var(--text-secondary)]">Type: {selectedOrder.clientType.replace('_', ' ').toUpperCase()}</div>
-                <div className="text-[var(--text-secondary)]">Connection #: {selectedOrder.connectionNumber}</div>
-                <div className="text-[var(--text-secondary)]">Subsidy: {selectedOrder.subsidyApplicable ? `Applicable (₹${selectedOrder.subsidyAmount || 0})` : 'Not Applicable'}</div>
+              {/* Financial Ledger Section */}
+              <div className="bg-[var(--bg-main)] p-5 rounded-xl border border-[var(--border-color)] space-y-4">
+                <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
+                  <h4 className="font-bold text-[var(--text-primary)] text-sm flex items-center gap-2">
+                    <CreditCard className="w-4 h-4 text-emerald-400" />
+                    Financial Ledger & Payment History
+                  </h4>
+                  <div className="text-xs font-mono">
+                    <span className="text-[var(--text-secondary)]">Total Value: </span>
+                    <span className="text-emerald-400 font-bold">₹{selectedOrder.totalValue.toLocaleString()}</span>
+                  </div>
+                </div>
+
+                {selectedOrder.payments && selectedOrder.payments.length > 0 ? (
+                  <div className="space-y-2">
+                    {selectedOrder.payments.map(p => (
+                      <div key={p.id} className="p-3 bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)] flex items-center justify-between text-xs">
+                        <div>
+                          <span className="font-bold text-[var(--text-primary)]">₹{p.amount.toLocaleString()}</span>
+                          <span className="text-[var(--text-secondary)] ml-2 font-mono text-[10px] uppercase">[{p.paymentMethod}]</span>
+                          {p.transactionRef && <span className="text-[var(--text-muted)] ml-2 text-[10px]">Ref: {p.transactionRef}</span>}
+                        </div>
+                        <div className="text-[10px] text-[var(--text-secondary)]">
+                          Recorded by {p.recordedBy?.name} on {new Date(p.paymentDate).toLocaleDateString()}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-xs text-[var(--text-muted)] italic">No payments recorded.</div>
+                )}
               </div>
 
-              {/* Stakeholders */}
-              <div className="bg-[var(--bg-main)] p-4 rounded-2xl border border-[var(--border-color)] space-y-2">
-                <h4 className="font-bold text-emerald-400 uppercase font-mono text-[10px]">Department Handlers</h4>
-                <div className="text-[var(--text-primary)]"><span className="text-[var(--text-muted)]">Sales Member:</span> {selectedOrder.submittedBy?.name || '-'}</div>
-                <div className="text-[var(--text-primary)]"><span className="text-[var(--text-muted)]">Finance Member:</span> {selectedOrder.assignedFinance?.name || selectedOrder.financeProcessedBy?.name || '-'}</div>
-                <div className="text-[var(--text-primary)]"><span className="text-[var(--text-muted)]">Operations Member:</span> {selectedOrder.assignedOps?.name || '-'}</div>
-              </div>
-            </div>
-
-            {/* Financial Ledger Section */}
-            <div className="bg-[var(--bg-main)] p-5 rounded-2xl border border-[var(--border-color)] space-y-4">
-              <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
-                <h4 className="font-bold text-white text-sm flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-emerald-400" />
-                  Financial Ledger & Payment History
+              {/* Operations Lifecycle Milestones */}
+              <div className="bg-[var(--bg-main)] p-5 rounded-xl border border-[var(--border-color)] space-y-4">
+                <h4 className="font-bold text-[var(--text-primary)] text-sm flex items-center gap-2 border-b border-[var(--border-color)] pb-3">
+                  <Wrench className="w-4 h-4 text-purple-400" />
+                  Operations Lifecycle Milestones
                 </h4>
-                <div className="text-xs font-mono">
-                  <span className="text-[var(--text-secondary)]">Total Value: </span>
-                  <span className="text-emerald-400 font-bold">₹{selectedOrder.totalValue.toLocaleString()}</span>
-                </div>
-              </div>
 
-              {selectedOrder.payments && selectedOrder.payments.length > 0 ? (
-                <div className="space-y-2">
-                  {selectedOrder.payments.map(p => (
-                    <div key={p.id} className="p-3 bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)] flex items-center justify-between text-xs">
-                      <div>
-                        <span className="font-bold text-white">₹{p.amount.toLocaleString()}</span>
-                        <span className="text-[var(--text-secondary)] ml-2 font-mono text-[10px] uppercase">[{p.paymentMethod}]</span>
-                        {p.transactionRef && <span className="text-[var(--text-muted)] ml-2 text-[10px]">Ref: {p.transactionRef}</span>}
-                      </div>
-                      <div className="text-[10px] text-[var(--text-secondary)]">
-                        Recorded by {p.recordedBy?.name} on {new Date(p.paymentDate).toLocaleDateString()}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-xs text-[var(--text-muted)] italic">No payments recorded.</div>
-              )}
-            </div>
-
-            {/* Operations Lifecycle Milestones */}
-            <div className="bg-[var(--bg-main)] p-5 rounded-2xl border border-[var(--border-color)] space-y-4">
-              <h4 className="font-bold text-white text-sm flex items-center gap-2 border-b border-[var(--border-color)] pb-3">
-                <Wrench className="w-4 h-4 text-purple-400" />
-                Operations Lifecycle Milestones
-              </h4>
-
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center text-xs">
-                <div className="p-3 bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)]">
-                  <span className="text-[10px] text-[var(--text-secondary)] block font-mono">1. Delivery</span>
-                  <span className="font-bold text-emerald-400 block mt-1">Delivered</span>
-                </div>
-                <div className="p-3 bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)]">
-                  <span className="text-[10px] text-[var(--text-secondary)] block font-mono">2. Installation</span>
-                  <span className="font-bold text-emerald-400 block mt-1">Installed</span>
-                </div>
-                <div className="p-3 bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)]">
-                  <span className="text-[10px] text-[var(--text-secondary)] block font-mono">3. Metering</span>
-                  <span className="font-bold text-emerald-400 block mt-1">Metered</span>
-                </div>
-                <div className="p-3 bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)]">
-                  <span className="text-[10px] text-[var(--text-secondary)] block font-mono">4. Commissioning</span>
-                  <span className="font-bold text-emerald-400 block mt-1">Commissioned</span>
-                </div>
-                <div className="p-3 bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)]">
-                  <span className="text-[10px] text-[var(--text-secondary)] block font-mono">5. Subsidy</span>
-                  <span className="font-bold text-emerald-400 block mt-1">{selectedOrder.isSubsidyApplied ? 'Applied' : 'Complete'}</span>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center text-xs">
+                  <div className="p-3 bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)]">
+                    <span className="text-[10px] text-[var(--text-secondary)] block font-mono">1. Delivery</span>
+                    <span className="font-bold text-emerald-400 block mt-1">Delivered</span>
+                  </div>
+                  <div className="p-3 bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)]">
+                    <span className="text-[10px] text-[var(--text-secondary)] block font-mono">2. Installation</span>
+                    <span className="font-bold text-emerald-400 block mt-1">Installed</span>
+                  </div>
+                  <div className="p-3 bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)]">
+                    <span className="text-[10px] text-[var(--text-secondary)] block font-mono">3. Metering</span>
+                    <span className="font-bold text-emerald-400 block mt-1">Metered</span>
+                  </div>
+                  <div className="p-3 bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)]">
+                    <span className="text-[10px] text-[var(--text-secondary)] block font-mono">4. Commissioning</span>
+                    <span className="font-bold text-emerald-400 block mt-1">Commissioned</span>
+                  </div>
+                  <div className="p-3 bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)]">
+                    <span className="text-[10px] text-[var(--text-secondary)] block font-mono">5. Subsidy</span>
+                    <span className="font-bold text-emerald-400 block mt-1">{selectedOrder.isSubsidyApplied ? 'Applied' : 'Complete'}</span>
+                  </div>
                 </div>
               </div>
             </div>
 
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-[var(--border-color)] bg-[var(--bg-card)]/10 flex justify-end gap-3 shrink-0">
+              <button
+                type="button"
+                onClick={() => setSelectedOrder(null)}
+                className="py-2 px-5 bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-lg font-bold text-xs cursor-pointer transition-colors"
+              >
+                Close
+              </button>
+            </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

@@ -42,6 +42,14 @@ export default function RootLayout({
       className={`${plusJakartaSans.variable} ${geistMono.variable} h-full antialiased dark`}
       suppressHydrationWarning
     >
+      <head>
+        <link rel="preconnect" href="https://mt0.google.com" crossOrigin="" />
+        <link rel="preconnect" href="https://mt1.google.com" crossOrigin="" />
+        <link rel="preconnect" href="https://mt2.google.com" crossOrigin="" />
+        <link rel="preconnect" href="https://mt3.google.com" crossOrigin="" />
+        <link rel="dns-prefetch" href="https://mt0.google.com" />
+        <link rel="dns-prefetch" href="https://mt1.google.com" />
+      </head>
       <body className="min-h-full flex flex-col">
         <AuthProvider>{children}</AuthProvider>
         <SpeedInsights />

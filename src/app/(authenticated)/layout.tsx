@@ -938,8 +938,8 @@ export default function AuthenticatedLayout({
 
 
 
-        {/* Territory Map Widget (Admin Only) */}
-        {(user?.role === 'admin' || user?.role === 'director' || user?.department?.name === 'IT') && (
+        {/* Territory Map Widget (Admin & Sales Management) */}
+        {(user?.role === 'admin' || user?.role === 'director' || user?.role === 'sales_head' || (user?.role === 'manager' && (user?.department?.name === 'Sales' || !user?.department?.name)) || user?.department?.name === 'IT' || hasPermission('sales:lead_assign')) && (
           <div className={`border-t border-[var(--border-color)] ${sidebarCollapsed ? 'p-2' : 'px-3 py-2.5'}`}>
             {sidebarCollapsed ? (
               <Link
@@ -947,7 +947,7 @@ export default function AuthenticatedLayout({
                 title="Territory Map (Admin Reference)"
                 className={`w-10 h-10 mx-auto flex items-center justify-center rounded-lg transition-all ${
                   pathname === '/leads-map'
-                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                    ? 'bg-emerald-500/20 text-emerald-400 font-bold'
                     : 'bg-[#161b22] hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800'
                 }`}
               >
@@ -956,18 +956,24 @@ export default function AuthenticatedLayout({
             ) : (
               <Link
                 href="/leads-map"
-                className={`group flex items-center justify-between p-2.5 rounded-xl border transition-all ${
+                className={`group flex items-center justify-between p-2.5 rounded-xl transition-all border ${
                   pathname === '/leads-map'
-                    ? 'bg-emerald-500/15 border-emerald-500/30 text-white shadow-xs'
+                    ? 'bg-emerald-500/15 text-emerald-300 border-l-2 border-emerald-500 border-t-0 border-r-0 border-b-0 pl-3 shadow-xs font-semibold'
                     : 'bg-[#161b22] hover:bg-slate-800/80 border-slate-800/90 text-slate-300 hover:text-white'
                 }`}
               >
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 group-hover:scale-105 transition-transform shrink-0">
+                  <div className={`p-1.5 rounded-lg transition-colors shrink-0 ${
+                    pathname === '/leads-map'
+                      ? 'bg-emerald-500/20 text-emerald-300'
+                      : 'bg-slate-800/80 text-slate-400 group-hover:text-emerald-400'
+                  }`}>
                     <Globe className="w-4 h-4" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                    <div className={`text-xs font-bold transition-colors ${
+                      pathname === '/leads-map' ? 'text-white' : 'text-slate-200 group-hover:text-white'
+                    }`}>
                       Territory Map
                     </div>
                     <div className="text-[10px] text-[var(--text-muted)] truncate">
@@ -975,7 +981,9 @@ export default function AuthenticatedLayout({
                     </div>
                   </div>
                 </div>
-                <ChevronRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all shrink-0" />
+                <ChevronRight className={`w-3.5 h-3.5 transition-all shrink-0 ${
+                  pathname === '/leads-map' ? 'text-emerald-400' : 'text-slate-500 group-hover:text-slate-300'
+                }`} />
               </Link>
             )}
           </div>
@@ -1127,24 +1135,30 @@ export default function AuthenticatedLayout({
 
 
 
-            {/* Territory Map Widget (Mobile - Admin Only) */}
-            {(user?.role === 'admin' || user?.role === 'director' || user?.department?.name === 'IT') && (
+            {/* Territory Map Widget (Mobile - Admin & Sales Management) */}
+            {(user?.role === 'admin' || user?.role === 'director' || user?.role === 'sales_head' || (user?.role === 'manager' && (user?.department?.name === 'Sales' || !user?.department?.name)) || user?.department?.name === 'IT' || hasPermission('sales:lead_assign')) && (
               <div className="px-4 py-2 border-t border-[var(--border-color)]">
                 <Link
                   href="/leads-map"
                   onClick={() => setSidebarOpen(false)}
-                  className={`group flex items-center justify-between p-2.5 rounded-xl border transition-all ${
+                  className={`group flex items-center justify-between p-2.5 rounded-xl transition-all border ${
                     pathname === '/leads-map'
-                      ? 'bg-emerald-500/15 border-emerald-500/30 text-white shadow-xs'
+                      ? 'bg-emerald-500/15 text-emerald-300 border-l-2 border-emerald-500 border-t-0 border-r-0 border-b-0 pl-3 shadow-xs font-semibold'
                       : 'bg-[#161b22] hover:bg-slate-800/80 border-slate-800/90 text-slate-300 hover:text-white'
                   }`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 shrink-0">
+                    <div className={`p-1.5 rounded-lg transition-colors shrink-0 ${
+                      pathname === '/leads-map'
+                        ? 'bg-emerald-500/20 text-emerald-300'
+                        : 'bg-slate-800/80 text-slate-400'
+                    }`}>
                       <Globe className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
-                      <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">
+                      <div className={`text-xs font-bold transition-colors ${
+                        pathname === '/leads-map' ? 'text-white' : 'text-slate-200'
+                      }`}>
                         Territory Map
                       </div>
                       <div className="text-[10px] text-[var(--text-muted)] truncate">
@@ -1152,7 +1166,7 @@ export default function AuthenticatedLayout({
                       </div>
                     </div>
                   </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-emerald-400 transition-all shrink-0" />
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                 </Link>
               </div>
             )}

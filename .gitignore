@@ -55,3 +55,8 @@ yarn-error.log*
 # lead spreadsheets and client lists
 /PrayagLeads.csv
 /input.xlsx
+
+# scratch and temporary test scripts
+/scratch/
+scratch/
+

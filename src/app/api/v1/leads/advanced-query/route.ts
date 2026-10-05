@@ -109,6 +109,14 @@ export async function POST(req: Request) {
               id: true,
               status: true,
               rejectionReason: true,
+              deliveryDate: true,
+              isDelivered: true,
+              installationDate: true,
+              isInstalled: true,
+              isMeterInstalled: true,
+              isCommissioned: true,
+              isSubsidyApplied: true,
+              subsidyApplicable: true,
               installationImages: {
                 select: { id: true, status: true }
               }

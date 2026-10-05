@@ -33,7 +33,7 @@ import {
   Download,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import UserSelect from '@/components/UserSelect';
 import CustomSelect from '@/components/CustomSelect';
 import { LeadTrackingTimeline } from '@/components/LeadTrackingTimeline';
@@ -67,6 +67,14 @@ interface Lead {
     id: number;
     status: string;
     rejectionReason?: string | null;
+    deliveryDate?: string | null;
+    isDelivered?: boolean;
+    installationDate?: string | null;
+    isInstalled?: boolean;
+    isMeterInstalled?: boolean;
+    isCommissioned?: boolean;
+    isSubsidyApplied?: boolean;
+    subsidyApplicable?: boolean;
     installationImages?: { id: number; status: string }[];
   } | null;
 }
@@ -88,7 +96,53 @@ const STAGE_BADGES: Record<string | number, { name: string; class: string }> = {
   13: { name: 'Sale Done', class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-bold' },
   14: { name: 'Meeting Cancelled', class: 'bg-red-800/10 text-red-400 border-red-800/20 font-bold' },
   'order_punched': { name: 'Order Punched', class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-bold' },
+  'awaiting_verification': { name: 'Awaiting Verification', class: 'bg-amber-500/10 text-amber-400 border-amber-500/20 font-bold' },
+  'finance_verified': { name: 'Finance Verified', class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-bold' },
+  'delivery_scheduled': { name: 'Delivery Scheduled', class: 'bg-blue-500/10 text-blue-400 border-blue-500/20 font-bold' },
+  'delivered': { name: 'Materials Delivered', class: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20 font-bold' },
+  'installation_scheduled': { name: 'Installation Scheduled', class: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20 font-bold' },
+  'installed': { name: 'Solar Installed', class: 'bg-teal-500/10 text-teal-400 border-teal-500/20 font-bold' },
+  'meter_installed': { name: 'Net Meter Installed', class: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20 font-bold' },
+  'commissioned': { name: 'Plant Commissioned', class: 'bg-emerald-600/15 text-emerald-300 border-emerald-500/30 font-bold' },
+  'subsidy_applied': { name: 'Subsidy Applied', class: 'bg-purple-500/10 text-purple-400 border-purple-500/20 font-bold' },
 };
+
+function getLeadEffectiveStage(lead: Lead): { key: string; name: string; class: string } {
+  if (lead.status === 13 && lead.order) {
+    if (lead.order.status === 'draft' && lead.order.rejectionReason) {
+      return { key: 'rejected', name: 'Order Rejected ⚠️', class: 'bg-rose-500/10 text-rose-450 border-rose-500/20 font-bold' };
+    }
+    if (lead.order.isSubsidyApplied) {
+      return { key: 'subsidy_applied', name: 'Subsidy Applied', class: STAGE_BADGES['subsidy_applied']?.class || 'bg-purple-500/10 text-purple-400 border-purple-500/20 font-bold' };
+    }
+    if (lead.order.isCommissioned) {
+      return { key: 'commissioned', name: 'Plant Commissioned', class: STAGE_BADGES['commissioned']?.class || 'bg-emerald-600/15 text-emerald-300 border-emerald-500/30 font-bold' };
+    }
+    if (lead.order.isMeterInstalled) {
+      return { key: 'meter_installed', name: 'Net Meter Installed', class: STAGE_BADGES['meter_installed']?.class || 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20 font-bold' };
+    }
+    if (lead.order.isInstalled) {
+      return { key: 'installed', name: 'Solar Installed', class: STAGE_BADGES['installed']?.class || 'bg-teal-500/10 text-teal-400 border-teal-500/20 font-bold' };
+    }
+    if (lead.order.installationDate && !lead.order.isInstalled) {
+      return { key: 'installation_scheduled', name: 'Installation Scheduled', class: STAGE_BADGES['installation_scheduled']?.class || 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20 font-bold' };
+    }
+    if (lead.order.isDelivered) {
+      return { key: 'delivered', name: 'Materials Delivered', class: STAGE_BADGES['delivered']?.class || 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20 font-bold' };
+    }
+    if (lead.order.deliveryDate && !lead.order.isDelivered) {
+      return { key: 'delivery_scheduled', name: 'Delivery Scheduled', class: STAGE_BADGES['delivery_scheduled']?.class || 'bg-blue-500/10 text-blue-400 border-blue-500/20 font-bold' };
+    }
+    if (lead.order.status === 'finance_verified') {
+      return { key: 'finance_verified', name: 'Finance Verified', class: STAGE_BADGES['finance_verified']?.class || 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-bold' };
+    }
+    if (lead.order.status === 'submitted') {
+      return { key: 'awaiting_verification', name: 'Awaiting Verification', class: STAGE_BADGES['awaiting_verification']?.class || 'bg-amber-500/10 text-amber-400 border-amber-500/20 font-bold' };
+    }
+    return { key: 'order_punched', name: 'Order Punched', class: STAGE_BADGES['order_punched']?.class || 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-bold' };
+  }
+  return STAGE_BADGES[lead.status] ? { key: String(lead.status), ...STAGE_BADGES[lead.status] } : { key: String(lead.status), name: `Stage ${lead.status}`, class: 'bg-slate-500/10 text-[var(--text-secondary)] border-slate-500/20' };
+}
 
 const CONNECTION_BADGES: Record<string, string> = {
   residential: 'bg-emerald-500/5 text-emerald-400 border-emerald-500/10',
@@ -185,6 +239,7 @@ export default function LeadsPage() {
   const [dateFromFilter, setDateFromFilter] = useState('');
   const [dateToFilter, setDateToFilter] = useState('');
   const [unassignedFilter, setUnassignedFilter] = useState(false);
+  const [localitiesFilter, setLocalitiesFilter] = useState('');
   const [isAdvancedFilterActive, setIsAdvancedFilterActive] = useState(false);
   const [advancedQueryObj, setAdvancedQueryObj] = useState<Group | null>(null);
   const [page, setPage] = useState(1);
@@ -197,9 +252,33 @@ export default function LeadsPage() {
   const [activeFilterTab, setActiveFilterTab] = useState<'stages' | 'connection' | 'sources' | 'location' | 'team' | 'dates'>('stages');
   const [mounted, setMounted] = useState(false);
 
+  const searchParams = useSearchParams();
+
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Handle incoming geo query parameters from Territory Map
+  useEffect(() => {
+    if (!searchParams) return;
+    const isAdvancedNav = searchParams.get('advanced') === 'true';
+    if (isAdvancedNav) {
+      setIsAdvancedFilterActive(true);
+      return;
+    }
+    const geoCity = searchParams.get('city');
+    const geoLocalities = searchParams.get('localities');
+    const geoUnassigned = searchParams.get('unassigned');
+
+    if (geoLocalities || geoCity) {
+      if (geoCity) setCityFilter(geoCity);
+      if (geoLocalities) setLocalitiesFilter(geoLocalities);
+      if (geoUnassigned === 'true') setUnassignedFilter(true);
+      setIsAdvancedFilterActive(false);
+      setAdvancedQueryObj(null);
+      setPage(1);
+    }
+  }, [searchParams]);
 
   // Track Lead Modal State
   const [trackingLead, setTrackingLead] = useState<any | null>(null);
@@ -246,6 +325,77 @@ export default function LeadsPage() {
   const [showBulkRevertFreshModal, setShowBulkRevertFreshModal] = useState(false);
   const [bulkRevertClearHistory, setBulkRevertClearHistory] = useState(true);
   const [bulkRevertRemark, setBulkRevertRemark] = useState('');
+
+  // PDF Export States
+  const [showPdfExportDropdown, setShowPdfExportDropdown] = useState(false);
+  const [pdfExporting, setPdfExporting] = useState(false);
+  const pdfDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (pdfDropdownRef.current && !pdfDropdownRef.current.contains(event.target as Node)) {
+        setShowPdfExportDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleExportPdf = async (options: { mode: 'selected' | '50' | '100' | 'all' }) => {
+    try {
+      setPdfExporting(true);
+      setShowPdfExportDropdown(false);
+
+      let payload: any = {};
+      if (options.mode === 'selected') {
+        if (selectedIds.length === 0) {
+          alert('Please select at least one lead from the checkboxes.');
+          setPdfExporting(false);
+          return;
+        }
+        payload.leadIds = selectedIds;
+      } else {
+        const limitNum = options.mode === '50' ? 50 : (options.mode === '100' ? 100 : Math.min(total, 250));
+        payload.limit = limitNum;
+        payload.filters = {
+          search: debouncedSearch || search,
+          status: statusFilter,
+          city: cityFilter,
+          division: divisionFilter,
+          unassigned: unassignedFilter,
+          connectionType: connectionFilter,
+          leadSource: sourceFilter,
+          consultantId: consultantFilter,
+        };
+      }
+
+      const res = await fetch('/api/v1/leads/export-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || 'Failed to generate PDF');
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Santori_Leads_Pipeline_${new Date().toISOString().slice(0, 10)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      console.error('Export PDF error:', err);
+      alert(err.message || 'Failed to download PDF.');
+    } finally {
+      setPdfExporting(false);
+    }
+  };
 
   const shouldSelectAllOnNextFetchRef = useRef(false);
 
@@ -639,6 +789,7 @@ export default function LeadsPage() {
     if (dateFromFilter) count++;
     if (dateToFilter) count++;
     if (unassignedFilter) count++;
+    if (localitiesFilter) count++;
     return count;
   };
 
@@ -705,6 +856,10 @@ export default function LeadsPage() {
           unassigned: unassignedFilter ? 'true' : 'false',
         });
 
+        if (localitiesFilter.trim()) {
+          params.append('localities', localitiesFilter.trim());
+        }
+
         const res = await fetch(`/api/v1/leads?${params.toString()}`, {
           signal: controller.signal
         });
@@ -755,6 +910,12 @@ export default function LeadsPage() {
   useEffect(() => {
     if (typeof window !== 'undefined' && user && !filtersLoaded) {
       const userId = user.id;
+      const isAdvancedNav = searchParams?.get('advanced') === 'true';
+      const geoCity = searchParams?.get('city');
+      const geoLocalities = searchParams?.get('localities');
+      const geoUnassigned = searchParams?.get('unassigned');
+      const hasGeoNav = Boolean((geoLocalities || geoCity) && !isAdvancedNav);
+
       const savedSearch = localStorage.getItem(`leads_filter_${userId}_search`);
       const savedStatus = localStorage.getItem(`leads_filter_${userId}_status`);
       const savedConsultant = localStorage.getItem(`leads_filter_${userId}_consultant`);
@@ -763,6 +924,7 @@ export default function LeadsPage() {
       const savedConnection = localStorage.getItem(`leads_filter_${userId}_connection`);
       const savedSource = localStorage.getItem(`leads_filter_${userId}_source`);
       const savedCity = localStorage.getItem(`leads_filter_${userId}_city`);
+      const savedLocalities = localStorage.getItem(`leads_filter_${userId}_localities`);
       const savedDivision = localStorage.getItem(`leads_filter_${userId}_division`);
       const savedState = localStorage.getItem(`leads_filter_${userId}_state`);
       const savedDateFrom = localStorage.getItem(`leads_filter_${userId}_dateFrom`);
@@ -772,32 +934,46 @@ export default function LeadsPage() {
       const savedAdvancedActive = localStorage.getItem(`leads_filter_${userId}_isAdvancedActive`);
       const savedAdvancedQuery = localStorage.getItem(`leads_filter_${userId}_advancedQueryObj`);
 
-      if (savedSearch !== null) setSearch(savedSearch);
-      if (savedStatus !== null) setStatusFilter(savedStatus);
-      if (savedConsultant !== null) setConsultantFilter(savedConsultant);
-      if (savedTl !== null) setTlFilter(savedTl);
-      if (savedManager !== null) setManagerFilter(savedManager);
-      if (savedConnection !== null) setConnectionFilter(savedConnection);
-      if (savedSource !== null) setSourceFilter(savedSource);
-      if (savedCity !== null) setCityFilter(savedCity);
-      if (savedDivision !== null) setDivisionFilter(savedDivision);
-      if (savedState !== null) setStateFilter(savedState);
-      if (savedDateFrom !== null) setDateFromFilter(savedDateFrom);
-      if (savedDateTo !== null) setDateToFilter(savedDateTo);
-      if (savedUnassigned !== null) setUnassignedFilter(savedUnassigned === 'true');
-      if (savedPage !== null) setPage(Number(savedPage));
-      if (savedAdvancedActive !== null) setIsAdvancedFilterActive(savedAdvancedActive === 'true');
-      if (savedAdvancedQuery !== null && savedAdvancedQuery.trim() !== '') {
-        try {
-          setAdvancedQueryObj(JSON.parse(savedAdvancedQuery));
-        } catch (e) {
-          console.error('Error parsing advanced query from localStorage:', e);
+      if (hasGeoNav) {
+        if (geoCity) setCityFilter(geoCity);
+        if (geoLocalities) setLocalitiesFilter(geoLocalities);
+        if (geoUnassigned === 'true') setUnassignedFilter(true);
+        setIsAdvancedFilterActive(false);
+        setAdvancedQueryObj(null);
+        setPage(1);
+      } else {
+        if (savedSearch !== null) setSearch(savedSearch);
+        if (savedStatus !== null) setStatusFilter(savedStatus);
+        if (savedConsultant !== null) setConsultantFilter(savedConsultant);
+        if (savedTl !== null) setTlFilter(savedTl);
+        if (savedManager !== null) setManagerFilter(savedManager);
+        if (savedConnection !== null) setConnectionFilter(savedConnection);
+        if (savedSource !== null) setSourceFilter(savedSource);
+        if (savedCity !== null) setCityFilter(savedCity);
+        if (savedLocalities !== null) setLocalitiesFilter(savedLocalities);
+        if (savedDivision !== null) setDivisionFilter(savedDivision);
+        if (savedState !== null) setStateFilter(savedState);
+        if (savedDateFrom !== null) setDateFromFilter(savedDateFrom);
+        if (savedDateTo !== null) setDateToFilter(savedDateTo);
+        if (savedUnassigned !== null) setUnassignedFilter(savedUnassigned === 'true');
+        if (savedPage !== null) setPage(Number(savedPage));
+        if (isAdvancedNav) {
+          setIsAdvancedFilterActive(true);
+        } else if (savedAdvancedActive !== null) {
+          setIsAdvancedFilterActive(savedAdvancedActive === 'true');
+        }
+        if (savedAdvancedQuery !== null && savedAdvancedQuery.trim() !== '') {
+          try {
+            setAdvancedQueryObj(JSON.parse(savedAdvancedQuery));
+          } catch (e) {
+            console.error('Error parsing advanced query from localStorage:', e);
+          }
         }
       }
       
       setFiltersLoaded(true);
     }
-  }, [user, filtersLoaded]);
+  }, [user, filtersLoaded, searchParams]);
 
   // Save filters to localStorage when they change
   useEffect(() => {
@@ -812,6 +988,7 @@ export default function LeadsPage() {
       localStorage.setItem(`leads_filter_${userId}_connection`, connectionFilter);
       localStorage.setItem(`leads_filter_${userId}_source`, sourceFilter);
       localStorage.setItem(`leads_filter_${userId}_city`, cityFilter);
+      localStorage.setItem(`leads_filter_${userId}_localities`, localitiesFilter);
       localStorage.setItem(`leads_filter_${userId}_division`, divisionFilter);
       localStorage.setItem(`leads_filter_${userId}_state`, stateFilter);
       localStorage.setItem(`leads_filter_${userId}_dateFrom`, dateFromFilter);
@@ -821,14 +998,14 @@ export default function LeadsPage() {
       localStorage.setItem(`leads_filter_${userId}_isAdvancedActive`, isAdvancedFilterActive ? 'true' : 'false');
       localStorage.setItem(`leads_filter_${userId}_advancedQueryObj`, advancedQueryObj ? JSON.stringify(advancedQueryObj) : '');
     }
-  }, [search, statusFilter, consultantFilter, tlFilter, managerFilter, connectionFilter, sourceFilter, cityFilter, divisionFilter, stateFilter, dateFromFilter, dateToFilter, unassignedFilter, page, filtersLoaded, user, isAdvancedFilterActive, advancedQueryObj]);
+  }, [search, statusFilter, consultantFilter, tlFilter, managerFilter, connectionFilter, sourceFilter, cityFilter, localitiesFilter, divisionFilter, stateFilter, dateFromFilter, dateToFilter, unassignedFilter, page, filtersLoaded, user, isAdvancedFilterActive, advancedQueryObj]);
 
   // Refetch leads when filters change
   useEffect(() => {
     if (user && filtersLoaded) {
       fetchLeads();
     }
-  }, [page, limit, statusFilter, consultantFilter, tlFilter, managerFilter, connectionFilter, sourceFilter, cityFilter, divisionFilter, stateFilter, dateFromFilter, dateToFilter, unassignedFilter, user, filtersLoaded, debouncedSearch, isAdvancedFilterActive, advancedQueryObj]);
+  }, [page, limit, statusFilter, consultantFilter, tlFilter, managerFilter, connectionFilter, sourceFilter, cityFilter, localitiesFilter, divisionFilter, stateFilter, dateFromFilter, dateToFilter, unassignedFilter, user, filtersLoaded, debouncedSearch, isAdvancedFilterActive, advancedQueryObj]);
 
   // Handle Search Input (with manual or debounce enter)
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -850,6 +1027,7 @@ export default function LeadsPage() {
     setConnectionFilter('');
     setSourceFilter('');
     setCityFilter('');
+    setLocalitiesFilter('');
     setDivisionFilter('');
     setStateFilter('');
     setDateFromFilter('');
@@ -1264,6 +1442,62 @@ export default function LeadsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          {/* Export PDF Dropdown */}
+          <div className="relative" ref={pdfDropdownRef}>
+            <button
+              type="button"
+              onClick={() => setShowPdfExportDropdown(!showPdfExportDropdown)}
+              disabled={pdfExporting}
+              className="py-2.5 px-4 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-emerald-500/50 text-white rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
+            >
+              {pdfExporting ? (
+                <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
+              ) : (
+                <Download className="w-4 h-4 text-emerald-400" />
+              )}
+              <span>{pdfExporting ? 'Generating PDF...' : 'Export PDF'}</span>
+            </button>
+
+            {showPdfExportDropdown && (
+              <div className="absolute right-0 mt-2 w-64 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-2xl py-1.5 z-50">
+                <div className="px-3 py-1.5 border-b border-[var(--border-color)] text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+                  Download Pipeline Leads
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleExportPdf({ mode: 'selected' })}
+                  className="w-full text-left px-3.5 py-2.5 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/10 flex items-center justify-between cursor-pointer border-b border-[var(--border-color)]/50"
+                >
+                  <div className="flex flex-col">
+                    <span>Download Selected Leads</span>
+                    <span className="text-[10px] text-[var(--text-muted)] font-normal">
+                      {selectedIds.length > 0 ? `${selectedIds.length} leads selected` : 'No leads selected'}
+                    </span>
+                  </div>
+                  <span className="bg-emerald-500/20 text-emerald-300 text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">
+                    {selectedIds.length}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleExportPdf({ mode: '50' })}
+                  className="w-full text-left px-3.5 py-2 text-xs text-[var(--text-primary)] hover:bg-white/5 flex items-center justify-between cursor-pointer"
+                >
+                  <span>Download Top 50 Leads</span>
+                  <span className="text-[10px] text-[var(--text-muted)]">Filtered</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleExportPdf({ mode: '100' })}
+                  className="w-full text-left px-3.5 py-2 text-xs text-[var(--text-primary)] hover:bg-white/5 flex items-center justify-between cursor-pointer"
+                >
+                  <span>Download Top 100 Leads</span>
+                  <span className="text-[10px] text-[var(--text-muted)]">Filtered</span>
+                </button>
+              </div>
+            )}
+          </div>
+
           {(hasPermission('sales:lead_import') || hasPermission('leads:import')) && (
             <button
               onClick={() => setShowImportModal(true)}
@@ -1489,6 +1723,13 @@ export default function LeadsPage() {
                 <X className="w-3 h-3 cursor-pointer hover:text-white ml-0.5" onClick={() => setCityFilter('')} />
               </span>
             )}
+            {localitiesFilter && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[11px] font-semibold">
+                <MapPin className="w-3 h-3 text-emerald-400" />
+                Territory: {localitiesFilter.split(',').map(s => s.trim()).filter(Boolean).join(', ')}
+                <X className="w-3 h-3 cursor-pointer hover:text-white ml-0.5" onClick={() => setLocalitiesFilter('')} />
+              </span>
+            )}
             {divisionFilter && (
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-500/10 border border-teal-500/20 text-teal-400 text-[11px] font-semibold">
                 Division: {divisionFilter}
@@ -1545,6 +1786,20 @@ export default function LeadsPage() {
             </span>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => handleExportPdf({ mode: 'selected' })}
+              disabled={pdfExporting}
+              className="py-2 px-4 bg-emerald-600/25 hover:bg-emerald-600/40 border border-emerald-500/50 text-emerald-300 rounded-lg font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer font-sans"
+              title="Download selected leads as a formatted PDF report"
+            >
+              {pdfExporting ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-400" />
+              ) : (
+                <Download className="w-3.5 h-3.5 text-emerald-400" />
+              )}
+              <span>Download PDF ({selectedIds.length})</span>
+            </button>
             {(hasPermission('leads:assign') || user?.role === 'admin' || user?.role === 'director' || user?.role?.startsWith('admin:')) && (
               <>
                 <button
@@ -1683,7 +1938,7 @@ export default function LeadsPage() {
                 </tr>
               ) : (
                 leads.map((lead) => {
-                  const stage = STAGE_BADGES[lead.status] || { name: `Stage ${lead.status}`, class: 'bg-slate-500/10 text-[var(--text-secondary)] border-slate-500/20' };
+                  const stage = getLeadEffectiveStage(lead);
                   const connectionClass = CONNECTION_BADGES[lead.connectionType] || 'bg-slate-500/10 text-[var(--text-secondary)]';
                   
                   return (
@@ -1797,19 +2052,9 @@ export default function LeadsPage() {
                       </td>
                       <td className="py-3.5 px-4 w-44">
                         <div className="flex flex-col gap-1">
-                          {lead.status === 13 && lead.order?.status === 'draft' && lead.order?.rejectionReason ? (
-                            <span className="inline-block text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider bg-rose-500/10 text-rose-450 border-rose-500/20">
-                              Rejected ⚠️ 
-                            </span>
-                          ) : lead.status === 13 && lead.order && lead.order.status !== 'draft' ? (
-                            <span className="inline-block text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-bold">
-                              Order Punched
-                            </span>
-                          ) : (
-                            <span className={`inline-block text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${stage.class}`}>
-                              {stage.name}
-                            </span>
-                          )}
+                          <span className={`inline-block text-[10px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${stage.class}`}>
+                            {stage.name}
+                          </span>
                         </div>
                       </td>
                       <td className="py-3.5 px-4 font-medium text-[var(--text-primary)] w-40">

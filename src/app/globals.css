@@ -613,10 +613,7 @@ body {
 /* Primary text accent */
 .text-amber-400,
 .text-amber-500,
-.text-yellow-400,
-.text-yellow-500,
-.text-amber-600,
-.text-yellow-600 {
+.text-amber-600 {
   color: var(--accent-color) !important;
 }
 
@@ -634,8 +631,6 @@ body {
 
 /* Gradient fallback → flat accent */
 .from-amber-500,
-.from-yellow-400,
-.from-yellow-500,
 .from-amber-600 {
   background-color: var(--accent-color) !important;
   color: var(--btn-text) !important;

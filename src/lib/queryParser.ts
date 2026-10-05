@@ -33,6 +33,36 @@ const FIELD_TYPES: Record<string, 'string' | 'number' | 'boolean' | 'date'> = {
   assignedManagerId: 'number'
 };
 
+function parseStatusCondition(value: any): any {
+  const strVal = String(value).trim();
+  switch (strVal) {
+    case 'order_punched':
+      return { status: 13, order: { is: { status: { not: 'draft' } } } };
+    case 'awaiting_verification':
+      return { status: 13, order: { is: { status: 'submitted' } } };
+    case 'finance_verified':
+      return { status: 13, order: { is: { status: 'finance_verified' } } };
+    case 'delivery_scheduled':
+      return { status: 13, order: { is: { isDelivered: false, deliveryDate: { not: null } } } };
+    case 'delivered':
+      return { status: 13, order: { is: { isDelivered: true, isInstalled: false } } };
+    case 'installation_scheduled':
+      return { status: 13, order: { is: { isInstalled: false, installationDate: { not: null } } } };
+    case 'installed':
+      return { status: 13, order: { is: { isInstalled: true, isMeterInstalled: false } } };
+    case 'meter_installed':
+      return { status: 13, order: { is: { isMeterInstalled: true, isCommissioned: false } } };
+    case 'commissioned':
+      return { status: 13, order: { is: { isCommissioned: true } } };
+    case 'subsidy_applied':
+      return { status: 13, order: { is: { isSubsidyApplied: true } } };
+    default: {
+      const num = parseFloat(strVal);
+      return { status: { equals: isNaN(num) ? 0 : num } };
+    }
+  }
+}
+
 export function parseQuery(queryObj: QueryRule | null | undefined): any {
   if (!queryObj) return {};
 
@@ -212,10 +242,14 @@ export function parseQuery(queryObj: QueryRule | null | undefined): any {
 
   switch (operator) {
     // --- LOGICAL / TEXT OPERATORS ---
+
     case 'equals':
     case 'Equals':
     case 'is':
     case 'IS':
+      if (field === 'status') {
+        return parseStatusCondition(value);
+      }
       if (fieldType === 'number') {
         const num = parseFloat(value);
         return { [field]: { equals: isNaN(num) ? 0 : num } };
@@ -234,6 +268,9 @@ export function parseQuery(queryObj: QueryRule | null | undefined): any {
     case 'Not Equals':
     case 'is_not':
     case 'IS NOT':
+      if (field === 'status') {
+        return { NOT: parseStatusCondition(value) };
+      }
       if (fieldType === 'number') {
         const num = parseFloat(value);
         return { [field]: { not: isNaN(num) ? 0 : num } };

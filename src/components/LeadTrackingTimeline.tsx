@@ -220,13 +220,16 @@ export function LeadTrackingTimeline({ lead }: LeadTrackingProps) {
         } else if (log.remark.startsWith('Meeting completed.')) {
           eventTitle = 'Meeting Completed';
           eventDescription = log.remark;
-        } else if (log.remark.startsWith('Lead imported')) {
+        } else if (log.remark.toLowerCase().includes('lead imported')) {
           eventTitle = 'Lead Registered (CSV)';
           eventDescription = log.remark;
         } else if (log.remark.startsWith('Lead added to the system')) {
           eventTitle = 'Lead Registered';
           eventDescription = log.remark;
-        } else if (log.remark.includes('Reverted to Fresh Lead') || log.remark.includes('reverted to Fresh')) {
+        } else if (log.remark.includes('Territory assigned') || log.remark.includes('territory assigned')) {
+          eventTitle = 'Territory Assigned';
+          eventDescription = log.remark;
+        } else if (log.remark.includes('Reverted to Fresh Lead') || log.remark.includes('reverted to Fresh') || log.remark.startsWith('Reverted to') || log.remark.startsWith('reverted to')) {
           eventTitle = 'Reverted to Fresh Lead';
           eventDescription = log.remark;
         } else if (log.remark.includes('promoted to Fresh Lead')) {
@@ -244,8 +247,17 @@ export function LeadTrackingTimeline({ lead }: LeadTrackingProps) {
         }
       }
 
-      const isRevertLog = log.toStatus === 1 && (log.remark?.includes('Reverted') || log.remark?.includes('reverted') || log.remark?.includes('Fresh'));
-      if (isCreation && !isRevertLog) {
+      const isTerritoryLog = log.remark?.toLowerCase().includes('territory assigned');
+      const isImportLog = log.remark?.toLowerCase().includes('lead imported');
+      const isRevertLog = log.toStatus === 1 && (log.remark?.includes('Reverted') || log.remark?.includes('reverted') || log.remark?.includes('Reverting') || log.remark?.includes('reverting'));
+
+      if (isTerritoryLog) {
+        eventTitle = 'Territory Assigned';
+        eventDescription = log.remark || 'Territory leads assigned.';
+      } else if (isImportLog) {
+        eventTitle = 'Lead Registered (CSV)';
+        eventDescription = log.remark || 'Lead imported into system from CSV.';
+      } else if (isCreation && !isRevertLog) {
         eventTitle = 'Lead Opportunity Registered';
         eventDescription = log.remark || `Lead #${lead.leadCode} created in system for customer ${lead.customerName}.`;
       } else if (isRevertLog) {

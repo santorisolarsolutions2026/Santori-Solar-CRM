@@ -31,6 +31,7 @@ export async function GET(req: Request) {
     const search = (searchParams.get('search') || '').trim();
     const statusParam = searchParams.get('status') || '';
     const city = (searchParams.get('city') || '').trim();
+    const localitiesParam = (searchParams.get('localities') || '').trim();
     const division = (searchParams.get('division') || '').trim();
     const consultantIdStr = searchParams.get('consultant_id') || '';
     const connectionType = searchParams.get('connection_type') || '';
@@ -128,59 +129,103 @@ export async function GET(req: Request) {
       });
     }
 
+    const POST_SALES_STATUS_MAP: Record<string, Prisma.LeadWhereInput> = {
+      order_punched: { status: 13, order: { is: { status: { not: 'draft' } } } },
+      awaiting_verification: { status: 13, order: { is: { status: 'submitted' } } },
+      finance_verified: { status: 13, order: { is: { status: 'finance_verified' } } },
+      delivery_scheduled: { status: 13, order: { is: { isDelivered: false, deliveryDate: { not: null } } } },
+      delivered: { status: 13, order: { is: { isDelivered: true, isInstalled: false } } },
+      installation_scheduled: { status: 13, order: { is: { isInstalled: false, installationDate: { not: null } } } },
+      installed: { status: 13, order: { is: { isInstalled: true, isMeterInstalled: false } } },
+      meter_installed: { status: 13, order: { is: { isMeterInstalled: true, isCommissioned: false } } },
+      commissioned: { status: 13, order: { is: { isCommissioned: true } } },
+      subsidy_applied: { status: 13, order: { is: { isSubsidyApplied: true } } },
+    };
+
     if (rawStatusList.length > 0) {
-      if (hasSaleDoneFilter && hasOrderPunchedFilter) {
-        // Both Sale Done and Order Punched selected
-        const allStatuses = [...otherNumericStatuses, 13];
-        andConditions.push({ status: { in: allStatuses } });
-      } else if (hasSaleDoneFilter) {
-        // ONLY Sale Done selected: Show leads at Stage 13 where order is NOT yet submitted (null or draft)
-        const saleDoneCondition: Prisma.LeadWhereInput = {
-          status: 13,
-          OR: [
-            { order: null },
-            { order: { status: 'draft' } },
-          ],
-        };
+      const statusOrConditions: Prisma.LeadWhereInput[] = [];
 
-        if (otherNumericStatuses.length > 0) {
-          andConditions.push({
-            OR: [
-              { status: { in: otherNumericStatuses } },
-              saleDoneCondition,
-            ],
-          });
-        } else {
-          andConditions.push(saleDoneCondition);
-        }
-      } else if (hasOrderPunchedFilter) {
-        // ONLY Order Punched selected: Show leads at Stage 13 where order HAS BEEN SUBMITTED to finance
-        const orderPunchedCondition: Prisma.LeadWhereInput = {
-          status: 13,
-          order: {
-            is: {
-              status: { not: 'draft' },
-            },
-          },
-        };
+      const numericStatuses = rawStatusList
+        .filter((s) => !isNaN(Number(s)) && s !== '13' && s !== '15')
+        .map((s) => parseInt(s, 10));
 
-        if (otherNumericStatuses.length > 0) {
-          andConditions.push({
-            OR: [
-              { status: { in: otherNumericStatuses } },
-              orderPunchedCondition,
-            ],
-          });
-        } else {
-          andConditions.push(orderPunchedCondition);
+      if (numericStatuses.length > 0) {
+        statusOrConditions.push({ status: { in: numericStatuses } });
+      }
+
+      if (rawStatusList.includes('13')) {
+        statusOrConditions.push({
+          status: 13,
+          OR: [{ order: null }, { order: { status: 'draft' } }],
+        });
+      }
+
+      Object.entries(POST_SALES_STATUS_MAP).forEach(([key, condition]) => {
+        if (rawStatusList.includes(key) || (key === 'order_punched' && rawStatusList.includes('15'))) {
+          statusOrConditions.push(condition);
         }
-      } else if (otherNumericStatuses.length > 0) {
-        andConditions.push({ status: { in: otherNumericStatuses } });
+      });
+
+      if (statusOrConditions.length === 1) {
+        andConditions.push(statusOrConditions[0]);
+      } else if (statusOrConditions.length > 1) {
+        andConditions.push({ OR: statusOrConditions });
       }
     }
 
     if (city) {
       andConditions.push({ city: { contains: city, mode: 'insensitive' } });
+    }
+
+    if (localitiesParam) {
+      const locList = localitiesParam.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+      if (locList.length > 0) {
+        const hasGovindpur = locList.includes('govindpur');
+        const hasGovindpuram = locList.includes('govindpuram');
+
+        andConditions.push({
+          OR: locList.map(loc => {
+            if (loc === 'govindpur' && !hasGovindpuram) {
+              return {
+                AND: [
+                  { address: { contains: 'govindpur', mode: 'insensitive' as const } },
+                  { address: { not: { contains: 'govindpuram' } } }
+                ]
+              };
+            }
+            if (loc === 'harahua') {
+              return {
+                AND: [
+                  { address: { contains: 'harahua', mode: 'insensitive' as const } },
+                  { address: { not: { contains: 'bharahua' } } }
+                ]
+              };
+            }
+            if (loc === 'sewapuri') {
+              return {
+                OR: [
+                  { address: { contains: 'sewapuri', mode: 'insensitive' as const } },
+                  { address: { contains: 'bharahua', mode: 'insensitive' as const } },
+                  { pinCode: '221403' }
+                ]
+              };
+            }
+            if (loc === 'bara') {
+              return {
+                AND: [
+                  { address: { contains: 'bara', mode: 'insensitive' as const } },
+                  { address: { not: { contains: 'bharatganj' } } },
+                  { address: { not: { contains: 'baragaon' } } },
+                  { address: { not: { contains: 'baraut' } } }
+                ]
+              };
+            }
+            return {
+              address: { contains: loc, mode: 'insensitive' as const }
+            };
+          })
+        });
+      }
     }
 
     if (division) {
@@ -328,6 +373,14 @@ export async function GET(req: Request) {
               id: true,
               status: true,
               rejectionReason: true,
+              deliveryDate: true,
+              isDelivered: true,
+              installationDate: true,
+              isInstalled: true,
+              isMeterInstalled: true,
+              isCommissioned: true,
+              isSubsidyApplied: true,
+              subsidyApplicable: true,
               installationImages: {
                 select: { id: true, status: true }
               }

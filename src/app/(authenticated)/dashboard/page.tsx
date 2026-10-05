@@ -99,13 +99,14 @@ interface ConsultantPerformance {
 }
 
 interface ActivityLog {
-  id: number;
+  id: number | string;
   remark: string | null;
   fromStatus: number | null;
   toStatus: number;
   createdAt: string;
-  lead: { id: number; customerName: string; leadCode: string };
+  lead?: { id: number; customerName: string; leadCode: string } | null;
   user: { id: number; name: string; role: string };
+  isTerritoryAssign?: boolean;
 }
 
 const STAGE_NAMES: Record<number, { name: string; color: string }> = {
@@ -220,9 +221,8 @@ export default function DashboardPage() {
     if (!activitySearchQuery.trim()) return true;
     const q = activitySearchQuery.toLowerCase();
     return (
-      log.lead.customerName.toLowerCase().includes(q) ||
-      log.lead.leadCode.toLowerCase().includes(q) ||
-      log.user.name.toLowerCase().includes(q) ||
+      (log.lead && (log.lead.customerName.toLowerCase().includes(q) || log.lead.leadCode.toLowerCase().includes(q))) ||
+      (log.user && log.user.name.toLowerCase().includes(q)) ||
       (log.remark && log.remark.toLowerCase().includes(q))
     );
   });
@@ -623,6 +623,45 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 activities.slice(0, 15).map((log) => {
+                  if (log.isTerritoryAssign) {
+                    return (
+                      <div key={log.id} className="relative group">
+                        <span 
+                          className="absolute -left-[31px] top-1.5 w-2.5 h-2.5 rounded-full border-2 border-[var(--border-color)] transition-transform group-hover:scale-125 animate-pulse bg-emerald-500" 
+                        />
+                        <div className="min-w-0">
+                          <div className="flex justify-between items-start gap-2">
+                            <p className="text-xs font-bold text-white truncate flex items-center gap-1.5">
+                              <span>Territory Assignment</span>
+                              <span className="text-[9px] px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded font-mono font-bold uppercase">
+                                Map Assign
+                              </span>
+                            </p>
+                            <span className="text-[9px] text-[var(--text-secondary)] shrink-0 font-semibold">
+                              {new Date(log.createdAt).toLocaleString('en-IN', {
+                                day: 'numeric',
+                                month: 'short',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">
+                            Executed by{' '}
+                            <Link href={`/team?userId=${log.user.id}`} className="text-emerald-500 hover:underline font-bold">
+                              {log.user.name}
+                            </Link>
+                          </p>
+                          {log.remark && (
+                            <p className="text-[10px] text-[var(--text-secondary)] mt-1 font-mono bg-[var(--bg-main)] p-1.5 rounded border border-[var(--border-color)] leading-relaxed">
+                              {log.remark}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }
+
                   const stage = STAGE_NAMES[log.toStatus] || { name: `Stage ${log.toStatus}`, color: '#9CA3AF' };
                   return (
                     <div key={log.id} className="relative group">
@@ -633,15 +672,21 @@ export default function DashboardPage() {
                       <div className="min-w-0">
                         <div className="flex justify-between items-start gap-2">
                           <p className="text-xs font-bold text-white truncate">
-                            <Link
-                              href={`/leads/${log.lead.id}`}
-                              className="hover:text-emerald-400 hover:underline"
-                            >
-                              {log.lead.customerName}
-                            </Link>
-                            <span className="text-[9.5px] text-[var(--text-secondary)] font-semibold ml-1.5 font-mono">
-                              ({log.lead.leadCode})
-                            </span>
+                            {log.lead ? (
+                              <>
+                                <Link
+                                  href={`/leads/${log.lead.id}`}
+                                  className="hover:text-emerald-400 hover:underline"
+                                >
+                                  {log.lead.customerName}
+                                </Link>
+                                <span className="text-[9.5px] text-[var(--text-secondary)] font-semibold ml-1.5 font-mono">
+                                  ({log.lead.leadCode})
+                                </span>
+                              </>
+                            ) : (
+                              <span>System Action</span>
+                            )}
                           </p>
                           <span className="text-[9px] text-[var(--text-secondary)] shrink-0 font-semibold">
                             {new Date(log.createdAt).toLocaleString('en-IN', {
@@ -865,6 +910,49 @@ export default function DashboardPage() {
               ) : (
                 <div className="relative border-l-2 border-[var(--border-color)] ml-4 pl-6 space-y-6">
                   {filteredActivities.map((log) => {
+                    if (log.isTerritoryAssign) {
+                      return (
+                        <div key={log.id} className="relative group">
+                          <span
+                            className="absolute -left-[31px] top-1.5 w-3.5 h-3.5 rounded-full border-2 border-[#0f1422] shadow-md transition-transform group-hover:scale-125 bg-emerald-500"
+                          />
+
+                          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-4 space-y-2 hover:border-[var(--border-color)] transition-all">
+                            <div className="flex justify-between items-start gap-3">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-bold text-white">Territory Assignment</span>
+                                <span className="text-[10px] px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded font-mono font-bold uppercase">
+                                  Map Assign
+                                </span>
+                              </div>
+                              <span className="text-xs text-[var(--text-secondary)] font-mono">
+                                {new Date(log.createdAt).toLocaleString('en-IN', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </span>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-2 text-xs">
+                              <span className="text-[var(--text-secondary)]">Executed by</span>
+                              <span className="font-bold text-white bg-[var(--bg-card)] px-2 py-0.5 rounded border border-[var(--border-color)]">
+                                {log.user.name} ({log.user.role})
+                              </span>
+                            </div>
+
+                            {log.remark && (
+                              <p className="text-xs text-[var(--text-primary)] font-mono bg-[var(--bg-main)] p-2.5 rounded-lg border border-[var(--border-color)] leading-relaxed">
+                                {log.remark}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    }
+
                     const stage = STAGE_NAMES[log.toStatus] || { name: `Stage ${log.toStatus}`, color: '#9CA3AF' };
                     return (
                       <div key={log.id} className="relative group">
@@ -876,14 +964,18 @@ export default function DashboardPage() {
                         <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-4 space-y-2 hover:border-[var(--border-color)] transition-all">
                           <div className="flex justify-between items-start gap-3">
                             <div>
-                              <Link
-                                href={`/leads/${log.lead.id}`}
-                                onClick={() => setActivityModalOpen(false)}
-                                className="text-sm font-bold text-white hover:text-emerald-400 hover:underline flex items-center gap-2"
-                              >
-                                <span>{log.lead.customerName}</span>
-                                <span className="text-xs text-[var(--text-secondary)] font-mono font-semibold">({log.lead.leadCode})</span>
-                              </Link>
+                              {log.lead ? (
+                                <Link
+                                  href={`/leads/${log.lead.id}`}
+                                  onClick={() => setActivityModalOpen(false)}
+                                  className="text-sm font-bold text-white hover:text-emerald-400 hover:underline flex items-center gap-2"
+                                >
+                                  <span>{log.lead.customerName}</span>
+                                  <span className="text-xs text-[var(--text-secondary)] font-mono font-semibold">({log.lead.leadCode})</span>
+                                </Link>
+                              ) : (
+                                <span className="text-sm font-bold text-white">System Activity</span>
+                              )}
                             </div>
                             <span className="text-xs text-[var(--text-secondary)] font-mono">
                               {new Date(log.createdAt).toLocaleString('en-IN', {

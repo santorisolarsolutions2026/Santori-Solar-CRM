@@ -38,20 +38,44 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  const users = await prisma.user.findMany({
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      employeeId: true,
-      isActive: true,
-      department: { select: { name: true } },
-      designation: { select: { name: true } }
+  const lead = await prisma.lead.findFirst({
+    where: {
+      OR: [
+        { leadCode: 'SL-292177' },
+        { leadCode: { contains: '292177' } },
+        { id: 292177 }
+      ]
+    },
+    include: {
+      consultant: { select: { id: true, name: true, role: true, email: true } },
+      tl: { select: { id: true, name: true, role: true } },
+      manager: { select: { id: true, name: true, role: true } },
+      creator: { select: { id: true, name: true, role: true } },
+      activityLogs: {
+        include: { user: { select: { id: true, name: true, role: true } } },
+        orderBy: { createdAt: 'asc' }
+      },
+      auditLogs: {
+        include: { user: { select: { id: true, name: true, role: true } } },
+        orderBy: { createdAt: 'asc' }
+      },
+      employeeAssignments: {
+        include: {
+          employee: { select: { id: true, name: true, role: true } },
+          assignedBy: { select: { id: true, name: true, role: true } }
+        },
+        orderBy: { assignedAt: 'asc' }
+      },
+      meetings: {
+        orderBy: { createdAt: 'asc' }
+      },
+      tasks: true,
+      order: true
     }
   });
-  console.log('Total active/inactive users in DB:', users.length);
-  console.log(JSON.stringify(users, null, 2));
+
+  console.log('--- LEAD DETAILS ---');
+  console.log(JSON.stringify(lead, null, 2));
 }
 
 main().finally(() => pool.end());

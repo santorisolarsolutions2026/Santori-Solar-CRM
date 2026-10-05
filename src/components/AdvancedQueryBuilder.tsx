@@ -76,7 +76,16 @@ const STAGE_OPTIONS = [
   { value: '12', label: "Can't Fit Solar" },
   { value: '13', label: 'Sale Done' },
   { value: '14', label: 'Meeting Cancelled' },
-  { value: 'order_punched', label: 'Order Punched' }
+  { value: 'order_punched', label: 'Order Punched' },
+  { value: 'awaiting_verification', label: 'Awaiting Verification' },
+  { value: 'finance_verified', label: 'Finance Verified' },
+  { value: 'delivery_scheduled', label: 'Delivery Scheduled' },
+  { value: 'delivered', label: 'Materials Delivered' },
+  { value: 'installation_scheduled', label: 'Installation Scheduled' },
+  { value: 'installed', label: 'Solar Installed' },
+  { value: 'meter_installed', label: 'Net Meter Installed' },
+  { value: 'commissioned', label: 'Plant Commissioned' },
+  { value: 'subsidy_applied', label: 'Subsidy Applied' }
 ];
 
 const OPERATORS_BY_TYPE: Record<string, { value: string; label: string }[]> = {
