@@ -206,6 +206,7 @@ export async function POST(req: Request) {
           address,
           pinCode,
           city,
+          division,
           state,
           leadSource,
           otherData,
@@ -281,6 +282,7 @@ export async function POST(req: Request) {
               address: address || existingMobileLead.address || '',
               pinCode: cleanPin,
               city: norm.city,
+              division: division ? String(division).trim() : null,
               state: norm.state,
               leadSource: leadSource || 'other',
               status: 1, // Stage 1 Fresh Lead
@@ -382,6 +384,7 @@ export async function POST(req: Request) {
             address: address || '',
             pinCode: cleanPin,
             city: norm.city,
+            division: division ? String(division).trim() : null,
             state: norm.state,
             leadSource: leadSource || 'other',
             status: 1, // 1 = Fresh Lead

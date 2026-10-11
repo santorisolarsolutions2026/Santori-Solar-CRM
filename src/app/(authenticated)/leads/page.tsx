@@ -197,6 +197,7 @@ function parseCSV(text: string): string[][] {
 export default function LeadsPage() {
   const router = useRouter();
   const { user, loading: authLoading, hasPermission } = useAuth();
+  const isAdmin = user?.role === 'admin' || user?.role === 'director' || user?.role?.startsWith('admin:');
 
   if (authLoading) {
     return (
@@ -1442,61 +1443,64 @@ export default function LeadsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {/* Export PDF Dropdown */}
-          <div className="relative" ref={pdfDropdownRef}>
-            <button
-              type="button"
-              onClick={() => setShowPdfExportDropdown(!showPdfExportDropdown)}
-              disabled={pdfExporting}
-              className="py-2.5 px-4 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-emerald-500/50 text-white rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
-            >
-              {pdfExporting ? (
-                <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
-              ) : (
-                <Download className="w-4 h-4 text-emerald-400" />
-              )}
-              <span>{pdfExporting ? 'Generating PDF...' : 'Export PDF'}</span>
-            </button>
+          {/* Export PDF Dropdown (Admin Only) */}
+          {isAdmin && (
+            <div className="relative" ref={pdfDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setShowPdfExportDropdown(!showPdfExportDropdown)}
+                disabled={pdfExporting}
+                className="py-2.5 px-4 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-emerald-500/50 text-white rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
+              >
+                {pdfExporting ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
+                ) : (
+                  <Download className="w-4 h-4 text-emerald-400" />
+                )}
+                <span>{pdfExporting ? 'Generating PDF...' : 'Export PDF'}</span>
+              </button>
 
-            {showPdfExportDropdown && (
-              <div className="absolute right-0 mt-2 w-64 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-2xl py-1.5 z-50">
-                <div className="px-3 py-1.5 border-b border-[var(--border-color)] text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
-                  Download Pipeline Leads
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleExportPdf({ mode: 'selected' })}
-                  className="w-full text-left px-3.5 py-2.5 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/10 flex items-center justify-between cursor-pointer border-b border-[var(--border-color)]/50"
-                >
-                  <div className="flex flex-col">
-                    <span>Download Selected Leads</span>
-                    <span className="text-[10px] text-[var(--text-muted)] font-normal">
-                      {selectedIds.length > 0 ? `${selectedIds.length} leads selected` : 'No leads selected'}
-                    </span>
+              {showPdfExportDropdown && (
+                <div className="absolute right-0 mt-2 w-64 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-2xl py-1.5 z-50">
+                  <div className="px-3 py-1.5 border-b border-[var(--border-color)] text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+                    Download Pipeline Leads
                   </div>
-                  <span className="bg-emerald-500/20 text-emerald-300 text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">
-                    {selectedIds.length}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleExportPdf({ mode: '50' })}
-                  className="w-full text-left px-3.5 py-2 text-xs text-[var(--text-primary)] hover:bg-white/5 flex items-center justify-between cursor-pointer"
-                >
-                  <span>Download Top 50 Leads</span>
-                  <span className="text-[10px] text-[var(--text-muted)]">Filtered</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleExportPdf({ mode: '100' })}
-                  className="w-full text-left px-3.5 py-2 text-xs text-[var(--text-primary)] hover:bg-white/5 flex items-center justify-between cursor-pointer"
-                >
-                  <span>Download Top 100 Leads</span>
-                  <span className="text-[10px] text-[var(--text-muted)]">Filtered</span>
-                </button>
-              </div>
-            )}
-          </div>
+                  <button
+                    type="button"
+                    onClick={() => handleExportPdf({ mode: 'selected' })}
+                    className="w-full text-left px-3.5 py-2.5 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/10 flex items-center justify-between cursor-pointer border-b border-[var(--border-color)]/50"
+                  >
+                    <div className="flex flex-col">
+                      <span>Download Selected Leads</span>
+                      <span className="text-[10px] text-[var(--text-muted)] font-normal">
+                        {selectedIds.length > 0 ? `${selectedIds.length} leads selected` : 'No leads selected'}
+                      </span>
+                    </div>
+                    <span className="bg-emerald-500/20 text-emerald-300 text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">
+                      {selectedIds.length}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleExportPdf({ mode: '50' })}
+                    className="w-full text-left px-3.5 py-2 text-xs text-[var(--text-primary)] hover:bg-white/5 flex items-center justify-between cursor-pointer"
+                  >
+                    <span>Download Top 50 Leads</span>
+                    <span className="text-[10px] text-[var(--text-muted)]">Filtered</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleExportPdf({ mode: '100' })}
+                    className="w-full text-left px-3.5 py-2 text-xs text-[var(--text-primary)] hover:bg-white/5 flex items-center justify-between cursor-pointer"
+                  >
+                    <span>Download Top 100 Leads</span>
+                    <span className="text-[10px] text-[var(--text-muted)]">Filtered</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
 
           {(hasPermission('sales:lead_import') || hasPermission('leads:import')) && (
             <button
@@ -1786,20 +1790,22 @@ export default function LeadsPage() {
             </span>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={() => handleExportPdf({ mode: 'selected' })}
-              disabled={pdfExporting}
-              className="py-2 px-4 bg-emerald-600/25 hover:bg-emerald-600/40 border border-emerald-500/50 text-emerald-300 rounded-lg font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer font-sans"
-              title="Download selected leads as a formatted PDF report"
-            >
-              {pdfExporting ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-400" />
-              ) : (
-                <Download className="w-3.5 h-3.5 text-emerald-400" />
-              )}
-              <span>Download PDF ({selectedIds.length})</span>
-            </button>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => handleExportPdf({ mode: 'selected' })}
+                disabled={pdfExporting}
+                className="py-2 px-4 bg-emerald-600/25 hover:bg-emerald-600/40 border border-emerald-500/50 text-emerald-300 rounded-lg font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer font-sans"
+                title="Download selected leads as a formatted PDF report"
+              >
+                {pdfExporting ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-400" />
+                ) : (
+                  <Download className="w-3.5 h-3.5 text-emerald-400" />
+                )}
+                <span>Download PDF ({selectedIds.length})</span>
+              </button>
+            )}
             {(hasPermission('leads:assign') || user?.role === 'admin' || user?.role === 'director' || user?.role?.startsWith('admin:')) && (
               <>
                 <button

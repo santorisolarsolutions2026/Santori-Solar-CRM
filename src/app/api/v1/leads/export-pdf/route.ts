@@ -206,8 +206,10 @@ export async function POST(req: Request) {
     }
 
     const { role: userRole, permissions: userPermissions } = await getUserSession(userPayload.id);
-    if (!userPermissions.includes('leads:view')) {
-      return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to export leads.' }, { status: 403 });
+    const baseRole = userRole?.includes(':') ? userRole.split(':')[0] : userRole;
+    const isSuperAdmin = baseRole === 'admin' || baseRole === 'director' || userRole?.startsWith('admin:');
+    if (!isSuperAdmin) {
+      return NextResponse.json({ success: false, message: 'Forbidden. Only administrators can export leads.' }, { status: 403 });
     }
 
     const body = await req.json();

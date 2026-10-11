@@ -48,15 +48,25 @@ yarn-error.log*
 /dev.db-journal
 *.db
 *.db-journal
+*.sqlite
+*.sqlite3
+*.sql
 
 # backups
 /backups/
 
-# lead spreadsheets and client lists
+# excel, csv, and spreadsheet files
+*.csv
+*.xlsx
+*.xls
+*.tsv
 /PrayagLeads.csv
 /input.xlsx
 
 # scratch and temporary test scripts
 /scratch/
 scratch/
+scratch_*
+scratch.*
+
 
