@@ -224,6 +224,7 @@ const LOCALITY_GPS_COORDINATES: Record<string, { lat: number; lng: number; secto
   bamrauli: { lat: 25.4410, lng: 81.7340, sector: 'Bamrauli Airport / Air Force' },
   manauri: { lat: 25.4580, lng: 81.6850, sector: 'Manauri Air Force Station' },
   kareli: { lat: 25.4180, lng: 81.8210, sector: 'Kareli Scheme' },
+  gaughat: { lat: 25.4285, lng: 81.8415, sector: 'Gaughat / Yamuna North Bank' },
   'gtb nagar': { lat: 25.4250, lng: 81.8150, sector: 'GTB Nagar Residential' },
   attarsuiya: { lat: 25.4350, lng: 81.8380, sector: 'Attarsuiya / Old City' },
   kydganj: { lat: 25.4341, lng: 81.8610, sector: 'Kydganj / Old City Riverfront' },
