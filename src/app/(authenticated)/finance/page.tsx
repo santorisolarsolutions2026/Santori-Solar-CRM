@@ -32,7 +32,7 @@ import {
   Hash,
 } from 'lucide-react';
 import Link from 'next/link';
-import CustomDropdown from '@/components/CustomDropdown';
+import CustomSelect from '@/components/CustomSelect';
 import {
   PieChart,
   Pie,
@@ -129,7 +129,7 @@ export default function FinancePage() {
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6FAF4F]"></div>
       </div>
     );
   }
@@ -159,7 +159,7 @@ export default function FinancePage() {
   
   // Verification action inputs
   const [financeRemark, setFinanceRemark] = useState('');
-  const [actionLoading, setActionLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState<'approve' | 'reject' | null>(null);
 
   // Edit payment states
   const [editingPayment, setEditingPayment] = useState<any | null>(null);
@@ -420,7 +420,7 @@ export default function FinancePage() {
       return;
     }
 
-    setActionLoading(true);
+    setActionLoading(approve ? 'approve' : 'reject');
     try {
       const res = await fetch(`/api/v1/orders/${selectedOrder.id}/verify`, {
         method: 'POST',
@@ -451,7 +451,7 @@ export default function FinancePage() {
       console.error(err);
       alert('Error updating order.');
     } finally {
-      setActionLoading(false);
+      setActionLoading(null);
     }
   };
 
@@ -770,7 +770,7 @@ export default function FinancePage() {
             onClick={() => setShowFilters(!showFilters)}
             className={`px-3 py-2 border rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               showFilters || filterDateRange !== 'all' || filterPaymentMethod !== 'all' || filterBalanceStatus !== 'all' || filterMinAmount || filterMaxAmount || filterOrderStatus !== 'all' || filterSubmittedBy !== 'all' || filterVerifiedBy !== 'all'
-                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                ? 'bg-[#6FAF4F]/10 border-[#6FAF4F]/30 text-[#6FAF4F]'
                 : 'bg-[var(--bg-card)] border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-slate-750'
             }`}
           >
@@ -778,7 +778,7 @@ export default function FinancePage() {
             <span className="relative">
               Filters
               {(filterDateRange !== 'all' || filterPaymentMethod !== 'all' || filterBalanceStatus !== 'all' || filterMinAmount || filterMaxAmount || filterOrderStatus !== 'all' || filterSubmittedBy !== 'all' || filterVerifiedBy !== 'all') && (
-                <span className="absolute -top-1 -right-2 w-1.5 h-1.5 bg-emerald-600 rounded-full animate-ping" />
+                <span className="absolute -top-1 -right-2 w-1.5 h-1.5 bg-[#6FAF4F] rounded-full animate-ping" />
               )}
             </span>
           </button>
@@ -790,7 +790,7 @@ export default function FinancePage() {
         <div className="p-4 bg-[var(--bg-card)]/40 border border-slate-805 rounded-xl shadow-xl space-y-4">
           <div className="flex justify-between items-center border-b border-[var(--border-color)] pb-2.5">
             <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-              <SlidersHorizontal className="w-3.5 h-3.5 text-emerald-400" />
+              <SlidersHorizontal className="w-3.5 h-3.5 text-[#6FAF4F]" />
               <span>Advanced Filters</span>
             </h3>
             <button
@@ -806,7 +806,7 @@ export default function FinancePage() {
             {/* Date Range Filter */}
             <div className="space-y-1">
               <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Date Created</label>
-              <CustomDropdown
+              <CustomSelect
                 options={[
                   { value: 'all', label: 'All Time' },
                   { value: 'today', label: 'Today' },
@@ -824,21 +824,21 @@ export default function FinancePage() {
             {/* Payment Method Filter */}
             <div className="space-y-1">
               <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Payment Method</label>
-              <CustomDropdown
+              <CustomSelect
                 options={[
                   { value: 'all', label: 'All Methods' },
                   ...PAYMENT_METHODS.map((m) => ({ value: m.value, label: m.label }))
                 ]}
                 value={filterPaymentMethod}
                 onChange={(val) => setFilterPaymentMethod(val)}
-                className="w-full animate-capitalize"
+                className="w-full"
               />
             </div>
 
             {/* Outstanding Balance Filter */}
             <div className="space-y-1">
               <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Balance Status</label>
-              <CustomDropdown
+              <CustomSelect
                 options={[
                   { value: 'all', label: 'All Ledgers' },
                   { value: 'cleared', label: 'Fully Cleared (Paid)' },
@@ -853,7 +853,7 @@ export default function FinancePage() {
             {/* Order Status Filter */}
             <div className="space-y-1">
               <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Order Status</label>
-              <CustomDropdown
+              <CustomSelect
                 options={[
                   { value: 'all', label: 'All Statuses' },
                   { value: 'submitted', label: 'Submitted (Awaiting)' },
@@ -863,14 +863,14 @@ export default function FinancePage() {
                 ]}
                 value={filterOrderStatus}
                 onChange={(val) => setFilterOrderStatus(val)}
-                className="w-full animate-capitalize"
+                className="w-full"
               />
             </div>
 
             {/* Submitted By Filter */}
             <div className="space-y-1">
               <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Submitted By</label>
-              <CustomDropdown
+              <CustomSelect
                 options={[
                   { value: 'all', label: 'All Submitters' },
                   ...Array.from(new Map(orders.filter(o => o.submittedBy).map(o => [o.submittedBy.id, o.submittedBy])).values()).map(sub => ({
@@ -880,14 +880,14 @@ export default function FinancePage() {
                 ]}
                 value={filterSubmittedBy}
                 onChange={(val) => setFilterSubmittedBy(val)}
-                className="w-full animate-capitalize"
+                className="w-full"
               />
             </div>
 
             {/* Verified By Filter */}
             <div className="space-y-1">
               <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Verified By</label>
-              <CustomDropdown
+              <CustomSelect
                 options={[
                   { value: 'all', label: 'All Verifiers' },
                   ...Array.from(new Map(orders.filter(o => o.financeProcessedBy).map(o => [o.financeProcessedBy!.id, o.financeProcessedBy!])).values()).map(ver => ({
@@ -897,7 +897,7 @@ export default function FinancePage() {
                 ]}
                 value={filterVerifiedBy}
                 onChange={(val) => setFilterVerifiedBy(val)}
-                className="w-full animate-capitalize"
+                className="w-full"
               />
             </div>
           </div>
@@ -912,14 +912,14 @@ export default function FinancePage() {
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="flex-1 px-2.5 py-1.5 bg-[var(--bg-main)] border border-slate-805 rounded-lg text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-color)]"
+                    className="flex-1 px-2.5 py-1.5 bg-[var(--bg-main)] border border-black dark:border-[var(--border-color)] rounded-lg text-xs text-[var(--text-primary)] focus:outline-none focus:border-[#4F7D32]"
                   />
                   <span className="text-[var(--text-muted)] text-xs">to</span>
                   <input
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="flex-1 px-2.5 py-1.5 bg-[var(--bg-main)] border border-slate-805 rounded-lg text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-color)]"
+                    className="flex-1 px-2.5 py-1.5 bg-[var(--bg-main)] border border-black dark:border-[var(--border-color)] rounded-lg text-xs text-[var(--text-primary)] focus:outline-none focus:border-[#4F7D32]"
                   />
                 </div>
               </div>
@@ -936,7 +936,7 @@ export default function FinancePage() {
                   placeholder="Min Value"
                   value={filterMinAmount}
                   onChange={(e) => setFilterMinAmount(e.target.value)}
-                  className="flex-1 px-2.5 py-1.5 bg-[var(--bg-main)] border border-slate-805 rounded-lg text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-color)] placeholder-slate-700"
+                  className="flex-1 px-2.5 py-1.5 bg-[var(--bg-main)] border border-black dark:border-[var(--border-color)] rounded-lg text-xs text-[var(--text-primary)] focus:outline-none focus:border-[#4F7D32] placeholder:text-[var(--text-muted)]"
                 />
                 <span className="text-[var(--text-muted)] text-xs">to</span>
                 <input
@@ -944,7 +944,7 @@ export default function FinancePage() {
                   placeholder="Max Value"
                   value={filterMaxAmount}
                   onChange={(e) => setFilterMaxAmount(e.target.value)}
-                  className="flex-1 px-2.5 py-1.5 bg-[var(--bg-main)] border border-slate-805 rounded-lg text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-color)] placeholder-slate-700"
+                  className="flex-1 px-2.5 py-1.5 bg-[var(--bg-main)] border border-black dark:border-[var(--border-color)] rounded-lg text-xs text-[var(--text-primary)] focus:outline-none focus:border-[#4F7D32] placeholder:text-[var(--text-muted)]"
                 />
               </div>
             </div>
@@ -969,7 +969,7 @@ export default function FinancePage() {
           value: amount,
         })).filter(item => item.value > 0);
 
-        const PIE_COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#8B5CF6', '#EF4444', '#EC4899'];
+        const PIE_COLORS = ['#6FAF4F', '#3B82F6', '#F59E0B', '#8B5CF6', '#EF4444', '#EC4899'];
 
         const totalPaymentSum = pieChartData.reduce((acc, item) => acc + item.value, 0);
 
@@ -977,46 +977,46 @@ export default function FinancePage() {
           <div className="space-y-4">
             {/* Top Key Metric Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="p-4 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl flex items-center justify-between shadow-lg hover:shadow-[0_12px_24px_-10px_rgba(16,185,129,0.12)] hover:border-emerald-500/25 md:hover:-translate-y-1 transition-all duration-350 ease-out">
+              <div className="p-4 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl flex items-center justify-between shadow-lg hover:shadow-[0_12px_24px_-10px_rgba(111,175,79,0.12)] hover:border-[#6FAF4F]/25 md:hover:-translate-y-1 transition-all duration-350 ease-out">
                 <div>
                   <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-wider block">Total Order Value</span>
                   <span className="text-xl font-extrabold text-white mt-1 block">₹{totalValue.toLocaleString('en-IN')}</span>
                 </div>
-                <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                <div className="w-10 h-10 rounded-lg bg-[#6FAF4F]/10 border border-[#6FAF4F]/20 flex items-center justify-center text-[#6FAF4F]">
                   <FileText className="w-5 h-5" />
                 </div>
               </div>
 
-              <div className="p-4 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl flex items-center justify-between shadow-lg hover:shadow-[0_12px_24px_-10px_rgba(16,185,129,0.12)] hover:border-emerald-500/25 md:hover:-translate-y-1 transition-all duration-350 ease-out">
+              <div className="p-4 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl flex items-center justify-between shadow-lg hover:shadow-[0_12px_24px_-10px_rgba(111,175,79,0.12)] hover:border-[#6FAF4F]/25 md:hover:-translate-y-1 transition-all duration-350 ease-out">
                 <div>
                   <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-wider block">Payments Collected</span>
-                  <span className="text-xl font-extrabold text-emerald-400 mt-1 block">₹{totalCollected.toLocaleString('en-IN')}</span>
+                  <span className="text-xl font-extrabold text-[#6FAF4F] mt-1 block">₹{totalCollected.toLocaleString('en-IN')}</span>
                 </div>
-                <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                <div className="w-10 h-10 rounded-lg bg-[#6FAF4F]/10 border border-[#6FAF4F]/20 flex items-center justify-center text-[#6FAF4F]">
                   <IndianRupee className="w-5 h-5" />
                 </div>
               </div>
 
-              <div className="p-4 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl flex items-center justify-between shadow-lg hover:shadow-[0_12px_24px_-10px_rgba(16,185,129,0.12)] hover:border-emerald-500/25 md:hover:-translate-y-1 transition-all duration-350 ease-out">
+              <div className="p-4 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl flex items-center justify-between shadow-lg hover:shadow-[0_12px_24px_-10px_rgba(111,175,79,0.12)] hover:border-[#6FAF4F]/25 md:hover:-translate-y-1 transition-all duration-350 ease-out">
                 <div>
                   <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-wider block">Outstanding Balance</span>
-                  <span className="text-xl font-extrabold text-emerald-400 mt-1 block">₹{totalOutstanding.toLocaleString('en-IN')}</span>
+                  <span className="text-xl font-extrabold text-[#6FAF4F] mt-1 block">₹{totalOutstanding.toLocaleString('en-IN')}</span>
                 </div>
-                <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                <div className="w-10 h-10 rounded-lg bg-[#6FAF4F]/10 border border-[#6FAF4F]/20 flex items-center justify-center text-[#6FAF4F]">
                   <ArrowDownLeft className="w-5 h-5" />
                 </div>
               </div>
             </div>
 
             {/* Payment Methods Breakdown Card */}
-            <div className="p-5 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-xl space-y-3 hover:shadow-[0_12px_24px_-10px_rgba(16,185,129,0.10)] hover:border-emerald-500/20 md:hover:-translate-y-0.5 transition-all duration-350 ease-out">
+            <div className="p-5 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-xl space-y-3 hover:shadow-[0_12px_24px_-10px_rgba(111,175,79,0.10)] hover:border-[#6FAF4F]/20 md:hover:-translate-y-0.5 transition-all duration-350 ease-out">
               <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-2.5">
                 <div className="flex items-center gap-2">
-                  <PieChartIcon className="w-4 h-4 text-emerald-400" />
+                  <PieChartIcon className="w-4 h-4 text-[#6FAF4F]" />
                   <span className="text-xs text-[var(--text-primary)] font-bold uppercase tracking-wider">Verified Payment Methods Breakdown</span>
                 </div>
                 <span className="text-[10px] text-[var(--text-secondary)] font-mono">
-                  Total Collected: <strong className="text-emerald-400 font-bold">₹{totalPaymentSum.toLocaleString('en-IN')}</strong>
+                  Total Collected: <strong className="text-[#6FAF4F] font-bold">₹{totalPaymentSum.toLocaleString('en-IN')}</strong>
                 </span>
               </div>
 
@@ -1090,32 +1090,36 @@ export default function FinancePage() {
       })()}
 
       {/* Tabs */}
-      <div className="flex border-b border-[var(--border-color)] relative w-full sm:w-fit p-1 bg-[var(--bg-card)]/30 rounded-xl gap-1">
+      <div className="flex border border-slate-200 dark:border-[var(--border-color)] relative w-full sm:w-fit p-1 bg-slate-100/90 dark:bg-[var(--bg-card)]/60 rounded-xl gap-1 shadow-xs">
         <button
           onClick={() => { setActiveTab('pending'); setSelectedOrderIds([]); }}
-          className={`flex-1 sm:flex-none px-6 py-2.5 text-xs font-bold uppercase tracking-wider transition-all duration-300 rounded-lg flex items-center justify-center gap-2 relative z-10 cursor-pointer ${
+          className={`flex-1 sm:flex-none px-6 py-2.5 text-xs font-extrabold uppercase tracking-wider transition-all duration-200 rounded-lg flex items-center justify-center gap-2 relative z-10 cursor-pointer ${
             activeTab === 'pending'
-              ? 'text-emerald-450 bg-emerald-500/[0.06] shadow-sm border border-emerald-500/15'
-              : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5 border'
+              ? 'text-[#2B6119] dark:text-[#6FAF4F] bg-[#6FAF4F]/20 dark:bg-[#6FAF4F]/15 border border-[#6FAF4F]/60 dark:border-[#6FAF4F]/40 shadow-sm'
+              : 'border border-transparent text-slate-600 dark:text-[var(--text-secondary)] hover:text-slate-900 dark:hover:text-[var(--text-primary)] hover:bg-slate-200/60 dark:hover:bg-white/5'
           }`}
         >
           <span>Awaiting Verification</span>
           {pendingOrders.length > 0 && (
-            <span className="bg-emerald-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-extrabold">
+            <span className="bg-[#6FAF4F] text-white text-[10px] px-1.5 py-0.5 rounded-full font-extrabold shadow-sm">
               {pendingOrders.length}
             </span>
           )}
         </button>
         <button
           onClick={() => { setActiveTab('ledger'); setSelectedOrderIds([]); }}
-          className={`flex-1 sm:flex-none px-6 py-2.5 text-xs font-bold uppercase tracking-wider transition-all duration-300 rounded-lg flex items-center justify-center gap-2 relative z-10 cursor-pointer ${
+          className={`flex-1 sm:flex-none px-6 py-2.5 text-xs font-extrabold uppercase tracking-wider transition-all duration-200 rounded-lg flex items-center justify-center gap-2 relative z-10 cursor-pointer ${
             activeTab === 'ledger'
-              ? 'text-emerald-450 bg-emerald-500/[0.06] shadow-sm border border-emerald-500/15'
-              : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5 border'
+              ? 'text-[#2B6119] dark:text-[#6FAF4F] bg-[#6FAF4F]/20 dark:bg-[#6FAF4F]/15 border border-[#6FAF4F]/60 dark:border-[#6FAF4F]/40 shadow-sm'
+              : 'border border-transparent text-slate-600 dark:text-[var(--text-secondary)] hover:text-slate-900 dark:hover:text-[var(--text-primary)] hover:bg-slate-200/60 dark:hover:bg-white/5'
           }`}
         >
           <span>Active Ledgers</span>
-          <span className="bg-[var(--bg-card)] text-[var(--text-secondary)] text-[10px] px-1.5 py-0.5 rounded-full font-semibold">
+          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-extrabold transition-colors ${
+            activeTab === 'ledger'
+              ? 'bg-[#6FAF4F] text-white shadow-sm'
+              : 'bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300'
+          }`}>
             {verifiedOrders.length}
           </span>
         </button>
@@ -1123,8 +1127,8 @@ export default function FinancePage() {
 
       {/* Bulk assign toolbar */}
       {canAssignFinance && selectedOrderIds.length > 0 && (
-        <div className="flex items-center justify-between p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-xl animate-fade-in-up">
-          <span className="text-xs font-bold text-emerald-400">
+        <div className="flex items-center justify-between p-3 bg-[#6FAF4F]/5 border border-[#6FAF4F]/20 rounded-xl animate-fade-in-up">
+          <span className="text-xs font-bold text-[#6FAF4F]">
             {selectedOrderIds.length} order{selectedOrderIds.length > 1 ? 's' : ''} selected
           </span>
           <div className="flex items-center gap-2">
@@ -1136,7 +1140,7 @@ export default function FinancePage() {
             </button>
             <button
               onClick={() => setShowAssignModal(true)}
-              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-md shadow-emerald-500/10"
+              className="px-3 py-1.5 bg-[#6FAF4F] hover:bg-[#5ea140] text-white rounded font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-md shadow-[#6FAF4F]/10"
             >
               <UsersRound className="w-3.5 h-3.5" />
               <span>Assign Finance Member</span>
@@ -1148,7 +1152,7 @@ export default function FinancePage() {
       {/* Content */}
       {loading ? (
         <div className="py-24 flex flex-col items-center justify-center gap-3">
-          <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
+          <Loader2 className="w-8 h-8 text-[#6FAF4F] animate-spin" />
           <p className="text-xs text-[var(--text-secondary)]">Loading ledger data...</p>
         </div>
       ) : activeTab === 'pending' ? (
@@ -1172,7 +1176,7 @@ export default function FinancePage() {
                             type="checkbox"
                             checked={pendingOrders.length > 0 && selectedOrderIds.length === pendingOrders.length}
                             onChange={toggleAllOrders}
-                            className="accent-emerald-500 w-3.5 h-3.5 cursor-pointer"
+                            className="accent-[#6FAF4F] w-3.5 h-3.5 cursor-pointer"
                           />
                         </th>
                       )}
@@ -1188,14 +1192,14 @@ export default function FinancePage() {
                   </thead>
                   <tbody className="divide-y divide-slate-800/60">
                     {pendingOrders.map((order) => (
-                      <tr key={order.id} className={`hover:bg-[var(--bg-card)]/30 transition-all text-[var(--text-primary)] ${selectedOrderIds.includes(order.id) ? 'bg-emerald-500/5' : ''}`}>
+                      <tr key={order.id} className={`hover:bg-[var(--bg-card)]/30 transition-all text-[var(--text-primary)] ${selectedOrderIds.includes(order.id) ? 'bg-[#6FAF4F]/5' : ''}`}>
                         {canAssignFinance && (
                           <td className="py-4 px-3">
                             <input
                               type="checkbox"
                               checked={selectedOrderIds.includes(order.id)}
                               onChange={() => toggleOrderSelection(order.id)}
-                              className="accent-emerald-500 w-3.5 h-3.5 cursor-pointer"
+                              className="accent-[#6FAF4F] w-3.5 h-3.5 cursor-pointer"
                             />
                           </td>
                         )}
@@ -1204,7 +1208,7 @@ export default function FinancePage() {
                           <button
                             type="button"
                             onClick={() => setLeadInfoOrder(leadInfoOrder?.id === order.id ? null : order)}
-                            className="text-emerald-400 hover:underline cursor-pointer text-left"
+                            className="text-black dark:text-[#6FAF4F] hover:underline cursor-pointer text-left"
                           >
                             {order.lead.customerName}
                             {order.subsidyApplicable && (
@@ -1236,7 +1240,7 @@ export default function FinancePage() {
                                 </div>
                                 <div className="flex items-center gap-2 text-xs">
                                   <Phone className="w-3.5 h-3.5 text-[var(--text-muted)]" />
-                                  <a href={`tel:${order.lead.mobile}`} className="text-emerald-400 hover:underline font-semibold">{order.lead.mobile}</a>
+                                  <a href={`tel:${order.lead.mobile}`} className="text-[#6FAF4F] hover:underline font-semibold">{order.lead.mobile}</a>
                                 </div>
                                 <div className="flex items-center gap-2 text-xs">
                                   <MapPin className="w-3.5 h-3.5 text-[var(--text-muted)]" />
@@ -1245,7 +1249,7 @@ export default function FinancePage() {
                               </div>
                               <Link
                                 href={`/leads/${order.lead.id}`}
-                                className="block w-full text-center py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg text-[10px] font-bold hover:bg-emerald-500/20 transition-all mt-2"
+                                className="block w-full text-center py-1.5 bg-[#6FAF4F]/10 border border-[#6FAF4F]/20 text-[#6FAF4F] rounded-lg text-[10px] font-bold hover:bg-[#6FAF4F]/20 transition-all mt-2"
                               >
                                 Open Full Lead →
                               </Link>
@@ -1254,19 +1258,19 @@ export default function FinancePage() {
                         </td>
                         <td className="py-4 px-4 font-semibold text-[var(--text-secondary)]">{order.systemSizeKw} kW</td>
                         <td className="py-4 px-4 font-extrabold text-white">₹{order.totalValue.toLocaleString('en-IN')}</td>
-                        <td className="py-4 px-4 font-bold text-emerald-400">
+                        <td className="py-4 px-4 font-bold text-[#6FAF4F]">
                           ₹{order.downPayment.toLocaleString('en-IN')}
                           <span className="block text-[10px] text-[var(--text-muted)] font-normal">Method: {order.paymentMethod.toUpperCase()}</span>
                         </td>
                         <td className="py-4 px-4 text-[var(--text-secondary)]">
-                          <Link href={`/team?userId=${order.submittedBy.id}`} className="text-emerald-400 hover:underline font-bold">
+                          <Link href={`/team?userId=${order.submittedBy.id}`} className="text-[#6FAF4F] hover:underline font-bold">
                             {order.submittedBy.name}
                           </Link>
                         </td>
                         <td className="py-4 px-4 font-medium text-[var(--text-primary)]">
                           {order.assignedFinance ? (
-                            <span className="inline-flex items-center gap-1.5 text-emerald-400 font-semibold text-xs">
-                              <User className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            <span className="inline-flex items-center gap-1.5 text-[#6FAF4F] font-semibold text-xs">
+                              <User className="w-3.5 h-3.5 text-[#6FAF4F] shrink-0" />
                               <span>{order.assignedFinance.name}</span>
                             </span>
                           ) : (
@@ -1278,7 +1282,7 @@ export default function FinancePage() {
                             {canVerifyOrder && (
                               <button
                                 onClick={() => { setSelectedOrder(order); setModalMode('verify'); }}
-                                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1"
+                                className="px-3 py-1.5 bg-[#6FAF4F] hover:bg-[#5ea140] text-white rounded font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1 shadow-sm"
                               >
                                 <Eye className="w-3.5 h-3.5" />
                                 <span>Verify Order</span>
@@ -1323,7 +1327,7 @@ export default function FinancePage() {
                           )}
                         </h4>
                         <p className="text-xs text-[var(--text-muted)] mt-0.5 flex items-center gap-1">
-                          <MapPin className="w-3.5 h-3.5 text-emerald-500" /> {order.lead.city}
+                          <MapPin className="w-3.5 h-3.5 text-[#6FAF4F]" /> {order.lead.city}
                         </p>
                       </div>
 
@@ -1334,7 +1338,7 @@ export default function FinancePage() {
                         </div>
                         <div className="flex flex-col gap-0.5 items-end">
                           <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)]">Down Payment</span>
-                          <span className="text-xs font-bold text-emerald-400">₹{order.downPayment.toLocaleString('en-IN')}</span>
+                          <span className="text-xs font-bold text-[#6FAF4F]">₹{order.downPayment.toLocaleString('en-IN')}</span>
                         </div>
                       </div>
 
@@ -1350,7 +1354,7 @@ export default function FinancePage() {
                           {canVerifyOrder && (
                             <button
                               onClick={() => { setSelectedOrder(order); setModalMode('verify'); }}
-                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1 shadow-sm active:scale-95"
+                              className="px-3 py-1.5 bg-[#6FAF4F] hover:bg-[#5ea140] text-white rounded font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1 shadow-sm active:scale-95"
                             >
                               <Eye className="w-3.5 h-3.5" />
                               <span>Verify Order</span>
@@ -1385,7 +1389,7 @@ export default function FinancePage() {
                           type="checkbox"
                           checked={verifiedOrders.length > 0 && selectedOrderIds.length === verifiedOrders.length}
                           onChange={toggleAllOrders}
-                          className="accent-emerald-500 w-3.5 h-3.5 cursor-pointer"
+                          className="accent-[#6FAF4F] w-3.5 h-3.5 cursor-pointer"
                         />
                       </th>
                     )}
@@ -1402,14 +1406,14 @@ export default function FinancePage() {
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
                   {verifiedOrders.map((order) => (
-                    <tr key={order.id} className={`hover:bg-[var(--bg-card)]/30 transition-all text-[var(--text-primary)] ${selectedOrderIds.includes(order.id) ? 'bg-emerald-500/5' : ''}`}>
+                    <tr key={order.id} className={`hover:bg-[var(--bg-card)]/30 transition-all text-[var(--text-primary)] ${selectedOrderIds.includes(order.id) ? 'bg-[#6FAF4F]/5' : ''}`}>
                       {canAssignFinance && (
                         <td className="py-4 px-3">
                           <input
                             type="checkbox"
                             checked={selectedOrderIds.includes(order.id)}
                             onChange={() => toggleOrderSelection(order.id)}
-                            className="accent-emerald-500 w-3.5 h-3.5 cursor-pointer"
+                            className="accent-[#6FAF4F] w-3.5 h-3.5 cursor-pointer"
                           />
                         </td>
                       )}
@@ -1418,7 +1422,7 @@ export default function FinancePage() {
                         <button
                           type="button"
                           onClick={() => setLeadInfoOrder(leadInfoOrder?.id === order.id ? null : order)}
-                          className="text-emerald-400 hover:underline cursor-pointer text-left"
+                          className="text-black dark:text-[#6FAF4F] hover:underline cursor-pointer text-left"
                         >
                           {order.lead.customerName}
                           {order.subsidyApplicable && (
@@ -1450,7 +1454,7 @@ export default function FinancePage() {
                               </div>
                               <div className="flex items-center gap-2 text-xs">
                                 <Phone className="w-3.5 h-3.5 text-[var(--text-muted)]" />
-                                <a href={`tel:${order.lead.mobile}`} className="text-emerald-400 hover:underline font-semibold">{order.lead.mobile}</a>
+                                <a href={`tel:${order.lead.mobile}`} className="text-[#6FAF4F] hover:underline font-semibold">{order.lead.mobile}</a>
                               </div>
                               <div className="flex items-center gap-2 text-xs">
                                 <MapPin className="w-3.5 h-3.5 text-[var(--text-muted)]" />
@@ -1459,7 +1463,7 @@ export default function FinancePage() {
                             </div>
                             <Link
                               href={`/leads/${order.lead.id}`}
-                              className="block w-full text-center py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg text-[10px] font-bold hover:bg-emerald-500/20 transition-all mt-2"
+                              className="block w-full text-center py-1.5 bg-[#6FAF4F]/10 border border-[#6FAF4F]/20 text-[#6FAF4F] rounded-lg text-[10px] font-bold hover:bg-[#6FAF4F]/20 transition-all mt-2"
                             >
                               Open Full Lead →
                             </Link>
@@ -1468,17 +1472,17 @@ export default function FinancePage() {
                       </td>
                       <td className="py-4 px-4 font-extrabold text-white">₹{order.totalValue.toLocaleString('en-IN')}</td>
                       <td className="py-4 px-4 font-bold text-[var(--text-secondary)]">₹{order.downPayment.toLocaleString('en-IN')}</td>
-                      <td className="py-4 px-4 font-extrabold text-emerald-400">₹{order.totalPaid.toLocaleString('en-IN')}</td>
-                      <td className="py-4 px-4 font-extrabold text-emerald-400">
+                      <td className="py-4 px-4 font-extrabold text-black dark:text-[#6FAF4F]">₹{order.totalPaid.toLocaleString('en-IN')}</td>
+                      <td className="py-4 px-4 font-extrabold text-black dark:text-[#6FAF4F]">
                         ₹{order.balanceOutstanding.toLocaleString('en-IN')}
                         {order.balanceOutstanding === 0 && (
-                          <span className="inline-block text-[9px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded-md ml-2 font-bold">Paid</span>
+                          <span className="inline-block text-[9px] bg-[#6FAF4F]/10 text-[#6FAF4F] px-1.5 py-0.5 rounded-md ml-2 font-bold">Paid</span>
                         )}
                       </td>
                       <td className="py-4 px-4 font-medium text-[var(--text-primary)]">
                         {order.assignedFinance ? (
-                          <span className="inline-flex items-center gap-1.5 text-emerald-400 font-semibold text-xs">
-                            <User className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                          <span className="inline-flex items-center gap-1.5 text-[#6FAF4F] font-semibold text-xs">
+                            <User className="w-3.5 h-3.5 text-[#6FAF4F] shrink-0" />
                             <span>{order.assignedFinance.name}</span>
                           </span>
                         ) : order.assignedOps ? (
@@ -1498,10 +1502,10 @@ export default function FinancePage() {
                       <td className="py-4 px-4 capitalize">
                         <span className={`inline-block text-[9px] font-extrabold px-2.5 py-1 rounded-lg ${
                           order.status === 'finance_verified' 
-                            ? 'bg-emerald-500/10 text-emerald-400'
+                            ? 'bg-[#6FAF4F]/10 text-[#6FAF4F]'
                             : order.status === 'ops_assigned'
                               ? 'bg-purple-500/10 text-purple-400'
-                              : 'bg-emerald-500/10 text-emerald-400'
+                              : 'bg-[#6FAF4F]/10 text-[#6FAF4F]'
                         }`}>
                           {order.status === 'finance_verified' ? 'verified' : order.status === 'ops_assigned' ? 'scheduled' : order.status}
                         </span>
@@ -1512,7 +1516,7 @@ export default function FinancePage() {
                             onClick={() => { setSelectedOrder(order); setModalMode('ledger_detail'); }}
                             className="px-3 py-1.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-slate-600 text-[var(--text-primary)] rounded font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1"
                           >
-                            <CreditCard className="w-3.5 h-3.5 text-emerald-400" />
+                            <CreditCard className="w-3.5 h-3.5 text-[#6FAF4F]" />
                             <span>View Ledger</span>
                           </button>
                         ) : null}
@@ -1536,10 +1540,10 @@ export default function FinancePage() {
 
                 const statusText = order.status === 'finance_verified' ? 'verified' : order.status === 'ops_assigned' ? 'scheduled' : order.status;
                 const statusClass = order.status === 'finance_verified' 
-                  ? 'bg-emerald-500/10 text-emerald-400'
+                  ? 'bg-[#6FAF4F]/10 text-[#6FAF4F]'
                   : order.status === 'ops_assigned'
                     ? 'bg-purple-500/10 text-purple-400'
-                    : 'bg-emerald-500/10 text-emerald-400';
+                    : 'bg-[#6FAF4F]/10 text-[#6FAF4F]';
 
                 return (
                   <div
@@ -1568,7 +1572,7 @@ export default function FinancePage() {
                         )}
                       </h4>
                       <p className="text-xs text-[var(--text-muted)] mt-0.5 flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5 text-emerald-500" /> {order.lead.city}
+                        <MapPin className="w-3.5 h-3.5 text-[#6FAF4F]" /> {order.lead.city}
                       </p>
                     </div>
 
@@ -1579,9 +1583,9 @@ export default function FinancePage() {
                       </div>
                       <div className="flex flex-col gap-0.5 items-end">
                         <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)]">Outstanding Balance</span>
-                        <span className="text-xs font-black text-emerald-400">
+                        <span className="text-xs font-black text-[#6FAF4F]">
                           ₹{order.balanceOutstanding.toLocaleString('en-IN')}
-                          {order.balanceOutstanding === 0 && <span className="text-[8px] bg-emerald-500/10 text-emerald-450 border border-emerald-500/25 px-1 py-0.25 ml-1 rounded">Paid</span>}
+                          {order.balanceOutstanding === 0 && <span className="text-[8px] bg-[#6FAF4F]/10 text-[#6FAF4F] border border-[#6FAF4F]/25 px-1 py-0.25 ml-1 rounded">Paid</span>}
                         </span>
                       </div>
                     </div>
@@ -1600,7 +1604,7 @@ export default function FinancePage() {
                             onClick={() => { setSelectedOrder(order); setModalMode('ledger_detail'); }}
                             className="px-3 py-1.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-slate-650 text-[var(--text-primary)] rounded font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1 shadow-sm active:scale-95"
                           >
-                            <CreditCard className="w-3.5 h-3.5 text-emerald-400" />
+                            <CreditCard className="w-3.5 h-3.5 text-[#6FAF4F]" />
                             <span>View Ledger</span>
                           </button>
                         )}
@@ -1627,7 +1631,7 @@ export default function FinancePage() {
                 </h3>
                 <p className="text-[11px] text-[var(--text-secondary)] mt-0.5">
                   Client:{' '}
-                  <Link href={`/leads/${selectedOrder.lead.id}`} className="text-emerald-400 hover:underline font-bold">
+                  <Link href={`/leads/${selectedOrder.lead.id}`} className="text-[#6FAF4F] hover:underline font-bold">
                     {selectedOrder.lead.customerName}
                     {selectedOrder.subsidyApplicable && (
                       <span 
@@ -1660,15 +1664,15 @@ export default function FinancePage() {
                 </div>
                 <div>
                   <span className="text-[var(--text-secondary)] block font-semibold">Down Payment Punched</span>
-                  <span className="text-sm font-bold text-emerald-400">₹{selectedOrder.downPayment.toLocaleString('en-IN')}</span>
+                  <span className="text-sm font-bold text-[#6FAF4F]">₹{selectedOrder.downPayment.toLocaleString('en-IN')}</span>
                 </div>
                 <div>
                   <span className="text-[var(--text-secondary)] block font-semibold">Total Payments Cleared</span>
-                  <span className="text-sm font-extrabold text-emerald-400">₹{selectedOrder.totalPaid.toLocaleString('en-IN')}</span>
+                  <span className="text-sm font-extrabold text-[#6FAF4F]">₹{selectedOrder.totalPaid.toLocaleString('en-IN')}</span>
                 </div>
                 <div>
                   <span className="text-[var(--text-secondary)] block font-semibold">Outstanding Balance</span>
-                  <span className="text-sm font-extrabold text-emerald-400">₹{selectedOrder.balanceOutstanding.toLocaleString('en-IN')}</span>
+                  <span className="text-sm font-extrabold text-[#6FAF4F]">₹{selectedOrder.balanceOutstanding.toLocaleString('en-IN')}</span>
                 </div>
               </div>
 
@@ -1711,7 +1715,7 @@ export default function FinancePage() {
                         {selectedOrder.subsidyAmount && (
                           <div>
                             <span className="text-slate-450 block font-semibold">Subsidy Amount</span>
-                            <span className="text-slate-205 font-bold text-emerald-450">₹{selectedOrder.subsidyAmount.toLocaleString('en-IN')}</span>
+                            <span className="text-slate-205 font-bold text-[#6FAF4F]">₹{selectedOrder.subsidyAmount.toLocaleString('en-IN')}</span>
                           </div>
                         )}
                       </div>
@@ -1728,7 +1732,7 @@ export default function FinancePage() {
                             <div key={type} className="p-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg flex items-center justify-between">
                               <div>
                                 <span className="text-[10px] text-[var(--text-muted)] font-semibold block">{DOC_TYPES[type]}</span>
-                                <span className={`text-[10px] font-bold ${doc ? 'text-emerald-400' : 'text-rose-450'}`}>
+                                <span className={`text-[10px] font-bold ${doc ? 'text-[#6FAF4F]' : 'text-rose-450'}`}>
                                   {doc ? '✓ Uploaded' : '✗ Missing'}
                                 </span>
                               </div>
@@ -1737,7 +1741,7 @@ export default function FinancePage() {
                                   href={`/api/v1/orders/${selectedOrder.id}/documents/${doc.id}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-[10px] text-emerald-400 hover:underline font-bold"
+                                  className="text-[10px] text-[#6FAF4F] hover:underline font-bold"
                                 >
                                   View File
                                 </a>
@@ -1754,7 +1758,7 @@ export default function FinancePage() {
                     <div className="space-y-4">
                       <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-[var(--border-color)] pb-2">Verification Action</h4>
                       
-                      <div className="p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-lg text-[var(--text-primary)] text-xs leading-normal">
+                      <div className="p-3 bg-[#6FAF4F]/5 border border-[#6FAF4F]/10 rounded-lg text-[var(--text-primary)] text-xs leading-normal">
                         Please inspect all file uploads, client load capacity, connection numbers, and initial payment methods. 
                         Approving moves this order to **Operations** and records the initial down payment in the active ledger.
                       </div>
@@ -1775,19 +1779,19 @@ export default function FinancePage() {
                         <button
                           type="button"
                           onClick={() => handleVerifyOrder(false)}
-                          disabled={actionLoading}
+                          disabled={actionLoading !== null}
                           className="flex-1 py-2.5 bg-rose-950/20 hover:bg-rose-950/40 text-rose-400 border border-rose-900/30 rounded-lg font-bold text-xs shadow-md transition-all cursor-pointer disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
                         >
-                          {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />}
+                          {actionLoading === 'reject' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />}
                           <span>Reject Order</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => handleVerifyOrder(true)}
-                          disabled={actionLoading}
-                          className="flex-1 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg font-bold text-xs shadow-md shadow-emerald-500/10 transition-all cursor-pointer disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
+                          disabled={actionLoading !== null}
+                          className="flex-1 py-2.5 bg-[#6FAF4F] hover:bg-[#5ea140] text-white rounded-lg font-bold text-xs shadow-md shadow-[#6FAF4F]/10 transition-all cursor-pointer disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
                         >
-                          {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
+                          {actionLoading === 'approve' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
                           <span>Approve & Verify</span>
                         </button>
                       </div>
@@ -1843,7 +1847,7 @@ export default function FinancePage() {
                                           setEditPaymentReason('');
                                         }}
                                         title="Modify Payment"
-                                        className="text-[var(--text-secondary)] hover:text-emerald-400 p-1 hover:bg-[var(--bg-card)] rounded transition-all cursor-pointer border border-transparent"
+                                        className="text-[var(--text-secondary)] hover:text-[#6FAF4F] p-1 hover:bg-[var(--bg-card)] rounded transition-all cursor-pointer border border-transparent"
                                       >
                                         <SlidersHorizontal className="w-3.5 h-3.5" />
                                       </button>
@@ -1875,7 +1879,7 @@ export default function FinancePage() {
                                 </p>
                               )}
                               {pmt.changeReason && (
-                                <p className="text-[10px] text-emerald-400 italic bg-emerald-950/20 border border-emerald-900/30 p-2 rounded-lg mt-1.5">
+                                <p className="text-[10px] text-[#6FAF4F] italic bg-[#6FAF4F]/10 border border-[#6FAF4F]/20 p-2 rounded-lg mt-1.5">
                                   <strong>Edit Reason:</strong> {pmt.changeReason}
                                 </p>
                               )}
@@ -1895,9 +1899,9 @@ export default function FinancePage() {
                                         isPdf,
                                       });
                                     }}
-                                    className="text-[10px] text-emerald-400 hover:underline font-bold flex items-center gap-1 cursor-pointer bg-transparent border-0 p-0"
+                                    className="text-[10px] text-[#6FAF4F] hover:underline font-bold flex items-center gap-1 cursor-pointer bg-transparent border-0 p-0"
                                   >
-                                    <FileText className="w-3 h-3 text-emerald-400" />
+                                    <FileText className="w-3 h-3 text-[#6FAF4F]" />
                                     <span>{pmt.receiptUrl ? 'View Image' : 'View Receipt'}</span>
                                   </button>
                                 </div>
@@ -1907,7 +1911,7 @@ export default function FinancePage() {
                                 <span className="flex items-center gap-1">
                                   <User className="w-2.5 h-2.5 text-[var(--text-muted)]" />
                                   Recorded by{' '}
-                                  <Link href={`/team?userId=${pmt.recordedBy.id}`} className="text-emerald-400 hover:underline font-bold">
+                                  <Link href={`/team?userId=${pmt.recordedBy.id}`} className="text-[#6FAF4F] hover:underline font-bold">
                                     {pmt.recordedBy.name}
                                   </Link>
                                 </span>
@@ -1955,16 +1959,13 @@ export default function FinancePage() {
 
                         <div>
                           <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Payment Method *</label>
-                          <select
+                          <CustomSelect
+                            options={PAYMENT_METHODS}
                             value={newPaymentMethod}
-                            onChange={(e) => setNewPaymentMethod(e.target.value)}
+                            onChange={(val) => setNewPaymentMethod(val)}
                             disabled={selectedOrder.balanceOutstanding === 0}
-                            className="w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--border-color)] capitalize"
-                          >
-                            {PAYMENT_METHODS.map((m) => (
-                              <option key={m.value} value={m.value}>{m.label}</option>
-                            ))}
-                          </select>
+                            className="w-full"
+                          />
                         </div>
 
                         <div>
@@ -2014,15 +2015,15 @@ export default function FinancePage() {
 
                           {/* State 1: Uploading */}
                           {receiptUploading && (
-                            <div className="flex flex-col items-center justify-center p-6 bg-[var(--bg-main)] border border-dashed border-emerald-500/40 rounded-xl space-y-2 animate-pulse">
-                              <Loader2 className="w-6 h-6 text-emerald-400 animate-spin" />
-                              <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">Receipt is Uploading</span>
+                            <div className="flex flex-col items-center justify-center p-6 bg-[var(--bg-main)] border border-dashed border-[#6FAF4F]/40 rounded-xl space-y-2 animate-pulse">
+                              <Loader2 className="w-6 h-6 text-[#6FAF4F] animate-spin" />
+                              <span className="text-[11px] font-bold text-[#6FAF4F] uppercase tracking-wider">Receipt is Uploading</span>
                             </div>
                           )}
 
                           {/* State 2: Uploaded (Success Preview) */}
                           {!receiptUploading && receiptUrl && (
-                            <div className="p-3 bg-[var(--bg-main)] border border-emerald-500/30 rounded-xl space-y-3 relative group overflow-hidden">
+                            <div className="p-3 bg-[var(--bg-main)] border border-[#6FAF4F]/30 rounded-xl space-y-3 relative group overflow-hidden">
                               <div className="absolute top-2 right-2 z-10">
                                 <button
                                   type="button"
@@ -2041,14 +2042,14 @@ export default function FinancePage() {
                                   {!receiptUrl && <Image className="w-5 h-5 text-[var(--text-muted)]" />}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-[11px] font-bold text-emerald-400 truncate flex items-center gap-1">
+                                  <p className="text-[11px] font-bold text-[#6FAF4F] truncate flex items-center gap-1">
                                     <span>✓ Uploaded Successfully</span>
                                   </p>
                                   <a 
                                     href={receiptUrl} 
                                     target="_blank" 
                                     rel="noopener noreferrer" 
-                                    className="text-[10px] text-emerald-400 hover:text-emerald-400 font-bold underline mt-0.5 inline-block"
+                                    className="text-[10px] text-[#6FAF4F] hover:text-[#6FAF4F] font-bold underline mt-0.5 inline-block"
                                   >
                                     View Full Receipt Image
                                   </a>
@@ -2064,10 +2065,10 @@ export default function FinancePage() {
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
                                 disabled={selectedOrder.balanceOutstanding === 0}
-                                className="flex flex-col items-center justify-center p-4 bg-[var(--bg-main)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-emerald-500/30 rounded-xl space-y-1.5 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed group"
+                                className="flex flex-col items-center justify-center p-4 bg-[var(--bg-main)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[#6FAF4F]/30 rounded-xl space-y-1.5 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed group"
                               >
-                                <div className="w-8 h-8 bg-[var(--bg-card)] border border-[var(--border-color)] group-hover:border-emerald-500/20 rounded-lg flex items-center justify-center transition-all">
-                                  <Upload className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-emerald-400 transition-colors" />
+                                <div className="w-8 h-8 bg-[var(--bg-card)] border border-[var(--border-color)] group-hover:border-[#6FAF4F]/20 rounded-lg flex items-center justify-center transition-all">
+                                  <Upload className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-[#6FAF4F] transition-colors" />
                                 </div>
                                 <span className="text-[10px] font-bold text-[var(--text-primary)] group-hover:text-white transition-colors">Upload File</span>
                                 <span className="text-[8px] text-[var(--text-muted)]">From Device</span>
@@ -2077,10 +2078,10 @@ export default function FinancePage() {
                                 type="button"
                                 onClick={() => cameraInputRef.current?.click()}
                                 disabled={selectedOrder.balanceOutstanding === 0}
-                                className="flex flex-col items-center justify-center p-4 bg-[var(--bg-main)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-emerald-500/30 rounded-xl space-y-1.5 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed group"
+                                className="flex flex-col items-center justify-center p-4 bg-[var(--bg-main)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[#6FAF4F]/30 rounded-xl space-y-1.5 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed group"
                               >
-                                <div className="w-8 h-8 bg-[var(--bg-card)] border border-[var(--border-color)] group-hover:border-emerald-500/20 rounded-lg flex items-center justify-center transition-all">
-                                  <Camera className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-emerald-400 transition-colors" />
+                                <div className="w-8 h-8 bg-[var(--bg-card)] border border-[var(--border-color)] group-hover:border-[#6FAF4F]/20 rounded-lg flex items-center justify-center transition-all">
+                                  <Camera className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-[#6FAF4F] transition-colors" />
                                 </div>
                                 <span className="text-[10px] font-bold text-[var(--text-primary)] group-hover:text-white transition-colors">Take Photo</span>
                                 <span className="text-[8px] text-[var(--text-muted)]">Open Camera</span>
@@ -2090,14 +2091,14 @@ export default function FinancePage() {
                         </div>
 
                         {selectedOrder.balanceOutstanding === 0 ? (
-                          <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs rounded-lg font-bold text-center">
+                          <div className="p-3 bg-[#6FAF4F]/10 border border-[#6FAF4F]/20 text-[#6FAF4F] text-xs rounded-lg font-bold text-center">
                             ✓ This ledger has been fully cleared.
                           </div>
                         ) : (
                           <button
                             type="submit"
                             disabled={paymentRecording || receiptUploading}
-                            className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md shadow-emerald-500/10 flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                            className="w-full py-2.5 bg-[#6FAF4F] hover:bg-[#5ea140] text-white rounded-lg font-bold text-xs shadow-md shadow-[#6FAF4F]/10 flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
                           >
                             {paymentRecording ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <PlusCircle className="w-3.5 h-3.5" />}
                             <span>Record Receipt</span>
@@ -2147,16 +2148,12 @@ export default function FinancePage() {
 
               <div>
                 <label className="block text-[10px] font-semibold uppercase text-[var(--text-secondary)] mb-1">Payment Method *</label>
-                <select
-                  required
+                <CustomSelect
+                  options={PAYMENT_METHODS}
                   value={editPaymentMethod}
-                  onChange={(e) => setEditPaymentMethod(e.target.value)}
-                  className="block w-full px-3 py-2 bg-slate-955 border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-emerald-500 focus:outline-none"
-                >
-                  {PAYMENT_METHODS.map((m) => (
-                    <option key={m.value} value={m.value}>{m.label}</option>
-                  ))}
-                </select>
+                  onChange={(val) => setEditPaymentMethod(val)}
+                  className="w-full"
+                />
               </div>
 
               <div>
@@ -2181,14 +2178,14 @@ export default function FinancePage() {
               </div>
 
               <div>
-                <label className="block text-[10px] font-semibold uppercase text-emerald-400 mb-1">Reason for Modification *</label>
+                <label className="block text-[10px] font-semibold uppercase text-[#6FAF4F] mb-1">Reason for Modification *</label>
                 <textarea
                   required
                   value={editPaymentReason}
                   onChange={(e) => setEditPaymentReason(e.target.value)}
                   placeholder="Explain why this payment record is being changed..."
                   rows={2}
-                  className="block w-full px-3 py-2 bg-slate-955 border border-emerald-900/40 rounded-lg text-white text-xs focus:ring-emerald-500 focus:outline-none resize-none"
+                  className="block w-full px-3 py-2 bg-slate-955 border border-[#6FAF4F]/40 rounded-lg text-white text-xs focus:ring-[#6FAF4F] focus:outline-none resize-none"
                 />
               </div>
 
@@ -2202,7 +2199,7 @@ export default function FinancePage() {
                 </button>
                 <button
                   type="submit"
-                  className="py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md"
+                  className="py-2 px-5 bg-[#6FAF4F] hover:bg-[#5ea140] text-white rounded-lg font-bold text-xs shadow-md"
                 >
                   Save Changes
                 </button>
@@ -2240,7 +2237,7 @@ export default function FinancePage() {
                   onChange={(e) => setDiscardPaymentReason(e.target.value)}
                   placeholder="Provide a mandatory reason why this payment is being discarded..."
                   rows={3}
-                  className="block w-full px-3 py-2 bg-slate-955 border border-rose-900/60 rounded-lg text-white text-xs focus:ring-emerald-500 focus:outline-none resize-none"
+                  className="block w-full px-3 py-2 bg-slate-955 border border-rose-900/60 rounded-lg text-white text-xs focus:ring-[#6FAF4F] focus:outline-none resize-none"
                 />
               </div>
 
@@ -2271,7 +2268,7 @@ export default function FinancePage() {
           <div className="w-full max-w-lg bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up my-auto">
             <div className="p-6 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex justify-between items-center">
               <h3 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
-                <UsersRound className="w-4 h-4 text-emerald-400" />
+                <UsersRound className="w-4 h-4 text-[#6FAF4F]" />
                 Assign Finance Team Member
               </h3>
               <button onClick={() => { setShowAssignModal(false); setAssignTargetUserId(''); }} className="text-[var(--text-secondary)] hover:text-white cursor-pointer">
@@ -2290,7 +2287,7 @@ export default function FinancePage() {
                   required
                   value={assignTargetUserId}
                   onChange={(e) => setAssignTargetUserId(e.target.value)}
-                  className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-emerald-500 focus:outline-none"
+                  className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-[#6FAF4F] focus:outline-none"
                 >
                   <option value="">Select a team member...</option>
                   {financeSubordinates.map((emp) => (
@@ -2313,7 +2310,7 @@ export default function FinancePage() {
                   type="button"
                   onClick={handleBulkAssign}
                   disabled={!assignTargetUserId || assignLoading}
-                  className="py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
+                  className="py-2 px-5 bg-[#6FAF4F] hover:bg-[#5ea140] text-white rounded-lg font-bold text-xs shadow-md cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
                 >
                   {assignLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UsersRound className="w-3.5 h-3.5" />}
                   <span>Confirm Assignment</span>

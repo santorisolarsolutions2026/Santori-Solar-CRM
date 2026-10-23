@@ -4,6 +4,18 @@ import { getTerritoryPreviewData } from '@/lib/territorySql';
 
 export const dynamic = 'force-dynamic';
 
+interface CacheEntry {
+  data: any;
+  timestamp: number;
+}
+
+const previewCache = new Map<string, CacheEntry>();
+const PREVIEW_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes
+
+export function invalidateTerritoryPreviewCache() {
+  previewCache.clear();
+}
+
 export async function POST(req: Request) {
   try {
     const userPayload = getAuthenticatedUser(req);
@@ -47,6 +59,15 @@ export async function POST(req: Request) {
       allowedUserIds = [userPayload.id, ...subordinateIds];
     }
 
+    const sortedLocs = [...localities].map((l) => String(l).trim().toLowerCase()).sort().join('|');
+    const userScopeKey = isSuperAdmin ? 'all' : (allowedUserIds || []).sort().join(',');
+    const cacheKey = `${(city || 'varanasi').toLowerCase().trim()}::${sortedLocs}::${filterType}::${pageNum}::${limitNum}::${userScopeKey}`;
+
+    const cached = previewCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < PREVIEW_CACHE_TTL_MS) {
+      return NextResponse.json(cached.data);
+    }
+
     const result = await getTerritoryPreviewData({
       city,
       localities,
@@ -56,7 +77,7 @@ export async function POST(req: Request) {
       allowedUserIds,
     });
 
-    return NextResponse.json({
+    const responsePayload = {
       success: true,
       data: result.leads,
       counts: result.counts,
@@ -66,7 +87,18 @@ export async function POST(req: Request) {
         limit: limitNum,
         totalPages: Math.ceil(result.totalFiltered / limitNum) || 1,
       },
+    };
+
+    if (previewCache.size > 200) {
+      const oldestKey = previewCache.keys().next().value;
+      if (oldestKey) previewCache.delete(oldestKey);
+    }
+    previewCache.set(cacheKey, {
+      data: responsePayload,
+      timestamp: Date.now(),
     });
+
+    return NextResponse.json(responsePayload);
   } catch (error: any) {
     console.error('Territory preview error:', error);
     return NextResponse.json(

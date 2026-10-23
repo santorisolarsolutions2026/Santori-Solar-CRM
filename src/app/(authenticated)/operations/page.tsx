@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import CustomDropdown from '@/components/CustomDropdown';
+import CustomSelect from '@/components/CustomSelect';
 import { compressImageClient } from '@/lib/image-compress';
 import {
   Wrench,
@@ -1186,7 +1187,7 @@ export default function OperationsPage() {
                 placeholder="Search by client or order code..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--border-color)] placeholder-slate-500 outline-none"
+                className="w-full pl-9 pr-3 py-2 bg-[var(--bg-main)] border border-black dark:border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:outline-none focus:border-[#4F7D32] placeholder-slate-500 outline-none"
               />
               <Search className="w-4 h-4 text-[var(--text-muted)] absolute left-3 top-2.5" />
             </div>
@@ -1194,7 +1195,7 @@ export default function OperationsPage() {
 
           <div className="w-full sm:w-auto min-w-[150px]">
             <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Assigned To</label>
-            <CustomDropdown
+            <CustomSelect
               value={filterManagerId}
               onChange={(val) => setFilterManagerId(val)}
               options={[
@@ -1204,12 +1205,13 @@ export default function OperationsPage() {
                   label: m.name || 'Unassigned'
                 }))
               ]}
+              className="w-full"
             />
           </div>
 
           <div className="w-full sm:w-auto min-w-[190px]">
             <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Current Stage</label>
-            <CustomDropdown
+            <CustomSelect
               value={filterStage}
               onChange={(val) => setFilterStage(val)}
               options={[
@@ -1222,12 +1224,13 @@ export default function OperationsPage() {
                 { value: 'commissioned', label: 'Plant Commissioned' },
                 { value: 'subsidy_applied', label: 'Subsidy Applied' }
               ]}
+              className="w-full"
             />
           </div>
 
           <div className="w-full sm:w-auto min-w-[140px]">
             <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Date Shortcut</label>
-            <CustomDropdown
+            <CustomSelect
               options={[
                 { value: 'all', label: 'All Time' },
                 { value: 'today', label: 'Today' },
@@ -1250,7 +1253,7 @@ export default function OperationsPage() {
                 placeholder="Filter State..."
                 value={stateFilter}
                 onChange={(e) => setStateFilter(e.target.value)}
-                className="w-full pl-3 pr-7 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--border-color)] placeholder-slate-500 outline-none"
+                className="w-full pl-3 pr-7 py-2 bg-[var(--bg-main)] border border-black dark:border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:outline-none focus:border-[#4F7D32] placeholder-slate-500 outline-none ops-filter-input"
               />
               {stateFilter && (
                 <button
@@ -1274,7 +1277,7 @@ export default function OperationsPage() {
                 placeholder="Filter City..."
                 value={cityFilter}
                 onChange={(e) => setCityFilter(e.target.value)}
-                className="w-full pl-3 pr-7 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--border-color)] placeholder-slate-500 outline-none"
+                className="w-full pl-3 pr-7 py-2 bg-[var(--bg-main)] border border-black dark:border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:outline-none focus:border-[#4F7D32] placeholder-slate-500 outline-none ops-filter-input"
               />
               {cityFilter && (
                 <button
@@ -1298,7 +1301,7 @@ export default function OperationsPage() {
                 placeholder="Filter Division..."
                 value={divisionFilter}
                 onChange={(e) => setDivisionFilter(e.target.value)}
-                className="w-full pl-3 pr-7 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--border-color)] placeholder-slate-500 outline-none"
+                className="w-full pl-3 pr-7 py-2 bg-[var(--bg-main)] border border-black dark:border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:outline-none focus:border-[#4F7D32] placeholder-slate-500 outline-none ops-filter-input"
               />
               {divisionFilter && (
                 <button
@@ -1323,7 +1326,7 @@ export default function OperationsPage() {
                 type="date"
                 value={filterDateFrom}
                 onChange={(e) => setFilterDateFrom(e.target.value)}
-                className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg px-3 py-2 text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--border-color)] outline-none"
+                className="w-full bg-[var(--bg-main)] border border-black dark:border-[var(--border-color)] rounded-lg px-3 py-2 text-[var(--text-primary)] text-xs focus:outline-none focus:border-[#4F7D32] outline-none"
               />
             </div>
             <div>
@@ -1332,7 +1335,7 @@ export default function OperationsPage() {
                 type="date"
                 value={filterDateTo}
                 onChange={(e) => setFilterDateTo(e.target.value)}
-                className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg px-3 py-2 text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--border-color)] outline-none"
+                className="w-full bg-[var(--bg-main)] border border-black dark:border-[var(--border-color)] rounded-lg px-3 py-2 text-[var(--text-primary)] text-xs focus:outline-none focus:border-[#4F7D32] outline-none"
               />
             </div>
           </div>
@@ -1355,14 +1358,14 @@ export default function OperationsPage() {
         <>
           {/* Bulk Assign Operations Member Bar */}
           {canAssignOps && selectedOrderIds.length > 0 && (
-            <div className="flex items-center justify-between bg-emerald-600/10 border border-emerald-600/20 px-4 py-3 rounded-xl mb-4 text-xs">
-              <div className="flex items-center gap-2 text-emerald-400 font-bold">
-                <Users className="w-4 h-4" />
+            <div className="flex items-center justify-between bg-[#4F7D32]/10 border border-[#4F7D32]/20 px-4 py-3 rounded-xl mb-4 text-xs">
+              <div className="flex items-center gap-2 text-[#4F7D32] font-bold">
+                <Users className="w-4 h-4 text-[#4F7D32]" />
                 <span>Selected {selectedOrderIds.length} order{selectedOrderIds.length > 1 ? 's' : ''}</span>
               </div>
               <button
                 onClick={() => setShowAssignModal(true)}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition-all shadow-md shadow-emerald-500/10 flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-2 bg-[#4F7D32] hover:bg-[#436A2B] text-white font-bold rounded-lg transition-all shadow-md shadow-[#4F7D32]/20 flex items-center gap-1.5 cursor-pointer"
               >
                 <Users className="w-3.5 h-3.5" />
                 <span>Assign / Reassign Operations Member</span>
@@ -1380,7 +1383,7 @@ export default function OperationsPage() {
                           type="checkbox"
                           checked={filteredOrders.length > 0 && selectedOrderIds.length === filteredOrders.length}
                           onChange={toggleAllOrders}
-                          className="accent-emerald-500 w-3.5 h-3.5 cursor-pointer"
+                          className="accent-[#4F7D32] w-3.5 h-3.5 cursor-pointer"
                         />
                       </th>
                     )}
@@ -1396,7 +1399,7 @@ export default function OperationsPage() {
                 <tbody className="divide-y divide-slate-800/60">
                   {filteredOrders.map((order) => {
                     let stageText = 'Awaiting Schedule';
-                    let stageClass = 'bg-slate-800/60 text-slate-350';
+                    let stageClass = 'bg-slate-100 text-slate-700 border border-slate-300/80 dark:border-slate-600/60 dark:bg-slate-700/40 dark:text-slate-200';
 
                     if (order.isSubsidyApplied || (order.isCommissioned && !order.subsidyApplicable)) {
                       stageText = 'Completed';
@@ -1419,21 +1422,21 @@ export default function OperationsPage() {
                     }
 
                     return (
-                      <tr key={order.id} className={`hover:bg-[var(--bg-card)]/30 transition-colors group ${selectedOrderIds.includes(order.id) ? 'bg-emerald-500/5' : ''}`}>
+                      <tr key={order.id} className={`hover:bg-[var(--bg-card)]/30 transition-colors group ${selectedOrderIds.includes(order.id) ? 'bg-[#4F7D32]/10 dark:bg-[#4F7D32]/10' : ''}`}>
                         {canAssignOps && (
                           <td className="px-3 py-4 text-center">
                             <input
                               type="checkbox"
                               checked={selectedOrderIds.includes(order.id)}
                               onChange={() => toggleOrderSelection(order.id)}
-                              className="accent-emerald-500 w-3.5 h-3.5 cursor-pointer"
+                              className="accent-[#4F7D32] w-3.5 h-3.5 cursor-pointer"
                             />
                           </td>
                         )}
                         <td className="px-5 py-4">
                           <div className="flex flex-col">
                             <span className="font-mono font-bold text-white text-xs">{order.orderCode}</span>
-                            <Link href={`/leads/${order.lead.id}`} className="text-sm font-bold text-emerald-400 hover:underline mt-1">
+                            <Link href={`/leads/${order.lead.id}`} className="text-sm font-bold text-emerald-400 dark:text-[#4F7D32] hover:underline mt-1">
                               {order.lead.customerName}
                               {order.subsidyApplicable && (
                                 <span 
@@ -1445,7 +1448,7 @@ export default function OperationsPage() {
                               )}
                             </Link>
                             <p className="text-[10px] text-[var(--text-muted)] flex items-center gap-1 mt-1 truncate max-w-[250px]">
-                              <MapPin className="w-3 h-3 text-emerald-500" />
+                              <MapPin className="w-3 h-3 text-emerald-500 dark:text-[#4F7D32]" />
                               <span>{order.lead.address}{order.lead.division ? ` (${order.lead.division})` : ''}, {order.lead.city}</span>
                             </p>
                           </div>
@@ -1479,7 +1482,7 @@ export default function OperationsPage() {
                                 const desig = currentAssignee?.designation?.name || currentAssignee?.role;
                                 if (!desig || !order.assignedOpsId) return null;
                                 return (
-                                  <span className="inline-block text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md w-fit">
+                                  <span className="inline-block text-[9px] font-bold text-emerald-400 dark:text-[#4F7D32] bg-emerald-500/10 dark:bg-[#4F7D32]/15 px-2 py-0.5 rounded-md w-fit">
                                     {desig}
                                   </span>
                                 );
@@ -1522,7 +1525,7 @@ export default function OperationsPage() {
                                 setShowActualCommissionForm(false); 
                                 setNewSubsidyAmount(''); 
                               }}
-                              className="px-3 py-1.5 bg-[var(--bg-card)] border border-[var(--border-color)] hover:bg-[var(--bg-card)] text-emerald-400 rounded-lg font-bold text-xs transition-all cursor-pointer inline-flex items-center gap-1.5"
+                              className="px-3 py-1.5 bg-[var(--bg-card)] border border-black dark:border-[var(--border-color)] hover:bg-[var(--bg-card)] text-emerald-400 dark:text-[#4F7D32] rounded-lg font-bold text-xs transition-all cursor-pointer inline-flex items-center gap-1.5"
                             >
                               <Eye className="w-3.5 h-3.5" />
                               <span>Manage</span>
@@ -1540,7 +1543,7 @@ export default function OperationsPage() {
             <div className="block md:hidden divide-y divide-slate-800/40 bg-[var(--bg-card)]/30 text-sm">
               {filteredOrders.map((order) => {
                 let stageText = 'Awaiting Schedule';
-                let stageClass = 'bg-slate-800/60 text-slate-350';
+                let stageClass = 'bg-slate-100 text-slate-700 border border-slate-300/80 dark:border-slate-600/60 dark:bg-slate-700/40 dark:text-slate-200';
 
                 if (order.isSubsidyApplied || (order.isCommissioned && !order.subsidyApplicable)) {
                   stageText = 'Completed';
@@ -1579,7 +1582,7 @@ export default function OperationsPage() {
                     </div>
 
                     <div>
-                      <Link href={`/leads/${order.lead.id}`} className="font-bold text-emerald-400 hover:underline text-base block">
+                      <Link href={`/leads/${order.lead.id}`} className="font-bold text-emerald-400 dark:text-[#4F7D32] hover:underline text-base block">
                         {order.lead.customerName}
                         {order.subsidyApplicable && (
                           <span 
@@ -1591,7 +1594,7 @@ export default function OperationsPage() {
                         )}
                       </Link>
                       <p className="text-xs text-[var(--text-secondary)] mt-0.5 flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5 text-emerald-500" /> {order.lead.address}{order.lead.division ? ` (${order.lead.division})` : ''}, {order.lead.city}
+                        <MapPin className="w-3.5 h-3.5 text-emerald-500 dark:text-[#4F7D32]" /> {order.lead.address}{order.lead.division ? ` (${order.lead.division})` : ''}, {order.lead.city}
                       </p>
                     </div>
 
@@ -1616,7 +1619,7 @@ export default function OperationsPage() {
                               setShowActualCommissionForm(false);
                               setNewSubsidyAmount('');
                             }}
-                            className="px-3 py-1.5 bg-[var(--bg-card)] border border-[var(--border-color)] hover:bg-[var(--bg-card)] text-emerald-400 rounded-lg font-bold text-xs transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-sm active:scale-95"
+                            className="px-3 py-1.5 bg-[var(--bg-card)] border border-black dark:border-[var(--border-color)] hover:bg-[var(--bg-card)] text-emerald-400 dark:text-[#4F7D32] rounded-lg font-bold text-xs transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-sm active:scale-95"
                           >
                             <Eye className="w-3.5 h-3.5" />
                             <span>Manage</span>
@@ -1650,7 +1653,7 @@ export default function OperationsPage() {
               <div className="p-5 border-b border-[var(--border-color)]/60 bg-[var(--bg-card)]/10 flex justify-between items-center">
                 <div>
                   <h3 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
-                    <Wrench className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <Wrench className="w-4 h-4 text-[#4F7D32]" />
                     <span>Operations & Scheduling Panel</span>
                     <span className="text-[var(--text-muted)] font-mono text-xs font-normal">({selectedOrder.orderCode})</span>
                   </h3>
@@ -1674,7 +1677,7 @@ export default function OperationsPage() {
                     {/* ==================== 1. DELIVERY PHASE ==================== */}
                     <div className="space-y-4">
                       <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-[var(--border-color)] pb-1.5 flex items-center gap-2">
-                        <span className="w-5 h-5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-mono text-[10px]">1</span>
+                        <span className="w-5 h-5 rounded bg-[#4F7D32]/10 text-[#4F7D32] flex items-center justify-center font-mono text-[10px]">1</span>
                         <span>Material Delivery Phase</span>
                       </h4>
                       
@@ -1682,7 +1685,7 @@ export default function OperationsPage() {
                         <div>
                           <span className="text-[var(--text-muted)] block uppercase tracking-wider text-[8px] font-bold">Delivery Status</span>
                           <div className="flex items-center gap-2 mt-1">
-                            <Truck className={`w-4 h-4 ${selectedOrder.isDelivered ? 'text-emerald-400' : selectedOrder.deliveryDate ? 'text-emerald-600 dark:text-emerald-400' : 'text-[var(--text-muted)]'}`} />
+                            <Truck className={`w-4 h-4 ${selectedOrder.isDelivered ? 'text-[#4F7D32]' : selectedOrder.deliveryDate ? 'text-[#4F7D32]' : 'text-[var(--text-muted)]'}`} />
                             <div className="flex flex-col">
                               <span className="text-sm font-bold text-[var(--text-primary)]">
                                 {selectedOrder.isDelivered 
@@ -1692,7 +1695,7 @@ export default function OperationsPage() {
                                     : 'Awaiting Schedule'}
                               </span>
                               {selectedOrder.isDelivered && (
-                                <span className="text-[10px] text-emerald-400 mt-0.5">Delivered on: {formatDateTime(selectedOrder.actualDeliveryAt)}</span>
+                                <span className="text-[10px] text-[#4F7D32] mt-0.5">Delivered on: {formatDateTime(selectedOrder.actualDeliveryAt)}</span>
                               )}
                             </div>
                           </div>
@@ -1705,7 +1708,7 @@ export default function OperationsPage() {
                               onClick={() => { setShowScheduleForm(!showScheduleForm); setShowInstallForm(false); setShowActualDeliveryForm(false); setShowActualCommissionForm(false); }}
                               className="px-3 py-1.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] text-slate-350 hover:text-white rounded-lg font-bold text-[10px] cursor-pointer flex items-center gap-1 transition-all"
                             >
-                              <Calendar className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                              <Calendar className="w-3.5 h-3.5 text-[#4F7D32]" />
                               <span>{selectedOrder.deliveryDate ? 'Re-schedule' : 'Schedule Delivery'}</span>
                             </button>
                           )}
@@ -1717,8 +1720,8 @@ export default function OperationsPage() {
                               disabled={schedulingLoading || deliveredImages.length === 0}
                               className={`px-4 py-1.5 text-white rounded-lg font-bold text-[10px] cursor-pointer shadow-md inline-flex items-center gap-1.5 transition-all ${
                                 deliveredImages.length === 0
-                                  ? 'bg-[var(--bg-card)] text-[var(--text-muted)] border border-[var(--border-color)] cursor-not-allowed opacity-60'
-                                  : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-emerald-500/10'
+                                  ? 'bg-[#4A943E] opacity-75 cursor-not-allowed'
+                                  : 'bg-[#4A943E] hover:bg-[#3E7D34] shadow-[#4A943E]/20'
                               }`}
                               title={deliveredImages.length === 0 ? "You must upload at least one Delivered Items proof file first." : "Mark as Delivered"}
                             >
@@ -1770,7 +1773,7 @@ export default function OperationsPage() {
                             <button
                               type="submit"
                               disabled={schedulingLoading}
-                              className="px-3.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-slate-955 rounded font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer"
+                              className="px-3.5 py-1 bg-[#4A943E] hover:bg-[#3E7D34] text-white rounded font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer"
                             >
                               {schedulingLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                               <span>Confirm Schedule</span>
@@ -1783,7 +1786,7 @@ export default function OperationsPage() {
                       {showActualDeliveryForm && (
                         <form onSubmit={handleConfirmDelivery} className="p-4 bg-[var(--bg-card)]/20 border border-[var(--border-color)] rounded-lg space-y-4">
                           <div className="border-b border-[var(--border-color)] pb-1.5">
-                            <h5 className="text-[11px] font-bold text-emerald-450 uppercase tracking-wider">Confirm Actual Material Delivery</h5>
+                            <h5 className="text-[11px] font-bold text-[#4F7D32] uppercase tracking-wider">Confirm Actual Material Delivery</h5>
                             <p className="text-[10px] text-[var(--text-muted)] mt-0.5">Please confirm the actual date and time when the materials were delivered at site.</p>
                           </div>
 
@@ -1823,7 +1826,7 @@ export default function OperationsPage() {
                             <button
                               type="submit"
                               disabled={schedulingLoading}
-                              className="px-3.5 py-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer shadow-md"
+                              className="px-3.5 py-1 bg-[#4A943E] hover:bg-[#3E7D34] text-white rounded font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer shadow-md"
                             >
                               {schedulingLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
                               <span>Confirm Delivery</span>
@@ -1930,7 +1933,7 @@ export default function OperationsPage() {
                     {selectedOrder.isDelivered ? (
                       <div className="space-y-4 pt-2">
                         <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-[var(--border-color)] pb-1.5 flex items-center gap-2">
-                          <span className="w-5 h-5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-mono text-[10px]">2</span>
+                          <span className="w-5 h-5 rounded bg-[#4F7D32]/10 text-[#4F7D32] flex items-center justify-center font-mono text-[10px]">2</span>
                           <span>Solar Installation Phase</span>
                         </h4>
                         
@@ -1938,7 +1941,7 @@ export default function OperationsPage() {
                           <div>
                             <span className="text-[var(--text-muted)] block uppercase tracking-wider text-[8px] font-bold">Installation Status</span>
                             <div className="flex items-center gap-2 mt-1">
-                              <Wrench className={`w-4 h-4 ${selectedOrder.isInstalled ? 'text-emerald-400' : selectedOrder.installationDate ? 'text-emerald-600 dark:text-emerald-400' : 'text-[var(--text-muted)]'}`} />
+                              <Wrench className={`w-4 h-4 ${selectedOrder.isInstalled ? 'text-[#4F7D32]' : selectedOrder.installationDate ? 'text-[#4F7D32]' : 'text-[var(--text-muted)]'}`} />
                               <div className="flex flex-col">
                                 <span className="text-sm font-bold text-[var(--text-primary)]">
                                   {selectedOrder.isInstalled 
@@ -1948,7 +1951,7 @@ export default function OperationsPage() {
                                       : 'Awaiting Schedule'}
                                 </span>
                                 {selectedOrder.isInstalled && (
-                                  <span className="text-[10px] text-emerald-405 text-emerald-400 mt-0.5">Installed on: {formatDateTime(selectedOrder.actualInstallationAt)}</span>
+                                  <span className="text-[10px] text-[#4F7D32] mt-0.5">Installed on: {formatDateTime(selectedOrder.actualInstallationAt)}</span>
                                 )}
                               </div>
                             </div>
@@ -1961,7 +1964,7 @@ export default function OperationsPage() {
                                 onClick={() => { setShowInstallForm(!showInstallForm); setShowScheduleForm(false); setShowActualInstallForm(false); setShowActualCommissionForm(false); }}
                                 className="px-3 py-1.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] text-slate-350 hover:text-white rounded-lg font-bold text-[10px] cursor-pointer flex items-center gap-1 transition-all"
                               >
-                                <Calendar className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                                <Calendar className="w-3.5 h-3.5 text-[#4F7D32]" />
                                 <span>{selectedOrder.installationDate ? 'Re-schedule' : 'Schedule Installation'}</span>
                               </button>
                             )}
@@ -1973,8 +1976,8 @@ export default function OperationsPage() {
                                 disabled={installLoading || installedImages.length === 0}
                                 className={`px-4 py-1.5 text-white rounded-lg font-bold text-[10px] cursor-pointer shadow-md inline-flex items-center gap-1.5 transition-all ${
                                   installedImages.length === 0
-                                    ? 'bg-[var(--bg-card)] text-[var(--text-muted)] border border-[var(--border-color)] cursor-not-allowed opacity-60'
-                                    : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-emerald-500/10'
+                                    ? 'bg-[#4A943E] opacity-75 cursor-not-allowed'
+                                    : 'bg-[#4A943E] hover:bg-[#3E7D34] shadow-[#4A943E]/20'
                                 }`}
                                 title={installedImages.length === 0 ? "You must upload at least one Completed Installation proof photo/video first." : "Mark Installation as Done"}
                               >
@@ -2026,7 +2029,7 @@ export default function OperationsPage() {
                               <button
                                 type="submit"
                                 disabled={installLoading}
-                                className="px-3.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-slate-955 rounded font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer"
+                                className="px-3.5 py-1 bg-[#4A943E] hover:bg-[#3E7D34] text-white rounded font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer"
                               >
                                 {installLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                                 <span>Confirm Schedule</span>
@@ -2039,7 +2042,7 @@ export default function OperationsPage() {
                         {showActualInstallForm && (
                           <form onSubmit={handleConfirmInstallation} className="p-4 bg-[var(--bg-card)]/20 border border-[var(--border-color)] rounded-lg space-y-4 animate-fade-in-up">
                             <div className="border-b border-[var(--border-color)] pb-1.5">
-                              <h5 className="text-[11px] font-bold text-emerald-450 uppercase tracking-wider">Confirm Actual Installation Completed</h5>
+                              <h5 className="text-[11px] font-bold text-[#4F7D32] uppercase tracking-wider">Confirm Actual Installation Completed</h5>
                               <p className="text-[10px] text-[var(--text-muted)] mt-0.5">Please confirm the actual date and time when the solar structure was fully installed.</p>
                             </div>
 
@@ -2079,7 +2082,7 @@ export default function OperationsPage() {
                               <button
                                 type="submit"
                                 disabled={installLoading}
-                                className="px-3.5 py-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer shadow-md"
+                                className="px-3.5 py-1 bg-[#4A943E] hover:bg-[#3E7D34] text-white rounded font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer shadow-md"
                               >
                                 {installLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
                                 <span>Confirm Installation</span>
@@ -2191,7 +2194,7 @@ export default function OperationsPage() {
                     {selectedOrder.isInstalled ? (
                       <div className="space-y-4 pt-2">
                         <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-[var(--border-color)] pb-1.5 flex items-center gap-2">
-                          <span className="w-5 h-5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-mono text-[10px]">3</span>
+                          <span className="w-5 h-5 rounded bg-[#4F7D32]/10 text-[#4F7D32] flex items-center justify-center font-mono text-[10px]">3</span>
                           <span>Net Metering Phase</span>
                         </h4>
 
@@ -2199,7 +2202,7 @@ export default function OperationsPage() {
                           <div>
                             <span className="text-[var(--text-muted)] block uppercase tracking-wider text-[8px] font-bold">Meter Status</span>
                             <div className="flex items-center gap-2 mt-1">
-                              <Activity className={`w-4 h-4 ${selectedOrder.isMeterInstalled ? 'text-emerald-400' : 'text-rose-400'}`} />
+                              <Activity className={`w-4 h-4 ${selectedOrder.isMeterInstalled ? 'text-[#4F7D32]' : 'text-rose-400'}`} />
                               <div className="flex flex-col">
                                 <span className="text-sm font-bold text-[var(--text-primary)]">
                                   {selectedOrder.isMeterInstalled 
@@ -2207,7 +2210,7 @@ export default function OperationsPage() {
                                     : 'Meter Installation Pending (Electricity Dept)'}
                                 </span>
                                 {selectedOrder.isMeterInstalled && (
-                                  <span className="text-[10px] text-emerald-400 mt-0.5">Activated on: {formatDateTime(selectedOrder.actualMeterInstalledAt)}</span>
+                                  <span className="text-[10px] text-[#4F7D32] mt-0.5">Activated on: {formatDateTime(selectedOrder.actualMeterInstalledAt)}</span>
                                 )}
                               </div>
                             </div>
@@ -2221,8 +2224,8 @@ export default function OperationsPage() {
                                 disabled={meterLoading || meterImages.length === 0}
                                 className={`px-4 py-1.5 text-white rounded-lg font-bold text-[10px] cursor-pointer shadow-md inline-flex items-center gap-1.5 transition-all ${
                                   meterImages.length === 0
-                                    ? 'bg-[var(--bg-card)] text-[var(--text-muted)] border border-[var(--border-color)] cursor-not-allowed opacity-60'
-                                    : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-emerald-500/10'
+                                    ? 'bg-[#4A943E] opacity-75 cursor-not-allowed'
+                                    : 'bg-[#4A943E] hover:bg-[#3E7D34] shadow-[#4A943E]/20'
                                 }`}
                                 title={meterImages.length === 0 ? "You must upload the Meter Sealing Paper first." : "Mark Meter as Installed"}
                               >
@@ -2237,7 +2240,7 @@ export default function OperationsPage() {
                         {showActualMeterForm && (
                           <form onSubmit={handleConfirmMeterInstallation} className="p-4 bg-[var(--bg-card)]/20 border border-[var(--border-color)] rounded-lg space-y-4">
                             <div className="border-b border-[var(--border-color)] pb-1.5">
-                              <h5 className="text-[11px] font-bold text-emerald-450 uppercase tracking-wider">Confirm Meter Installation Date & Time</h5>
+                              <h5 className="text-[11px] font-bold text-[#4F7D32] uppercase tracking-wider">Confirm Meter Installation Date & Time</h5>
                               <p className="text-[10px] text-[var(--text-muted)] mt-0.5">Please confirm when the Net Meter was officially sealed and activated by the department.</p>
                             </div>
 
@@ -2277,7 +2280,7 @@ export default function OperationsPage() {
                               <button
                                 type="submit"
                                 disabled={meterLoading}
-                                className="px-3.5 py-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer shadow-md"
+                                className="px-3.5 py-1 bg-[#4A943E] hover:bg-[#3E7D34] text-white rounded font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer shadow-md"
                               >
                                 {meterLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
                                 <span>Confirm Installed</span>
@@ -2392,7 +2395,7 @@ export default function OperationsPage() {
                     {selectedOrder.isMeterInstalled ? (
                       <div className="space-y-4 pt-2">
                         <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-[var(--border-color)] pb-1.5 flex items-center gap-2">
-                          <span className="w-5 h-5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-mono text-[10px]">4</span>
+                          <span className="w-5 h-5 rounded bg-[#4F7D32]/10 text-[#4F7D32] flex items-center justify-center font-mono text-[10px]">4</span>
                           <span>Plant Commissioning Phase</span>
                         </h4>
 
@@ -2400,7 +2403,7 @@ export default function OperationsPage() {
                           <div>
                             <span className="text-slate-555 block uppercase tracking-wider text-[8px] font-bold">Commissioning Status</span>
                             <div className="flex items-center gap-2 mt-1">
-                              <Zap className={`w-4 h-4 ${selectedOrder.isCommissioned ? 'text-emerald-400' : 'text-emerald-600 dark:text-emerald-400 animate-pulse'}`} />
+                              <Zap className={`w-4 h-4 ${selectedOrder.isCommissioned ? 'text-[#4F7D32]' : 'text-[#4F7D32] animate-pulse'}`} />
                               <div className="flex flex-col">
                                 <span className="text-sm font-bold text-[var(--text-primary)]">
                                   {selectedOrder.isCommissioned 
@@ -2408,7 +2411,7 @@ export default function OperationsPage() {
                                     : 'Plant Commissioning Pending'}
                                 </span>
                                 {selectedOrder.isCommissioned && (
-                                  <span className="text-[10px] text-emerald-400 mt-0.5">Commissioned on: {formatDateTime(selectedOrder.actualCommissionedAt)}</span>
+                                  <span className="text-[10px] text-[#4F7D32] mt-0.5">Commissioned on: {formatDateTime(selectedOrder.actualCommissionedAt)}</span>
                                 )}
                               </div>
                             </div>
@@ -2422,8 +2425,8 @@ export default function OperationsPage() {
                                 disabled={commissionLoading || commissionedImages.length === 0}
                                 className={`px-4 py-1.5 text-white rounded-lg font-bold text-[10px] cursor-pointer shadow-md inline-flex items-center gap-1.5 transition-all ${
                                   commissionedImages.length === 0
-                                    ? 'bg-[var(--bg-card)] text-[var(--text-muted)] border border-[var(--border-color)] cursor-not-allowed opacity-60'
-                                    : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-emerald-500/10'
+                                    ? 'bg-[#4A943E] opacity-75 cursor-not-allowed'
+                                    : 'bg-[#4A943E] hover:bg-[#3E7D34] shadow-[#4A943E]/20'
                                 }`}
                                 title={commissionedImages.length === 0 ? "You must upload at least one commissioning photo/video of the working solar plant first." : "Mark Plant as Commissioned"}
                               >
@@ -2438,7 +2441,7 @@ export default function OperationsPage() {
                         {showActualCommissionForm && (
                           <form onSubmit={handleConfirmPlantCommissioning} className="p-4 bg-[var(--bg-card)]/20 border border-[var(--border-color)] rounded-lg space-y-4">
                             <div className="border-b border-[var(--border-color)] pb-1.5">
-                              <h5 className="text-[11px] font-bold text-emerald-450 uppercase tracking-wider">Confirm Commissioning Date & Time</h5>
+                              <h5 className="text-[11px] font-bold text-[#4F7D32] uppercase tracking-wider">Confirm Commissioning Date & Time</h5>
                               <p className="text-[10px] text-[var(--text-muted)] mt-0.5">Please confirm when the plant was officially commissioned, powered up, and verified as fully functional.</p>
                             </div>
 
@@ -2478,7 +2481,7 @@ export default function OperationsPage() {
                               <button
                                 type="submit"
                                 disabled={commissionLoading}
-                                className="px-3.5 py-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer shadow-md"
+                                className="px-3.5 py-1 bg-[#4A943E] hover:bg-[#3E7D34] text-white rounded font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer shadow-md"
                               >
                                 {commissionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
                                 <span>Confirm Commissioned</span>
@@ -2588,14 +2591,14 @@ export default function OperationsPage() {
                     {selectedOrder.isCommissioned ? (
                       <div className="space-y-4 pt-2">
                         <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-[var(--border-color)] pb-1.5 flex items-center gap-2">
-                          <span className="w-5 h-5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-mono text-[10px]">5</span>
+                          <span className="w-5 h-5 rounded bg-[#4F7D32]/10 text-[#4F7D32] flex items-center justify-center font-mono text-[10px]">5</span>
                           <span>Government Subsidy Stage</span>
                         </h4>
                         {selectedOrder.isSubsidyApplied ? (
                           // Already Applied
                           <div className="p-4 bg-[var(--bg-card)]/10 border border-[var(--border-color)] rounded-lg text-xs space-y-2">
-                            <div className="flex items-center gap-2 text-emerald-450 font-bold">
-                              <Gift className="w-4 h-4 text-emerald-400" />
+                            <div className="flex items-center gap-2 text-[#4F7D32] font-bold">
+                              <Gift className="w-4 h-4 text-[#4F7D32]" />
                               <span>Government Subsidy Applied & Verified</span>
                             </div>
                             <div className="text-slate-350 text-[11px] space-y-1">
@@ -2615,8 +2618,8 @@ export default function OperationsPage() {
                           // Dues paid -> Eligible for subsidy! Show the registration form.
                           <form onSubmit={handleConfirmSubsidy} className="p-4 bg-[var(--bg-card)]/20 border border-[var(--border-color)] rounded-lg space-y-4 animate-fade-in-up">
                             <div className="border-b border-[var(--border-color)] pb-1.5">
-                              <h5 className="text-[11px] font-bold text-emerald-450 uppercase tracking-wider flex items-center gap-1.5">
-                                <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+                              <h5 className="text-[11px] font-bold text-[#4F7D32] uppercase tracking-wider flex items-center gap-1.5">
+                                <CheckCircle className="w-3.5 h-3.5 text-[#4F7D32]" />
                                 <span>Apply Government Subsidy</span>
                               </h5>
                               <p className="text-[10px] text-[var(--text-muted)] mt-0.5">Dues are fully paid (₹0 outstanding). Please record the government subsidy details below.</p>
@@ -2662,7 +2665,7 @@ export default function OperationsPage() {
                               <button
                                 type="submit"
                                 disabled={subsidyLoading || !newSubsidyAmount}
-                                className="px-4 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md shadow-emerald-500/10 flex items-center gap-1.5"
+                                className="px-4 py-1.5 bg-[#4A943E] hover:bg-[#3E7D34] text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md shadow-[#4A943E]/10 flex items-center gap-1.5"
                               >
                                 {subsidyLoading ? (
                                   <>
@@ -2757,11 +2760,11 @@ export default function OperationsPage() {
                             </div>
                             <div className="flex justify-between text-[var(--text-secondary)] text-[11px]">
                               <span>Total Paid:</span>
-                              <span className="text-emerald-400 font-bold">₹{totalPaid.toLocaleString('en-IN')}</span>
+                              <span className="text-[#4F7D32] font-bold">₹{totalPaid.toLocaleString('en-IN')}</span>
                             </div>
                             <div className="flex justify-between border-t border-[var(--border-color)]/60 pt-1.5 text-[11px]">
                               <span className="text-[var(--text-primary)] font-semibold">Remaining Balance:</span>
-                              <span className={`font-mono font-bold ${balanceOutstanding <= 0 ? 'text-emerald-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                              <span className="font-mono font-bold text-[#4F7D32]">
                                 ₹{balanceOutstanding.toLocaleString('en-IN')}
                               </span>
                             </div>
@@ -2881,7 +2884,7 @@ export default function OperationsPage() {
                           }}
                           className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-semibold cursor-pointer transition-all hover:bg-[var(--bg-card)] ${
                             isSelected 
-                              ? 'bg-emerald-600 text-white font-bold hover:bg-emerald-500' 
+                              ? 'bg-[#4F7D32] text-white font-bold hover:bg-[#436A2B]' 
                               : 'text-slate-350 hover:text-white'
                           }`}
                         >
@@ -2902,7 +2905,7 @@ export default function OperationsPage() {
                       customPicker.onChange(dateStr);
                       setCustomPicker(prev => ({ ...prev, isOpen: false }));
                     }}
-                    className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:text-emerald-600 dark:text-emerald-400 font-bold cursor-pointer"
+                    className="text-[10px] text-[#4F7D32] hover:text-[#436A2B] font-bold cursor-pointer"
                   >
                     Today
                   </button>
@@ -2932,7 +2935,7 @@ export default function OperationsPage() {
                           type="button"
                           onClick={() => setSelectedHour(h)}
                           className={`w-full text-center py-0.5 text-xs cursor-pointer hover:bg-[var(--bg-card)] ${
-                            selectedHour === h ? 'text-emerald-600 dark:text-emerald-400 font-bold bg-[var(--bg-card)]' : 'text-slate-350 hover:text-white'
+                            selectedHour === h ? 'text-[#4F7D32] font-bold bg-[var(--bg-card)]' : 'text-slate-350 hover:text-white'
                           }`}
                         >
                           {h}
@@ -2950,7 +2953,7 @@ export default function OperationsPage() {
                           type="button"
                           onClick={() => setSelectedMinute(m)}
                           className={`w-full text-center py-0.5 text-xs cursor-pointer hover:bg-[var(--bg-card)] ${
-                            selectedMinute === m ? 'text-emerald-600 dark:text-emerald-400 font-bold bg-[var(--bg-card)]' : 'text-slate-350 hover:text-white'
+                            selectedMinute === m ? 'text-[#4F7D32] font-bold bg-[var(--bg-card)]' : 'text-slate-350 hover:text-white'
                           }`}
                         >
                           {m}
@@ -2974,7 +2977,7 @@ export default function OperationsPage() {
                       customPicker.onChange(`${selectedHour}:${selectedMinute}`);
                       setCustomPicker(prev => ({ ...prev, isOpen: false }));
                     }}
-                    className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded text-[10px] cursor-pointer"
+                    className="px-3 py-1 bg-[#4F7D32] hover:bg-[#436A2B] text-white font-bold rounded text-[10px] cursor-pointer"
                   >
                     Confirm
                   </button>
@@ -2990,7 +2993,7 @@ export default function OperationsPage() {
           <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-5 shadow-2xl max-w-sm w-full space-y-4 text-center animate-fade-in-up">
             <div className="flex justify-center">
               {customAlert.type === 'success' ? (
-                <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                <div className="w-12 h-12 rounded-full bg-[#4F7D32]/10 flex items-center justify-center text-[#4F7D32]">
                   <CheckCircle className="w-6 h-6" />
                 </div>
               ) : customAlert.type === 'error' ? (
@@ -2998,7 +3001,7 @@ export default function OperationsPage() {
                   <X className="w-6 h-6" />
                 </div>
               ) : (
-                <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                <div className="w-12 h-12 rounded-full bg-[#4F7D32]/10 flex items-center justify-center text-[#4F7D32]">
                   <Info className="w-6 h-6" />
                 </div>
               )}
@@ -3019,10 +3022,10 @@ export default function OperationsPage() {
                 onClick={() => setCustomAlert(prev => ({ ...prev, isOpen: false }))}
                 className={`w-full py-2 rounded-lg font-bold text-xs cursor-pointer shadow-md transition-all ${
                   customAlert.type === 'success'
-                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/10'
+                    ? 'bg-[#4F7D32] hover:bg-[#436A2B] text-white shadow-[#4F7D32]/10'
                     : customAlert.type === 'error'
                     ? 'bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white shadow-rose-500/10'
-                    : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/10'
+                    : 'bg-[#4F7D32] hover:bg-[#436A2B] text-white shadow-[#4F7D32]/10'
                 }`}
               >
                 Dismiss
@@ -3191,7 +3194,7 @@ export default function OperationsPage() {
                 type="button"
                 onClick={handleBulkAssign}
                 disabled={!assignTargetUserId || assignLoading}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shadow-md shadow-emerald-500/10"
+                className="px-4 py-2 bg-[#4F7D32] hover:bg-[#436A2B] text-white rounded-lg text-xs font-bold transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shadow-md shadow-[#4F7D32]/20"
               >
                 {assignLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Users className="w-3.5 h-3.5" />}
                 <span>Confirm Assignment</span>

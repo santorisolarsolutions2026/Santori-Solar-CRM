@@ -51,7 +51,7 @@ export default function AccessControlManager({ currentUser, users, onPermissions
   if (!isITOrAdmin) {
     return (
       <div className="p-6 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl text-center">
-        <Lock className="w-10 h-10 text-emerald-400 mx-auto mb-3" />
+        <Lock className="w-10 h-10 text-[#4F7D32] dark:text-[#7bb05c] mx-auto mb-3" />
         <h3 className="text-lg font-bold text-white mb-1">Restricted Access</h3>
         <p className="text-sm text-[var(--text-secondary)]">Only IT department members or Administrators can modify custom access level permissions.</p>
       </div>
@@ -105,11 +105,11 @@ export default function AccessControlManager({ currentUser, users, onPermissions
     <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-6 shadow-xl space-y-6">
       <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-            <ShieldCheck className="w-6 h-6 text-emerald-400" />
+          <div className="p-2.5 bg-[#4F7D32]/10 border border-[#4F7D32]/20 rounded-xl">
+            <ShieldCheck className="w-6 h-6 text-[#4F7D32] dark:text-[#7bb05c]" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white">Custom Access Level Manager</h2>
+            <h2 className="text-xl font-bold text-[var(--text-primary)]">Custom Access Level Manager</h2>
             <p className="text-xs text-[var(--text-secondary)]">Configure granular department permissions with instant enforcement (IT & Admin Controlled)</p>
           </div>
         </div>
@@ -118,17 +118,17 @@ export default function AccessControlManager({ currentUser, users, onPermissions
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-all shadow-lg disabled:opacity-50 cursor-pointer text-xs border border-transparent"
+            className="flex items-center gap-2 px-4 py-2 bg-[#4F7D32] hover:bg-[#436A2B] text-white !text-white font-bold rounded-xl transition-all shadow-lg disabled:opacity-50 cursor-pointer text-xs border border-transparent"
           >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            Save Access Levels
+            {saving ? <Loader2 className="w-4 h-4 animate-spin text-white !text-white" /> : <Save className="w-4 h-4 text-white !text-white" />}
+            <span className="text-white !text-white">Save Access Levels</span>
           </button>
         )}
       </div>
 
       {message && (
         <div className={`p-4 rounded-xl flex items-center gap-3 text-sm font-medium ${
-          message.type === 'success' ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border border-red-500/20 text-red-400'
+          message.type === 'success' ? 'bg-[#4F7D32]/10 border border-[#4F7D32]/20 text-[#4F7D32] dark:text-[#7bb05c]' : 'bg-red-500/10 border border-red-500/20 text-red-400'
         }`}>
           {message.type === 'success' ? <CheckCircle2 className="w-5 h-5 shrink-0" /> : <AlertCircle className="w-5 h-5 shrink-0" />}
           {message.text}
@@ -160,7 +160,7 @@ export default function AccessControlManager({ currentUser, users, onPermissions
           <div className="bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
             <div>
               <span className="text-xs text-[var(--text-secondary)] font-mono uppercase">Configuring User</span>
-              <h4 className="text-lg font-bold text-emerald-400">{selectedUser.name}</h4>
+              <h4 className="text-lg font-bold text-[#4F7D32] dark:text-[#7bb05c]">{selectedUser.name}</h4>
               <p className="text-xs text-[var(--text-secondary)]">{selectedUser.email} • {selectedUser.department?.name || 'Department Unassigned'} • {selectedUser.designation?.name || selectedUser.role}</p>
             </div>
             <div className="flex gap-2">
@@ -205,18 +205,18 @@ export default function AccessControlManager({ currentUser, users, onPermissions
 
               const colorClasses = {
                 blue: {
-                  headerText: 'text-emerald-400',
-                  badge: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-                  subHeader: 'text-emerald-400/90 border-emerald-500/20 bg-emerald-950/20',
-                  activeBg: 'bg-emerald-500/10 border-emerald-500/40 text-[var(--text-primary)]',
-                  activeToggle: 'bg-emerald-500 shadow-emerald-500/30',
+                  headerText: 'text-[#4F7D32] dark:text-[#7bb05c]',
+                  badge: 'bg-[#4F7D32]/10 text-[#4F7D32] dark:text-[#7bb05c] border-[#4F7D32]/20',
+                  subHeader: 'text-[#4F7D32] dark:text-[#7bb05c] border-[#4F7D32]/20 bg-[#4F7D32]/10',
+                  activeBg: 'bg-[#4F7D32]/10 border-[#4F7D32]/40 text-[var(--text-primary)]',
+                  activeToggle: 'bg-[#4F7D32]',
                 },
                 emerald: {
-                  headerText: 'text-emerald-400',
-                  badge: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-                  subHeader: 'text-emerald-400/90 border-emerald-500/20 bg-emerald-950/20',
-                  activeBg: 'bg-emerald-500/10 border-emerald-500/40 text-[var(--text-primary)]',
-                  activeToggle: 'bg-emerald-500 shadow-emerald-500/30',
+                  headerText: 'text-[#4F7D32] dark:text-[#7bb05c]',
+                  badge: 'bg-[#4F7D32]/10 text-[#4F7D32] dark:text-[#7bb05c] border-[#4F7D32]/20',
+                  subHeader: 'text-[#4F7D32] dark:text-[#7bb05c] border-[#4F7D32]/20 bg-[#4F7D32]/10',
+                  activeBg: 'bg-[#4F7D32]/10 border-[#4F7D32]/40 text-[var(--text-primary)]',
+                  activeToggle: 'bg-[#4F7D32]',
                 },
                 purple: {
                   headerText: 'text-purple-400',
@@ -268,7 +268,7 @@ export default function AccessControlManager({ currentUser, users, onPermissions
                                   }
                                   setSelectedPermissions(next);
                                 }}
-                                className="text-[9px] font-semibold text-[var(--text-secondary)] hover:text-emerald-400 transition-colors cursor-pointer"
+                                className="text-[9px] font-semibold text-[var(--text-secondary)] hover:text-[#4F7D32] dark:hover:text-[#7bb05c] transition-colors cursor-pointer"
                               >
                                 {allGroupActive ? 'Deselect All' : 'Select All'}
                               </button>
@@ -294,9 +294,9 @@ export default function AccessControlManager({ currentUser, users, onPermissions
 
                                     {/* Interactive Toggle Switch */}
                                     <div className={`relative shrink-0 w-8 h-4.5 rounded-full transition-colors duration-200 ease-in-out p-0.5 mt-0.5 ${
-                                      active ? colorClasses.activeToggle : 'bg-[var(--bg-card)] border border-[var(--border-color)]'
+                                      active ? colorClasses.activeToggle : 'bg-slate-200/80 dark:bg-[var(--bg-card)] border border-black/25 dark:border-[var(--border-color)]'
                                     }`}>
-                                      <div className={`w-3.5 h-3.5 rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${
+                                      <div className={`w-3.5 h-3.5 rounded-full bg-white shadow-xs border border-black/15 dark:border-transparent transition-transform duration-200 ease-in-out ${
                                         active ? 'translate-x-3.5' : 'translate-x-0'
                                       }`} />
                                     </div>

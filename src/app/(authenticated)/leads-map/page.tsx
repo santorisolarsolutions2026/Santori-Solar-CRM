@@ -362,6 +362,7 @@ export default function LeadsMapPage() {
   const [coordError, setCoordError] = useState<string | null>(null);
 
   // Leaflet Map Refs
+  const [mapReady, setMapReady] = useState(false);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const tileLayersGroupRef = useRef<any>(null);
@@ -420,44 +421,101 @@ export default function LeadsMapPage() {
     );
   }, [teamMembers, user, isAdmin]);
 
+  const applyGeoData = (json: GeoDataResponse, isInitial = false) => {
+    setData(json);
+    if (isInitial && json.states && json.states.length > 0) {
+      setExpandedStates({ [json.states[0].name]: true });
+      if (json.states[0].cities.length > 0) {
+        const firstCity: CitySummary = json.states[0].cities[0];
+        setSelectedCity(firstCity);
+        // Select first mapped locality
+        const firstMapped = firstCity.divisions.find(
+          (d: DivisionSummary) => getLocalityGPS(d.name) !== null
+        );
+        if (firstMapped) {
+          setSelectedLocality(firstMapped);
+        }
+      }
+    }
+  };
+
   const fetchData = async (forceFresh = false) => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/v1/leads/geo-summary${forceFresh ? '?fresh=true' : ''}`);
-      const json = await res.json();
-      if (json.success) {
-        setData(json);
-        if (json.states && json.states.length > 0) {
-          setExpandedStates({ [json.states[0].name]: true });
-          if (json.states[0].cities.length > 0) {
-            const firstCity: CitySummary = json.states[0].cities[0];
-            setSelectedCity(firstCity);
-            // Select first mapped locality
-            const firstMapped = firstCity.divisions.find(
-              (d: DivisionSummary) => getLocalityGPS(d.name) !== null
-            );
-            if (firstMapped) {
-              setSelectedLocality(firstMapped);
+    // 0ms SWR Cache Hit: Instantly show cached territory data on navigation
+    if (!forceFresh && typeof window !== 'undefined') {
+      try {
+        const cachedRaw = sessionStorage.getItem('crm_geo_summary_cache_v1');
+        if (cachedRaw) {
+          const cached = JSON.parse(cachedRaw);
+          if (cached && cached.data) {
+            applyGeoData(cached.data, !data && !selectedCity);
+            setLoading(false);
+            // If cached within last 3 minutes, avoid redundant background fetch
+            if (Date.now() - (cached.timestamp || 0) < 3 * 60 * 1000) {
+              return;
             }
           }
         }
+      } catch {}
+    }
+
+    if (!data) setLoading(true);
+    try {
+      const res = await fetch(`/api/v1/leads/geo-summary${forceFresh ? '?fresh=true' : ''}`);
+      const contentType = res.headers.get('content-type');
+      if (!res.ok || !contentType || !contentType.includes('application/json')) {
+        return;
       }
-    } catch (err) {
-      console.error('Failed to load geo summary:', err);
+      const json = await res.json();
+      if (json.success) {
+        applyGeoData(json, !data && !selectedCity);
+        try {
+          sessionStorage.setItem(
+            'crm_geo_summary_cache_v1',
+            JSON.stringify({ data: json, timestamp: Date.now() })
+          );
+        } catch {}
+      }
+    } catch {
+      // Suppress network disconnect logs during local dev server restarts
     } finally {
       setLoading(false);
     }
   };
 
   const fetchTeamMembers = async () => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cachedRaw = sessionStorage.getItem('crm_team_members_cache_v1');
+        if (cachedRaw) {
+          const cached = JSON.parse(cachedRaw);
+          if (cached && Array.isArray(cached.data)) {
+            setTeamMembers(cached.data);
+            if (Date.now() - (cached.timestamp || 0) < 5 * 60 * 1000) {
+              return;
+            }
+          }
+        }
+      } catch {}
+    }
+
     try {
       const res = await fetch('/api/v1/users?include_inactive=false');
+      const contentType = res.headers.get('content-type');
+      if (!res.ok || !contentType || !contentType.includes('application/json')) {
+        return;
+      }
       const json = await res.json();
       if (json.success && Array.isArray(json.data)) {
         setTeamMembers(json.data);
+        try {
+          sessionStorage.setItem(
+            'crm_team_members_cache_v1',
+            JSON.stringify({ data: json.data, timestamp: Date.now() })
+          );
+        } catch {}
       }
-    } catch (err) {
-      console.error('Failed to load team members:', err);
+    } catch {
+      // Suppress network disconnect logs during local dev server restarts
     }
   };
 
@@ -565,6 +623,11 @@ export default function LeadsMapPage() {
           limit: 25,
         }),
       });
+      const contentType = res.headers.get('content-type');
+      if (!res.ok || !contentType || !contentType.includes('application/json')) {
+        setPreviewLeads([]);
+        return;
+      }
       const json = await res.json();
       if (json.success) {
         previewCacheRef.current.set(cacheKey, json);
@@ -577,8 +640,7 @@ export default function LeadsMapPage() {
       } else {
         setPreviewLeads([]);
       }
-    } catch (err) {
-      console.error('Failed to preview territory leads:', err);
+    } catch {
       setPreviewLeads([]);
     } finally {
       setPreviewLoading(false);
@@ -590,7 +652,6 @@ export default function LeadsMapPage() {
     customLocs?: string[],
     customCity?: string
   ) => {
-    previewCacheRef.current.clear();
     const targetLocs =
       customLocs ||
       (selectedLocalities.length > 0
@@ -725,6 +786,11 @@ export default function LeadsMapPage() {
         }),
       });
 
+      const contentType = res.headers.get('content-type');
+      if (!res.ok || !contentType || !contentType.includes('application/json')) {
+        setAssignErrorMsg('Server returned an unexpected response. Please try again.');
+        return;
+      }
       const json = await res.json();
       if (json.success) {
         setAssignSuccessMsg(json.message || 'Leads successfully assigned!');
@@ -907,6 +973,7 @@ export default function LeadsMapPage() {
         targetGroupRef.current = targetGroup;
 
         mapInstanceRef.current = map;
+        setMapReady(true);
 
         // Ensure Leaflet calculates viewport dimensions immediately to download tiles with zero delay
         setTimeout(() => {
@@ -956,7 +1023,10 @@ export default function LeadsMapPage() {
 
   // Update Leaflet Markers whenever selectedCity, selectedLocality or selectedLocalities change
   useEffect(() => {
-    if (!mapInstanceRef.current || !markersGroupRef.current || !selectedCity) return;
+    if (!mapReady || !mapInstanceRef.current || !markersGroupRef.current) return;
+
+    const currentCity = selectedCity || (data?.cities && data.cities.length > 0 ? data.cities[0] : null);
+    if (!currentCity) return;
 
     async function renderPins() {
       const L = (await import('leaflet')).default;
@@ -965,16 +1035,16 @@ export default function LeadsMapPage() {
 
       markersGroup.clearLayers();
 
-      const cityKey = selectedCity?.name.toLowerCase().trim() || 'varanasi';
+      const cityKey = currentCity?.name.toLowerCase().trim() || 'varanasi';
       const cityCenter = CITY_CENTER_COORDINATES[cityKey] || [25.3176, 82.9739];
 
       const latLngList: [number, number][] = [];
 
       // Render discrete geolocated pins for ALL cities (Varanasi, Prayagraj, etc.)
-      const allCities: CitySummary[] = data?.cities || (selectedCity ? [selectedCity] : []);
+      const allCities: CitySummary[] = data?.cities || (currentCity ? [currentCity] : []);
 
       allCities.forEach((city) => {
-        const isCurrentCity = selectedCity?.name.toLowerCase() === city.name.toLowerCase();
+        const isCurrentCity = currentCity?.name.toLowerCase() === city.name.toLowerCase();
         const validLocalities = city.divisions.filter((div) => getLocalityGPS(div.name) !== null);
 
         validLocalities.forEach((div) => {
@@ -1169,7 +1239,7 @@ export default function LeadsMapPage() {
     }
 
     renderPins();
-  }, [selectedCity, selectedLocality, selectedLocalities, data]);
+  }, [selectedCity, selectedLocality, selectedLocalities, data, mapReady]);
 
   const toggleState = (stateName: string) => {
     setExpandedStates((prev) => ({ ...prev, [stateName]: !prev[stateName] }));
@@ -1261,7 +1331,7 @@ export default function LeadsMapPage() {
   // Strict Access Gate
   if (!canAccessMap) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-lg mt-6 max-w-xl mx-auto">
+      <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center bg-[var(--bg-card)] border border-[var(--border-color)] border-t-white/60 dark:border-t-white/25 border-b-black/30 dark:border-b-black/70 rounded-2xl shadow-[0_22px_48px_-10px_rgba(0,0,0,0.35),0_10px_20px_-6px_rgba(0,0,0,0.2),inset_0_1.5px_0_rgba(255,255,255,0.45),inset_0_-2px_4px_rgba(0,0,0,0.18)] dark:shadow-[0_28px_60px_-12px_rgba(0,0,0,0.9),0_14px_26px_-6px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.2),inset_0_-2px_4px_rgba(0,0,0,0.7)] mt-6 max-w-xl mx-auto">
         <div className="w-14 h-14 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl flex items-center justify-center mb-4">
           <ShieldAlert className="w-7 h-7" />
         </div>
@@ -1299,7 +1369,12 @@ export default function LeadsMapPage() {
       .reduce((sum: number, d: DivisionSummary) => sum + d.total, 0) || 0;
 
   return (
-    <div className="space-y-6 pb-12">
+    <div 
+      className="-m-4 sm:-m-6 p-4 sm:p-6 min-h-[calc(100vh-4rem)] space-y-6 pb-16 transition-all"
+      style={{
+        background: 'linear-gradient(115deg, #092c22 0%, #0d4a3b 30%, #0b5e52 58%, #087f8c 82%, #0284c7 100%)',
+      }}
+    >
       {/* Dynamic Keyframes for Map Pin Animations */}
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes pinBounceSlow {
@@ -1344,103 +1419,201 @@ export default function LeadsMapPage() {
         }
       `}} />
 
-      {/* 1. Header Banner */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[var(--border-color)] pb-5">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400">
-              <Compass className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-xl md:text-2xl font-bold text-white tracking-wide flex items-center gap-2">
+      {/* 1. Modern Ambient Hero Banner (Cyan-Emerald Gradient Mesh with Grain Texture) */}
+      <div 
+        className="relative overflow-hidden rounded-3xl p-6 sm:p-8 pb-14 sm:pb-16 shadow-2xl border border-white/20 text-white-force bg-black/25 backdrop-blur-xl"
+        style={{
+          background: 'linear-gradient(115deg, rgba(9, 44, 34, 0.75) 0%, rgba(13, 74, 59, 0.75) 30%, rgba(11, 94, 82, 0.75) 58%, rgba(8, 127, 140, 0.75) 82%, rgba(2, 132, 199, 0.75) 100%)',
+          color: '#FFFFFF',
+        }}
+      >
+        {/* Subtle Noise / Radial Glow Accent Overlay */}
+        <div 
+          className="absolute inset-0 pointer-events-none opacity-30 mix-blend-overlay"
+          style={{
+            backgroundImage: `radial-gradient(circle at 85% 20%, rgba(34, 211, 238, 0.45) 0%, transparent 60%), radial-gradient(circle at 10% 80%, rgba(52, 211, 153, 0.35) 0%, transparent 50%)`,
+          }}
+        />
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5 text-white-force">
+          {/* Title & Description */}
+          <div className="space-y-1.5 max-w-xl text-white-force">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2.5 bg-black/25 backdrop-blur-md border border-white/20 rounded-xl text-cyan-300 shadow-inner">
+                <Compass className="w-5 h-5" />
+              </div>
+              <h1 className="text-xl md:text-2xl font-black text-white-force tracking-tight drop-shadow-sm flex items-center gap-2.5" style={{ color: '#FFFFFF' }}>
                 Territory Leads Map
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 uppercase">
+                <span className="hidden sm:inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-black/30 backdrop-blur-md text-cyan-200 border border-white/20 uppercase tracking-wider text-white-force" style={{ color: '#a5f3fc' }}>
                   Live Satellite & Street View
                 </span>
               </h1>
-              <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-                Explore territory-wise lead distribution, inspect local areas and allocate leads to your team
-              </p>
+            </div>
+            <p className="text-xs text-white-force font-medium leading-relaxed pl-0.5" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
+              Explore territory-wise lead distribution, inspect local areas and allocate leads to your team
+            </p>
+          </div>
+
+          {/* Action Button: Live Sync / Refresh Glass Button with Active Status Dot */}
+          <div className="flex items-center gap-2.5 text-white-force">
+            <button
+              onClick={() => fetchData(true)}
+              disabled={loading}
+              aria-label="Refresh analysis and sync live data"
+              className="p-2.5 bg-white/15 hover:bg-white/30 backdrop-blur-md border border-white/30 hover:border-white/60 rounded-2xl text-white transition-all cursor-pointer shadow-md disabled:opacity-50 relative group shrink-0"
+              title="Refresh Analysis (Live Database Sync)"
+            >
+              <RefreshCw className={`w-4 h-4 text-white group-hover:rotate-180 transition-transform duration-500 ${loading ? 'animate-spin' : ''}`} />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-emerald-900/40 animate-pulse" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Top Summary KPI Cards (Overlapping Floating Cards - Light/Dark Adaptive) */}
+      <div className="-mt-9 sm:-mt-11 relative z-20 px-2 sm:px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        {/* Card 1: Total Leads Pool */}
+        <div className="relative rounded-2xl group cursor-pointer select-none active:scale-[0.98] active:translate-y-1 transition-all duration-300">
+          <div className="absolute -inset-1 rounded-2xl overflow-hidden blur-xl opacity-0 group-hover:opacity-65 dark:group-hover:opacity-75 transition-opacity duration-300 pointer-events-none">
+            <div className="rainbow-conic-glow" />
+          </div>
+          <div className="relative z-10 w-full h-full rounded-2xl overflow-hidden border-2 border-black dark:border-white/10 group-hover:border-transparent p-[1.5px] transition-colors duration-300 shadow-[0_16px_32px_-6px_rgba(0,0,0,0.28),0_8px_16px_-4px_rgba(0,0,0,0.18)] dark:shadow-[0_20px_40px_-8px_rgba(0,0,0,0.85),0_8px_16px_-4px_rgba(0,0,0,0.65)]">
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none overflow-hidden">
+              <div className="rainbow-conic-glow" />
+            </div>
+            <div className="relative z-10 w-full h-full bg-[var(--bg-card)] dark:bg-[#0B1015]/95 group-hover:bg-white/85 dark:group-hover:bg-[#0B1015]/75 backdrop-blur-xl rounded-[14.5px] p-4 sm:p-5 flex flex-col justify-between transition-colors duration-300">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-[var(--text-secondary)] dark:text-slate-400 uppercase tracking-wider">
+                  Total Leads Pool
+                </span>
+                <Globe2 className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+              </div>
+              
+              <div className="my-2">
+                <div className="text-2xl sm:text-3xl font-black font-mono text-[var(--text-primary)] dark:text-white tracking-tight">
+                  {(summary.totalLeads || 0).toLocaleString()}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-slate-400 dark:border-white/15">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-200 dark:bg-cyan-500/15 dark:text-cyan-300 dark:border-cyan-500/20">
+                  Live Pool
+                </span>
+                <span className="text-[11px] text-[var(--text-secondary)] dark:text-slate-400 truncate">
+                  Across {summary.totalCities || 0} operational districts
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => fetchData(true)}
-            disabled={loading}
-            aria-label="Refresh analysis and sync live data"
-            className="inline-flex items-center gap-2 px-3.5 py-2 bg-[var(--bg-card)] hover:bg-slate-800 border border-[var(--border-color)] text-xs text-[var(--text-primary)] rounded-xl transition-all cursor-pointer shadow-xs disabled:opacity-50"
-            title="Refresh Analysis (Live Database Sync)"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-emerald-400' : ''}`} />
-            <span>Refresh</span>
-          </button>
+        {/* Card 2: Active Pipeline */}
+        <div className="relative rounded-2xl group cursor-pointer select-none active:scale-[0.98] active:translate-y-1 transition-all duration-300">
+          <div className="absolute -inset-1 rounded-2xl overflow-hidden blur-xl opacity-0 group-hover:opacity-65 dark:group-hover:opacity-75 transition-opacity duration-300 pointer-events-none">
+            <div className="rainbow-conic-glow" />
+          </div>
+          <div className="relative z-10 w-full h-full rounded-2xl overflow-hidden border-2 border-black dark:border-white/10 group-hover:border-transparent p-[1.5px] transition-colors duration-300 shadow-[0_16px_32px_-6px_rgba(0,0,0,0.28),0_8px_16px_-4px_rgba(0,0,0,0.18)] dark:shadow-[0_20px_40px_-8px_rgba(0,0,0,0.85),0_8px_16px_-4px_rgba(0,0,0,0.65)]">
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none overflow-hidden">
+              <div className="rainbow-conic-glow" />
+            </div>
+            <div className="relative z-10 w-full h-full bg-[var(--bg-card)] dark:bg-[#0B1015]/95 group-hover:bg-white/85 dark:group-hover:bg-[#0B1015]/75 backdrop-blur-xl rounded-[14.5px] p-4 sm:p-5 flex flex-col justify-between transition-colors duration-300">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+                  Active Pipeline
+                </span>
+                <div className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]"></div>
+              </div>
+
+              <div className="my-2">
+                <div className="text-2xl sm:text-3xl font-black font-mono text-emerald-700 dark:text-emerald-400 tracking-tight">
+                  {(summary.totalActive || summary.totalAssigned || 0).toLocaleString()}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-slate-400 dark:border-white/15">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/20">
+                  ↗ {summary.activePercentage != null ? summary.activePercentage : (summary.totalLeads > 0 ? ((summary.totalActive / summary.totalLeads) * 100).toFixed(2) : '0')}%
+                </span>
+                <span className="text-[11px] text-[var(--text-secondary)] dark:text-slate-400 truncate">
+                  in active process
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 3: Free (Unassigned) */}
+        <div className="relative rounded-2xl group cursor-pointer select-none active:scale-[0.98] active:translate-y-1 transition-all duration-300">
+          <div className="absolute -inset-1 rounded-2xl overflow-hidden blur-xl opacity-0 group-hover:opacity-65 dark:group-hover:opacity-75 transition-opacity duration-300 pointer-events-none">
+            <div className="rainbow-conic-glow" />
+          </div>
+          <div className="relative z-10 w-full h-full rounded-2xl overflow-hidden border-2 border-black dark:border-white/10 group-hover:border-transparent p-[1.5px] transition-colors duration-300 shadow-[0_16px_32px_-6px_rgba(0,0,0,0.28),0_8px_16px_-4px_rgba(0,0,0,0.18)] dark:shadow-[0_20px_40px_-8px_rgba(0,0,0,0.85),0_8px_16px_-4px_rgba(0,0,0,0.65)]">
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none overflow-hidden">
+              <div className="rainbow-conic-glow" />
+            </div>
+            <div className="relative z-10 w-full h-full bg-[var(--bg-card)] dark:bg-[#0B1015]/95 group-hover:bg-white/85 dark:group-hover:bg-[#0B1015]/75 backdrop-blur-xl rounded-[14.5px] p-4 sm:p-5 flex flex-col justify-between transition-colors duration-300">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-amber-700 dark:text-yellow-400 uppercase tracking-wider">
+                  Free (Unassigned)
+                </span>
+                <div className="w-2 h-2 rounded-full bg-amber-500 dark:bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.8)]"></div>
+              </div>
+
+              <div className="my-2">
+                <div className="text-2xl sm:text-3xl font-black font-mono text-amber-700 dark:text-yellow-400 tracking-tight">
+                  {(summary.totalUnassigned || 0).toLocaleString()}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-slate-400 dark:border-white/15">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 dark:bg-yellow-500/15 dark:text-yellow-300 dark:border-yellow-500/20">
+                  ⚡ {summary.unassignedPercentage != null ? summary.unassignedPercentage : (summary.totalLeads > 0 ? ((summary.totalUnassigned / summary.totalLeads) * 100).toFixed(2) : '0')}%
+                </span>
+                <span className="text-[11px] text-[var(--text-secondary)] dark:text-slate-400 truncate">
+                  ready for allocation
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 4: Inactive / Closed */}
+        <div className="relative rounded-2xl group cursor-pointer select-none active:scale-[0.98] active:translate-y-1 transition-all duration-300">
+          <div className="absolute -inset-1 rounded-2xl overflow-hidden blur-xl opacity-0 group-hover:opacity-65 dark:group-hover:opacity-75 transition-opacity duration-300 pointer-events-none">
+            <div className="rainbow-conic-glow" />
+          </div>
+          <div className="relative z-10 w-full h-full rounded-2xl overflow-hidden border-2 border-black dark:border-white/10 group-hover:border-transparent p-[1.5px] transition-colors duration-300 shadow-[0_16px_32px_-6px_rgba(0,0,0,0.28),0_8px_16px_-4px_rgba(0,0,0,0.18)] dark:shadow-[0_20px_40px_-8px_rgba(0,0,0,0.85),0_8px_16px_-4px_rgba(0,0,0,0.65)]">
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none overflow-hidden">
+              <div className="rainbow-conic-glow" />
+            </div>
+            <div className="relative z-10 w-full h-full bg-[var(--bg-card)] dark:bg-[#0B1015]/95 group-hover:bg-white/85 dark:group-hover:bg-[#0B1015]/75 backdrop-blur-xl rounded-[14.5px] p-4 sm:p-5 flex flex-col justify-between transition-colors duration-300">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-rose-700 dark:text-red-400 uppercase tracking-wider">
+                  Inactive / Closed
+                </span>
+                <div className="w-2 h-2 rounded-full bg-rose-500 dark:bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]"></div>
+              </div>
+
+              <div className="my-2">
+                <div className="text-2xl sm:text-3xl font-black font-mono text-rose-700 dark:text-red-400 tracking-tight">
+                  {(summary.totalInactive || 0).toLocaleString()}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-slate-400 dark:border-white/15">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 dark:bg-red-500/15 dark:text-red-300 dark:border-red-500/20">
+                  ↘ {summary.inactivePercentage != null ? summary.inactivePercentage : (summary.totalLeads > 0 ? ((summary.totalInactive / summary.totalLeads) * 100).toFixed(2) : '0')}%
+                </span>
+                <span className="text-[11px] text-[var(--text-secondary)] dark:text-slate-400 truncate">
+                  not interested / disqualified
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* 2. Top Summary KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
-              Total Leads Pool
-            </span>
-            <Globe2 className="w-4 h-4 text-cyan-400" />
-          </div>
-          <div className="text-2xl font-bold font-mono text-white mt-2">
-            {(summary.totalLeads || 0).toLocaleString()}
-          </div>
-          <div className="text-[11px] text-[var(--text-muted)] mt-1 flex items-center gap-1">
-            Across {summary.totalCities || 0} operational districts
-          </div>
-        </div>
 
-        <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">
-              Active Pipeline
-            </span>
-            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-          </div>
-          <div className="text-2xl font-bold font-mono text-emerald-400 mt-2">
-            {(summary.totalActive || summary.totalAssigned || 0).toLocaleString()}
-          </div>
-          <div className="text-[11px] text-[var(--text-secondary)] mt-1">
-            {summary.activePercentage != null ? summary.activePercentage : (summary.totalLeads > 0 ? ((summary.totalActive / summary.totalLeads) * 100).toFixed(2) : '0')}% in active process
-          </div>
-        </div>
-
-        <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-yellow-400 uppercase tracking-wider" style={{ color: '#facc15' }}>
-              Free (Unassigned)
-            </span>
-            <div className="w-2 h-2 rounded-full bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.6)]" style={{ backgroundColor: '#facc15' }}></div>
-          </div>
-          <div className="text-2xl font-bold font-mono text-yellow-400 mt-2" style={{ color: '#facc15' }}>
-            {(summary.totalUnassigned || 0).toLocaleString()}
-          </div>
-          <div className="text-[11px] text-[var(--text-secondary)] mt-1">
-            {summary.unassignedPercentage != null ? summary.unassignedPercentage : (summary.totalLeads > 0 ? ((summary.totalUnassigned / summary.totalLeads) * 100).toFixed(2) : '0')}% ready for allocation
-          </div>
-        </div>
-
-        <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-red-400 uppercase tracking-wider">
-              Inactive / Closed
-            </span>
-            <div className="w-2 h-2 rounded-full bg-red-500"></div>
-          </div>
-          <div className="text-2xl font-bold font-mono text-red-400 mt-2">
-            {(summary.totalInactive || 0).toLocaleString()}
-          </div>
-          <div className="text-[11px] text-[var(--text-secondary)] mt-1">
-            {summary.inactivePercentage != null ? summary.inactivePercentage : (summary.totalLeads > 0 ? ((summary.totalInactive / summary.totalLeads) * 100).toFixed(2) : '0')}% not interested / disqualified
-          </div>
-        </div>
-      </div>
 
       {/* 3. Main Workspace: Real 2D Interactive Map (8 Cols) + Hierarchy Tree Explorer (4 Cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
@@ -1448,18 +1621,18 @@ export default function LeadsMapPage() {
         <div
           className={`transition-all ${
             isFullscreenMap
-              ? 'fixed inset-0 z-[9990] bg-slate-950 p-3 sm:p-4 flex flex-col h-[100dvh] w-full max-h-[100dvh] max-w-[100vw] overflow-hidden box-border'
-              : 'lg:col-span-8 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-5 shadow-xl flex flex-col min-h-[600px]'
+              ? 'fixed inset-0 z-[9990] bg-[var(--bg-main)] dark:bg-[#0B1015] p-3 sm:p-4 flex flex-col h-[100dvh] w-full max-h-[100dvh] max-w-[100vw] overflow-hidden box-border'
+              : 'lg:col-span-8 bg-[var(--bg-card)] dark:bg-[#0B1015]/95 border-2 border-black dark:border-white/10 rounded-2xl p-4 sm:p-5 shadow-[0_22px_48px_-10px_rgba(0,0,0,0.35),0_10px_20px_-6px_rgba(0,0,0,0.2),inset_0_1.5px_0_rgba(255,255,255,0.45),inset_0_-2px_4px_rgba(0,0,0,0.18)] dark:shadow-[0_28px_60px_-12px_rgba(0,0,0,0.9),0_14px_26px_-6px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.2),inset_0_-2px_4px_rgba(0,0,0,0.7)] flex flex-col min-h-[600px]'
           }`}
         >
           {/* Top Control Bar with City Quick Switcher & Zoom */}
-          <div className={`flex flex-wrap items-center justify-between gap-2.5 border-b border-[var(--border-color)] shrink-0 ${
+          <div className={`flex flex-wrap items-center justify-between gap-2.5 border-b border-black/30 dark:border-white/10 shrink-0 ${
             isFullscreenMap ? 'pb-2.5 mb-2.5' : 'pb-3 mb-3'
           }`}>
             {/* City Selector Pills */}
             <div className="flex items-center gap-2 overflow-x-auto scrollbar-thin">
-              <span className="text-[10px] uppercase font-bold text-[var(--text-secondary)] shrink-0 flex items-center gap-1">
-                <MapPin className="w-3 h-3 text-emerald-400" /> City Hub:
+              <span className="text-[10px] uppercase font-bold text-[var(--text-secondary)] dark:text-slate-400 shrink-0 flex items-center gap-1">
+                <MapPin className="w-3 h-3 text-teal-600 dark:text-cyan-400" /> City Hub:
               </span>
               {(data?.cities || []).slice(0, 8).map((ct) => {
                 const isActive = selectedCity?.name.toLowerCase() === ct.name.toLowerCase();
@@ -1467,14 +1640,14 @@ export default function LeadsMapPage() {
                   <button
                     key={ct.name}
                     onClick={() => handleCitySelect(ct)}
-                    className={`px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition-all font-medium flex items-center gap-1.5 cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-xl text-xs whitespace-nowrap transition-all font-medium flex items-center gap-1.5 cursor-pointer ${
                       isActive
-                        ? 'bg-emerald-600 text-white font-semibold shadow-sm'
-                        : 'bg-slate-900 text-slate-300 border border-slate-800 hover:bg-slate-800 hover:text-white'
+                        ? 'bg-black hover:bg-slate-800 text-white font-bold shadow-sm border border-black dark:border-white/40'
+                        : 'bg-[var(--bg-main)] text-[var(--text-secondary)] border border-black hover:bg-slate-200/60 hover:text-[var(--text-primary)] dark:bg-black/50 dark:text-slate-300 dark:border-white/10 dark:hover:bg-white/10 dark:hover:text-white'
                     }`}
                   >
                     <span>{ct.name}</span>
-                    <span className={`font-mono text-[10px] ${isActive ? 'text-emerald-100' : 'text-slate-400'}`}>
+                    <span className={`font-mono text-[10px] ${isActive ? 'text-white/80 font-bold' : 'text-[var(--text-muted)] dark:text-slate-400'}`}>
                       ({ct.total.toLocaleString()})
                     </span>
                   </button>
@@ -1484,40 +1657,40 @@ export default function LeadsMapPage() {
 
             <div className="flex items-center gap-2 shrink-0">
               {/* Map Layer Mode Selector */}
-              <div className="flex items-center bg-slate-900 p-0.5 rounded-xl border border-slate-800">
+              <div className="flex items-center bg-[var(--bg-main)] dark:bg-black/50 p-1 rounded-xl border border-black dark:border-white/10">
                 <button
                   onClick={() => setMapStyle('satellite')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
                     mapStyle === 'satellite'
-                      ? 'bg-slate-800 text-white font-semibold shadow-xs'
-                      : 'text-slate-400 hover:text-slate-200'
+                      ? 'bg-[var(--bg-card)] dark:bg-white/15 text-[var(--text-primary)] dark:text-white font-semibold shadow-xs border border-black/40 dark:border-white/15'
+                      : 'text-[var(--text-secondary)] dark:text-slate-400 hover:text-[var(--text-primary)] dark:hover:text-slate-200'
                   }`}
                   title="Google Maps Satellite Hybrid View"
                 >
-                  <Globe2 className={`w-3.5 h-3.5 ${mapStyle === 'satellite' ? 'text-emerald-400' : 'text-slate-400'}`} />
+                  <Globe2 className={`w-3.5 h-3.5 ${mapStyle === 'satellite' ? 'text-teal-600 dark:text-cyan-400' : 'text-[var(--text-secondary)] dark:text-slate-400'}`} />
                   <span>Satellite</span>
                 </button>
                 <button
                   onClick={() => setMapStyle('street')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
                     mapStyle === 'street'
-                      ? 'bg-slate-800 text-white font-semibold shadow-xs'
-                      : 'text-slate-400 hover:text-slate-200'
+                      ? 'bg-[var(--bg-card)] dark:bg-white/15 text-[var(--text-primary)] dark:text-white font-semibold shadow-xs border border-black/40 dark:border-white/15'
+                      : 'text-[var(--text-secondary)] dark:text-slate-400 hover:text-[var(--text-primary)] dark:hover:text-slate-200'
                   }`}
                   title="Google Maps Street View"
                 >
-                  <Layers className={`w-3.5 h-3.5 ${mapStyle === 'street' ? 'text-blue-400' : 'text-slate-400'}`} />
+                  <Layers className={`w-3.5 h-3.5 ${mapStyle === 'street' ? 'text-teal-600 dark:text-cyan-400' : 'text-[var(--text-secondary)] dark:text-slate-400'}`} />
                   <span>Google Street</span>
                 </button>
               </div>
 
               {/* Map Zoom & Reset Controls */}
-              <div className="flex items-center gap-1 bg-[var(--bg-main)] p-1 rounded-xl border border-[var(--border-color)]">
+              <div className="flex items-center gap-1 bg-[var(--bg-main)] dark:bg-black/50 p-1 rounded-xl border border-black dark:border-white/10">
                 <button
                   type="button"
                   onClick={zoomOut}
                   aria-label="Zoom out"
-                  className="p-1 hover:bg-slate-700 text-[var(--text-secondary)] hover:text-white rounded-lg transition-all cursor-pointer"
+                  className="p-1 hover:bg-[var(--bg-card)] dark:hover:bg-white/10 text-[var(--text-secondary)] dark:text-slate-300 hover:text-[var(--text-primary)] dark:hover:text-white rounded-lg transition-all cursor-pointer"
                   title="Zoom Out"
                 >
                   <ZoomOut className="w-3.5 h-3.5" />
@@ -1526,7 +1699,7 @@ export default function LeadsMapPage() {
                   type="button"
                   onClick={zoomIn}
                   aria-label="Zoom in"
-                  className="p-1 hover:bg-slate-700 text-[var(--text-secondary)] hover:text-white rounded-lg transition-all cursor-pointer"
+                  className="p-1 hover:bg-[var(--bg-card)] dark:hover:bg-white/10 text-[var(--text-secondary)] dark:text-slate-300 hover:text-[var(--text-primary)] dark:hover:text-white rounded-lg transition-all cursor-pointer"
                   title="Zoom In"
                 >
                   <ZoomIn className="w-3.5 h-3.5" />
@@ -1535,20 +1708,20 @@ export default function LeadsMapPage() {
                   type="button"
                   onClick={resetView}
                   aria-label="Reset map view"
-                  className="text-[10px] px-2 py-0.5 text-emerald-400 hover:text-emerald-300 font-semibold cursor-pointer"
+                  className="text-[10px] px-2 py-0.5 text-teal-600 dark:text-cyan-400 hover:text-teal-700 dark:hover:text-cyan-300 font-semibold cursor-pointer"
                   title="Reset View"
                 >
                   Reset
                 </button>
-                <div className="w-px h-3 bg-slate-700 mx-0.5" />
+                <div className="w-px h-3 bg-[var(--border-color)] dark:bg-white/20 mx-0.5" />
                 <button
                   type="button"
                   onClick={() => setIsFullscreenMap((prev) => !prev)}
                   aria-label={isFullscreenMap ? 'Exit Full Screen' : 'View Full Screen'}
                   className={`p-1 rounded-lg transition-all cursor-pointer ${
                     isFullscreenMap
-                      ? 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
-                      : 'hover:bg-slate-700 text-[var(--text-secondary)] hover:text-white'
+                      ? 'bg-teal-500/15 text-teal-700 dark:bg-cyan-500/20 dark:text-cyan-300 hover:bg-teal-500/25 dark:hover:bg-cyan-500/30'
+                      : 'hover:bg-[var(--bg-card)] dark:hover:bg-white/10 text-[var(--text-secondary)] dark:text-slate-300 hover:text-[var(--text-primary)] dark:hover:text-white'
                   }`}
                   title={isFullscreenMap ? 'Exit Full Screen (Esc)' : 'View Full Screen'}
                 >
@@ -1563,16 +1736,16 @@ export default function LeadsMapPage() {
           </div>
 
           {/* Real Leaflet 2D Map Container */}
-          <div className={`relative rounded-xl border border-slate-800/80 overflow-hidden shadow-inner bg-slate-950 ${
+          <div className={`relative rounded-2xl border border-black dark:border-white/10 overflow-hidden shadow-md dark:shadow-2xl bg-slate-100 dark:bg-slate-950 ${
             isFullscreenMap ? 'flex-1 min-h-0 w-full' : 'flex-1 min-h-[460px] w-full'
           }`}>
             {/* Map Canvas */}
-            <div ref={mapContainerRef} className="w-full h-full min-h-0 z-10 bg-slate-950 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px]" />
+            <div ref={mapContainerRef} className="w-full h-full min-h-0 z-10 bg-slate-100 dark:bg-slate-950" />
 
             {/* Real GPS Info Overlay */}
-            <div className="absolute top-3 left-3 z-20 pointer-events-none bg-slate-900/90 border border-slate-700 text-slate-200 px-3 py-1.5 rounded-xl text-[11px] shadow-lg backdrop-blur-md flex items-center gap-2 font-mono">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>
+            <div className="absolute top-3 left-3 z-20 pointer-events-none bg-white/95 dark:bg-black/80 border border-black dark:border-white/15 text-[var(--text-primary)] dark:text-white px-3 py-1.5 rounded-xl text-[11px] shadow-lg dark:shadow-2xl backdrop-blur-md flex items-center gap-2 font-mono">
+              <span className="w-2.5 h-2.5 rounded-full bg-teal-500 dark:bg-cyan-400 animate-pulse shadow-[0_0_8px_rgba(20,184,166,0.8)] dark:shadow-[0_0_8px_rgba(34,211,238,0.8)]"></span>
+              <span className="font-semibold text-slate-800 dark:text-slate-100">
                 {mapStyle === 'satellite'
                   ? 'Google Satellite'
                   : 'Google Street'}
@@ -1584,9 +1757,9 @@ export default function LeadsMapPage() {
             <div className="absolute top-3 right-3 z-20 flex flex-col items-end gap-1">
               <form
                 onSubmit={handleGoToCoordinates}
-                className="flex items-center bg-slate-900/95 border border-slate-700/90 rounded-xl p-1 shadow-2xl backdrop-blur-md transition-all focus-within:border-cyan-500/80 focus-within:ring-1 focus-within:ring-cyan-500/30"
+                className="flex items-center bg-white/95 dark:bg-black/85 border border-black dark:border-white/15 rounded-xl p-1 shadow-lg dark:shadow-2xl backdrop-blur-md transition-all focus-within:border-teal-500 dark:focus-within:border-cyan-400/80 focus-within:ring-1 focus-within:ring-teal-500/30"
               >
-                <div className="pl-2 pr-1.5 text-cyan-400 shrink-0">
+                <div className="pl-2 pr-1.5 text-teal-600 dark:text-cyan-400 shrink-0">
                   <Crosshair className="w-3.5 h-3.5" />
                 </div>
                 <input
@@ -1597,14 +1770,14 @@ export default function LeadsMapPage() {
                     setCoordInput(e.target.value);
                     setCoordError(null);
                   }}
-                  className="bg-transparent text-xs text-white placeholder-slate-400 focus:outline-none w-44 sm:w-60 font-mono py-1 px-1"
+                  className="bg-transparent text-xs text-[var(--text-primary)] dark:text-white placeholder-slate-400 focus:outline-none w-44 sm:w-60 font-mono py-1 px-1"
                 />
                 {coordInput && (
                   <button
                     type="button"
                     onClick={handleClearTarget}
                     aria-label="Clear coordinate input"
-                    className="p-1 text-slate-400 hover:text-white rounded-lg transition-colors cursor-pointer shrink-0"
+                    className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-lg transition-colors cursor-pointer shrink-0"
                     title="Clear"
                   >
                     <X className="w-3.5 h-3.5" />
@@ -1613,14 +1786,14 @@ export default function LeadsMapPage() {
                 <button
                   type="submit"
                   aria-label="Locate exact coordinates"
-                  className="px-2.5 py-1 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold rounded-lg shadow-sm transition-all flex items-center gap-1 cursor-pointer shrink-0 ml-1"
+                  className="px-3 py-1 bg-gradient-to-r from-teal-600 to-cyan-600 hover:brightness-110 text-white text-xs font-bold rounded-lg shadow-sm transition-all flex items-center gap-1 cursor-pointer shrink-0 ml-1"
                   title="Locate Exact Coordinates"
                 >
                   <span>Locate</span>
                 </button>
               </form>
               {coordError && (
-                <div className="bg-red-950/90 border border-red-500/50 text-red-300 text-[10px] px-2 py-0.5 rounded-lg shadow-md font-mono">
+                <div className="bg-red-50 dark:bg-red-950/90 border border-red-200 dark:border-red-500/50 text-red-700 dark:text-red-300 text-[10px] px-2 py-0.5 rounded-lg shadow-md font-mono">
                   {coordError}
                 </div>
               )}
@@ -1628,11 +1801,11 @@ export default function LeadsMapPage() {
 
             {/* Active Inspected Target Floating Bottom Bar */}
             {inspectedCoord && (
-              <div className="absolute bottom-3 left-3 z-20 bg-slate-900/95 border border-cyan-500/50 text-white px-3 py-1.5 rounded-xl text-xs shadow-2xl backdrop-blur-md flex items-center gap-2.5 font-mono animate-in fade-in duration-150">
+              <div className="absolute bottom-3 left-3 z-20 bg-white/95 dark:bg-black/90 border border-teal-500/50 dark:border-cyan-400/50 text-[var(--text-primary)] dark:text-white px-3 py-1.5 rounded-xl text-xs shadow-lg dark:shadow-2xl backdrop-blur-md flex items-center gap-2.5 font-mono animate-in fade-in duration-150">
                 <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-                  <span className="text-cyan-300 font-bold">Target:</span>
-                  <span className="text-slate-200">
+                  <span className="w-2 h-2 rounded-full bg-teal-500 dark:bg-cyan-400 animate-ping" />
+                  <span className="text-teal-700 dark:text-cyan-300 font-bold">Target:</span>
+                  <span className="text-slate-800 dark:text-slate-200">
                     {inspectedCoord.lat.toFixed(6)}, {inspectedCoord.lng.toFixed(6)}
                   </span>
                 </div>
@@ -1640,17 +1813,17 @@ export default function LeadsMapPage() {
                   <button
                     onClick={copyCoordinates}
                     aria-label="Copy coordinates"
-                    className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg border border-slate-700 text-[10px] transition-colors flex items-center gap-1 cursor-pointer"
+                    className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-white/10 dark:hover:bg-white/20 dark:text-slate-200 dark:hover:text-white rounded-lg border border-black dark:border-white/10 text-[10px] transition-colors flex items-center gap-1 cursor-pointer"
                     title="Copy Coordinates"
                   >
                     {copiedCoord ? (
                       <>
-                        <Check className="w-3 h-3 text-emerald-400" />
-                        <span className="text-emerald-400 font-semibold">Copied</span>
+                        <Check className="w-3 h-3 text-teal-600 dark:text-cyan-400" />
+                        <span className="text-teal-600 dark:text-cyan-400 font-semibold">Copied</span>
                       </>
                     ) : (
                       <>
-                        <Copy className="w-3 h-3 text-slate-400" />
+                        <Copy className="w-3 h-3 text-slate-500 dark:text-slate-400" />
                         <span>Copy</span>
                       </>
                     )}
@@ -1660,15 +1833,15 @@ export default function LeadsMapPage() {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Open coordinates in Google Maps"
-                    className="p-1 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg border border-slate-700 text-[10px] transition-colors flex items-center gap-1"
+                    className="p-1 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-white/10 dark:hover:bg-white/20 dark:text-slate-300 dark:hover:text-white rounded-lg border border-black dark:border-white/10 text-[10px] transition-colors flex items-center gap-1"
                     title="Open in Google Maps"
                   >
-                    <ExternalLink className="w-3 h-3 text-cyan-400" />
+                    <ExternalLink className="w-3 h-3 text-teal-600 dark:text-cyan-400" />
                   </a>
                   <button
                     onClick={handleClearTarget}
                     aria-label="Remove pin target"
-                    className="p-1 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
+                    className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
                     title="Remove Pin"
                   >
                     <X className="w-3.5 h-3.5" />
@@ -1679,8 +1852,8 @@ export default function LeadsMapPage() {
 
             {/* Loading Overlay */}
             {loading && (
-              <div className="absolute inset-0 z-30 bg-slate-950/80 flex flex-col items-center justify-center gap-2 text-xs text-slate-300">
-                <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />
+              <div className="absolute inset-0 z-30 bg-white/80 dark:bg-black/80 flex flex-col items-center justify-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+                <Loader2 className="w-6 h-6 animate-spin text-teal-600 dark:text-cyan-400" />
                 <span>Loading real satellite & street coordinates...</span>
               </div>
             )}
@@ -1688,26 +1861,26 @@ export default function LeadsMapPage() {
 
           {/* Selected Locality Detail Panel & Unmapped Info */}
           {selectedCity && (
-            <div className={`shrink-0 bg-slate-900/90 border border-slate-800 rounded-xl ${
-              isFullscreenMap ? 'mt-2 p-2.5 space-y-2' : 'mt-4 p-3.5 space-y-2.5'
+            <div className={`shrink-0 bg-[var(--bg-main)] dark:bg-black/50 border border-black dark:border-white/10 rounded-2xl p-3.5 space-y-2.5 backdrop-blur-md ${
+              isFullscreenMap ? 'mt-2 p-2.5 space-y-2' : 'mt-4'
             }`}>
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                 <div>
-                  <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+                  <h4 className="text-xs font-bold text-[var(--text-primary)] dark:text-white flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-teal-600 dark:text-cyan-400" />
                     <span>{selectedCity.name} Mapped Localities</span>
-                    <span className="text-[11px] text-slate-400 font-normal">
+                    <span className="text-[11px] text-[var(--text-secondary)] dark:text-slate-400 font-normal">
                       • {selectedCity.divisions.filter((d: DivisionSummary) => getLocalityGPS(d.name) !== null).length} Discrete Pins
                     </span>
                   </h4>
                 </div>
 
                 <div className="flex items-center gap-2 text-xs font-mono">
-                  <span className="px-2.5 py-1 bg-slate-950 text-emerald-400 border border-slate-800 rounded-lg font-medium">
+                  <span className="px-2.5 py-1 bg-[var(--bg-card)] dark:bg-black/70 text-teal-700 dark:text-cyan-300 border border-teal-500/30 dark:border-cyan-500/30 rounded-lg font-medium shadow-xs">
                     Geolocated: {cityMappedCount.toLocaleString()}
                   </span>
                   {cityUnmappedCount > 0 && (
-                    <span className="px-2.5 py-1 bg-slate-950 text-slate-400 border border-slate-800 rounded-lg" title="General Address Leads without specific locality">
+                    <span className="px-2.5 py-1 bg-[var(--bg-card)] dark:bg-black/70 text-[var(--text-secondary)] dark:text-slate-400 border border-black dark:border-white/10 rounded-lg shadow-xs" title="General Address Leads without specific locality">
                       General Pool: {cityUnmappedCount.toLocaleString()}
                     </span>
                   )}
@@ -1716,41 +1889,44 @@ export default function LeadsMapPage() {
 
               {/* Active Selected Locality Pill Card */}
               {selectedLocality && getLocalityGPS(selectedLocality.name) ? (
-                <div className={`bg-slate-950/80 border border-slate-800 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 ${
-                  isFullscreenMap ? 'p-2' : 'p-3'
-                }`}>
+                <div
+                  style={{ backgroundColor: '#97DDE9' }}
+                  className={`border border-black rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 shadow-md text-black ${
+                    isFullscreenMap ? 'p-2' : 'p-3'
+                  }`}
+                >
                   <div className="flex items-center gap-2.5">
-                    <div className="p-1.5 bg-slate-800 rounded-lg text-emerald-400 shrink-0">
+                    <div className="p-2 bg-black/10 border border-black/15 rounded-lg text-black shrink-0">
                       <Crosshair className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="text-xs font-bold text-white flex items-center gap-2">
+                      <div className="text-xs font-bold text-black flex items-center gap-2">
                         <span>{selectedLocality.name}</span>
                         {getLocalityGPS(selectedLocality.name)?.sector && (
-                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-slate-800 text-slate-300">
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-black/10 text-black border border-black/15">
                             {getLocalityGPS(selectedLocality.name)?.sector}
                           </span>
                         )}
                       </div>
-                      <div className="text-[11px] text-slate-400 mt-0.5">
+                      <div className="text-[11px] text-black/75 font-medium mt-0.5">
                         {selectedLocality.total.toLocaleString()} Total Leads on Street Map
                       </div>
                     </div>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 sm:gap-3 font-mono text-xs">
-                    <div className="flex items-center gap-1.5 text-emerald-400 font-semibold bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <div className="flex items-center gap-1.5 text-emerald-950 font-bold bg-white/80 px-2.5 py-1 rounded-lg border border-emerald-300/60 shadow-xs">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
                       <span>{selectedLocality.assigned.toLocaleString()} Assigned</span>
                     </div>
-                    <div className="flex items-center gap-1.5 text-yellow-400 font-semibold bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800">
-                      <Zap className="w-3 h-3 text-yellow-400" />
+                    <div className="flex items-center gap-1.5 text-amber-950 font-bold bg-white/80 px-2.5 py-1 rounded-lg border border-amber-300/60 shadow-xs">
+                      <Zap className="w-3 h-3 text-amber-600" />
                       <span>{selectedLocality.unassigned.toLocaleString()} Free</span>
                     </div>
                     <button
                       type="button"
                       onClick={() => handleOpenPreviewModal('unassigned', [getLocKey(selectedCity.name, selectedLocality.name)], selectedCity.name)}
-                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer font-sans shadow-sm"
+                      className="px-3.5 py-1.5 bg-black hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer font-sans shadow-sm"
                       title="Preview leads for this area"
                     >
                       <Eye className="w-3.5 h-3.5" />
@@ -1764,30 +1940,40 @@ export default function LeadsMapPage() {
         </div>
 
         {/* Right: Collapsible Hierarchy Tree Explorer (4 Cols Shrunk) */}
-        <div className="lg:col-span-4 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-5 shadow-xl flex flex-col min-h-[600px]">
-          <div className="space-y-3 border-b border-[var(--border-color)] pb-4 mb-3">
+        <div className="lg:col-span-4 bg-[var(--bg-card)] dark:bg-[#0B1015]/95 backdrop-blur-xl border-2 border-black dark:border-white/10 rounded-2xl p-4 sm:p-5 shadow-[0_22px_48px_-10px_rgba(0,0,0,0.35),0_10px_20px_-6px_rgba(0,0,0,0.2),inset_0_1.5px_0_rgba(255,255,255,0.45),inset_0_-2px_4px_rgba(0,0,0,0.18)] dark:shadow-[0_28px_60px_-12px_rgba(0,0,0,0.9),0_14px_26px_-6px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.2),inset_0_-2px_4px_rgba(0,0,0,0.7)] flex flex-col min-h-[600px]">
+          <div className="space-y-3 border-b border-black/30 dark:border-white/10 pb-4 mb-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-emerald-400" />
-                <h3 className="text-sm font-bold text-white tracking-wide">
+                <Sparkles className="w-4 h-4 text-teal-600 dark:text-cyan-400" />
+                <h3 className="text-sm font-bold text-[var(--text-primary)] dark:text-white tracking-wide">
                   Territory Hierarchy Tree
                 </h3>
               </div>
-              <span className="text-[10px] font-mono text-[var(--text-secondary)]">
+              <span className="text-[10px] font-mono text-[var(--text-secondary)] dark:text-slate-400">
                 {summary.totalStates} {summary.totalStates === 1 ? 'State' : 'States'} • {summary.totalCities} {summary.totalCities === 1 ? 'City' : 'Cities'}
               </span>
             </div>
 
-            {/* Search Input */}
+            {/* Search Input with thin outline border */}
             <div className="relative">
               <input
                 type="text"
                 placeholder="Search state, city, micro-area..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-xs text-[var(--text-primary)] placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                className="w-full pl-9 pr-8 py-2 bg-[var(--bg-main)] dark:bg-black/60 rounded-xl text-xs text-[var(--text-primary)] dark:text-white placeholder-[var(--text-secondary)] dark:placeholder-slate-400 border border-black dark:border-[#1DCED8] focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-[#1DCED8] transition-all"
               />
-              <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
+              <Search className="w-3.5 h-3.5 text-black dark:text-[#1DCED8] absolute left-3 top-2.5" />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch('')}
+                  aria-label="Clear search"
+                  className="absolute right-2.5 top-2.5 text-slate-400 hover:text-white cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
           </div>
 
@@ -1804,27 +1990,28 @@ export default function LeadsMapPage() {
                 return (
                   <div
                     key={st.name}
-                    className="border border-[var(--border-color)] rounded-xl overflow-hidden bg-[var(--bg-main)] transition-all"
+                    className="border border-black dark:border-white/10 rounded-xl overflow-hidden bg-[var(--bg-main)] dark:bg-black/40 transition-all shadow-xs"
                   >
                     {/* State Header Node */}
                     <div
                       onClick={() => toggleState(st.name)}
-                      className="p-3 flex items-center justify-between cursor-pointer hover:bg-slate-800/40 transition-colors"
+                      style={{ backgroundColor: '#1DCED8' }}
+                      className="p-3 flex items-center justify-between cursor-pointer rounded-t-xl transition-colors"
                     >
-                      <div className="flex items-center gap-2 text-xs font-bold text-white">
+                      <div className="flex items-center gap-2 text-xs font-bold text-black">
                         {isStateOpen ? (
-                          <ChevronDown className="w-4 h-4 text-emerald-400 shrink-0" />
+                          <ChevronDown className="w-4 h-4 text-black shrink-0" />
                         ) : (
-                          <ChevronRight className="w-4 h-4 text-slate-500 shrink-0" />
+                          <ChevronRight className="w-4 h-4 text-black/75 shrink-0" />
                         )}
-                        <span>{st.name}</span>
-                        <span className="text-[10px] text-[var(--text-secondary)] font-normal">
+                        <span className="text-black font-bold">{st.name}</span>
+                        <span className="text-[10px] text-black/75 font-semibold">
                           ({st.cities.length} {st.cities.length === 1 ? 'city' : 'cities'})
                         </span>
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono font-bold text-white bg-slate-800 px-2 py-0.5 rounded-md">
+                        <span className="text-xs font-mono font-bold text-black bg-black/15 px-2 py-0.5 rounded-md">
                           {st.total.toLocaleString()}
                         </span>
                       </div>
@@ -1832,7 +2019,7 @@ export default function LeadsMapPage() {
 
                     {/* Cities list under state */}
                     {isStateOpen && (
-                      <div className="border-t border-[var(--border-color)] p-2 space-y-1.5 bg-[var(--bg-card)]">
+                      <div className="border-t border-black/30 dark:border-white/10 p-2 space-y-1.5 bg-slate-100/60 dark:bg-black/20">
                         {st.cities.map((ct) => {
                           const isCityOpen = expandedCities[ct.name] ?? false;
                           const isCurrentSelected =
@@ -1841,11 +2028,7 @@ export default function LeadsMapPage() {
                           return (
                             <div
                               key={ct.name}
-                              className={`rounded-xl transition-all ${
-                                isCurrentSelected
-                                  ? 'bg-slate-900/90 border border-emerald-500/20'
-                                  : 'bg-[var(--bg-main)]/60'
-                              }`}
+                              className="rounded-xl transition-all overflow-hidden bg-[var(--bg-card)] dark:bg-black/30 border border-black dark:border-white/5"
                             >
                               {/* City Node */}
                               <div
@@ -1853,30 +2036,29 @@ export default function LeadsMapPage() {
                                   handleCitySelect(ct);
                                   toggleCity(ct.name);
                                 }}
-                                className={`p-2.5 flex items-center justify-between cursor-pointer rounded-xl transition-colors ${
-                                  isCurrentSelected ? 'hover:bg-slate-800/60' : 'hover:bg-slate-800/40'
-                                }`}
+                                style={{ backgroundColor: '#1DCED8' }}
+                                className="p-2.5 flex items-center justify-between cursor-pointer rounded-xl transition-colors"
                               >
-                                <div className="flex items-center gap-2 text-xs font-semibold text-slate-200">
+                                <div className="flex items-center gap-2 text-xs font-bold text-black">
                                   {isCityOpen ? (
-                                    <ChevronDown className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                    <ChevronDown className="w-3.5 h-3.5 text-black shrink-0" />
                                   ) : (
-                                    <ChevronRight className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                                    <ChevronRight className="w-3.5 h-3.5 text-black/75 shrink-0" />
                                   )}
-                                  <span className={isCurrentSelected ? 'text-emerald-400 font-bold' : ''}>
+                                  <span className="text-black font-bold">
                                     {ct.name}
                                   </span>
-                                  <span className="text-[10px] text-slate-500 font-normal">
+                                  <span className="text-[10px] text-black/75 font-semibold">
                                     ({ct.divisions.length} discrete areas)
                                   </span>
                                 </div>
 
                                 <div className="flex items-center gap-1.5 font-mono text-[11px]">
-                                  <span className="text-emerald-400 font-bold" title="Assigned">
+                                  <span className="text-black font-extrabold" title="Assigned">
                                     {ct.assigned.toLocaleString()}
                                   </span>
-                                  <span className="text-slate-600">/</span>
-                                  <span className="text-yellow-400 font-bold" style={{ color: '#facc15' }} title="Unassigned (Free)">
+                                  <span className="text-black/50 font-bold">/</span>
+                                  <span className="text-black font-extrabold" title="Unassigned (Free)">
                                     {ct.unassigned.toLocaleString()}
                                   </span>
                                 </div>
@@ -1884,11 +2066,12 @@ export default function LeadsMapPage() {
 
                               {/* Single Discrete Localities under City */}
                               {isCityOpen && ct.divisions.length > 0 && (
-                                <div className="px-2 pb-2 pt-1 space-y-0.5">
+                                <div className="px-2 pb-2 pt-1 space-y-0.5 border-t border-black/20 dark:border-white/5">
                                   {ct.divisions.map((div) => {
                                     const isDivActive =
                                       isCurrentSelected && selectedLocality?.name === div.name;
                                     const isLocSelected = selectedLocalities.includes(getLocKey(ct.name, div.name));
+                                    const isHighlighted = isDivActive || isLocSelected;
                                     const isGeolocated = getLocalityGPS(div.name) !== null;
 
                                     return (
@@ -1899,12 +2082,11 @@ export default function LeadsMapPage() {
                                           handleCitySelect(ct);
                                           handleLocalitySelect(div);
                                         }}
+                                        style={isHighlighted ? { backgroundColor: '#92EEFF', borderColor: '#92EEFF' } : undefined}
                                         className={`flex items-center justify-between text-[11px] px-2.5 py-1.5 rounded-lg cursor-pointer transition-all ${
-                                          isDivActive
-                                            ? 'bg-emerald-500/15 border border-emerald-400/40 text-emerald-200 font-semibold'
-                                            : isLocSelected
-                                            ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 font-medium'
-                                            : 'border border-transparent hover:bg-slate-800/40 text-slate-300'
+                                          isHighlighted
+                                            ? '!bg-[#92EEFF] !border-[#92EEFF] !text-black font-semibold shadow-xs'
+                                            : 'border border-transparent hover:bg-[#92EEFF]/20 hover:border-[#92EEFF]/30 text-[var(--text-primary)] dark:text-slate-300'
                                         }`}
                                       >
                                         <div className="flex items-center gap-2 truncate pr-2">
@@ -1917,35 +2099,37 @@ export default function LeadsMapPage() {
                                             aria-label={isLocSelected ? `Deselect ${div.name}` : `Select ${div.name}`}
                                             className={`w-3.5 h-3.5 rounded flex items-center justify-center transition-all shrink-0 cursor-pointer ${
                                               isLocSelected
-                                                ? 'bg-emerald-500 text-slate-950 border border-emerald-400 shadow-xs'
-                                                : 'bg-slate-900 border border-slate-700 hover:border-slate-500'
+                                                ? 'bg-white border-2 border-black text-black shadow-xs'
+                                                : isHighlighted
+                                                ? 'border border-black/40 bg-white hover:border-black'
+                                                : 'bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:border-black'
                                             }`}
                                             title={isLocSelected ? 'Deselect locality' : 'Select locality for assignment'}
                                           >
-                                            {isLocSelected && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                                            {isLocSelected && <Check className="w-2.5 h-2.5 stroke-[3] !text-black stroke-black" />}
                                           </button>
                                           {isGeolocated ? (
-                                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isLocSelected || isDivActive ? 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]' : 'bg-emerald-500/80'}`} />
+                                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isHighlighted ? 'bg-emerald-700' : 'bg-emerald-600 dark:bg-emerald-500/80'}`} />
                                           ) : (
-                                            <span className="w-1.5 h-1.5 rounded-full bg-slate-500 shrink-0" />
+                                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isHighlighted ? 'bg-black/40' : 'bg-slate-300 dark:bg-slate-500'}`} />
                                           )}
-                                          <span className="truncate">{div.name}</span>
+                                          <span className={`truncate ${isHighlighted ? '!text-black font-bold' : ''}`}>{div.name}</span>
                                         </div>
                                         <div className="flex items-center gap-2 font-mono shrink-0 text-[10px]">
-                                          <span className="text-white font-semibold">
+                                          <span className={isHighlighted ? '!text-black font-extrabold' : 'text-[var(--text-primary)] dark:text-white font-semibold'}>
                                             {div.total.toLocaleString()}
                                           </span>
-                                          <span className="inline-flex items-center gap-1 text-emerald-400 font-medium" title="Active in Pipeline">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                                          <span className={`inline-flex items-center gap-1 font-medium ${isHighlighted ? '!text-black font-bold' : 'text-emerald-700 dark:text-emerald-400'}`} title="Active in Pipeline">
+                                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isHighlighted ? 'bg-emerald-700' : 'bg-emerald-500 dark:bg-emerald-400'}`} />
                                             {(div.active || div.assigned || 0).toLocaleString()}
                                           </span>
-                                          <span className="inline-flex items-center gap-1 text-yellow-400 font-medium" title="Free / Unassigned">
-                                            <Zap className="w-2.5 h-2.5 text-yellow-400 shrink-0" />
+                                          <span className={`inline-flex items-center gap-1 font-medium ${isHighlighted ? '!text-black font-bold' : 'text-amber-700 dark:text-yellow-400'}`} title="Free / Unassigned">
+                                            <Zap className={`w-2.5 h-2.5 shrink-0 ${isHighlighted ? 'text-amber-700' : 'text-amber-600 dark:text-yellow-400'}`} />
                                             {(div.unassigned || 0).toLocaleString()}
                                           </span>
                                           {(div.inactive || 0) > 0 && (
-                                            <span className="inline-flex items-center gap-1 text-red-400 font-medium opacity-80" title="Inactive / Closed">
-                                              <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
+                                            <span className={`inline-flex items-center gap-1 font-medium ${isHighlighted ? '!text-black font-bold' : 'text-rose-700 dark:text-red-400 opacity-80'}`} title="Inactive / Closed">
+                                              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isHighlighted ? 'bg-rose-700' : 'bg-rose-500 dark:bg-red-400'}`} />
                                               {(div.inactive || 0).toLocaleString()}
                                             </span>
                                           )}
@@ -1970,8 +2154,8 @@ export default function LeadsMapPage() {
 
       {/* Floating Smart Allocation Dock */}
       {selectedLocalities.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 border border-emerald-500/50 rounded-2xl p-3 px-5 shadow-2xl backdrop-blur-xl flex flex-wrap items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-200 max-w-[95vw]">
-          <div className="flex items-center gap-2 font-mono text-xs text-white">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 border border-emerald-500/50 border-t-emerald-300/60 border-b-black/80 rounded-2xl p-3 px-5 shadow-[0_25px_60px_-10px_rgba(0,0,0,0.85),0_12px_24px_-5px_rgba(0,0,0,0.6),inset_0_1.5px_0_rgba(255,255,255,0.3),inset_0_-2px_4px_rgba(0,0,0,0.6)] backdrop-blur-xl flex flex-wrap items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-200 max-w-[95vw]">
+          <div className="flex items-center gap-2 font-mono text-xs text-white-force" style={{ color: '#ffffff' }}>
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
             <span className="font-bold text-emerald-300">
               {selectedSummary.count} {selectedSummary.count === 1 ? 'Locality' : 'Localities'} Selected
@@ -2022,16 +2206,16 @@ export default function LeadsMapPage() {
         typeof document !== 'undefined' &&
         createPortal(
           <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 my-auto">
+            <div className="bg-[var(--bg-card)] border border-black dark:bg-slate-900 dark:border-slate-700/80 border-t-white/80 dark:border-t-white/30 border-b-black/40 dark:border-b-black/80 rounded-2xl w-full max-w-lg shadow-[0_35px_80px_-15px_rgba(0,0,0,0.6),0_18px_35px_-8px_rgba(0,0,0,0.35),inset_0_2px_0_rgba(255,255,255,0.6),inset_0_-3px_6px_rgba(0,0,0,0.2)] dark:shadow-[0_45px_100px_-15px_rgba(0,0,0,0.95),0_25px_45px_-10px_rgba(0,0,0,0.8),inset_0_1.5px_0_rgba(255,255,255,0.25),inset_0_-3px_6px_rgba(0,0,0,0.8)] overflow-hidden animate-in fade-in zoom-in-95 duration-150 my-auto">
               {/* Modal Header */}
-              <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
+              <div className="p-4 border-b border-black/30 dark:border-slate-800 flex items-center justify-between bg-[var(--bg-main)] dark:bg-slate-950/60">
                 <div className="flex items-center gap-2">
-                  <div className="p-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl">
+                  <div className="p-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl">
                     <Zap className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-white">Direct Territory Lead Allocation</h3>
-                    <p className="text-[11px] text-slate-400">
+                    <h3 className="text-sm font-bold text-[var(--text-primary)] dark:text-white">Direct Territory Lead Allocation</h3>
+                    <p className="text-[11px] text-[var(--text-secondary)] dark:text-slate-400">
                       Assign territory leads to callers or field executives in 1 click
                     </p>
                   </div>
@@ -2039,7 +2223,7 @@ export default function LeadsMapPage() {
                 <button
                   onClick={() => setShowQuickAssignModal(false)}
                   aria-label="Close dialog"
-                  className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+                  className="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-slate-200/60 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -2048,10 +2232,10 @@ export default function LeadsMapPage() {
               {/* Modal Form */}
               <form onSubmit={handleQuickAssignSubmit} className="p-5 space-y-4">
                 {/* Selected Territories Summary */}
-                <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl space-y-1.5">
+                <div className="p-3 bg-[var(--bg-main)] border border-black/40 dark:bg-slate-950 dark:border-slate-800 rounded-xl space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-400 font-medium">Selected Territories:</span>
-                    <span className="font-bold text-emerald-400 font-mono">
+                    <span className="text-[var(--text-secondary)] dark:text-slate-400 font-medium">Selected Territories:</span>
+                    <span className="font-bold text-emerald-700 dark:text-emerald-400 font-mono">
                       {selectedSummary.count} {selectedSummary.count === 1 ? 'Area' : 'Areas'}
                     </span>
                   </div>
@@ -2061,30 +2245,30 @@ export default function LeadsMapPage() {
                       return (
                         <span
                           key={locKey}
-                          className="px-2 py-0.5 bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 text-[10px] rounded-md font-mono capitalize"
+                          className="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/60 dark:border-emerald-500/30 dark:text-emerald-300 text-[10px] rounded-md font-mono capitalize"
                         >
                           {displayName}
                         </span>
                       );
                     })}
                   </div>
-                  <div className="flex items-center justify-between pt-1 border-t border-slate-800/80 text-xs font-mono">
-                    <span className="text-slate-400">Available Unassigned Leads:</span>
-                    <span className="text-amber-300 font-bold">{selectedSummary.unassigned.toLocaleString()} Free</span>
+                  <div className="flex items-center justify-between pt-1 border-t border-black/20 dark:border-slate-800/80 text-xs font-mono">
+                    <span className="text-[var(--text-secondary)] dark:text-slate-400">Available Unassigned Leads:</span>
+                    <span className="text-amber-700 dark:text-amber-300 font-bold">{selectedSummary.unassigned.toLocaleString()} Free</span>
                   </div>
                 </div>
 
                 {/* Employee Selection */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-200 flex items-center justify-between">
+                  <label className="text-xs font-semibold text-[var(--text-primary)] dark:text-slate-200 flex items-center justify-between">
                     <span>Assign To Employee / Caller:</span>
-                    <span className="text-[10px] text-slate-400">({assignableTeamMembers.length} team members)</span>
+                    <span className="text-[10px] text-[var(--text-secondary)] dark:text-slate-400">({assignableTeamMembers.length} team members)</span>
                   </label>
                   <select
                     value={assigneeId}
                     onChange={(e) => setAssigneeId(e.target.value)}
                     required
-                    className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500/50 cursor-pointer"
+                    className="w-full px-3 py-2.5 bg-[var(--bg-main)] border border-black dark:bg-slate-950 dark:border-slate-800 rounded-xl text-xs text-[var(--text-primary)] dark:text-white focus:outline-none focus:border-emerald-500/50 cursor-pointer"
                   >
                     <option value="">-- Choose Employee / Caller --</option>
                     {assignableTeamMembers.map((u) => (
@@ -2097,9 +2281,9 @@ export default function LeadsMapPage() {
 
                 {/* Number of Leads to Assign (Capped at Max 500) */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-200 flex items-center justify-between">
+                  <label className="text-xs font-semibold text-[var(--text-primary)] dark:text-slate-200 flex items-center justify-between">
                     <span>Number of Leads to Assign:</span>
-                    <span className="text-[10px] text-amber-400 font-mono font-semibold">Max limit: 500 leads per batch</span>
+                    <span className="text-[10px] text-amber-700 dark:text-amber-400 font-mono font-semibold">Max limit: 500 leads per batch</span>
                   </label>
                   <div className="flex items-center gap-2">
                     <input
@@ -2116,7 +2300,7 @@ export default function LeadsMapPage() {
                           setAssignCount(val);
                         }
                       }}
-                      className="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 font-mono"
+                      className="flex-1 px-3 py-2 bg-[var(--bg-main)] border border-black dark:bg-slate-950 dark:border-slate-800 rounded-xl text-xs text-[var(--text-primary)] dark:text-white placeholder-[var(--text-muted)] dark:placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 font-mono"
                     />
                     <div className="flex items-center gap-1">
                       {['25', '50', '100', '250', '500'].map((preset) => (
@@ -2126,8 +2310,8 @@ export default function LeadsMapPage() {
                           onClick={() => setAssignCount(preset)}
                           className={`px-2 py-1.5 text-[10px] font-mono font-semibold rounded-lg border cursor-pointer transition-colors ${
                             assignCount === preset
-                              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 font-bold shadow-xs'
-                              : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border-slate-700'
+                              ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-black dark:border-emerald-500/50 font-bold shadow-xs'
+                              : 'bg-[var(--bg-main)] hover:bg-slate-200/60 text-[var(--text-secondary)] hover:text-[var(--text-primary)] border-black dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 dark:hover:text-white dark:border-slate-700'
                           }`}
                         >
                           {preset}
@@ -2139,7 +2323,7 @@ export default function LeadsMapPage() {
 
                 {/* Allocation Priority */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-200">
+                  <label className="text-xs font-semibold text-[var(--text-primary)] dark:text-slate-200">
                     Lead Queue Priority:
                   </label>
                   <div className="grid grid-cols-2 gap-2">
@@ -2148,18 +2332,18 @@ export default function LeadsMapPage() {
                       onClick={() => setAssignPriority('oldest')}
                       className={`p-2.5 rounded-xl border text-xs font-medium text-left flex items-center gap-2 transition-all cursor-pointer ${
                         assignPriority === 'oldest'
-                          ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-300 font-semibold'
-                          : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                          ? 'bg-emerald-50 dark:bg-emerald-500/10 border-black dark:border-emerald-500/50 text-emerald-800 dark:text-emerald-300 font-semibold'
+                          : 'bg-[var(--bg-main)] border-black text-[var(--text-secondary)] hover:text-[var(--text-primary)] dark:bg-slate-950 dark:border-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
                       }`}
                     >
                       <div className={`w-3 h-3 rounded-full border flex items-center justify-center ${
-                        assignPriority === 'oldest' ? 'border-emerald-400 bg-emerald-400' : 'border-slate-600'
+                        assignPriority === 'oldest' ? 'border-emerald-500 bg-emerald-500' : 'border-black dark:border-slate-600'
                       }`}>
-                        {assignPriority === 'oldest' && <div className="w-1 h-1 rounded-full bg-slate-950" />}
+                        {assignPriority === 'oldest' && <div className="w-1 h-1 rounded-full bg-white dark:bg-slate-950" />}
                       </div>
                       <div>
-                        <div className="font-semibold text-white text-[11px]">Oldest First</div>
-                        <div className="text-[10px] text-slate-500">Prioritize backlog leads</div>
+                        <div className="font-semibold text-[var(--text-primary)] dark:text-white text-[11px]">Oldest First</div>
+                        <div className="text-[10px] text-[var(--text-secondary)] dark:text-slate-500">Prioritize backlog leads</div>
                       </div>
                     </button>
 
@@ -2168,18 +2352,18 @@ export default function LeadsMapPage() {
                       onClick={() => setAssignPriority('newest')}
                       className={`p-2.5 rounded-xl border text-xs font-medium text-left flex items-center gap-2 transition-all cursor-pointer ${
                         assignPriority === 'newest'
-                          ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-300 font-semibold'
-                          : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                          ? 'bg-emerald-50 dark:bg-emerald-500/10 border-black dark:border-emerald-500/50 text-emerald-800 dark:text-emerald-300 font-semibold'
+                          : 'bg-[var(--bg-main)] border-black text-[var(--text-secondary)] hover:text-[var(--text-primary)] dark:bg-slate-950 dark:border-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
                       }`}
                     >
                       <div className={`w-3 h-3 rounded-full border flex items-center justify-center ${
-                        assignPriority === 'newest' ? 'border-emerald-400 bg-emerald-400' : 'border-slate-600'
+                        assignPriority === 'newest' ? 'border-emerald-500 bg-emerald-500' : 'border-black dark:border-slate-600'
                       }`}>
-                        {assignPriority === 'newest' && <div className="w-1 h-1 rounded-full bg-slate-950" />}
+                        {assignPriority === 'newest' && <div className="w-1 h-1 rounded-full bg-white dark:bg-slate-950" />}
                       </div>
                       <div>
-                        <div className="font-semibold text-white text-[11px]">Newest First</div>
-                        <div className="text-[10px] text-slate-500">Prioritize freshest leads</div>
+                        <div className="font-semibold text-[var(--text-primary)] dark:text-white text-[11px]">Newest First</div>
+                        <div className="text-[10px] text-[var(--text-secondary)] dark:text-slate-500">Prioritize freshest leads</div>
                       </div>
                     </button>
                   </div>
@@ -2187,26 +2371,26 @@ export default function LeadsMapPage() {
 
                 {/* Status & Error Messages */}
                 {assignErrorMsg && (
-                  <div className="p-2.5 bg-red-950/40 border border-red-500/40 text-red-300 rounded-xl text-xs flex items-center gap-2">
-                    <ShieldAlert className="w-4 h-4 text-red-400 shrink-0" />
+                  <div className="p-2.5 bg-red-50 border border-red-200 text-red-700 dark:bg-red-950/40 dark:border-red-500/40 dark:text-red-300 rounded-xl text-xs flex items-center gap-2">
+                    <ShieldAlert className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
                     <span>{assignErrorMsg}</span>
                   </div>
                 )}
 
                 {assignSuccessMsg && (
-                  <div className="p-2.5 bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 rounded-xl text-xs flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <div className="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 dark:bg-emerald-950/40 dark:border-emerald-500/40 dark:text-emerald-300 rounded-xl text-xs flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                     <span>{assignSuccessMsg}</span>
                   </div>
                 )}
 
                 {/* Action Buttons */}
-                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-800">
+                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-black/30 dark:border-slate-800">
                   <button
                     type="button"
                     onClick={() => setShowQuickAssignModal(false)}
                     disabled={assignLoading}
-                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+                    className="px-4 py-2 bg-[var(--bg-main)] hover:bg-slate-200/60 text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-black dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 dark:border-transparent text-xs font-semibold rounded-xl transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -2239,28 +2423,28 @@ export default function LeadsMapPage() {
         typeof document !== 'undefined' &&
         createPortal(
           <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-5xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 my-auto flex flex-col max-h-[90vh]">
+            <div className="bg-[var(--bg-card)] border border-black dark:bg-slate-900 dark:border-slate-700/80 border-t-white/80 dark:border-t-white/30 border-b-black/40 dark:border-b-black/80 rounded-2xl w-full max-w-5xl shadow-[0_35px_80px_-15px_rgba(0,0,0,0.6),0_18px_35px_-8px_rgba(0,0,0,0.35),inset_0_2px_0_rgba(255,255,255,0.6),inset_0_-3px_6px_rgba(0,0,0,0.2)] dark:shadow-[0_45px_100px_-15px_rgba(0,0,0,0.95),0_25px_45px_-10px_rgba(0,0,0,0.8),inset_0_1.5px_0_rgba(255,255,255,0.25),inset_0_-3px_6px_rgba(0,0,0,0.8)] overflow-hidden animate-in fade-in zoom-in-95 duration-150 my-auto flex flex-col max-h-[90vh]">
               {/* Modal Header */}
-              <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/80 shrink-0">
+              <div className="p-4 border-b border-black/30 dark:border-slate-800 flex items-center justify-between bg-[var(--bg-main)] dark:bg-slate-950/80 shrink-0">
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-xl">
+                  <div className="p-2.5 bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 rounded-xl">
                     <Eye className="w-5 h-5" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-base font-bold text-white">Area Leads Preview</h3>
-                      <span className="px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-mono font-semibold">
+                      <h3 className="text-base font-bold text-[var(--text-primary)] dark:text-white">Area Leads Preview</h3>
+                      <span className="px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20 text-blue-700 dark:text-blue-400 text-xs font-mono font-semibold">
                         {previewLoading && previewCounts.total === 0
                           ? '0 Total Leads'
                           : `${(previewCounts.total > 0 ? previewCounts.total : previewPagination.total).toLocaleString()} Total Leads`}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-0.5">
-                      <MapPin className="w-3 h-3 text-emerald-400" />
+                    <div className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)] dark:text-slate-400 mt-0.5">
+                      <MapPin className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                       <span>{previewTargetCity} •</span>
                       <div className="flex flex-wrap gap-1 max-w-md">
                         {previewTargetLocalities.map((k) => (
-                          <span key={k} className="text-slate-300 font-mono text-[11px] bg-slate-800 px-1.5 py-0.2 rounded">
+                          <span key={k} className="text-[var(--text-secondary)] dark:text-slate-300 font-mono text-[11px] bg-slate-200/70 dark:bg-slate-800 px-1.5 py-0.2 rounded border border-black/30 dark:border-transparent">
                             {k.includes('::') ? k.split('::')[1] : k}
                           </span>
                         ))}
@@ -2275,15 +2459,15 @@ export default function LeadsMapPage() {
                     setPreviewPage(1);
                   }}
                   aria-label="Close leads preview modal"
-                  className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+                  className="p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-slate-200/60 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               {/* Filter Tabs Subheader */}
-              <div className="p-3 bg-slate-950/40 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
-                <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+              <div className="p-3 bg-[var(--bg-main)]/50 dark:bg-slate-950/40 border-b border-black/30 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
+                <div className="flex items-center gap-1.5 bg-[var(--bg-card)] dark:bg-slate-950 p-1 rounded-xl border border-black dark:border-slate-800">
                   <button
                     type="button"
                     onClick={() => {
@@ -2293,11 +2477,11 @@ export default function LeadsMapPage() {
                     }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                       previewFilterType === 'unassigned'
-                        ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 shadow-sm'
-                        : 'text-slate-400 hover:text-slate-200'
+                        ? 'bg-amber-500/20 text-amber-700 dark:text-yellow-300 border border-black dark:border-amber-500/40 shadow-sm'
+                        : 'text-[var(--text-secondary)] dark:text-slate-400 hover:text-[var(--text-primary)] dark:hover:text-slate-200 border border-transparent hover:border-black/30'
                     }`}
                   >
-                    <Zap className="w-3.5 h-3.5 text-yellow-400 shrink-0" />
+                    <Zap className="w-3.5 h-3.5 text-amber-600 dark:text-yellow-400 shrink-0" />
                     <span>Free Unassigned ({previewLoading && previewCounts.unassigned === 0 ? '0' : previewCounts.unassigned.toLocaleString()})</span>
                   </button>
 
@@ -2310,11 +2494,11 @@ export default function LeadsMapPage() {
                     }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                       previewFilterType === 'active'
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
-                        : 'text-slate-400 hover:text-slate-200'
+                        ? 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-black dark:border-emerald-500/40 shadow-sm'
+                        : 'text-[var(--text-secondary)] dark:text-slate-400 hover:text-[var(--text-primary)] dark:hover:text-slate-200 border border-transparent hover:border-black/30'
                     }`}
                   >
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                     <span>Active ({previewLoading && previewCounts.active === 0 ? '0' : previewCounts.active.toLocaleString()})</span>
                   </button>
 
@@ -2327,11 +2511,11 @@ export default function LeadsMapPage() {
                     }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                       previewFilterType === 'inactive'
-                        ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-sm'
-                        : 'text-slate-400 hover:text-slate-200'
+                        ? 'bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-black dark:border-rose-500/40 shadow-sm'
+                        : 'text-[var(--text-secondary)] dark:text-slate-400 hover:text-[var(--text-primary)] dark:hover:text-slate-200 border border-transparent hover:border-black/30'
                     }`}
                   >
-                    <XCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                    <XCircle className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 shrink-0" />
                     <span>Inactive / Closed ({previewLoading && previewCounts.inactive === 0 ? '0' : previewCounts.inactive.toLocaleString()})</span>
                   </button>
 
@@ -2344,11 +2528,11 @@ export default function LeadsMapPage() {
                     }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                       previewFilterType === 'all'
-                        ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40 shadow-sm'
-                        : 'text-slate-400 hover:text-slate-200'
+                        ? 'bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-black dark:border-blue-500/40 shadow-sm'
+                        : 'text-[var(--text-secondary)] dark:text-slate-400 hover:text-[var(--text-primary)] dark:hover:text-slate-200 border border-transparent hover:border-black/30'
                     }`}
                   >
-                    <Layers className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                    <Layers className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
                     <span>All Leads ({previewLoading && previewCounts.total === 0 ? '0' : previewCounts.total.toLocaleString()})</span>
                   </button>
                 </div>
@@ -2357,7 +2541,7 @@ export default function LeadsMapPage() {
                   <button
                     type="button"
                     onClick={() => fetchPreviewLeads(previewPage, previewFilterType)}
-                    className="p-1.5 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 text-xs transition-colors flex items-center gap-1 cursor-pointer"
+                    className="p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--bg-card)] hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg border border-black dark:border-slate-700 text-xs transition-colors flex items-center gap-1 cursor-pointer"
                     title="Refresh list"
                   >
                     <RefreshCw className={`w-3.5 h-3.5 ${previewLoading ? 'animate-spin' : ''}`} />
@@ -2369,24 +2553,24 @@ export default function LeadsMapPage() {
               {/* Modal Leads Table Content */}
               <div className="flex-1 overflow-y-auto p-4 space-y-2 min-h-[300px]">
                 {previewLoading ? (
-                  <div className="flex flex-col items-center justify-center py-20 text-slate-400 space-y-3">
-                    <Loader2 className="w-7 h-7 animate-spin text-blue-400" />
+                  <div className="flex flex-col items-center justify-center py-20 text-[var(--text-secondary)] dark:text-slate-400 space-y-3">
+                    <Loader2 className="w-7 h-7 animate-spin text-blue-600 dark:text-blue-400" />
                     <span className="text-xs">Fetching territory leads...</span>
                   </div>
                 ) : previewLeads.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-slate-400 space-y-2 text-center">
-                    <Users className="w-10 h-10 text-slate-600 mb-1" />
-                    <p className="text-sm font-semibold text-slate-300">No leads found</p>
-                    <p className="text-xs text-slate-500 max-w-sm">
+                  <div className="flex flex-col items-center justify-center py-16 text-[var(--text-secondary)] dark:text-slate-400 space-y-2 text-center">
+                    <Users className="w-10 h-10 text-slate-400 dark:text-slate-600 mb-1" />
+                    <p className="text-sm font-semibold text-[var(--text-primary)] dark:text-slate-300">No leads found</p>
+                    <p className="text-xs text-[var(--text-muted)] dark:text-slate-500 max-w-sm">
                       No leads matching the "{previewFilterType}" status filter were found in the selected territory.
                     </p>
                   </div>
                 ) : (
-                  <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/60 shadow-inner">
+                  <div className="border border-black dark:border-slate-800 rounded-xl overflow-hidden bg-[var(--bg-card)] dark:bg-slate-950/60 shadow-sm dark:shadow-inner">
                     <div className="overflow-x-auto">
                       <table className="w-full text-left border-collapse text-xs">
                         <thead>
-                          <tr className="bg-slate-950 border-b border-slate-800 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                          <tr className="bg-[var(--bg-main)] dark:bg-slate-950 border-b border-black/30 dark:border-slate-800 text-[11px] font-semibold text-[var(--text-secondary)] dark:text-slate-400 uppercase tracking-wider">
                             <th className="py-2.5 px-3 w-24">Lead Code</th>
                             <th className="py-2.5 px-3 w-44">Customer</th>
                             <th className="py-2.5 px-3">Full Address & Pincode</th>
@@ -2394,34 +2578,34 @@ export default function LeadsMapPage() {
                             <th className="py-2.5 px-3 w-36">Status / Assigned</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-800/60 text-slate-200">
+                        <tbody className="divide-y divide-black/20 dark:divide-slate-800/60 text-[var(--text-primary)] dark:text-slate-200">
                           {previewLeads.map((lead: any) => {
                             const isLeadUnassigned = !lead.consultant && !lead.tl && !lead.manager;
                             return (
-                              <tr key={lead.id} className="hover:bg-slate-800/30 transition-colors">
-                                <td className="py-2.5 px-3 font-mono font-bold text-white whitespace-nowrap text-xs align-top">
+                              <tr key={lead.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                                <td className="py-2.5 px-3 font-mono font-bold text-[var(--text-primary)] dark:text-white whitespace-nowrap text-xs align-top">
                                   #{lead.leadCode}
                                 </td>
                                 <td className="py-2.5 px-3 align-top">
-                                  <div className="font-semibold text-slate-100 max-w-[150px] truncate" title={lead.customerName}>
+                                  <div className="font-semibold text-[var(--text-primary)] dark:text-slate-100 max-w-[150px] truncate" title={lead.customerName}>
                                     {lead.customerName}
                                   </div>
-                                  <div className="text-[11px] text-slate-400 flex items-center gap-1 font-mono mt-0.5 whitespace-nowrap">
-                                    <Phone className="w-3 h-3 text-slate-500 shrink-0" />
+                                  <div className="text-[11px] text-[var(--text-secondary)] dark:text-slate-400 flex items-center gap-1 font-mono mt-0.5 whitespace-nowrap">
+                                    <Phone className="w-3 h-3 text-slate-400 dark:text-slate-500 shrink-0" />
                                     <span>{lead.mobile}</span>
                                   </div>
                                 </td>
                                 <td className="py-2.5 px-3 align-top">
-                                  <div className="text-[11px] text-slate-200 leading-relaxed break-words">
-                                    {lead.address || <span className="text-slate-500 italic">No address provided</span>}
+                                  <div className="text-[11px] text-[var(--text-primary)] dark:text-slate-200 leading-relaxed break-words">
+                                    {lead.address || <span className="text-[var(--text-muted)] dark:text-slate-500 italic">No address provided</span>}
                                   </div>
                                   {lead.pinCode && (
                                     <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-                                      <span className="inline-flex items-center text-[10px] font-mono font-semibold px-1.5 py-0.2 rounded bg-slate-800/90 text-emerald-400 border border-slate-700/80">
+                                      <span className="inline-flex items-center text-[10px] font-mono font-semibold px-1.5 py-0.2 rounded bg-slate-100 text-emerald-800 border border-emerald-200 dark:bg-slate-800/90 dark:text-emerald-400 dark:border-slate-700/80">
                                         PIN: {lead.pinCode}
                                       </span>
                                       {lead.division && (
-                                        <span className="inline-flex items-center text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-800/60 text-slate-400 border border-slate-800">
+                                        <span className="inline-flex items-center text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-[var(--text-secondary)] border border-slate-200 dark:bg-slate-800/60 dark:text-slate-400 dark:border-slate-800">
                                           {lead.division}
                                         </span>
                                       )}
@@ -2429,27 +2613,27 @@ export default function LeadsMapPage() {
                                   )}
                                 </td>
                                 <td className="py-2.5 px-3 whitespace-nowrap font-mono text-[11px] align-top">
-                                  <div className="capitalize text-slate-300">{lead.connectionType || 'Residential'}</div>
-                                  <div className="text-slate-500">{lead.sanctionedLoadKw ? `${lead.sanctionedLoadKw} kW` : '-'}</div>
+                                  <div className="capitalize text-[var(--text-primary)] dark:text-slate-300">{lead.connectionType || 'Residential'}</div>
+                                  <div className="text-[var(--text-muted)] dark:text-slate-500">{lead.sanctionedLoadKw ? `${lead.sanctionedLoadKw} kW` : '-'}</div>
                                 </td>
                                 <td className="py-2.5 px-3 whitespace-nowrap align-top">
                                   {lead.isActive === false ? (
-                                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-rose-500/10 border border-rose-500/20 text-rose-400 font-semibold text-[11px]">
-                                      <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
+                                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/20 dark:text-rose-400 font-semibold text-[11px]">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 dark:bg-rose-400 shrink-0" />
                                       <span>Inactive / Closed</span>
                                     </span>
                                   ) : isLeadUnassigned ? (
-                                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 font-semibold text-[11px]">
-                                      <Zap className="w-3 h-3 text-yellow-400 shrink-0" />
+                                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 dark:bg-yellow-500/10 dark:border-yellow-500/20 dark:text-yellow-400 font-semibold text-[11px]">
+                                      <Zap className="w-3 h-3 text-amber-600 dark:text-yellow-400 shrink-0" />
                                       <span>Free Unassigned</span>
                                     </span>
                                   ) : (
                                     <div className="space-y-0.5">
-                                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-semibold text-[11px]">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/20 dark:text-emerald-400 font-semibold text-[11px]">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 shrink-0" />
                                         <span>Active</span>
                                       </span>
-                                      <div className="text-[10px] text-slate-400 truncate max-w-[140px]">
+                                      <div className="text-[10px] text-[var(--text-secondary)] dark:text-slate-400 truncate max-w-[140px]">
                                         {lead.consultant?.name ? `Caller: ${lead.consultant.name}` : lead.manager?.name ? `Mgr: ${lead.manager.name}` : 'Assigned'}
                                       </div>
                                     </div>
@@ -2466,8 +2650,8 @@ export default function LeadsMapPage() {
               </div>
 
               {/* Modal Pagination Footer */}
-              <div className="p-3.5 bg-slate-950 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
-                <div className="text-xs text-slate-400 font-mono">
+              <div className="p-3.5 bg-[var(--bg-main)] dark:bg-slate-950 border-t border-black/30 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
+                <div className="text-xs text-[var(--text-secondary)] dark:text-slate-400 font-mono">
                   Showing {previewLeads.length > 0 ? (previewPage - 1) * 25 + 1 : 0} -{' '}
                   {Math.min(previewPage * 25, previewPagination.total)} of {previewPagination.total} leads
                 </div>
@@ -2477,13 +2661,13 @@ export default function LeadsMapPage() {
                     type="button"
                     disabled={previewPage <= 1 || previewLoading}
                     onClick={() => fetchPreviewLeads(previewPage - 1)}
-                    className="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-slate-200 rounded-lg border border-slate-700 transition-colors flex items-center gap-1 cursor-pointer"
+                    className="px-2.5 py-1 text-xs bg-[var(--bg-card)] hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 disabled:opacity-40 text-[var(--text-primary)] dark:text-slate-200 rounded-lg border border-black dark:border-slate-700 transition-colors flex items-center gap-1 cursor-pointer"
                   >
                     <ChevronLeft className="w-3.5 h-3.5" />
                     <span>Prev</span>
                   </button>
 
-                  <span className="text-xs font-mono text-slate-300 px-2 font-semibold">
+                  <span className="text-xs font-mono text-[var(--text-primary)] dark:text-slate-300 px-2 font-semibold">
                     Page {previewPage} of {previewPagination.totalPages}
                   </span>
 
@@ -2491,7 +2675,7 @@ export default function LeadsMapPage() {
                     type="button"
                     disabled={previewPage >= previewPagination.totalPages || previewLoading}
                     onClick={() => fetchPreviewLeads(previewPage + 1)}
-                    className="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-slate-200 rounded-lg border border-slate-700 transition-colors flex items-center gap-1 cursor-pointer"
+                    className="px-2.5 py-1 text-xs bg-[var(--bg-card)] hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 disabled:opacity-40 text-[var(--text-primary)] dark:text-slate-200 rounded-lg border border-black dark:border-slate-700 transition-colors flex items-center gap-1 cursor-pointer"
                   >
                     <span>Next</span>
                     <ChevronRight className="w-3.5 h-3.5" />
@@ -2505,7 +2689,7 @@ export default function LeadsMapPage() {
                       setShowPreviewModal(false);
                       setPreviewPage(1);
                     }}
-                    className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+                    className="px-3.5 py-1.5 bg-[var(--bg-card)] hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-[var(--text-secondary)] dark:text-slate-300 text-xs font-semibold rounded-xl border border-black dark:border-transparent transition-colors cursor-pointer"
                   >
                     Close
                   </button>

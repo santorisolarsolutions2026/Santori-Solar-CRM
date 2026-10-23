@@ -130,6 +130,10 @@ model Lead {
   @@index([status])
   @@index([assignedConsultantId])
   @@index([assignedManagerId])
+  @@index([assignedTlId])
+  @@index([updatedAt])
+  @@index([createdAt])
+  @@index([city])
 }
 
 model LeadActivityLog {

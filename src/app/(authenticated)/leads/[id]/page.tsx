@@ -50,6 +50,7 @@ import ConfirmationModal from '@/components/ConfirmationModal';
 import { LeadTrackingTimeline } from '@/components/LeadTrackingTimeline';
 import { getLeadAssignedDisplay } from '@/lib/permissions';
 import { compressImageClient } from '@/lib/image-compress';
+import CustomSelect from '@/components/CustomSelect';
 
 interface Lead {
   id: number;
@@ -146,7 +147,7 @@ interface Lead {
 
 const STAGE_BADGES: Record<number, { name: string; class: string }> = {
   0: { name: 'Uninitiated', class: 'bg-slate-800/60 text-slate-350' },
-  1: { name: 'Fresh Lead', class: 'bg-emerald-500/10 text-emerald-400' },
+  1: { name: 'Fresh Lead', class: 'bg-[#4F7D32]/10 text-[#4F7D32]' },
   2: { name: 'DNP (No Answer)', class: 'bg-blue-500/10 text-blue-450' },
   3: { name: 'Follow Up', class: 'bg-blue-600/10 text-blue-400' },
   4: { name: 'Not Interested', class: 'bg-red-500/10 text-red-400' },
@@ -158,7 +159,7 @@ const STAGE_BADGES: Record<number, { name: string; class: string }> = {
   10: { name: 'Disconnected', class: 'bg-slate-700/30 text-slate-400' },
   11: { name: 'Switch Off', class: 'bg-slate-800/80 text-slate-400' },
   12: { name: 'Can\'t Fit Solar', class: 'bg-stone-900/80 text-stone-400' },
-  13: { name: 'Sale Done', class: 'bg-emerald-500/10 text-emerald-400 font-bold' },
+  13: { name: 'Sale Done', class: 'bg-[#4F7D32]/10 text-[#4F7D32] font-bold' },
 };
 
 // Transition matrix for select dropdown option filters
@@ -194,7 +195,7 @@ const getStageConfig = (statusNum: number) => {
     10: { name: 'Disconnected', desc: 'Call could not connect', icon: 'PhoneOff', bg: 'bg-slate-600/5', text: 'text-[var(--text-secondary)]' },
     11: { name: 'Switch Off', desc: 'Phone is switched off', icon: 'PowerOff', bg: 'bg-slate-700/5', text: 'text-[var(--text-secondary)]' },
     12: { name: "Can't Fit Solar", desc: 'Site is infeasible', icon: 'XCircle', bg: 'bg-stone-900/10', text: 'text-stone-400' },
-    13: { name: 'Sale Done', desc: 'Convert to order / Form D', icon: 'CheckCircle2', bg: 'bg-emerald-500/5', text: 'text-emerald-400' },
+    13: { name: 'Sale Done', desc: 'Convert to order / Form D', icon: 'CheckCircle2', bg: 'bg-[#4F7D32]/5', text: 'text-[#4F7D32]' },
     14: { name: 'Meeting Cancelled', desc: 'Site visit cancelled', icon: 'XCircle', bg: 'bg-red-900/10', text: 'text-red-500' },
   };
 
@@ -1508,24 +1509,7 @@ export default function LeadDetailPage({
     }
   };
 
-  // Recording timer
-  useEffect(() => {
-    if (isRecording) {
-      timerIntervalRef.current = setInterval(() => {
-        setRecordingElapsed((prev) => prev + 1);
-      }, 1000);
-    } else {
-      if (timerIntervalRef.current) {
-        clearInterval(timerIntervalRef.current);
-        timerIntervalRef.current = null;
-      }
-    }
-    return () => {
-      if (timerIntervalRef.current) {
-        clearInterval(timerIntervalRef.current);
-      }
-    };
-  }, [isRecording]);
+
 
   const baseRole = user?.role ? (user.role.includes(':') ? user.role.split(':')[0] : user.role) : '';
   const canTrackJourney = hasPermission('sales:lead_track') || hasPermission('leads:track');
@@ -1645,6 +1629,7 @@ export default function LeadDetailPage({
           url: previewUrl,
           durationSec,
         });
+        setRecordingElapsed(durationSec);
         stream.getTracks().forEach((track) => track.stop());
         mediaStreamRef.current = null;
       };
@@ -1747,6 +1732,7 @@ export default function LeadDetailPage({
           url: previewUrl,
           durationSec,
         });
+        setRecordingElapsed(durationSec);
         stream.getTracks().forEach((track) => track.stop());
         mediaStreamRef.current = null;
       };
@@ -1765,6 +1751,10 @@ export default function LeadDetailPage({
   };
 
   const handleStopRecording = () => {
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
     if (mediaRecorder && isRecording) {
       mediaRecorder.stop();
       setIsRecording(false);
@@ -1909,6 +1899,7 @@ export default function LeadDetailPage({
       URL.revokeObjectURL(unsavedAudioPreview.url);
     } catch {}
     setUnsavedAudioPreview(null);
+    setRecordingElapsed(0);
   };
 
   const handleDiscardAudioPreview = () => {
@@ -1917,6 +1908,7 @@ export default function LeadDetailPage({
       URL.revokeObjectURL(unsavedAudioPreview.url);
     } catch {}
     setUnsavedAudioPreview(null);
+    setRecordingElapsed(0);
   };
 
   const handleRestartFromPreview = (meetingId: number) => {
@@ -2032,7 +2024,7 @@ export default function LeadDetailPage({
   if (loading || !lead) {
     return (
       <div className="min-h-screen bg-[#0D1117] flex items-center justify-center">
-        <Sun className="w-12 h-12 text-emerald-500 dark:text-emerald-400 animate-spin" />
+        <Sun className="w-12 h-12 text-[#4F7D32] animate-spin" />
       </div>
     );
   }
@@ -2202,21 +2194,27 @@ export default function LeadDetailPage({
             return (
               <div key={idx} className="flex items-start md:flex-col gap-3 relative">
                 {idx < steps.length - 1 && (
-                  <div className="hidden md:block absolute left-[34px] top-4 w-[calc(100%-12px)] h-0.5 bg-[var(--border-color)] z-0">
+                  <div className="hidden md:block absolute left-[34px] top-4 w-[calc(100%-12px)] h-0.5 bg-black dark:bg-[var(--border-color)] z-0">
                     <div
-                      className="h-full bg-emerald-500 transition-all duration-500"
-                      style={{ width: isCompleted ? '100%' : '0%' }}
+                      className="h-full transition-all duration-500"
+                      style={{
+                        backgroundColor: '#4F7D32',
+                        width: isCompleted ? '100%' : '0%'
+                      }}
                     />
                   </div>
                 )}
                 
-                <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-xs shrink-0 transition-all duration-300 z-10 ${
-                  isCompleted
-                    ? 'border-emerald-600 bg-emerald-600 text-white shadow-sm'
-                    : isActive
-                      ? 'border-emerald-500 bg-transparent text-emerald-500 dark:text-emerald-400 scale-105'
-                      : 'border-[var(--border-color)] bg-transparent text-[var(--text-muted)]'
-                }`}>
+                <div
+                  className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-xs shrink-0 transition-all duration-300 z-10 ${
+                    isCompleted
+                      ? 'border-black text-white shadow-sm'
+                      : isActive
+                        ? 'border-black dark:border-[#4F7D32] bg-transparent text-[#4F7D32] scale-105'
+                        : 'border-black dark:border-[var(--border-color)] bg-transparent text-black dark:text-[var(--text-muted)]'
+                  }`}
+                  style={isCompleted ? { backgroundColor: '#4F7D32' } : {}}
+                >
                   {isCompleted ? (
                     <Check className="w-4 h-4 text-white stroke-[3]" stroke="#FFFFFF" />
                   ) : (
@@ -2226,11 +2224,13 @@ export default function LeadDetailPage({
 
                 <div className="min-w-0 z-10">
                   <p className={`text-[11px] font-extrabold uppercase tracking-wider ${
-                    isActive ? 'text-emerald-500 dark:text-emerald-400' : isCompleted ? 'text-emerald-500 dark:text-emerald-400' : 'text-[var(--text-secondary)]'
+                    isActive || isCompleted
+                      ? 'text-[#4F7D32]'
+                      : 'text-black dark:text-[var(--text-secondary)]'
                   }`}>
                     {step.label}
                   </p>
-                  <p className="text-[9px] text-[var(--text-muted)] mt-0.5 font-semibold truncate uppercase">{step.desc}</p>
+                  <p className="text-[9px] text-gray-700 dark:text-[var(--text-muted)] mt-0.5 font-semibold truncate uppercase">{step.desc}</p>
                 </div>
               </div>
             );
@@ -2249,7 +2249,7 @@ export default function LeadDetailPage({
           </Link>
           <div>
             <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">
-              <Link href="/leads" className="hover:text-emerald-400 transition-colors">Leads</Link>
+              <Link href="/leads" className="hover:text-[#4F7D32] transition-colors">Leads</Link>
               <span>/</span>
               <span>{isEditing ? 'Edit Lead' : 'Lead Workspace'}</span>
               <span>/</span>
@@ -2262,7 +2262,7 @@ export default function LeadDetailPage({
                   Order Rejected
                 </span>
               ) : lead.status === 13 && lead.order && lead.order.status !== 'draft' ? (
-                <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 font-bold">
+                <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-[#4F7D32]/10 text-[#4F7D32] font-bold">
                   Order Punched
                 </span>
               ) : (
@@ -2307,28 +2307,28 @@ export default function LeadDetailPage({
                   setRevertClearHistory(true);
                   setShowRevertFreshModal(true);
                 }}
-                className="py-2 px-3.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 transition-all font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-sm"
+                className="py-2 px-3.5 rounded-lg bg-[#4F7D32]/10 hover:bg-[#4F7D32]/20 text-[#4F7D32] border border-[#4F7D32]/30 transition-all font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-sm"
               >
-                <RotateCcw className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400 shrink-0" />
-                <span className="text-emerald-700 dark:text-emerald-400 font-bold">Revert to Fresh</span>
+                <RotateCcw className="w-3.5 h-3.5 text-[#4F7D32] shrink-0" />
+                <span className="text-[#4F7D32] font-bold">Revert to Fresh</span>
               </button>
             )}
             {!lead.isActive && hasPermission('leads:edit') && (
               <button
                 onClick={() => handleActivateLead(lead.id)}
-                className="py-2 px-4 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 transition-all font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-sm"
+                className="py-2 px-4 rounded-lg bg-[#4F7D32]/10 hover:bg-[#4F7D32]/20 text-[#4F7D32] border border-[#4F7D32]/30 transition-all font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-sm"
               >
-                <Check className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" />
-                <span className="text-emerald-700 dark:text-emerald-400 font-bold">Activate Lead</span>
+                <Check className="w-4 h-4 text-[#4F7D32] shrink-0" />
+                <span className="text-[#4F7D32] font-bold">Activate Lead</span>
               </button>
             )}
             {hasPermission('leads:delete') && (
               <button
                 onClick={() => handleDeleteLead(lead.id)}
-                className="py-2 px-4 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-700 dark:text-red-400 border border-red-500/30 transition-all font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-sm"
+                className="py-2 px-4 bg-transparent hover:bg-red-50 dark:hover:bg-red-950/25 border border-red-600 dark:border-red-500 !text-red-700 dark:!text-red-400 rounded-lg font-bold text-xs shadow-sm transition-all flex items-center gap-1.5 cursor-pointer font-sans"
               >
-                <Trash2 className="w-3.5 h-3.5 text-red-700 dark:text-red-400 shrink-0" />
-                <span className="text-red-700 dark:text-red-400 font-bold">{lead.isActive ? "Deactivate Opportunity" : "Delete Lead"}</span>
+                <Trash2 className="w-3.5 h-3.5 !text-red-700 dark:!text-red-400 shrink-0" />
+                <span className="!text-red-700 dark:!text-red-400 font-bold">{lead.isActive ? "Deactivate Opportunity" : "Delete Lead"}</span>
               </button>
             )}
           </div>
@@ -2336,7 +2336,7 @@ export default function LeadDetailPage({
       </div>
 
       {lead.status === 0 && (
-        <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 dark:text-emerald-400 p-4 rounded-xl text-xs flex items-start gap-3 shadow-md">
+        <div className="bg-[#4F7D32]/10 border border-[#4F7D32]/20 text-[#4F7D32] p-4 rounded-xl text-xs flex items-start gap-3 shadow-md">
           <AlertTriangle className="w-5 h-5 shrink-0" />
           <div>
             <strong className="text-white font-bold block mb-0.5">Uninitiated Lead Pool</strong>
@@ -2353,24 +2353,24 @@ export default function LeadDetailPage({
               onClick={() => setActiveTab('info')}
               className={`px-5 py-4 border-b-2 transition-all flex items-center justify-center gap-2 shrink-0 ${
                 activeTab === 'info'
-                  ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 font-extrabold bg-emerald-500/[0.04]'
-                  : 'border-transparent text-[var(--text-secondary)] hover:text-emerald-600 dark:hover:text-emerald-400 font-semibold'
+                  ? 'border-[#4F7D32] text-[#4F7D32] font-extrabold bg-[#4F7D32]/[0.04]'
+                  : 'border-transparent text-[var(--text-secondary)] hover:text-[#4F7D32] dark:hover:text-[#4F7D32] font-semibold'
               }`}
             >
-              <User className={`w-4 h-4 ${activeTab === 'info' ? 'text-emerald-600 dark:text-emerald-400' : ''}`} />
-              <span className={activeTab === 'info' ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : ''}>Info</span>
+              <User className={`w-4 h-4 ${activeTab === 'info' ? 'text-[#4F7D32]' : ''}`} />
+              <span className={activeTab === 'info' ? 'text-[#4F7D32] font-extrabold' : ''}>Info</span>
             </button>
             {!isLeadUnassigned && (lead.status === 9 || roleFilteredNextStages.length > 0) && (
               <button
                 onClick={() => setActiveTab('action')}
                 className={`px-5 py-4 border-b-2 transition-all flex items-center justify-center gap-2 shrink-0 ${
                   activeTab === 'action'
-                    ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 font-extrabold bg-emerald-500/[0.04]'
-                    : 'border-transparent text-[var(--text-secondary)] hover:text-emerald-600 dark:hover:text-emerald-400 font-semibold'
+                    ? 'border-[#4F7D32] text-[#4F7D32] font-extrabold bg-[#4F7D32]/[0.04]'
+                    : 'border-transparent text-[var(--text-secondary)] hover:text-[#4F7D32] dark:hover:text-[#4F7D32] font-semibold'
                 }`}
               >
-                <Layers className={`w-4 h-4 ${activeTab === 'action' ? 'text-emerald-600 dark:text-emerald-400' : ''}`} />
-                <span className={activeTab === 'action' ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : ''}>Action</span>
+                <Layers className={`w-4 h-4 ${activeTab === 'action' ? 'text-[#4F7D32]' : ''}`} />
+                <span className={activeTab === 'action' ? 'text-[#4F7D32] font-extrabold' : ''}>Action</span>
               </button>
             )}
             {!isLeadUnassigned && canTrackJourney && (
@@ -2378,12 +2378,12 @@ export default function LeadDetailPage({
                 onClick={() => setActiveTab('track')}
                 className={`px-5 py-4 border-b-2 transition-all flex items-center justify-center gap-2 shrink-0 ${
                   activeTab === 'track'
-                    ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 font-extrabold bg-emerald-500/[0.04]'
-                    : 'border-transparent text-[var(--text-secondary)] hover:text-emerald-600 dark:hover:text-emerald-400 font-semibold'
+                    ? 'border-[#4F7D32] text-[#4F7D32] font-extrabold bg-[#4F7D32]/[0.04]'
+                    : 'border-transparent text-[var(--text-secondary)] hover:text-[#4F7D32] dark:hover:text-[#4F7D32] font-semibold'
                 }`}
               >
-                <Truck className={`w-4 h-4 ${activeTab === 'track' ? 'text-emerald-600 dark:text-emerald-400' : ''}`} />
-                <span className={activeTab === 'track' ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : ''}>Track Progress</span>
+                <Truck className={`w-4 h-4 ${activeTab === 'track' ? 'text-[#4F7D32]' : ''}`} />
+                <span className={activeTab === 'track' ? 'text-[#4F7D32] font-extrabold' : ''}>Track Progress</span>
               </button>
             )}
             {!isLeadUnassigned && (lead.status >= 8 || lead.meetings.length > 0) && (
@@ -2391,12 +2391,12 @@ export default function LeadDetailPage({
                 onClick={() => setActiveTab('meeting')}
                 className={`px-5 py-4 border-b-2 transition-all flex items-center justify-center gap-2 shrink-0 ${
                   activeTab === 'meeting'
-                    ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 font-extrabold bg-emerald-500/[0.04]'
-                    : 'border-transparent text-[var(--text-secondary)] hover:text-emerald-600 dark:hover:text-emerald-400 font-semibold'
+                    ? 'border-[#4F7D32] text-[#4F7D32] font-extrabold bg-[#4F7D32]/[0.04]'
+                    : 'border-transparent text-[var(--text-secondary)] hover:text-[#4F7D32] dark:hover:text-[#4F7D32] font-semibold'
                 }`}
               >
-                <Calendar className={`w-4 h-4 ${activeTab === 'meeting' ? 'text-emerald-600 dark:text-emerald-400' : ''}`} />
-                <span className={activeTab === 'meeting' ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : ''}>Meeting Details</span>
+                <Calendar className={`w-4 h-4 ${activeTab === 'meeting' ? 'text-[#4F7D32]' : ''}`} />
+                <span className={activeTab === 'meeting' ? 'text-[#4F7D32] font-extrabold' : ''}>Meeting Details</span>
               </button>
             )}
               
@@ -2405,12 +2405,12 @@ export default function LeadDetailPage({
                 onClick={() => setActiveTab('order')}
                 className={`px-5 py-4 border-b-2 transition-all flex items-center justify-center gap-2 shrink-0 ${
                   activeTab === 'order'
-                    ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 font-extrabold bg-emerald-500/[0.04]'
-                    : 'border-transparent text-[var(--text-secondary)] hover:text-emerald-600 dark:hover:text-emerald-400 font-semibold'
+                    ? 'border-[#4F7D32] text-[#4F7D32] font-extrabold bg-[#4F7D32]/[0.04]'
+                    : 'border-transparent text-[var(--text-secondary)] hover:text-[#4F7D32] dark:hover:text-[#4F7D32] font-semibold'
                 }`}
               >
-                <FileCheck className={`w-4 h-4 ${activeTab === 'order' ? 'text-emerald-600 dark:text-emerald-400' : ''}`} />
-                <span className={activeTab === 'order' ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : ''}>Order Punching & Documents</span>
+                <FileCheck className={`w-4 h-4 ${activeTab === 'order' ? 'text-[#4F7D32]' : ''}`} />
+                <span className={activeTab === 'order' ? 'text-[#4F7D32] font-extrabold' : ''}>Order Punching & Documents</span>
               </button>
             )}
               
@@ -2429,7 +2429,7 @@ export default function LeadDetailPage({
                       <button
                         type="button"
                         onClick={() => setShowFormC(true)}
-                        className="w-full sm:w-auto py-2.5 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md shadow-emerald-500/20 flex items-center justify-center gap-1.5 transition-all cursor-pointer font-sans"
+                        className="w-full sm:w-auto py-2.5 px-5 bg-[#4F7D32] hover:bg-[#436A2B] text-white rounded-lg font-bold text-xs shadow-md shadow-[#4F7D32]/20 flex items-center justify-center gap-1.5 transition-all cursor-pointer font-sans"
                       >
                         <Sun className="w-4 h-4 text-white" />
                         <span className="text-white font-bold">Document Meeting Outcome</span>
@@ -2440,14 +2440,14 @@ export default function LeadDetailPage({
                   {roleFilteredNextStages.length > 0 ? (
                     <div className="bg-[#161B22] border border-[var(--border-color)] rounded-xl p-6 space-y-6">
                       <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)] border-b border-[var(--border-color)] pb-3 flex items-center gap-2">
-                        <Layers className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
+                        <Layers className="w-4 h-4 text-[#4F7D32]" />
                         <span>Pipeline Stage Control</span>
                       </h3>
 
                       {/* Mandatory Stage Tasks Checklist */}
                       <div className="p-4 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl space-y-4 shadow-inner">
                         <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)] flex items-center gap-2">
-                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          <Check className="w-3.5 h-3.5 text-[#4F7D32]" />
                           <span>Workflow Requirements Checklist</span>
                         </h4>
                         {leadTasks.length === 0 ? (
@@ -2461,7 +2461,7 @@ export default function LeadDetailPage({
                                   key={task.id}
                                   className={`flex items-start gap-2.5 p-2.5 rounded-xl border text-left transition-all ${
                                     task.isCompleted
-                                      ? 'border-emerald-950/80 bg-emerald-950/10 text-[var(--text-secondary)]'
+                                      ? 'border-[#4F7D32]/40 bg-[#4F7D32]/15 text-[var(--text-secondary)]'
                                       : 'border-[var(--border-color)] bg-[var(--bg-main)] text-[var(--text-primary)]'
                                   } ${allowed ? 'cursor-pointer hover:border-[var(--border-color)] hover:bg-[var(--bg-card)]' : 'opacity-60 cursor-not-allowed'}`}
                                 >
@@ -2470,7 +2470,7 @@ export default function LeadDetailPage({
                                     disabled={!allowed}
                                     checked={task.isCompleted}
                                     onChange={(e) => handleToggleTask(task.id, e.target.checked)}
-                                    className="mt-0.5 rounded border-[var(--border-color)] bg-[var(--bg-card)] text-emerald-500 dark:text-emerald-400 focus:ring-blue-500 cursor-pointer"
+                                    className="mt-0.5 rounded border-[var(--border-color)] bg-[var(--bg-card)] text-[#4F7D32] focus:ring-blue-500 cursor-pointer"
                                   />
                                   <div className="min-w-0 flex-1">
                                     <p className={`text-xs font-bold ${task.isCompleted ? 'line-through text-[var(--text-muted)]' : 'text-[var(--text-primary)]'}`}>
@@ -2503,13 +2503,13 @@ export default function LeadDetailPage({
                                   onClick={() => setNewStatus(statusNum.toString())}
                                   className={`flex items-start gap-3 p-2.5 rounded-xl border text-left transition-all duration-200 cursor-pointer outline-none relative overflow-hidden ${
                                     isSelected
-                                      ? `${config.text} ${config.bg} border-emerald-500 bg-emerald-500/[0.03] ring-1 ring-emerald-500/20 translate-x-[2px]`
+                                      ? `${config.text} ${config.bg} border-[#4F7D32] bg-[#4F7D32]/[0.03] ring-1 ring-[#4F7D32]/20 translate-x-[2px]`
                                       : `border-[var(--border-color)]/80 bg-[var(--bg-main)] text-[var(--text-secondary)] hover:border-[var(--border-color)] hover:bg-[var(--bg-card)] hover:text-[var(--text-primary)]`
                                   }`}
                                 >
                                   <div className={`p-1.5 rounded-lg border ${
                                     isSelected
-                                      ? `bg-emerald-500/10 border-emerald-500/30 text-emerald-500 dark:text-emerald-400`
+                                      ? `bg-[#4F7D32]/10 border-[#4F7D32]/30 text-[#4F7D32]`
                                       : `bg-[var(--bg-card)] border-[var(--border-color)] text-[var(--text-secondary)]`
                                   } transition-all`}>
                                     {renderStageIcon(config.icon, "w-4 h-4")}
@@ -2519,7 +2519,7 @@ export default function LeadDetailPage({
                                     <p className="text-[10px] text-[var(--text-muted)] font-medium truncate mt-0.5">{config.desc}</p>
                                   </div>
                                   {isSelected && (
-                                    <div className="absolute right-3 top-3.5 w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center">
+                                    <div className="absolute right-3 top-3.5 w-4 h-4 rounded-full bg-[#4F7D32] text-white flex items-center justify-center">
                                       <Check className="w-3 h-3 stroke-[3]" />
                                     </div>
                                   )}
@@ -2534,14 +2534,14 @@ export default function LeadDetailPage({
                           <div className="space-y-4 p-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg animate-fade-in">
                             <div>
                               <label className="block text-[10px] font-semibold text-[var(--text-secondary)] mb-1">Sub-Type</label>
-                              <select
+                              <CustomSelect
                                 value={followUpSub}
-                                onChange={(e) => setFollowUpSub(e.target.value)}
-                                className="block w-full px-3 py-1.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded text-[var(--text-primary)] text-[11px]"
-                              >
-                                <option value="warm">Warm Lead</option>
-                                <option value="hot">Hot Lead</option>
-                              </select>
+                                onChange={(val) => setFollowUpSub(val)}
+                                options={[
+                                  { value: 'warm', label: 'Warm Lead' },
+                                  { value: 'hot', label: 'Hot Lead' },
+                                ]}
+                              />
                             </div>
                             <div>
                               <label className="block text-[10px] font-semibold text-[var(--text-secondary)] mb-1">Follow-Up Date & Time *</label>
@@ -2574,18 +2574,18 @@ export default function LeadDetailPage({
                         {parseInt(newStatus, 10) === 12 && (
                           <div className="p-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg animate-fade-in">
                             <label className="block text-[10px] font-semibold text-[var(--text-secondary)] mb-1">Reason for Infeasibility</label>
-                            <select
+                            <CustomSelect
                               value={disqualifiedReason}
-                              onChange={(e) => setDisqualifiedReason(e.target.value)}
-                              className="block w-full px-3 py-1.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded text-[var(--text-primary)] text-[11px]"
-                            >
-                              <option value="Shading Issue">Too Much Shading</option>
-                              <option value="Roof Structure">Roof Structurally Unsafe</option>
-                              <option value="Rented Property">Rented Property</option>
-                              <option value="Landlord Refusal">Landlord denied NOC</option>
-                              <option value="Too Small">Terrace Area Too Small</option>
-                              <option value="Other">Other</option>
-                            </select>
+                              onChange={(val) => setDisqualifiedReason(val)}
+                              options={[
+                                { value: 'Shading Issue', label: 'Too Much Shading' },
+                                { value: 'Roof Structure', label: 'Roof Structurally Unsafe' },
+                                { value: 'Rented Property', label: 'Rented Property' },
+                                { value: 'Landlord Refusal', label: 'Landlord denied NOC' },
+                                { value: 'Too Small', label: 'Terrace Area Too Small' },
+                                { value: 'Other', label: 'Other' },
+                              ]}
+                            />
                           </div>
                         )}
 
@@ -2594,15 +2594,15 @@ export default function LeadDetailPage({
                           <div className="p-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg animate-fade-in space-y-3">
                             <div>
                               <label className="block text-[10px] font-semibold text-[var(--text-secondary)] mb-1">Reason for Cancellation</label>
-                              <select
+                              <CustomSelect
                                 value={cancelledReason}
-                                onChange={(e) => setCancelledReason(e.target.value)}
-                                className="block w-full px-3 py-1.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded text-[var(--text-primary)] text-[11px]"
-                              >
-                                <option value="Not Interested">Not Interested</option>
-                                <option value="Reschedule Meeting">Reschedule Meeting</option>
-                                <option value="Can't Fit Solar">Can't Fit Solar</option>
-                              </select>
+                                onChange={(val) => setCancelledReason(val)}
+                                options={[
+                                  { value: 'Not Interested', label: 'Not Interested' },
+                                  { value: 'Reschedule Meeting', label: 'Reschedule Meeting' },
+                                  { value: 'Can\'t Fit Solar', label: 'Can\'t Fit Solar' },
+                                ]}
+                              />
                             </div>
                             {cancelledReason === 'Reschedule Meeting' && (
                               <div className="grid grid-cols-2 gap-2 animate-fade-in">
@@ -2639,14 +2639,14 @@ export default function LeadDetailPage({
                             value={statusRemark}
                             onChange={(e) => setStatusRemark(e.target.value)}
                             placeholder="Enter call notes or reasons for status change..."
-                            className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs h-20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                            className="lead-field block w-full px-3 py-2 bg-[var(--bg-main)] border !border-black dark:!border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs h-20 focus:outline-none focus:ring-2 focus:ring-[#4F7D32]/50"
                           />
                         </div>
 
                         <button
                           type="submit"
                           disabled={!newStatus || isStatusSubmitting}
-                          className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+                          className="w-full py-2.5 px-4 bg-[#4F7D32] hover:bg-[#436A2B] text-white rounded-lg font-bold text-xs shadow-md disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
                         >
                           {isStatusSubmitting ? (
                             <>
@@ -2699,9 +2699,10 @@ export default function LeadDetailPage({
                               doWipe();
                             }
                           }}
-                          className="py-1.5 px-3 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg text-xs font-bold transition-all cursor-pointer font-sans shadow-sm"
+                          className="py-2 px-4 bg-transparent hover:bg-red-50 dark:hover:bg-red-950/25 border border-red-600 dark:border-red-500 !text-red-700 dark:!text-red-400 rounded-lg font-bold text-xs shadow-sm transition-all flex items-center gap-1.5 cursor-pointer font-sans"
                         >
-                          Wipe Tracking Journey History
+                          <Trash2 className="w-3.5 h-3.5 !text-red-700 dark:!text-red-400 shrink-0" />
+                          <span className="!text-red-700 dark:!text-red-400 font-bold">Wipe Tracking Journey History</span>
                         </button>
                       </div>
                     )}
@@ -2709,7 +2710,7 @@ export default function LeadDetailPage({
                   </div>
                 ) : (
                   <div className="p-6 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl text-center">
-                    <Lock className="w-10 h-10 text-emerald-500 dark:text-emerald-400 mx-auto mb-3" />
+                    <Lock className="w-10 h-10 text-[#4F7D32] mx-auto mb-3" />
                     <h3 className="text-sm font-bold text-white mb-1">Restricted Access</h3>
                     <p className="text-xs text-[var(--text-secondary)]">You do not have permission to view the lead tracking journey history.</p>
                   </div>
@@ -2720,11 +2721,13 @@ export default function LeadDetailPage({
               {activeTab === 'info' && (
                 <div>
                   {isLeadUnassigned ? (
-                    <div className="bg-amber-500/10 border border-amber-500/30 text-amber-300 p-4 rounded-xl text-xs flex items-start gap-3 shadow-md mb-6 animate-fade-in-up">
-                      <Lock className="w-5 h-5 shrink-0 text-amber-400 mt-0.5" />
+                    <div className="text-xs flex items-start gap-3 mb-6 animate-fade-in-up">
+                      <Lock className="w-5 h-5 shrink-0 text-[#581c87] dark:text-purple-300 mt-0.5" />
                       <div>
-                        <strong className="text-white font-bold block mb-0.5">Lead is Unassigned (Locked)</strong>
-                        This lead is currently unassigned. Pipeline actions and progress tracking are locked. Assign a team member below to unlock full workflow actions and tracking.
+                        <strong className="text-[var(--text-primary)] font-bold block mb-0.5">Lead is Unassigned (Locked)</strong>
+                        <p className="text-[#581c87] dark:text-purple-300 font-medium leading-relaxed">
+                          This lead is currently unassigned. Pipeline actions and progress tracking are locked. Assign a team member below to unlock full workflow actions and tracking.
+                        </p>
                       </div>
                     </div>
                   ) : isLeadLocked && (
@@ -2796,9 +2799,9 @@ export default function LeadDetailPage({
                           const targetStatus = siblings[0]?.status !== undefined ? STAGE_BADGES[siblings[0].status]?.name : null;
 
                           return (
-                            <div className="md:col-span-3 mt-2 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between gap-3">
+                            <div className="md:col-span-3 mt-2 p-3 bg-[#4F7D32]/10 border border-[#4F7D32]/30 rounded-xl flex items-center justify-between gap-3">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-emerald-400 font-bold text-xs">🔗 Linked Connection:</span>
+                                <span className="text-[#4F7D32] font-bold text-xs">🔗 Linked Connection:</span>
                                 <span className="text-xs text-[var(--text-secondary)]">
                                   Account ID: <strong className="text-white font-mono">{targetAccId}</strong> (Lead #{targetCode})
                                 </span>
@@ -2810,7 +2813,7 @@ export default function LeadDetailPage({
                               </div>
                               <Link
                                 href={`/leads/${targetCode}`}
-                                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition-all shrink-0"
+                                className="px-3 py-1.5 bg-[#4F7D32] hover:bg-[#436A2B] text-white text-xs font-bold rounded-lg transition-all shrink-0"
                               >
                                 View Linked Lead →
                               </Link>
@@ -2820,9 +2823,9 @@ export default function LeadDetailPage({
 
                         // Multi-Meter Family Case (2 or more other connections)
                         return (
-                          <div className="md:col-span-3 mt-2 p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex flex-col gap-2.5">
+                          <div className="md:col-span-3 mt-2 p-3.5 bg-[#4F7D32]/10 border border-[#4F7D32]/30 rounded-xl flex flex-col gap-2.5">
                             <div className="flex items-center justify-between">
-                              <span className="text-emerald-400 font-bold text-xs flex items-center gap-1.5">
+                              <span className="text-[#4F7D32] font-bold text-xs flex items-center gap-1.5">
                                 <span>🔗</span> Linked Connections ({siblings.length} other meters):
                               </span>
                               <span className="text-[11px] text-[var(--text-muted)] font-medium">
@@ -2835,14 +2838,14 @@ export default function LeadDetailPage({
                                 return (
                                   <div
                                     key={sib.id}
-                                    className="p-2.5 bg-[var(--bg-card)]/90 border border-emerald-500/20 hover:border-emerald-500/40 rounded-lg flex items-center justify-between gap-2 transition-all"
+                                    className="p-2.5 bg-[var(--bg-card)]/90 border border-[#4F7D32]/20 hover:border-[#4F7D32]/40 rounded-lg flex items-center justify-between gap-2 transition-all"
                                   >
                                     <div className="min-w-0 flex-1">
                                       <div className="text-xs font-mono font-bold text-white truncate">
                                         Account: {sib.connectionNumber || '-'}
                                       </div>
                                       <div className="flex items-center gap-1.5 mt-0.5">
-                                        <span className="text-[10px] text-emerald-400 font-mono font-semibold">
+                                        <span className="text-[10px] text-[#4F7D32] font-mono font-semibold">
                                           #{sib.leadCode}
                                         </span>
                                         {stageInfo && (
@@ -2854,7 +2857,7 @@ export default function LeadDetailPage({
                                     </div>
                                     <Link
                                       href={`/leads/${sib.leadCode}`}
-                                      className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold rounded transition-all shrink-0"
+                                      className="px-2.5 py-1 bg-[#4F7D32] hover:bg-[#436A2B] text-white text-[11px] font-bold rounded transition-all shrink-0"
                                     >
                                       View →
                                     </Link>
@@ -2874,7 +2877,7 @@ export default function LeadDetailPage({
                         <p className="text-sm text-white mt-1.5 flex items-center gap-1.5 flex-wrap">
                           <span>{lead.pinCode} - {lead.city}, {lead.state}</span>
                           {lead.division && (
-                            <span className="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-md font-mono">
+                            <span className="text-xs bg-[#4F7D32]/10 text-[#4F7D32] border border-[#4F7D32]/20 px-2 py-0.5 rounded-md font-mono">
                               {lead.division} Division
                             </span>
                           )}
@@ -2886,7 +2889,7 @@ export default function LeadDetailPage({
                           {(() => {
                             const assigned = getLeadAssignedDisplay(lead, user);
                             return assigned ? (
-                              <Link href={`/team?userId=${assigned.id}`} className="text-[var(--text-primary)] hover:text-emerald-400 hover:underline">
+                              <Link href={`/team?userId=${assigned.id}`} className="text-[var(--text-primary)] hover:text-[#4F7D32] hover:underline">
                                 {assigned.name}
                               </Link>
                             ) : (
@@ -2920,17 +2923,17 @@ export default function LeadDetailPage({
                       {/* Single Member Assignment Panel */}
                       {(hasPermission('leads:assign') || user?.role === 'admin' || user?.role === 'director' || user?.role?.startsWith('admin:')) && (
                         <div className="md:col-span-2 pt-6 mt-6 border-t border-[var(--border-color)]/80 animate-fade-in">
-                          <div className="bg-[var(--bg-main)] border border-[var(--border-color)] rounded-2xl p-5 space-y-4 shadow-lg">
+                          <div className="bg-[#D1EDD3] border border-[var(--border-color)] rounded-2xl p-5 space-y-4 shadow-lg" style={{ backgroundColor: '#D1EDD3' }}>
                             <div className="flex flex-wrap items-center justify-between gap-2">
-                              <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)] flex items-center gap-2">
-                                <UserCheck className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
-                                <span>Assign Lead to 1 Member</span>
+                              <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)] dark:!text-slate-900 flex items-center gap-2">
+                                <UserCheck className="w-4 h-4 text-[#4F7D32]" />
+                                <span className="dark:!text-slate-900">Assign Lead to 1 Member</span>
                               </h4>
-                              <span className="text-[10px] text-[var(--text-secondary)] bg-[var(--bg-card)] border border-[var(--border-color)] px-2 py-0.5 rounded-full font-mono">
+                              <span className="text-[10px] text-[var(--text-secondary)] dark:!text-slate-800 bg-[var(--bg-card)] dark:!bg-white/80 border border-[var(--border-color)] dark:!border-slate-300/80 px-2.5 py-0.5 rounded-full font-mono font-medium shadow-sm">
                                 Visible to assigned member & hierarchy above
                               </span>
                             </div>
-                            <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
+                            <p className="text-[11px] text-[var(--text-secondary)] dark:!text-slate-800 leading-relaxed font-medium">
                               Select 1 team member to assign this lead to. The lead will automatically become visible to him and everyone above him in the reporting hierarchy.
                             </p>
 
@@ -2961,10 +2964,11 @@ export default function LeadDetailPage({
                                   onChange={(val) => handleSingleMemberAssign(val ? String(val) : '')}
                                   placeholder="-- Select Sales Member --"
                                   disabled={assigningMember}
+                                  triggerClassName="dark:!bg-white dark:!border-slate-300 dark:!text-slate-900 dark:[&_span]:!text-slate-800 dark:[&_svg]:!text-slate-700 shadow-sm"
                                 />
                               </div>
                               {assigningMember && (
-                                <div className="flex items-center gap-2 text-xs text-emerald-500 dark:text-emerald-400 font-semibold shrink-0">
+                                <div className="flex items-center gap-2 text-xs text-[#4F7D32] font-semibold shrink-0">
                                   <Loader2 className="w-4 h-4 animate-spin" />
                                   <span>Updating...</span>
                                 </div>
@@ -3120,7 +3124,7 @@ export default function LeadDetailPage({
                       <div className="flex gap-3 border-t border-[var(--border-color)]/80 pt-4">
                         <button
                           type="submit"
-                          className="py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md shadow-emerald-500/20 transition-all cursor-pointer font-sans"
+                          className="py-2 px-4 bg-[#4F7D32] hover:bg-[#436A2B] text-white rounded-lg font-bold text-xs shadow-md shadow-[#4F7D32]/20 transition-all cursor-pointer font-sans"
                         >
                           Save Changes
                         </button>
@@ -3152,17 +3156,17 @@ export default function LeadDetailPage({
                         className="p-5 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl space-y-4 shadow-sm"
                       >
                         <div className="flex justify-between items-center border-b border-[var(--border-color)] pb-2.5">
-                          <h4 className="text-xs font-bold text-emerald-500 dark:text-emerald-400 uppercase tracking-wider">
+                          <h4 className="text-xs font-bold text-[#4F7D32] uppercase tracking-wider">
                             Meeting Booking #{lead.meetings.length - index}
                           </h4>
                           {meet.meetingStartedAt && meet.meetingEndedAt && (
-                            <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full px-2 py-0.5 font-bold uppercase tracking-wider">
-                              Completed ✅
+                            <span className="text-[10px] bg-[#4F7D32]/10 text-[#4F7D32] border border-[#4F7D32]/20 rounded-full px-2 py-0.5 font-bold uppercase tracking-wider">
+                              Completed
                             </span>
                           )}
                           {meet.meetingStartedAt && !meet.meetingEndedAt && (
-                            <span className="text-[10px] bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-500/20 rounded-full px-2 py-0.5 font-bold uppercase tracking-wider flex items-center gap-1.5 animate-pulse">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            <span className="text-[10px] bg-[#4F7D32]/10 text-[#4F7D32] border border-[#4F7D32]/20 rounded-full px-2 py-0.5 font-bold uppercase tracking-wider flex items-center gap-1.5 animate-pulse">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#4F7D32]" />
                               <span>Active Session</span>
                             </span>
                           )}
@@ -3213,7 +3217,7 @@ export default function LeadDetailPage({
                               </span>
                               {lead.consultant || lead.tl || lead.manager ? (
                                 <div className="flex items-center gap-2 mt-1">
-                                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                                  <span className="w-2 h-2 rounded-full bg-[#4F7D32] animate-pulse" />
                                   <span className="text-xs font-bold text-white">
                                     {getLeadAssignedDisplay(lead, user)?.name || lead.consultant?.name || lead.tl?.name || lead.manager?.name} ({getLeadAssignedDisplay(lead, user)?.role || 'Sales'})
                                   </span>
@@ -3232,7 +3236,7 @@ export default function LeadDetailPage({
                               <button
                                 type="button"
                                 onClick={() => setShowPostMeetingAssignModal(true)}
-                                className="py-1.5 px-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer shrink-0"
+                                className="py-1.5 px-3.5 bg-[#4F7D32] hover:bg-[#436A2B] text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer shrink-0"
                               >
                                 <UserCheck className="w-3.5 h-3.5" />
                                 <span>{hasAssignedSalesMember ? 'Reassign Sales Team' : 'Assign Sales Team'}</span>
@@ -3264,7 +3268,7 @@ export default function LeadDetailPage({
                                     <button
                                       type="button"
                                       onClick={() => setShowPostMeetingAssignModal(true)}
-                                      className="w-full sm:w-auto py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-emerald-500/20 cursor-pointer shrink-0"
+                                      className="w-full sm:w-auto py-2 px-4 bg-[#4F7D32] hover:bg-[#436A2B] text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-[#4F7D32]/20 cursor-pointer shrink-0"
                                     >
                                       Assign Sales Member →
                                     </button>
@@ -3282,7 +3286,7 @@ export default function LeadDetailPage({
                                     type="button"
                                     disabled={isStartingMeeting}
                                     onClick={() => handleStartMeeting(meet.id)}
-                                    className="w-full sm:w-auto py-2.5 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/10 disabled:opacity-50 transition-all cursor-pointer"
+                                    className="w-full sm:w-auto py-2.5 px-5 bg-[#4F7D32] hover:bg-[#436A2B] text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-[#4F7D32]/10 disabled:opacity-50 transition-all cursor-pointer"
                                   >
                                     {isStartingMeeting ? (
                                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -3294,38 +3298,43 @@ export default function LeadDetailPage({
                                 </div>
                               )
                             ) : !meet.meetingEndedAt ? (
-                              <div className="p-4 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl space-y-4">
+                              <div className="p-4 rounded-xl space-y-4 border border-[#C7C078] shadow-xs" style={{ backgroundColor: '#D9D28B' }}>
                                 <div className="flex items-center justify-between flex-wrap gap-3">
                                   <div className="flex items-center gap-2">
                                     <span className="relative flex h-2 w-2">
                                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                                       <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
                                     </span>
-                                    <span className="text-xs font-bold text-white uppercase tracking-wider">
+                                    <span className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">
                                       Meeting Session In Progress
                                     </span>
                                   </div>
-                                  <div className="text-sm font-mono font-bold text-emerald-500 dark:text-emerald-400">
-                                    {Math.floor(recordingElapsed / 60).toString().padStart(2, '0')}:
-                                    {(recordingElapsed % 60).toString().padStart(2, '0')}
-                                  </div>
+                                  {isRecording && !unsavedAudioPreview && (
+                                    <div className="text-sm font-mono font-bold text-[#4F7D32]">
+                                      {Math.floor(recordingElapsed / 60).toString().padStart(2, '0')}:
+                                      {(recordingElapsed % 60).toString().padStart(2, '0')}
+                                    </div>
+                                  )}
                                   <div className="flex flex-col sm:flex-row flex-wrap gap-2.5 items-center w-full">
                                     {canRecordMeeting ? (
                                       <>
                                         {/* Unsaved Audio Recording Preview Card */}
                                         {unsavedAudioPreview && unsavedAudioPreview.meetingId === meet.id ? (
-                                          <div className="w-full p-4 bg-emerald-950/30 border border-emerald-500/40 rounded-xl space-y-3 shadow-inner">
+                                          <div 
+                                            className="w-full p-4.5 rounded-xl space-y-3 shadow-md border border-[#55634A]" 
+                                            style={{ backgroundColor: '#6A795D' }}
+                                          >
                                             <div className="flex items-center justify-between flex-wrap gap-2">
                                               <div className="flex items-center gap-2">
-                                                <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
-                                                  <Mic className="w-4 h-4 text-emerald-400 animate-pulse" />
+                                                <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5 drop-shadow-2xs">
+                                                  <Mic className="w-4 h-4 text-white animate-pulse" />
                                                   <span>Recorded Audio Preview (Unsaved)</span>
                                                 </span>
-                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                                                <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-400 text-amber-950 border border-amber-300 shadow-2xs tracking-wide">
                                                   Review Before Saving
                                                 </span>
                                               </div>
-                                              <div className="text-xs font-mono font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/40">
+                                              <div className="text-xs font-mono font-bold text-white bg-black/30 px-2.5 py-0.5 rounded-md border border-white/20 shadow-2xs">
                                                 {Math.floor(unsavedAudioPreview.durationSec / 60).toString().padStart(2, '0')}:
                                                 {(unsavedAudioPreview.durationSec % 60).toString().padStart(2, '0')}
                                               </div>
@@ -3343,12 +3352,12 @@ export default function LeadDetailPage({
                                                 type="button"
                                                 disabled={isUploadingAudio}
                                                 onClick={handleSaveAudioPreview}
-                                                className="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/20 disabled:opacity-50 transition-all cursor-pointer"
+                                                className="py-2.5 px-4 bg-[#4A943E] hover:bg-[#3E7D34] text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 shadow-md border border-black/20 disabled:opacity-50 transition-all cursor-pointer"
                                               >
                                                 {isUploadingAudio ? (
-                                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                  <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
                                                 ) : (
-                                                  <Save className="w-3.5 h-3.5" />
+                                                  <Save className="w-3.5 h-3.5 text-white" />
                                                 )}
                                                 <span>{isUploadingAudio ? 'Uploading to Server...' : 'Save & Upload Audio'}</span>
                                               </button>
@@ -3357,10 +3366,10 @@ export default function LeadDetailPage({
                                                 type="button"
                                                 disabled={isUploadingAudio}
                                                 onClick={() => handleRestartFromPreview(meet.id)}
-                                                className="py-2.5 px-3 bg-[var(--bg-card)] hover:bg-[var(--bg-card)]/80 text-[var(--text-secondary)] hover:text-amber-400 border border-[var(--border-color)] hover:border-amber-500/30 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                                                className="py-2.5 px-3 bg-white hover:bg-slate-50 text-slate-800 border border-black/20 hover:border-amber-500/50 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer"
                                                 title="Discard current recording and start fresh"
                                               >
-                                                <RotateCcw className="w-3.5 h-3.5" />
+                                                <RotateCcw className="w-3.5 h-3.5 text-slate-700" />
                                                 <span>Discard & Re-Record</span>
                                               </button>
 
@@ -3368,10 +3377,10 @@ export default function LeadDetailPage({
                                                 type="button"
                                                 disabled={isUploadingAudio}
                                                 onClick={handleDiscardAudioPreview}
-                                                className="py-2.5 px-3 bg-[var(--bg-card)] hover:bg-red-500/10 text-[var(--text-secondary)] hover:text-red-400 border border-[var(--border-color)] hover:border-red-500/30 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                                                className="py-2.5 px-3 bg-white hover:bg-rose-50 text-slate-800 hover:text-rose-600 border border-black/20 hover:border-rose-400/50 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer"
                                                 title="Discard this recording"
                                               >
-                                                <Trash2 className="w-3.5 h-3.5" />
+                                                <Trash2 className="w-3.5 h-3.5 text-slate-700 hover:text-rose-600" />
                                                 <span>Discard</span>
                                               </button>
                                             </div>
@@ -3391,7 +3400,7 @@ export default function LeadDetailPage({
                                             <button
                                               type="button"
                                               onClick={() => handleRestartRecording(meet.id)}
-                                              className="p-2.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)]/80 text-[var(--text-secondary)] hover:text-emerald-400 border border-[var(--border-color)] rounded-lg transition-all shadow-sm flex items-center justify-center cursor-pointer active:scale-95"
+                                              className="p-2.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)]/80 text-[var(--text-secondary)] hover:text-[#4F7D32] border border-[var(--border-color)] rounded-lg transition-all shadow-sm flex items-center justify-center cursor-pointer active:scale-95"
                                               title="Restart Recording"
                                             >
                                               <RotateCcw className="w-4 h-4" />
@@ -3411,7 +3420,7 @@ export default function LeadDetailPage({
                                           <button
                                             type="button"
                                             onClick={() => handleStartRecordingOnly(meet.id)}
-                                            className="w-full sm:w-auto py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                                            className="w-full sm:w-auto py-2.5 px-4 bg-[#4F7D32] hover:bg-[#436A2B] text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm"
                                           >
                                             <Mic className="w-3.5 h-3.5" />
                                             <span>Start Audio Recording</span>
@@ -3423,7 +3432,7 @@ export default function LeadDetailPage({
                                             <button
                                               type="button"
                                               onClick={() => handleAddNewRecording(meet.id)}
-                                              className="p-2.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)]/80 text-[var(--text-secondary)] hover:text-emerald-400 border border-[var(--border-color)] rounded-lg transition-all shadow-sm flex items-center justify-center cursor-pointer active:scale-95"
+                                              className="p-2.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)]/80 text-[var(--text-secondary)] hover:text-[#4F7D32] border border-[var(--border-color)] rounded-lg transition-all shadow-sm flex items-center justify-center cursor-pointer active:scale-95"
                                               title="Record New / Additional Audio"
                                             >
                                               <Plus className="w-4 h-4" />
@@ -3433,7 +3442,7 @@ export default function LeadDetailPage({
                                             <button
                                               type="button"
                                               onClick={() => handleRestartRecording(meet.id)}
-                                              className="p-2.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)]/80 text-[var(--text-secondary)] hover:text-emerald-400 border border-[var(--border-color)] rounded-lg transition-all shadow-sm flex items-center justify-center cursor-pointer active:scale-95"
+                                              className="p-2.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)]/80 text-[var(--text-secondary)] hover:text-[#4F7D32] border border-[var(--border-color)] rounded-lg transition-all shadow-sm flex items-center justify-center cursor-pointer active:scale-95"
                                               title="Restart Recording"
                                             >
                                               <RotateCcw className="w-4 h-4" />
@@ -3456,7 +3465,7 @@ export default function LeadDetailPage({
                                             type="button"
                                             disabled={isEndingMeeting || isUploadingAudio}
                                             onClick={() => handleStopMeeting(meet.id)}
-                                            className="w-full sm:w-auto py-2.5 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md shadow-emerald-500/20 disabled:opacity-50 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                                            className="w-full sm:w-auto py-2.5 px-5 bg-[#4F7D32] hover:bg-[#436A2B] text-white rounded-lg font-bold text-xs shadow-md shadow-[#4F7D32]/20 disabled:opacity-50 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                                           >
                                             {isEndingMeeting ? (
                                               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -3469,7 +3478,7 @@ export default function LeadDetailPage({
 
                                         {isUploadingAudio && !unsavedAudioPreview && (
                                           <div className="text-[10px] text-[var(--text-secondary)] flex items-center justify-center gap-1.5 w-full sm:w-auto mt-1 sm:mt-0">
-                                            <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-500" />
+                                            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#4F7D32]" />
                                             <span>Uploading audio file to server...</span>
                                           </div>
                                         )}
@@ -3487,23 +3496,23 @@ export default function LeadDetailPage({
                         {/* Completed Meeting Review & Playback */}
                         {meet.meetingStartedAt && (
                           <div className="border-t border-[var(--border-color)]/80 pt-4 space-y-3">
-                            <h5 className="text-[10px] font-bold text-slate-700 dark:text-slate-350 uppercase tracking-wider flex items-center gap-1">
+                            <h5 className="text-[11px] font-extrabold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1">
                               <span>Meeting Session Details & Playback</span>
                             </h5>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs bg-[var(--bg-main)] p-4 border border-[var(--border-color)] rounded-xl">
                               <div>
-                                <span className="text-[var(--text-muted)] uppercase tracking-wider font-semibold">Location Tracked</span>
+                                <span className="text-slate-800 dark:text-slate-200 uppercase tracking-wider font-bold text-[11px]">Location Tracked</span>
                                 {meet.meetingLatitude && meet.meetingLongitude ? (
                                   <div className="mt-1">
                                     <a
                                       href={`https://www.google.com/maps/search/?api=1&query=${meet.meetingLatitude},${meet.meetingLongitude}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="text-emerald-500 dark:text-emerald-400 hover:underline inline-flex items-start gap-1.5 font-semibold transition-colors duration-150"
+                                      className="text-[#3E6826] dark:text-[#6BB347] hover:underline inline-flex items-start gap-1.5 font-bold transition-colors duration-150"
                                       title="Open in Google Maps"
                                     >
-                                      <MapPin className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                                      <span className="text-[var(--text-primary)] hover:text-emerald-500 dark:hover:text-emerald-400 leading-tight">
+                                      <MapPin className="w-4 h-4 text-[#4F7D32] flex-shrink-0 mt-0.5" />
+                                      <span className="text-slate-900 dark:text-white hover:text-[#3E6826] dark:hover:text-[#6BB347] font-bold leading-tight">
                                         <MeetingLocationDisplay
                                           latitude={meet.meetingLatitude}
                                           longitude={meet.meetingLongitude}
@@ -3513,11 +3522,11 @@ export default function LeadDetailPage({
                                         />
                                       </span>
                                     </a>
-                                    <span className="block text-[9px] text-[var(--text-muted)] mt-1">({meet.meetingLatitude.toFixed(6)}, {meet.meetingLongitude.toFixed(6)})</span>
+                                    <span className="block text-[11px] text-slate-700 dark:text-slate-300 font-semibold mt-1">({meet.meetingLatitude.toFixed(6)}, {meet.meetingLongitude.toFixed(6)})</span>
                                   </div>
                                 ) : (
                                   <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                    <p className="text-xs text-[var(--text-muted)] italic">Location permission was denied.</p>
+                                    <p className="text-xs text-slate-700 dark:text-slate-300 font-medium italic">Location permission was denied.</p>
                                     {canRecordMeeting && !meet.meetingEndedAt && (
                                       <button
                                         type="button"
@@ -3530,7 +3539,7 @@ export default function LeadDetailPage({
                                             alert('Could not retrieve GPS location. Please ensure device GPS is turned ON and browser location permission is allowed.');
                                           }
                                         }}
-                                        className="py-1 px-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-md text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer"
+                                        className="py-1 px-2.5 bg-[#4F7D32]/10 hover:bg-[#4F7D32]/20 text-[#4F7D32] border border-[#4F7D32]/30 rounded-md text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer"
                                         title="Retry fetching GPS location"
                                       >
                                         {isRetryingLocation === meet.id ? (
@@ -3545,16 +3554,16 @@ export default function LeadDetailPage({
                                 )}
                               </div>
                               <div>
-                                <span className="text-[var(--text-muted)] uppercase tracking-wider font-semibold block text-[10px]">Duration & Timing</span>
+                                <span className="text-slate-800 dark:text-slate-200 uppercase tracking-wider font-bold block text-[11px]">Duration & Timing</span>
                                 <div className="mt-1">
-                                  <span className="font-bold text-xs text-emerald-400 bg-emerald-950/60 border border-emerald-800/40 px-2 py-0.5 rounded-md inline-block shadow-sm">
+                                  <span className="font-extrabold text-xs text-[#2E5A1E] dark:text-[#6BB347] bg-[#4F7D32]/20 border border-[#4F7D32]/40 px-2.5 py-0.5 rounded-md inline-block shadow-xs">
                                     {meet.meetingDurationSec !== null && meet.meetingDurationSec !== undefined
                                       ? meet.meetingDurationSec >= 60
                                         ? `${Math.floor(meet.meetingDurationSec / 60)}m ${meet.meetingDurationSec % 60}s`
                                         : `${meet.meetingDurationSec}s`
                                       : 'Under 1 minute'}
                                   </span>
-                                  <span className="block text-[10px] text-[var(--text-muted)] mt-1 font-mono">
+                                  <span className="block text-[11px] text-slate-800 dark:text-slate-200 mt-1 font-mono font-bold">
                                     Started: {new Date(meet.meetingStartedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                                     {meet.meetingEndedAt && (
                                       <>
@@ -3599,7 +3608,7 @@ export default function LeadDetailPage({
                                                 Recording #{idx + 1}
                                               </span>
                                               {rec.durationSec ? (
-                                                <span className="text-[11px] text-emerald-500 dark:text-emerald-400 font-mono font-bold">
+                                                <span className="text-[11px] text-[#4F7D32] font-mono font-bold">
                                                   {rec.durationSec >= 60
                                                     ? `${Math.floor(rec.durationSec / 60)}m ${rec.durationSec % 60}s`
                                                     : `${rec.durationSec}s`}
@@ -3619,10 +3628,10 @@ export default function LeadDetailPage({
                                                 download={`meeting-${meet.id}-recording-${idx + 1}.webm`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="text-[11px] font-bold text-emerald-500 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer py-1 px-2.5 rounded-lg bg-[var(--bg-main)] border border-[var(--border-color)] transition-all"
+                                                className="text-[11px] font-bold text-[#4F7D32] hover:underline flex items-center gap-1 cursor-pointer py-1 px-2.5 rounded-lg bg-[var(--bg-main)] border border-[var(--border-color)] transition-all"
                                                 title={`Download Recording #${idx + 1}`}
                                               >
-                                                <Download className="w-3 h-3 text-emerald-500 dark:text-emerald-400" />
+                                                <Download className="w-3 h-3 text-[#4F7D32]" />
                                                 <span>Download</span>
                                               </a>
 
@@ -3668,7 +3677,7 @@ export default function LeadDetailPage({
                     <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-450 text-xs leading-normal flex items-start gap-2.5">
                       <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0 animate-pulse" />
                       <div>
-                        <strong className="text-white block mb-1">⚠️ Order Rejected by Finance:</strong> 
+                        <strong className="text-[var(--text-primary)] block mb-1">⚠️ Order Rejected by Finance:</strong> 
                         <span className="text-[var(--text-primary)]">{lead.order.rejectionReason}</span>
                         <p className="mt-2 text-[var(--text-secondary)]">
                           Please rectify the details or documents below and click the **Submit Order for Approval** button at the bottom to send it back to the Finance team.
@@ -3685,9 +3694,9 @@ export default function LeadDetailPage({
                     
                     {isOrderFormLocked ? (
                       <div className="mb-6 p-4 rounded-xl bg-[var(--bg-main)] border border-[var(--border-color)] text-[var(--text-secondary)] text-xs leading-normal flex items-start gap-2.5">
-                        <Lock className="w-5 h-5 text-emerald-500 dark:text-emerald-400 shrink-0" />
+                        <Lock className="w-5 h-5 text-[#4F7D32] shrink-0" />
                         <div>
-                          <strong className="text-white">Order Details Locked:</strong> This order has been submitted to Finance (Current Status: <span className="font-bold text-emerald-500 dark:text-emerald-400 capitalize">{lead.order.status}</span>). You can no longer modify the punching fields unless sent back to draft by Finance.
+                          <strong className="text-[var(--text-primary)]">Order Details Locked:</strong> This order has been submitted to Finance (Current Status: <span className="font-bold text-[#4F7D32] capitalize">{lead.order.status}</span>). You can no longer modify the punching fields unless sent back to draft by Finance.
                         </div>
                       </div>
                     ) : null}
@@ -3702,7 +3711,7 @@ export default function LeadDetailPage({
                             disabled={isOrderFormDisabled}
                             value={orderForm.connectionNumber}
                             onChange={(e) => setOrderForm({ ...orderForm, connectionNumber: e.target.value })}
-                            className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs disabled:opacity-50"
+                            className="lead-field block w-full px-3 py-2 bg-[var(--bg-main)] border !border-black dark:!border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs disabled:opacity-50 focus:border-[#4F7D32] focus:outline-none"
                           />
                         </div>
                         <div>
@@ -3714,7 +3723,7 @@ export default function LeadDetailPage({
                             disabled={isOrderFormDisabled}
                             value={orderForm.systemSizeKw}
                             onChange={(e) => setOrderForm({ ...orderForm, systemSizeKw: e.target.value })}
-                            className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs disabled:opacity-50"
+                            className="lead-field block w-full px-3 py-2 bg-[var(--bg-main)] border !border-black dark:!border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs disabled:opacity-50 focus:border-[#4F7D32] focus:outline-none"
                           />
                         </div>
                         <div>
@@ -3725,7 +3734,7 @@ export default function LeadDetailPage({
                             disabled={isOrderFormDisabled}
                             value={orderForm.totalValue}
                             onChange={(e) => setOrderForm({ ...orderForm, totalValue: e.target.value })}
-                            className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs disabled:opacity-50"
+                            className="lead-field block w-full px-3 py-2 bg-[var(--bg-main)] border !border-black dark:!border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs disabled:opacity-50 focus:border-[#4F7D32] focus:outline-none"
                           />
                         </div>
                         <div>
@@ -3736,23 +3745,23 @@ export default function LeadDetailPage({
                             disabled={isOrderFormDisabled}
                             value={orderForm.downPayment}
                             onChange={(e) => setOrderForm({ ...orderForm, downPayment: e.target.value })}
-                            className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs disabled:opacity-50"
+                            className="lead-field block w-full px-3 py-2 bg-[var(--bg-main)] border !border-black dark:!border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs disabled:opacity-50 focus:border-[#4F7D32] focus:outline-none"
                           />
                         </div>
                         <div>
                           <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">Transaction Method</label>
-                          <select
+                          <CustomSelect
                             value={orderForm.paymentMethod}
                             disabled={isOrderFormDisabled}
-                            onChange={(e) => setOrderForm({ ...orderForm, paymentMethod: e.target.value })}
-                            className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs disabled:opacity-50"
-                          >
-                            <option value="cash">Cash</option>
-                            <option value="upi">UPI</option>
-                            <option value="cheque">Cheque</option>
-                            <option value="neft">NEFT / RTGS</option>
-                            <option value="bank_transfer">Bank Transfer</option>
-                          </select>
+                            onChange={(val) => setOrderForm({ ...orderForm, paymentMethod: val })}
+                            options={[
+                              { value: 'cash', label: 'Cash' },
+                              { value: 'upi', label: 'UPI' },
+                              { value: 'cheque', label: 'Cheque' },
+                              { value: 'neft', label: 'NEFT / RTGS' },
+                              { value: 'bank_transfer', label: 'Bank Transfer' },
+                            ]}
+                          />
                         </div>
                         <div>
                           <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">Transaction Reference</label>
@@ -3762,15 +3771,15 @@ export default function LeadDetailPage({
                             value={orderForm.transactionRef}
                             onChange={(e) => setOrderForm({ ...orderForm, transactionRef: e.target.value })}
                             placeholder="UPI Reference / Cheque ID / NEFT number"
-                            className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs disabled:opacity-50"
+                            className="lead-field block w-full px-3 py-2 bg-[var(--bg-main)] border !border-black dark:!border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs disabled:opacity-50 focus:border-[#4F7D32] focus:outline-none"
                           />
                         </div>
 
-                        <div className="md:col-span-2 p-4 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl space-y-3">
+                        <div className="md:col-span-2 p-4 bg-[var(--bg-card)] border border-black dark:border-[var(--border-color)] rounded-xl space-y-3">
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-bold text-slate-350 uppercase tracking-wider">Downpayment Receipt</span>
                             {getDocStatus('downpayment_receipt').uploaded && (
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase tracking-wider">
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#4F7D32]/10 text-[#4F7D32] border border-[#4F7D32]/20 uppercase tracking-wider">
                                 Uploaded
                               </span>
                             )}
@@ -3779,7 +3788,7 @@ export default function LeadDetailPage({
                           {getDocStatus('downpayment_receipt').uploaded ? (
                             <div className="p-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg flex items-center justify-between gap-3">
                               <div className="flex items-center gap-2.5 min-w-0">
-                                <FileText className="w-4 h-4 text-emerald-500 dark:text-emerald-400 shrink-0" />
+                                <FileText className="w-4 h-4 text-[#4F7D32] shrink-0" />
                                 <span className="text-xs text-slate-350 truncate">{getDocStatus('downpayment_receipt').fileName}</span>
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
@@ -3792,7 +3801,7 @@ export default function LeadDetailPage({
                                   className="py-1 px-2.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] hover:text-white rounded-lg text-[10px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
                                   title="Download Receipt"
                                 >
-                                  <Download className="w-3 h-3 text-emerald-500 dark:text-emerald-400" />
+                                  <Download className="w-3 h-3 text-[#4F7D32]" />
                                   <span>Download</span>
                                 </button>
                                 {isPreviewable(getDocStatus('downpayment_receipt').fileName) && (
@@ -3803,7 +3812,7 @@ export default function LeadDetailPage({
                                       getDocStatus('downpayment_receipt').fileName,
                                       `Downpayment Receipt: ${getDocStatus('downpayment_receipt').fileName}`
                                     )}
-                                    className="py-1 px-2.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] text-emerald-500 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-400 rounded-lg text-[10px] font-semibold flex items-center gap-1 transition-all cursor-pointer"
+                                    className="py-1 px-2.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] text-[#4F7D32] hover:text-[#4F7D32] dark:hover:text-[#4F7D32] rounded-lg text-[10px] font-semibold flex items-center gap-1 transition-all cursor-pointer"
                                     title="Preview Receipt"
                                   >
                                     <Eye className="w-3 h-3" />
@@ -3825,15 +3834,15 @@ export default function LeadDetailPage({
                             <div className="flex flex-col sm:flex-row gap-3">
                               <label className={`flex-1 border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center text-center transition-all ${
                                 isOrderFormDisabled 
-                                  ? 'border-[var(--border-color)] bg-[var(--bg-main)] cursor-not-allowed opacity-60' 
+                                  ? 'border-black/30 dark:border-[var(--border-color)] bg-[var(--bg-main)] cursor-not-allowed opacity-60' 
                                   : uploadingDoc === 'downpayment_receipt'
-                                    ? 'border-blue-500/50 bg-emerald-600/[0.02] cursor-wait' 
-                                    : 'border-[var(--border-color)] hover:border-[var(--border-color)] bg-[var(--bg-main)] hover:bg-[var(--bg-card)] cursor-pointer'
+                                    ? 'border-blue-500/50 bg-[#4F7D32]/[0.02] cursor-wait' 
+                                    : 'border-black dark:border-[var(--border-color)] hover:border-black dark:hover:border-[var(--border-color)] bg-[var(--bg-main)] hover:bg-[var(--bg-card)] cursor-pointer'
                               }`}>
                                 {uploadingDoc === 'downpayment_receipt' ? (
                                   <div className="flex flex-col items-center gap-1.5 py-1">
-                                    <Loader2 className="w-5 h-5 text-emerald-500 dark:text-emerald-400 animate-spin" />
-                                    <span className="text-xs font-semibold text-emerald-500 dark:text-emerald-400">Uploading receipt...</span>
+                                    <Loader2 className="w-5 h-5 text-[#4F7D32] animate-spin" />
+                                    <span className="text-xs font-semibold text-[#4F7D32]">Uploading receipt...</span>
                                   </div>
                                 ) : (
                                   <div className="flex flex-col items-center gap-1.5 py-1">
@@ -3859,9 +3868,9 @@ export default function LeadDetailPage({
                                       onCapture: (file) => executeDocUpload('downpayment_receipt', file)
                                     });
                                   }}
-                                  className="sm:w-48 py-4 px-4 bg-[var(--bg-main)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-[var(--text-primary)] hover:text-white rounded-xl text-xs font-bold transition-all cursor-pointer flex flex-col items-center justify-center gap-2"
+                                  className="sm:w-48 py-4 px-4 bg-[#4A943E] hover:bg-[#3E7D34] border border-[#4A943E] text-white rounded-xl text-xs font-bold transition-all cursor-pointer flex flex-col items-center justify-center gap-2 shadow-sm"
                                 >
-                                  <Camera className="w-5 h-5 text-[var(--text-secondary)]" />
+                                  <Camera className="w-5 h-5 text-white" />
                                   <span>Open Camera</span>
                                 </button>
                               )}
@@ -3870,11 +3879,11 @@ export default function LeadDetailPage({
                         </div>
 
                         {/* Order Confirmation Receipt (OCR) */}
-                        <div className="md:col-span-2 p-4 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl space-y-3">
+                        <div className="md:col-span-2 p-4 bg-[var(--bg-card)] border border-black dark:border-[var(--border-color)] rounded-xl space-y-3">
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-bold text-slate-350 uppercase tracking-wider">Order Confirmation Receipt (OCR)</span>
                             {getDocStatus('order_confirmation_receipt').uploaded && (
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase tracking-wider">
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#4F7D32]/10 text-[#4F7D32] border border-[#4F7D32]/20 uppercase tracking-wider">
                                 Uploaded
                               </span>
                             )}
@@ -3883,7 +3892,7 @@ export default function LeadDetailPage({
                           {getDocStatus('order_confirmation_receipt').uploaded ? (
                             <div className="p-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg flex items-center justify-between gap-3">
                               <div className="flex items-center gap-2.5 min-w-0">
-                                <FileText className="w-4 h-4 text-emerald-500 dark:text-emerald-400 shrink-0" />
+                                <FileText className="w-4 h-4 text-[#4F7D32] shrink-0" />
                                 <span className="text-xs text-slate-350 truncate">{getDocStatus('order_confirmation_receipt').fileName}</span>
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
@@ -3896,7 +3905,7 @@ export default function LeadDetailPage({
                                   className="py-1 px-2.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] hover:text-white rounded-lg text-[10px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
                                   title="Download Receipt"
                                 >
-                                  <Download className="w-3 h-3 text-emerald-500 dark:text-emerald-400" />
+                                  <Download className="w-3 h-3 text-[#4F7D32]" />
                                   <span>Download</span>
                                 </button>
                                 {isPreviewable(getDocStatus('order_confirmation_receipt').fileName) && (
@@ -3907,7 +3916,7 @@ export default function LeadDetailPage({
                                       getDocStatus('order_confirmation_receipt').fileName,
                                       `Order Confirmation Receipt (OCR): ${getDocStatus('order_confirmation_receipt').fileName}`
                                     )}
-                                    className="py-1 px-2.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] text-emerald-500 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-400 rounded-lg text-[10px] font-semibold flex items-center gap-1 transition-all cursor-pointer"
+                                    className="py-1 px-2.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] text-[#4F7D32] hover:text-[#4F7D32] dark:hover:text-[#4F7D32] rounded-lg text-[10px] font-semibold flex items-center gap-1 transition-all cursor-pointer"
                                     title="Preview Receipt"
                                   >
                                     <Eye className="w-3 h-3" />
@@ -3929,15 +3938,15 @@ export default function LeadDetailPage({
                             <div className="flex flex-col sm:flex-row gap-3">
                               <label className={`flex-1 border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center text-center transition-all ${
                                 isOrderFormDisabled 
-                                  ? 'border-[var(--border-color)] bg-[var(--bg-main)] cursor-not-allowed opacity-60' 
+                                  ? 'border-black/30 dark:border-[var(--border-color)] bg-[var(--bg-main)] cursor-not-allowed opacity-60' 
                                   : uploadingDoc === 'order_confirmation_receipt'
-                                    ? 'border-blue-500/50 bg-emerald-600/[0.02] cursor-wait' 
-                                    : 'border-[var(--border-color)] hover:border-[var(--border-color)] bg-[var(--bg-main)] hover:bg-[var(--bg-card)] cursor-pointer'
+                                    ? 'border-blue-500/50 bg-[#4F7D32]/[0.02] cursor-wait' 
+                                    : 'border-black dark:border-[var(--border-color)] hover:border-black dark:hover:border-[var(--border-color)] bg-[var(--bg-main)] hover:bg-[var(--bg-card)] cursor-pointer'
                               }`}>
                                 {uploadingDoc === 'order_confirmation_receipt' ? (
                                   <div className="flex flex-col items-center gap-1.5 py-1">
-                                    <Loader2 className="w-5 h-5 text-emerald-500 dark:text-emerald-400 animate-spin" />
-                                    <span className="text-xs font-semibold text-emerald-500 dark:text-emerald-400">Uploading receipt...</span>
+                                    <Loader2 className="w-5 h-5 text-[#4F7D32] animate-spin" />
+                                    <span className="text-xs font-semibold text-[#4F7D32]">Uploading receipt...</span>
                                   </div>
                                 ) : (
                                   <div className="flex flex-col items-center gap-1.5 py-1">
@@ -3963,9 +3972,9 @@ export default function LeadDetailPage({
                                       onCapture: (file) => executeDocUpload('order_confirmation_receipt', file)
                                     });
                                   }}
-                                  className="sm:w-48 py-4 px-4 bg-[var(--bg-main)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-[var(--text-primary)] hover:text-white rounded-xl text-xs font-bold transition-all cursor-pointer flex flex-col items-center justify-center gap-2"
+                                  className="sm:w-48 py-4 px-4 bg-[#4A943E] hover:bg-[#3E7D34] border border-[#4A943E] text-white rounded-xl text-xs font-bold transition-all cursor-pointer flex flex-col items-center justify-center gap-2 shadow-sm"
                                 >
-                                  <Camera className="w-5 h-5 text-[var(--text-secondary)]" />
+                                  <Camera className="w-5 h-5 text-white" />
                                   <span>Open Camera</span>
                                 </button>
                               )}
@@ -3974,16 +3983,16 @@ export default function LeadDetailPage({
                         </div>
                         <div>
                           <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">Remaining Payment Scheme</label>
-                          <select
+                          <CustomSelect
                             value={orderForm.remainingMethod}
                             disabled={isOrderFormDisabled}
-                            onChange={(e) => setOrderForm({ ...orderForm, remainingMethod: e.target.value })}
-                            className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs disabled:opacity-50"
-                          >
-                            <option value="cash">Direct Cash/UPI</option>
-                            <option value="finance">Finance Loan</option>
-                            <option value="emi">EMI Plan</option>
-                          </select>
+                            onChange={(val) => setOrderForm({ ...orderForm, remainingMethod: val })}
+                            options={[
+                              { value: 'cash', label: 'Direct Cash/UPI' },
+                              { value: 'finance', label: 'Finance Loan' },
+                              { value: 'emi', label: 'EMI Plan' },
+                            ]}
+                          />
                         </div>
                         <div>
                           <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">Finance Provider (if applicable)</label>
@@ -3993,21 +4002,21 @@ export default function LeadDetailPage({
                             value={orderForm.financeProvider}
                             onChange={(e) => setOrderForm({ ...orderForm, financeProvider: e.target.value })}
                             placeholder="Bank / NBFC Name"
-                            className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs disabled:opacity-50"
+                            className="lead-field block w-full px-3 py-2 bg-[var(--bg-main)] border !border-black dark:!border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs disabled:opacity-50 focus:border-[#4F7D32] focus:outline-none"
                           />
                         </div>
                         <div>
                           <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">Client Setup Type</label>
-                          <select
+                          <CustomSelect
                             value={orderForm.clientType}
                             disabled={isOrderFormDisabled}
-                            onChange={(e) => setOrderForm({ ...orderForm, clientType: e.target.value })}
-                            className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs disabled:opacity-50"
-                          >
-                            <option value="on_grid">On-Grid (Connected to Net Metering)</option>
-                            <option value="off_grid">Off-Grid (Connected to Battery Banks)</option>
-                            <option value="hybrid">Hybrid (Both)</option>
-                          </select>
+                            onChange={(val) => setOrderForm({ ...orderForm, clientType: val })}
+                            options={[
+                              { value: 'on_grid', label: 'On-Grid (Connected to Net Metering)' },
+                              { value: 'off_grid', label: 'Off-Grid (Connected to Battery Banks)' },
+                              { value: 'hybrid', label: 'Hybrid (Both)' },
+                            ]}
+                          />
                         </div>
                         <div className="flex items-center gap-2 pt-6">
                           <input
@@ -4016,7 +4025,7 @@ export default function LeadDetailPage({
                             disabled={isOrderFormDisabled}
                             checked={orderForm.subsidyApplicable}
                             onChange={(e) => setOrderForm({ ...orderForm, subsidyApplicable: e.target.checked })}
-                            className="w-4 h-4 rounded border-[var(--border-color)] bg-[var(--bg-main)] text-emerald-500 focus:ring-emerald-500/20 cursor-pointer disabled:opacity-50"
+                            className="lead-field w-4 h-4 rounded border !border-black dark:!border-[var(--border-color)] bg-[var(--bg-main)] text-[#4F7D32] focus:ring-[#4F7D32]/20 cursor-pointer disabled:opacity-50"
                           />
                           <label
                             htmlFor="subsidyApplicable"
@@ -4031,7 +4040,7 @@ export default function LeadDetailPage({
                             value={orderForm.additionalNotes}
                             disabled={isOrderFormDisabled}
                             onChange={(e) => setOrderForm({ ...orderForm, additionalNotes: e.target.value })}
-                            className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs h-20 disabled:opacity-50"
+                            className="lead-field block w-full px-3 py-2 bg-[var(--bg-main)] border !border-black dark:!border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs h-20 disabled:opacity-50 focus:border-[#4F7D32] focus:outline-none"
                           />
                         </div>
                       </div>
@@ -4041,7 +4050,7 @@ export default function LeadDetailPage({
                         <div className="p-4 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg text-xs flex flex-wrap gap-x-8 gap-y-2 justify-between max-w-lg">
                           <div>
                             <span className="text-[var(--text-muted)]">Remaining Balance:</span>
-                            <span className="text-sm font-bold text-white ml-2">
+                            <span className="text-sm font-bold text-[var(--text-primary)] ml-2">
                               ₹ {(parseFloat(orderForm.totalValue) - parseFloat(orderForm.downPayment)).toLocaleString('en-IN')}
                             </span>
                           </div>
@@ -4053,7 +4062,7 @@ export default function LeadDetailPage({
                         <div className="border-t border-[var(--border-color)]/80 pt-4">
                           <button
                             type="submit"
-                            className="w-full sm:w-auto py-2.5 px-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md flex items-center justify-center transition-all"
+                            className="w-full sm:w-auto py-2.5 px-6 bg-[#4F7D32] hover:bg-[#436A2B] text-white rounded-lg font-bold text-xs shadow-md flex items-center justify-center transition-all"
                           >
                             Save Punching Details
                           </button>
@@ -4066,7 +4075,7 @@ export default function LeadDetailPage({
                     <div className="p-5 bg-gradient-to-r from-slate-900/80 via-[#131b2e] to-slate-900/80 border border-[var(--border-color)] rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-lg">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2.5">
-                          <FileCheck className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
+                          <FileCheck className="w-5 h-5 text-[#4F7D32]" />
                           <h3 className="text-sm font-bold uppercase tracking-wider text-white">
                             Client KYC & Verification Vault
                           </h3>
@@ -4084,8 +4093,8 @@ export default function LeadDetailPage({
                         </div>
                         <div className={`w-3 h-3 rounded-full ${
                           docsChecklist.every(item => getDocStatus(item.type).uploaded) 
-                            ? 'bg-emerald-500 shadow-sm shadow-emerald-500/50 animate-pulse' 
-                            : 'bg-emerald-600'
+                            ? 'bg-[#4F7D32] shadow-sm shadow-[#4F7D32]/30 animate-pulse' 
+                            : 'bg-[#4F7D32]'
                         }`} />
                       </div>
                     </div>
@@ -4101,8 +4110,8 @@ export default function LeadDetailPage({
                             key={item.type}
                             className={`p-5 rounded-2xl border transition-all duration-300 flex flex-col justify-between space-y-4 ${
                               uploaded
-                                ? 'bg-gradient-to-br from-emerald-950/10 via-slate-900/30 to-slate-950/40 border-emerald-500/30 shadow-md shadow-emerald-950/10'
-                                : 'bg-[var(--bg-main)] border-[var(--border-color)]/80 hover:border-[var(--border-color)]'
+                                ? 'bg-gradient-to-br from-[#4F7D32]/10 via-slate-900/30 to-slate-950/40 border-[#4F7D32]/30 shadow-md shadow-[#4F7D32]/10'
+                                : 'bg-[var(--bg-main)] border-black dark:border-[var(--border-color)]/80 hover:border-black dark:hover:border-[var(--border-color)]'
                             }`}
                           >
                             {/* Card Header: Title & Status Badge */}
@@ -4110,25 +4119,25 @@ export default function LeadDetailPage({
                               <div className="flex items-center gap-3">
                                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
                                   uploaded 
-                                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
-                                    : 'bg-[var(--bg-card)] border-[var(--border-color)] text-[var(--text-secondary)]'
+                                    ? 'bg-[#4F7D32]/10 border-[#4F7D32]/20 text-[#4F7D32]' 
+                                    : 'bg-[var(--bg-card)] border border-black/30 dark:border-[var(--border-color)] text-[var(--text-secondary)]'
                                 }`}>
                                   <FileText className="w-5 h-5" />
                                 </div>
                                 <div>
-                                  <h4 className="text-xs font-bold text-white tracking-wide">{item.label}</h4>
+                                  <h4 className="text-xs font-bold text-[var(--text-primary)] tracking-wide">{item.label}</h4>
                                   <span className="text-[10px] text-[var(--text-muted)] block">{item.sublabel}</span>
                                 </div>
                               </div>
 
                               <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wider flex items-center gap-1 shrink-0 ${
                                 uploaded
-                                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                  : 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-color)]'
+                                  ? 'bg-[#4F7D32]/10 text-[#4F7D32] border-[#4F7D32]/20'
+                                  : 'bg-[var(--bg-card)] text-[var(--text-secondary)] border border-black/30 dark:border-[var(--border-color)]'
                               }`}>
                                 {uploaded ? (
                                   <>
-                                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                                    <CheckCircle2 className="w-3 h-3 text-[#4F7D32]" />
                                     <span>Uploaded</span>
                                   </>
                                 ) : (
@@ -4140,9 +4149,9 @@ export default function LeadDetailPage({
                             {/* Card Content & Upload Area */}
                             <div className="flex-1 flex flex-col justify-center min-h-[70px]">
                               {uploaded ? (
-                                <div className="p-3.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl flex items-center justify-between gap-3">
+                                <div className="p-3.5 bg-[var(--bg-main)] border border-black dark:border-[var(--border-color)] rounded-xl flex items-center justify-between gap-3">
                                   <div className="flex items-center gap-2.5 min-w-0">
-                                    <File className="w-4 h-4 text-emerald-500 dark:text-emerald-400 shrink-0" />
+                                    <File className="w-4 h-4 text-[#4F7D32] shrink-0" />
                                     <span className="text-xs text-[var(--text-primary)] truncate font-medium">{fileName}</span>
                                   </div>
                                   <div className="flex items-center gap-2 shrink-0">
@@ -4155,7 +4164,7 @@ export default function LeadDetailPage({
                                       className="py-1.5 px-2.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] hover:text-white rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
                                       title="Download Document"
                                     >
-                                      <Download className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
+                                      <Download className="w-3.5 h-3.5 text-[#4F7D32]" />
                                       <span>Download</span>
                                     </button>
                                     {isPreviewable(fileName) && (
@@ -4166,7 +4175,7 @@ export default function LeadDetailPage({
                                           fileName,
                                           `${item.label}: ${fileName}`
                                         )}
-                                        className="py-1.5 px-2.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] text-emerald-500 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-400 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition-all cursor-pointer"
+                                        className="py-1.5 px-2.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] text-[#4F7D32] hover:text-[#4F7D32] dark:hover:text-[#4F7D32] rounded-lg text-[11px] font-semibold flex items-center gap-1 transition-all cursor-pointer"
                                         title="Preview Document"
                                       >
                                         <Eye className="w-3.5 h-3.5" />
@@ -4179,15 +4188,15 @@ export default function LeadDetailPage({
                                 <div className="space-y-2">
                                   <label className={`border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center text-center transition-all ${
                                     isOrderFormDisabled 
-                                      ? 'border-[var(--border-color)] bg-[var(--bg-main)] cursor-not-allowed opacity-60' 
+                                      ? 'border-black/30 dark:border-[var(--border-color)] bg-[var(--bg-main)] cursor-not-allowed opacity-60' 
                                       : isUploading 
-                                        ? 'border-blue-500/50 bg-emerald-600/[0.02] cursor-wait' 
-                                        : 'border-[var(--border-color)] hover:border-[var(--border-color)] bg-[var(--bg-main)] hover:bg-[var(--bg-card)] cursor-pointer'
+                                        ? 'border-blue-500/50 bg-[#4F7D32]/[0.02] cursor-wait' 
+                                        : 'border-black dark:border-[var(--border-color)] hover:border-black dark:hover:border-[var(--border-color)] bg-[var(--bg-main)] hover:bg-[var(--bg-card)] cursor-pointer'
                                   }`}>
                                     {isUploading ? (
                                       <div className="flex flex-col items-center gap-2 py-1">
-                                        <Loader2 className="w-5 h-5 text-emerald-500 dark:text-emerald-400 animate-spin" />
-                                        <span className="text-xs font-semibold text-emerald-500 dark:text-emerald-400">Uploading document...</span>
+                                        <Loader2 className="w-5 h-5 text-[#4F7D32] animate-spin" />
+                                        <span className="text-xs font-semibold text-[#4F7D32]">Uploading document...</span>
                                       </div>
                                     ) : (
                                       <div className="flex flex-col items-center gap-1.5 py-1">
@@ -4213,9 +4222,9 @@ export default function LeadDetailPage({
                                           onCapture: (file) => executeDocUpload(item.type, file)
                                         });
                                       }}
-                                      className="w-full py-1.5 bg-[var(--bg-main)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-slate-350 hover:text-white rounded-lg text-[10px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                                      className="w-full py-1.5 bg-[#4A943E] hover:bg-[#3E7D34] border border-[#4A943E] text-white rounded-lg text-[10px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
                                     >
-                                      <Camera className="w-3.5 h-3.5 text-slate-450" />
+                                      <Camera className="w-3.5 h-3.5 text-white" />
                                       <span>Or Open Camera</span>
                                     </button>
                                   )}
@@ -4234,14 +4243,14 @@ export default function LeadDetailPage({
                                       onCapture: (file) => executeDocUpload(item.type, file)
                                     });
                                   }}
-                                  className="text-xs font-semibold text-[var(--text-secondary)] hover:text-emerald-500 dark:text-emerald-400 transition-all flex items-center gap-1.5 cursor-pointer"
+                                  className="text-xs font-semibold text-[var(--text-secondary)] hover:text-[#4F7D32] transition-all flex items-center gap-1.5 cursor-pointer"
                                 >
                                   <Camera className="w-3.5 h-3.5 text-[var(--text-muted)]" />
                                   <span>Snap Photo</span>
                                 </button>
-                                <label className="cursor-pointer text-xs font-semibold text-[var(--text-secondary)] hover:text-emerald-500 dark:text-emerald-400 transition-all flex items-center gap-1.5">
+                                <label className="cursor-pointer text-xs font-semibold text-[var(--text-secondary)] hover:text-[#4F7D32] transition-all flex items-center gap-1.5">
                                   {isUploading ? (
-                                    <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-500 dark:text-emerald-400" />
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin text-[#4F7D32]" />
                                   ) : (
                                     <Upload className="w-3.5 h-3.5 text-[var(--text-muted)]" />
                                   )}
@@ -4284,7 +4293,7 @@ export default function LeadDetailPage({
                           {hasPermission('sales:finance_assign') || hasPermission('orders:assign_finance') || hasPermission('sales:order_punch') || hasPermission('orders:create') ? (
                             <button
                               onClick={() => handleSubmitOrderToFinance()}
-                              className="py-2.5 px-5 rounded-lg font-bold text-xs shadow-lg transition-all bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-emerald-500/10 focus:outline-none"
+                              className="py-2.5 px-5 rounded-lg font-bold text-xs shadow-lg transition-all bg-[#4F7D32] hover:bg-[#436A2B] text-white cursor-pointer shadow-[#4F7D32]/10 focus:outline-none"
                             >
                               Submit Order for Approval
                             </button>
@@ -4321,7 +4330,7 @@ export default function LeadDetailPage({
                     required
                     value={formBData.meetingDate}
                     onChange={(e) => setFormBData({ ...formBData, meetingDate: e.target.value })}
-                    className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs"
+                    className="lead-field block w-full px-3 py-2 bg-[var(--bg-main)] border !border-black dark:!border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:border-[#4F7D32] focus:outline-none"
                   />
                 </div>
                 <div>
@@ -4331,7 +4340,7 @@ export default function LeadDetailPage({
                     required
                     value={formBData.meetingTime}
                     onChange={(e) => setFormBData({ ...formBData, meetingTime: e.target.value })}
-                    className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs"
+                    className="lead-field block w-full px-3 py-2 bg-[var(--bg-main)] border !border-black dark:!border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:border-[#4F7D32] focus:outline-none"
                   />
                 </div>
                 <div>
@@ -4341,20 +4350,20 @@ export default function LeadDetailPage({
                     required
                     value={formBData.avgMonthlyBill}
                     onChange={(e) => setFormBData({ ...formBData, avgMonthlyBill: e.target.value })}
-                    className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs"
+                    className="lead-field block w-full px-3 py-2 bg-[var(--bg-main)] border !border-black dark:!border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:border-[#4F7D32] focus:outline-none"
                   />
                 </div>
                 <div>
                   <label className="block text-[10px] font-semibold uppercase text-[var(--text-secondary)] mb-1">Connection Type</label>
-                  <select
+                  <CustomSelect
                     value={formBData.connectionType}
-                    onChange={(e) => setFormBData({ ...formBData, connectionType: e.target.value })}
-                    className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs"
-                  >
-                    <option value="residential">Residential</option>
-                    <option value="commercial">Commercial</option>
-                    <option value="industrial">Industrial</option>
-                  </select>
+                    onChange={(val) => setFormBData({ ...formBData, connectionType: val })}
+                    options={[
+                      { value: 'residential', label: 'Residential' },
+                      { value: 'commercial', label: 'Commercial' },
+                      { value: 'industrial', label: 'Industrial' },
+                    ]}
+                  />
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block text-[10px] font-semibold uppercase text-[var(--text-secondary)] mb-1">Visit Full Address *</label>
@@ -4362,7 +4371,7 @@ export default function LeadDetailPage({
                     required
                     value={formBData.address}
                     onChange={(e) => setFormBData({ ...formBData, address: e.target.value })}
-                    className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs h-16"
+                    className="lead-field block w-full px-3 py-2 bg-[var(--bg-main)] border !border-black dark:!border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs h-16 focus:border-[#4F7D32] focus:outline-none"
                   />
                 </div>
                 <div>
@@ -4372,7 +4381,7 @@ export default function LeadDetailPage({
                     required
                     value={formBData.pinCode}
                     onChange={(e) => setFormBData({ ...formBData, pinCode: e.target.value })}
-                    className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs"
+                    className="lead-field block w-full px-3 py-2 bg-[var(--bg-main)] border !border-black dark:!border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs font-mono focus:border-[#4F7D32] focus:outline-none"
                   />
                 </div>
                 <div>
@@ -4382,7 +4391,7 @@ export default function LeadDetailPage({
                     required
                     value={formBData.mobile}
                     onChange={(e) => setFormBData({ ...formBData, mobile: e.target.value })}
-                    className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs"
+                    className="lead-field block w-full px-3 py-2 bg-[var(--bg-main)] border !border-black dark:!border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs font-mono focus:border-[#4F7D32] focus:outline-none"
                   />
                 </div>
                 <div className="sm:col-span-2">
@@ -4391,7 +4400,7 @@ export default function LeadDetailPage({
                     value={formBData.notes}
                     onChange={(e) => setFormBData({ ...formBData, notes: e.target.value })}
                     placeholder="Terrace accessibility details, shading objects information, etc."
-                    className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs h-16"
+                    className="lead-field block w-full px-3 py-2 bg-[var(--bg-main)] border !border-black dark:!border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs h-16 focus:border-[#4F7D32] focus:outline-none"
                   />
                 </div>
               </div>
@@ -4400,14 +4409,14 @@ export default function LeadDetailPage({
                 <button
                   type="button"
                   onClick={handleCancelFormB}
-                  className="py-2 px-4 bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] rounded-lg font-bold text-xs cursor-pointer hover:text-white"
+                  className="py-2 px-4 bg-[var(--bg-card)] border border-black/20 dark:border-[var(--border-color)] text-[var(--text-primary)] rounded-lg font-bold text-xs cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isFormBSubmitting}
-                  className="py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="py-2 px-5 bg-[#4F7D32] hover:bg-[#436A2B] text-white rounded-lg font-bold text-xs shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   {isFormBSubmitting ? (
                     <>
@@ -4470,7 +4479,7 @@ export default function LeadDetailPage({
                 </button>
                 <button
                   type="submit"
-                  className="py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md cursor-pointer"
+                  className="py-2 px-5 bg-[#4F7D32] hover:bg-[#436A2B] text-white rounded-lg font-bold text-xs shadow-md cursor-pointer"
                 >
                   Submit Order to Finance
                 </button>
@@ -4485,8 +4494,8 @@ export default function LeadDetailPage({
       {/* Form C Modal: Meeting Done Outcomes */}
       {mounted && showFormC && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md px-4 overflow-y-auto">
-          <div className="w-full max-w-lg bg-[#161B22] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up my-auto">
-            <div className="p-6 border-b border-[var(--border-color)] bg-[var(--bg-card)] flex justify-between items-center">
+          <div className="w-full max-w-lg bg-[#161B22] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-visible animate-fade-in-up my-auto">
+            <div className="p-6 border-b border-[var(--border-color)] bg-[var(--bg-card)] flex justify-between items-center rounded-t-2xl">
               <h3 className="text-sm font-bold uppercase tracking-wider text-white">Form C: Document Meeting Outcome</h3>
               <button onClick={handleCancelFormC} className="text-[var(--text-secondary)] hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
@@ -4497,22 +4506,24 @@ export default function LeadDetailPage({
               {/* Select Outcome */}
               <div>
                 <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-2">Meeting Outcome</label>
-                <select
+                <CustomSelect
                   value={formCOutcome}
-                  onChange={(e) => setFormCOutcome(e.target.value)}
-                  className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-slate-350 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 text-xs"
-                >
-                  <option value="meeting_done">Meeting Done (Stay in Negotiation)</option>
-                  <option value="re_meeting">Re-Meeting (Schedule Next Visit)</option>
-                  <option value="follow_up">Follow Up</option>
-                  <option value="sale_done">Sale Done</option>
-                  <option value="not_interested">Not Interested</option>
-                </select>
+                  onChange={(val) => setFormCOutcome(val)}
+                  buttonClassName="!border-black dark:!border-black"
+                  buttonStyle={{ border: '1.5px solid #000000', borderColor: '#000000' }}
+                  options={[
+                    { value: 'meeting_done', label: 'Meeting Done (Stay in Negotiation)' },
+                    { value: 're_meeting', label: 'Re-Meeting (Schedule Next Visit)' },
+                    { value: 'follow_up', label: 'Follow Up' },
+                    { value: 'sale_done', label: 'Sale Done' },
+                    { value: 'not_interested', label: 'Not Interested' },
+                  ]}
+                />
               </div>
 
               {/* Re-Meeting Notice */}
               {formCOutcome === 're_meeting' && (
-                <div className="p-3 bg-emerald-950/20 border border-emerald-500/30 rounded-lg text-xs text-emerald-400 animate-fade-in">
+                <div className="p-3 bg-[#4F7D32]/15 border border-[#4F7D32]/30 rounded-lg text-xs text-[#4F7D32] animate-fade-in">
                   <span>📅 Submitting will open the Meeting Scheduler (Form B) to set the date and time for Visit #2.</span>
                 </div>
               )}
@@ -4522,14 +4533,16 @@ export default function LeadDetailPage({
                 <div className="space-y-4 p-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg">
                   <div>
                     <label className="block text-[10px] font-semibold text-slate-450 mb-1">Sub-Type</label>
-                    <select
+                    <CustomSelect
                       value={formCSubStatus}
-                      onChange={(e) => setFormCSubStatus(e.target.value)}
-                      className="block w-full px-3 py-1.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded text-[var(--text-primary)] text-[11px]"
-                    >
-                      <option value="warm">Warm Lead</option>
-                      <option value="hot">Hot Lead</option>
-                    </select>
+                      onChange={(val) => setFormCSubStatus(val)}
+                      buttonClassName="!border-black dark:!border-black"
+                      buttonStyle={{ border: '1.5px solid #000000', borderColor: '#000000' }}
+                      options={[
+                        { value: 'warm', label: 'Warm Lead' },
+                        { value: 'hot', label: 'Hot Lead' },
+                      ]}
+                    />
                   </div>
                   <div>
                     <label className="block text-[10px] font-semibold text-slate-455 mb-1">Follow-Up Date & Time *</label>
@@ -4538,7 +4551,8 @@ export default function LeadDetailPage({
                       required
                       value={formCFollowUpAt}
                       onChange={(e) => setFormCFollowUpAt(e.target.value)}
-                      className="block w-full px-3 py-1.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded text-[var(--text-primary)] text-[11px]"
+                      className="lead-field block w-full px-3 py-1.5 bg-white dark:bg-[var(--bg-main)] !border !border-black dark:!border-black rounded text-[var(--text-primary)] text-[11px]"
+                      style={{ border: '1.5px solid #000000', borderColor: '#000000' }}
                     />
                   </div>
                 </div>
@@ -4547,16 +4561,18 @@ export default function LeadDetailPage({
               {formCOutcome === 'not_interested' && (
                 <div className="p-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg">
                   <label className="block text-[10px] font-semibold text-slate-450 mb-1">Reason for Disinterest</label>
-                  <select
+                  <CustomSelect
                     value={formCSubStatus}
-                    onChange={(e) => setFormCSubStatus(e.target.value)}
-                    className="block w-full px-3 py-1.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded text-[var(--text-primary)] text-[11px]"
-                  >
-                    <option value="Price">Price too high</option>
-                    <option value="Not Convinced">Not convinced of ROI</option>
-                    <option value="Competitor">Chose a competitor</option>
-                    <option value="Other">Other</option>
-                  </select>
+                    onChange={(val) => setFormCSubStatus(val)}
+                    buttonClassName="!border-black dark:!border-black"
+                    buttonStyle={{ border: '1.5px solid #000000', borderColor: '#000000' }}
+                    options={[
+                      { value: 'Price', label: 'Price too high' },
+                      { value: 'Not Convinced', label: 'Not convinced of ROI' },
+                      { value: 'Competitor', label: 'Chose a competitor' },
+                      { value: 'Other', label: 'Other' },
+                    ]}
+                  />
                 </div>
               )}
 
@@ -4568,7 +4584,8 @@ export default function LeadDetailPage({
                   value={formCRemark}
                   onChange={(e) => setFormCRemark(e.target.value)}
                   placeholder="Summarize the site visit inspection and client discussions..."
-                  className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs h-24"
+                  className="lead-field block w-full px-3 py-2 bg-white dark:bg-[var(--bg-main)] !border !border-black dark:!border-black rounded-lg text-slate-900 dark:text-white text-xs h-24 focus:outline-none focus:!border-black focus:ring-1 focus:ring-black"
+                  style={{ border: '1.5px solid #000000', borderColor: '#000000' }}
                 />
               </div>
 
@@ -4584,7 +4601,7 @@ export default function LeadDetailPage({
                 <button
                   type="submit"
                   disabled={isFormCSubmitting}
-                  className="py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="py-2 px-5 bg-[#4F7D32] hover:bg-[#436A2B] text-white rounded-lg font-bold text-xs shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   {isFormCSubmitting ? (
                     <>
@@ -4689,7 +4706,7 @@ export default function LeadDetailPage({
                   <button
                     type="button"
                     onClick={confirmPhoto}
-                    className="w-1/2 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md shadow-emerald-500/10"
+                    className="w-1/2 py-2 bg-[#4F7D32] hover:bg-[#436A2B] text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md shadow-[#4F7D32]/10"
                   >
                     Use Photo
                   </button>
@@ -4706,7 +4723,7 @@ export default function LeadDetailPage({
                   <button
                     type="button"
                     onClick={capturePhoto}
-                    className="w-2/3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md shadow-emerald-500/10 flex items-center justify-center gap-1.5"
+                    className="w-2/3 py-2 bg-[#4F7D32] hover:bg-[#436A2B] text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md shadow-[#4F7D32]/10 flex items-center justify-center gap-1.5"
                   >
                     <Camera className="w-4 h-4" />
                     <span>Capture Photo</span>
@@ -4722,14 +4739,14 @@ export default function LeadDetailPage({
       {/* Separate Post-Meeting Sales Team Assign Modal */}
       {mounted && showPostMeetingAssignModal && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in overflow-y-auto">
-          <div className="w-full max-w-lg bg-[#161B22] border border-emerald-500/30 rounded-2xl shadow-2xl overflow-hidden transform animate-fade-in-up my-auto">
+          <div className="w-full max-w-lg bg-[#161B22] border border-[#4F7D32]/30 rounded-2xl shadow-2xl overflow-hidden transform animate-fade-in-up my-auto">
             <div className="px-6 py-4 border-b border-[var(--border-color)] bg-[var(--bg-card)] flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-emerald-500/20 border border-emerald-500/30 rounded-xl">
-                  <UserCheck className="w-5 h-5 text-emerald-400" />
+                <div className="p-2 bg-[#4F7D32]/20 border border-[#4F7D32]/30 rounded-xl">
+                  <UserCheck className="w-5 h-5 text-[#4F7D32]" />
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#4F7D32]/20 text-[#4F7D32] border border-[#4F7D32]/30">
                     Meeting Booked Successfully
                   </span>
                   <h3 className="text-sm font-bold text-white tracking-wide mt-0.5">Assign Sales Team Member</h3>
@@ -4748,12 +4765,12 @@ export default function LeadDetailPage({
               <div className="p-3.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl flex items-center justify-between text-xs">
                 <div>
                   <span className="text-[var(--text-secondary)] text-[10px] font-semibold uppercase block">Lead</span>
-                  <span className="font-mono font-bold text-emerald-400">{lead?.leadCode}</span>
+                  <span className="font-mono font-bold text-[#4F7D32]">{lead?.leadCode}</span>
                   {lead?.customerName && <span className="text-[var(--text-primary)] ml-1.5">({lead.customerName})</span>}
                 </div>
                 <div>
                   <span className="text-[var(--text-secondary)] text-[10px] font-semibold uppercase block">Current Status</span>
-                  <span className="font-bold text-emerald-400">Stage 8: Meeting Booked</span>
+                  <span className="font-bold text-[#4F7D32]">Stage 8: Meeting Booked</span>
                 </div>
               </div>
 
@@ -4822,7 +4839,7 @@ export default function LeadDetailPage({
                   setShowPostMeetingAssignModal(false);
                   handleSingleMemberAssign(postMeetingSelectedEmpId);
                 }}
-                className="py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-500/20 cursor-pointer"
+                className="py-2 px-5 bg-[#4F7D32] hover:bg-[#436A2B] text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-[#4F7D32]/20 cursor-pointer"
               >
                 Assign Sales Member →
               </button>
@@ -4873,7 +4890,7 @@ export default function LeadDetailPage({
           <div className="w-full max-w-md bg-[#161B22] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up my-auto">
             <div className="p-5 border-b border-[var(--border-color)] bg-[var(--bg-card)] flex justify-between items-center">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                <div className="w-8 h-8 rounded-xl bg-[#4F7D32]/10 border border-[#4F7D32]/20 flex items-center justify-center text-[#4F7D32]">
                   <RotateCcw className="w-4 h-4" />
                 </div>
                 <div>
@@ -4890,8 +4907,8 @@ export default function LeadDetailPage({
             </div>
 
             <form onSubmit={handleRevertFreshSubmit} className="p-5 space-y-4">
-              <div className="p-3 bg-blue-500/5 border border-emerald-500/20 rounded-xl text-xs text-[var(--text-primary)] leading-relaxed">
-                <span className="font-bold text-emerald-400">Note:</span> Reverting this lead to Fresh Lead will automatically clear its current sales assignments and return the lead to <span className="font-bold text-white">Unassigned</span>.
+              <div className="p-3 bg-blue-500/5 border border-[#4F7D32]/20 rounded-xl text-xs text-[var(--text-primary)] leading-relaxed">
+                <span className="font-bold text-[#4F7D32]">Note:</span> Reverting this lead to Fresh Lead will automatically clear its current sales assignments and return the lead to <span className="font-bold text-white">Unassigned</span>.
               </div>
 
               {/* History Deletion Option */}
@@ -4900,7 +4917,7 @@ export default function LeadDetailPage({
                   type="checkbox"
                   checked={revertClearHistory}
                   onChange={(e) => setRevertClearHistory(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 rounded border-[var(--border-color)] bg-[var(--bg-main)] text-emerald-500 focus:ring-0 cursor-pointer"
+                  className="mt-0.5 w-4 h-4 rounded border-[var(--border-color)] bg-[var(--bg-main)] text-[#4F7D32] focus:ring-0 cursor-pointer"
                 />
                 <div>
                   <p className="text-xs font-bold text-white">Clear track journey history</p>
@@ -4922,7 +4939,7 @@ export default function LeadDetailPage({
                   value={revertRemark}
                   onChange={(e) => setRevertRemark(e.target.value)}
                   placeholder="Enter reason for reverting this lead to Fresh Lead..."
-                  className="w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-xs text-white h-20 focus:outline-none focus:border-emerald-500"
+                  className="w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-xs text-white h-20 focus:outline-none focus:border-[#4F7D32]"
                 />
               </div>
 
@@ -4938,7 +4955,7 @@ export default function LeadDetailPage({
                 <button
                   type="submit"
                   disabled={revertingFresh}
-                  className="py-2 px-5 bg-emerald-600 hover:bg-blue-500 text-white rounded-xl font-bold text-xs cursor-pointer shadow-lg shadow-emerald-500/20 flex items-center gap-1.5 disabled:opacity-50"
+                  className="py-2 px-5 bg-[#4F7D32] hover:bg-[#436A2B] text-white rounded-xl font-bold text-xs cursor-pointer shadow-lg shadow-[#4F7D32]/20 flex items-center gap-1.5 disabled:opacity-50"
                 >
                   {revertingFresh ? (
                     <>

@@ -4,6 +4,7 @@ import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
 import { resolveHierarchyAssignments } from '@/lib/hierarchy';
 import { getTerritoryUnassignedLeadIds, RAW_DIVISION_CASE_STR } from '@/lib/territorySql';
 import { invalidateGeoSummaryCache } from '../geo-summary/route';
+import { invalidateTerritoryPreviewCache } from '../territory-preview/route';
 
 export const dynamic = 'force-dynamic';
 
@@ -164,9 +165,10 @@ export async function POST(req: Request) {
       console.warn('Audit log creation failed for territory assign:', auditErr);
     }
 
-    // Invalidate server geo summary cache so UI updates immediately
+    // Invalidate server geo summary and territory preview caches so UI updates immediately
     try {
       invalidateGeoSummaryCache();
+      invalidateTerritoryPreviewCache();
     } catch {}
 
     return NextResponse.json({

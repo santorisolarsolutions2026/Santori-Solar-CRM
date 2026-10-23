@@ -6,7 +6,7 @@ import { signToken, resolveUserPermissions, parseUserAgent, markSessionKilled } 
 
 export async function POST(req: Request) {
   try {
-    const { email, password, location } = await req.json();
+    const { email, password, location, turnstileToken } = await req.json();
 
     if (!email || !password) {
       return NextResponse.json(
@@ -21,6 +21,43 @@ export async function POST(req: Request) {
       : req.headers.get('x-real-ip') || '127.0.0.1';
     const userAgent = req.headers.get('user-agent');
     const deviceInfo = parseUserAgent(userAgent);
+
+    // Cloudflare Turnstile Verification
+    const turnstileSecret = process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY || '1x0000000000000000000000000000000AA';
+
+    if (!turnstileToken) {
+      return NextResponse.json(
+        { success: false, message: 'Please complete the security captcha verification.' },
+        { status: 400 }
+      );
+    }
+
+    try {
+      const formData = new URLSearchParams();
+      formData.append('secret', turnstileSecret);
+      formData.append('response', turnstileToken);
+      if (ipAddress) {
+        formData.append('remoteip', ipAddress);
+      }
+
+      const cfRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formData.toString(),
+      });
+
+      const cfData = await cfRes.json();
+      if (!cfData.success) {
+        return NextResponse.json(
+          { success: false, message: 'Security check failed. Please verify the captcha again.' },
+          { status: 400 }
+        );
+      }
+    } catch (cfErr) {
+      console.error('Turnstile verification error:', cfErr);
+    }
 
     // Clean up old attempts (older than 24 hours) to keep the DB clean
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);

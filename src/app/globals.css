@@ -54,6 +54,10 @@ body {
   animation: slide-in-right 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+.animate-drawer-in {
+  animation: slide-in-right 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 @keyframes skeleton-shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
@@ -78,6 +82,40 @@ body {
 }
 
 /* ============================================================
+   ROTATING RAINBOW CONIC GRADIENT (Filled Moving Aura Effect)
+   ============================================================ */
+@keyframes spin-gradient {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+.rainbow-conic-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 280%;
+  aspect-ratio: 1 / 1;
+  transform: translate(-50%, -50%) rotate(0deg);
+  background: conic-gradient(
+    from 0deg,
+    #ec4899,
+    #8b5cf6,
+    #3b82f6,
+    #06b6d4,
+    #10b981,
+    #eab308,
+    #f97316,
+    #ec4899
+  );
+  animation: spin-gradient 4.5s linear infinite;
+  pointer-events: none;
+}
+
+/* ============================================================
    SCROLLBAR — Modern Custom Translucent Design
    ============================================================ */
 
@@ -92,19 +130,19 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(16, 185, 129, 0.16);
+  background: rgba(79, 125, 50, 0.35);
   border-radius: 10px;
   transition: background-color 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(16, 185, 129, 0.4);
+  background: rgba(79, 125, 50, 0.6);
 }
 
 /* Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(16, 185, 129, 0.16) transparent;
+  scrollbar-color: rgba(79, 125, 50, 0.35) transparent;
 }
 
 /* ============================================================
@@ -237,7 +275,7 @@ body {
    ============================================================ */
 
 /* Generic white text → dark (exclude buttons, links, svgs, and elements inside colored backgrounds) */
-.light .text-white:not(button):not(a):not(svg):not([class*="bg-emerald"]):not([class*="bg-red"]):not([class*="bg-blue"]):not([class*="bg-indigo"]) {
+.light .text-white:not(button):not(a):not(svg):not([class*="bg-emerald"]):not([class*="bg-red"]):not([class*="bg-blue"]):not([class*="bg-indigo"]):not([title*="Santori Standings"] *):not(.text-white-force) {
   color: var(--text-primary) !important;
 }
 
@@ -291,22 +329,30 @@ body {
 /* Secondary header, filter, and card buttons adapt cleanly to dark text in Light Mode */
 .light button.bg-\[var\(--bg-card\)\],
 .light button.bg-white,
-.light button[class*="border-"]:not([class*="bg-emerald"]):not([class*="bg-red"]):not([class*="bg-blue"]):not([class*="bg-indigo"]):not([class*="bg-slate-800"]):not([class*="bg-slate-900"]):not([class*="bg-zinc-800"]):not([class*="bg-zinc-900"]) {
+.light button[class*="border-"]:not([class*="bg-emerald"]):not([class*="bg-red"]):not([class*="bg-blue"]):not([class*="bg-indigo"]):not([class*="bg-slate-800"]):not([class*="bg-slate-900"]):not([class*="bg-zinc-800"]):not([class*="bg-zinc-900"]):not(.bg-\[\#4F7D32\]):not([class*="bg-[#4F7D32]"]) {
   color: var(--text-primary);
 }
 
 .light button.bg-\[var\(--bg-card\)\] svg,
 .light button.bg-white svg,
-.light button[class*="border-"]:not([class*="bg-emerald"]):not([class*="bg-red"]):not([class*="bg-blue"]):not([class*="bg-indigo"]):not([class*="bg-slate-800"]):not([class*="bg-slate-900"]):not([class*="bg-zinc-800"]):not([class*="bg-zinc-900"]) svg {
+.light button[class*="border-"]:not([class*="bg-emerald"]):not([class*="bg-red"]):not([class*="bg-blue"]):not([class*="bg-indigo"]):not([class*="bg-slate-800"]):not([class*="bg-slate-900"]):not([class*="bg-zinc-800"]):not([class*="bg-zinc-900"]):not(.bg-\[\#4F7D32\]):not([class*="bg-[#4F7D32]"]) svg {
   color: var(--text-secondary);
 }
 
 /* Prevent hover:text-white from producing white-on-white text in light mode */
-.light .hover\:text-white:not([class*="bg-emerald"]):not([class*="bg-red"]):not([class*="bg-blue"]):not([class*="bg-indigo"]):not([class*="bg-slate-8"]):not([class*="bg-slate-9"]):hover {
+.light .hover\:text-white:not([class*="bg-emerald"]):not([class*="bg-red"]):not([class*="bg-blue"]):not([class*="bg-indigo"]):not([class*="bg-slate-8"]):not([class*="bg-slate-9"]):not(.bg-\[\#4F7D32\]):not([class*="bg-[#4F7D32]"]):hover {
   color: var(--text-primary);
 }
 
-/* Preserve solid dark/colored button text and SVG icon contrast (only exact solid 600/700 shades) */
+/* Preserve solid dark/colored button text and SVG icon contrast (only exact solid 600/700 shades and brand green) */
+.light .bg-\[\#4F7D32\],
+.light .bg-\[\#4F7D32\] *,
+.light .bg-\[\#4F7D32\] svg,
+.light .bg-\[\#4F7D32\] span,
+.light .bg-\[\#436A2B\],
+.light .bg-\[\#436A2B\] *,
+.light .bg-\[\#436A2B\] svg,
+.light .bg-\[\#436A2B\] span,
 .light .bg-emerald-600,
 .light .bg-emerald-600 *,
 .light .bg-emerald-600 svg,
@@ -330,47 +376,278 @@ body {
 }
 
 /* ============================================================
-   LIGHT MODE — SIDEBAR ACTIVE NAVIGATION & TOP BUTTONS
+   LIGHT MODE — TOP BAR BUTTONS (#091413 Accents)
    ============================================================ */
 
-.light aside nav a[class*="border-emerald"],
-.light aside nav a[class*="bg-emerald"],
-.light div[class*="animate-slide-in"] nav a[class*="border-emerald"],
-.light div[class*="animate-slide-in"] nav a[class*="bg-emerald"] {
-  background-color: rgba(16, 185, 129, 0.12) !important;
-  color: #065F46 !important;
-  border-left-color: #059669 !important;
+/* Santori Standings Button */
+button[title*="Santori Standings"],
+.light button[title*="Santori Standings"],
+.dark button[title*="Santori Standings"] {
+  background-color: #4A943E !important;
+  border-color: #4A943E !important;
+  color: #FFFFFF !important;
 }
-
-.light aside nav a[class*="border-emerald"] span,
-.light aside nav a[class*="bg-emerald"] span,
-.light div[class*="animate-slide-in"] nav a[class*="border-emerald"] span,
-.light div[class*="animate-slide-in"] nav a[class*="bg-emerald"] span {
-  color: #065F46 !important;
+button[title*="Santori Standings"] *,
+button[title*="Santori Standings"] span,
+.light button[title*="Santori Standings"] *,
+.light button[title*="Santori Standings"] span,
+.dark button[title*="Santori Standings"] *,
+.dark button[title*="Santori Standings"] span {
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
   font-weight: 700 !important;
 }
-
-.light aside nav a[class*="border-emerald"] svg,
-.light aside nav a[class*="bg-emerald"] svg,
-.light div[class*="animate-slide-in"] nav a[class*="border-emerald"] svg,
-.light div[class*="animate-slide-in"] nav a[class*="bg-emerald"] svg {
-  color: #059669 !important;
-  stroke: #059669 !important;
+button[title*="Santori Standings"] svg,
+.light button[title*="Santori Standings"] svg,
+.dark button[title*="Santori Standings"] svg {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+button[title*="Santori Standings"]:hover,
+.light button[title*="Santori Standings"]:hover,
+.dark button[title*="Santori Standings"]:hover {
+  background-color: #3E7D34 !important;
+  border-color: #3E7D34 !important;
+  opacity: 0.95 !important;
+  filter: none !important;
 }
 
-/* Santori Standings Button in Light Mode */
-.light button[title*="Santori Standings"] {
-  background-color: #ECFDF5 !important;
-  border-color: #A7F3D0 !important;
-  color: #065F46 !important;
+/* Dashboard Welcome User Name & Add New Lead Button (#6FAF4F) */
+.welcome-user-name,
+.light .welcome-user-name {
+  color: #6FAF4F !important;
+  -webkit-text-fill-color: #6FAF4F !important;
 }
-.light button[title*="Santori Standings"] span {
-  color: #065F46 !important;
+
+a[href="/leads/new"],
+.light a[href="/leads/new"] {
+  background-color: #6FAF4F !important;
+  color: #FFFFFF !important;
+}
+
+a[href="/leads/new"]:hover,
+.light a[href="/leads/new"]:hover {
+  background-color: #5ea140 !important;
+}
+
+a[href="/leads/new"] *,
+.light a[href="/leads/new"] * {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+
+/* Universal #6FAF4F styling preservation */
+.text-\[\#6FAF4F\],
+.light .text-\[\#6FAF4F\],
+.light table td .text-\[\#6FAF4F\],
+.light table td button.text-\[\#6FAF4F\],
+.light table td a.text-\[\#6FAF4F\] {
+  color: #6FAF4F !important;
+  -webkit-text-fill-color: #6FAF4F !important;
+}
+
+.bg-\[\#6FAF4F\],
+.light .bg-\[\#6FAF4F\],
+.light table td button.bg-\[\#6FAF4F\] {
+  background-color: #6FAF4F !important;
+  color: #FFFFFF !important;
+}
+
+.bg-\[\#6FAF4F\] *,
+.light .bg-\[\#6FAF4F\] *,
+.bg-\[\#6FAF4F\] svg,
+.light .bg-\[\#6FAF4F\] svg {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+
+/* ============================================================
+   LIGHT MODE — KPI DASHBOARD CARDS HOVER OUTLINE
+   ============================================================ */
+
+.light .kpi-card-0:hover {
+  border-color: rgba(37, 99, 235, 0.5) !important;
+  box-shadow: 0 10px 24px -5px rgba(37, 99, 235, 0.12), 0 0 0 1px rgba(37, 99, 235, 0.35) !important;
+}
+
+.light .kpi-card-1:hover {
+  border-color: rgba(124, 58, 237, 0.5) !important;
+  box-shadow: 0 10px 24px -5px rgba(124, 58, 237, 0.12), 0 0 0 1px rgba(124, 58, 237, 0.35) !important;
+}
+
+.light .kpi-card-2:hover {
+  border-color: rgba(13, 148, 136, 0.5) !important;
+  box-shadow: 0 10px 24px -5px rgba(13, 148, 136, 0.12), 0 0 0 1px rgba(13, 148, 136, 0.35) !important;
+}
+
+.light .kpi-card-3:hover {
+  border-color: rgba(111, 175, 79, 0.55) !important;
+  box-shadow: 0 10px 24px -5px rgba(111, 175, 79, 0.15), 0 0 0 1px rgba(111, 175, 79, 0.4) !important;
+}
+
+.light .kpi-card-4:hover {
+  border-color: rgba(217, 119, 6, 0.5) !important;
+  box-shadow: 0 10px 24px -5px rgba(217, 119, 6, 0.12), 0 0 0 1px rgba(217, 119, 6, 0.35) !important;
+}
+
+.light .kpi-card-5:hover {
+  border-color: rgba(225, 29, 72, 0.5) !important;
+  box-shadow: 0 10px 24px -5px rgba(225, 29, 72, 0.12), 0 0 0 1px rgba(225, 29, 72, 0.35) !important;
+}
+
+/* Daily Attendance Button — #091413 Outline Style */
+button[title*="Daily Attendance Status"],
+.light button[title*="Daily Attendance Status"] {
+  background-color: transparent !important;
+  border-color: #091413 !important;
+}
+
+button[title*="Daily Attendance Status"]:hover,
+.light button[title*="Daily Attendance Status"]:hover {
+  background-color: rgba(9, 20, 19, 0.05) !important;
+}
+
+button[title*="Daily Attendance Status"] svg.lucide-clock,
+.light button[title*="Daily Attendance Status"] svg.lucide-clock {
+  color: #091413 !important;
+  stroke: #091413 !important;
+}
+
+/* Attendance Active Badge (#6FAF4F bg, black text) */
+.attendance-active-badge,
+.light .attendance-active-badge,
+.dark .attendance-active-badge {
+  background-color: #6FAF4F !important;
+  color: #000000 !important;
+  border-color: #6FAF4F !important;
+}
+
+/* Theme Toggle Button — #091413 Outline Style */
+header button[title*="Mode"],
+.light header button[title*="Mode"] {
+  background-color: transparent !important;
+  border-color: #091413 !important;
+}
+header button[title*="Mode"]:hover,
+.light header button[title*="Mode"]:hover {
+  background-color: rgba(9, 20, 19, 0.05) !important;
+}
+header button[title*="Mode"] svg,
+.light header button[title*="Mode"] svg {
+  color: #091413 !important;
+  stroke: #091413 !important;
+}
+
+/* Notification Bell Button — #091413 Outline Style */
+header button:has(svg.lucide-bell),
+.light header button:has(svg.lucide-bell) {
+  background-color: transparent !important;
+  border-color: #091413 !important;
+}
+header button:has(svg.lucide-bell):hover,
+.light header button:has(svg.lucide-bell):hover {
+  background-color: rgba(9, 20, 19, 0.05) !important;
+}
+header button:has(svg.lucide-bell) svg,
+.light header button:has(svg.lucide-bell) svg {
+  color: #091413 !important;
+  stroke: #091413 !important;
+}
+
+/* Profile Brief Info Button — #091413 Outline Style */
+header button:has(img[src*="/photograph"]),
+.light header button:has(img[src*="/photograph"]),
+header button:has(svg.lucide-user),
+.light header button:has(svg.lucide-user) {
+  background-color: transparent !important;
+  border-color: #091413 !important;
+}
+header button:has(img[src*="/photograph"]):hover,
+.light header button:has(img[src*="/photograph"]):hover,
+header button:has(svg.lucide-user):hover,
+.light header button:has(svg.lucide-user):hover {
+  background-color: rgba(9, 20, 19, 0.05) !important;
+}
+header button img[src*="/photograph"],
+.light header button img[src*="/photograph"] {
+  border-color: #091413 !important;
+}
+
+/* ============================================================
+   DARK MODE — TOP BAR BUTTONS (#8BBB92 Accents)
+   ============================================================ */
+
+/* Santori Standings Button */
+.dark button[title*="Santori Standings"] {
+  background-color: #4A943E !important;
+  border-color: #4A943E !important;
+  color: #FFFFFF !important;
+}
+.dark button[title*="Santori Standings"] span {
+  color: #FFFFFF !important;
   font-weight: 700 !important;
 }
-.light button[title*="Santori Standings"] svg {
-  color: #059669 !important;
-  stroke: #059669 !important;
+.dark button[title*="Santori Standings"] svg {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+.dark button[title*="Santori Standings"]:hover {
+  background-color: #3E7D34 !important;
+  border-color: #3E7D34 !important;
+  filter: none !important;
+}
+
+/* Daily Attendance Button — #8BBB92 Outline Style */
+.dark button[title*="Daily Attendance Status"] {
+  background-color: transparent !important;
+  border-color: #8BBB92 !important;
+}
+.dark button[title*="Daily Attendance Status"]:hover {
+  background-color: rgba(139, 187, 146, 0.1) !important;
+}
+.dark button[title*="Daily Attendance Status"] svg.lucide-clock {
+  color: #8BBB92 !important;
+  stroke: #8BBB92 !important;
+}
+
+/* Theme Toggle Button — #8BBB92 Outline Style */
+.dark header button[title*="Mode"] {
+  background-color: transparent !important;
+  border-color: #8BBB92 !important;
+}
+.dark header button[title*="Mode"]:hover {
+  background-color: rgba(139, 187, 146, 0.1) !important;
+}
+.dark header button[title*="Mode"] svg {
+  color: #8BBB92 !important;
+  stroke: #8BBB92 !important;
+}
+
+/* Notification Bell Button — #8BBB92 Outline Style */
+.dark header button:has(svg.lucide-bell) {
+  background-color: transparent !important;
+  border-color: #8BBB92 !important;
+}
+.dark header button:has(svg.lucide-bell):hover {
+  background-color: rgba(139, 187, 146, 0.1) !important;
+}
+.dark header button:has(svg.lucide-bell) svg {
+  color: #8BBB92 !important;
+  stroke: #8BBB92 !important;
+}
+
+/* Profile Brief Info Button — #8BBB92 Outline Style */
+.dark header button:has(img[src*="/photograph"]),
+.dark header button:has(svg.lucide-user) {
+  background-color: transparent !important;
+  border-color: #8BBB92 !important;
+}
+.dark header button:has(img[src*="/photograph"]):hover,
+.dark header button:has(svg.lucide-user):hover {
+  background-color: rgba(139, 187, 146, 0.1) !important;
+}
+.dark header button img[src*="/photograph"] {
+  border-color: #8BBB92 !important;
 }
 
 
@@ -472,12 +749,22 @@ body {
    LIGHT MODE — FORM INPUTS
    ============================================================ */
 
-.light input:not([type="submit"]):not([type="button"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]),
-.light select,
-.light textarea {
+.light input:not([type="submit"]):not([type="button"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(.login-input):not(.lead-field):not(.ops-filter-input),
+.light select:not(.lead-field),
+.light textarea:not(.lead-field) {
   background-color: #FFFFFF !important;
   color: #111827 !important;
   border-color: var(--border-color) !important;
+}
+
+.light input.ops-filter-input {
+  background-color: #FFFFFF !important;
+  color: #111827 !important;
+  border: 1px solid #000000 !important;
+}
+
+.light input.ops-filter-input:focus {
+  border-color: #4F7D32 !important;
 }
 
 .light input::placeholder,
@@ -485,66 +772,416 @@ body {
   color: #9CA3AF !important;
 }
 
+.light select {
+  accent-color: #B8CFB3 !important;
+}
+
 .light select option {
   background-color: #FFFFFF !important;
   color: #111827 !important;
 }
 
+.light select option:checked,
+.light select option:hover,
+.light select option:focus,
+.light select option:active {
+  background-color: #B8CFB3 !important;
+  background: #B8CFB3 linear-gradient(0deg, #B8CFB3 0%, #B8CFB3 100%) !important;
+  color: #000000 !important;
+  box-shadow: 0 0 10px 100px #B8CFB3 inset !important;
+}
+
 /* ============================================================
-   LIGHT MODE — SIDEBAR NAV SPECIFICS
+   PERMANENT DARK SIDEBAR (Both Light & Dark Modes)
+   Maintains sleek #091413 aesthetic regardless of active theme
    ============================================================ */
 
-/* Sidebar base */
+/* Sidebar Base Canvas & Border */
+/* Dark Mode: #8BBB92 */
+aside,
+.dark aside,
+div[class*="animate-slide-in"]:not(.toast-card):not(.leaderboard-drawer),
+.dark div[class*="animate-slide-in"]:not(.toast-card):not(.leaderboard-drawer) {
+  background-color: #8BBB92 !important;
+  border-color: rgba(9, 20, 19, 0.15) !important;
+}
+
+/* Light Mode: Remains #091413 */
 .light aside,
-.light header {
-  background-color: #FFFFFF !important;
-  border-color: var(--border-color) !important;
+.light div[class*="animate-slide-in"]:not(.toast-card):not(.leaderboard-drawer) {
+  background-color: #091413 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Sidebar separators */
+aside div[class*="border-t"],
+.dark aside div[class*="border-t"],
+aside div[class*="border-b"],
+.dark aside div[class*="border-b"],
+div[class*="animate-slide-in"] div[class*="border-t"],
+.dark div[class*="animate-slide-in"] div[class*="border-t"],
+div[class*="animate-slide-in"] div[class*="border-b"],
+.dark div[class*="animate-slide-in"] div[class*="border-b"] {
+  border-color: rgba(9, 20, 19, 0.15) !important;
+}
+
+.light aside div[class*="border-t"],
+.light aside div[class*="border-b"],
+.light div[class*="animate-slide-in"] div[class*="border-t"],
+.light div[class*="animate-slide-in"] div[class*="border-b"] {
+  border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 /* Sidebar brand text */
-.light aside .text-white,
-.light aside span.text-white {
-  color: #111827 !important;
-}
-
-/* Inactive nav links */
-.light aside a:not([class*="bg-emerald-500/10"]) {
-  color: var(--text-secondary) !important;
-}
-
-.light aside a:not([class*="bg-emerald-500/10"]):hover {
-  background-color: rgba(0, 0, 0, 0.04) !important;
-  color: var(--text-primary) !important;
-}
-
-.light aside a:not([class*="bg-emerald-500/10"]) svg {
-  color: var(--text-muted) !important;
-}
-
-.light aside a:not([class*="bg-emerald-500/10"]):hover svg {
-  color: var(--text-primary) !important;
-}
-
-/* Active nav link */
-.light aside a[class*="bg-emerald-500/10"] {
-  color: #059669 !important;
-}
-
-.light aside a[class*="bg-emerald-500/10"] svg {
-  color: #059669 !important;
-}
-
-/* Nav group labels */
-.light aside button {
-  color: var(--text-muted) !important;
+aside .text-xl,
+.light aside .text-xl,
+div[class*="animate-slide-in"] .text-xl,
+.light div[class*="animate-slide-in"] .text-xl {
+  color: #FFFFFF !important;
 }
 
 /* User profile card in sidebar */
+aside > button,
 .light aside > button,
-.light aside > div > button {
-  background-color: #F9FAFB !important;
-  border-color: var(--border-color) !important;
-  color: var(--text-primary) !important;
+div[class*="animate-slide-in"] > button,
+.light div[class*="animate-slide-in"] > button {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+aside > button:hover,
+.light aside > button:hover,
+div[class*="animate-slide-in"] > button:hover,
+.light div[class*="animate-slide-in"] > button:hover {
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+aside > button p.text-sm,
+.light aside > button p.text-sm,
+div[class*="animate-slide-in"] > button p.text-sm,
+.light div[class*="animate-slide-in"] > button p.text-sm {
+  color: #F0F6FC !important;
+}
+
+aside > button p.text-\[10px\],
+.light aside > button p.text-\[10px\],
+div[class*="animate-slide-in"] > button p.text-\[10px\],
+.light div[class*="animate-slide-in"] > button p.text-\[10px\] {
+  color: #94A3B8 !important;
+}
+
+/* Nav group labels */
+aside nav button,
+.light aside nav button,
+div[class*="animate-slide-in"] nav button,
+.light div[class*="animate-slide-in"] nav button {
+  color: #64748B !important;
+}
+
+aside nav button span,
+.light aside nav button span,
+aside nav button svg,
+.light aside nav button svg,
+div[class*="animate-slide-in"] nav button span,
+.light div[class*="animate-slide-in"] nav button span,
+div[class*="animate-slide-in"] nav button svg,
+.light div[class*="animate-slide-in"] nav button svg {
+  color: #64748B !important;
+}
+
+aside nav button:hover span,
+.light aside nav button:hover span,
+aside nav button:hover svg,
+.light aside nav button:hover svg,
+div[class*="animate-slide-in"] nav button:hover span,
+.light div[class*="animate-slide-in"] nav button:hover span,
+div[class*="animate-slide-in"] nav button:hover svg,
+.light div[class*="animate-slide-in"] nav button:hover svg {
+  color: #94A3B8 !important;
+}
+
+/* Inactive nav links */
+aside nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]),
+.light aside nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]),
+div[class*="animate-slide-in"] nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]),
+.light div[class*="animate-slide-in"] nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]) {
+  color: #94A3B8 !important;
+  background-color: transparent !important;
+  border-left: none !important;
+  border: none !important;
+  font-weight: 500 !important;
+  border-radius: 0.75rem !important;
+}
+
+aside nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]) span,
+.light aside nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]) span,
+div[class*="animate-slide-in"] nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]) span,
+.light div[class*="animate-slide-in"] nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]) span {
+  color: #94A3B8 !important;
+  font-weight: 500 !important;
+}
+
+aside nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]) svg,
+.light aside nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]) svg,
+div[class*="animate-slide-in"] nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]) svg,
+.light div[class*="animate-slide-in"] nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]) svg {
+  color: #8B949E !important;
+  stroke: #8B949E !important;
+}
+
+aside nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]):hover,
+.light aside nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]):hover,
+div[class*="animate-slide-in"] nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]):hover,
+.light div[class*="animate-slide-in"] nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]):hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  color: #FFFFFF !important;
+}
+
+aside nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]):hover span,
+.light aside nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]):hover span,
+div[class*="animate-slide-in"] nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]):hover span,
+.light div[class*="animate-slide-in"] nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]):hover span {
+  color: #FFFFFF !important;
+}
+
+aside nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]):hover svg,
+.light aside nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]):hover svg,
+div[class*="animate-slide-in"] nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]):hover svg,
+.light div[class*="animate-slide-in"] nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]):hover svg {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+
+/* Active nav link (Clean pill background + emerald green text & icon) */
+aside nav a.sidebar-nav-active,
+aside nav a[class*="sidebar-nav-active"],
+.light aside nav a.sidebar-nav-active,
+.light aside nav a[class*="sidebar-nav-active"],
+div[class*="animate-slide-in"] nav a.sidebar-nav-active,
+div[class*="animate-slide-in"] nav a[class*="sidebar-nav-active"],
+.light div[class*="animate-slide-in"] nav a.sidebar-nav-active,
+.light div[class*="animate-slide-in"] nav a[class*="sidebar-nav-active"] {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: #10B981 !important;
+  border-left: none !important;
+  border: none !important;
+  border-radius: 0.75rem !important;
+}
+
+aside nav a.sidebar-nav-active span,
+aside nav a[class*="sidebar-nav-active"] span,
+.light aside nav a.sidebar-nav-active span,
+.light aside nav a[class*="sidebar-nav-active"] span,
+div[class*="animate-slide-in"] nav a.sidebar-nav-active span,
+div[class*="animate-slide-in"] nav a[class*="sidebar-nav-active"] span,
+.light div[class*="animate-slide-in"] nav a.sidebar-nav-active span,
+.light div[class*="animate-slide-in"] nav a[class*="sidebar-nav-active"] span {
+  color: #10B981 !important;
+  font-weight: 600 !important;
+}
+
+aside nav a.sidebar-nav-active svg,
+aside nav a[class*="sidebar-nav-active"] svg,
+.light aside nav a.sidebar-nav-active svg,
+.light aside nav a[class*="sidebar-nav-active"] svg,
+div[class*="animate-slide-in"] nav a.sidebar-nav-active svg,
+div[class*="animate-slide-in"] nav a[class*="sidebar-nav-active"] svg,
+.light div[class*="animate-slide-in"] nav a.sidebar-nav-active svg,
+.light div[class*="animate-slide-in"] nav a[class*="sidebar-nav-active"] svg {
+  color: #10B981 !important;
+  stroke: #10B981 !important;
+}
+
+/* Territory Map in Sidebar — Signature Gradient Card */
+aside a[href="/leads-map"],
+.light aside a[href="/leads-map"],
+div[class*="animate-slide-in"] a[href="/leads-map"],
+.light div[class*="animate-slide-in"] a[href="/leads-map"] {
+  background: linear-gradient(110deg, #0e876a 0%, #1a7e8b 26%, #2874af 58%, #c79522 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
+}
+
+aside a[href="/leads-map"]:hover,
+.light aside a[href="/leads-map"]:hover,
+div[class*="animate-slide-in"] a[href="/leads-map"]:hover,
+.light div[class*="animate-slide-in"] a[href="/leads-map"]:hover {
+  filter: brightness(1.08) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35) !important;
+}
+
+aside a[href="/leads-map"] div.text-xs,
+.light aside a[href="/leads-map"] div.text-xs,
+div[class*="animate-slide-in"] a[href="/leads-map"] div.text-xs,
+.light div[class*="animate-slide-in"] a[href="/leads-map"] div.text-xs {
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45) !important;
+}
+
+aside a[href="/leads-map"] div.text-\[10px\],
+.light aside a[href="/leads-map"] div.text-\[10px\],
+div[class*="animate-slide-in"] a[href="/leads-map"] div.text-\[10px\],
+.light div[class*="animate-slide-in"] a[href="/leads-map"] div.text-\[10px\] {
+  color: rgba(255, 255, 255, 0.92) !important;
+  font-weight: 500 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+}
+
+aside a[href="/leads-map"] svg,
+.light aside a[href="/leads-map"] svg,
+div[class*="animate-slide-in"] a[href="/leads-map"] svg,
+.light div[class*="animate-slide-in"] a[href="/leads-map"] svg {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+
+/* Logout Button */
+aside button:has(svg.lucide-log-out),
+.light aside button:has(svg.lucide-log-out),
+aside button[title="Logout"],
+.light aside button[title="Logout"],
+div[class*="animate-slide-in"] button:has(svg.lucide-log-out),
+.light div[class*="animate-slide-in"] button:has(svg.lucide-log-out) {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #E2E8F0 !important;
+}
+
+aside button:has(svg.lucide-log-out):hover,
+.light aside button:has(svg.lucide-log-out):hover,
+aside button[title="Logout"]:hover,
+.light aside button[title="Logout"]:hover,
+div[class*="animate-slide-in"] button:has(svg.lucide-log-out):hover,
+.light div[class*="animate-slide-in"] button:has(svg.lucide-log-out):hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: #FFFFFF !important;
+}
+
+aside button:has(svg.lucide-log-out) span,
+.light aside button:has(svg.lucide-log-out) span,
+div[class*="animate-slide-in"] button:has(svg.lucide-log-out) span,
+.light div[class*="animate-slide-in"] button:has(svg.lucide-log-out) span {
+  color: #E2E8F0 !important;
+}
+
+aside button:has(svg.lucide-log-out):hover span,
+.light aside button:has(svg.lucide-log-out):hover span,
+div[class*="animate-slide-in"] button:has(svg.lucide-log-out):hover span,
+.light div[class*="animate-slide-in"] button:has(svg.lucide-log-out):hover span {
+  color: #FFFFFF !important;
+}
+
+aside button:has(svg.lucide-log-out) svg,
+.light aside button:has(svg.lucide-log-out) svg,
+div[class*="animate-slide-in"] button:has(svg.lucide-log-out) svg,
+.light div[class*="animate-slide-in"] button:has(svg.lucide-log-out) svg {
+  color: #94A3B8 !important;
+}
+
+aside button:has(svg.lucide-log-out):hover svg,
+.light aside button:has(svg.lucide-log-out):hover svg,
+div[class*="animate-slide-in"] button:has(svg.lucide-log-out):hover svg,
+.light div[class*="animate-slide-in"] button:has(svg.lucide-log-out):hover svg {
+  color: #FFFFFF !important;
+}
+
+/* ============================================================
+   DARK MODE — SIDEBAR INTERIOR STYLING ON #8BBB92 CANVAS (Pure Black Text)
+   ============================================================ */
+
+/* Group Labels */
+.dark aside nav button,
+.dark div[class*="animate-slide-in"] nav button {
+  color: #000000 !important;
+}
+.dark aside nav button span,
+.dark div[class*="animate-slide-in"] nav button span {
+  color: #000000 !important;
+  font-weight: 800 !important;
+}
+.dark aside nav button svg,
+.dark div[class*="animate-slide-in"] nav button svg {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}
+
+/* Inactive Nav Links */
+.dark aside nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]),
+.dark div[class*="animate-slide-in"] nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]) {
+  color: #000000 !important;
+}
+.dark aside nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]) span,
+.dark div[class*="animate-slide-in"] nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]) span {
+  color: #000000 !important;
+  font-weight: 600 !important;
+}
+.dark aside nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]) svg,
+.dark div[class*="animate-slide-in"] nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]) svg {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}
+.dark aside nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]):hover,
+.dark div[class*="animate-slide-in"] nav a:not(.sidebar-nav-active):not([class*="sidebar-nav-active"]):hover {
+  background-color: rgba(0, 0, 0, 0.08) !important;
+  color: #000000 !important;
+}
+
+/* Active Nav Links */
+.dark aside nav a.sidebar-nav-active,
+.dark aside nav a[class*="sidebar-nav-active"],
+.dark div[class*="animate-slide-in"] nav a.sidebar-nav-active,
+.dark div[class*="animate-slide-in"] nav a[class*="sidebar-nav-active"] {
+  background-color: rgba(0, 0, 0, 0.12) !important;
+  color: #000000 !important;
+}
+.dark aside nav a.sidebar-nav-active span,
+.dark aside nav a[class*="sidebar-nav-active"] span,
+.dark div[class*="animate-slide-in"] nav a.sidebar-nav-active span,
+.dark div[class*="animate-slide-in"] nav a[class*="sidebar-nav-active"] span {
+  color: #000000 !important;
+  font-weight: 700 !important;
+}
+.dark aside nav a.sidebar-nav-active svg,
+.dark aside nav a[class*="sidebar-nav-active"] svg,
+.dark div[class*="animate-slide-in"] nav a.sidebar-nav-active svg,
+.dark div[class*="animate-slide-in"] nav a[class*="sidebar-nav-active"] svg {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}
+
+/* Toggle & Logout in Dark Mode */
+.dark .sidebar-toggle-btn {
+  color: #000000 !important;
+}
+.dark .sidebar-toggle-btn:hover {
+  background-color: rgba(0, 0, 0, 0.08) !important;
+  color: #000000 !important;
+}
+.dark aside button:has(svg.lucide-log-out),
+.dark div[class*="animate-slide-in"] button:has(svg.lucide-log-out) {
+  background-color: rgba(0, 0, 0, 0.06) !important;
+  border-color: rgba(0, 0, 0, 0.15) !important;
+  color: #000000 !important;
+}
+.dark aside button:has(svg.lucide-log-out) span,
+.dark div[class*="animate-slide-in"] button:has(svg.lucide-log-out) span {
+  color: #000000 !important;
+}
+.dark aside button:has(svg.lucide-log-out) svg,
+.dark div[class*="animate-slide-in"] button:has(svg.lucide-log-out) svg {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}
+
+/* Sidebar Brand Title Gradient */
+.santori-brand-text,
+.light .santori-brand-text {
+  background: linear-gradient(110deg, #0e876a 0%, #1a7e8b 26%, #2874af 58%, #c79522 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  color: transparent !important;
 }
 
 /* ============================================================
@@ -671,17 +1308,47 @@ select:focus {
    FORM ELEMENTS (dark mode baseline)
    ============================================================ */
 
-input:not([type="submit"]):not([type="button"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(.glass-input-premium),
-select,
-textarea {
+input:not([type="submit"]):not([type="button"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(.glass-input-premium):not(.login-input):not(.lead-field):not(.ops-filter-input),
+select:not(.lead-field),
+textarea:not(.lead-field) {
   background-color: var(--bg-input) !important;
   color: var(--text-primary) !important;
   border-color: var(--border-color) !important;
 }
 
-input:not(.glass-input-premium)::placeholder,
+input:not(.glass-input-premium):not(.login-input)::placeholder,
 textarea::placeholder {
   color: var(--text-muted) !important;
+}
+
+/* ============================================================
+   LOGIN PAGE INPUTS (Pure White Background, Solid Black Text)
+   ============================================================ */
+
+.login-input {
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: #000000 !important;
+  color-scheme: light !important;
+}
+
+.login-input::placeholder {
+  color: #94A3B8 !important;
+}
+
+.login-input:focus {
+  border-color: #000000 !important;
+  box-shadow: 0 0 0 1px #000000 !important;
+}
+
+.login-input:-webkit-autofill,
+.login-input:-webkit-autofill:hover,
+.login-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #FFFFFF inset !important;
+  -webkit-text-fill-color: #000000 !important;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 select option {
@@ -809,18 +1476,21 @@ aside {
 }
 
 /* ============================================================
-   LIGHT MODE — COLLAPSIBLE SIDEBAR TOGGLE BUTTON
+   COLLAPSIBLE SIDEBAR TOGGLE BUTTON (Consistent Dark Style)
    ============================================================ */
 
+.sidebar-toggle-btn,
 .light .sidebar-toggle-btn {
-  background-color: #F3F4F6 !important;
-  border-color: var(--border-color) !important;
-  color: var(--text-secondary) !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #94A3B8 !important;
 }
 
+.sidebar-toggle-btn:hover,
 .light .sidebar-toggle-btn:hover {
-  background-color: #E5E7EB !important;
-  color: var(--text-primary) !important;
+  background-color: rgba(255, 255, 255, 0.06) !important;
+  color: #FFFFFF !important;
 }
 
 /* ============================================================
@@ -829,3 +1499,21 @@ aside {
 .lucide {
   stroke-width: 1.5px !important;
 }
+
+/* ============================================================
+   UPCOMING TASK REMINDERS & ACTIVITY STREAM — LIGHT MODE CONTRAST
+   Ensures customer names, lead codes, and subtitles are crisp and never washed out
+   ============================================================ */
+
+.light .reminder-customer-name {
+  color: #0F172A !important;
+}
+
+.light .reminder-customer-name:hover {
+  color: #4F7D32 !important;
+}
+
+.light .reminder-subtitle {
+  color: #475569 !important;
+}
+

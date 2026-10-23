@@ -93,6 +93,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
+  const handleSessionInvalid = async () => {
+    setUser(null);
+    try {
+      await fetch('/api/v1/auth/logout', { method: 'POST' });
+    } catch {
+      // Ignore network errors during session cleanup
+    }
+    if (typeof window !== 'undefined') {
+      document.cookie = 'token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+      if (window.location.pathname !== '/login' && window.location.pathname !== '/') {
+        window.location.href = '/login?expired=1';
+      }
+    }
+  };
+
   const fetchUser = async () => {
     try {
       const res = await fetch('/api/v1/auth/me');
@@ -104,22 +119,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
       }
-      setUser(null);
-      if (typeof window !== 'undefined') {
-        document.cookie = 'token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
-        if (window.location.pathname !== '/login' && window.location.pathname !== '/') {
-          window.location.href = '/login';
-        }
-      }
+      await handleSessionInvalid();
     } catch (err) {
       console.error('Fetch user error:', err);
-      setUser(null);
-      if (typeof window !== 'undefined') {
-        document.cookie = 'token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
-        if (window.location.pathname !== '/login' && window.location.pathname !== '/') {
-          window.location.href = '/login';
-        }
-      }
+      await handleSessionInvalid();
     } finally {
       setLoading(false);
     }
@@ -147,15 +150,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (typeof document !== 'undefined' && document.hidden) return; // Tab is minimized/hidden
       if (Date.now() - lastActivityTime > 5 * 60 * 1000) return; // Inactive for >5m
       fetch('/api/v1/auth/heartbeat', { method: 'POST' })
-        .then((res) => {
+        .then(async (res) => {
           if (res.status === 401) {
-            setUser(null);
-            if (typeof window !== 'undefined') {
-              document.cookie = 'token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
-              if (window.location.pathname !== '/login') {
-                window.location.href = '/login';
-              }
-            }
+            await handleSessionInvalid();
           }
         })
         .catch(() => {});
@@ -189,34 +186,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      let locationStr = 'Unknown Location';
-      
-      // 1. Try browser Geolocation first (triggers the browser permission popup)
-      const geoResult = await getBrowserLocation(5000);
-      if (geoResult && !geoResult.startsWith('error_') && geoResult !== 'HTML5 Geolocation not supported') {
-        locationStr = geoResult;
-      } else {
-        // 2. Fall back to IP Geolocation if HTML5 fails or is blocked
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 1500);
-          const geoRes = await fetch('https://ipapi.co/json/', { signal: controller.signal });
-          clearTimeout(timeoutId);
-          const contentType = geoRes.headers.get('content-type');
-          if (geoRes.ok && contentType && contentType.includes('application/json')) {
-            const geoData = await geoRes.json();
-            const city = geoData.city || '';
-            const region = geoData.region || '';
-            const country = geoData.country_name || '';
-            const locParts = [city, region, country].filter(Boolean);
-            if (locParts.length > 0) {
-              locationStr = locParts.join(', ');
-            }
-          }
-        } catch (err) {
-          console.warn('Geolocation fetch timed out or failed on logout:', err);
+      let locationStr = 'Web Browser Logout';
+      try {
+        const cachedLoc = typeof window !== 'undefined' ? (sessionStorage.getItem('last_user_location') || localStorage.getItem('last_user_location')) : null;
+        if (cachedLoc) {
+          locationStr = cachedLoc;
         }
-      }
+      } catch {}
 
       await fetch('/api/v1/auth/logout', { 
         method: 'POST',
@@ -231,7 +207,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       if (typeof window !== 'undefined') {
         document.cookie = 'token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
-        window.location.href = '/login';
+        window.location.href = '/login?logout=1';
       }
     }
   };

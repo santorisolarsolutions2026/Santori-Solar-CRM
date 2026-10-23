@@ -21,6 +21,7 @@ interface UserSelectProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  triggerClassName?: string;
 }
 
 export default function UserSelect({
@@ -30,6 +31,7 @@ export default function UserSelect({
   placeholder = 'Select Team Member...',
   disabled = false,
   className = '',
+  triggerClassName = '',
 }: UserSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -133,7 +135,7 @@ export default function UserSelect({
             : isOpen
             ? 'bg-[var(--bg-card-solid)] border-slate-700 ring-1 ring-slate-800/40 text-[var(--text-primary)]'
             : 'bg-[var(--bg-card-solid)] hover:bg-[var(--border-color)] border-[var(--border-color)] text-[var(--text-primary)]'
-        }`}
+        } ${triggerClassName}`}
       >
         <div className="flex items-center gap-2 min-w-0">
           {selectedUser ? (
@@ -179,25 +181,25 @@ export default function UserSelect({
             left: `${coords.left}px`,
             width: `${coords.width}px`,
           }}
-          className="z-[99999] bg-black border border-slate-800/80 rounded-xl shadow-2xl overflow-hidden animate-fade-in"
+          className="z-[99999] bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden animate-fade-in"
         >
           {/* Search Header */}
-          <div className="p-2 border-b border-slate-800 bg-black relative">
-            <Search className="w-3.5 h-3.5 text-[var(--text-muted)] absolute left-4 top-3.5" />
+          <div className="p-2 border-b border-slate-200 bg-white relative">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-4 top-3.5" />
             <input
               type="text"
               autoFocus
               placeholder="Search by name, role..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 bg-[var(--bg-card-solid)] border border-slate-800 focus:border-slate-750 focus:outline-none rounded-lg text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] font-semibold"
+              className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 focus:border-[#4F7D32] focus:outline-none rounded-lg text-xs text-slate-900 placeholder-slate-400 font-semibold"
             />
           </div>
 
           {/* User List */}
-          <div className="max-h-56 overflow-y-auto p-1 divide-y divide-slate-100 dark:divide-slate-850/40 custom-scrollbar">
+          <div className="max-h-56 overflow-y-auto p-1 divide-y divide-slate-100 bg-white custom-scrollbar">
             {filteredUsers.length === 0 ? (
-              <div className="p-4 text-center text-xs text-[var(--text-muted)] italic font-semibold">
+              <div className="p-4 text-center text-xs text-slate-400 italic font-semibold">
                 No matching team members
               </div>
             ) : (
@@ -216,25 +218,28 @@ export default function UserSelect({
                     }}
                     className={`w-full p-2 text-left rounded-lg transition-colors flex items-center justify-between gap-2 cursor-pointer text-xs font-semibold group ${
                       isSelected
-                        ? 'text-white font-bold hover:bg-slate-800'
-                        : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                        ? 'bg-[#B8CFB3]/40 text-black font-bold hover:bg-[#B8CFB3]'
+                        : 'text-slate-800 hover:bg-[#B8CFB3] hover:text-black'
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-6 h-6 rounded-full bg-slate-850 border border-slate-800 text-slate-400 group-hover:text-white font-bold text-[10px] flex items-center justify-center shrink-0 uppercase">
+                      <div className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 text-slate-700 font-bold text-[10px] flex items-center justify-center shrink-0 uppercase">
                         {u.name.charAt(0)}
                       </div>
                       <div className="min-w-0 font-semibold">
-                        <span className={`text-xs font-semibold block truncate ${isSelected ? 'text-white' : 'text-slate-400 group-hover:text-white'}`}>{u.name}</span>
-                        {u.email && <span className="text-[10px] text-slate-500 block truncate font-medium">{u.email}</span>}
+                        <span className={`text-xs font-semibold block truncate ${isSelected ? 'text-black font-bold' : 'text-slate-900 group-hover:text-black'}`}>{u.name}</span>
+                        {u.email && <span className="text-[10px] text-slate-500 group-hover:text-slate-700 block truncate font-medium">{u.email}</span>}
                       </div>
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0">
-                      <span className="text-[9px] designation-badge px-1.5 py-0.5 rounded bg-slate-850 text-slate-350 font-semibold font-mono">
+                      <span
+                        className="text-[9px] px-1.5 py-0.5 rounded font-semibold font-mono text-white"
+                        style={{ backgroundColor: '#4F7D32', border: 'none', color: '#ffffff' }}
+                      >
                         {des}
                       </span>
-                      {isSelected && <Check className="w-3.5 h-3.5 text-white shrink-0" />}
+                      {isSelected && <Check className="w-3.5 h-3.5 text-black shrink-0" />}
                     </div>
                   </button>
                 );

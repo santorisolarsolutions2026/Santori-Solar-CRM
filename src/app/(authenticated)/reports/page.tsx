@@ -105,7 +105,7 @@ export default function ReportsPage() {
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4F7D32]"></div>
       </div>
     );
   }
@@ -192,7 +192,7 @@ export default function ReportsPage() {
 
   const getSortIcon = (field: string) => {
     if (sortField !== field) return <span className="text-[var(--text-muted)] ml-1 font-mono text-[10px]">↕</span>;
-    return <span className="text-emerald-500 ml-1 font-mono text-[10px]">{sortOrder === 'asc' ? '↑' : '↓'}</span>;
+    return <span className="text-[#4F7D32] dark:text-[#7bb05c] ml-1 font-mono text-[10px]">{sortOrder === 'asc' ? '↑' : '↓'}</span>;
   };
 
   const getInitials = (name: string) => {
@@ -335,11 +335,24 @@ export default function ReportsPage() {
       const trendRes = results[2];
       const perfRes = userHasReportsView ? results[3] : null;
 
+      const safeJson = async (res: Response | null) => {
+        if (!res) return { success: false };
+        try {
+          const contentType = res.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            return await res.json();
+          }
+          return { success: false };
+        } catch {
+          return { success: false };
+        }
+      };
+
       const [statsData, pipelineData, trendData, perfData] = await Promise.all([
-        statsRes.json(),
-        pipelineRes.json(),
-        trendRes.json(),
-        perfRes ? perfRes.json() : Promise.resolve({ success: false }),
+        safeJson(statsRes),
+        safeJson(pipelineRes),
+        safeJson(trendRes),
+        safeJson(perfRes),
       ]);
 
       if (statsData.success) setStats(statsData.data);
@@ -480,7 +493,7 @@ export default function ReportsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[var(--bg-main)] flex items-center justify-center">
-        <Sun className="w-12 h-12 text-emerald-600 dark:text-emerald-400 animate-spin" />
+        <Sun className="w-12 h-12 text-[#4F7D32] dark:text-[#7bb05c] animate-spin" />
       </div>
     );
   }
@@ -517,14 +530,14 @@ export default function ReportsPage() {
             onClick={handleExportCSV}
             className="py-2.5 px-4 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
           >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
+            <FileSpreadsheet className="w-4 h-4 text-[#4F7D32] dark:text-[#7bb05c]" />
             <span>Export to Excel (CSV)</span>
           </button>
           <button
             onClick={handleExportPDF}
             className="py-2.5 px-4 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
           >
-            <FileText className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <FileText className="w-4 h-4 text-[#4F7D32] dark:text-[#7bb05c]" />
             <span>Print Audit (PDF)</span>
           </button>
         </div>
@@ -538,7 +551,7 @@ export default function ReportsPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--border-color)]/80 pb-4">
               <div>
                 <h2 className="text-base font-bold text-white tracking-wide uppercase flex items-center gap-2">
-                  <div className="p-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400">
+                  <div className="p-1.5 bg-[#4F7D32]/10 border border-[#4F7D32]/20 rounded-lg text-[#4F7D32] dark:text-[#7bb05c]">
                     <Filter className="w-4 h-4" />
                   </div>
                   <span>Employee Audit Filters</span>
@@ -571,7 +584,7 @@ export default function ReportsPage() {
               {/* Designation Filter */}
               <div className="bg-[var(--bg-main)] border border-[var(--border-color)]/80 rounded-xl p-3.5 flex flex-col gap-1.5 shadow-inner">
                 <label className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--text-secondary)] flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#4F7D32]"></span>
                   <span>Designation Role</span>
                 </label>
                 <div className="w-full">
@@ -593,7 +606,7 @@ export default function ReportsPage() {
               {/* Start Date & Time */}
               <div className="bg-[var(--bg-main)] border border-[var(--border-color)]/80 rounded-xl p-3.5 flex flex-col gap-1.5 shadow-inner">
                 <label className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--text-secondary)] flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#4F7D32]"></span>
                   <span>Start Date & Time</span>
                 </label>
                 <div className="flex items-center gap-2">
@@ -601,13 +614,13 @@ export default function ReportsPage() {
                     type="date"
                     value={filterStartDate}
                     onChange={(e) => setFilterStartDate(e.target.value)}
-                    className="flex-1 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-white px-3 py-2 rounded-lg text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none cursor-pointer"
+                    className="flex-1 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-white px-3 py-2 rounded-lg text-xs focus:ring-1 focus:ring-[#4F7D32] focus:outline-none cursor-pointer"
                   />
                   <input
                     type="time"
                     value={filterStartTime}
                     onChange={(e) => setFilterStartTime(e.target.value)}
-                    className="w-24 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-white px-2.5 py-2 rounded-lg text-xs font-mono focus:ring-1 focus:ring-emerald-500 focus:outline-none cursor-pointer"
+                    className="w-24 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-white px-2.5 py-2 rounded-lg text-xs font-mono focus:ring-1 focus:ring-[#4F7D32] focus:outline-none cursor-pointer"
                   />
                 </div>
               </div>
@@ -623,13 +636,13 @@ export default function ReportsPage() {
                     type="date"
                     value={filterEndDate}
                     onChange={(e) => setFilterEndDate(e.target.value)}
-                    className="flex-1 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-white px-3 py-2 rounded-lg text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none cursor-pointer"
+                    className="flex-1 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-white px-3 py-2 rounded-lg text-xs focus:ring-1 focus:ring-[#4F7D32] focus:outline-none cursor-pointer"
                   />
                   <input
                     type="time"
                     value={filterEndTime}
                     onChange={(e) => setFilterEndTime(e.target.value)}
-                    className="w-24 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-white px-2.5 py-2 rounded-lg text-xs font-mono focus:ring-1 focus:ring-emerald-500 focus:outline-none cursor-pointer"
+                    className="w-24 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color)] text-white px-2.5 py-2 rounded-lg text-xs font-mono focus:ring-1 focus:ring-[#4F7D32] focus:outline-none cursor-pointer"
                   />
                 </div>
               </div>
@@ -639,7 +652,7 @@ export default function ReportsPage() {
             <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-[var(--border-color)]/60">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-[11px] text-[var(--text-secondary)] font-bold uppercase tracking-wider flex items-center gap-1.5 mr-1">
-                  <Clock className="w-3.5 h-3.5 text-emerald-400" /> Quick Ranges:
+                  <Clock className="w-3.5 h-3.5 text-[#4F7D32] dark:text-[#7bb05c]" /> Quick Ranges:
                 </span>
                 {[
                   { label: 'Today', key: 'today' },
@@ -677,7 +690,7 @@ export default function ReportsPage() {
                       onClick={() => setPresetRange(p.key as any)}
                       className={`px-3.5 py-1.5 rounded-xl transition-all text-xs font-semibold cursor-pointer flex items-center gap-1.5 shadow-sm border ${
                         isSelected
-                          ? 'bg-emerald-600 border-emerald-500 text-white font-extrabold shadow-emerald-500/20'
+                          ? 'bg-[#4F7D32] border-[#4F7D32] text-white font-extrabold shadow-md'
                           : 'bg-[var(--bg-card)]/90 hover:bg-[var(--bg-card)] border-[var(--border-color)] hover:border-[var(--border-color)] text-[var(--text-primary)] hover:text-white'
                       }`}
                     >
@@ -732,7 +745,7 @@ export default function ReportsPage() {
                     <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-wider block">Active Staff</span>
                     <span className="text-xl font-extrabold text-white mt-1 block">{staffCount} <span className="text-xs text-[var(--text-muted)] font-normal">Members</span></span>
                   </div>
-                  <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                  <div className="w-10 h-10 rounded-lg bg-[#4F7D32]/10 border border-[#4F7D32]/20 flex items-center justify-center text-[#4F7D32] dark:text-[#7bb05c]">
                     <Users className="w-5 h-5" />
                   </div>
                 </div>
@@ -740,9 +753,9 @@ export default function ReportsPage() {
                 <div className="p-4 bg-[var(--bg-card)] border border-[var(--border-color)]/80 rounded-xl flex items-center justify-between shadow-lg">
                   <div>
                     <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-wider block">{outputLabel}</span>
-                    <span className="text-xl font-extrabold text-emerald-400 mt-1 block">{totalOutput.toLocaleString('en-IN')}</span>
+                    <span className="text-xl font-extrabold text-[#4F7D32] dark:text-[#7bb05c] mt-1 block">{totalOutput.toLocaleString('en-IN')}</span>
                   </div>
-                  <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                  <div className="w-10 h-10 rounded-lg bg-[#4F7D32]/10 border border-[#4F7D32]/20 flex items-center justify-center text-[#4F7D32] dark:text-[#7bb05c]">
                     <Award className="w-5 h-5" />
                   </div>
                 </div>
@@ -752,7 +765,7 @@ export default function ReportsPage() {
                     <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-wider block">Active Department</span>
                     <span className="text-sm font-bold text-[var(--text-primary)] mt-1 block flex items-center gap-1.5">
                       <span className={`w-2 h-2 rounded-full ${
-                        activeDeptTab === 'Sales' ? 'bg-cyan-400' : activeDeptTab === 'Finance' ? 'bg-emerald-400' : activeDeptTab === 'Operations' ? 'bg-purple-400' : 'bg-emerald-400'
+                        activeDeptTab === 'Sales' ? 'bg-cyan-400' : activeDeptTab === 'Finance' ? 'bg-[#4F7D32]' : activeDeptTab === 'Operations' ? 'bg-purple-400' : 'bg-[#4F7D32]'
                       }`} />
                       {activeDeptTab}
                     </span>
@@ -765,11 +778,11 @@ export default function ReportsPage() {
                 <div className="p-4 bg-[var(--bg-card)] border border-[var(--border-color)]/80 rounded-xl flex items-center justify-between shadow-lg">
                   <div>
                     <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-wider block">Top Contributor</span>
-                    <span className="text-xs font-bold text-amber-300 mt-1 block truncate max-w-[130px]" title={topStaff}>
+                    <span className="text-xs font-bold text-amber-700 dark:text-amber-300 mt-1 block truncate max-w-[130px]" title={topStaff}>
                       {topStaff}
                     </span>
                   </div>
-                  <div className="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                  <div className="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400">
                     <Sparkles className="w-5 h-5" />
                   </div>
                 </div>
@@ -788,7 +801,7 @@ export default function ReportsPage() {
                   onClick={() => setActiveDeptTab(dept as any)}
                   className={`py-2.5 px-5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                     isActive
-                      ? 'bg-emerald-600 text-white font-extrabold shadow-md'
+                      ? 'bg-[#4F7D32] text-white font-extrabold shadow-md'
                       : 'bg-transparent border border-transparent text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-card)]/40'
                   }`}
                 >
@@ -809,8 +822,8 @@ export default function ReportsPage() {
               <h3 className="text-sm font-bold text-white tracking-wide uppercase flex items-center gap-2">
                 <span className={`w-2.5 h-2.5 rounded-full ${
                   activeDeptTab === 'Sales' ? 'bg-cyan-500' :
-                  activeDeptTab === 'Finance' ? 'bg-emerald-500' :
-                  activeDeptTab === 'Operations' ? 'bg-purple-500' : 'bg-emerald-600'
+                  activeDeptTab === 'Finance' ? 'bg-[#4F7D32]' :
+                  activeDeptTab === 'Operations' ? 'bg-purple-500' : 'bg-[#4F7D32]'
                 }`} />
                 <span>{activeDeptTab} Staff Performance & Audit List</span>
               </h3>
@@ -829,7 +842,7 @@ export default function ReportsPage() {
 
                 {auditLoading && (
                   <div className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)] animate-pulse shrink-0">
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-400" />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-[#4F7D32] dark:text-[#7bb05c]" />
                   </div>
                 )}
               </div>
@@ -924,22 +937,22 @@ export default function ReportsPage() {
                                 </div>
                               )}
                               <div className="flex flex-col min-w-0">
-                                <span className="truncate group-hover:text-emerald-400 transition-colors">{emp.name}</span>
+                                <span className="truncate group-hover:text-[#4F7D32] dark:group-hover:text-[#7bb05c] transition-colors">{emp.name}</span>
                               </div>
                               <button
                                 type="button"
                                 onClick={() => handleOpenTimelineModal(emp.id, emp.name)}
-                                className="px-2 py-0.5 rounded bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-emerald-500/40 text-[var(--text-secondary)] hover:text-emerald-400 transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium ml-auto"
+                                className="px-2 py-0.5 rounded bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[#4F7D32]/40 text-[var(--text-secondary)] hover:text-[#4F7D32] dark:hover:text-[#7bb05c] transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium ml-auto"
                                 title="View Daily Activity Timeline"
                               >
-                                <Calendar className="w-3 h-3 text-emerald-400" /> Timeline
+                                <Calendar className="w-3 h-3 text-[#4F7D32] dark:text-[#7bb05c]" /> Timeline
                               </button>
                             </td>
                             <td className="py-3.5 px-4 text-[var(--text-secondary)] font-medium text-xs">{emp.designation}</td>
                             <td className="py-3.5 px-4 text-center">
                               <button
                                 onClick={() => handleOpenHierarchyModal(emp.id)}
-                                className="font-extrabold font-mono text-emerald-400 hover:underline outline-none cursor-pointer px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-xs"
+                                className="font-extrabold font-mono text-[#4F7D32] dark:text-[#7bb05c] hover:underline outline-none cursor-pointer px-2 py-0.5 rounded bg-[#4F7D32]/10 border border-[#4F7D32]/20 text-xs"
                               >
                                 {emp.teamSize || 1}
                               </button>
@@ -947,7 +960,7 @@ export default function ReportsPage() {
                             <td className="py-3.5 px-4 text-center">
                               <button
                                 onClick={() => handleOpenDetailsModal(emp.id, 'leads_worked')}
-                                className="font-extrabold text-emerald-400 hover:text-blue-300 hover:underline outline-none cursor-pointer"
+                                className="font-extrabold text-[#4F7D32] dark:text-[#7bb05c] hover:text-blue-300 hover:underline outline-none cursor-pointer"
                               >
                                 {emp.metrics.leadsWorked}
                               </button>
@@ -979,7 +992,7 @@ export default function ReportsPage() {
                             <td className="py-3.5 px-4 text-center">
                               <button
                                 onClick={() => handleOpenDetailsModal(emp.id, 'sales_done')}
-                                className="font-extrabold text-emerald-400 hover:text-emerald-300 hover:underline outline-none cursor-pointer"
+                                className="font-extrabold text-[#4F7D32] dark:text-[#7bb05c] hover:underline outline-none cursor-pointer"
                               >
                                 {emp.metrics.salesDone || 0} <span className="text-[10px] font-normal text-[var(--text-muted)]">({emp.metrics.saleConversionRate || 0}%)</span>
                               </button>
@@ -1044,21 +1057,21 @@ export default function ReportsPage() {
                                 </div>
                               )}
                               <div className="flex flex-col min-w-0">
-                                <span className="truncate group-hover:text-emerald-400 transition-colors">{emp.name}</span>
+                                <span className="truncate group-hover:text-[#4F7D32] dark:group-hover:text-[#7bb05c] transition-colors">{emp.name}</span>
                               </div>
                               <button
                                 type="button"
                                 onClick={() => handleOpenTimelineModal(emp.id, emp.name)}
-                                className="px-2 py-0.5 rounded bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-emerald-500/40 text-[var(--text-secondary)] hover:text-emerald-400 transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium ml-auto"
+                                className="px-2 py-0.5 rounded bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[#4F7D32]/40 text-[var(--text-secondary)] hover:text-[#4F7D32] dark:hover:text-[#7bb05c] transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium ml-auto"
                               >
-                                <Calendar className="w-3 h-3 text-emerald-400" /> Timeline
+                                <Calendar className="w-3 h-3 text-[#4F7D32] dark:text-[#7bb05c]" /> Timeline
                               </button>
                             </td>
                             <td className="py-3.5 px-4 text-[var(--text-secondary)] font-medium text-xs">{emp.designation}</td>
                             <td className="py-3.5 px-4 text-center">
                               <button
                                 onClick={() => handleOpenHierarchyModal(emp.id)}
-                                className="font-extrabold font-mono text-emerald-400 hover:underline outline-none cursor-pointer px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-xs"
+                                className="font-extrabold font-mono text-[#4F7D32] dark:text-[#7bb05c] hover:underline outline-none cursor-pointer px-2 py-0.5 rounded bg-[#4F7D32]/10 border border-[#4F7D32]/20 text-xs"
                               >
                                 {emp.teamSize || 1}
                               </button>
@@ -1066,7 +1079,7 @@ export default function ReportsPage() {
                             <td className="py-3.5 px-4 text-center">
                               <button
                                 onClick={() => handleOpenDetailsModal(emp.id, 'orders_verified')}
-                                className="font-extrabold text-emerald-400 hover:text-emerald-300 hover:underline outline-none cursor-pointer"
+                                className="font-extrabold text-[#4F7D32] dark:text-[#7bb05c] hover:underline outline-none cursor-pointer"
                               >
                                 {emp.metrics.ordersVerified}
                               </button>
@@ -1074,7 +1087,7 @@ export default function ReportsPage() {
                             <td className="py-3.5 px-4 text-center">
                               <button
                                 onClick={() => handleOpenDetailsModal(emp.id, 'ledger_activities')}
-                                className="font-extrabold text-emerald-400 hover:text-blue-300 hover:underline outline-none cursor-pointer"
+                                className="font-extrabold text-[#4F7D32] dark:text-[#7bb05c] hover:text-blue-300 hover:underline outline-none cursor-pointer"
                               >
                                 {emp.metrics.ledgerActivities}
                               </button>
@@ -1137,21 +1150,21 @@ export default function ReportsPage() {
                                 </div>
                               )}
                               <div className="flex flex-col min-w-0">
-                                <span className="truncate group-hover:text-emerald-400 transition-colors">{emp.name}</span>
+                                <span className="truncate group-hover:text-[#4F7D32] dark:group-hover:text-[#7bb05c] transition-colors">{emp.name}</span>
                               </div>
                               <button
                                 type="button"
                                 onClick={() => handleOpenTimelineModal(emp.id, emp.name)}
-                                className="px-2 py-0.5 rounded bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-emerald-500/40 text-[var(--text-secondary)] hover:text-emerald-400 transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium ml-auto"
+                                className="px-2 py-0.5 rounded bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[#4F7D32]/40 text-[var(--text-secondary)] hover:text-[#4F7D32] dark:hover:text-[#7bb05c] transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium ml-auto"
                               >
-                                <Calendar className="w-3 h-3 text-emerald-400" /> Timeline
+                                <Calendar className="w-3 h-3 text-[#4F7D32] dark:text-[#7bb05c]" /> Timeline
                               </button>
                             </td>
                             <td className="py-3.5 px-4 text-[var(--text-secondary)] font-medium text-xs">{emp.designation}</td>
                             <td className="py-3.5 px-4 text-center">
                               <button
                                 onClick={() => handleOpenHierarchyModal(emp.id)}
-                                className="font-extrabold font-mono text-emerald-400 hover:underline outline-none cursor-pointer px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-xs"
+                                className="font-extrabold font-mono text-[#4F7D32] dark:text-[#7bb05c] hover:underline outline-none cursor-pointer px-2 py-0.5 rounded bg-[#4F7D32]/10 border border-[#4F7D32]/20 text-xs"
                               >
                                 {emp.teamSize || 1}
                               </button>
@@ -1175,7 +1188,7 @@ export default function ReportsPage() {
                             <td className="py-3.5 px-4 text-center">
                               <button
                                 onClick={() => handleOpenDetailsModal(emp.id, 'commissioned_completed')}
-                                className="font-extrabold text-emerald-400 hover:text-emerald-300 hover:underline outline-none cursor-pointer"
+                                className="font-extrabold text-[#4F7D32] dark:text-[#7bb05c] hover:underline outline-none cursor-pointer"
                               >
                                 {emp.metrics.commissionedCompleted}
                               </button>
@@ -1183,7 +1196,7 @@ export default function ReportsPage() {
                             <td className="py-3.5 px-4 text-center">
                               <button
                                 onClick={() => handleOpenDetailsModal(emp.id, 'subsidies_applied')}
-                                className="font-extrabold text-emerald-400 hover:text-blue-300 hover:underline outline-none cursor-pointer"
+                                className="font-extrabold text-[#4F7D32] dark:text-[#7bb05c] hover:text-blue-300 hover:underline outline-none cursor-pointer"
                               >
                                 {emp.metrics.subsidiesApplied}
                               </button>
@@ -1233,21 +1246,21 @@ export default function ReportsPage() {
                               </div>
                             )}
                             <div className="flex flex-col min-w-0">
-                              <span className="truncate group-hover:text-emerald-400 transition-colors">{emp.name}</span>
+                              <span className="truncate group-hover:text-[#4F7D32] dark:group-hover:text-[#7bb05c] transition-colors">{emp.name}</span>
                             </div>
                             <button
                               type="button"
                               onClick={() => handleOpenTimelineModal(emp.id, emp.name)}
-                              className="px-2 py-0.5 rounded bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-emerald-500/40 text-[var(--text-secondary)] hover:text-emerald-400 transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium ml-auto"
+                              className="px-2 py-0.5 rounded bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[#4F7D32]/40 text-[var(--text-secondary)] hover:text-[#4F7D32] dark:hover:text-[#7bb05c] transition-all cursor-pointer font-sans text-[10px] flex items-center gap-1 shrink-0 font-medium ml-auto"
                             >
-                              <Calendar className="w-3 h-3 text-emerald-400" /> Timeline
+                              <Calendar className="w-3 h-3 text-[#4F7D32] dark:text-[#7bb05c]" /> Timeline
                             </button>
                           </td>
                           <td className="py-3.5 px-4 text-[var(--text-secondary)] font-medium text-xs">{emp.designation}</td>
                           <td className="py-3.5 px-4 text-center">
                             <button
                               onClick={() => handleOpenHierarchyModal(emp.id)}
-                              className="font-extrabold font-mono text-emerald-400 hover:underline outline-none cursor-pointer px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-xs"
+                              className="font-extrabold font-mono text-[#4F7D32] dark:text-[#7bb05c] hover:underline outline-none cursor-pointer px-2 py-0.5 rounded bg-[#4F7D32]/10 border border-[#4F7D32]/20 text-xs"
                             >
                               {emp.teamSize || 1}
                             </button>
@@ -1255,7 +1268,7 @@ export default function ReportsPage() {
                           <td className="py-3.5 px-4 text-center">
                             <button
                               onClick={() => handleOpenDetailsModal(emp.id, 'leads_worked')}
-                              className="font-extrabold text-emerald-400 hover:text-blue-300 hover:underline outline-none cursor-pointer"
+                              className="font-extrabold text-[#4F7D32] dark:text-[#7bb05c] hover:text-blue-300 hover:underline outline-none cursor-pointer"
                             >
                               {emp.metrics.leadsWorked}
                             </button>
@@ -1289,13 +1302,13 @@ export default function ReportsPage() {
                     </span>
                   )}
                   {modalData?.teamSize && modalData.teamSize > 1 && (
-                    <span className="text-[10px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded font-mono">
+                    <span className="text-[10px] bg-[#4F7D32]/10 border border-[#4F7D32]/20 text-[#4F7D32] dark:text-[#7bb05c] px-2 py-0.5 rounded font-mono">
                       Hierarchy Team ({modalData.teamSize} members)
                     </span>
                   )}
                 </h2>
                 <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-                  Drilldown Line Items for: <span className="text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider">{activeDetailType.replace('_', ' ')}</span>
+                  Drilldown Line Items for: <span className="text-[#4F7D32] dark:text-[#7bb05c] font-bold uppercase tracking-wider">{activeDetailType.replace('_', ' ')}</span>
                 </p>
               </div>
               <button
@@ -1316,7 +1329,7 @@ export default function ReportsPage() {
                     placeholder="Search by Lead Name, ID, or Details..."
                     value={auditSearchQuery}
                     onChange={(e) => setAuditSearchQuery(e.target.value)}
-                    className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg pl-9 pr-4 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg pl-9 pr-4 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[#4F7D32]/50"
                   />
                 </div>
               )}
@@ -1336,7 +1349,7 @@ export default function ReportsPage() {
                 if (modalLoading && !modalData) {
                   return (
                     <div className="flex flex-col items-center justify-center py-20 text-[var(--text-muted)] text-xs italic gap-2">
-                      <Loader2 className="w-6 h-6 animate-spin text-emerald-600 dark:text-emerald-400" />
+                      <Loader2 className="w-6 h-6 animate-spin text-[#4F7D32] dark:text-[#7bb05c]" />
                       <span>Fetching activity details across team hierarchy...</span>
                     </div>
                   );
@@ -1375,8 +1388,8 @@ export default function ReportsPage() {
                             className="w-full flex items-center justify-between p-4 hover:bg-[var(--bg-card)] transition-colors text-left border-b border-transparent focus:outline-none"
                           >
                             <div className="flex items-center gap-4">
-                              <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-inner">
-                                <span className="text-emerald-400 font-bold text-xs">{group.logs.length}</span>
+                              <div className="w-10 h-10 rounded-full bg-[#4F7D32]/10 flex items-center justify-center border border-[#4F7D32]/20 shadow-inner">
+                                <span className="text-[#4F7D32] dark:text-[#7bb05c] font-bold text-xs">{group.logs.length}</span>
                               </div>
                               <div>
                                 <h4 className="text-white font-bold text-sm tracking-wide">{group.customerName || `Lead #${group.leadCode}`}</h4>
@@ -1385,7 +1398,7 @@ export default function ReportsPage() {
                             </div>
                             <div className="flex items-center gap-4 text-[var(--text-secondary)] bg-[var(--bg-card)]/60 px-3 py-1.5 rounded-full border border-[var(--border-color)]/60">
                               <span className="text-[10px] font-mono font-medium">{group.logs.length} Actions</span>
-                              {expandedLeadIds[group.leadId] ? <ChevronUp className="w-4 h-4 text-emerald-400" /> : <ChevronDown className="w-4 h-4" />}
+                              {expandedLeadIds[group.leadId] ? <ChevronUp className="w-4 h-4 text-[#4F7D32] dark:text-[#7bb05c]" /> : <ChevronDown className="w-4 h-4" />}
                             </div>
                           </button>
                           
@@ -1394,10 +1407,10 @@ export default function ReportsPage() {
                               <div className="relative border-l-2 border-[var(--border-color)] ml-4 pl-6 space-y-6">
                                 {group.logs.map((log: any) => (
                                   <div key={log.id} className="relative group">
-                                    <div className="absolute -left-[33px] top-1.5 w-4 h-4 rounded-full border-[3px] border-emerald-500/80 bg-[var(--bg-main)] ring-4 ring-slate-950 shadow-sm" />
+                                    <div className="absolute -left-[33px] top-1.5 w-4 h-4 rounded-full border-[3px] border-[#4F7D32]/80 bg-[var(--bg-main)] ring-4 ring-slate-950 shadow-sm" />
                                     <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)]/60 rounded-xl p-3 hover:border-[var(--border-color)] transition-colors">
                                       <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
-                                        <span className="text-xs font-bold text-emerald-400/90 tracking-wide uppercase">{log.detail1}</span>
+                                        <span className="text-xs font-bold text-[#4F7D32] dark:text-[#7bb05c] tracking-wide uppercase">{log.detail1}</span>
                                         <span className="text-[10px] text-[var(--text-muted)] font-mono">
                                           {log.date || new Date(log.timestamp).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
                                         </span>
@@ -1444,8 +1457,8 @@ export default function ReportsPage() {
                             <td className="py-3.5 px-4">
                               {item.executedBy ? (
                                 <div className="flex flex-col">
-                                  <span className="font-bold text-white group-hover:text-emerald-400 transition-colors">{item.executedBy.name}</span>
-                                  <span className="text-[9px] text-emerald-500/70 font-mono mt-0.5">{item.executedBy.designation}</span>
+                                  <span className="font-bold text-white group-hover:text-[#4F7D32] dark:group-hover:text-[#7bb05c] transition-colors">{item.executedBy.name}</span>
+                                  <span className="text-[9px] text-[#4F7D32]/70 dark:text-[#7bb05c]/70 font-mono mt-0.5">{item.executedBy.designation}</span>
                                 </div>
                               ) : (
                                 <span className="text-[var(--text-muted)] italic">Self</span>
@@ -1453,7 +1466,7 @@ export default function ReportsPage() {
                             </td>
                             <td className="py-3.5 px-4">
                               {item.leadId && !['deliveries_completed', 'installations_completed', 'commissioned_completed', 'subsidies_applied'].includes(activeDetailType) ? (
-                                <a href={`/leads/${item.leadId}`} className="hover:underline text-emerald-500 font-bold block transition-colors">
+                                <a href={`/leads/${item.leadId}`} className="hover:underline text-[#4F7D32] dark:text-[#7bb05c] font-bold block transition-colors">
                                   {item.customerName || `Lead #${item.leadCode}`}
                                 </a>
                               ) : (
@@ -1524,7 +1537,7 @@ export default function ReportsPage() {
             <div className="p-6 flex-1 overflow-y-auto min-h-[350px] space-y-4">
               {timelineLoading ? (
                 <div className="flex flex-col items-center justify-center py-20 text-[var(--text-muted)] text-xs italic gap-2">
-                  <Loader2 className="w-6 h-6 animate-spin text-emerald-600 dark:text-emerald-400" />
+                  <Loader2 className="w-6 h-6 animate-spin text-[#4F7D32] dark:text-[#7bb05c]" />
                   <span>Aggregating task trail from database logs...</span>
                 </div>
               ) : timelineEvents.length === 0 ? (
@@ -1539,9 +1552,9 @@ export default function ReportsPage() {
                     const isLog = evt.type === 'log';
                     const isMeet = evt.type === 'meeting';
 
-                    const theme = isCheckIn ? { border: 'border-emerald-500', bg: 'bg-emerald-500/10', text: 'text-emerald-400' } :
+                    const theme = isCheckIn ? { border: 'border-[#4F7D32]', bg: 'bg-[#4F7D32]/10', text: 'text-[#4F7D32] dark:text-[#7bb05c]' } :
                                   isCheckOut ? { border: 'border-teal-500', bg: 'bg-teal-500/10', text: 'text-teal-400' } :
-                                  isLog ? { border: 'border-emerald-500', bg: 'bg-emerald-500/10', text: 'text-emerald-600 dark:text-emerald-400' } :
+                                  isLog ? { border: 'border-[#4F7D32]', bg: 'bg-[#4F7D32]/10', text: 'text-[#4F7D32] dark:text-[#7bb05c]' } :
                                   isMeet ? { border: 'border-cyan-500', bg: 'bg-cyan-500/10', text: 'text-cyan-400' } :
                                   { border: 'border-purple-500', bg: 'bg-purple-500/10', text: 'text-purple-400' };
 
@@ -1614,7 +1627,7 @@ export default function ReportsPage() {
             <div className="p-6 flex-1 overflow-y-auto min-h-[300px]">
               {hierarchyLoading || hierarchyModalData.loading ? (
                 <div className="flex flex-col items-center justify-center py-20 text-[var(--text-muted)] text-xs italic gap-2">
-                  <Loader2 className="w-6 h-6 animate-spin text-emerald-600 dark:text-emerald-400" />
+                  <Loader2 className="w-6 h-6 animate-spin text-[#4F7D32] dark:text-[#7bb05c]" />
                   <span>Loading hierarchy tree...</span>
                 </div>
               ) : (
@@ -1626,8 +1639,8 @@ export default function ReportsPage() {
                         <div key={node.id} className={`pl-${level === 0 ? '0' : '6'} border-l ${level === 0 ? 'border-transparent' : 'border-[var(--border-color)]'} mt-2`}>
                           <div className="flex items-center gap-3 p-3 bg-[var(--bg-card)]/40 border border-[var(--border-color)]/60 rounded-xl relative">
                             {level > 0 && <div className="absolute -left-6 top-1/2 w-6 border-t border-[var(--border-color)]"></div>}
-                            <div className="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
-                              <Users className="w-5 h-5 text-emerald-400" />
+                            <div className="w-10 h-10 rounded-full bg-[#4F7D32]/10 border border-[#4F7D32]/30 flex items-center justify-center flex-shrink-0">
+                              <Users className="w-5 h-5 text-[#4F7D32] dark:text-[#7bb05c]" />
                             </div>
                             <div className="flex-1 min-w-0">
                               <h4 className="text-white font-bold text-sm truncate">{node.name}</h4>

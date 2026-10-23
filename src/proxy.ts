@@ -20,6 +20,15 @@ export function proxy(request: NextRequest) {
   }
 
   if (isGuestPath && token) {
+    if (url.searchParams.has('expired') || url.searchParams.has('logout')) {
+      const response = NextResponse.next();
+      response.cookies.delete('token');
+      response.headers.append(
+        'Set-Cookie',
+        'token=; Path=/; HttpOnly; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT'
+      );
+      return response;
+    }
     url.pathname = '/dashboard';
     return NextResponse.redirect(url);
   }

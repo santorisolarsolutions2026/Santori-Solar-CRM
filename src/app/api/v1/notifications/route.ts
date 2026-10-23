@@ -59,30 +59,28 @@ export async function GET(req: Request) {
     const isAdmin = userPayload.role === 'admin' || userPayload.role?.startsWith('admin:') || userPayload.role === 'director';
     let recentBroadcasts: any[] = [];
 
-    if (isAdmin) {
-      const announcements = await prisma.notification.findMany({
-        where: {
-          type: 'announcement',
-          createdAt: { gte: twentyFourHoursAgo },
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 100,
-      });
+    // Fetch recent broadcasts for all users so any employee can see the broadcast feed in the drawer
+    const announcements = await prisma.notification.findMany({
+      where: {
+        type: 'announcement',
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    });
 
-      const map = new Map<string, any>();
-      announcements.forEach((a) => {
-        const key = `${a.title}___${a.body}`;
-        if (!map.has(key)) {
-          map.set(key, {
-            id: a.id,
-            title: a.title,
-            body: a.body,
-            createdAt: a.createdAt,
-          });
-        }
-      });
-      recentBroadcasts = Array.from(map.values());
-    }
+    const map = new Map<string, any>();
+    announcements.forEach((a) => {
+      const key = `${a.title}___${a.body}`;
+      if (!map.has(key)) {
+        map.set(key, {
+          id: a.id,
+          title: a.title,
+          body: a.body,
+          createdAt: a.createdAt,
+        });
+      }
+    });
+    recentBroadcasts = Array.from(map.values());
 
     // Fetch Upcoming Tasks & Meeting Reminders
     const todayStr = new Date().toISOString().split('T')[0];
@@ -244,8 +242,31 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: false, message: 'Forbidden. Only admins can broadcast news.' }, { status: 403 });
       }
 
-      if (!title || !message) {
-        return NextResponse.json({ success: false, message: 'News title and message are required.' }, { status: 400 });
+      const inputTitle = (body.title || '').trim();
+      const inputMessage = (body.message || '').trim();
+      const inputImageUrl = (body.imageUrl || '').trim();
+
+      if (!inputTitle && !inputMessage && !inputImageUrl) {
+        return NextResponse.json({ success: false, message: 'News title, message, or photo is required.' }, { status: 400 });
+      }
+
+      // Title formatting: if provided, keep it; if not, use first line of message or "Announcement"
+      let finalTitle = inputTitle;
+      if (!finalTitle) {
+        if (inputMessage) {
+          finalTitle = inputMessage.split('\n')[0].substring(0, 50);
+        } else {
+          finalTitle = 'Announcement';
+        }
+      }
+      if (!finalTitle.startsWith('📢')) {
+        finalTitle = `📢 ${finalTitle}`;
+      }
+
+      // Body formatting: preserve exact text as typed, with attached image appended if provided
+      let finalBody = inputMessage;
+      if (inputImageUrl) {
+        finalBody = finalBody ? `${finalBody}\n\n[img:${inputImageUrl}]` : `[img:${inputImageUrl}]`;
       }
 
       const activeUsers = await prisma.user.findMany({
@@ -256,8 +277,8 @@ export async function POST(req: Request) {
       await prisma.notification.createMany({
         data: activeUsers.map(u => ({
           userId: u.id,
-          title: `📢 ${title.trim()}`,
-          body: message.trim(),
+          title: finalTitle,
+          body: finalBody,
           type: 'announcement',
           isRead: false,
         }))

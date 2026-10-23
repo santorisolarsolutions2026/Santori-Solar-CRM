@@ -21,50 +21,50 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view reports.' }, { status: 403 });
     }
 
-    // Fetch latest activity logs (excluding per-lead bulk territory items to avoid spamming the stream)
-    const logs = await prisma.leadActivityLog.findMany({
-      where: {
-        NOT: {
-          remark: {
-            startsWith: 'Territory assigned to',
+    // Fetch latest activity logs and territory assignments concurrently
+    const [logs, territoryAudits] = await Promise.all([
+      prisma.leadActivityLog.findMany({
+        where: {
+          NOT: {
+            remark: {
+              startsWith: 'Territory assigned to',
+            },
           },
         },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 40,
-      include: {
-        lead: {
-          select: {
-            id: true,
-            customerName: true,
-            leadCode: true,
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+        include: {
+          lead: {
+            select: {
+              id: true,
+              customerName: true,
+              leadCode: true,
+            },
+          },
+          user: {
+            select: {
+              id: true,
+              name: true,
+              role: true,
+            },
           },
         },
-        user: {
-          select: {
-            id: true,
-            name: true,
-            role: true,
+      }),
+      prisma.auditLog.findMany({
+        where: { fieldName: 'territory_assign' },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              role: true,
+            },
           },
         },
-      },
-    });
-
-    // Fetch recent Territory Assignment batch summaries from AuditLog
-    const territoryAudits = await prisma.auditLog.findMany({
-      where: { fieldName: 'territory_assign' },
-      orderBy: { createdAt: 'desc' },
-      take: 15,
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            role: true,
-          },
-        },
-      },
-    });
+      }),
+    ]);
 
     // Format territory audits as clean unified activity entries
     const territoryLogs = territoryAudits.map((a) => ({
@@ -78,7 +78,7 @@ export async function GET(req: Request) {
       user: a.user,
     }));
 
-    // Merge and sort chronologically (newest first)
+    // Merge and sort chronologically (newest first) to get the true last 50 activities
     const combinedLogs = [...logs, ...territoryLogs]
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 50);

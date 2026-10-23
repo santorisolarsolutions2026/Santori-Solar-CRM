@@ -20,6 +20,7 @@ import {
   X,
   SlidersHorizontal,
 } from 'lucide-react';
+import CustomDropdown from '@/components/CustomDropdown';
 
 interface AttendanceRecord {
   id: number;
@@ -447,63 +448,64 @@ export default function AttendancePage() {
     if (record) {
       if (record.notes?.includes('Auto-closed') || record.notes?.includes('Missed') || record.status === 'auto_checkout') {
         return (
-          <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-md bg-orange-500/15 text-orange-400 border border-orange-500/30 whitespace-nowrap inline-flex items-center gap-1">
+          <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-md bg-orange-500/15 text-orange-700 dark:text-orange-400 border border-orange-500/30 whitespace-nowrap inline-flex items-center gap-1">
             <AlertCircle className="w-2.5 h-2.5 shrink-0" />
             <span>Auto Checkout (Half Day)</span>
           </span>
         );
       } else if (record.status === 'half_day') {
         return (
-          <span className="text-[9px] font-extrabold px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-500">
+          <span className="text-[9px] font-extrabold px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-400">
             Half Day
           </span>
         );
       } else if (record.status === 'absent') {
         return (
-          <span className="text-[9px] font-extrabold px-2.5 py-1 rounded-lg bg-red-500/10 text-red-400">
+          <span className="text-[9px] font-extrabold px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-700 dark:text-rose-400">
             Absent
           </span>
         );
       } else if (record.status === 'completed' || record.checkOut) {
         return (
-          <span className="text-[9px] font-extrabold px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400">
+          <span className="text-[9px] font-extrabold px-2.5 py-1 rounded-lg bg-[#4F7D32]/10 text-[#4F7D32]">
             Completed
           </span>
         );
       } else if (record.status === 'late') {
         return (
-          <span className="text-[9px] font-extrabold px-2.5 py-1 rounded-lg bg-yellow-500/10 text-yellow-400">
+          <span className="text-[9px] font-extrabold px-2.5 py-1 rounded-lg bg-yellow-500/10 text-amber-700 dark:text-yellow-400">
             Late
           </span>
         );
       } else {
         return (
-          <span className="text-[9px] font-extrabold px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-500 animate-pulse">
-            Active
+          <span className="text-[9px] font-extrabold px-2.5 py-1 rounded-lg bg-[#4F7D32]/10 text-[#4F7D32] inline-flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#4F7D32] animate-pulse shrink-0" />
+            <span>Active</span>
           </span>
         );
       }
     } else if (isFuture) {
       return (
-        <span className="text-[9px] font-semibold px-2.5 py-1 rounded-lg bg-slate-800/60 text-slate-350">
+        <span className="text-[9px] font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300">
           Future
         </span>
       );
     } else if (isHoliday) {
       return (
-        <span className="text-[9px] font-extrabold px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-500" title={holidayName}>
+        <span className="text-[9px] font-extrabold px-2.5 py-1 rounded-lg bg-[#4F7D32]/10 text-[#4F7D32]" title={holidayName}>
           Holiday
         </span>
       );
     } else if (isWeekend) {
       return (
-        <span className="text-[9px] font-semibold px-2.5 py-1 rounded-lg bg-[var(--bg-main)] text-[var(--text-muted)]">
+        <span className="text-[9px] font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300">
           Weekly Off
         </span>
       );
     } else {
       return (
-        <span className="text-[9px] font-extrabold px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-450">
+        <span className="text-[9px] font-extrabold px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-700 dark:text-rose-400">
           Absent
         </span>
       );
@@ -515,7 +517,7 @@ export default function AttendancePage() {
   if (!hasAttendanceAccess) {
     return (
       <div className="p-12 text-center bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl max-w-xl mx-auto my-12 space-y-4 shadow-xl">
-        <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 mx-auto">
+        <div className="w-12 h-12 flex items-center justify-center text-[#4F7D32] mx-auto">
           <Clock className="w-6 h-6" />
         </div>
         <h2 className="text-base font-bold text-white uppercase tracking-wider">Attendance Access Restricted</h2>
@@ -529,10 +531,10 @@ export default function AttendancePage() {
   return (
     <div className="space-y-6">
       {/* Title Header & Daily Control */}
-      <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-6 shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+      <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-5 sm:p-6 shadow-xl flex flex-col 2xl:flex-row 2xl:items-center justify-between gap-5">
         <div>
           <h1 className="text-xl font-bold text-white tracking-wide flex items-center gap-2.5">
-            <Clock className="w-6 h-6 text-emerald-500 shrink-0" />
+            <Clock className="w-6 h-6 text-[#4F7D32] shrink-0" />
             <span>Team Member Attendance & Work Hours</span>
           </h1>
           <p className="text-xs text-[var(--text-secondary)] mt-1 max-w-xl">
@@ -540,7 +542,7 @@ export default function AttendancePage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3 flex-wrap lg:flex-nowrap">
+        <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
           {/* Quick Personal Action Box */}
           <div className="px-4 py-2 bg-[var(--bg-main)]/60 border border-[var(--border-color)] rounded-xl flex items-center gap-3 shadow-inner shrink-0">
             <div className="text-right">
@@ -555,10 +557,10 @@ export default function AttendancePage() {
                   : todayAttendance.status === 'absent'
                   ? 'text-red-400'
                   : todayAttendance.checkOut
-                  ? 'text-emerald-400'
+                  ? 'text-[#4F7D32]'
                   : todayAttendance.status === 'late'
                   ? 'text-yellow-400'
-                  : 'text-emerald-500'
+                  : 'text-[#4F7D32]'
               }`}>
                 {!todayAttendance
                   ? 'Not Checked In'
@@ -582,7 +584,7 @@ export default function AttendancePage() {
               <button
                 onClick={handleCheckIn}
                 disabled={actionLoading}
-                className="py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all font-sans"
+                className="py-1.5 px-3 bg-[#4F7D32] hover:bg-[#436A2B] text-white rounded-lg font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all font-sans"
               >
                 {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserCheck className="w-3.5 h-3.5" />}
                 <span>Check In</span>
@@ -591,13 +593,13 @@ export default function AttendancePage() {
               <button
                 onClick={handleCheckOut}
                 disabled={actionLoading}
-                className="py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all font-sans"
+                className="py-1.5 px-3 bg-[#4F7D32] hover:bg-[#436A2B] text-white rounded-lg font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all font-sans"
               >
                 {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LogOut className="w-3.5 h-3.5" />}
                 <span>Check Out</span>
               </button>
             ) : (
-              <div className="px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-[10px] font-bold text-emerald-400 font-mono">
+              <div className="px-2.5 py-1 bg-[#4F7D32]/10 border border-[#4F7D32]/20 rounded-lg text-[10px] font-bold text-[#4F7D32] font-mono">
                 {Math.floor((todayAttendance.workDurationMin || 0) / 60)}h {(todayAttendance.workDurationMin || 0) % 60}m Worked
               </div>
             )}
@@ -607,7 +609,7 @@ export default function AttendancePage() {
             <button
               type="button"
               onClick={() => handleDownloadAttendanceRegister()}
-              className="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-all shadow-md shadow-emerald-500/20 font-sans shrink-0"
+              className="py-2.5 px-4 bg-[#4F7D32] hover:bg-[#436A2B] text-white rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-all shadow-md shadow-[#4F7D32]/20 font-sans shrink-0"
               title="Download Monthwise Attendance Register (School/Company Register Format)"
             >
               <FileSpreadsheet className="w-4 h-4 text-white" />
@@ -623,7 +625,7 @@ export default function AttendancePage() {
               }}
               className="py-2.5 px-4 bg-[var(--bg-main)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-white rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer hover:border-[var(--border-color)] transition-all font-sans shrink-0"
             >
-              <Calendar className="w-4 h-4 text-emerald-500" />
+              <Calendar className="w-4 h-4 text-[#4F7D32]" />
               <span>Manage Holidays</span>
             </button>
           )}
@@ -637,7 +639,7 @@ export default function AttendancePage() {
             <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block">Total Team Members</span>
             <span className="text-xl font-extrabold text-white mt-1 block font-mono">{teamRoster.length}</span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500">
+          <div className="w-10 h-10 flex items-center justify-center text-[#4F7D32]">
             <Users className="w-5 h-5" />
           </div>
         </div>
@@ -645,9 +647,9 @@ export default function AttendancePage() {
         <div className="p-5 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl flex items-center justify-between">
           <div>
             <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block">Checked In (Active)</span>
-            <span className="text-xl font-extrabold text-emerald-500 mt-1 block font-mono">{checkedInCount}</span>
+            <span className="text-xl font-extrabold text-[#4F7D32] mt-1 block font-mono">{checkedInCount}</span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500">
+          <div className="w-10 h-10 flex items-center justify-center text-[#4F7D32]">
             <UserCheck className="w-5 h-5" />
           </div>
         </div>
@@ -655,9 +657,9 @@ export default function AttendancePage() {
         <div className="p-5 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl flex items-center justify-between">
           <div>
             <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block">Checked Out (Completed)</span>
-            <span className="text-xl font-extrabold text-emerald-400 mt-1 block font-mono">{completedCount}</span>
+            <span className="text-xl font-extrabold text-[#4F7D32] mt-1 block font-mono">{completedCount}</span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+          <div className="w-10 h-10 flex items-center justify-center text-[#4F7D32]">
             <CheckCircle2 className="w-5 h-5" />
           </div>
         </div>
@@ -668,7 +670,7 @@ export default function AttendancePage() {
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
           {activeTab !== 'monthly' && (
             <div className="flex items-center gap-2 bg-[var(--bg-main)] border border-[var(--border-color)] px-3 py-2 rounded-xl text-xs text-[var(--text-primary)]">
-              <Calendar className="w-4 h-4 text-emerald-500 shrink-0" />
+              <Calendar className="w-4 h-4 text-[#4F7D32] shrink-0" />
               <input
                 type="date"
                 value={selectedDate}
@@ -684,7 +686,7 @@ export default function AttendancePage() {
                 type="button"
                 onClick={() => setActiveTab('team')}
                 className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  activeTab === 'team' ? 'bg-emerald-600 text-white shadow' : 'text-slate-450 hover:text-white'
+                  activeTab === 'team' ? 'bg-[#4F7D32] hover:bg-[#436A2B] text-white shadow' : 'text-slate-450 hover:text-white'
                 }`}
               >
                 Team Roster
@@ -694,7 +696,7 @@ export default function AttendancePage() {
               type="button"
               onClick={() => setActiveTab('personal')}
               className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'personal' ? 'bg-emerald-600 text-white shadow' : 'text-slate-450 hover:text-white'
+                activeTab === 'personal' ? 'bg-[#4F7D32] hover:bg-[#436A2B] text-white shadow' : 'text-slate-450 hover:text-white'
               }`}
             >
               My Log
@@ -703,7 +705,7 @@ export default function AttendancePage() {
               type="button"
               onClick={() => setActiveTab('monthly')}
               className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'monthly' ? 'bg-emerald-600 text-white shadow' : 'text-slate-450 hover:text-white'
+                activeTab === 'monthly' ? 'bg-[#4F7D32] hover:bg-[#436A2B] text-white shadow' : 'text-slate-450 hover:text-white'
               }`}
             >
               Monthly History
@@ -718,7 +720,7 @@ export default function AttendancePage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search team member name or ID..."
-              className="block w-full pl-9 pr-3 py-2 bg-slate-955/60 border border-[var(--border-color)] rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 text-xs"
+              className="block w-full pl-9 pr-3 py-2 bg-slate-955/60 border border-[var(--border-color)] rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#4F7D32]/50 text-xs"
             />
             <Search className="w-4 h-4 text-[var(--text-muted)] absolute left-3 top-2.5" />
           </div>
@@ -728,58 +730,52 @@ export default function AttendancePage() {
           <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
             {/* Employee Selector (Shown for supervisors / admins with multiple subordinates) */}
             {isSupervisor && visibleEmployees.length > 1 && (
-              <div className="flex items-center gap-2 bg-[var(--bg-main)] border border-[var(--border-color)] px-3 py-1.5 rounded-xl text-xs text-[var(--text-primary)]">
-                <span className="text-[var(--text-muted)] uppercase tracking-wider text-[10px] font-bold">Employee:</span>
-                <select
-                  value={selectedEmployeeId || user?.id?.toString()}
-                  onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                  className="bg-transparent text-white focus:outline-none cursor-pointer font-bold font-sans"
-                >
-                  {visibleEmployees.map((emp) => (
-                    <option key={emp.id} value={emp.id} className="bg-[var(--bg-main)] text-white">
-                      {emp.name} ({emp.employeeId || 'No ID'})
-                    </option>
-                  ))}
-                </select>
+              <div className="flex items-center gap-2">
+                <span className="text-[var(--text-muted)] uppercase tracking-wider text-[10px] font-bold shrink-0">Employee:</span>
+                <div className="min-w-[190px] sm:min-w-[220px]">
+                  <CustomDropdown
+                    options={visibleEmployees.map((emp) => ({
+                      value: emp.id.toString(),
+                      label: `${emp.name} (${emp.employeeId || 'No ID'})`,
+                    }))}
+                    value={selectedEmployeeId || user?.id?.toString() || ''}
+                    onChange={(val) => setSelectedEmployeeId(val)}
+                    placeholder="Select Employee..."
+                  />
+                </div>
               </div>
             )}
 
             {/* Month Selector */}
-            <div className="flex items-center gap-2 bg-[var(--bg-main)] border border-[var(--border-color)] px-3 py-1.5 rounded-xl text-xs text-[var(--text-primary)]">
-              <span className="text-[var(--text-muted)] uppercase tracking-wider text-[10px] font-bold">Month:</span>
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                className="bg-transparent text-white focus:outline-none cursor-pointer font-bold"
-              >
-                {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => {
-                  const name = new Date(2000, m - 1, 1).toLocaleString('default', { month: 'long' });
-                  return (
-                    <option key={m} value={m} className="bg-[var(--bg-main)] text-white">
-                      {name}
-                    </option>
-                  );
-                })}
-              </select>
+            <div className="flex items-center gap-2">
+              <span className="text-[var(--text-muted)] uppercase tracking-wider text-[10px] font-bold shrink-0">Month:</span>
+              <div className="w-36">
+                <CustomDropdown
+                  options={Array.from({ length: 12 }, (_, i) => i + 1).map((m) => ({
+                    value: m.toString(),
+                    label: new Date(2000, m - 1, 1).toLocaleString('default', { month: 'long' }),
+                  }))}
+                  value={selectedMonth.toString()}
+                  onChange={(val) => setSelectedMonth(parseInt(val, 10))}
+                  placeholder="Select Month..."
+                />
+              </div>
             </div>
 
             {/* Year Selector */}
-            <div className="flex items-center gap-2 bg-[var(--bg-main)] border border-[var(--border-color)] px-3 py-1.5 rounded-xl text-xs text-[var(--text-primary)]">
-              <span className="text-[var(--text-muted)] uppercase tracking-wider text-[10px] font-bold">Year:</span>
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                className="bg-transparent text-white focus:outline-none cursor-pointer font-bold"
-              >
-                {[-2, -1, 0, 1].map((offset) => {
-                  const y = new Date().getFullYear() + offset;
-                  return (
-                    <option key={y} value={y} className="bg-[var(--bg-main)] text-white">
-                      {y}
-                    </option>
-                  );
-                })}
-              </select>
+            <div className="flex items-center gap-2">
+              <span className="text-[var(--text-muted)] uppercase tracking-wider text-[10px] font-bold shrink-0">Year:</span>
+              <div className="w-28">
+                <CustomDropdown
+                  options={[-2, -1, 0, 1].map((offset) => {
+                    const y = new Date().getFullYear() + offset;
+                    return { value: y.toString(), label: y.toString() };
+                  })}
+                  value={selectedYear.toString()}
+                  onChange={(val) => setSelectedYear(parseInt(val, 10))}
+                  placeholder="Select Year..."
+                />
+              </div>
             </div>
           </div>
         )}
@@ -789,7 +785,7 @@ export default function AttendancePage() {
       <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl overflow-hidden shadow-xl">
         {loading ? (
           <div className="p-12 text-center text-[var(--text-secondary)] flex flex-col items-center gap-3">
-            <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
+            <Loader2 className="w-6 h-6 animate-spin text-[#4F7D32]" />
             <span className="text-xs font-semibold">Loading daily attendance records...</span>
           </div>
         ) : activeTab === 'team' ? (
@@ -826,7 +822,7 @@ export default function AttendancePage() {
                                 onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
                               />
                             ) : (
-                              <div className="w-9 h-9 rounded-full bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-center text-emerald-500 shrink-0">
+                              <div className="w-9 h-9 rounded-full bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-center text-[#4F7D32] shrink-0">
                                 <User className="w-5 h-5" />
                               </div>
                             )}
@@ -837,7 +833,7 @@ export default function AttendancePage() {
                                   title={status.label}
                                   className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-[var(--bg-card)] ${
                                     status.isOnline
-                                      ? 'bg-emerald-400'
+                                      ? 'bg-[#4F7D32]'
                                       : 'bg-slate-600'
                                   }`}
                                 />
@@ -849,7 +845,7 @@ export default function AttendancePage() {
                             <div className="flex items-center gap-2 mt-0.5">
                               <span className="text-[10px] text-[var(--text-secondary)] capitalize">{member.role}</span>
                               {member.employeeId && (
-                                <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-md font-bold">
+                                <span className="text-[9px] font-mono text-[#4F7D32] bg-[#4F7D32]/10 px-1.5 py-0.5 rounded-md font-bold">
                                   {member.employeeId}
                                 </span>
                               )}
@@ -858,7 +854,7 @@ export default function AttendancePage() {
                               const status = getOnlineStatus(member.lastSeenAt);
                               return (
                                 <div className="mt-1 flex items-center gap-1.5">
-                                  <span className={`text-[9px] font-medium leading-none ${status.isOnline ? 'text-emerald-400' : 'text-slate-500'}`}>
+                                  <span className={`text-[9px] font-medium leading-none ${status.isOnline ? 'text-[#4F7D32]' : 'text-slate-500'}`}>
                                     {status.label}
                                   </span>
                                 </div>
@@ -894,32 +890,34 @@ export default function AttendancePage() {
 
                       <td className="py-3.5 px-4">
                         {!attendance ? (
-                          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-slate-800/60 text-slate-350 flex items-center gap-1.5 w-fit" title="Not Checked In Yet">
-                            <AlertCircle className="w-3.5 h-3.5 text-slate-400" /> Pending
+                          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 flex items-center gap-1.5 w-fit" title="Not Checked In Yet">
+                            <AlertCircle className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" /> Pending
                           </span>
                         ) : (attendance.notes?.includes('Auto-closed') || attendance.notes?.includes('Missed 07:30 PM') || attendance.status === 'auto_checkout') ? (
-                          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-orange-500/15 text-orange-400 border border-orange-500/30 flex items-center gap-1.5 w-fit" title={attendance.notes || "Auto Checkout"}>
-                            <AlertCircle className="w-3.5 h-3.5 text-orange-400" /> Auto Checkout (Half Day)
+                          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-orange-500/15 text-orange-700 dark:text-orange-400 border border-orange-500/30 flex items-center gap-1.5 w-fit" title={attendance.notes || "Auto Checkout"}>
+                            <AlertCircle className="w-3.5 h-3.5 text-orange-700 dark:text-orange-400" /> Auto Checkout (Half Day)
                           </span>
                         ) : attendance.status === 'half_day' ? (
-                          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-500 flex items-center gap-1.5 w-fit" title={attendance.notes || "Half Day"}>
-                            <AlertCircle className="w-3.5 h-3.5 text-amber-500" /> Half Day
+                          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-400 flex items-center gap-1.5 w-fit" title={attendance.notes || "Half Day"}>
+                            <AlertCircle className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" /> Half Day
                           </span>
                         ) : attendance.status === 'late' && !attendance.checkOut ? (
-                          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-yellow-500/10 text-yellow-400 flex items-center gap-1.5 w-fit animate-pulse" title="Late Check-in (Active)">
-                            <Clock className="w-3.5 h-3.5 text-yellow-400" /> Late (Active)
+                          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-yellow-500/10 text-amber-700 dark:text-yellow-400 flex items-center gap-1.5 w-fit" title="Late Check-in (Active)">
+                            <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse shrink-0" />
+                            <span>Late (Active)</span>
                           </span>
                         ) : attendance.status === 'absent' ? (
-                          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-red-500/10 text-red-400 flex items-center gap-1.5 w-fit" title={attendance.notes || "Absent"}>
-                            <AlertCircle className="w-3.5 h-3.5 text-red-400" /> Absent
+                          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-700 dark:text-rose-400 flex items-center gap-1.5 w-fit" title={attendance.notes || "Absent"}>
+                            <AlertCircle className="w-3.5 h-3.5 text-rose-700 dark:text-rose-400" /> Absent
                           </span>
                         ) : attendance.checkOut ? (
-                          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center gap-1.5 w-fit" title="Full Day Completed">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Full Day
+                          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-[#4F7D32]/10 text-[#4F7D32] flex items-center gap-1.5 w-fit" title="Full Day Completed">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-[#4F7D32]" /> Full Day
                           </span>
                         ) : (
-                          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center gap-1.5 w-fit animate-pulse" title="Currently Checked In">
-                            <UserCheck className="w-3.5 h-3.5 text-emerald-400" /> Active
+                          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-[#4F7D32]/10 text-[#4F7D32] flex items-center gap-1.5 w-fit" title="Currently Checked In">
+                            <span className="w-2 h-2 rounded-full bg-[#4F7D32] animate-pulse shrink-0" />
+                            <span>Active</span>
                           </span>
                         )}
                       </td>
@@ -987,11 +985,11 @@ export default function AttendancePage() {
               <div className="p-4 bg-[var(--bg-card)]/60 border border-[var(--border-color)] rounded-xl flex items-center justify-between">
                 <div>
                   <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block">Days Present</span>
-                  <span className="text-lg font-extrabold text-emerald-400 mt-1 block font-mono">
+                  <span className="text-lg font-extrabold text-[#4F7D32] mt-1 block font-mono">
                     {presentDaysCount} <span className="text-xs text-[var(--text-muted)] font-sans font-normal">/ {totalWorkingDays} working days</span>
                   </span>
                 </div>
-                <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                <div className="w-9 h-9 flex items-center justify-center text-[#4F7D32]">
                   <UserCheck className="w-5 h-5" />
                 </div>
               </div>
@@ -999,9 +997,9 @@ export default function AttendancePage() {
               <div className="p-4 bg-[var(--bg-card)]/60 border border-[var(--border-color)] rounded-xl flex items-center justify-between">
                 <div>
                   <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block">Total Work Hours</span>
-                  <span className="text-lg font-extrabold text-emerald-500 mt-1 block font-mono">{totalWorkHoursStr}</span>
+                  <span className="text-lg font-extrabold text-[#4F7D32] mt-1 block font-mono">{totalWorkHoursStr}</span>
                 </div>
-                <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500">
+                <div className="w-9 h-9 flex items-center justify-center text-[#4F7D32]">
                   <Clock className="w-5 h-5" />
                 </div>
               </div>
@@ -1030,7 +1028,7 @@ export default function AttendancePage() {
             {/* Monthly Calendar Tabular List */}
             {monthlyLoading ? (
               <div className="p-12 text-center text-[var(--text-secondary)] flex flex-col items-center gap-3">
-                <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
+                <Loader2 className="w-6 h-6 animate-spin text-[#4F7D32]" />
                 <span className="text-xs font-semibold">Loading monthly logs...</span>
               </div>
             ) : (
@@ -1061,10 +1059,10 @@ export default function AttendancePage() {
                       const weekdayDisplay = dayDate.toLocaleDateString('default', { weekday: 'short', timeZone: 'UTC' });
 
                       return (
-                        <tr key={dayStr} className={`hover:bg-[var(--bg-card)]/30 transition-all ${isToday ? 'bg-emerald-500/[0.04]' : ''}`}>
+                        <tr key={dayStr} className={`hover:bg-[var(--bg-card)]/30 transition-all ${isToday ? 'bg-[#4F7D32]/[0.06]' : ''}`}>
                           <td className="py-3 px-5 font-sans">
-                            <span className="font-bold text-white block">{dateDisplay}</span>
-                            <span className="text-[10px] text-[var(--text-muted)] font-medium">{weekdayDisplay}</span>
+                            <span className="font-bold text-[var(--text-primary)] block">{dateDisplay}</span>
+                            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold">{weekdayDisplay}</span>
                           </td>
                           <td className="py-3 px-4 font-sans">
                             {user?.role === 'admin' ? (
@@ -1084,48 +1082,51 @@ export default function AttendancePage() {
                               renderStatusBadge(record, isFuture, isWeekend, dayStr)
                             )}
                           </td>
-                          <td className="py-3 px-4 text-[var(--text-primary)]">
+                          <td className="py-3 px-4 text-[var(--text-primary)] font-mono font-medium">
                             {record ? (
                               new Date(record.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                             ) : (
-                              <span className="text-slate-650 font-normal">-</span>
+                              <span className="text-slate-400 dark:text-slate-500 font-normal">-</span>
                             )}
                           </td>
-                          <td className="py-3 px-4 text-[var(--text-primary)]">
+                          <td className="py-3 px-4 text-[var(--text-primary)] font-mono font-medium">
                             {record && record.checkOut ? (
                               new Date(record.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                             ) : (
-                              <span className="text-slate-655 font-normal">-</span>
+                              <span className="text-slate-400 dark:text-slate-500 font-normal">-</span>
                             )}
                           </td>
                           <td className="py-3 px-4 font-mono font-bold">
                             {record && record.workDurationMin ? (
-                              <span className={record.workDurationMin >= 510 ? "text-emerald-400" : "text-amber-400"}>
+                              <span className={record.workDurationMin >= 510 ? "text-[#4F7D32]" : "text-amber-700 dark:text-amber-400"}>
                                 {Math.floor(record.workDurationMin / 60)}h {record.workDurationMin % 60}m
                               </span>
                             ) : isToday && record && !record.checkOut ? (
-                              <span className="text-emerald-500/80 font-normal italic animate-pulse">Active...</span>
+                              <span className="text-[#4F7D32] font-semibold flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#4F7D32] animate-pulse shrink-0" />
+                                <span>Active...</span>
+                              </span>
                             ) : (
-                              <span className="text-slate-655 font-normal">-</span>
+                              <span className="text-slate-400 dark:text-slate-500 font-normal">-</span>
                             )}
                           </td>
                           <td className="py-3 px-4 text-[var(--text-secondary)] text-xs font-sans max-w-sm truncate" title={record?.checkInLocation || ''}>
                             {record ? (
                               <div className="flex flex-col gap-0.5">
                                 {record.checkInLocation && (
-                                  <span className="text-[var(--text-primary)] truncate">
-                                    <span className="text-[var(--text-muted)] font-semibold text-[9px] uppercase tracking-wide mr-1">In Loc:</span>
+                                  <span className="text-[var(--text-primary)] truncate font-medium">
+                                    <span className="text-slate-500 dark:text-slate-400 font-bold text-[9px] uppercase tracking-wide mr-1">In Loc:</span>
                                     {record.checkInLocation.includes('@') ? record.checkInLocation.split('@')[0] : record.checkInLocation.replace('Web Portal check-in at ', '')}
                                   </span>
                                 )}
                                 {record.notes && (
-                                  <span className={record.notes.includes('Auto-closed') || record.notes.includes('Missed') ? "text-amber-400/90 italic text-[11px]" : "text-emerald-500 italic text-[11px]"}>
+                                  <span className={record.notes.includes('Auto-closed') || record.notes.includes('Missed') ? "text-amber-700 dark:text-amber-300 italic text-[11px] font-medium" : "text-[#4F7D32] dark:text-[#7bb05c] italic text-[11px] font-medium"}>
                                     &ldquo;{record.notes}&rdquo;
                                   </span>
                                 )}
                               </div>
                             ) : (
-                              <span className="text-slate-655">-</span>
+                              <span className="text-slate-400 dark:text-slate-500">-</span>
                             )}
                           </td>
                         </tr>
@@ -1164,7 +1165,7 @@ export default function AttendancePage() {
                     value={newHolidayName}
                     onChange={(e) => setNewHolidayName(e.target.value)}
                     placeholder="e.g. Independence Day, Diwali"
-                    className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-emerald-500 focus:outline-none"
+                    className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-[#4F7D32] focus:outline-none"
                   />
                 </div>
                 <div>
@@ -1175,11 +1176,11 @@ export default function AttendancePage() {
                       required
                       value={newHolidayDate}
                       onChange={(e) => setNewHolidayDate(e.target.value)}
-                      className="block flex-1 px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-emerald-500 focus:outline-none"
+                      className="block flex-1 px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:ring-[#4F7D32] focus:outline-none"
                     />
                     <button
                       type="submit"
-                      className="py-2 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold text-xs shadow-md transition-all cursor-pointer shrink-0 border border-transparent"
+                      className="py-2 px-4 bg-[#4F7D32] hover:bg-[#436A2B] text-white rounded-lg font-bold text-xs shadow-md transition-all cursor-pointer shrink-0 border border-transparent"
                     >
                       Add
                     </button>
@@ -1234,7 +1235,7 @@ export default function AttendancePage() {
           <div className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
             <div className="p-5 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex justify-between items-center">
               <div className="flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-emerald-500" />
+                <ShieldCheck className="w-5 h-5 text-[#4F7D32]" />
                 <h3 className="text-sm font-bold uppercase tracking-wider text-white">Override Attendance Status</h3>
               </div>
               <button type="button" onClick={() => setShowOverrideModal(false)} className="text-[var(--text-secondary)] hover:text-white cursor-pointer border border-transparent">
@@ -1244,7 +1245,7 @@ export default function AttendancePage() {
 
             <form onSubmit={handleOverrideSubmit}>
               <div className="p-6 space-y-4">
-                <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-3.5 text-xs text-emerald-500 leading-relaxed font-sans">
+                <div className="bg-[#4F7D32]/5 border border-[#4F7D32]/10 rounded-xl p-3.5 text-xs text-[#4F7D32] leading-relaxed font-sans">
                   You are overriding attendance for:
                   <strong className="text-white block font-sans mt-1">Date: {overrideDate}</strong>
                   <strong className="text-white block font-sans">Employee: {employees.find(e => e.id === overrideUserId)?.name || `ID #${overrideUserId}`}</strong>
@@ -1252,16 +1253,17 @@ export default function AttendancePage() {
 
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1.5">New Attendance Status</label>
-                  <select
+                  <CustomDropdown
+                    options={[
+                      { value: 'present', label: 'Present (Completed)' },
+                      { value: 'half_day', label: 'Half Day' },
+                      { value: 'absent', label: 'Absent' },
+                      { value: 'clear', label: 'Clear Record (Reset)' },
+                    ]}
                     value={overrideStatus}
-                    onChange={(e) => setOverrideStatus(e.target.value)}
-                    className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-white text-xs focus:ring-emerald-500 focus:outline-none"
-                  >
-                    <option value="present">Present (Completed)</option>
-                    <option value="half_day">Half Day</option>
-                    <option value="absent">Absent</option>
-                    <option value="clear">Clear Record (Reset)</option>
-                  </select>
+                    onChange={(val) => setOverrideStatus(val)}
+                    placeholder="Select Status..."
+                  />
                 </div>
               </div>
 
@@ -1275,7 +1277,7 @@ export default function AttendancePage() {
                 </button>
                 <button
                   type="submit"
-                  className="py-2 px-5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-md transition-all cursor-pointer border border-transparent"
+                  className="py-2 px-5 bg-[#4F7D32] hover:bg-[#436A2B] text-white rounded-xl font-bold text-xs shadow-md transition-all cursor-pointer border border-transparent"
                 >
                   Confirm Override
                 </button>

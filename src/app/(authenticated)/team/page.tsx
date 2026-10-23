@@ -82,7 +82,7 @@ const ROLE_LABELS: Record<string, { label: string; class: string }> = {
   psa_tl: { label: 'PSA Team Leader', class: 'bg-sky-500/10 text-sky-400' },
   psa: { label: 'PSA Consultant', class: 'bg-sky-500/10 text-sky-450' },
   tl: { label: 'Sales Team Leader', class: 'bg-cyan-500/10 text-cyan-400' },
-  consultant: { label: 'Sales Consultant', class: 'bg-emerald-500/10 text-emerald-400' },
+  consultant: { label: 'Sales Consultant', class: 'bg-[#4F7D32]/15 text-[#4F7D32] dark:text-[#7bb05c]' },
 };
 
 export function getRoleLabel(role: string): string {
@@ -408,7 +408,7 @@ const STAGE_BADGES: Record<number, { name: string; class: string }> = {
   10: { name: 'Disconnected', class: 'bg-slate-600/15 text-[var(--text-secondary)] border-slate-600/20' },
   11: { name: 'Switch Off', class: 'bg-slate-700/20 text-[var(--text-secondary)] border-[var(--border-color)]' },
   12: { name: 'Can\'t Fit Solar', class: 'bg-stone-900 text-stone-400 border-stone-800/40' },
-  13: { name: 'Sale Done', class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-bold' },
+  13: { name: 'Sale Done', class: 'bg-[#4F7D32]/10 text-[#4F7D32] dark:text-[#7bb05c] border-[#4F7D32]/20 font-bold' },
   14: { name: 'Meeting Cancelled', class: 'bg-red-950/20 text-red-500 border-red-900/20 font-bold' },
 };
 
@@ -440,11 +440,11 @@ interface TreeNode {
 }
 
 const getLevelColor = (level: number) => {
-  return 'bg-emerald-500 shadow-emerald-500/10 border-emerald-500/20';
+  return 'bg-[#4F7D32] shadow-[#4F7D32]/10 border-[#4F7D32]/20';
 };
 
 const getLevelBorderColor = (level: number) => {
-  return 'border-emerald-500/70 shadow-emerald-500/10';
+  return 'border-[#4F7D32]/70 shadow-[#4F7D32]/10';
 };
 
 
@@ -473,7 +473,7 @@ const HierarchyTreeNodeComponent = ({
       {/* Node Card */}
       <div 
         onClick={() => onSelectNode(node.id)}
-        className={`group relative flex flex-col gap-2.5 p-3.5 bg-[var(--bg-card)]/80 hover:bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-emerald-500/40 rounded-xl transition-all duration-300 cursor-pointer shadow-lg w-64 transform hover:-translate-y-0.5 hover:shadow-emerald-500/[0.04] ${
+        className={`group relative flex flex-col gap-2.5 p-3.5 bg-[var(--bg-card)]/80 hover:bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[#4F7D32]/40 rounded-xl transition-all duration-300 cursor-pointer shadow-lg w-64 transform hover:-translate-y-0.5 hover:shadow-xl ${
           isDropdownOpen ? 'z-[60]' : 'z-10 hover:z-20'
         }`}
       >
@@ -497,7 +497,7 @@ const HierarchyTreeNodeComponent = ({
                 e.stopPropagation(); // Prevent focusing tree
                 onOpenDetails(node.member);
               }}
-              className="text-xs font-bold text-white hover:text-emerald-600 dark:hover:text-emerald-400 leading-none mb-1 text-left truncate w-full cursor-pointer hover:underline block"
+              className="text-xs font-bold text-white hover:text-[#4F7D32] dark:hover:text-[#7bb05c] leading-none mb-1 text-left truncate w-full cursor-pointer hover:underline block"
               title="Click to view details"
             >
               {node.name}
@@ -539,7 +539,7 @@ const HierarchyTreeNodeComponent = ({
 
         {/* Focus badge helper */}
         <div className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          <span className="text-[7px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+          <span className="text-[7px] font-bold text-[#4F7D32] dark:text-[#7bb05c] uppercase tracking-widest bg-[#4F7D32]/10 px-1.5 py-0.5 rounded border border-[#4F7D32]/20">
             Focus
           </span>
         </div>
@@ -766,7 +766,7 @@ const DesignationTreeNodeComponent = ({
       {/* Node Card */}
       <div 
         onClick={() => onEdit?.(node)}
-        className="group relative flex flex-col gap-2.5 p-3.5 bg-[var(--bg-card)]/80 hover:bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-emerald-500/40 rounded-xl transition-all duration-300 cursor-pointer shadow-lg w-64 transform hover:-translate-y-0.5 hover:shadow-emerald-500/[0.04]"
+        className="group relative flex flex-col gap-2.5 p-3.5 bg-[var(--bg-card)]/80 hover:bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[#4F7D32]/40 rounded-xl transition-all duration-300 cursor-pointer shadow-lg w-64 transform hover:-translate-y-0.5 hover:shadow-xl"
       >
         <div className="flex items-center gap-3">
           {/* Level indicators as color badge */}
@@ -779,7 +779,7 @@ const DesignationTreeNodeComponent = ({
 
           {/* Info */}
           <div className="min-w-0 flex-1">
-            <h4 className="text-xs font-extrabold text-[var(--text-primary)] leading-none mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors truncate">
+            <h4 className="text-xs font-extrabold text-[var(--text-primary)] leading-none mb-1 group-hover:text-[#4F7D32] dark:group-hover:text-[#7bb05c] transition-colors truncate">
               {node.name}
             </h4>
             <div className="flex items-center gap-1.5 flex-wrap mt-1">
@@ -787,7 +787,7 @@ const DesignationTreeNodeComponent = ({
                 {node.departmentName}
               </span>
               <span className="text-slate-700 text-[10px]">•</span>
-              <span className="text-[8px] bg-emerald-500/5 border border-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded font-bold font-mono">
+              <span className="text-[8px] bg-[#4F7D32]/5 border border-[#4F7D32]/10 text-[#4F7D32] dark:text-[#7bb05c] px-1.5 py-0.5 rounded font-bold font-mono">
                 {node.defaultPermissionsCount} Defaults
               </span>
             </div>
@@ -796,7 +796,7 @@ const DesignationTreeNodeComponent = ({
 
         {/* Edit details hover tip */}
         <div className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          <span className="text-[7px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+          <span className="text-[7px] font-bold text-[#4F7D32] dark:text-[#7bb05c] uppercase tracking-widest bg-[#4F7D32]/10 px-1.5 py-0.5 rounded border border-[#4F7D32]/20">
             Edit
           </span>
         </div>
@@ -2586,10 +2586,10 @@ export default function TeamManagementPage() {
             <button
               type="button"
               onClick={() => setShowAddModal(true)}
-              className="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-lg shadow-emerald-500/10 flex items-center gap-1.5 transition-all w-fit cursor-pointer border border-transparent"
+              className="py-2.5 px-4 bg-[#4F7D32] hover:bg-[#436A2B] text-white !text-white rounded-lg font-bold text-xs shadow-md flex items-center gap-1.5 transition-all w-fit cursor-pointer border border-transparent"
             >
-              <Plus className="w-4 h-4" />
-              <span>Add Team Member</span>
+              <Plus className="w-4 h-4 text-white !text-white" />
+              <span className="text-white !text-white">Add Team Member</span>
             </button>
           )}
         </div>
@@ -2599,20 +2599,20 @@ export default function TeamManagementPage() {
       <div className="flex border border-[var(--border-color)] bg-[var(--bg-main)]/60 p-1 rounded-xl w-fit gap-1 shadow-inner">
         <button
           onClick={() => setActiveTab('members')}
-          className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
+          className={`px-4 py-2 rounded-lg font-bold text-xs transition-all cursor-pointer ${
             activeTab === 'members'
-              ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/10'
-              : 'text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-card)]/30'
+              ? 'bg-[#4F7D32] text-white shadow-md'
+              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card)]/30'
           }`}
         >
           Members Directory
         </button>
         <button
           onClick={() => setActiveTab('hierarchy')}
-          className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
+          className={`px-4 py-2 rounded-lg font-bold text-xs transition-all cursor-pointer ${
             activeTab === 'hierarchy'
-              ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/10'
-              : 'text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-card)]/30'
+              ? 'bg-[#4F7D32] text-white shadow-md'
+              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card)]/30'
           }`}
         >
           Hierarchy Tree
@@ -2620,10 +2620,10 @@ export default function TeamManagementPage() {
         {(user?.role === 'admin' || user?.role === 'director' || user?.department?.name === 'IT') && (
           <button
             onClick={() => setActiveTab('permissions')}
-            className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
+            className={`px-4 py-2 rounded-lg font-bold text-xs transition-all cursor-pointer ${
               activeTab === 'permissions'
-                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/10'
-                : 'text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-card)]/30'
+                ? 'bg-[#4F7D32] text-white shadow-md'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card)]/30'
             }`}
           >
             Custom Access Levels
@@ -2654,7 +2654,7 @@ export default function TeamManagementPage() {
       {activeTab === 'members' && (
         <>
           {/* Directory Search and Department Filter */}
-      <div className="flex flex-col md:flex-row items-center gap-4 bg-[var(--bg-card)]/60 border border-slate-805 p-4 rounded-xl shadow-xl">
+      <div className="flex flex-col md:flex-row items-center gap-4 bg-[var(--bg-card)]/60 border border-[var(--border-color)] p-4 rounded-xl shadow-xl">
         <div className="relative flex-1 w-full">
           <input
             type="text"
@@ -2662,7 +2662,7 @@ export default function TeamManagementPage() {
             disabled={!!empSearchInput.trim()}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={empSearchInput.trim() ? "Clear Employee ID lookup to search by name..." : "Search by name, email, or employee ID..."}
-            className="w-full pl-9 pr-4 py-2 bg-slate-955/80 border border-slate-805 rounded-xl text-[var(--text-primary)] placeholder-slate-550 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/50 disabled:opacity-40"
+            className="w-full pl-9 pr-4 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] text-xs focus:outline-none focus:ring-2 focus:ring-[#4F7D32]/50 disabled:opacity-40"
           />
           <Search className="w-4 h-4 text-[var(--text-muted)] absolute left-3 top-2.5" />
         </div>
@@ -2672,7 +2672,7 @@ export default function TeamManagementPage() {
             value={empSearchInput}
             onChange={(e) => setEmpSearchInput(e.target.value)}
             placeholder="Exact Employee ID Lookup (EMP-101)..."
-            className="w-full pl-9 pr-4 py-2.5 bg-slate-955/80 border border-slate-805 rounded-xl text-[var(--text-primary)] placeholder-slate-550 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/50 font-mono tracking-wide"
+            className="w-full pl-9 pr-4 py-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] text-xs focus:outline-none focus:ring-2 focus:ring-[#4F7D32]/50 font-mono tracking-wide"
           />
           <Search className="w-4 h-4 text-[var(--text-muted)] absolute left-3 top-3" />
         </div>
@@ -2699,7 +2699,7 @@ export default function TeamManagementPage() {
       {isAdminOrDirectorOrSalesHead && selectedUserIds.length > 0 && (
         <div className="bg-[var(--bg-card)] border border-[var(--border-color)] p-4 rounded-xl flex items-center justify-between shadow-xl animate-fade-in">
           <div className="flex items-center gap-3">
-            <span className="w-6 h-6 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center font-mono">
+            <span className="w-6 h-6 rounded-full bg-[#4F7D32] text-white font-bold text-xs flex items-center justify-center font-mono">
               {selectedUserIds.length}
             </span>
             <span className="text-xs font-semibold text-[var(--text-primary)]">Team Member(s) Selected</span>
@@ -2709,7 +2709,7 @@ export default function TeamManagementPage() {
             <button
               onClick={() => handleBulkAction('activate')}
               disabled={bulkActionLoading}
-              className="py-1.5 px-3 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 font-bold text-xs rounded-lg flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+              className="py-1.5 px-3 bg-[#4F7D32]/10 hover:bg-[#4F7D32]/20 border border-[#4F7D32]/30 text-[#4F7D32] dark:text-[#7bb05c] font-bold text-xs rounded-lg flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
             >
               <UserCheck className="w-3.5 h-3.5" />
               <span>Activate</span>
@@ -2717,7 +2717,7 @@ export default function TeamManagementPage() {
             <button
               onClick={() => handleBulkAction('deactivate')}
               disabled={bulkActionLoading}
-              className="py-1.5 px-3 bg-[var(--bg-card)] hover:bg-slate-750 border border-[var(--border-color)] text-[var(--text-primary)] font-bold text-xs rounded-lg flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+              className="py-1.5 px-3 bg-[var(--bg-card)] hover:bg-[var(--bg-main)] border border-[var(--border-color)] text-[var(--text-primary)] font-bold text-xs rounded-lg flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
             >
               <UserX className="w-3.5 h-3.5" />
               <span>Deactivate</span>
@@ -2725,7 +2725,7 @@ export default function TeamManagementPage() {
             <button
               onClick={() => handleBulkAction('delete')}
               disabled={bulkActionLoading}
-              className="py-1.5 px-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 font-bold text-xs rounded-lg flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+              className="py-1.5 px-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-600 dark:text-red-400 font-bold text-xs rounded-lg flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>Delete</span>
@@ -2742,13 +2742,13 @@ export default function TeamManagementPage() {
             {displayedMembers.length > 0 ? (
               <div className="p-5">
                 <div className="flex items-center gap-2 mb-4 pb-3 border-b border-[var(--border-color)]">
-                  <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <svg className="w-4 h-4 text-[#4F7D32]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                   <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
-                    Lookup Results for &ldquo;<span className="text-emerald-400 font-mono">{empSearchInput.trim()}</span>&rdquo;
+                    Lookup Results for &ldquo;<span className="text-[#4F7D32] dark:text-[#7bb05c] font-mono">{empSearchInput.trim()}</span>&rdquo;
                   </span>
-                  <span className="ml-auto text-[10px] text-slate-600 font-mono">{displayedMembers.length} found</span>
+                  <span className="ml-auto text-[10px] text-[var(--text-muted)] font-mono">{displayedMembers.length} found</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {displayedMembers.map((member) => {
@@ -2767,8 +2767,8 @@ export default function TeamManagementPage() {
                       designationLabel = roleConfig.label;
                     }
                     return (
-                      <div key={member.id} onClick={() => handleOpenProfile(member)} className="bg-[var(--bg-card)]/80 border border-[var(--border-color)] hover:border-emerald-600/40 hover:shadow-emerald-500/5 hover:shadow-xl rounded-2xl p-5 flex flex-col items-center gap-3.5 shadow-lg transition-all cursor-pointer">
-                        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-[var(--border-color)] overflow-hidden flex items-center justify-center flex-shrink-0 shadow-inner">
+                      <div key={member.id} onClick={() => handleOpenProfile(member)} className="bg-[var(--bg-card)]/80 border border-[var(--border-color)] hover:border-[#4F7D32]/40 hover:shadow-xl rounded-2xl p-5 flex flex-col items-center gap-3.5 shadow-lg transition-all cursor-pointer">
+                        <div className="w-20 h-20 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-color)] overflow-hidden flex items-center justify-center flex-shrink-0 shadow-inner">
                           {member.photograph ? (
                             <img src={"/api/v1/users/" + member.id + "/photograph"} alt={member.name} className="w-full h-full object-cover" />
                           ) : (
@@ -2785,15 +2785,15 @@ export default function TeamManagementPage() {
                           {designationLabel}
                         </span>
                         <div className="w-full bg-[var(--bg-main)]/80 border border-[var(--border-color)]/80 rounded-xl px-3.5 py-2.5 flex items-center gap-2">
-                          <svg className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <svg className="w-3.5 h-3.5 text-[#4F7D32] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                             <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                           </svg>
                           <span className="text-xs text-[var(--text-primary)] truncate leading-tight">
-                            {member.workingLocation ? member.workingLocation : <span className="text-slate-600 italic text-[10px]">Location not set</span>}
+                            {member.workingLocation ? member.workingLocation : <span className="text-slate-400 dark:text-slate-500 italic text-[10px]">Location not set</span>}
                           </span>
                         </div>
-                        <span className={`inline-block text-[9px] font-bold px-3 py-1 border rounded-full uppercase tracking-wider ${member.isActive ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
+                        <span className={`inline-block text-[9px] font-bold px-3 py-1 border rounded-full uppercase tracking-wider ${member.isActive ? 'bg-[#4F7D32]/10 text-[#4F7D32] dark:text-[#7bb05c] border-[#4F7D32]/20' : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20'}`}>
                           {member.isActive ? '● Active' : '○ Deactivated'}
                         </span>
                       </div>
@@ -2815,14 +2815,14 @@ export default function TeamManagementPage() {
           <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead>
-              <tr className="border-b border-[var(--border-color)] bg-[var(--bg-card)]/10 text-[var(--text-secondary)] text-xs font-semibold uppercase tracking-wider">
+              <tr className="border-b border-[var(--border-color)] bg-[var(--bg-card)]/40 text-[var(--text-secondary)] text-[11px] font-bold uppercase tracking-wider">
                 {isAdminOrDirectorOrSalesHead && (
                   <th className="py-4 px-3 w-10 text-center">
                     <input
                       type="checkbox"
                       onChange={handleSelectAll}
                       checked={displayedMembers.length > 0 && displayedMembers.filter(m => m.id !== user?.id).length > 0 && displayedMembers.filter(m => m.id !== user?.id).every(m => selectedUserIds.includes(m.id))}
-                      className="w-4 h-4 rounded border-[var(--border-color)] bg-[var(--bg-card)] text-emerald-600 accent-emerald-600 focus:ring-emerald-500/40 cursor-pointer"
+                      className="w-4 h-4 rounded border-[var(--border-color)] bg-[var(--bg-card)] accent-[#4F7D32] focus:ring-[#4F7D32]/40 cursor-pointer"
                     />
                   </th>
                 )}
@@ -2860,7 +2860,7 @@ export default function TeamManagementPage() {
                       key={member.id}
                       className={`hover:bg-[var(--bg-card)]/10 transition-colors ${
                         !member.isActive ? 'opacity-50' : ''
-                      } ${selectedUserIds.includes(member.id) ? 'bg-emerald-500/5' : ''}`}
+                      } ${selectedUserIds.includes(member.id) ? 'bg-[#4F7D32]/5' : ''}`}
                     >
                       {isAdminOrDirectorOrSalesHead && (
                         <td className="py-4 px-3 text-center w-10">
@@ -2869,7 +2869,7 @@ export default function TeamManagementPage() {
                               type="checkbox"
                               checked={selectedUserIds.includes(member.id)}
                               onChange={() => handleSelectUser(member.id)}
-                              className="w-4 h-4 rounded border-[var(--border-color)] bg-[var(--bg-card)] text-emerald-600 accent-emerald-600 focus:ring-emerald-500/40 cursor-pointer"
+                              className="w-4 h-4 rounded border-[var(--border-color)] bg-[var(--bg-card)] accent-[#4F7D32] focus:ring-[#4F7D32]/40 cursor-pointer"
                             />
                           )}
                         </td>
@@ -2886,7 +2886,7 @@ export default function TeamManagementPage() {
                             }}
                           />
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-center text-emerald-600 mx-auto shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-center text-[#4F7D32] mx-auto shrink-0">
                             <User className="w-4 h-4" />
                           </div>
                         )}
@@ -2897,12 +2897,12 @@ export default function TeamManagementPage() {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleOpenProfile(member)}
-                            className="hover:text-emerald-600 dark:hover:text-emerald-400 text-left font-bold text-[var(--text-primary)] transition-colors cursor-pointer"
+                            className="hover:text-[#4F7D32] dark:hover:text-[#7bb05c] text-left font-bold text-[var(--text-primary)] transition-colors cursor-pointer"
                           >
                             {member.name}
                           </button>
                           {member.id === user?.id && (
-                            <span className="text-[8px] bg-emerald-600/20 text-emerald-600 border border-emerald-600/20 rounded px-1.5 font-extrabold uppercase">
+                            <span className="text-[8px] bg-[#4F7D32]/15 text-[#4F7D32] dark:text-[#7bb05c] border border-[#4F7D32]/30 rounded px-1.5 font-extrabold uppercase">
                               You
                             </span>
                           )}
@@ -2910,8 +2910,8 @@ export default function TeamManagementPage() {
                       </td>
 
                       {/* Employee ID Column */}
-                      <td className="py-4 px-4 font-mono text-xs text-[var(--text-primary)] w-32">
-                        {member.employeeId || <span className="text-slate-600 italic">Not Set</span>}
+                      <td className="py-4 px-4 font-mono text-xs text-[var(--text-primary)] font-semibold w-32">
+                        {member.employeeId || <span className="text-slate-400 dark:text-slate-500 italic font-normal">Not Set</span>}
                       </td>
 
                       {/* Designation/Role Column */}
@@ -2940,21 +2940,29 @@ export default function TeamManagementPage() {
                           })()}
                         </span>
                       </td>
-                      <td className="py-4 px-4 text-xs text-[var(--text-secondary)] w-36">
-                        {member.supervisor?.name || <span className="text-slate-600 italic">Unassigned</span>}
+                      <td className="py-4 px-4 text-xs w-36">
+                        {member.supervisor?.name ? (
+                          <span className="font-semibold text-[var(--text-primary)]">{member.supervisor.name}</span>
+                        ) : (
+                          <span className="text-slate-400 dark:text-slate-500 italic">Unassigned</span>
+                        )}
                       </td>
-                      <td className="py-4 px-4 text-xs text-[var(--text-primary)] w-28">
+                      <td className="py-4 px-4 text-xs text-[var(--text-primary)] font-semibold w-28">
                         {calculateYearsInCompany(member.joiningDate)}
                       </td>
-                      <td className="py-4 px-4 text-xs text-[var(--text-primary)] w-36">
-                        {member.workingLocation || <span className="text-slate-600 italic">Not Set</span>}
+                      <td className="py-4 px-4 text-xs w-36">
+                        {member.workingLocation ? (
+                          <span className="font-semibold text-[var(--text-primary)]">{member.workingLocation}</span>
+                        ) : (
+                          <span className="text-slate-400 dark:text-slate-500 italic">Not Set</span>
+                        )}
                       </td>
                       <td className="py-4 px-4 text-center w-28">
                         <span
-                          className={`inline-block text-[9px] font-extrabold px-2.5 py-1 rounded-lg ${
+                          className={`inline-block text-[9px] font-extrabold px-2.5 py-1 rounded-lg border ${
                             member.isActive
-                              ? 'bg-emerald-500/10 text-emerald-400'
-                              : 'bg-red-500/10 text-red-400'
+                              ? 'bg-[#4F7D32]/10 text-[#4F7D32] dark:text-[#7bb05c] border-[#4F7D32]/20'
+                              : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20'
                           }`}
                         >
                           {member.isActive ? 'Active' : 'Deactivated'}
@@ -2965,7 +2973,7 @@ export default function TeamManagementPage() {
                           {hasPermission('logs:view') && (
                             <button
                               onClick={() => handleOpenActivityLogs(member)}
-                              className="p-1.5 rounded-lg bg-[#1c2128] hover:bg-[#2d333b] text-slate-400 hover:text-white border border-slate-800/80 transition-all cursor-pointer flex items-center justify-center"
+                              className="p-1.5 rounded-lg bg-[var(--bg-main)] hover:bg-[var(--border-color)]/40 text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-color)] transition-all cursor-pointer flex items-center justify-center shadow-xs"
                               title="View Activity Logs"
                             >
                               <History className="w-4 h-4" />
@@ -2976,10 +2984,10 @@ export default function TeamManagementPage() {
                             <>
                               <button
                                 onClick={() => handleToggleActive(member)}
-                                className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                                className={`p-1.5 rounded-lg border transition-all cursor-pointer shadow-xs ${
                                   member.isActive
-                                    ? 'bg-red-950/40 text-red-400 border-red-900/50 hover:bg-red-900/30'
-                                    : 'bg-emerald-950/40 text-emerald-450 border-emerald-900/50 hover:bg-emerald-900/30'
+                                    ? 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20 hover:bg-red-500/20'
+                                    : 'bg-[#4F7D32]/10 text-[#4F7D32] dark:text-[#7bb05c] border-[#4F7D32]/20 hover:bg-[#4F7D32]/20'
                                 }`}
                                 title={member.isActive ? 'Deactivate Account' : 'Reactivate Account'}
                               >
@@ -2990,7 +2998,7 @@ export default function TeamManagementPage() {
                                 <button
                                   type="button"
                                   onClick={() => handleDeleteUser(member)}
-                                  className="p-1.5 rounded-lg border bg-rose-950/40 text-rose-400 border-rose-900/50 hover:bg-rose-900/30 transition-all cursor-pointer"
+                                  className="p-1.5 rounded-lg border bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20 hover:bg-rose-500/20 transition-all cursor-pointer shadow-xs"
                                   title="Permanently Delete User"
                                 >
                                   <Trash2 className="w-4 h-4" />
@@ -3420,7 +3428,7 @@ export default function TeamManagementPage() {
               <button
                 type="submit"
                 disabled={savingReporting}
-                className="py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-md shadow-emerald-500/10 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                className="py-2 px-5 bg-[#4F7D32] hover:bg-[#436A2B] text-white rounded-xl font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 {savingReporting ? (
                   <>
@@ -3468,7 +3476,7 @@ export default function TeamManagementPage() {
 
                               {/* Photo Upload */}
 
-                              <div className="flex items-center gap-5 p-4 bg-emerald-600/5 border border-emerald-600/10 rounded-2xl">
+                              <div className="flex items-center gap-5 p-4 bg-[#4F7D32]/5 border border-[#4F7D32]/15 rounded-2xl">
 
                                 <div className="relative flex-shrink-0">
 
@@ -3480,9 +3488,9 @@ export default function TeamManagementPage() {
 
                                     ) : (
 
-                                      <span className="text-2xl font-extrabold text-slate-600 uppercase select-none">
+                                      <span className="text-2xl font-extrabold text-[var(--text-muted)] uppercase select-none">
 
-                                        {form.name ? form.name.substring(0, 2) : <User className="w-8 h-8 text-slate-600" />}
+                                        {form.name ? form.name.substring(0, 2) : <User className="w-8 h-8 text-[var(--text-muted)]" />}
 
                                       </span>
 
@@ -3492,7 +3500,7 @@ export default function TeamManagementPage() {
 
                                       <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
 
-                                        <Loader2 className="w-5 h-5 text-emerald-400 animate-spin" />
+                                        <Loader2 className="w-5 h-5 text-[#4F7D32] animate-spin" />
 
                                       </div>
 
@@ -3510,7 +3518,7 @@ export default function TeamManagementPage() {
 
                                   <input type="file" accept="image/*" id="add-photo-input" onChange={handleAddPhotoUpload} className="hidden" />
 
-                                  <label htmlFor="add-photo-input" className="inline-flex items-center gap-1.5 py-1.5 px-3 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-emerald-600/50 hover:bg-emerald-600/5 text-[var(--text-primary)] hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all">
+                                  <label htmlFor="add-photo-input" className="inline-flex items-center gap-1.5 py-1.5 px-3 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[#4F7D32]/50 hover:bg-[#4F7D32]/10 text-[var(--text-primary)] hover:text-white rounded-lg text-xs font-semibold cursor-pointer transition-all">
 
                                     <Upload className="w-3.5 h-3.5" />
 
@@ -3920,7 +3928,7 @@ export default function TeamManagementPage() {
 
                                 disabled={submitting}
 
-                                className="py-2 px-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-lg shadow-emerald-500/20 flex items-center gap-2 cursor-pointer disabled:opacity-50 transition-all"
+                                className="py-2 px-6 bg-[#4F7D32] hover:bg-[#436A2B] text-white rounded-xl font-bold text-xs shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50 transition-all"
 
                               >
 
@@ -3990,13 +3998,13 @@ export default function TeamManagementPage() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full bg-[var(--bg-card)] flex items-center justify-center font-bold text-lg text-emerald-600 dark:text-emerald-400">
+                        <div className="w-full h-full bg-[var(--bg-card)] flex items-center justify-center font-bold text-lg text-[#4F7D32]">
                           {selectedMember.name.substring(0, 2).toUpperCase()}
                         </div>
                       )}
                       {uploadingEditPhoto && (
                         <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
-                          <Loader2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 animate-spin" />
+                          <Loader2 className="w-4 h-4 text-[#4F7D32] animate-spin" />
                         </div>
                       )}
                     </div>
@@ -4046,7 +4054,7 @@ export default function TeamManagementPage() {
                             required
                             value={editName}
                             onChange={(e) => setEditName(e.target.value)}
-                            className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:ring-emerald-500 focus:outline-none"
+                            className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:ring-[#4F7D32] focus:outline-none"
                           />
                         ) : (
                           <span className="text-white text-xs font-semibold block bg-[var(--bg-main)]/30 border border-[var(--border-color)] px-3 py-2 rounded-lg opacity-70 truncate" title={selectedMember.name}>
@@ -4062,7 +4070,7 @@ export default function TeamManagementPage() {
                             required
                             value={editEmployeeId}
                             onChange={(e) => setEditEmployeeId(e.target.value)}
-                            className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:ring-emerald-500 focus:outline-none font-mono"
+                            className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:ring-[#4F7D32] focus:outline-none font-mono"
                           />
                         ) : (
                           <span className="text-white text-xs font-mono block bg-[var(--bg-main)]/30 border border-[var(--border-color)] px-3 py-2 rounded-lg opacity-70 truncate" title={selectedMember.employeeId || 'Not Set'}>
@@ -4078,7 +4086,7 @@ export default function TeamManagementPage() {
                             required
                             value={editEmail}
                             onChange={(e) => setEditEmail(e.target.value)}
-                            className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:ring-emerald-500 focus:outline-none font-mono"
+                            className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:ring-[#4F7D32] focus:outline-none font-mono"
                           />
                         ) : (
                           <span className="text-[var(--text-primary)] text-xs font-mono block bg-[var(--bg-main)]/30 border border-[var(--border-color)] px-3 py-2 rounded-lg opacity-70 truncate" title={selectedMember.email}>
@@ -4108,7 +4116,7 @@ export default function TeamManagementPage() {
                         value={editPhone}
                         onChange={(e) => setEditPhone(e.target.value)}
                         placeholder="Update mobile number"
-                        className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:ring-emerald-500 focus:outline-none"
+                        className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:ring-[#4F7D32] focus:outline-none"
                       />
                     </div>
                   </div>
@@ -4118,7 +4126,7 @@ export default function TeamManagementPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="flex items-center gap-2">
-                          <ShieldAlert className="w-4 h-4 text-emerald-500" />
+                          <ShieldAlert className="w-4 h-4 text-[#4F7D32]" />
                           <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">
                             Active Login Sessions ({memberSessions.length} / 3)
                           </h4>
@@ -4127,7 +4135,7 @@ export default function TeamManagementPage() {
                           Max 3 simultaneous logins allowed across devices & browsers.
                         </p>
                       </div>
-                      {loadingMemberSessions && <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-500" />}
+                      {loadingMemberSessions && <Loader2 className="w-3.5 h-3.5 animate-spin text-[#4F7D32]" />}
                     </div>
 
                     <div className="space-y-2">
@@ -4146,7 +4154,7 @@ export default function TeamManagementPage() {
                           >
                             <div className="flex items-start gap-2.5 min-w-0 flex-1">
                               <div className="w-8 h-8 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-secondary)] shrink-0 mt-0.5">
-                                {isMobile ? <Smartphone className="w-4 h-4 text-emerald-400" /> : <Laptop className="w-4 h-4 text-emerald-400" />}
+                                {isMobile ? <Smartphone className="w-4 h-4 text-[#4F7D32]" /> : <Laptop className="w-4 h-4 text-[#4F7D32]" />}
                               </div>
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2 flex-wrap">
@@ -4154,7 +4162,7 @@ export default function TeamManagementPage() {
                                     {s.deviceInfo || 'Unknown Browser / Device'}
                                   </span>
                                   {s.isCurrentSession && (
-                                    <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded">
+                                    <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-[#4F7D32]/10 text-[#4F7D32] border border-[#4F7D32]/25 rounded">
                                       Current Device
                                     </span>
                                   )}
@@ -4212,7 +4220,7 @@ export default function TeamManagementPage() {
                   <button
                     type="submit"
                     disabled={updatingProfile}
-                    className="py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer"
+                    className="py-2 px-5 bg-[#4F7D32] hover:bg-[#436A2B] text-white rounded-lg font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer"
                   >
                     {updatingProfile ? (
                       <>
@@ -4719,21 +4727,21 @@ export default function TeamManagementPage() {
                       </div>
                       <div>
                         <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1 flex items-center gap-1">
-                          <svg className="w-2.5 h-2.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                          <svg className="w-2.5 h-2.5 text-[#4F7D32]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                           Working Location
                         </span>
-                        <span className="text-[var(--text-primary)]">{selectedMember.workingLocation || <span className="text-slate-600 italic text-[10px]">Not set</span>}</span>
+                        <span className="text-[var(--text-primary)]">{selectedMember.workingLocation || <span className="text-slate-400 dark:text-slate-500 italic text-[10px]">Not set</span>}</span>
                       </div>
                       <div>
                         <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1">Direct Supervisor</span>
-                        <span className="text-[var(--text-primary)]">{selectedMember.supervisor?.name || <span className="text-slate-600 italic">None</span>}</span>
+                        <span className="text-[var(--text-primary)]">{selectedMember.supervisor?.name || <span className="text-slate-400 dark:text-slate-500 italic">None</span>}</span>
                       </div>
                       <div>
                         <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1">Status</span>
                         <span className={`inline-block text-[9px] font-bold px-2 py-0.5 border rounded-full uppercase tracking-wider ${
                           selectedMember.isActive
-                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                            : 'bg-red-500/10 text-red-400 border-red-500/20'
+                            ? 'bg-[#4F7D32]/10 text-[#4F7D32] dark:text-[#7bb05c] border-[#4F7D32]/20'
+                            : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20'
                         }`}>
                           {selectedMember.isActive ? 'Active' : 'Deactivated'}
                         </span>
@@ -4747,7 +4755,7 @@ export default function TeamManagementPage() {
                     <>
                       <div>
                         <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1">Employee ID</span>
-                        <span className="text-[var(--text-primary)] font-mono">{selectedMember.employeeId || <span className="text-slate-650 italic">None</span>}</span>
+                        <span className="text-[var(--text-primary)] font-mono">{selectedMember.employeeId || <span className="text-slate-400 dark:text-slate-500 italic">None</span>}</span>
                       </div>
                       <div>
                         <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1">Designation</span>
@@ -4755,10 +4763,10 @@ export default function TeamManagementPage() {
                       </div>
                       <div>
                         <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1 flex items-center gap-1">
-                          <svg className="w-2.5 h-2.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                          <svg className="w-2.5 h-2.5 text-[#4F7D32]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                           Working Location
                         </span>
-                        <span className="text-[var(--text-primary)]">{selectedMember.workingLocation || <span className="text-slate-600 italic text-[10px]">Not set</span>}</span>
+                        <span className="text-[var(--text-primary)]">{selectedMember.workingLocation || <span className="text-slate-400 dark:text-slate-500 italic text-[10px]">Not set</span>}</span>
                       </div>
                       <div className="col-span-2">
                         <span className="block text-[var(--text-muted)] font-semibold uppercase tracking-wider text-[9px] mb-1">Years in Company</span>
@@ -4771,7 +4779,7 @@ export default function TeamManagementPage() {
                 {/* Activity Timing & Geolocation Logs (Admin, Director, Sales Head only) */}
                 {isAdminOrDirectorOrSalesHead && (
                   <div className="border-t border-[var(--border-color)] pt-4 space-y-4">
-                    <h5 className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Access Logs</h5>
+                    <h5 className="text-[10px] font-bold uppercase tracking-wider text-[#4F7D32] dark:text-[#7bb05c]">Access Logs</h5>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       {/* Live Online Status */}
                       <div className="p-3 bg-[var(--bg-main)]/40 border border-[var(--border-color)] rounded-lg">
@@ -4780,8 +4788,8 @@ export default function TeamManagementPage() {
                           const status = getMemberOnlineStatus(selectedMember.lastSeenAt);
                           return (
                             <div className="space-y-1">
-                              <span className={`inline-flex items-center gap-1.5 text-xs font-bold ${status.isOnline ? 'text-emerald-400' : 'text-slate-400'}`}>
-                                <span className={`w-2 h-2 rounded-full ${status.isOnline ? 'bg-emerald-400' : 'bg-slate-600'}`} />
+                              <span className={`inline-flex items-center gap-1.5 text-xs font-bold ${status.isOnline ? 'text-[#4F7D32] dark:text-[#7bb05c]' : 'text-slate-400'}`}>
+                                <span className={`w-2 h-2 rounded-full ${status.isOnline ? 'bg-[#4F7D32]' : 'bg-slate-600'}`} />
                                 {status.label}
                               </span>
                               <span className="block text-[10px] text-[var(--text-secondary)] italic font-semibold leading-normal">
@@ -4869,7 +4877,7 @@ export default function TeamManagementPage() {
                   Activity Audit Logs
                 </h3>
                 <p className="text-[11px] text-[var(--text-muted)] mt-1">
-                  Viewing daily transitions for <span className="text-emerald-600 dark:text-emerald-400 font-bold">{logsMember.name}</span> ({getRoleLabel(logsMember.role)})
+                  Viewing daily transitions for <span className="text-[#4F7D32] dark:text-[#7bb05c] font-bold">{logsMember.name}</span> ({getRoleLabel(logsMember.role)})
                 </p>
               </div>
               <button onClick={() => setShowLogsModal(false)} className="text-[var(--text-secondary)] hover:text-white cursor-pointer">
@@ -4890,7 +4898,7 @@ export default function TeamManagementPage() {
                     value={logsDate}
                     max={getTodayLocalDateStr()}
                     onChange={handleLogsDateChange}
-                    className="block w-full sm:w-auto px-3 py-1.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    className="block w-full sm:w-auto px-3 py-1.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:outline-none focus:ring-1 focus:ring-[#4F7D32]"
                   />
                   <button
                     onClick={() => {
@@ -4908,7 +4916,7 @@ export default function TeamManagementPage() {
               {/* Logs Timeline Display */}
               {logsLoading ? (
                 <div className="py-12 flex flex-col items-center gap-3">
-                  <Loader2 className="w-8 h-8 text-emerald-600 dark:text-emerald-400 animate-spin" />
+                  <Loader2 className="w-8 h-8 text-[#4F7D32] dark:text-[#7bb05c] animate-spin" />
                   <p className="text-xs text-[var(--text-muted)] font-semibold uppercase tracking-wider">Loading activities...</p>
                 </div>
               ) : logsList.length === 0 ? (
@@ -4930,7 +4938,7 @@ export default function TeamManagementPage() {
                     return (
                       <div key={log.id} className="relative group">
                         {/* Timeline Node Point */}
-                        <div className="absolute -left-[31px] top-1.5 w-3 h-3 rounded-full bg-emerald-600 border-2 border-[#111625]" />
+                        <div className="absolute -left-[31px] top-1.5 w-3 h-3 rounded-full bg-[#4F7D32] border-2 border-[var(--bg-card)] shadow-xs" />
                         
                         <div className="bg-[var(--bg-main)]/30 border border-[var(--border-color)] rounded-xl p-4 space-y-2 hover:border-[var(--border-color)] transition-all">
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -4941,7 +4949,7 @@ export default function TeamManagementPage() {
                                 href={`/leads/${log.lead.id}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-emerald-600 dark:text-emerald-400 hover:underline font-bold"
+                                className="text-[#4F7D32] dark:text-[#7bb05c] hover:underline font-bold"
                               >
                                 {log.lead.customerName} (#{log.lead.leadCode})
                               </a>
@@ -4999,7 +5007,7 @@ export default function TeamManagementPage() {
             <div className="p-6 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex flex-col gap-4">
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2.5">
-                  <SlidersHorizontal className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                  <SlidersHorizontal className="w-5 h-5 text-[#4F7D32] dark:text-[#7bb05c]" />
                   <div>
                     <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">Organization Hierarchy & Custom Designations</h3>
                     <p className="text-[11px] text-[var(--text-secondary)]">Configure hierarchy levels, designate departments, and view the visual reporting structure.</p>
@@ -5015,7 +5023,7 @@ export default function TeamManagementPage() {
                   type="button"
                   onClick={() => setModalTab('designations')}
                   className={`pb-2 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                    modalTab === 'designations' ? 'border-b-2 border-emerald-500 text-white' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                    modalTab === 'designations' ? 'border-b-2 border-[#4F7D32] text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                   }`}
                 >
                   Designations & Levels
@@ -5024,10 +5032,10 @@ export default function TeamManagementPage() {
                   type="button"
                   onClick={() => setModalTab('orgTree')}
                   className={`pb-2 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                    modalTab === 'orgTree' ? 'border-b-2 border-emerald-500 text-white' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                    modalTab === 'orgTree' ? 'border-b-2 border-[#4F7D32] text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                   }`}
                 >
-                  Visual Org Tree ðŸŒ³
+                  Visual Org Tree 🌳
                 </button>
               </div>
             </div>
@@ -5051,7 +5059,7 @@ export default function TeamManagementPage() {
                         type="button"
                         onClick={() => setDesignationsViewMode('level')}
                         className={`px-2 py-1 rounded-md text-[9px] font-bold uppercase transition-all cursor-pointer ${
-                          designationsViewMode === 'level' ? 'bg-emerald-600 text-white shadow' : 'text-[var(--text-secondary)] hover:text-white'
+                          designationsViewMode === 'level' ? 'bg-[#4F7D32] text-white shadow' : 'text-[var(--text-secondary)] hover:text-white'
                         }`}
                       >
                         Group By Level
@@ -5060,7 +5068,7 @@ export default function TeamManagementPage() {
                         type="button"
                         onClick={() => setDesignationsViewMode('department')}
                         className={`px-2 py-1 rounded-md text-[9px] font-bold uppercase transition-all cursor-pointer ${
-                          designationsViewMode === 'department' ? 'bg-emerald-600 text-white shadow' : 'text-[var(--text-secondary)] hover:text-white'
+                          designationsViewMode === 'department' ? 'bg-[#4F7D32] text-white shadow' : 'text-[var(--text-secondary)] hover:text-white'
                         }`}
                       >
                         Group By Dept
@@ -5071,13 +5079,13 @@ export default function TeamManagementPage() {
                   {designationsViewMode === 'level' ? (
                     <div className="space-y-3.5">
                       {[
-                        { level: 0, label: 'Level 0: Admin ðŸ‘‘', color: 'border-emerald-500/20 text-emerald-400 bg-emerald-500/5' },
-                        { level: 1, label: 'Level 1: Department Heads ðŸ‘”', color: 'border-emerald-500/20 text-emerald-400 bg-emerald-500/5' },
-                        { level: 2, label: 'Level 2: Senior Managers ðŸ“ˆ', color: 'border-emerald-500/20 text-emerald-400 bg-emerald-500/5' },
-                        { level: 3, label: 'Level 3: Managers ðŸ¢', color: 'border-emerald-500/20 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5' },
-                        { level: 4, label: 'Level 4: Team Leaders (TL) ðŸ‘¥', color: 'border-emerald-500/20 text-emerald-400 bg-emerald-500/5' },
-                        { level: 5, label: 'Level 5: Consultants ðŸ› ï¸', color: 'border-emerald-500/20 text-emerald-400 bg-emerald-500/5' },
-                        { level: 6, label: 'Level 6: PSA Consultants ðŸ“ž', color: 'border-emerald-500/20 text-emerald-400 bg-emerald-500/5' },
+                        { level: 0, label: 'Level 0: Admin ðŸ‘‘', color: 'border-[#4F7D32]/20 text-[#4F7D32] dark:text-[#7bb05c] bg-[#4F7D32]/5' },
+                        { level: 1, label: 'Level 1: Department Heads ðŸ‘”', color: 'border-[#4F7D32]/20 text-[#4F7D32] dark:text-[#7bb05c] bg-[#4F7D32]/5' },
+                        { level: 2, label: 'Level 2: Senior Managers ðŸ“ˆ', color: 'border-[#4F7D32]/20 text-[#4F7D32] dark:text-[#7bb05c] bg-[#4F7D32]/5' },
+                        { level: 3, label: 'Level 3: Managers ðŸ¢', color: 'border-[#4F7D32]/20 text-[#4F7D32] dark:text-[#7bb05c] bg-[#4F7D32]/5' },
+                        { level: 4, label: 'Level 4: Team Leaders (TL) ðŸ‘¥', color: 'border-[#4F7D32]/20 text-[#4F7D32] dark:text-[#7bb05c] bg-[#4F7D32]/5' },
+                        { level: 5, label: 'Level 5: Consultants ðŸ› ï¸', color: 'border-[#4F7D32]/20 text-[#4F7D32] dark:text-[#7bb05c] bg-[#4F7D32]/5' },
+                        { level: 6, label: 'Level 6: PSA Consultants ðŸ“ž', color: 'border-[#4F7D32]/20 text-[#4F7D32] dark:text-[#7bb05c] bg-[#4F7D32]/5' },
                       ].map((levelItem) => {
                         const levelDesigs = designationsList.filter(d => d.level === levelItem.level);
                         return (
@@ -5110,7 +5118,7 @@ export default function TeamManagementPage() {
                         { id: null, name: 'Shared / General Admin ðŸŒ', color: 'border-red-500/20 text-red-400 bg-red-500/5' },
                         ...departmentsList.map(dept => {
                           const deptColors: { [key: string]: string } = {
-                            'sales': 'border-emerald-500/20 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5',
+                            'sales': 'border-[#4F7D32]/20 text-[#4F7D32] dark:text-[#7bb05c] bg-[#4F7D32]/5',
                             'finance': 'border-purple-500/20 text-purple-400 bg-purple-500/5',
                             'operations': 'border-indigo-500/20 text-indigo-400 bg-indigo-500/5',
                             'it': 'border-cyan-500/20 text-cyan-400 bg-cyan-500/5',
@@ -5138,7 +5146,7 @@ export default function TeamManagementPage() {
                                   return (
                                     <span key={d.id} className="text-[10px] bg-[var(--bg-main)] border border-[var(--border-color)] px-2.5 py-1.5 rounded-lg text-[var(--text-primary)] font-semibold flex items-center gap-1.5 shadow-sm">
                                       <span>{d.name}</span>
-                                      <span className="text-[8px] bg-[var(--bg-card)] text-emerald-600 dark:text-emerald-400 px-1 rounded font-extrabold uppercase tracking-wider">Level {d.level}</span>
+                                      <span className="text-[8px] bg-[var(--bg-card)] text-[#4F7D32] dark:text-[#7bb05c] px-1 rounded font-extrabold uppercase tracking-wider">Level {d.level}</span>
                                     </span>
                                   );
                                 })
@@ -5285,10 +5293,10 @@ export default function TeamManagementPage() {
                                   />
                                   <div className={`w-7 h-4 rounded-full transition-colors duration-200 ease-in-out ${
                                     isChecked 
-                                      ? 'bg-emerald-600' 
-                                      : 'bg-[var(--bg-card)] border border-[var(--border-color)]'
+                                      ? 'bg-[#4F7D32]' 
+                                      : 'bg-slate-200/80 dark:bg-[var(--bg-card)] border border-black/25 dark:border-[var(--border-color)]'
                                   }`} />
-                                  <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${
+                                  <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white shadow-xs border border-black/15 dark:border-transparent transition-transform duration-200 ease-in-out ${
                                     isChecked ? 'translate-x-3' : 'translate-x-0'
                                   }`} />
                                 </div>
@@ -5327,7 +5335,7 @@ export default function TeamManagementPage() {
                         )}
                         <button
                           type="submit"
-                          className="py-1.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md transition-all cursor-pointer"
+                          className="py-1.5 px-4 bg-[#4F7D32] hover:bg-[#436A2B] text-white rounded-lg font-bold text-xs shadow-md transition-all cursor-pointer"
                         >
                           {editingDesignation ? 'Save Designation' : 'Create Designation'}
                         </button>
@@ -5562,7 +5570,7 @@ const MyTeamAddMemberForm = ({
 
       <button
         type="submit"
-        className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-1 border border-transparent"
+        className="w-full py-2 bg-[#4F7D32] hover:bg-[#436A2B] text-white rounded-xl font-bold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-1 border border-transparent"
       >
         <Plus className="w-3.5 h-3.5" />
         <span>Add to Clan</span>

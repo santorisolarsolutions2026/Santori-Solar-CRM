@@ -301,6 +301,24 @@ export function normalizeCityName(city: string | null | undefined): string {
   return city.trim();
 }
 
+export function getCityPreFilterSql(normCity: string): string {
+  const c = normCity.trim().toLowerCase();
+  if (c === 'varanasi') {
+    return `(city ILIKE '%varanasi%' OR city ILIKE '%banaras%' OR city ILIKE '%kashi%' OR city IS NULL OR TRIM(city) = '')`;
+  }
+  if (c === 'prayagraj') {
+    return `(city ILIKE '%allahabad%' OR city ILIKE '%prayagraj%')`;
+  }
+  if (c === 'lucknow') return `city ILIKE '%lucknow%'`;
+  if (c === 'kanpur') return `city ILIKE '%kanpur%'`;
+  if (c === 'gorakhpur') return `city ILIKE '%gorakhpur%'`;
+  if (c === 'mirzapur') return `city ILIKE '%mirzapur%'`;
+  if (c === 'jaunpur') return `city ILIKE '%jaunpur%'`;
+  if (c === 'chandauli') return `city ILIKE '%chandauli%'`;
+  if (c === 'bhadohi') return `city ILIKE '%bhadohi%'`;
+  return `(city ILIKE '%${c}%' OR city IS NULL OR TRIM(city) = '')`;
+}
+
 export interface TerritoryLeadRow {
   id: number;
   leadCode: string;
@@ -355,6 +373,7 @@ export async function getTerritoryPreviewData({
   totalFiltered: number;
 }> {
   const normCity = normalizeCityName(city);
+  const cityPreFilter = getCityPreFilterSql(normCity);
   const lowerLocs = localities.map((l) => l.trim().toLowerCase()).filter(Boolean);
   const pageNum = Math.max(1, Number(page) || 1);
   const limitNum = Math.min(100, Math.max(1, Number(limit) || 25));
@@ -388,7 +407,7 @@ export async function getTerritoryPreviewData({
           ${RAW_CITY_CASE_STR} as normalized_city,
           ${RAW_DIVISION_CASE_STR} as calculated_division
         FROM "Lead"
-        WHERE ("assignedManagerId" = ANY($3::int[]) OR "assignedTlId" = ANY($3::int[]) OR "assignedConsultantId" = ANY($3::int[]))
+        WHERE (${cityPreFilter}) AND ("assignedManagerId" = ANY($3::int[]) OR "assignedTlId" = ANY($3::int[]) OR "assignedConsultantId" = ANY($3::int[]))
       )
       SELECT 
         COUNT(*)::int as total,
@@ -410,6 +429,7 @@ export async function getTerritoryPreviewData({
           ${RAW_CITY_CASE_STR} as normalized_city,
           ${RAW_DIVISION_CASE_STR} as calculated_division
         FROM "Lead"
+        WHERE ${cityPreFilter}
       )
       SELECT 
         COUNT(*)::int as total,
@@ -458,7 +478,7 @@ export async function getTerritoryPreviewData({
           ${RAW_CITY_CASE_STR} as normalized_city,
           ${RAW_DIVISION_CASE_STR} as calculated_division
         FROM "Lead"
-        WHERE ("assignedManagerId" = ANY($5::int[]) OR "assignedTlId" = ANY($5::int[]) OR "assignedConsultantId" = ANY($5::int[]))
+        WHERE (${cityPreFilter}) AND ("assignedManagerId" = ANY($5::int[]) OR "assignedTlId" = ANY($5::int[]) OR "assignedConsultantId" = ANY($5::int[]))
       )
       SELECT 
         l.id,
@@ -516,6 +536,7 @@ export async function getTerritoryPreviewData({
           ${RAW_CITY_CASE_STR} as normalized_city,
           ${RAW_DIVISION_CASE_STR} as calculated_division
         FROM "Lead"
+        WHERE ${cityPreFilter}
       )
       SELECT 
         l.id,
@@ -604,6 +625,7 @@ export async function getTerritoryUnassignedLeadIds({
   allowedUserIds?: number[];
 }): Promise<number[]> {
   const normCity = normalizeCityName(city);
+  const cityPreFilter = getCityPreFilterSql(normCity);
   const lowerLocs = localities.map((l) => l.trim().toLowerCase()).filter(Boolean);
   const countLimit = count && Number(count) > 0 ? Number(count) : null;
   const isDesc = priority === 'newest';
@@ -622,7 +644,7 @@ export async function getTerritoryUnassignedLeadIds({
           ${RAW_CITY_CASE_STR} as normalized_city,
           ${RAW_DIVISION_CASE_STR} as calculated_division
         FROM "Lead"
-        WHERE ("assignedManagerId" = ANY($3::int[]) OR "assignedTlId" = ANY($3::int[]) OR "assignedConsultantId" = ANY($3::int[]))
+        WHERE (${cityPreFilter}) AND ("assignedManagerId" = ANY($3::int[]) OR "assignedTlId" = ANY($3::int[]) OR "assignedConsultantId" = ANY($3::int[]))
       )
       SELECT l.id
       FROM analyzed_leads l
@@ -647,6 +669,7 @@ export async function getTerritoryUnassignedLeadIds({
           ${RAW_CITY_CASE_STR} as normalized_city,
           ${RAW_DIVISION_CASE_STR} as calculated_division
         FROM "Lead"
+        WHERE ${cityPreFilter}
       )
       SELECT l.id
       FROM analyzed_leads l

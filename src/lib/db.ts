@@ -26,9 +26,9 @@ function createPrismaClient() {
   const poolConfig: pg.PoolConfig = { 
     connectionString, 
     ssl,
-    max: process.env.NODE_ENV === 'production' ? 1 : 10,
-    idleTimeoutMillis: 5000,
-    connectionTimeoutMillis: 10000,
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 30000,
   };
   if (dbPassword) {
     poolConfig.password = dbPassword;

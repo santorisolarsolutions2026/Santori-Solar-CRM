@@ -22,7 +22,7 @@ interface CacheEntry {
 }
 
 const geoSummaryCache = new Map<string, CacheEntry>();
-const CACHE_TTL_MS = 60 * 1000; // 60s cache TTL
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 min cache TTL (prevents repeated full-table scans)
 
 export function invalidateGeoSummaryCache() {
   geoSummaryCache.clear();

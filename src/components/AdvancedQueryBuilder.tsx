@@ -352,23 +352,24 @@ export default function AdvancedQueryBuilder({ onChange, onClear, initialQuery }
 
   const renderGroup = (group: Group, parentId?: string) => {
     return (
-      <div key={group.id} className="relative border border-[var(--border-color)]/70 bg-slate-950/20 rounded-xl p-4 sm:p-5 mt-2 space-y-4">
+      <div 
+        key={group.id} 
+        style={{ backgroundColor: '#08122d' }}
+        className="relative border border-[#1e3268] rounded-xl p-4 sm:p-5 mt-2 space-y-4 shadow-inner"
+      >
         {/* Group Controls header */}
-        <div className="flex flex-wrap justify-between items-center gap-3 pb-2 border-b border-[var(--border-color)]/50">
-          <div className="flex items-center gap-1 bg-slate-900/60 p-0.5 rounded-lg border border-[var(--border-color)]/85">
+        <div className="flex flex-wrap justify-between items-center gap-3 pb-2 border-b border-[#1e3268]/70">
+          <div className="flex items-center gap-1 bg-[#050c20] p-0.5 rounded-lg border border-[#1e3268] shadow-inner">
             {(['AND', 'OR', 'NOT'] as const).map((op) => (
               <button
                 key={op}
                 type="button"
                 onClick={() => toggleGroupOperator(group.id, op)}
+                style={group.logicalOperator === op ? { backgroundColor: '#AEC4D4', color: '#000000', borderColor: '#000000' } : { color: '#F1F5F9' }}
                 className={`px-3 py-1 text-[10px] font-extrabold rounded-md uppercase tracking-wider transition-all cursor-pointer ${
                   group.logicalOperator === op
-                    ? op === 'AND'
-                      ? 'bg-emerald-600/90 text-white shadow-md'
-                      : op === 'OR'
-                      ? 'bg-blue-600/90 text-white shadow-md'
-                      : 'bg-red-600/90 text-white shadow-md'
-                    : 'text-slate-450 hover:text-slate-200'
+                    ? 'border border-black text-black font-extrabold shadow-sm'
+                    : 'hover:text-white hover:bg-white/10'
                 }`}
               >
                 {op}
@@ -380,17 +381,19 @@ export default function AdvancedQueryBuilder({ onChange, onClear, initialQuery }
             <button
               type="button"
               onClick={() => addRule(group.id)}
-              className="px-2.5 py-1 bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-[var(--border-color)] rounded-lg font-bold text-[10px] flex items-center gap-1 cursor-pointer transition-all"
+              style={{ backgroundColor: '#AEC4D4', color: '#000000', borderColor: '#000000' }}
+              className="px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-all border border-black hover:brightness-95 shadow-sm text-black"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>Add Filter</span>
             </button>
             <button
               type="button"
               onClick={() => addSubGroup(group.id)}
-              className="px-2.5 py-1 bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-[var(--border-color)] rounded-lg font-bold text-[10px] flex items-center gap-1 cursor-pointer transition-all"
+              style={{ backgroundColor: '#AEC4D4', color: '#000000', borderColor: '#000000' }}
+              className="px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-all border border-black hover:brightness-95 shadow-sm text-black"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>Add Group</span>
             </button>
             {parentId && (
@@ -407,9 +410,9 @@ export default function AdvancedQueryBuilder({ onChange, onClear, initialQuery }
         </div>
 
         {/* Child items list */}
-        <div className="space-y-3.5 pl-1 sm:pl-3 border-l border-[var(--border-color)]/60">
+        <div className="space-y-3.5 pl-1 sm:pl-3 border-l border-[#1e3268]/60">
           {group.rules.length === 0 ? (
-            <p className="text-[10px] text-slate-550 italic pl-1 py-1">No filter rules configured in this group.</p>
+            <p className="text-xs font-semibold italic pl-1 py-1.5" style={{ color: '#AEC4D4' }}>No filter rules configured in this group.</p>
           ) : (
             group.rules.map((node, index) => {
               const isGroup = 'rules' in node;
@@ -417,17 +420,17 @@ export default function AdvancedQueryBuilder({ onChange, onClear, initialQuery }
                 <div key={node.id} className="relative" style={{ zIndex: 50 - index }}>
                   {index > 0 && (
                     <div className="flex items-center gap-2 my-2 select-none">
-                      <div className="h-[1px] bg-[var(--border-color)]/30 flex-1"></div>
+                      <div className="h-[1px] bg-[#1e3268]/50 flex-1"></div>
                       <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${
                         group.logicalOperator === 'AND'
-                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                          ? 'bg-[#AEC4D4]/30 text-white border border-[#AEC4D4]/40'
                           : group.logicalOperator === 'OR'
-                          ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                          : 'bg-red-500/10 text-red-450 border border-red-500/20'
+                          ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                          : 'bg-red-500/20 text-red-300 border border-red-500/30'
                       }`}>
                         {group.logicalOperator}
                       </span>
-                      <div className="h-[1px] bg-[var(--border-color)]/30 flex-1"></div>
+                      <div className="h-[1px] bg-[#1e3268]/50 flex-1"></div>
                     </div>
                   )}
                   {isGroup ? renderGroup(node as Group, group.id) : renderRuleRow(node as Rule)}
@@ -446,7 +449,7 @@ export default function AdvancedQueryBuilder({ onChange, onClear, initialQuery }
     const showValue = !NO_VALUE_OPERATORS.includes(rule.operator);
 
     return (
-      <div key={rule.id} className="flex flex-wrap items-center gap-3 bg-[var(--bg-main)]/20 border border-[var(--border-color)]/40 p-3 rounded-xl animate-fade-in-up">
+      <div key={rule.id} className="flex flex-wrap items-center gap-3 bg-[#0d1c42]/90 border border-[#1e3268] p-3 rounded-xl animate-fade-in-up">
         {/* 1. Field Dropdown */}
         <div className="min-w-[150px]">
           <CustomDropdown
@@ -454,6 +457,7 @@ export default function AdvancedQueryBuilder({ onChange, onClear, initialQuery }
             value={rule.field}
             onChange={(val) => updateRuleField(rule.id, val)}
             className="w-full"
+            variant="clean"
           />
         </div>
 
@@ -464,6 +468,7 @@ export default function AdvancedQueryBuilder({ onChange, onClear, initialQuery }
             value={rule.operator}
             onChange={(val) => updateRuleOperator(rule.id, val)}
             className="w-full"
+            variant="clean"
           />
         </div>
 
@@ -502,6 +507,7 @@ export default function AdvancedQueryBuilder({ onChange, onClear, initialQuery }
                 value={rule.value}
                 onChange={(val) => updateRuleValue(rule.id, val)}
                 className="w-full"
+                variant="clean"
               />
             ) : fieldDef.type === 'status_dropdown' ? (
               <CustomDropdown
@@ -509,6 +515,7 @@ export default function AdvancedQueryBuilder({ onChange, onClear, initialQuery }
                 value={rule.value}
                 onChange={(val) => updateRuleValue(rule.id, val)}
                 className="w-full"
+                variant="clean"
               />
             ) : fieldDef.type === 'user_dropdown' ? (
               <CustomDropdown
@@ -533,6 +540,7 @@ export default function AdvancedQueryBuilder({ onChange, onClear, initialQuery }
                 value={rule.value}
                 onChange={(val) => updateRuleValue(rule.id, val)}
                 className="w-full"
+                variant="clean"
               />
             ) : fieldDef.type === 'date' ? (
               ['in_the_last_x_days', 'in_the_next_x_days'].includes(rule.operator) ? (
@@ -590,8 +598,8 @@ export default function AdvancedQueryBuilder({ onChange, onClear, initialQuery }
       {renderGroup(rootGroup)}
 
       <div className="flex justify-between items-center pt-2">
-        <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
-          <Settings className="w-3.5 h-3.5 text-slate-500 animate-spin-slow" />
+        <div className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: '#AEC4D4' }}>
+          <Settings className="w-3.5 h-3.5 animate-spin-slow" style={{ color: '#AEC4D4' }} />
           <span>Smart Filter Compiler active. Brackets matching nested constraints.</span>
         </div>
         

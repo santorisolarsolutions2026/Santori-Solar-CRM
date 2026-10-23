@@ -2,9 +2,10 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import Script from 'next/script';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { Eye, EyeOff, Lock, Mail, Loader2, ShieldAlert } from 'lucide-react';
-import Logo3D from '@/app/components/Logo3D';
+import { Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react';
 
 function getBrowserLocation(timeoutMs = 5000): Promise<string> {
   return new Promise((resolve) => {
@@ -64,6 +65,65 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
+
+  // Cloudflare Turnstile state
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileReady, setTurnstileReady] = useState(false);
+  const turnstileContainerRef = React.useRef<HTMLDivElement>(null);
+  const widgetIdRef = React.useRef<string | null>(null);
+
+  const renderTurnstile = React.useCallback(() => {
+    if (typeof window === 'undefined') return;
+    const turnstile = (window as any).turnstile;
+    if (turnstile && turnstileContainerRef.current) {
+      if (widgetIdRef.current) {
+        try {
+          turnstile.remove(widgetIdRef.current);
+        } catch (e) {}
+        widgetIdRef.current = null;
+      }
+
+      try {
+        const sitekey = process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY || '1x00000000000000000000AA';
+        widgetIdRef.current = turnstile.render(turnstileContainerRef.current, {
+          sitekey,
+          theme: 'light',
+          callback: (token: string) => {
+            setTurnstileToken(token);
+            setError('');
+          },
+          'expired-callback': () => {
+            setTurnstileToken('');
+          },
+          'error-callback': () => {
+            setTurnstileToken('');
+          },
+        });
+      } catch (err) {
+        console.error('Turnstile render error:', err);
+      }
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (turnstileReady) {
+      renderTurnstile();
+    }
+  }, [turnstileReady, renderTurnstile]);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && (window as any).turnstile) {
+      setTurnstileReady(true);
+    }
+    return () => {
+      if (widgetIdRef.current && typeof window !== 'undefined' && (window as any).turnstile) {
+        try {
+          (window as any).turnstile.remove(widgetIdRef.current);
+        } catch (e) {}
+      }
+    };
+  }, []);
   
   // Setup Flow state
   const [isSetupRequired, setIsSetupRequired] = useState(false);
@@ -73,8 +133,31 @@ export default function LoginPage() {
   const [setupEmployeeId, setSetupEmployeeId] = useState('');
 
   const { login } = useAuth();
+  const preloadedLocationRef = React.useRef<string>('');
 
   React.useEffect(() => {
+    // Silently pre-fetch location in background while user fills the login form
+    getBrowserLocation(3000).then((loc) => {
+      if (loc && !loc.startsWith('error_') && loc !== 'HTML5 Geolocation not supported') {
+        preloadedLocationRef.current = loc;
+        try {
+          sessionStorage.setItem('last_user_location', loc);
+        } catch {}
+      }
+    }).catch(() => {});
+  }, []);
+
+  React.useEffect(() => {
+    try {
+      const savedEmail = localStorage.getItem('remembered_email');
+      if (savedEmail) {
+        setEmail(savedEmail);
+        setRememberMe(true);
+      }
+    } catch {
+      // LocalStorage access failsafe
+    }
+
     async function checkSetup() {
       try {
         const res = await fetch('/api/v1/auth/setup');
@@ -119,18 +202,23 @@ export default function LoginPage() {
 
       const data = await res.json();
       if (data.success) {
-        let locationStr = 'Unknown Location';
-        try {
-          const geoResult = await getBrowserLocation(5000);
-          if (geoResult && !geoResult.startsWith('error_') && geoResult !== 'HTML5 Geolocation not supported') {
-            locationStr = geoResult;
-          }
-        } catch (e) {}
+        let locationStr = preloadedLocationRef.current || 'Admin Setup';
+        if (!preloadedLocationRef.current) {
+          try {
+            const geoResult = await Promise.race([
+              getBrowserLocation(800),
+              new Promise<string>((resolve) => setTimeout(() => resolve(''), 800))
+            ]);
+            if (geoResult && !geoResult.startsWith('error_') && geoResult !== 'HTML5 Geolocation not supported') {
+              locationStr = geoResult;
+            }
+          } catch (e) {}
+        }
 
         const loginRes = await fetch('/api/v1/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password, location: locationStr }),
+          body: JSON.stringify({ email, password, location: locationStr, turnstileToken }),
         });
 
         const loginData = await loginRes.json();
@@ -158,38 +246,32 @@ export default function LoginPage() {
       return;
     }
 
+    if (!turnstileToken) {
+      setError('Please complete the security captcha verification.');
+      return;
+    }
+
     setSubmitting(true);
     setError('');
 
-    let locationStr = 'Unknown Location';
+    let locationStr = preloadedLocationRef.current || 'Web Browser Login';
     
-    // 1. Try browser Geolocation first (triggers the browser permission popup)
-    const geoResult = await getBrowserLocation(5000);
-    if (geoResult && !geoResult.startsWith('error_') && geoResult !== 'HTML5 Geolocation not supported') {
-      locationStr = geoResult;
-    } else {
-      // 2. Fall back to IP Geolocation if HTML5 fails, is blocked, or is not supported
+    // If not preloaded yet (e.g. quick password autofill), do a fast race (max 800ms)
+    if (!preloadedLocationRef.current) {
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 1500);
-        const geoRes = await fetch('https://ipapi.co/json/', { signal: controller.signal });
-        clearTimeout(timeoutId);
-        const contentType = geoRes.headers.get('content-type');
-        if (geoRes.ok && contentType && contentType.includes('application/json')) {
-          const geoData = await geoRes.json();
-          const city = geoData.city || '';
-          const region = geoData.region || '';
-          const country = geoData.country_name || '';
-          const locParts = [city, region, country].filter(Boolean);
-          if (locParts.length > 0) {
-            locationStr = locParts.join(', ');
-          }
+        const quickLoc = await Promise.race([
+          getBrowserLocation(800),
+          new Promise<string>((resolve) => setTimeout(() => resolve(''), 800))
+        ]);
+        if (quickLoc && !quickLoc.startsWith('error_') && quickLoc !== 'HTML5 Geolocation not supported') {
+          locationStr = quickLoc;
+          preloadedLocationRef.current = quickLoc;
+          try {
+            sessionStorage.setItem('last_user_location', quickLoc);
+          } catch {}
         }
-      } catch (err) {
-        console.warn('IP Geolocation fallback timed out or failed:', err);
-      }
+      } catch {}
     }
-
 
     try {
       const res = await fetch('/api/v1/auth/login', {
@@ -197,18 +279,40 @@ export default function LoginPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password, location: locationStr }),
+        body: JSON.stringify({ email, password, location: locationStr, turnstileToken }),
       });
 
       const data = await res.json();
       if (data.success && data.data) {
+        try {
+          sessionStorage.setItem('last_user_location', locationStr);
+          if (rememberMe) {
+            localStorage.setItem('remembered_email', email);
+          } else {
+            localStorage.removeItem('remembered_email');
+          }
+        } catch {
+          // LocalStorage access failsafe
+        }
         login(data.data.token, data.data.user);
       } else {
         setError(data.message || 'Invalid credentials.');
+        if (widgetIdRef.current && typeof window !== 'undefined' && (window as any).turnstile) {
+          try {
+            (window as any).turnstile.reset(widgetIdRef.current);
+            setTurnstileToken('');
+          } catch (e) {}
+        }
       }
     } catch (err) {
       console.error(err);
       setError('Something went wrong. Please try again.');
+      if (widgetIdRef.current && typeof window !== 'undefined' && (window as any).turnstile) {
+        try {
+          (window as any).turnstile.reset(widgetIdRef.current);
+          setTurnstileToken('');
+        } catch (e) {}
+      }
     } finally {
       setSubmitting(false);
     }
@@ -216,62 +320,120 @@ export default function LoginPage() {
 
   if (checkingSetup) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[var(--bg-main)]">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-10 h-10 text-emerald-600 animate-spin" />
-          <p className="text-gray-600 dark:text-gray-400 text-sm font-semibold tracking-wider uppercase">Checking setup status...</p>
+      <div className="min-h-screen flex flex-col bg-[#FBFDFD]">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="relative w-11 h-11 flex items-center justify-center">
+              <svg className="w-full h-full animate-spin" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="setup-loader-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#0e876a" />
+                    <stop offset="26%" stopColor="#1a7e8b" />
+                    <stop offset="58%" stopColor="#2874af" />
+                    <stop offset="100%" stopColor="#c79522" />
+                  </linearGradient>
+                </defs>
+                <path
+                  d="M21 12a9 9 0 1 1-6.219-8.56"
+                  stroke="url(#setup-loader-gradient)"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </div>
+            <p className="text-slate-600 text-sm font-semibold tracking-wider uppercase">Checking setup status...</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center selection:bg-emerald-600 selection:text-white bg-[#0D1117] overflow-hidden p-6 sm:p-10">
-      {/* Full Page Background Image with Dark Overlay */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-luminosity scale-105 transition-transform duration-1000"
-        style={{ backgroundImage: 'url("/Sun-being-reflected-over-solar-panels.jpg")' }}
-      />
-      <div className="absolute inset-0 bg-gradient-to-br from-[#0D1117]/95 via-[#0D1117]/85 to-[#0D1117]/95 backdrop-blur-[2px]" />
-
-      {/* Main Content Grid */}
-      <div className="relative z-10 w-full max-w-5xl mx-auto grid lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-        {/* LEFT PANEL - Brand / Visual */}
-        <div className="hidden lg:flex lg:col-span-6 flex-col justify-center p-6 space-y-6">
-          <div className="mb-2">
-            <Logo3D size={88} />
+    <div className="light login-page-container min-h-screen flex flex-col lg:flex-row selection:bg-emerald-600 selection:text-white bg-[#FBFDFD]">
+      <style>{`
+        .login-page-container input:not([type="checkbox"]):not([type="submit"]):not([type="button"]),
+        .login-page-container .login-input,
+        .login-page-container input[type="email"],
+        .login-page-container input[type="password"],
+        .login-page-container input[type="text"] {
+          background-color: #ffffff !important;
+          background: #ffffff !important;
+          color: #000000 !important;
+          border: 1px solid #000000 !important;
+          border-width: 1px !important;
+          border-style: solid !important;
+          border-color: #000000 !important;
+          color-scheme: light !important;
+          -webkit-text-fill-color: #000000 !important;
+        }
+        .login-page-container input::placeholder,
+        .login-page-container .login-input::placeholder {
+          color: #94a3b8 !important;
+          -webkit-text-fill-color: #94a3b8 !important;
+        }
+        .login-page-container input:focus,
+        .login-page-container .login-input:focus {
+          border-color: #000000 !important;
+          outline: none !important;
+          box-shadow: 0 0 0 1px #000000 !important;
+        }
+        .login-page-container input:-webkit-autofill,
+        .login-page-container input:-webkit-autofill:hover,
+        .login-page-container input:-webkit-autofill:focus {
+          -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+          -webkit-text-fill-color: #000000 !important;
+        }
+        .login-page-container .login-submit-btn {
+          background-color: #000000 !important;
+          color: #ffffff !important;
+        }
+        .login-page-container .login-submit-btn:hover:not(:disabled) {
+          background-color: #1f2937 !important;
+          color: #ffffff !important;
+          opacity: 1 !important;
+        }
+      `}</style>
+      {/* Left 60% Container: centers the form card within the left 60% of the viewport */}
+      <div className="w-full lg:w-[60%] min-h-screen flex items-center justify-center p-6 pt-20 sm:p-10 sm:pt-24 lg:p-12 relative">
+        {/* Top Left Logo & Brand Name */}
+        <div className="absolute top-6 left-6 sm:top-8 sm:left-10 lg:top-10 lg:left-12 flex items-center gap-3 z-20">
+          <Link
+            href="/"
+            title="Back to Landing Page"
+            className="text-slate-700 hover:text-black transition-colors cursor-pointer flex items-center justify-center"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+          <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-xl overflow-hidden flex items-center justify-center bg-white border border-slate-200/90 shadow-xs p-1">
+            <Image
+              src="/logo.png"
+              alt="Santori Solar CRM Logo"
+              width={36}
+              height={36}
+              className="w-full h-full object-contain"
+              priority
+            />
           </div>
-          <div>
-            <h1 className="text-4xl md:text-5xl font-extrabold text-white leading-tight">
-              Santori <span className="text-emerald-500">Solar</span>
-            </h1>
-            <h2 className="text-xl text-emerald-400/90 font-medium mt-1">
-              Powering Sustainable Futures
-            </h2>
-          </div>
-          <p className="text-gray-300 text-sm leading-relaxed max-w-md">
-            Streamline your operations and manage customer relationships with our powerful, green-first CRM solution designed specifically for modern solar energy providers.
-          </p>
+          <span className="text-base sm:text-lg font-bold tracking-tight text-black select-none">
+            Santori Solar CRM
+          </span>
         </div>
 
-        {/* RIGHT PANEL - Form Card */}
-        <div className="lg:col-span-6 flex justify-center w-full">
-          <div className="w-full max-w-md bg-[#161B22]/90 border border-[var(--border-color)] rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
-            <div className="mb-8 text-center lg:text-left">
-              <div className="lg:hidden flex justify-center mb-6">
-                <Logo3D size={64} />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                {isSetupRequired ? 'Initial Admin Setup' : 'Welcome Back'}
-              </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                {isSetupRequired ? 'Configure your primary administrator account to get started.' : 'Sign in to access your CRM portal'}
-              </p>
-            </div>
+        <div className="w-full max-w-[420px]">
+          <div className="mb-8 text-center">
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+              {isSetupRequired ? 'Initial Admin Setup' : 'Welcome Back!'}
+            </h1>
+            <p className="text-sm text-slate-500 mt-2.5 max-w-sm mx-auto leading-relaxed">
+              {isSetupRequired 
+                ? 'Configure your primary administrator account to get started.' 
+                : 'Manage leads, track customer interactions, and close more deals with ease.'}
+            </p>
+          </div>
 
           {/* Error Message */}
           {error && (
-            <div className="mb-6 p-3 rounded-lg bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-300 text-sm animate-shake">
+            <div className="mb-5 text-red-600 text-sm animate-shake text-center font-medium">
               {error}
             </div>
           )}
@@ -280,7 +442,7 @@ export default function LoginPage() {
             <form onSubmit={handleSetupSubmit} className="space-y-4">
               {/* Setup Full Name */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">
+                <label className="block text-sm font-semibold text-slate-800 mb-2">
                   Admin Full Name *
                 </label>
                 <input
@@ -289,13 +451,14 @@ export default function LoginPage() {
                   value={setupName}
                   onChange={(e) => setSetupName(e.target.value)}
                   placeholder="e.g. Deepak Sir"
-                  className="block w-full bg-[var(--bg-input)] border border-[var(--border-color)] rounded-lg py-2.5 px-3 text-sm focus:outline-none focus:border-emerald-500 text-gray-900 dark:text-white transition-colors"
+                  style={{ backgroundColor: '#ffffff', color: '#000000', border: '1px solid #000000' }}
+                  className="login-input block w-full bg-white border border-black rounded-xl py-3 px-4 text-sm text-black placeholder:text-slate-400 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
                 />
               </div>
 
               {/* Setup Email */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">
+                <label className="block text-sm font-semibold text-slate-800 mb-2">
                   Email Address *
                 </label>
                 <input
@@ -304,13 +467,14 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="e.g. admin@solarcrm.com"
-                  className="block w-full bg-[var(--bg-input)] border border-[var(--border-color)] rounded-lg py-2.5 px-3 text-sm focus:outline-none focus:border-emerald-500 text-gray-900 dark:text-white transition-colors"
+                  style={{ backgroundColor: '#ffffff', color: '#000000', border: '1px solid #000000' }}
+                  className="login-input block w-full bg-white border border-black rounded-xl py-3 px-4 text-sm text-black placeholder:text-slate-400 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
                 />
               </div>
 
               {/* Setup Employee ID */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">
+                <label className="block text-sm font-semibold text-slate-800 mb-2">
                   Employee ID *
                 </label>
                 <input
@@ -319,13 +483,14 @@ export default function LoginPage() {
                   value={setupEmployeeId}
                   onChange={(e) => setSetupEmployeeId(e.target.value)}
                   placeholder="e.g. EMP-1001"
-                  className="block w-full bg-[var(--bg-input)] border border-[var(--border-color)] rounded-lg py-2.5 px-3 text-sm focus:outline-none focus:border-emerald-500 text-gray-900 dark:text-white transition-colors"
+                  style={{ backgroundColor: '#ffffff', color: '#000000', border: '1px solid #000000' }}
+                  className="login-input block w-full bg-white border border-black rounded-xl py-3 px-4 text-sm text-black placeholder:text-slate-400 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
                 />
               </div>
 
               {/* Setup Phone */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">
+                <label className="block text-sm font-semibold text-slate-800 mb-2">
                   Contact Phone
                 </label>
                 <input
@@ -333,13 +498,14 @@ export default function LoginPage() {
                   value={setupPhone}
                   onChange={(e) => setSetupPhone(e.target.value)}
                   placeholder="e.g. 9876543210"
-                  className="block w-full bg-[var(--bg-input)] border border-[var(--border-color)] rounded-lg py-2.5 px-3 text-sm focus:outline-none focus:border-emerald-500 text-gray-900 dark:text-white transition-colors"
+                  style={{ backgroundColor: '#ffffff', color: '#000000', border: '1px solid #000000' }}
+                  className="login-input block w-full bg-white border border-black rounded-xl py-3 px-4 text-sm text-black placeholder:text-slate-400 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
                 />
               </div>
 
               {/* Setup Password */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">
+                <label className="block text-sm font-semibold text-slate-800 mb-2">
                   Password *
                 </label>
                 <div className="relative">
@@ -348,15 +514,16 @@ export default function LoginPage() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="block w-full bg-[var(--bg-input)] border border-[var(--border-color)] rounded-lg py-2.5 pl-3 pr-10 text-sm focus:outline-none focus:border-emerald-500 text-gray-900 dark:text-white transition-colors"
+                    placeholder="Enter your password"
+                    style={{ backgroundColor: '#ffffff', color: '#000000', border: '1px solid #000000' }}
+                    className="login-input block w-full bg-white border border-black rounded-xl py-3 pl-4 pr-11 text-sm text-black placeholder:text-slate-400 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-black hover:text-slate-700 transition-colors"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? <EyeOff className="w-5 h-5 text-black stroke-black" /> : <Eye className="w-5 h-5 text-black stroke-black" />}
                   </button>
                 </div>
               </div>
@@ -365,7 +532,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                className="login-submit-btn w-full mt-6 bg-black text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm shadow-sm"
               >
                 {submitting ? (
                   <>
@@ -381,80 +548,122 @@ export default function LoginPage() {
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Email Input */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">
-                  Email Address
+                <label className="block text-sm font-semibold text-slate-800 mb-2">
+                  Email
                 </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                    <Mail className="w-4 h-4" />
-                  </div>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="e.g. admin@solarcrm.com"
-                    className="block w-full bg-[var(--bg-input)] border border-[var(--border-color)] rounded-lg py-2.5 pl-10 pr-3 text-sm focus:outline-none focus:border-emerald-500 text-gray-900 dark:text-white transition-colors"
-                  />
-                </div>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  style={{ backgroundColor: '#ffffff', color: '#000000', borderWidth: '1px', borderStyle: 'solid', borderColor: '#000000' }}
+                  className="login-input block w-full bg-white border border-black rounded-xl py-3 px-4 text-sm text-black placeholder:text-slate-400 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
+                />
               </div>
 
               {/* Password Input */}
               <div>
-                <div className="flex justify-between items-center mb-1.5">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300">
-                    Password
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setError('Please contact the Admin to reset your password.')}
-                    className="text-xs text-emerald-600 hover:text-emerald-500 transition-colors font-medium"
-                  >
-                    Forgot Password?
-                  </button>
-                </div>
+                <label className="block text-sm font-semibold text-slate-800 mb-2">
+                  Password
+                </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                    <Lock className="w-4 h-4" />
-                  </div>
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="block w-full bg-[var(--bg-input)] border border-[var(--border-color)] rounded-lg py-2.5 pl-10 pr-10 text-sm focus:outline-none focus:border-emerald-500 text-gray-900 dark:text-white transition-colors"
+                    placeholder="Enter your password"
+                    style={{ backgroundColor: '#ffffff', color: '#000000', borderWidth: '1px', borderStyle: 'solid', borderColor: '#000000' }}
+                    className="login-input block w-full bg-white border border-black rounded-xl py-3 pl-4 pr-11 text-sm text-black placeholder:text-slate-400 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-black hover:text-slate-700 transition-colors"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? <EyeOff className="w-5 h-5 text-black stroke-black" /> : <Eye className="w-5 h-5 text-black stroke-black" />}
                   </button>
                 </div>
               </div>
 
-              {/* Submit Button */}
+              {/* Remember Me & Forget Password Row */}
+              <div className="flex items-center justify-between text-sm pt-1">
+                <label className="flex items-center gap-2 cursor-pointer select-none text-slate-800 font-medium text-sm">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="w-4 h-4 rounded text-black bg-white border-slate-300 focus:ring-black accent-black cursor-pointer"
+                  />
+                  <span>Remember me</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setError('Please contact the Admin to reset your password.')}
+                  className="text-slate-800 hover:text-black font-medium text-sm transition-colors"
+                >
+                  Forget password?
+                </button>
+              </div>
+
+              {/* Cloudflare Turnstile Captcha */}
+              <div className="flex justify-center my-2 min-h-[66px]">
+                <div ref={turnstileContainerRef} id="turnstile-widget" />
+              </div>
+
+              {/* Sign In Button */}
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full mt-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                className="login-submit-btn w-full mt-2 bg-black text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm shadow-sm"
               >
                 {submitting ? (
                   <>
                     <Loader2 className="w-4 h-4 text-white animate-spin" />
-                    <span>Logging in...</span>
+                    <span>Signing in...</span>
                   </>
                 ) : (
-                  <span>Sign In</span>
+                  <span>Sign in</span>
                 )}
               </button>
             </form>
           )}
         </div>
       </div>
+
+      {/* Right 40% Container: Full height solar panel sunset image with centered quote */}
+      <div className="hidden lg:block lg:w-[40%] relative self-stretch min-h-screen overflow-hidden">
+        <Image
+          src="/solar_login_bg.jpg"
+          alt="Santori Solar Panels"
+          fill
+          priority
+          className="object-cover object-center"
+          sizes="40vw"
+        />
+        {/* Subtle dark gradient scrim for contrast & depth */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/15 to-black/25 pointer-events-none" />
+
+        {/* Big centered quote on scene */}
+        <div className="absolute inset-0 flex items-center justify-center p-6 lg:p-10 z-10 pointer-events-none select-none">
+          <div className="w-full max-w-[360px] xl:max-w-[420px] 2xl:max-w-[460px] drop-shadow-[0_8px_28px_rgba(0,0,0,0.65)]">
+            <Image
+              src="/login_quote.png"
+              alt="Innovate Today. Empower Tomorrow."
+              width={986}
+              height={656}
+              priority
+              className="w-full h-auto object-contain"
+            />
+          </div>
+        </div>
+      </div>
+    <Script
+        src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+        strategy="afterInteractive"
+        onLoad={() => setTurnstileReady(true)}
+      />
     </div>
-  </div>
-);
+  );
 }

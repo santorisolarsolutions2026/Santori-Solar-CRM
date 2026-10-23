@@ -1,10 +1,92 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { Sun, ArrowLeft, Loader2, Sparkles, AlertCircle } from 'lucide-react';
+import { Sun, ArrowLeft, Loader2, Sparkles, AlertCircle, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
+
+const LEAD_SOURCE_OPTIONS = [
+  { value: 'meta', label: 'Meta' },
+  { value: 'discom', label: 'Discom' },
+  { value: 'offline_campaign', label: 'Offline Campaign' },
+  { value: 'inbound', label: 'Inbound' },
+  { value: 'whatsapp', label: 'WhatsApp' },
+  { value: 'cold_call', label: 'Cold Call' },
+];
+
+const CONNECTION_TYPE_OPTIONS = [
+  { value: 'residential', label: 'Residential' },
+  { value: 'commercial', label: 'Commercial' },
+  { value: 'industrial', label: 'Industrial' },
+];
+
+function CustomSelect({
+  value,
+  onChange,
+  options,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  options: { value: string; label: string }[];
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    if (open) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [open]);
+
+  const selected = options.find((o) => o.value === value) || options[0];
+
+  return (
+    <div className="relative w-full" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="lead-field w-full px-3 py-2 bg-[var(--bg-main)] border border-black dark:border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:border-[#4F7D32] focus:outline-none flex items-center justify-between text-left cursor-pointer"
+      >
+        <span className="truncate">{selected?.label}</span>
+        <ChevronDown className={`w-3.5 h-3.5 text-black dark:text-white transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div className="absolute z-50 mt-1 w-full bg-white dark:bg-[#0D1117] border border-black dark:border-[var(--border-color)] rounded-lg shadow-xl overflow-hidden py-1 max-h-60 overflow-y-auto">
+          {options.map((opt) => {
+            const isSelected = opt.value === value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => {
+                  onChange(opt.value);
+                  setOpen(false);
+                }}
+                className={`w-full px-3 py-2 text-left text-xs transition-colors cursor-pointer select-none hover:bg-[#B8CFB3] hover:text-black dark:hover:bg-slate-800 dark:hover:text-white ${
+                  isSelected
+                    ? 'font-bold text-black dark:text-white'
+                    : 'font-normal text-black dark:text-gray-300'
+                }`}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function NewLeadPage() {
   const { user, hasPermission } = useAuth();
@@ -288,20 +370,45 @@ export default function NewLeadPage() {
       <div className="flex items-center gap-3">
         <Link
           href="/leads"
-          className="p-2 rounded-lg bg-emerald-900 border border-[var(--border-color)] text-emerald-400 hover:text-white transition-all focus:outline-none"
+          style={{ backgroundColor: '#4F7D32', color: '#FFFFFF' }}
+          className="p-2 rounded-lg border border-[#4F7D32] hover:brightness-95 transition-all focus:outline-none flex items-center justify-center cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
         </Link>
         <div>
           <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">
-            <Link href="/leads" className="hover:text-emerald-400 transition-colors">Leads</Link>
+            <Link href="/leads" className="hover:text-[#4F7D32] transition-colors">Leads</Link>
             <span>/</span>
             <span className="text-[var(--text-secondary)]">Create Lead</span>
           </div>
           <h1 className="text-xl font-bold text-white tracking-wide">Create New Sales Lead</h1>
-          <p className="text-xs text-emerald-400 mt-1">Form A: Add Lead details and assign team pool.</p>
+          <p className="text-xs mt-1" style={{ color: '#4F7D32' }}>Form A: Add Lead details and assign team pool.</p>
         </div>
       </div>
+
+      {/* Scoped style for lead form fields outline & dark headings in light mode */}
+      <style>{`
+        .light .lead-field {
+          border-color: #000000 !important;
+        }
+        .light form label,
+        .light form h3 {
+          color: #000000 !important;
+          font-weight: 700 !important;
+        }
+        .light select {
+          accent-color: #B8CFB3 !important;
+        }
+        .light select option:checked,
+        .light select option:hover,
+        .light select option:focus,
+        .light select option:active {
+          background-color: #B8CFB3 !important;
+          background: #B8CFB3 linear-gradient(0deg, #B8CFB3 0%, #B8CFB3 100%) !important;
+          color: #000000 !important;
+          box-shadow: 0 0 10px 100px #B8CFB3 inset !important;
+        }
+      `}</style>
 
       {/* Main card */}
       <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 shadow-xl relative overflow-hidden">
@@ -309,7 +416,7 @@ export default function NewLeadPage() {
           {/* Customer name and phone */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-emerald-400 mb-2">
+              <label className="block text-xs font-bold uppercase tracking-wider text-black dark:text-[#4F7D32] mb-2">
                 Customer Full Name *
               </label>
               <input
@@ -318,11 +425,11 @@ export default function NewLeadPage() {
                 value={form.customerName}
                 onChange={(e) => setForm({ ...form, customerName: e.target.value })}
                 placeholder="e.g. Rajesh Singhania"
-                className="block w-full px-3 py-2 bg-emerald-950/60 border border-[var(--border-color)] rounded-lg text-white text-xs focus:border-emerald-500 focus:outline-none"
+                className="lead-field block w-full px-3 py-2 bg-[var(--bg-main)] border border-black dark:border-[var(--border-color)] rounded-lg text-white text-xs focus:border-[#4F7D32] focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-emerald-400 mb-2">
+              <label className="block text-xs font-bold uppercase tracking-wider text-black dark:text-[#4F7D32] mb-2">
                 Mobile Number *
               </label>
               <div className="relative">
@@ -333,11 +440,11 @@ export default function NewLeadPage() {
                   onChange={(e) => setForm({ ...form, mobile: e.target.value })}
                   onBlur={handlePhoneBlur}
                   placeholder="10-digit number"
-                  className="block w-full px-3 py-2 bg-emerald-950/60 border border-[var(--border-color)] rounded-lg text-white text-xs focus:border-emerald-500 focus:outline-none font-mono"
+                  className="lead-field block w-full px-3 py-2 bg-[var(--bg-main)] border border-black dark:border-[var(--border-color)] rounded-lg text-white text-xs focus:border-[#4F7D32] focus:outline-none font-mono"
                 />
                 {checkingDuplicate && (
                   <span className="absolute right-3 top-2.5">
-                    <Loader2 className="w-4 h-4 text-emerald-500 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin" style={{ color: '#4F7D32' }} />
                   </span>
                 )}
               </div>
@@ -346,10 +453,10 @@ export default function NewLeadPage() {
 
           {/* Duplicate warnings alerts */}
           {duplicateWarning && (
-            <div className="p-4 bg-red-950/40 border border-emerald-600 rounded-lg text-red-200 text-xs flex flex-col gap-2.5">
+            <div className="p-4 bg-red-50 dark:bg-red-950/40 border border-red-300 dark:border-[#4F7D32] rounded-lg text-red-800 dark:text-red-200 text-xs flex flex-col gap-2.5">
               <div className="flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
-                <span>{duplicateWarning}</span>
+                <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
+                <span className="font-semibold">{duplicateWarning}</span>
               </div>
               {showOverride && (
                 <label className="flex items-center gap-2 mt-1 cursor-pointer select-none">
@@ -357,9 +464,9 @@ export default function NewLeadPage() {
                     type="checkbox"
                     checked={overrideDuplicate}
                     onChange={(e) => setOverrideDuplicate(e.target.checked)}
-                    className="w-3.5 h-3.5 bg-[var(--bg-main)] border border-[var(--border-color)] text-red-600 focus:ring-0 rounded"
+                    className="lead-field w-3.5 h-3.5 bg-white dark:bg-[var(--bg-main)] border border-black dark:border-[var(--border-color)] text-red-600 focus:ring-0 rounded"
                   />
-                  <span className="font-semibold text-[11px] text-red-300">
+                  <span className="font-bold text-[11px] text-red-900 dark:text-red-300">
                     Admin Override: Create this duplicate lead anyway.
                   </span>
                 </label>
@@ -370,7 +477,7 @@ export default function NewLeadPage() {
           {/* Alternate Mobile and Source */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
+              <label className="block text-xs font-bold uppercase tracking-wider text-black dark:text-[var(--text-secondary)] mb-2">
                 Alternate Mobile
               </label>
               <input
@@ -378,46 +485,35 @@ export default function NewLeadPage() {
                 value={form.mobileAlt}
                 onChange={(e) => setForm({ ...form, mobileAlt: e.target.value })}
                 placeholder="Alternate phone"
-                className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:border-emerald-500 focus:outline-none font-mono"
+                className="lead-field block w-full px-3 py-2 bg-[var(--bg-main)] border border-black dark:border-[var(--border-color)] rounded-lg text-white text-xs focus:border-[#4F7D32] focus:outline-none font-mono"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
+              <label className="block text-xs font-bold uppercase tracking-wider text-black dark:text-[var(--text-secondary)] mb-2">
                 Lead Source
               </label>
-              <select
+              <CustomSelect
                 value={form.leadSource}
-                onChange={(e) => setForm({ ...form, leadSource: e.target.value })}
-                className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:border-emerald-500 focus:outline-none"
-              >
-                <option value="meta">Meta</option>
-                <option value="discom">Discom</option>
-                <option value="offline_campaign">Offline Campaign</option>
-                <option value="inbound">Inbound</option>
-                <option value="whatsapp">WhatsApp</option>
-                <option value="cold_call">Cold Call</option>
-              </select>
+                onChange={(val) => setForm({ ...form, leadSource: val })}
+                options={LEAD_SOURCE_OPTIONS}
+              />
             </div>
           </div>
 
           {/* Connection and Load */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
+              <label className="block text-xs font-bold uppercase tracking-wider text-black dark:text-[var(--text-secondary)] mb-2">
                 Connection Type
               </label>
-              <select
+              <CustomSelect
                 value={form.connectionType}
-                onChange={(e) => setForm({ ...form, connectionType: e.target.value })}
-                className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] text-xs focus:border-emerald-500 focus:outline-none"
-              >
-                <option value="residential">Residential</option>
-                <option value="commercial">Commercial</option>
-                <option value="industrial">Industrial</option>
-              </select>
+                onChange={(val) => setForm({ ...form, connectionType: val })}
+                options={CONNECTION_TYPE_OPTIONS}
+              />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
+              <label className="block text-xs font-bold uppercase tracking-wider text-black dark:text-[var(--text-secondary)] mb-2">
                 Sanctioned Load (kW)
               </label>
               <input
@@ -426,7 +522,7 @@ export default function NewLeadPage() {
                 value={form.sanctionedLoadKw}
                 onChange={(e) => setForm({ ...form, sanctionedLoadKw: e.target.value })}
                 placeholder="kW from electricity bill"
-                className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:border-emerald-500 focus:outline-none"
+                className="lead-field block w-full px-3 py-2 bg-[var(--bg-main)] border border-black dark:border-[var(--border-color)] rounded-lg text-white text-xs focus:border-[#4F7D32] focus:outline-none"
               />
             </div>
           </div>
@@ -434,7 +530,7 @@ export default function NewLeadPage() {
           {/* DisCom Name and Connection Number */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
+              <label className="block text-xs font-bold uppercase tracking-wider text-black dark:text-[var(--text-secondary)] mb-2">
                 DisCom Name
               </label>
               <input
@@ -442,11 +538,11 @@ export default function NewLeadPage() {
                 value={form.discomName}
                 onChange={(e) => setForm({ ...form, discomName: e.target.value })}
                 placeholder="e.g. UPPCL"
-                className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:border-emerald-500 focus:outline-none"
+                className="lead-field block w-full px-3 py-2 bg-[var(--bg-main)] border border-black dark:border-[var(--border-color)] rounded-lg text-white text-xs focus:border-[#4F7D32] focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
+              <label className="block text-xs font-bold uppercase tracking-wider text-black dark:text-[var(--text-secondary)] mb-2">
                 Account ID / Connection No / Consumer No
               </label>
               <input
@@ -454,28 +550,28 @@ export default function NewLeadPage() {
                 value={form.connectionNumber}
                 onChange={(e) => setForm({ ...form, connectionNumber: e.target.value })}
                 placeholder="e.g. 7419012345 / CA Number"
-                className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:border-emerald-500 focus:outline-none font-mono"
+                className="lead-field block w-full px-3 py-2 bg-[var(--bg-main)] border border-black dark:border-[var(--border-color)] rounded-lg text-white text-xs focus:border-[#4F7D32] focus:outline-none font-mono"
               />
             </div>
           </div>
 
           {/* Address details */}
           <div className="space-y-4 border-t border-[var(--border-color)]/80 pt-6">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">Site Location Details</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-black dark:text-[var(--text-primary)]">Site Location Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="md:col-span-4">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
+                <label className="block text-xs font-bold uppercase tracking-wider text-black dark:text-[var(--text-secondary)] mb-2">
                   Full Street Address
                 </label>
                 <textarea
                   value={form.address}
                   onChange={(e) => setForm({ ...form, address: e.target.value })}
                   placeholder="House number, flat, apartment, street address details..."
-                  className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs h-16 focus:border-emerald-500 focus:outline-none"
+                  className="lead-field block w-full px-3 py-2 bg-[var(--bg-main)] border border-black dark:border-[var(--border-color)] rounded-lg text-white text-xs h-16 focus:border-[#4F7D32] focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
+                <label className="block text-xs font-bold uppercase tracking-wider text-black dark:text-[var(--text-secondary)] mb-2">
                   Pincode
                 </label>
                 <input
@@ -483,11 +579,11 @@ export default function NewLeadPage() {
                   value={form.pinCode}
                   onChange={handlePincodeChange}
                   placeholder="6-digit pincode"
-                  className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:border-emerald-500 focus:outline-none font-mono"
+                  className="lead-field block w-full px-3 py-2 bg-[var(--bg-main)] border border-black dark:border-[var(--border-color)] rounded-lg text-white text-xs focus:border-[#4F7D32] focus:outline-none font-mono"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
+                <label className="block text-xs font-bold uppercase tracking-wider text-black dark:text-[var(--text-secondary)] mb-2">
                   City
                 </label>
                 <input
@@ -495,11 +591,11 @@ export default function NewLeadPage() {
                   value={form.city}
                   onChange={(e) => setForm({ ...form, city: e.target.value })}
                   placeholder="e.g. Varanasi"
-                  className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:border-emerald-500 focus:outline-none"
+                  className="lead-field block w-full px-3 py-2 bg-[var(--bg-main)] border border-black dark:border-[var(--border-color)] rounded-lg text-white text-xs focus:border-[#4F7D32] focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
+                <label className="block text-xs font-bold uppercase tracking-wider text-black dark:text-[var(--text-secondary)] mb-2">
                   Division / Area
                 </label>
                 <input
@@ -507,11 +603,11 @@ export default function NewLeadPage() {
                   value={form.division}
                   onChange={(e) => setForm({ ...form, division: e.target.value })}
                   placeholder="e.g. Bhelupur, Sigra, Naini"
-                  className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:border-emerald-500 focus:outline-none"
+                  className="lead-field block w-full px-3 py-2 bg-[var(--bg-main)] border border-black dark:border-[var(--border-color)] rounded-lg text-white text-xs focus:border-[#4F7D32] focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
+                <label className="block text-xs font-bold uppercase tracking-wider text-black dark:text-[var(--text-secondary)] mb-2">
                   State
                 </label>
                 <input
@@ -519,7 +615,7 @@ export default function NewLeadPage() {
                   value={form.state}
                   onChange={(e) => setForm({ ...form, state: e.target.value })}
                   placeholder="e.g. Uttar Pradesh"
-                  className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs focus:border-emerald-500 focus:outline-none"
+                  className="lead-field block w-full px-3 py-2 bg-[var(--bg-main)] border border-black dark:border-[var(--border-color)] rounded-lg text-white text-xs focus:border-[#4F7D32] focus:outline-none"
                 />
               </div>
             </div>
@@ -527,14 +623,14 @@ export default function NewLeadPage() {
 
           {/* Initial remark */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
+            <label className="block text-xs font-bold uppercase tracking-wider text-black dark:text-[var(--text-secondary)] mb-2">
               Initial Remarks / Caller Notes
             </label>
             <textarea
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
               placeholder="Initial details about client requirements..."
-              className="block w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-white text-xs h-20 focus:border-emerald-500 focus:outline-none"
+              className="lead-field block w-full px-3 py-2 bg-[var(--bg-main)] border border-black dark:border-[var(--border-color)] rounded-lg text-white text-xs h-20 focus:border-[#4F7D32] focus:outline-none"
             />
           </div>
 
@@ -543,7 +639,8 @@ export default function NewLeadPage() {
             <button
               type="submit"
               disabled={loading}
-              className="py-3 px-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-lg shadow-emerald-500/10 disabled:opacity-50 flex items-center gap-2"
+              style={{ backgroundColor: '#4F7D32', color: '#FFFFFF' }}
+              className="py-3 px-6 hover:brightness-95 text-white rounded-lg font-bold text-xs shadow-lg disabled:opacity-50 flex items-center gap-2 cursor-pointer"
             >
               {loading ? (
                 <>

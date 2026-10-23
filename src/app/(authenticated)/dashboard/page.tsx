@@ -47,7 +47,54 @@ const LeadSourcePieChart = dynamic(
   }
 );
 
+const PipelineBarChart = dynamic(
+  () => import('@/components/ReportsCharts').then((mod) => mod.PipelineBarChart),
+  {
+    ssr: false,
+    loading: () => <div className="h-72 w-full bg-[var(--bg-main)] animate-pulse rounded-xl" />,
+  }
+);
+
 const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#8B5CF6', '#EC4899', '#0EA5E9', '#14B8A6'];
+
+const CARD_PALETTES = [
+  {
+    color: '#2563EB',
+    bg: 'rgba(37, 99, 235, 0.12)',
+    borderHover: 'hover:border-blue-500/40',
+    shadowHover: 'hover:shadow-[0_12px_24px_-10px_rgba(37,99,235,0.18)]',
+  },
+  {
+    color: '#7C3AED',
+    bg: 'rgba(124, 58, 237, 0.12)',
+    borderHover: 'hover:border-purple-500/40',
+    shadowHover: 'hover:shadow-[0_12px_24px_-10px_rgba(124,58,237,0.18)]',
+  },
+  {
+    color: '#0D9488',
+    bg: 'rgba(13, 148, 136, 0.12)',
+    borderHover: 'hover:border-teal-500/40',
+    shadowHover: 'hover:shadow-[0_12px_24px_-10px_rgba(13,148,136,0.18)]',
+  },
+  {
+    color: '#6FAF4F',
+    bg: 'rgba(111, 175, 79, 0.15)',
+    borderHover: 'hover:border-[#6FAF4F]/40',
+    shadowHover: 'hover:shadow-[0_12px_24px_-10px_rgba(111,175,79,0.18)]',
+  },
+  {
+    color: '#D97706',
+    bg: 'rgba(217, 119, 6, 0.14)',
+    borderHover: 'hover:border-amber-500/40',
+    shadowHover: 'hover:shadow-[0_12px_24px_-10px_rgba(217,119,6,0.18)]',
+  },
+  {
+    color: '#E11D48',
+    bg: 'rgba(225, 29, 72, 0.12)',
+    borderHover: 'hover:border-rose-500/40',
+    shadowHover: 'hover:shadow-[0_12px_24px_-10px_rgba(225,29,72,0.18)]',
+  },
+];
 
 const leadSourceData = [
   { name: 'Meta', value: 35 },
@@ -109,28 +156,30 @@ interface ActivityLog {
   isTerritoryAssign?: boolean;
 }
 
-const STAGE_NAMES: Record<number, { name: string; color: string }> = {
-  1: { name: 'Fresh Lead', color: '#3B82F6' },
-  2: { name: 'DNP (No Answer)', color: '#94A3B8' },
-  3: { name: 'Follow Up', color: '#0D9488' },
-  4: { name: 'Not Interested', color: '#EF4444' },
-  5: { name: 'Call Later', color: '#06B6D4' },
-  6: { name: 'Already Installed', color: '#475569' },
-  7: { name: 'Decision Pending', color: '#6366F1' },
-  8: { name: 'Meeting Booked', color: '#2563EB' },
-  9: { name: 'Meeting Done', color: '#10B981' },
-  10: { name: 'Disconnected', color: '#64748B' },
-  11: { name: 'Switch Off', color: '#64748B' },
-  12: { name: 'Can\'t Fit Solar', color: '#475569' },
-  13: { name: 'Sale Done', color: '#10B981' },
-  14: { name: 'Meeting Cancelled', color: '#EF4444' },
+const STAGE_NAMES: Record<number, { name: string; short: string; color: string }> = {
+  1: { name: 'Fresh Lead', short: 'Fresh', color: '#3B82F6' },
+  2: { name: 'DNP (No Answer)', short: 'DNP', color: '#94A3B8' },
+  3: { name: 'Follow Up', short: 'Follow Up', color: '#0D9488' },
+  4: { name: 'Not Interested', short: 'Not Int.', color: '#EF4444' },
+  5: { name: 'Call Later', short: 'Call Later', color: '#06B6D4' },
+  6: { name: 'Already Installed', short: 'Installed', color: '#475569' },
+  7: { name: 'Decision Pending', short: 'Decision', color: '#6366F1' },
+  8: { name: 'Meeting Booked', short: 'Mtg Booked', color: '#2563EB' },
+  9: { name: 'Meeting Done', short: 'Mtg Done', color: '#10B981' },
+  10: { name: 'Disconnected', short: 'Discon.', color: '#64748B' },
+  11: { name: 'Switch Off', short: 'Switch Off', color: '#64748B' },
+  12: { name: 'Can\'t Fit Solar', short: 'No Fit', color: '#475569' },
+  13: { name: 'Sale Done', short: 'Sale Done', color: '#10B981' },
+  14: { name: 'Meeting Cancelled', short: 'Cancelled', color: '#EF4444' },
 };
 
 const REMINDER_HEX_COLORS: Record<string, string> = {
-  meeting: '#10B981',      // Green
+  meeting: '#4F7D32',      // Brand Green #4F7D32
   delivery: '#3B82F6',     // Blue
   installation: '#8B5CF6', // Purple
   commissioning: '#F59E0B', // Amber
+  followup: '#0D9488',     // Teal #0D9488
+  follow_up: '#0D9488',    // Teal #0D9488
 };
 
 export default function DashboardPage() {
@@ -151,7 +200,8 @@ export default function DashboardPage() {
   const [filterEndDate, setFilterEndDate] = useState<string>('');
   const [showFilters, setShowFilters] = useState(false);
 
-  // Activity Stream full screen modal state for Admin
+  // Separate Activity Stream & Reminders modal states (no toggle between them)
+  const [remindersModalOpen, setRemindersModalOpen] = useState(false);
   const [activityModalOpen, setActivityModalOpen] = useState(false);
   const [activitySearchQuery, setActivitySearchQuery] = useState('');
 
@@ -161,7 +211,7 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    if (activityModalOpen) {
+    if (remindersModalOpen || activityModalOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
@@ -169,7 +219,7 @@ export default function DashboardPage() {
     return () => {
       document.body.style.overflow = '';
     };
-  }, [activityModalOpen]);
+  }, [remindersModalOpen, activityModalOpen]);
 
   const isAdmin = user?.role === 'admin' || user?.role?.startsWith('admin:') || user?.role === 'director';
 
@@ -227,20 +277,44 @@ export default function DashboardPage() {
     );
   });
 
-  const fetchData = async () => {
-    try {
-      let query = '';
-      const params = new URLSearchParams();
-      if (stateFilter) params.append('state', stateFilter);
-      if (cityFilter) params.append('city', cityFilter);
-      if (filterStartDate && filterEndDate) {
-        params.append('startDate', filterStartDate);
-        params.append('endDate', filterEndDate);
-      }
-      if (params.toString()) {
-        query = `?${params.toString()}`;
-      }
+  const meetingReminders = reminders.filter((rem) => rem.type === 'meeting');
+  const followupReminders = reminders.filter((rem) => rem.type !== 'meeting');
 
+  const fetchData = async () => {
+    let query = '';
+    const params = new URLSearchParams();
+    if (stateFilter) params.append('state', stateFilter);
+    if (cityFilter) params.append('city', cityFilter);
+    if (filterStartDate && filterEndDate) {
+      params.append('startDate', filterStartDate);
+      params.append('endDate', filterEndDate);
+    }
+    if (params.toString()) {
+      query = `?${params.toString()}`;
+    }
+
+    const cacheKey = `dashboard_data_cache_${query || 'default'}`;
+
+    // SWR Step 1: Immediately use cached data if available for instant 0ms render
+    try {
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && Date.now() - parsed.timestamp < 3 * 60 * 1000) {
+          if (parsed.stats) setStats(parsed.stats);
+          if (parsed.pipeline) setPipeline(parsed.pipeline);
+          if (parsed.trend) setTrend(parsed.trend);
+          if (parsed.performance) setPerformance(parsed.performance);
+          if (parsed.activities) setActivities(parsed.activities);
+          if (parsed.reminders) setReminders(parsed.reminders);
+          if (parsed.leadSources) setLeadSources(parsed.leadSources);
+          setLoading(false);
+        }
+      }
+    } catch {}
+
+    // SWR Step 2: Fetch fresh data in background to silently revalidate
+    try {
       const [
         statsRes,
         pipelineRes,
@@ -259,6 +333,18 @@ export default function DashboardPage() {
         fetch(`/api/v1/reports/lead-sources${query}`),
       ]);
 
+      const safeJson = async (res: Response) => {
+        try {
+          const contentType = res.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            return await res.json();
+          }
+          return { success: false };
+        } catch {
+          return { success: false };
+        }
+      };
+
       const [
         statsData,
         pipelineData,
@@ -268,22 +354,50 @@ export default function DashboardPage() {
         remindersData,
         sourcesData,
       ] = await Promise.all([
-        statsRes.json(),
-        pipelineRes.json(),
-        trendRes.json(),
-        perfRes.json(),
-        feedRes.json(),
-        remindersRes.json(),
-        sourcesRes.json(),
+        safeJson(statsRes),
+        safeJson(pipelineRes),
+        safeJson(trendRes),
+        safeJson(perfRes),
+        safeJson(feedRes),
+        safeJson(remindersRes),
+        safeJson(sourcesRes),
       ]);
 
-      if (statsData.success) setStats(statsData.data);
-      if (pipelineData.success) setPipeline(pipelineData.data);
-      if (trendData.success) setTrend(trendData.data);
-      if (perfData.success) setPerformance(perfData.data);
-      if (feedData.success) setActivities(feedData.data.logs || feedData.data || []);
-      if (remindersData.success) setReminders(remindersData.data);
-      if (sourcesData.success && Array.isArray(sourcesData.data)) setLeadSources(sourcesData.data);
+      const freshCache: any = { timestamp: Date.now() };
+
+      if (statsData.success) {
+        setStats(statsData.data);
+        freshCache.stats = statsData.data;
+      }
+      if (pipelineData.success) {
+        setPipeline(pipelineData.data);
+        freshCache.pipeline = pipelineData.data;
+      }
+      if (trendData.success) {
+        setTrend(trendData.data);
+        freshCache.trend = trendData.data;
+      }
+      if (perfData.success) {
+        setPerformance(perfData.data);
+        freshCache.performance = perfData.data;
+      }
+      if (feedData.success) {
+        const logs = feedData.data.logs || feedData.data || [];
+        setActivities(logs);
+        freshCache.activities = logs;
+      }
+      if (remindersData.success) {
+        setReminders(remindersData.data);
+        freshCache.reminders = remindersData.data;
+      }
+      if (sourcesData.success && Array.isArray(sourcesData.data)) {
+        setLeadSources(sourcesData.data);
+        freshCache.leadSources = sourcesData.data;
+      }
+
+      try {
+        sessionStorage.setItem(cacheKey, JSON.stringify(freshCache));
+      } catch {}
     } catch (err) {
       console.error('Fetch dashboard data error:', err);
     } finally {
@@ -445,28 +559,59 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Welcome Banner */}
-      <div className="relative bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-6 overflow-hidden shadow-sm">
-        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-wide">
-              Welcome Back, <span className="text-emerald-500 font-extrabold">{user?.name}</span>!
-            </h1>
-            <p className="text-sm text-[var(--text-muted)] dark:text-[var(--text-secondary)] mt-1">
-              Here's the latest status of your solar sales pipeline.
-            </p>
-          </div>
-          <div className="flex gap-3">
-            {hasPermission('leads:create') && (
-              <Link
-                href="/leads/new"
-                className="py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs transition-all flex items-center gap-1.5 shadow-sm"
-              >
-                <span>Add New Lead</span>
-                <ArrowUpRight className="w-3.5 h-3.5" />
-              </Link>
+      {/* Welcome Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-wide">
+            Welcome Back, <span className="font-extrabold welcome-user-name" style={{ color: '#6FAF4F' }}>{user?.name}</span>!
+          </h1>
+          <p className="text-sm text-[var(--text-muted)] dark:text-[var(--text-secondary)] mt-1">
+            Here's the latest status of your solar sales pipeline.
+          </p>
+        </div>
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setRemindersModalOpen(true)}
+            className="py-2 px-3.5 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[#4F7D32] text-slate-800 dark:text-white rounded-lg font-bold text-xs transition-all flex items-center gap-2 shadow-xs cursor-pointer hover:bg-[var(--bg-main)]"
+            title="View Upcoming Task Reminders"
+          >
+            <Clock className="w-3.5 h-3.5 text-[#4F7D32] dark:text-[#6FAF4F]" />
+            <span>Reminders</span>
+            {reminders.length > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-extrabold bg-red-600 text-white leading-none">
+                {reminders.length}
+              </span>
             )}
-          </div>
+          </button>
+
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => setActivityModalOpen(true)}
+              className="py-2 px-3.5 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[#4F7D32] text-slate-800 dark:text-white rounded-lg font-bold text-xs transition-all flex items-center gap-2 shadow-xs cursor-pointer hover:bg-[var(--bg-main)]"
+              title="View Live Activity Stream"
+            >
+              <Zap className="w-3.5 h-3.5 text-amber-500" />
+              <span>Activity Stream</span>
+              {activities.length > 0 && (
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-800 text-slate-300 border border-[var(--border-color)] leading-none">
+                  {activities.length}
+                </span>
+              )}
+            </button>
+          )}
+
+          {hasPermission('leads:create') && (
+            <Link
+              href="/leads/new"
+              style={{ backgroundColor: '#6FAF4F', color: '#FFFFFF' }}
+              className="py-2 px-4 hover:brightness-95 text-white rounded-lg font-bold text-xs transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
+            >
+              <span style={{ color: '#FFFFFF' }}>Add New Lead</span>
+              <ArrowUpRight className="w-3.5 h-3.5" style={{ color: '#FFFFFF', stroke: '#FFFFFF' }} />
+            </Link>
+          )}
         </div>
       </div>
 
@@ -476,247 +621,30 @@ export default function DashboardPage() {
       <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-${activeCards.length} gap-6`}>
         {activeCards.map((card, index) => {
           const Icon = card.icon;
+          const palette = CARD_PALETTES[index % CARD_PALETTES.length];
           return (
             <div
               key={index}
-              className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-5 shadow-sm hover:shadow-[0_12px_24px_-10px_rgba(16,185,129,0.12)] hover:border-emerald-500/25 md:hover:-translate-y-1 flex justify-between items-center h-28 transition-all duration-350 ease-out"
+              className={`kpi-dashboard-card kpi-card-${index % CARD_PALETTES.length} bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-5 shadow-sm ${palette.borderHover} ${palette.shadowHover} md:hover:-translate-y-1 flex justify-between items-center h-28 transition-all duration-350 ease-out group`}
             >
               <div className="flex flex-col justify-between h-full">
                 <span className="text-xs font-semibold text-[var(--text-secondary)] tracking-wider uppercase leading-snug">
                   {card.name}
                 </span>
-                <span className="text-2xl font-extrabold text-white tracking-tight">{card.value}</span>
+                <span className="text-2xl font-extrabold text-[var(--text-primary)] tracking-tight">{card.value}</span>
               </div>
-              <div className="w-10 h-10 rounded-full flex items-center justify-center bg-emerald-500/10 text-emerald-400 shrink-0">
-                <Icon className="w-5 h-5" />
+              <div
+                style={{ backgroundColor: palette.bg }}
+                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105"
+              >
+                <Icon className="w-5 h-5" style={{ color: palette.color, stroke: palette.color }} />
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Reminders & Activity Feed Section (Placed right below Leads Data) */}
-      <div className={`grid grid-cols-1 ${isAdmin ? 'lg:grid-cols-2' : ''} gap-6`}>
-        {/* Column 1: Upcoming Task Reminders */}
-        <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 shadow-sm hover:shadow-[0_12px_24px_-10px_rgba(16,185,129,0.10)] hover:border-emerald-500/20 md:hover:-translate-y-0.5 flex flex-col h-[28rem] transition-all duration-350 ease-out">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-6 flex items-center gap-2">
-            <Clock className="w-5 h-5 text-emerald-500" />
-            <span>Upcoming Task Reminders</span>
-          </h3>
-          {reminders.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-[var(--text-muted)] text-xs italic py-12">
-              <span>No upcoming tasks scheduled.</span>
-            </div>
-          ) : (
-            <div className="divide-y divide-slate-800/60 overflow-y-auto pr-1 flex-1">
-               {reminders.map((rem) => {
-                const isMeeting = rem.type === 'meeting';
-                const isDelivery = rem.type === 'delivery';
-                const isInstallation = rem.type === 'installation';
-                const isCommissioning = rem.type === 'commissioning';
-                const remColor = REMINDER_HEX_COLORS[rem.type] || '#94A3B8';
-                return (
-                  <div
-                    key={rem.id}
-                    className="py-3 flex items-start gap-3 transition-colors hover:bg-[var(--bg-main)] px-2 rounded-lg"
-                  >
-                    <div className="mt-0.5 shrink-0">
-                      {isMeeting ? (
-                        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
-                          <Calendar className="w-4 h-4" />
-                        </div>
-                      ) : isDelivery ? (
-                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20">
-                          <Truck className="w-4 h-4" />
-                        </div>
-                      ) : isInstallation ? (
-                        <div className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center border border-purple-500/20">
-                          <Hammer className="w-4 h-4" />
-                        </div>
-                      ) : isCommissioning ? (
-                        <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20">
-                          <Zap className="w-4 h-4" />
-                        </div>
-                      ) : (
-                        <div className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-400 flex items-center justify-center border border-teal-500/20">
-                          <Clock className="w-4 h-4" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start gap-2">
-                         <Link
-                          href={
-                            rem.type === 'delivery' || rem.type === 'installation' || rem.type === 'commissioning'
-                              ? `/operations?leadId=${rem.leadId}`
-                              : `/leads/${rem.leadId}`
-                          }
-                          className="text-xs font-bold text-white hover:text-emerald-400 truncate"
-                        >
-                          {rem.customerName}
-                          <span className="text-[10px] text-[var(--text-secondary)] font-semibold ml-1.5 font-mono">
-                            ({rem.leadCode})
-                          </span>
-                        </Link>
-                        <span className="text-[9px] font-bold text-[var(--text-muted)] shrink-0 font-mono">
-                          {new Date(rem.datetime).toLocaleTimeString('en-IN', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            hour12: false,
-                          })}
-                        </span>
-                      </div>
-                      
-                      <div className="flex justify-between items-center mt-1">
-                        <span
-                          className="text-[9px] font-extrabold px-2.5 py-1 rounded-lg"
-                          style={{
-                            backgroundColor: `${remColor}15`,
-                            color: remColor,
-                          }}
-                        >
-                          {rem.title.toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase())}
-                        </span>
-                        
-                        <span className="text-[9px] text-[var(--text-secondary)] font-bold font-mono">
-                          {new Date(rem.datetime).toLocaleDateString('en-IN', {
-                            day: 'numeric',
-                            month: 'short',
-                          })}
-                        </span>
-                      </div>
-                      
-                      <p className="text-[10px] text-[var(--text-muted)] mt-1.5 leading-normal truncate">
-                        {rem.subtitle}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
 
-        {/* Column 2: Recent Activity Stream (Strictly Admin / Director Only) */}
-        {isAdmin && (
-          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 shadow-sm h-[28rem] flex flex-col hover:shadow-[0_12px_24px_-10px_rgba(16,185,129,0.10)] hover:border-emerald-500/20 md:hover:-translate-y-0.5 transition-all duration-350 ease-out">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] flex items-center gap-2">
-                <Clock className="w-5 h-5 text-emerald-500" />
-                <span>Recent Activity Stream</span>
-              </h3>
-              <button
-                type="button"
-                onClick={() => setActivityModalOpen(true)}
-                className="p-1.5 rounded-lg bg-[var(--bg-main)] border border-[var(--border-color)] hover:border-emerald-500 text-[var(--text-secondary)] hover:text-white transition-all cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold"
-                title="Expand Full Screen Activity Timeline"
-              >
-                <Maximize2 className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Full Screen</span>
-              </button>
-            </div>
-
-            <div className="relative border-l border-[var(--border-color)] ml-4 pl-6 space-y-5 overflow-y-auto pr-1 flex-1 py-1">
-              {activities.length === 0 ? (
-                <div className="py-8 text-center text-[var(--text-muted)] text-xs italic">
-                  No system activity records found.
-                </div>
-              ) : (
-                activities.slice(0, 15).map((log) => {
-                  if (log.isTerritoryAssign) {
-                    return (
-                      <div key={log.id} className="relative group">
-                        <span 
-                          className="absolute -left-[31px] top-1.5 w-2.5 h-2.5 rounded-full border-2 border-[var(--border-color)] transition-transform group-hover:scale-125 animate-pulse bg-emerald-500" 
-                        />
-                        <div className="min-w-0">
-                          <div className="flex justify-between items-start gap-2">
-                            <p className="text-xs font-bold text-white truncate flex items-center gap-1.5">
-                              <span>Territory Assignment</span>
-                              <span className="text-[9px] px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded font-mono font-bold uppercase">
-                                Map Assign
-                              </span>
-                            </p>
-                            <span className="text-[9px] text-[var(--text-secondary)] shrink-0 font-semibold">
-                              {new Date(log.createdAt).toLocaleString('en-IN', {
-                                day: 'numeric',
-                                month: 'short',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </span>
-                          </div>
-                          <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">
-                            Executed by{' '}
-                            <Link href={`/team?userId=${log.user.id}`} className="text-emerald-500 hover:underline font-bold">
-                              {log.user.name}
-                            </Link>
-                          </p>
-                          {log.remark && (
-                            <p className="text-[10px] text-[var(--text-secondary)] mt-1 font-mono bg-[var(--bg-main)] p-1.5 rounded border border-[var(--border-color)] leading-relaxed">
-                              {log.remark}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  const stage = STAGE_NAMES[log.toStatus] || { name: `Stage ${log.toStatus}`, color: '#9CA3AF' };
-                  return (
-                    <div key={log.id} className="relative group">
-                      <span 
-                        className="absolute -left-[31px] top-1.5 w-2.5 h-2.5 rounded-full border-2 border-[var(--border-color)] transition-transform group-hover:scale-125 animate-pulse" 
-                        style={{ backgroundColor: stage.color }} 
-                      />
-                      <div className="min-w-0">
-                        <div className="flex justify-between items-start gap-2">
-                          <p className="text-xs font-bold text-white truncate">
-                            {log.lead ? (
-                              <>
-                                <Link
-                                  href={`/leads/${log.lead.id}`}
-                                  className="hover:text-emerald-400 hover:underline"
-                                >
-                                  {log.lead.customerName}
-                                </Link>
-                                <span className="text-[9.5px] text-[var(--text-secondary)] font-semibold ml-1.5 font-mono">
-                                  ({log.lead.leadCode})
-                                </span>
-                              </>
-                            ) : (
-                              <span>System Action</span>
-                            )}
-                          </p>
-                          <span className="text-[9px] text-[var(--text-secondary)] shrink-0 font-semibold">
-                            {new Date(log.createdAt).toLocaleString('en-IN', {
-                              day: 'numeric',
-                              month: 'short',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </span>
-                        </div>
-                        <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">
-                          Moved to <strong style={{ color: stage.color }} className="font-semibold">{stage.name}</strong> by{' '}
-                          <Link href={`/team?userId=${log.user.id}`} className="text-emerald-500 hover:underline font-bold">
-                            {log.user.name}
-                          </Link>
-                        </p>
-                        {log.remark && (
-                          <p className="text-[10px] text-[var(--text-secondary)] mt-1 italic truncate font-mono bg-[var(--bg-main)] p-1.5 rounded border border-[var(--border-color)]">
-                            "{log.remark}"
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-        )}
-      </div>
 
       {/* Charts & Redesigned Pipeline Distribution Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -735,14 +663,14 @@ export default function DashboardPage() {
                 : 'Sales & Leads Trend (15 Days)'}
             </h3>
             <div className="flex items-center gap-4 text-xs">
-              <span className="flex items-center gap-1.5 text-blue-400 font-semibold">
-                <span className="w-2.5 h-3 bg-blue-500 rounded-xs opacity-80" />
+              <span className="flex items-center gap-1.5 text-pink-400 font-semibold">
+                <span className="w-2.5 h-3 bg-pink-400 rounded-xs opacity-80" />
                 {userDept === 'Finance' || userBaseRole === 'finance' || userDept === 'Operations' || userBaseRole === 'operations'
                   ? 'Total Orders (Bars)'
                   : 'Leads Created (Bars)'}
               </span>
-              <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
-                <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full shadow-xs" />
+              <span className="flex items-center gap-1.5 text-purple-400 font-semibold">
+                <span className="w-2.5 h-2.5 bg-purple-500 rounded-full shadow-xs" />
                 {userDept === 'Finance' || userBaseRole === 'finance'
                   ? 'Verified Orders (Line)'
                   : userDept === 'Operations' || userBaseRole === 'operations'
@@ -765,90 +693,37 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Lead Acquisition Channels Pie Chart (Sales/Admin only) */}
+        {/* Lead Sources Horizontal Bar Chart (Sales/Admin only) */}
         {userDept !== 'Finance' && userBaseRole !== 'finance' && userDept !== 'Operations' && userBaseRole !== 'operations' && (
           <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 shadow-sm flex flex-col justify-between hover:shadow-[0_12px_24px_-10px_rgba(16,185,129,0.10)] hover:border-emerald-500/20 md:hover:-translate-y-0.5 transition-all duration-350 ease-out">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-4">Lead Acquisition Channels</h3>
-            <div className="h-80 w-full flex items-center justify-center">
-              <LeadSourcePieChart leadSourceData={leadSources} colors={COLORS} />
-            </div>
+            <LeadSourcePieChart leadSourceData={leadSources} colors={COLORS} />
           </div>
         )}
 
-        {/* Redesigned Pipeline Stage Distribution Grid (Sales/Admin only) */}
+        {/* Redesigned Pipeline Stage Distribution Capsule Bar Chart (Sales/Admin only) */}
         {userDept !== 'Finance' && userBaseRole !== 'finance' && userDept !== 'Operations' && userBaseRole !== 'operations' && (
           <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 shadow-sm flex flex-col justify-between lg:col-span-3 hover:shadow-[0_12px_24px_-10px_rgba(16,185,129,0.10)] hover:border-emerald-500/20 md:hover:-translate-y-0.5 transition-all duration-350 ease-out">
             <div>
-              <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] flex items-center gap-2">
                   <Layers className="w-4 h-4 text-emerald-500" />
                   <span>Pipeline Stage Distribution</span>
                 </h3>
                 <span className="text-[11px] text-[var(--text-secondary)] font-semibold font-mono">
-                  Total Active Leads: <strong className="text-white">{pipeline.reduce((acc, curr) => acc + curr.count, 0)}</strong>
+                  Total Active Leads: <strong className="text-slate-900 dark:text-white">{pipeline.reduce((acc, curr) => acc + curr.count, 0)}</strong>
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
-                {pipeline.map((item) => {
-                  const stageInfo = STAGE_NAMES[item.stage] || { name: `Stage ${item.stage}`, color: '#3B82F6' };
-                  const totalLeads = pipeline.reduce((acc, curr) => acc + curr.count, 0) || 1;
-                  const percentVal = (item.count / totalLeads) * 100;
-                  const precisePercent = percentVal.toFixed(2);
-                  const hasLeads = item.count > 0;
-
-                  return (
-                    <div
-                      key={item.stage}
-                      className={`p-3.5 rounded-xl border transition-all flex flex-col justify-between space-y-2.5 ${
-                        hasLeads
-                          ? 'bg-[var(--bg-main)] border-[var(--border-color)] shadow-md'
-                          : 'bg-[var(--bg-main)]/40 border-[var(--border-color)]/50 opacity-70'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 min-w-0 pr-1">
-                          <span
-                            className="w-2.5 h-2.5 rounded-full shrink-0"
-                            style={{ backgroundColor: stageInfo.color }}
-                          />
-                          <span className="text-xs font-bold text-[var(--text-primary)] truncate" title={stageInfo.name}>
-                            {stageInfo.name}
-                          </span>
-                        </div>
-                        <span
-                          className={`text-xs font-extrabold px-2 py-0.5 rounded-md shrink-0 font-mono ${
-                            hasLeads
-                              ? 'bg-blue-500/20 text-blue-400'
-                              : 'bg-[var(--bg-card)] text-[var(--text-secondary)]'
-                          }`}
-                        >
-                          {item.count}
-                        </span>
-                      </div>
-
-                      <div className="space-y-1">
-                        <div className="w-full h-1.5 bg-[var(--bg-card)] rounded-full overflow-hidden">
-                          <div
-                            className="h-full rounded-full transition-all duration-500"
-                            style={{ width: `${percentVal}%`, backgroundColor: stageInfo.color }}
-                          />
-                        </div>
-                        <div className="flex justify-between items-center text-[10px] text-[var(--text-secondary)] font-mono">
-                          <span>Share</span>
-                          <span>{precisePercent}%</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="w-full h-72 sm:h-80">
+                <PipelineBarChart pipelineData={pipeline} stageNames={STAGE_NAMES} />
               </div>
             </div>
 
-            <div className="pt-4 border-t border-[var(--border-color)] mt-6 flex justify-center">
+            <div className="pt-4 border-t border-[var(--border-color)] mt-4 flex justify-center">
               <Link
                 href="/leads"
-                className="text-xs text-emerald-400 hover:text-emerald-300 font-bold flex items-center justify-center gap-1.5 group"
+                style={{ color: '#91D06C' }}
+                className="text-xs font-bold flex items-center justify-center gap-1.5 group hover:opacity-85 transition-opacity"
               >
                 <span>View Full Interactive Pipeline Grid</span>
                 <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
@@ -858,43 +733,305 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Full-Screen Activity Modal for Admin */}
-      {mounted && activityModalOpen && isAdmin && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-8 bg-black/80 backdrop-blur-md animate-fade-in font-sans overflow-y-auto">
-          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl w-full max-w-5xl h-[85vh] flex flex-col shadow-2xl overflow-hidden my-auto">
-            {/* Modal Header */}
-            <div className="p-5 border-b border-[var(--border-color)] bg-[var(--bg-main)] flex items-center justify-between gap-4">
+      {/* Dedicated Upcoming Task Reminders Modal (Follow-ups & Meetings Separated with Independent Scrolling) */}
+      {mounted && remindersModalOpen && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md animate-fade-in font-sans overflow-y-auto">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl w-full max-w-5xl h-[88vh] flex flex-col shadow-2xl overflow-hidden my-auto">
+            {/* Modal Header without any tab toggle */}
+            <div className="p-4 sm:p-5 border-b border-[var(--border-color)] bg-[var(--bg-main)] flex items-center justify-between gap-3 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+                <div className="w-9 h-9 rounded-xl bg-[#4F7D32]/10 text-[#4F7D32] flex items-center justify-center border border-[#4F7D32]/25 shrink-0">
                   <Clock className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white tracking-wide flex items-center gap-2">
-                    <span>Full System Activity Stream</span>
-                    <span className="text-xs px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-400 font-mono font-bold">
-                      {activities.length} logs
-                    </span>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-wide">
+                    Upcoming Task Reminders
                   </h3>
-                  <p className="text-xs text-[var(--text-secondary)]">Live operational timeline across all teams</p>
+                  <p className="text-xs text-[var(--text-secondary)]">
+                    Scheduled follow-ups, meetings &amp; site operations
+                  </p>
                 </div>
               </div>
 
+              <div className="flex items-center gap-2.5">
+                <span className="hidden sm:inline-flex px-2.5 py-1 rounded-lg text-xs font-bold bg-[var(--bg-card)] border border-[var(--border-color)] text-slate-700 dark:text-slate-300 font-mono">
+                  {reminders.length} Total Reminders
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setRemindersModalOpen(false)}
+                  className="w-8 h-8 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[#4F7D32] flex items-center justify-center text-[var(--text-secondary)] hover:text-white transition-all cursor-pointer"
+                  title="Close Modal"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body: 2 Columns with INDEPENDENT SCROLLING */}
+            <div className="flex-1 min-h-0 p-4 sm:p-6 bg-[var(--bg-main)] overflow-hidden">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 h-full min-h-0">
+                
+                {/* Column 1: Scheduled Follow-Ups & Tasks (Independent Scroll) */}
+                <div className="h-full flex flex-col min-h-0 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-4 shadow-xs">
+                  {/* Column Header */}
+                  <div className="shrink-0 flex items-center justify-between pb-3 mb-3 border-b border-[var(--border-color)]">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center border border-teal-500/20">
+                        <Clock className="w-3.5 h-3.5" />
+                      </div>
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                        Follow-ups &amp; Operations
+                      </h4>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/30 font-mono">
+                      {followupReminders.length}
+                    </span>
+                  </div>
+
+                  {/* Independent Scroll Area */}
+                  <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-3 custom-scrollbar">
+                    {followupReminders.length === 0 ? (
+                      <div className="h-full flex flex-col items-center justify-center text-[var(--text-muted)] text-xs italic py-16">
+                        <Clock className="w-8 h-8 text-[var(--text-muted)] mb-2 opacity-30" />
+                        <span>No pending follow-ups scheduled.</span>
+                      </div>
+                    ) : (
+                      followupReminders.map((rem) => {
+                        const isDelivery = rem.type === 'delivery';
+                        const isInstallation = rem.type === 'installation';
+                        const isCommissioning = rem.type === 'commissioning';
+                        const remColor = REMINDER_HEX_COLORS[rem.type] || '#0D9488';
+                        return (
+                          <div
+                            key={rem.id}
+                            className="p-3.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-color)] hover:border-teal-500/40 transition-all flex items-start gap-3 shadow-xs"
+                          >
+                            <div className="mt-0.5 shrink-0">
+                              {isDelivery ? (
+                                <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20">
+                                  <Truck className="w-3.5 h-3.5" />
+                                </div>
+                              ) : isInstallation ? (
+                                <div className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center border border-purple-500/20">
+                                  <Hammer className="w-3.5 h-3.5" />
+                                </div>
+                              ) : isCommissioning ? (
+                                <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20">
+                                  <Zap className="w-3.5 h-3.5" />
+                                </div>
+                              ) : (
+                                <div className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center border border-teal-500/20">
+                                  <Clock className="w-3.5 h-3.5" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex justify-between items-start gap-2">
+                                <Link
+                                  href={
+                                    rem.type === 'delivery' || rem.type === 'installation' || rem.type === 'commissioning'
+                                      ? `/operations?leadId=${rem.leadId}`
+                                      : `/leads/${rem.leadId}`
+                                  }
+                                  onClick={() => setRemindersModalOpen(false)}
+                                  className="reminder-customer-name text-xs font-bold text-slate-900 dark:text-white hover:text-[#4F7D32] dark:hover:text-[#7bb05c] truncate"
+                                >
+                                  {rem.customerName}
+                                  <span className="text-[10px] text-slate-600 dark:text-[var(--text-secondary)] font-semibold ml-1.5 font-mono">
+                                    ({rem.leadCode})
+                                  </span>
+                                </Link>
+                                <span className="text-[10px] font-bold text-slate-700 dark:text-[var(--text-muted)] shrink-0 font-mono">
+                                  {new Date(rem.datetime).toLocaleTimeString('en-IN', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: false,
+                                  })}
+                                </span>
+                              </div>
+
+                              <div className="flex justify-between items-center mt-1.5">
+                                <span
+                                  className="text-[9px] font-extrabold px-2 py-0.5 rounded-md"
+                                  style={{
+                                    backgroundColor: `${remColor}15`,
+                                    color: remColor,
+                                  }}
+                                >
+                                  {rem.title.toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                                </span>
+
+                                <span className="text-[10px] text-slate-600 dark:text-[var(--text-secondary)] font-bold font-mono">
+                                  {new Date(rem.datetime).toLocaleDateString('en-IN', {
+                                    day: 'numeric',
+                                    month: 'short',
+                                  })}
+                                </span>
+                              </div>
+
+                              {rem.subtitle && (
+                                <p className="reminder-subtitle text-[11px] text-slate-600 dark:text-[var(--text-muted)] mt-1.5 leading-normal truncate">
+                                  {rem.subtitle}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+
+                {/* Column 2: Scheduled Meetings (Independent Scroll) */}
+                <div className="h-full flex flex-col min-h-0 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-4 shadow-xs">
+                  {/* Column Header */}
+                  <div className="shrink-0 flex items-center justify-between pb-3 mb-3 border-b border-[var(--border-color)]">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-lg bg-[#4F7D32]/10 text-[#4F7D32] flex items-center justify-center border border-[#4F7D32]/25">
+                        <Calendar className="w-3.5 h-3.5" />
+                      </div>
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                        Scheduled Client Meetings
+                      </h4>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-[#4F7D32]/15 text-[#4F7D32] dark:text-[#7bb05c] border border-[#4F7D32]/30 font-mono">
+                      {meetingReminders.length}
+                    </span>
+                  </div>
+
+                  {/* Independent Scroll Area */}
+                  <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-3 custom-scrollbar">
+                    {meetingReminders.length === 0 ? (
+                      <div className="h-full flex flex-col items-center justify-center text-[var(--text-muted)] text-xs italic py-16">
+                        <Calendar className="w-8 h-8 text-[var(--text-muted)] mb-2 opacity-30" />
+                        <span>No upcoming meetings scheduled.</span>
+                      </div>
+                    ) : (
+                      meetingReminders.map((rem) => {
+                        const remColor = REMINDER_HEX_COLORS.meeting || '#4F7D32';
+                        return (
+                          <div
+                            key={rem.id}
+                            className="p-3.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-color)] hover:border-[#4F7D32]/40 transition-all flex items-start gap-3 shadow-xs"
+                          >
+                            <div className="mt-0.5 shrink-0">
+                              <div className="w-8 h-8 rounded-lg bg-[#4F7D32]/10 text-[#4F7D32] flex items-center justify-center border border-[#4F7D32]/25">
+                                <Calendar className="w-3.5 h-3.5" />
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex justify-between items-start gap-2">
+                                <Link
+                                  href={`/leads/${rem.leadId}`}
+                                  onClick={() => setRemindersModalOpen(false)}
+                                  className="reminder-customer-name text-xs font-bold text-slate-900 dark:text-white hover:text-[#4F7D32] dark:hover:text-[#7bb05c] truncate"
+                                >
+                                  {rem.customerName}
+                                  <span className="text-[10px] text-slate-600 dark:text-[var(--text-secondary)] font-semibold ml-1.5 font-mono">
+                                    ({rem.leadCode})
+                                  </span>
+                                </Link>
+                                <span className="text-[10px] font-bold text-slate-700 dark:text-[var(--text-muted)] shrink-0 font-mono">
+                                  {new Date(rem.datetime).toLocaleTimeString('en-IN', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: false,
+                                  })}
+                                </span>
+                              </div>
+
+                              <div className="flex justify-between items-center mt-1.5">
+                                <span
+                                  className="text-[9px] font-extrabold px-2 py-0.5 rounded-md"
+                                  style={{
+                                    backgroundColor: `${remColor}15`,
+                                    color: remColor,
+                                  }}
+                                >
+                                  Meeting Scheduled
+                                </span>
+
+                                <span className="text-[10px] text-slate-600 dark:text-[var(--text-secondary)] font-bold font-mono">
+                                  {new Date(rem.datetime).toLocaleDateString('en-IN', {
+                                    day: 'numeric',
+                                    month: 'short',
+                                  })}
+                                </span>
+                              </div>
+
+                              {rem.subtitle && (
+                                <p className="reminder-subtitle text-[11px] text-slate-600 dark:text-[var(--text-muted)] mt-1.5 leading-normal truncate">
+                                  {rem.subtitle}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-[var(--border-color)] bg-[var(--bg-main)] flex justify-between items-center text-xs text-[var(--text-secondary)] shrink-0">
+              <span>
+                Total {reminders.length} Reminders ({followupReminders.length} Follow-ups, {meetingReminders.length} Meetings)
+              </span>
+              <button
+                type="button"
+                onClick={() => setRemindersModalOpen(false)}
+                className="px-4 py-2 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[#4F7D32] text-slate-900 dark:text-white rounded-lg font-bold transition-all cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Dedicated Recent Activity Stream Modal (No Toggle) */}
+      {mounted && activityModalOpen && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md animate-fade-in font-sans overflow-y-auto">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl w-full max-w-5xl h-[88vh] flex flex-col shadow-2xl overflow-hidden my-auto">
+            {/* Modal Header without any tab toggle */}
+            <div className="p-4 sm:p-5 border-b border-[var(--border-color)] bg-[var(--bg-main)] flex flex-wrap items-center justify-between gap-3 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="relative w-64 hidden sm:block">
-                  <Search className="w-4 h-4 absolute left-3 top-2.5 text-[var(--text-muted)]" />
+                <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center border border-amber-500/25 shrink-0">
+                  <Zap className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-wide">
+                    Recent Activity Stream
+                  </h3>
+                  <p className="text-xs text-[var(--text-secondary)]">
+                    Real-time audit trail &amp; pipeline status transitions
+                  </p>
+                </div>
+              </div>
+
+              {/* Search & Close Controls */}
+              <div className="flex items-center gap-2.5">
+                <div className="relative w-48 sm:w-60">
+                  <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-[var(--text-muted)]" />
                   <input
                     type="text"
-                    placeholder="Search logs..."
+                    placeholder="Search activity..."
                     value={activitySearchQuery}
                     onChange={(e) => setActivitySearchQuery(e.target.value)}
-                    className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-emerald-500 rounded-lg pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none"
+                    className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] focus:border-[#4F7D32] rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none"
                   />
                 </div>
 
                 <button
                   type="button"
                   onClick={() => setActivityModalOpen(false)}
-                  className="w-8 h-8 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-emerald-500 flex items-center justify-center text-[var(--text-secondary)] hover:text-white transition-all cursor-pointer"
+                  className="w-8 h-8 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[#4F7D32] flex items-center justify-center text-[var(--text-secondary)] hover:text-white transition-all cursor-pointer"
+                  title="Close Modal"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -902,7 +1039,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Modal Body */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-[var(--bg-main)]">
+            <div className="flex-1 min-h-0 overflow-y-auto p-5 sm:p-6 bg-[var(--bg-main)]">
               {filteredActivities.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-[var(--text-muted)] text-xs italic py-20">
                   <span>No activity logs matched your search.</span>
@@ -938,7 +1075,7 @@ export default function DashboardPage() {
 
                             <div className="flex flex-wrap items-center gap-2 text-xs">
                               <span className="text-[var(--text-secondary)]">Executed by</span>
-                              <span className="font-bold text-white bg-[var(--bg-card)] px-2 py-0.5 rounded border border-[var(--border-color)]">
+                              <span className="font-bold text-[#4F7D32] bg-[var(--bg-card)] px-2 py-0.5 rounded border border-[var(--border-color)]">
                                 {log.user.name} ({log.user.role})
                               </span>
                             </div>
@@ -968,7 +1105,7 @@ export default function DashboardPage() {
                                 <Link
                                   href={`/leads/${log.lead.id}`}
                                   onClick={() => setActivityModalOpen(false)}
-                                  className="text-sm font-bold text-white hover:text-emerald-400 hover:underline flex items-center gap-2"
+                                  className="text-sm font-bold text-white hover:text-[#4F7D32] hover:underline flex items-center gap-2"
                                 >
                                   <span>{log.lead.customerName}</span>
                                   <span className="text-xs text-[var(--text-secondary)] font-mono font-semibold">({log.lead.leadCode})</span>
@@ -1000,7 +1137,7 @@ export default function DashboardPage() {
                               {stage.name}
                             </span>
                             <span className="text-[var(--text-secondary)]">by</span>
-                            <span className="font-bold text-white bg-[var(--bg-card)] px-2 py-0.5 rounded border border-[var(--border-color)]">
+                            <span className="font-bold text-[#4F7D32] bg-[var(--bg-card)] px-2 py-0.5 rounded border border-[var(--border-color)]">
                               {log.user.name} ({log.user.role})
                             </span>
                           </div>
@@ -1019,14 +1156,16 @@ export default function DashboardPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-[var(--border-color)] bg-[var(--bg-main)] flex justify-between items-center text-xs text-[var(--text-secondary)]">
-              <span>Showing full activity history for system administrators</span>
+            <div className="p-4 border-t border-[var(--border-color)] bg-[var(--bg-main)] flex justify-between items-center text-xs text-[var(--text-secondary)] shrink-0">
+              <span>
+                Showing {filteredActivities.length} activity records
+              </span>
               <button
                 type="button"
                 onClick={() => setActivityModalOpen(false)}
-                className="px-4 py-2 bg-[var(--bg-card)] border border-[var(--border-color)] hover:bg-[var(--bg-card)] text-white rounded-lg font-bold transition-all cursor-pointer"
+                className="px-4 py-2 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[#4F7D32] text-slate-900 dark:text-white rounded-lg font-bold transition-all cursor-pointer"
               >
-                Close Full Screen View
+                Close
               </button>
             </div>
           </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import { getCurrentLocationString } from '@/lib/location';
@@ -45,9 +46,12 @@ import {
   Smartphone,
   Globe,
   ShieldAlert,
+  Radio,
 } from 'lucide-react';
 import Link from 'next/link';
 import LeaderboardDrawer from '@/components/LeaderboardDrawer';
+import BroadcastDrawer from '@/components/BroadcastDrawer';
+import { parseBroadcastBody } from '@/lib/broadcastUtils';
 
 interface Notification {
   id: number;
@@ -109,8 +113,24 @@ export default function AuthenticatedLayout({
   const toggleGroup = (groupId: string) => {
     setExpandedGroups(prev => ({ ...prev, [groupId]: !prev[groupId] }));
   };
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifications, setNotifications] = useState<Notification[]>(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const c = sessionStorage.getItem('cached_notifications_data');
+        if (c) return JSON.parse(c).notifications || [];
+      }
+    } catch {}
+    return [];
+  });
+  const [unreadCount, setUnreadCount] = useState<number>(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const c = sessionStorage.getItem('cached_notifications_data');
+        if (c) return JSON.parse(c).unreadCount || 0;
+      }
+    } catch {}
+    return 0;
+  });
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
 
@@ -118,48 +138,29 @@ export default function AuthenticatedLayout({
   const [showTodayAlertModal, setShowTodayAlertModal] = useState(false);
 
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const [leaderboardOpen, setLeaderboardOpen] = useState(false);
-  const [topPerformers, setTopPerformers] = useState<any[]>([]);
-
-  // Broadcast News modal state
-  const [broadcastModalOpen, setBroadcastModalOpen] = useState(false);
-  const [broadcastTitle, setBroadcastTitle] = useState('');
-  const [broadcastMessage, setBroadcastMessage] = useState('');
-  const [broadcasting, setBroadcasting] = useState(false);
-  const [recentBroadcasts, setRecentBroadcasts] = useState<any[]>([]);
-
-  const handleBroadcastNews = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!broadcastTitle.trim() || !broadcastMessage.trim()) return;
-    setBroadcasting(true);
+  const [topPerformers, setTopPerformers] = useState<any[]>(() => {
     try {
-      const res = await fetch('/api/v1/notifications', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'broadcast',
-          title: broadcastTitle,
-          message: broadcastMessage,
-        }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setBroadcastModalOpen(false);
-        setBroadcastTitle('');
-        setBroadcastMessage('');
-        fetchNotifications();
-        setToasts((prev) => [...prev, { id: Date.now().toString(), message: data.message || 'News broadcast sent to all employees!', type: 'success' }]);
-      } else {
-        alert(data.message || 'Failed to broadcast news.');
+      if (typeof window !== 'undefined') {
+        const c = sessionStorage.getItem('cached_top_performers');
+        if (c) {
+          const parsed = JSON.parse(c);
+          if (Date.now() - parsed.timestamp < 5 * 60 * 1000) return parsed.data || [];
+        }
       }
-    } catch (err) {
-      console.error('Broadcast news error:', err);
-      alert('Failed to broadcast news. Please try again.');
-    } finally {
-      setBroadcasting(false);
-    }
-  };
+    } catch {}
+    return [];
+  });
+
+  // Broadcast News drawer state
+  const [broadcastModalOpen, setBroadcastModalOpen] = useState(false);
+  const [recentBroadcasts, setRecentBroadcasts] = useState<any[]>([]);
 
   const handleDeleteBroadcast = (notifId: number) => {
     setConfirmModal({
@@ -169,15 +170,17 @@ export default function AuthenticatedLayout({
           const res = await fetch(`/api/v1/notifications?id=${notifId}`, {
             method: 'DELETE',
           });
-          const data = await res.json();
-          if (data.success) {
-            fetchNotifications();
-            setToasts((prev) => [...prev, { id: Date.now().toString(), message: data.message || 'Broadcast message deleted successfully!', type: 'success' }]);
-          } else {
-            alert(data.message || 'Failed to delete broadcast message.');
+          const contentType = res.headers.get('content-type');
+          if (res.ok && contentType && contentType.includes('application/json')) {
+            const data = await res.json();
+            if (data.success) {
+              fetchNotifications();
+              setToasts((prev) => [...prev, { id: Date.now().toString(), message: data.message || 'Broadcast message deleted successfully!', type: 'success' }]);
+            } else {
+              alert(data.message || 'Failed to delete broadcast message.');
+            }
           }
-        } catch (err) {
-          console.error('Delete broadcast error:', err);
+        } catch {
           alert('Failed to delete broadcast message. Please try again.');
         }
       },
@@ -248,12 +251,12 @@ export default function AuthenticatedLayout({
     };
   }, []);
 
-  // Enforce Dark Mode on mount for all users while Light Mode is under development
+  // Initialize theme from localStorage on mount (defaults to dark if not set)
   useEffect(() => {
-    document.documentElement.classList.add('dark');
-    document.documentElement.classList.remove('light');
-    localStorage.setItem('solar-crm-theme', 'dark');
-    setTheme('dark');
+    const savedTheme = localStorage.getItem('solar-crm-theme') as 'dark' | 'light' | null;
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+      setTheme(savedTheme);
+    }
   }, []);
 
   // Synchronize document.documentElement class and localStorage whenever theme changes
@@ -269,7 +272,7 @@ export default function AuthenticatedLayout({
   }, [theme]);
 
   const toggleTheme = () => {
-    addToast('Please use Dark Mode. Light Mode is currently under development.', 'info');
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
   };
 
   // Global click listener for date and time inputs to open showPicker() on click
@@ -369,12 +372,15 @@ export default function AuthenticatedLayout({
     try {
       setLoadingSessions(true);
       const res = await fetch('/api/v1/auth/sessions');
-      const data = await res.json();
-      if (data.success && Array.isArray(data.data)) {
-        setUserSessions(data.data);
+      const contentType = res.headers.get('content-type');
+      if (res.ok && contentType && contentType.includes('application/json')) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data)) {
+          setUserSessions(data.data);
+        }
       }
-    } catch (err) {
-      console.error('Fetch sessions error:', err);
+    } catch {
+      // Suppress network disconnect logs during local dev server restarts
     } finally {
       setLoadingSessions(false);
     }
@@ -386,18 +392,20 @@ export default function AuthenticatedLayout({
       const res = await fetch(`/api/v1/auth/sessions?id=${sessionId}`, {
         method: 'DELETE',
       });
-      const data = await res.json();
-      if (data.success) {
-        setUserSessions((prev) => prev.filter((s) => s.id !== sessionId));
-        addToast(data.message || 'Session killed successfully.', 'success');
-        if (isCurrent) {
-          logout();
+      const contentType = res.headers.get('content-type');
+      if (res.ok && contentType && contentType.includes('application/json')) {
+        const data = await res.json();
+        if (data.success) {
+          setUserSessions((prev) => prev.filter((s) => s.id !== sessionId));
+          addToast(data.message || 'Session killed successfully.', 'success');
+          if (isCurrent) {
+            logout();
+          }
+        } else {
+          alert(data.message || 'Failed to kill session.');
         }
-      } else {
-        alert(data.message || 'Failed to kill session.');
       }
-    } catch (err) {
-      console.error('Kill session error:', err);
+    } catch {
       alert('Failed to kill session.');
     } finally {
       setKillingSessionId(null);
@@ -500,7 +508,8 @@ export default function AuthenticatedLayout({
     if (!user) return;
     try {
       const res = await fetch('/api/v1/notifications');
-      if (!res.ok) return;
+      const contentType = res.headers.get('content-type');
+      if (!res.ok || !contentType || !contentType.includes('application/json')) return;
       const data = await res.json();
       if (data.success && data.data) {
         setNotifications(data.data.notifications);
@@ -508,6 +517,14 @@ export default function AuthenticatedLayout({
         if (data.data.recentBroadcasts) {
           setRecentBroadcasts(data.data.recentBroadcasts);
         }
+        try {
+          sessionStorage.setItem('cached_notifications_data', JSON.stringify({
+            notifications: data.data.notifications,
+            unreadCount: data.data.unreadCount,
+            recentBroadcasts: data.data.recentBroadcasts || [],
+            timestamp: Date.now()
+          }));
+        } catch {}
       }
     } catch {
       // Suppress network disconnect logs during local dev server restarts
@@ -515,17 +532,35 @@ export default function AuthenticatedLayout({
   };
 
   // Attendance states
-  const [todayAttendance, setTodayAttendance] = useState<any>(null);
+  const [todayAttendance, setTodayAttendance] = useState<any>(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const c = sessionStorage.getItem('cached_today_attendance');
+        if (c) {
+          const parsed = JSON.parse(c);
+          if (Date.now() - parsed.timestamp < 3 * 60 * 1000) return parsed.data;
+        }
+      }
+    } catch {}
+    return null;
+  });
   const [attendanceActionLoading, setAttendanceActionLoading] = useState(false);
 
   const fetchTodayAttendance = async () => {
     if (!user) return;
     try {
       const res = await fetch('/api/v1/attendance/today');
-      if (!res.ok) return;
+      const contentType = res.headers.get('content-type');
+      if (!res.ok || !contentType || !contentType.includes('application/json')) return;
       const data = await res.json();
       if (data.success) {
         setTodayAttendance(data.data);
+        try {
+          sessionStorage.setItem('cached_today_attendance', JSON.stringify({
+            data: data.data,
+            timestamp: Date.now()
+          }));
+        } catch {}
       }
     } catch {
       // Suppress network disconnect logs during local dev server restarts
@@ -541,15 +576,20 @@ export default function AuthenticatedLayout({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ location: loc }),
       });
-      const data = await res.json();
-      if (data.success) {
-        setTodayAttendance(data.data);
-        alert(data.message);
+      const contentType = res.headers.get('content-type');
+      if (res.ok && contentType && contentType.includes('application/json')) {
+        const data = await res.json();
+        if (data.success) {
+          setTodayAttendance(data.data);
+          alert(data.message);
+        } else {
+          alert(data.message || 'Check-in failed');
+        }
       } else {
-        alert(data.message || 'Check-in failed');
+        alert('Check-in failed. Please try again.');
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
+      alert('Check-in failed. Please try again.');
     } finally {
       setAttendanceActionLoading(false);
     }
@@ -567,15 +607,20 @@ export default function AuthenticatedLayout({
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ location: loc }),
           });
-          const data = await res.json();
-          if (data.success) {
-            setTodayAttendance(data.data);
-            alert(data.message);
+          const contentType = res.headers.get('content-type');
+          if (res.ok && contentType && contentType.includes('application/json')) {
+            const data = await res.json();
+            if (data.success) {
+              setTodayAttendance(data.data);
+              alert(data.message);
+            } else {
+              alert(data.message || 'Check-out failed');
+            }
           } else {
-            alert(data.message || 'Check-out failed');
+            alert('Check-out failed. Please try again.');
           }
-        } catch (err) {
-          console.error(err);
+        } catch {
+          alert('Check-out failed. Please try again.');
         } finally {
           setAttendanceActionLoading(false);
         }
@@ -590,7 +635,14 @@ export default function AuthenticatedLayout({
       if (res.ok && contentType && contentType.includes('application/json')) {
         const data = await res.json();
         if (data.success && data.data) {
-          setTopPerformers(data.data.slice(0, 3));
+          const performers = data.data.slice(0, 3);
+          setTopPerformers(performers);
+          try {
+            sessionStorage.setItem('cached_top_performers', JSON.stringify({
+              data: performers,
+              timestamp: Date.now()
+            }));
+          } catch {}
         }
       }
     } catch {
@@ -645,6 +697,10 @@ export default function AuthenticatedLayout({
       });
       fetchNotifications();
       setNotifDropdownOpen(false);
+      if (notif.type === 'announcement' || notif.title.startsWith('📢')) {
+        setBroadcastModalOpen(true);
+        return;
+      }
       if (notif.leadId) {
         router.push(`/leads/${notif.leadId}`);
       }
@@ -670,7 +726,26 @@ export default function AuthenticatedLayout({
     return (
       <div className="min-h-screen bg-[var(--bg-main)] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <Sun className="w-12 h-12 text-emerald-500 animate-spin" />
+          <div className="relative flex items-center justify-center">
+            {/* Ambient glow matching Pic 2 gradient */}
+            <div
+              className="absolute -inset-1.5 rounded-full blur-md opacity-40 animate-pulse pointer-events-none"
+              style={{
+                background: 'linear-gradient(110deg, #0e876a 0%, #1a7e8b 26%, #2874af 58%, #c79522 100%)',
+              }}
+            />
+            {/* Round circular loader with Pic 2 gradient background */}
+            <div
+              className="relative w-20 h-20 rounded-full flex items-center justify-center shadow-xl border border-white/25"
+              style={{
+                background: 'linear-gradient(110deg, #0e876a 0%, #1a7e8b 26%, #2874af 58%, #c79522 100%)',
+              }}
+            >
+              <div className="w-13 h-13 rounded-full bg-white/20 border border-white/30 backdrop-blur-xs flex items-center justify-center shadow-inner">
+                <Sun className="w-7 h-7 text-white animate-spin" style={{ animationDuration: '3s' }} />
+              </div>
+            </div>
+          </div>
           <p className="text-[var(--text-secondary)] text-sm font-semibold tracking-wider uppercase">Loading SolarCRM...</p>
         </div>
       </div>
@@ -788,86 +863,50 @@ export default function AuthenticatedLayout({
   return (
     <div className="flex h-screen bg-[var(--bg-main)] text-[var(--text-primary)] overflow-hidden">
       {/* 1. Desktop Sidebar */}
-      <aside className={`hidden md:flex flex-col bg-[var(--bg-sidebar)] border-r border-[var(--border-color)] shadow-xl transition-all duration-250 ease-in-out ${sidebarCollapsed ? 'w-16' : 'w-64'}`}>
+      <aside
+        style={{ backgroundColor: theme === 'dark' ? '#8BBB92' : '#091413' }}
+        className={`hidden md:flex flex-col border-r border-[var(--border-color)] shadow-xl transition-all duration-250 ease-in-out ${sidebarCollapsed ? 'w-16' : 'w-64'}`}
+      >
         <div className="h-16 flex items-center justify-between px-3 border-b border-[var(--border-color)] relative">
           {!sidebarCollapsed && (
-            <Link href="/dashboard" className="flex items-center gap-3 flex-1 min-w-0">
-              <div className="w-8 h-8 flex-shrink-0 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg flex items-center justify-center overflow-hidden p-1 shadow-md shadow-black/20">
+            <Link href="/dashboard" className="flex items-center gap-2.5 flex-1 min-w-0">
+              <div className="w-8 h-8 flex-shrink-0 bg-white border border-white/20 rounded-lg flex items-center justify-center overflow-hidden p-0.5 shadow-md shadow-black/20">
                 <img
                   src="/logo.png"
-                  alt="Santori Solar Solutions Logo"
+                  alt="Santori Solar CRM Logo"
                   className="w-full h-full object-contain"
                 />
               </div>
-              <span className="text-xl font-extrabold text-[var(--text-primary)] tracking-wide truncate">
-                Solar<span className="text-emerald-500">CRM</span>
+              <span
+                className="santori-brand-text text-[15px] font-bold tracking-tight truncate select-none"
+                style={{
+                  background: 'linear-gradient(110deg, #0e876a 0%, #1a7e8b 26%, #2874af 58%, #c79522 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                Santori Solar CRM
               </span>
             </Link>
           )}
           {sidebarCollapsed && (
             <Link href="/dashboard" className="flex items-center justify-center w-full">
-              <div className="w-8 h-8 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg flex items-center justify-center overflow-hidden p-1">
-                <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
+              <div className="w-8 h-8 bg-white border border-white/20 rounded-lg flex items-center justify-center overflow-hidden p-0.5">
+                <img src="/logo.png" alt="Santori Solar CRM Logo" className="w-full h-full object-contain" />
               </div>
             </Link>
           )}
           <button
             onClick={toggleSidebarCollapsed}
-            className={`sidebar-toggle-btn flex-shrink-0 w-6 h-6 rounded-md flex items-center justify-center bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--border-color)] transition-all focus:outline-none ${sidebarCollapsed ? 'ml-auto mr-0' : 'ml-2'}`}
+            className={`sidebar-toggle-btn flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center bg-transparent border-0 text-slate-400 hover:text-white hover:bg-white/5 transition-all focus:outline-none cursor-pointer ${sidebarCollapsed ? 'ml-auto mr-0' : 'ml-2'}`}
             title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
-            {sidebarCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
+            {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
         </div>
 
-        {/* User Card */}
-        <button
-          onClick={handleOpenProfile}
-          className={`bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color-hover)] rounded-xl text-left cursor-pointer transition-all focus:outline-none ${sidebarCollapsed ? 'p-2 mx-2 my-3 flex items-center justify-center' : 'p-4 mx-4 my-6 block w-[calc(100%-2rem)]'
-            }`}
-        >
-          {sidebarCollapsed ? (
-            <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-[var(--border-color)] flex items-center justify-center text-emerald-500 shrink-0">
-              {user.photograph ? (
-                <img
-                  src={`/api/v1/users/${user.id}/photograph`}
-                  alt={user.name}
-                  className="w-8 h-8 rounded-full object-cover"
-                  onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-                />
-              ) : (
-                <User className="w-4 h-4" />
-              )}
-            </div>
-          ) : (
-            <>
-              <div className="flex items-center gap-3">
-                {user.photograph ? (
-                  <img
-                    src={`/api/v1/users/${user.id}/photograph`}
-                    alt={user.name}
-                    className="w-8 h-8 rounded-full object-cover border border-[var(--border-color)]"
-                    onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-                  />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-[var(--border-color)] flex items-center justify-center text-emerald-500 shrink-0">
-                    <User className="w-4 h-4" />
-                  </div>
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{user.name}</p>
-                  <p className="text-[10px] text-[var(--text-muted)] truncate mb-2">{user.email}</p>
-                </div>
-              </div>
-              <span className={`inline-block text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 border rounded-full mt-1 ${userRoleConfig.color}`}>
-                {userRoleConfig.label}
-              </span>
-            </>
-          )}
-        </button>
-
         {/* Nav Links */}
-        <nav className={`flex-1 overflow-y-auto space-y-4 ${sidebarCollapsed ? 'px-2' : 'px-4'}`}>
+        <nav className={`flex-1 overflow-y-auto space-y-4 ${sidebarCollapsed ? 'px-2' : 'px-3.5'} pt-4 pb-2`}>
           {visibleGroups.map((group) => {
             const isExpanded = expandedGroups[group.id];
             return (
@@ -898,19 +937,19 @@ export default function AuthenticatedLayout({
                           key={item.path}
                           href={item.path}
                           title={item.name}
-                          className={`flex items-center justify-center w-10 h-10 mx-auto rounded-lg transition-all ${isActive
-                              ? 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-400 font-bold'
-                              : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--border-color)]'
+                          className={`sidebar-nav-item flex items-center justify-center w-10 h-10 mx-auto rounded-xl transition-all duration-150 ${isActive
+                              ? 'sidebar-nav-active bg-white/[0.08] text-emerald-400 shadow-xs'
+                              : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
                             }`}
                         >
-                          <Icon className="w-4.5 h-4.5" />
+                          <Icon className={`w-[18px] h-[18px] transition-colors duration-150 ${isActive ? 'text-emerald-400' : 'text-slate-400 group-hover:text-white'}`} />
                         </Link>
                       );
                     })}
                   </div>
                 ) : (
                   isExpanded && (
-                    <div className="space-y-0.5 pl-1.5">
+                    <div className="space-y-1 pl-1">
                       {group.items.map((item) => {
                         const isActive = pathname === item.path || pathname.startsWith(item.path + '/');
                         const Icon = item.icon;
@@ -918,13 +957,13 @@ export default function AuthenticatedLayout({
                           <Link
                             key={item.path}
                             href={item.path}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold transition-all group ${isActive
-                                ? 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border-l-2 border-emerald-600 dark:border-emerald-400 pl-2.5 shadow-xs'
-                                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-color)]'
+                            className={`sidebar-nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150 group select-none ${isActive
+                                ? 'sidebar-nav-active bg-white/[0.08] text-emerald-400 shadow-xs font-semibold'
+                                : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
                               }`}
                           >
-                            <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-emerald-800 dark:text-emerald-300' : 'text-[var(--text-muted)] group-hover:text-[var(--text-primary)]'}`} />
-                            <span className={isActive ? 'text-emerald-800 dark:text-emerald-300 font-bold' : ''}>{item.name}</span>
+                            <Icon className={`w-[18px] h-[18px] shrink-0 transition-colors duration-150 ${isActive ? 'text-emerald-400' : 'text-slate-400 group-hover:text-white'}`} />
+                            <span className={isActive ? 'text-emerald-400 font-semibold' : 'text-slate-400 group-hover:text-white'}>{item.name}</span>
                           </Link>
                         );
                       })}
@@ -945,45 +984,41 @@ export default function AuthenticatedLayout({
               <Link
                 href="/leads-map"
                 title="Territory Map (Admin Reference)"
-                className={`w-10 h-10 mx-auto flex items-center justify-center rounded-lg transition-all ${
-                  pathname === '/leads-map'
-                    ? 'bg-emerald-500/20 text-emerald-400 font-bold'
-                    : 'bg-[#161b22] hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800'
+                style={{
+                  background: 'linear-gradient(110deg, #0e876a 0%, #1a7e8b 26%, #2874af 58%, #c79522 100%)',
+                }}
+                className={`w-10 h-10 mx-auto flex items-center justify-center rounded-lg transition-all border border-white/20 shadow-sm ${
+                  pathname === '/leads-map' ? 'ring-2 ring-white/50' : 'hover:brightness-110'
                 }`}
               >
-                <Globe className="w-4 h-4 text-emerald-400" />
+                <Globe className="w-4 h-4 text-white" />
               </Link>
             ) : (
               <Link
                 href="/leads-map"
-                className={`group flex items-center justify-between p-2.5 rounded-xl transition-all border ${
+                style={{
+                  background: 'linear-gradient(110deg, #0e876a 0%, #1a7e8b 26%, #2874af 58%, #c79522 100%)',
+                }}
+                className={`group flex items-center justify-between p-2.5 rounded-xl transition-all border shadow-sm ${
                   pathname === '/leads-map'
-                    ? 'bg-emerald-500/15 text-emerald-300 border-l-2 border-emerald-500 border-t-0 border-r-0 border-b-0 pl-3 shadow-xs font-semibold'
-                    : 'bg-[#161b22] hover:bg-slate-800/80 border-slate-800/90 text-slate-300 hover:text-white'
+                    ? 'ring-2 ring-white/50 border-white/30'
+                    : 'border-white/20 hover:border-white/30 hover:brightness-105'
                 }`}
               >
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <div className={`p-1.5 rounded-lg transition-colors shrink-0 ${
-                    pathname === '/leads-map'
-                      ? 'bg-emerald-500/20 text-emerald-300'
-                      : 'bg-slate-800/80 text-slate-400 group-hover:text-emerald-400'
-                  }`}>
-                    <Globe className="w-4 h-4" />
+                  <div className="p-1.5 rounded-lg bg-white/20 border border-white/25 text-white shrink-0 backdrop-blur-xs">
+                    <Globe className="w-4 h-4 text-white" />
                   </div>
                   <div className="min-w-0">
-                    <div className={`text-xs font-bold transition-colors ${
-                      pathname === '/leads-map' ? 'text-white' : 'text-slate-200 group-hover:text-white'
-                    }`}>
+                    <div className="text-xs font-bold text-white drop-shadow-xs">
                       Territory Map
                     </div>
-                    <div className="text-[10px] text-[var(--text-muted)] truncate">
+                    <div className="text-[10px] text-white/90 truncate font-medium drop-shadow-xs">
                       Geo Distribution & Insights
                     </div>
                   </div>
                 </div>
-                <ChevronRight className={`w-3.5 h-3.5 transition-all shrink-0 ${
-                  pathname === '/leads-map' ? 'text-emerald-400' : 'text-slate-500 group-hover:text-slate-300'
-                }`} />
+                <ChevronRight className="w-3.5 h-3.5 text-white/80 group-hover:text-white transition-all shrink-0" />
               </Link>
             )}
           </div>
@@ -1006,18 +1041,28 @@ export default function AuthenticatedLayout({
       {/* 2. Mobile Nav Drawer */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 flex md:hidden bg-black/60 backdrop-blur-sm">
-          <div className="relative w-64 max-w-xs bg-[var(--bg-sidebar)] flex flex-col h-full shadow-2xl animate-slide-in">
+          <div
+            style={{ backgroundColor: theme === 'dark' ? '#8BBB92' : '#091413' }}
+            className="relative w-64 max-w-xs flex flex-col h-full shadow-2xl animate-slide-in"
+          >
             <div className="h-16 flex items-center justify-between px-6 border-b border-[var(--border-color)]">
-              <Link href="/dashboard" className="flex items-center gap-3" onClick={() => setSidebarOpen(false)}>
-                <div className="w-8 h-8 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg flex items-center justify-center overflow-hidden p-1 shadow-md shadow-black/20">
+              <Link href="/dashboard" className="flex items-center gap-2.5" onClick={() => setSidebarOpen(false)}>
+                <div className="w-8 h-8 bg-white border border-white/20 rounded-lg flex items-center justify-center overflow-hidden p-0.5 shadow-md shadow-black/20">
                   <img
                     src="/logo.png"
-                    alt="Santori Solar Solutions Logo"
+                    alt="Santori Solar CRM Logo"
                     className="w-full h-full object-contain"
                   />
                 </div>
-                <span className="text-xl font-extrabold text-white tracking-wide">
-                  Solar<span className="text-emerald-500">CRM</span>
+                <span
+                  className="santori-brand-text text-[15px] font-bold tracking-tight select-none"
+                  style={{
+                    background: 'linear-gradient(110deg, #0e876a 0%, #1a7e8b 26%, #2874af 58%, #c79522 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}
+                >
+                  Santori Solar CRM
                 </span>
               </Link>
               <button onClick={() => setSidebarOpen(false)} className="text-[var(--text-secondary)] hover:text-white">
@@ -1025,45 +1070,15 @@ export default function AuthenticatedLayout({
               </button>
             </div>
 
-            <button
-              onClick={() => {
-                setSidebarOpen(false);
-                handleOpenProfile();
-              }}
-              className="p-4 mx-4 my-6 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color-hover)] rounded-xl text-left cursor-pointer transition-all block w-[calc(100%-2rem)] focus:outline-none"
-            >
-              <div className="flex items-center gap-3">
-                {user.photograph ? (
-                  <img
-                    src={`/api/v1/users/${user.id}/photograph`}
-                    alt={user.name}
-                    className="w-8 h-8 rounded-full object-cover border border-[var(--border-color)]"
-                    onError={(e) => {
-                      (e.target as HTMLElement).style.display = 'none';
-                    }}
-                  />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-center text-emerald-500 shrink-0">
-                    <User className="w-4 h-4" />
-                  </div>
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-white truncate">{user.name}</p>
-                  <p className="text-[10px] text-[var(--text-secondary)] truncate mb-2">{user.email}</p>
-                </div>
-              </div>
-              <span className={`inline-block text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 border rounded-full mt-1 ${userRoleConfig.color}`}>
-                {userRoleConfig.label}
-              </span>
-            </button>
+
 
             {/* Quick Attendance Mobile Widget */}
             <div className="mx-4 mb-4 p-3 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-[var(--text-primary)] flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-emerald-500" /> Attendance
+                  <Clock className="w-3.5 h-3.5 text-[#4A943E]" /> Attendance
                 </span>
-                <span className="text-[9px] font-bold text-emerald-500 uppercase">
+                <span className="text-[9px] font-bold text-[#4A943E] uppercase">
                   {!todayAttendance ? 'Not Checked In' : todayAttendance.checkOut ? 'Completed' : 'Checked In'}
                 </span>
               </div>
@@ -1081,7 +1096,7 @@ export default function AuthenticatedLayout({
                   type="button"
                   onClick={() => { setSidebarOpen(false); handleQuickCheckOut(); }}
                   disabled={attendanceActionLoading}
-                  className="w-full py-1.5 px-3 bg-emerald-600 text-white rounded-lg font-bold text-xs"
+                  className="w-full py-1.5 px-3 bg-[#4A943E] hover:bg-[#3E7D34] text-white rounded-lg font-bold text-xs"
                 >
                   Check Out
                 </button>
@@ -1107,7 +1122,7 @@ export default function AuthenticatedLayout({
                     </button>
 
                     {isExpanded && (
-                      <div className="space-y-0.5 pl-1.5 animate-fade-in-down">
+                      <div className="space-y-1 pl-1 animate-fade-in-down">
                         {group.items.map((item) => {
                           const isActive = pathname === item.path || pathname.startsWith(item.path + '/');
                           const Icon = item.icon;
@@ -1116,13 +1131,13 @@ export default function AuthenticatedLayout({
                               key={item.path}
                               onClick={() => setSidebarOpen(false)}
                               href={item.path}
-                              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold transition-all group ${isActive
-                                  ? 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border-l-2 border-emerald-600 dark:border-emerald-400 pl-2.5 font-bold shadow-xs'
-                                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5'
+                              className={`sidebar-nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150 group select-none ${isActive
+                                  ? 'sidebar-nav-active bg-white/[0.08] text-emerald-400 shadow-xs font-semibold'
+                                  : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
                                 }`}
                             >
-                              <Icon className={`w-4 h-4 transition-transform group-hover:scale-105 duration-200 ${isActive ? 'text-emerald-800 dark:text-emerald-300' : 'text-[var(--text-muted)] group-hover:text-[var(--text-primary)]'}`} />
-                              <span className={isActive ? 'text-emerald-800 dark:text-emerald-300 font-bold' : ''}>{item.name}</span>
+                              <Icon className={`w-[18px] h-[18px] shrink-0 transition-colors duration-150 ${isActive ? 'text-emerald-400' : 'text-slate-400 group-hover:text-white'}`} />
+                              <span className={isActive ? 'text-emerald-400 font-semibold' : 'text-slate-400 group-hover:text-white'}>{item.name}</span>
                             </Link>
                           );
                         })}
@@ -1141,32 +1156,29 @@ export default function AuthenticatedLayout({
                 <Link
                   href="/leads-map"
                   onClick={() => setSidebarOpen(false)}
-                  className={`group flex items-center justify-between p-2.5 rounded-xl transition-all border ${
+                  style={{
+                    background: 'linear-gradient(110deg, #0e876a 0%, #1a7e8b 26%, #2874af 58%, #c79522 100%)',
+                  }}
+                  className={`group flex items-center justify-between p-2.5 rounded-xl transition-all border shadow-sm ${
                     pathname === '/leads-map'
-                      ? 'bg-emerald-500/15 text-emerald-300 border-l-2 border-emerald-500 border-t-0 border-r-0 border-b-0 pl-3 shadow-xs font-semibold'
-                      : 'bg-[#161b22] hover:bg-slate-800/80 border-slate-800/90 text-slate-300 hover:text-white'
+                      ? 'ring-2 ring-white/50 border-white/30'
+                      : 'border-white/20 hover:border-white/30 hover:brightness-105'
                   }`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className={`p-1.5 rounded-lg transition-colors shrink-0 ${
-                      pathname === '/leads-map'
-                        ? 'bg-emerald-500/20 text-emerald-300'
-                        : 'bg-slate-800/80 text-slate-400'
-                    }`}>
-                      <Globe className="w-4 h-4" />
+                    <div className="p-1.5 rounded-lg bg-white/20 border border-white/25 text-white shrink-0 backdrop-blur-xs">
+                      <Globe className="w-4 h-4 text-white" />
                     </div>
                     <div className="min-w-0">
-                      <div className={`text-xs font-bold transition-colors ${
-                        pathname === '/leads-map' ? 'text-white' : 'text-slate-200'
-                      }`}>
+                      <div className="text-xs font-bold text-white drop-shadow-xs">
                         Territory Map
                       </div>
-                      <div className="text-[10px] text-[var(--text-muted)] truncate">
+                      <div className="text-[10px] text-white/90 truncate font-medium drop-shadow-xs">
                         Geo Distribution & Insights
                       </div>
                     </div>
                   </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                  <ChevronRight className="w-3.5 h-3.5 text-white/80 group-hover:text-white transition-all shrink-0" />
                 </Link>
               </div>
             )}
@@ -1202,14 +1214,68 @@ export default function AuthenticatedLayout({
 
           <div className="flex items-center gap-4 relative">
             {/* Santori Standings Top Bar Button */}
+            <style>{`
+              #santori-standings-top-btn,
+              .dark #santori-standings-top-btn,
+              .light #santori-standings-top-btn,
+              header #santori-standings-top-btn,
+              .dark header #santori-standings-top-btn,
+              .dark button[title*="Santori Standings"],
+              button[title*="Santori Standings"] {
+                background-color: #4A943E !important;
+                background: #4A943E !important;
+                border-color: #4A943E !important;
+                color: #FFFFFF !important;
+              }
+              #santori-standings-top-btn:hover,
+              .dark #santori-standings-top-btn:hover,
+              .dark button[title*="Santori Standings"]:hover {
+                background-color: #3E7D34 !important;
+                background: #3E7D34 !important;
+                border-color: #3E7D34 !important;
+                filter: none !important;
+              }
+              #santori-standings-top-btn *,
+              #santori-standings-top-btn span,
+              #santori-standings-top-btn svg,
+              .dark #santori-standings-top-btn *,
+              .dark #santori-standings-top-btn span,
+              .dark #santori-standings-top-btn svg,
+              .dark button[title*="Santori Standings"] *,
+              .dark button[title*="Santori Standings"] span,
+              .dark button[title*="Santori Standings"] svg {
+                color: #FFFFFF !important;
+                stroke: #FFFFFF !important;
+                -webkit-text-fill-color: #FFFFFF !important;
+              }
+            `}</style>
             <button
+              id="santori-standings-top-btn"
               type="button"
               onClick={() => setLeaderboardOpen(true)}
               title="Santori Standings - View Team Leaderboard"
-              className="py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-all focus:outline-none cursor-pointer flex items-center gap-2 text-xs font-bold shadow-md shadow-emerald-500/10 group"
+              style={{
+                backgroundColor: '#4A943E',
+                borderColor: '#4A943E',
+                color: '#FFFFFF',
+              }}
+              className="py-1.5 px-3 rounded-lg border border-[#4A943E] bg-[#4A943E] hover:bg-[#3E7D34] text-white transition-all focus:outline-none cursor-pointer flex items-center gap-2 text-xs font-bold shadow-xs group"
             >
-              <Trophy className="w-4 h-4 text-white shrink-0 group-hover:scale-110 transition-transform" />
-              <span className="hidden sm:inline text-white font-bold">Santori Standings</span>
+              <Trophy
+                className="w-4 h-4 shrink-0 group-hover:scale-110 transition-transform text-white"
+                style={{
+                  color: '#FFFFFF',
+                  stroke: '#FFFFFF',
+                }}
+              />
+              <span
+                className="hidden sm:inline font-bold text-white"
+                style={{
+                  color: '#FFFFFF',
+                }}
+              >
+                Santori Standings
+              </span>
             </button>
 
             {/* Quick Attendance Check-in / Check-out Dropdown */}
@@ -1220,15 +1286,23 @@ export default function AuthenticatedLayout({
                   setNotifDropdownOpen(false);
                 }}
                 title="Daily Attendance Status"
-                className="py-1.5 px-3 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-white transition-all relative focus:outline-none cursor-pointer flex items-center gap-2 text-xs font-semibold"
+                className={`py-1.5 px-3 rounded-lg bg-transparent border ${
+                  theme === 'dark' ? 'border-[#8BBB92] hover:bg-[#8BBB92]/10' : 'border-[#091413] hover:bg-[#091413]/5'
+                } text-[var(--text-primary)] transition-all relative focus:outline-none cursor-pointer flex items-center gap-2 text-xs font-semibold`}
               >
-                <Clock className="w-4 h-4 text-emerald-500" />
-                <span className="hidden sm:inline">Attendance:</span>
-                <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg flex items-center gap-1 ${!todayAttendance
-                    ? 'bg-slate-800/60 text-slate-350'
-                    : todayAttendance.checkOut
-                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                      : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 animate-pulse'
+                <Clock className={`w-4 h-4 shrink-0 ${theme === 'dark' ? 'text-[#8BBB92]' : 'text-[#091413]'}`} />
+                <span className="hidden sm:inline font-semibold">Attendance:</span>
+                <span
+                  style={
+                    todayAttendance
+                      ? { backgroundColor: '#6FAF4F', color: '#000000', borderColor: '#6FAF4F' }
+                      : undefined
+                  }
+                  className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md flex items-center gap-1 border ${!todayAttendance
+                    ? theme === 'dark'
+                      ? 'bg-[#8BBB92]/20 text-[#8BBB92] border-[#8BBB92]/40'
+                      : 'bg-[#091413]/10 text-[#091413] border-[#091413]/30'
+                    : 'bg-[#6FAF4F] text-black border-[#6FAF4F] attendance-active-badge'
                   }`}>
                   {!todayAttendance ? 'Pending' : todayAttendance.checkOut ? 'Completed' : 'Active'}
                 </span>
@@ -1239,7 +1313,7 @@ export default function AuthenticatedLayout({
                 <div className="absolute right-0 mt-3 w-72 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-2xl z-50 p-4 space-y-3 animate-fade-in-down">
                   <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-2.5">
                     <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-emerald-500" />
+                      <Clock className="w-4 h-4 text-[#4A943E]" />
                       <span className="text-xs font-bold text-[var(--text-primary)]">Daily Attendance</span>
                     </div>
                   </div>
@@ -1262,7 +1336,7 @@ export default function AuthenticatedLayout({
                       ) : (
                         <div className="flex justify-between">
                           <span>Active duration:</span>
-                          <span className="font-mono font-semibold text-emerald-500">
+                          <span className="font-mono font-semibold text-[#4A943E]">
                             Active Now
                           </span>
                         </div>
@@ -1282,7 +1356,7 @@ export default function AuthenticatedLayout({
                         setAttendanceDropdownOpen(false);
                       }}
                       disabled={attendanceActionLoading}
-                      className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md shadow-blue-500/10 flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                      className="w-full py-2 px-3 bg-[#4A943E] hover:bg-[#3E7D34] text-white rounded-lg font-bold text-xs shadow-md shadow-[#4A943E]/10 flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
                     >
                       {attendanceActionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserCheck className="w-3.5 h-3.5" />}
                       <span>Check In Now</span>
@@ -1295,13 +1369,16 @@ export default function AuthenticatedLayout({
                         setAttendanceDropdownOpen(false);
                       }}
                       disabled={attendanceActionLoading}
-                      className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                      className="w-full py-2 px-3 bg-[#4A943E] hover:bg-[#3E7D34] text-white rounded-lg font-bold text-xs shadow-md shadow-[#4A943E]/10 flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
                     >
                       {attendanceActionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LogOut className="w-3.5 h-3.5" />}
                       <span>Check Out Now</span>
                     </button>
                   ) : (
-                    <div className="text-[11px] text-center text-emerald-450 font-semibold py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
+                    <div 
+                      className="text-[11px] text-center font-bold py-1.5 bg-[#4A943E]/15 border border-[#4A943E]/40 text-[#4A943E] rounded-lg transition-all"
+                      style={{ color: '#4A943E' }}
+                    >
                       Completed ({Math.floor((todayAttendance.workDurationMin || 0) / 60)}h {(todayAttendance.workDurationMin || 0) % 60}m)
                     </div>
                   )}
@@ -1313,144 +1390,64 @@ export default function AuthenticatedLayout({
             <button
               type="button"
               onClick={toggleTheme}
-              className="p-2 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all cursor-pointer focus:outline-none"
-              title="Light Mode (Under Development)"
+              className={`p-2 rounded-lg bg-transparent border ${
+                theme === 'dark' ? 'border-[#8BBB92] hover:bg-[#8BBB92]/10 text-[#8BBB92]' : 'border-[#091413] hover:bg-[#091413]/5 text-[#091413]'
+              } transition-all cursor-pointer focus:outline-none`}
+              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             >
-              <Sun className="w-4 h-4 text-emerald-500" />
+              {theme === 'dark' ? (
+                <Sun className="w-4 h-4 text-[#8BBB92]" />
+              ) : (
+                <Moon className="w-4 h-4 text-[#091413]" />
+              )}
             </button>
 
-            {/* Notification Bell Dropdown */}
-            <div className="relative" ref={notifRef}>
-              <button
-                onClick={() => {
-                  setNotifDropdownOpen(!notifDropdownOpen);
-                  setAttendanceDropdownOpen(false);
-                }}
-                className="p-2 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all relative focus:outline-none cursor-pointer"
-              >
-                <Bell className="w-4 h-4" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center animate-pulse">
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
-                )}
-              </button>
-
-              {/* Dropdown Card */}
-              {notifDropdownOpen && (
-                <div className="absolute right-0 mt-3 w-80 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-2xl z-50 overflow-hidden animate-fade-in-down">
-                  <div className="p-3 bg-[var(--bg-main)]/60 border-b border-[var(--border-color)] space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-emerald-500" />
-                        <span className="text-xs font-bold text-[var(--text-primary)]">Notifications</span>
-                      </div>
-                      {unreadCount > 0 && (
-                        <button
-                          onClick={handleMarkAllRead}
-                          className="text-[10px] text-emerald-500 hover:underline font-semibold cursor-pointer"
-                        >
-                          Mark all as read
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Broadcast News Button for Admins */}
-                    {isCurrentUserAdmin && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setNotifDropdownOpen(false);
-                          setBroadcastModalOpen(true);
-                        }}
-                        className="w-full py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md"
-                      >
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>Broadcast News to Employees</span>
-                      </button>
-                    )}
-                  </div>
-                  <div className="max-h-64 overflow-y-auto divide-y divide-slate-800/80">
-                    {notifications.length === 0 ? (
-                      <div className="p-6 text-center text-[var(--text-muted)] text-xs">
-                        No new notifications.
-                      </div>
-                    ) : (
-                      notifications.map((notif) => (
-                        <div
-                          key={notif.id}
-                          onClick={() => handleNotifClick(notif)}
-                          className={`p-4 hover:bg-[var(--bg-card)] dark:hover:bg-[var(--bg-card)] active:bg-slate-700/30 dark:active:bg-[var(--bg-card)] cursor-pointer transition-colors ${!notif.isRead ? 'bg-emerald-500/[0.04] dark:bg-emerald-500/[0.02]' : ''
-                            }`}
-                        >
-                          <div className="flex items-start gap-2.5">
-                            <div className="mt-0.5">
-                              {notif.type === 'announcement' && <Sparkles className="w-4 h-4 text-amber-400" />}
-                              {notif.type === 'meeting_booked' && <Calendar className="w-4 h-4 text-cyan-400" />}
-                              {notif.type === 'sale_done' && <TrendingUp className="w-4 h-4 text-emerald-400" />}
-                              {notif.type === 'unreachable_lead' && <AlertTriangle className="w-4 h-4 text-red-400" />}
-                              {['lead_assigned', 'order_submitted', 'order_verified', 'order_rejected'].includes(notif.type) && (
-                                <ChevronRight className="w-4 h-4 text-emerald-500" />
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className={`text-xs text-[var(--text-primary)] ${!notif.isRead ? 'font-bold' : 'font-medium'}`}>
-                                {notif.title}
-                              </p>
-                              <p className="text-[10px] text-[var(--text-secondary)] mt-0.5 leading-normal">
-                                {notif.body}
-                              </p>
-                              <p className="text-[9px] text-[var(--text-muted)] mt-1">
-                                {new Date(notif.createdAt).toLocaleTimeString('en-IN', {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })}
-                              </p>
-                            </div>
-
-                            {isCurrentUserAdmin && (notif.type === 'announcement' || notif.title.startsWith('📢')) && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteBroadcast(notif.id);
-                                }}
-                                className="p-1.5 hover:bg-red-500/20 text-red-400 hover:text-red-300 rounded-lg transition-colors cursor-pointer shrink-0 ml-1 border border-red-500/20 bg-red-500/10"
-                                title="Delete Broadcast Message for All Employees"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
+            {/* Broadcast Announcements Live Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setBroadcastModalOpen(true);
+                setNotifDropdownOpen(false);
+                setAttendanceDropdownOpen(false);
+              }}
+              className={`p-2 rounded-lg bg-transparent border ${
+                theme === 'dark' ? 'border-[#8BBB92] hover:bg-[#8BBB92]/10 text-[#8BBB92]' : 'border-[#091413] hover:bg-[#091413]/5 text-[#091413]'
+              } transition-all cursor-pointer focus:outline-none relative`}
+              title="Team Broadcast & Announcements"
+            >
+              <Radio className={`w-4 h-4 ${theme === 'dark' ? 'text-[#8BBB92]' : 'text-[#091413]'}`} />
+              {recentBroadcasts.length > 0 && (
+                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#4F7D32] animate-pulse" />
               )}
-            </div>
+            </button>
+
+
 
             {/* Profile Brief Info */}
             <button
               onClick={handleOpenProfile}
-              className="hidden sm:flex items-center gap-3 px-3 py-1.5 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--border-color-hover)] rounded-lg text-left cursor-pointer transition-all focus:outline-none"
+              className={`hidden sm:flex items-center gap-3 px-3 py-1.5 bg-transparent border ${
+                theme === 'dark' ? 'border-[#8BBB92] hover:bg-[#8BBB92]/10' : 'border-[#091413] hover:bg-[#091413]/5'
+              } rounded-lg text-left cursor-pointer transition-all focus:outline-none`}
             >
               {user.photograph ? (
                 <img
                   src={`/api/v1/users/${user.id}/photograph`}
                   alt={user.name}
-                  className="w-8 h-8 rounded-full object-cover border border-[var(--border-color)]"
+                  className={`w-8 h-8 rounded-full object-cover border ${theme === 'dark' ? 'border-[#8BBB92]' : 'border-[#091413]'}`}
                   onError={(e) => {
                     (e.target as HTMLElement).style.display = 'none';
                   }}
                 />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-center text-emerald-500 shrink-0">
+                <div className={`w-8 h-8 rounded-full ${
+                  theme === 'dark' ? 'bg-[#8BBB92]/20 border border-[#8BBB92] text-[#8BBB92]' : 'bg-[#091413]/10 border border-[#091413] text-[#091413]'
+                } flex items-center justify-center shrink-0`}>
                   <User className="w-4 h-4" />
                 </div>
               )}
               <div className="text-left">
-                <p className="text-xs font-bold text-white leading-none">{user.name}</p>
+                <p className="text-xs font-bold text-[var(--text-primary)] leading-none">{user.name}</p>
                 <p className="text-[9px] text-[var(--text-secondary)] mt-1 leading-none capitalize">{user.role.includes(':') ? user.role.split(':')[1] : user.role}</p>
               </div>
             </button>
@@ -1499,13 +1496,13 @@ export default function AuthenticatedLayout({
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full bg-[var(--bg-card)] flex items-center justify-center text-emerald-500">
+                      <div className="w-full h-full bg-[var(--bg-card)] flex items-center justify-center text-[#4F7D32]">
                         <User className="w-8 h-8" />
                       </div>
                     )}
                     {uploadingEditPhoto && (
                       <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
-                        <Loader2 className="w-4 h-4 text-emerald-500 animate-spin" />
+                        <Loader2 className="w-4 h-4 text-[#4F7D32] animate-spin" />
                       </div>
                     )}
                   </div>
@@ -1611,7 +1608,7 @@ export default function AuthenticatedLayout({
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="flex items-center gap-2">
-                        <ShieldAlert className="w-4 h-4 text-emerald-500" />
+                        <ShieldAlert className="w-4 h-4 text-[#4F7D32]" />
                         <h4 className="text-xs font-bold uppercase tracking-wider text-white">
                           Active Login Sessions ({userSessions.length} / 3)
                         </h4>
@@ -1620,7 +1617,7 @@ export default function AuthenticatedLayout({
                         Max 3 simultaneous logins allowed across devices & browsers.
                       </p>
                     </div>
-                    {loadingSessions && <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-500" />}
+                    {loadingSessions && <Loader2 className="w-3.5 h-3.5 animate-spin text-[#4F7D32]" />}
                   </div>
 
                   <div className="space-y-2">
@@ -1639,7 +1636,7 @@ export default function AuthenticatedLayout({
                         >
                           <div className="flex items-start gap-2.5 min-w-0 flex-1">
                             <div className="w-8 h-8 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-secondary)] shrink-0 mt-0.5">
-                              {isMobile ? <Smartphone className="w-4 h-4 text-emerald-400" /> : <Laptop className="w-4 h-4 text-emerald-400" />}
+                              {isMobile ? <Smartphone className="w-4 h-4 text-[#4F7D32]" /> : <Laptop className="w-4 h-4 text-[#4F7D32]" />}
                             </div>
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-2 flex-wrap">
@@ -1647,7 +1644,7 @@ export default function AuthenticatedLayout({
                                   {s.deviceInfo || 'Unknown Browser / Device'}
                                 </span>
                                 {s.isCurrentSession && (
-                                  <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded">
+                                  <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-[#4F7D32]/10 text-[#4F7D32] border border-[#4F7D32]/20 rounded">
                                     Current Device
                                   </span>
                                 )}
@@ -1705,7 +1702,7 @@ export default function AuthenticatedLayout({
                 <button
                   type="submit"
                   disabled={updatingProfile}
-                  className="py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer"
+                  className="py-2 px-5 bg-[#4F7D32] hover:bg-[#436A2B] text-white rounded-lg font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer"
                 >
                   {updatingProfile ? (
                     <>
@@ -1728,8 +1725,8 @@ export default function AuthenticatedLayout({
           <div className="w-full max-w-lg bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
             <div className="p-6 border-b border-[var(--border-color)] transparent flex justify-between items-center">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500">
-                  <Flame className="w-4.5 h-4.5" />
+                <div className="w-8 h-8 rounded-xl bg-[#4F7D32]/10 border border-[#4F7D32]/25 flex items-center justify-center text-[#4F7D32]">
+                  <Flame className="w-4.5 h-4.5 text-[#4F7D32]" />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold uppercase tracking-wider text-white">Your Tasks Scheduled Today</h3>
@@ -1747,7 +1744,7 @@ export default function AuthenticatedLayout({
                   key={alert.id}
                   className="p-3 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl flex items-start gap-3 hover:border-[var(--border-color)] transition-colors"
                 >
-                  <div className="text-xs font-mono font-bold text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded shrink-0">
+                  <div className="text-xs font-mono font-bold text-[#4F7D32] bg-[#4F7D32]/10 border border-[#4F7D32]/25 px-2 py-1 rounded shrink-0">
                     {alert.time}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -1757,7 +1754,7 @@ export default function AuthenticatedLayout({
                   <Link
                     href={`/leads/${alert.leadId}`}
                     onClick={() => setShowTodayAlertModal(false)}
-                    className="text-[10px] text-emerald-500 hover:text-emerald-500 font-bold self-center px-2 py-1 rounded hover:bg-[var(--bg-card)] transition-colors"
+                    className="text-[10px] text-[#4F7D32] hover:text-[#4F7D32] hover:opacity-80 font-bold self-center px-2 py-1 rounded hover:bg-[var(--bg-card)] transition-colors"
                   >
                     View Lead
                   </Link>
@@ -1769,7 +1766,7 @@ export default function AuthenticatedLayout({
               <button
                 type="button"
                 onClick={() => setShowTodayAlertModal(false)}
-                className="py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-md cursor-pointer"
+                className="py-2 px-5 bg-[#4F7D32] hover:bg-[#436A2B] text-white rounded-lg font-bold text-xs shadow-md transition-colors cursor-pointer"
               >
                 Acknowledge & Continue
               </button>
@@ -1783,21 +1780,31 @@ export default function AuthenticatedLayout({
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className="p-4 rounded-xl shadow-2xl border pointer-events-auto flex items-start gap-3 animate-slide-in-right transition-all bg-[var(--bg-card)] border-[var(--border-color)] backdrop-blur-md"
+            className="toast-card p-4 rounded-xl shadow-2xl border pointer-events-auto flex items-start gap-3 animate-slide-in-right transition-all"
+            style={{
+              backgroundColor: theme === 'dark' ? '#161B22' : '#FFFFFF',
+              borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.12)',
+              boxShadow: theme === 'dark' ? '0 10px 25px -5px rgba(0, 0, 0, 0.5)' : '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
+            }}
           >
             <div className="shrink-0 mt-0.5">
-              {toast.type === 'success' && <CheckCircle className="w-5 h-5 text-emerald-400" />}
-              {toast.type === 'error' && <XCircle className="w-5 h-5 text-rose-400" />}
-              {toast.type === 'info' && <Info className="w-5 h-5 text-emerald-500" />}
+              {toast.type === 'success' && <CheckCircle className="w-5 h-5 text-[#4F7D32]" style={{ color: '#4F7D32' }} />}
+              {toast.type === 'error' && <XCircle className="w-5 h-5 text-rose-500" />}
+              {toast.type === 'info' && <Info className="w-5 h-5 text-[#4F7D32]" style={{ color: '#4F7D32' }} />}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-white leading-normal">
+              <p 
+                className="text-xs font-semibold leading-normal text-white-force"
+                style={{ color: theme === 'dark' ? '#F0F6FC' : '#111827' }}
+              >
                 {toast.message}
               </p>
             </div>
             <button
+              type="button"
               onClick={() => setToasts((prev) => prev.filter((t) => t.id !== toast.id))}
-              className="shrink-0 text-[var(--text-secondary)] hover:text-white transition-colors cursor-pointer"
+              className="shrink-0 transition-colors cursor-pointer"
+              style={{ color: theme === 'dark' ? '#8B949E' : '#64748B' }}
             >
               <X className="w-4 h-4" />
             </button>
@@ -1806,195 +1813,119 @@ export default function AuthenticatedLayout({
       </div>
 
       {/* Custom Confirm Modal */}
-      {confirmModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
-            <div className="p-6 border-b border-[var(--border-color)] transparent flex justify-between items-center">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-white">Confirm Action</h3>
-              <button
-                onClick={() => {
-                  confirmModal.onCancel();
-                  setConfirmModal(null);
-                }}
-                className="text-[var(--text-secondary)] hover:text-white cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-6 space-y-6">
-              <p className="text-sm text-[var(--text-primary)] leading-relaxed">
-                {confirmModal.message}
-              </p>
-              <div className="flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    confirmModal.onCancel();
-                    setConfirmModal(null);
-                  }}
-                  className="px-4 py-2 bg-[var(--bg-card)] hover:bg-[var(--bg-main)] border border-[var(--border-color)] hover:border-[var(--border-color-hover)] rounded-lg text-[var(--text-primary)] hover:text-white transition-all font-semibold text-xs cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    confirmModal.onConfirm();
-                    setConfirmModal(null);
-                  }}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition-all text-xs cursor-pointer shadow-md shadow-emerald-500/20 font-sans"
-                >
-                  Confirm
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {confirmModal &&
+        (mounted
+          ? createPortal(
+              <div className="fixed inset-0 z-[20000] flex items-center justify-center bg-black/75 backdrop-blur-md px-4 font-sans animate-fade-in">
+                <div className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+                  <div className="p-6 border-b border-[var(--border-color)] flex justify-between items-center">
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-white">Confirm Action</h3>
+                    <button
+                      onClick={() => {
+                        confirmModal.onCancel();
+                        setConfirmModal(null);
+                      }}
+                      className="text-[var(--text-secondary)] hover:text-white cursor-pointer"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                  <div className="p-6 space-y-6">
+                    <p className="text-sm text-[var(--text-primary)] leading-relaxed">
+                      {confirmModal.message}
+                    </p>
+                    <div className="flex justify-end gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          confirmModal.onCancel();
+                          setConfirmModal(null);
+                        }}
+                        className="px-4 py-2 bg-[var(--bg-card)] hover:bg-[var(--bg-main)] border border-[var(--border-color)] hover:border-[var(--border-color-hover)] rounded-lg text-[var(--text-primary)] hover:text-white transition-all font-semibold text-xs cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          confirmModal.onConfirm();
+                          setConfirmModal(null);
+                        }}
+                        className="px-4 py-2 bg-[#4F7D32] hover:bg-[#436A2B] text-white font-bold rounded-lg transition-all text-xs cursor-pointer shadow-md shadow-[#4F7D32]/20 font-sans"
+                      >
+                        Confirm
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>,
+              document.body
+            )
+          : null)}
 
       {/* Logout Confirmation Modal */}
-      {showLogoutConfirm && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="w-full max-w-sm bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
-            <div className="p-5 border-b border-[var(--border-color)] flex justify-between items-center">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">Logout Confirmation</h3>
-              <button
-                onClick={() => setShowLogoutConfirm(false)}
-                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="p-5 space-y-5">
-              <p className="text-xs text-[var(--text-primary)] leading-relaxed font-medium">
-                Are you sure you want to log out of the company portal?
-              </p>
-              <div className="flex justify-end gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setShowLogoutConfirm(false)}
-                  className="px-4 py-2 bg-[var(--bg-main)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] transition-all font-semibold text-[11px] cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowLogoutConfirm(false);
-                    logout();
-                  }}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition-all text-[11px] cursor-pointer shadow-md shadow-emerald-600/20"
-                >
-                  Logout
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {showLogoutConfirm &&
+        (mounted
+          ? createPortal(
+              <div className="fixed inset-0 z-[20000] flex items-center justify-center bg-black/75 backdrop-blur-md px-4 font-sans animate-fade-in">
+                <div className="w-full max-w-sm bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg shadow-2xl overflow-hidden animate-fade-in-up">
+                  <div className="p-5 border-b border-[var(--border-color)] flex justify-between items-center">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">Logout Confirmation</h3>
+                    <button
+                      onClick={() => setShowLogoutConfirm(false)}
+                      className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="p-5 space-y-5">
+                    <p className="text-xs text-[var(--text-primary)] leading-relaxed font-medium">
+                      Are you sure you want to log out of the company portal?
+                    </p>
+                    <div className="flex justify-end gap-2.5">
+                      <button
+                        type="button"
+                        onClick={() => setShowLogoutConfirm(false)}
+                        className="px-4 py-2 bg-[var(--bg-main)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] transition-all font-semibold text-[11px] cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowLogoutConfirm(false);
+                          logout();
+                        }}
+                        className="px-4 py-2 bg-[#4F7D32] hover:bg-[#436A2B] text-white font-bold rounded-lg transition-all text-[11px] cursor-pointer shadow-md shadow-[#4F7D32]/20"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>,
+              document.body
+            )
+          : null)}
 
       {/* Leaderboard Slide Drawer */}
       <LeaderboardDrawer isOpen={leaderboardOpen} onClose={() => setLeaderboardOpen(false)} />
 
-      {/* Broadcast News Modal */}
-      {broadcastModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in font-sans">
-          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl w-full max-w-md overflow-hidden shadow-2xl p-6 space-y-4">
-            <div className="flex justify-between items-center border-b border-[var(--border-color)] pb-3">
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-emerald-500" />
-                <span>Broadcast News to Employees</span>
-              </h3>
-              <button
-                onClick={() => setBroadcastModalOpen(false)}
-                className="text-[var(--text-secondary)] hover:text-white transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleBroadcastNews} className="space-y-4">
-              <div>
-                <label className="text-[11px] font-bold text-[var(--text-primary)] uppercase tracking-wider block mb-1">
-                  News Title / Headline
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Office Holiday Notice, Policy Update..."
-                  value={broadcastTitle}
-                  onChange={(e) => setBroadcastTitle(e.target.value)}
-                  className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-[var(--accent-color)] rounded-lg px-3 py-2 text-white text-xs focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="text-[11px] font-bold text-[var(--text-primary)] uppercase tracking-wider block mb-1">
-                  Announcement Message
-                </label>
-                <textarea
-                  required
-                  rows={4}
-                  placeholder="Enter complete news details to notify all active employees..."
-                  value={broadcastMessage}
-                  onChange={(e) => setBroadcastMessage(e.target.value)}
-                  className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] focus:border-[var(--accent-color)] rounded-lg px-3 py-2 text-white text-xs focus:outline-none resize-none"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t border-[var(--border-color)]">
-                <button
-                  type="button"
-                  onClick={() => setBroadcastModalOpen(false)}
-                  className="py-2 px-4 bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] rounded-lg text-xs font-bold transition-all cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={broadcasting}
-                  className="py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
-                >
-                  {broadcasting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                  <span>Send to All Employees</span>
-                </button>
-              </div>
-            </form>
-
-            {/* Admin Broadcast History Control */}
-            {isCurrentUserAdmin && recentBroadcasts.length > 0 && (
-              <div className="pt-4 border-t border-[var(--border-color)] space-y-3">
-                <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Recent Sent Broadcasts</span>
-                </h4>
-                <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
-                  {recentBroadcasts.map((bc) => (
-                    <div key={bc.id} className="p-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl flex items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-bold text-white truncate">{bc.title}</p>
-                        <p className="text-[10px] text-[var(--text-secondary)] mt-0.5 line-clamp-2 leading-relaxed">{bc.body}</p>
-                        <span className="text-[9px] text-[var(--text-muted)] font-mono block mt-1">
-                          Sent {new Date(bc.createdAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteBroadcast(bc.id)}
-                        className="p-1.5 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 text-red-400 rounded-lg transition-all text-xs font-bold shrink-0 cursor-pointer flex items-center gap-1"
-                        title="Delete this broadcast announcement for all employees"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>Delete</span>
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Broadcast News Slide Drawer (Chat style) */}
+      <BroadcastDrawer
+        isOpen={broadcastModalOpen}
+        onClose={() => setBroadcastModalOpen(false)}
+        isCurrentUserAdmin={isCurrentUserAdmin}
+        recentBroadcasts={recentBroadcasts}
+        onBroadcastSent={() => {
+          fetchNotifications();
+          setToasts((prev) => [
+            ...prev,
+            { id: Date.now().toString(), message: 'News broadcast sent to all employees!', type: 'success' },
+          ]);
+        }}
+        onDeleteBroadcast={handleDeleteBroadcast}
+      />
     </div>
   );
 }

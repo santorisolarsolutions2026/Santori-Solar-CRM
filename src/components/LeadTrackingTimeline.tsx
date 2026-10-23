@@ -89,19 +89,19 @@ const STAGE_NAMES: Record<number, string> = {
 
 const STAGE_BADGES: Record<number, { name: string; class: string }> = {
   0: { name: 'Uninitiated', class: 'bg-[#3b3a37] text-[#c9c5ba] border-[#4f4d45]' },
-  1: { name: 'Fresh Lead', class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+  1: { name: 'Fresh Lead', class: 'bg-[#4F7D32]/10 text-[#4F7D32] border-[#4F7D32]/20' },
   2: { name: 'DNP (No Answer)', class: 'bg-slate-500/10 text-[var(--text-secondary)] border-slate-500/20' },
-  3: { name: 'Follow Up', class: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' },
+  3: { name: 'Follow Up', class: 'bg-[#4F7D32]/10 text-[#4F7D32] border-[#4F7D32]/20' },
   4: { name: 'Not Interested', class: 'bg-red-800/10 text-red-400 border-red-800/20' },
   5: { name: 'Call Later', class: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
   6: { name: 'Already Installed', class: 'bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border-color)]' },
-  7: { name: 'Decision Pending', class: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' },
+  7: { name: 'Decision Pending', class: 'bg-[#4F7D32]/10 text-[#4F7D32] border-[#4F7D32]/20' },
   8: { name: 'Meeting Booked', class: 'bg-teal-500/10 text-teal-400 border-teal-500/20' },
   9: { name: 'Meeting Done', class: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
   10: { name: 'Disconnected', class: 'bg-slate-600/15 text-[var(--text-secondary)] border-slate-600/20' },
   11: { name: 'Switch Off', class: 'bg-slate-700/20 text-[var(--text-secondary)] border-[var(--border-color)]' },
   12: { name: 'Can\'t Fit Solar', class: 'bg-stone-900 text-stone-400 border-stone-800/40' },
-  13: { name: 'Sale Done', class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-bold' },
+  13: { name: 'Sale Done', class: 'bg-[#4F7D32]/10 text-[#4F7D32] border-[#4F7D32]/20 font-bold' },
   14: { name: 'Meeting Cancelled', class: 'bg-red-500/10 text-red-400 border-red-500/20 font-bold' },
 };
 
@@ -374,13 +374,13 @@ export function LeadTrackingTimeline({ lead }: LeadTrackingProps) {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-inner">
-            <Truck className="w-5 h-5" />
+          <div className="w-10 h-10 rounded-xl bg-[#4F7D32]/10 border border-[#4F7D32]/20 flex items-center justify-center text-[#4F7D32] shadow-inner">
+            <Truck className="w-5 h-5 text-[#4F7D32]" />
           </div>
           <div>
             <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)] flex items-center gap-2">
               <span>Track Lead Journey</span>
-              <span className="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-450 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono">
+              <span className="text-[10px] bg-[#4F7D32]/10 text-[#4F7D32] border border-[#4F7D32]/20 px-2 py-0.5 rounded-full font-mono">
                 #{lead.leadCode}
               </span>
             </h3>
@@ -420,8 +420,8 @@ export function LeadTrackingTimeline({ lead }: LeadTrackingProps) {
                   <div
                     className={`w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold shadow-md transition-all duration-300 ${
                       isLatest
-                        ? 'bg-emerald-600 shadow-emerald-500/30 ring-4 ring-emerald-500/20'
-                        : 'bg-emerald-600 shadow-emerald-500/10'
+                        ? 'bg-[#4F7D32] shadow-[#4F7D32]/30 ring-4 ring-[#4F7D32]/20'
+                        : 'bg-[#4F7D32] shadow-[#4F7D32]/10'
                     }`}
                   >
                     {getEventIcon(event.title, event.toStatus || null)}
@@ -439,7 +439,7 @@ export function LeadTrackingTimeline({ lead }: LeadTrackingProps) {
                       <span>{event.title}</span>
                     </h4>
                     {isLatest && (
-                      <span className="text-[9px] font-extrabold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-450 border border-emerald-500/20 px-2 py-0.5 rounded-full animate-pulse">
+                      <span className="text-[9px] font-extrabold uppercase tracking-wider bg-[#4F7D32]/10 text-[#4F7D32] border border-[#4F7D32]/20 px-2 py-0.5 rounded-full animate-pulse">
                         Latest Action
                       </span>
                     )}

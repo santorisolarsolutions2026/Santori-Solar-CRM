@@ -117,7 +117,7 @@ export default function CompletedOrdersPage() {
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4A943E]"></div>
       </div>
     );
   }
@@ -279,7 +279,7 @@ export default function CompletedOrdersPage() {
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
+        <Loader2 className="w-8 h-8 text-[#4A943E] animate-spin" />
       </div>
     );
   }
@@ -290,8 +290,8 @@ export default function CompletedOrdersPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--border-color)] pb-6">
         <div>
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
-              <PackageCheck className="w-7 h-7 text-emerald-400" />
+            <div className="p-3 bg-transparent border border-[#4A943E]/30 rounded-2xl">
+              <PackageCheck className="w-7 h-7 text-[#4A943E]" />
             </div>
             <div>
               <h1 className="text-2xl md:text-3xl font-extrabold text-white">Completed Orders Portal</h1>
@@ -307,11 +307,11 @@ export default function CompletedOrdersPage() {
           </div>
           <div className="bg-[var(--bg-card)] border border-[var(--border-color)] p-3 rounded-xl text-center">
             <span className="text-[10px] text-[var(--text-secondary)] uppercase font-mono block">Installed Capacity</span>
-            <span className="text-lg font-bold text-emerald-400">{totalKwInstalled.toFixed(1)} kW</span>
+            <span className="text-lg font-bold text-[#4A943E]">{totalKwInstalled.toFixed(1)} kW</span>
           </div>
           <div className="bg-[var(--bg-card)] border border-[var(--border-color)] p-3 rounded-xl text-center">
             <span className="text-[10px] text-[var(--text-secondary)] uppercase font-mono block">Total Value</span>
-            <span className="text-lg font-bold text-emerald-400">₹{(totalRevenue / 100000).toFixed(2)}L</span>
+            <span className="text-lg font-bold text-[#4A943E]">₹{(totalRevenue / 100000).toFixed(2)}L</span>
           </div>
         </div>
       </div>
@@ -323,14 +323,14 @@ export default function CompletedOrdersPage() {
           <div className="flex items-center bg-[var(--bg-main)] p-1 rounded-xl border border-[var(--border-color)] text-xs">
             <button
               onClick={() => setScope('team')}
-              className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${scope === 'team' ? 'bg-emerald-600 text-white shadow' : 'text-[var(--text-secondary)] hover:text-white'
+              className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${scope === 'team' ? 'bg-[#4A943E] text-white shadow' : 'text-[var(--text-secondary)] hover:text-white'
                 }`}
             >
               My Team's Orders
             </button>
             <button
               onClick={() => setScope('my')}
-              className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${scope === 'my' ? 'bg-emerald-600 text-white shadow' : 'text-[var(--text-secondary)] hover:text-white'
+              className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${scope === 'my' ? 'bg-[#4A943E] text-white shadow' : 'text-[var(--text-secondary)] hover:text-white'
                 }`}
             >
               My Assigned
@@ -338,7 +338,7 @@ export default function CompletedOrdersPage() {
             {(user?.role === 'admin' || user?.role === 'director' || user?.department?.name === 'IT') && (
               <button
                 onClick={() => setScope('all')}
-                className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${scope === 'all' ? 'bg-emerald-600 text-white shadow' : 'text-[var(--text-secondary)] hover:text-white'
+                className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${scope === 'all' ? 'bg-[#4A943E] text-white shadow' : 'text-[var(--text-secondary)] hover:text-white'
                   }`}
               >
                 All System Orders
@@ -354,12 +354,12 @@ export default function CompletedOrdersPage() {
                 placeholder="Search by Code, Customer Name, Mobile, City..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#4A943E]/50"
               />
             </div>
             <button
               type="submit"
-              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl cursor-pointer transition-all shadow-sm active:bg-emerald-800"
+              className="px-4 py-2.5 bg-[#4A943E] hover:bg-[#3E7D34] text-white text-xs font-semibold rounded-xl cursor-pointer transition-all shadow-sm active:bg-[#356B2C]"
             >
               Search
             </button>
@@ -423,7 +423,7 @@ export default function CompletedOrdersPage() {
                 placeholder="Filter State..."
                 value={stateFilter}
                 onChange={(e) => setStateFilter(e.target.value)}
-                className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl pl-3 pr-7 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl pl-3 pr-7 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#4A943E]/50"
               />
               {stateFilter && (
                 <button
@@ -447,7 +447,7 @@ export default function CompletedOrdersPage() {
                 placeholder="Filter City..."
                 value={cityFilter}
                 onChange={(e) => setCityFilter(e.target.value)}
-                className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl pl-3 pr-7 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl pl-3 pr-7 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#4A943E]/50"
               />
               {cityFilter && (
                 <button
@@ -471,7 +471,7 @@ export default function CompletedOrdersPage() {
                 placeholder="Filter Division..."
                 value={divisionFilter}
                 onChange={(e) => setDivisionFilter(e.target.value)}
-                className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl pl-3 pr-7 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl pl-3 pr-7 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#4A943E]/50"
               />
               {divisionFilter && (
                 <button
@@ -496,7 +496,7 @@ export default function CompletedOrdersPage() {
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-emerald-500/50 outline-none"
+                className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-[#4A943E]/50 outline-none"
               />
             </div>
 
@@ -506,7 +506,7 @@ export default function CompletedOrdersPage() {
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-emerald-500/50 outline-none"
+                className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:border-[#4A943E]/50 outline-none"
               />
             </div>
           </div>
@@ -544,7 +544,7 @@ export default function CompletedOrdersPage() {
                 {orders.map(order => (
                   <tr key={order.id} className="hover:bg-[var(--bg-card)] transition-colors">
                     <td className="p-4">
-                      <div className="font-bold text-emerald-400 font-mono">{order.orderCode}</div>
+                      <div className="font-bold text-[#4A943E] font-mono">{order.orderCode}</div>
                       <div className="text-[10px] text-[var(--text-muted)] font-mono">Lead: {order.lead.leadCode}</div>
                     </td>
                     <td className="p-4">
@@ -554,12 +554,12 @@ export default function CompletedOrdersPage() {
                         {order.lead.division ? ` (${order.lead.division})` : ''}
                       </div>
                     </td>
-                    <td className="p-4 font-mono font-bold text-emerald-400">
+                    <td className="p-4 font-mono font-bold text-[#4A943E]">
                       {order.systemSizeKw} kW
                       <span className="block text-[10px] text-[var(--text-secondary)] font-normal uppercase">{order.clientType.replace('_', '-')}</span>
                     </td>
                     <td className="p-4 font-mono">
-                      <span className="font-bold text-emerald-400">₹{order.totalValue.toLocaleString()}</span>
+                      <span className="font-bold text-[#4A943E]">₹{order.totalValue.toLocaleString()}</span>
                       <span className="block text-[10px] text-[var(--text-muted)]">Paid: ₹{order.totalPaid.toLocaleString()}</span>
                     </td>
                     <td className="p-4 space-y-0.5 text-[11px]">
@@ -573,7 +573,7 @@ export default function CompletedOrdersPage() {
                     <td className="p-4 text-right">
                       <button
                         onClick={() => setSelectedOrder(order)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 font-semibold rounded-xl text-xs transition-all cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-transparent border border-[#4A943E] text-[#4A943E] hover:bg-[#4A943E] hover:text-white font-semibold rounded-xl text-xs transition-all cursor-pointer"
                       >
                         <Eye className="w-3.5 h-3.5" />
                         Full Details
@@ -599,15 +599,15 @@ export default function CompletedOrdersPage() {
             {/* Modal Header */}
             <div className="p-6 border-b border-[var(--border-color)] bg-[var(--bg-card)]/40 flex justify-between items-center shrink-0">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-                  <PackageCheck className="w-5 h-5 text-emerald-400" />
+                <div className="p-2.5 bg-transparent border border-[#4A943E]/30 rounded-xl">
+                  <PackageCheck className="w-5 h-5 text-[#4A943E]" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">
                       Order Details: {selectedOrder.orderCode}
                     </h3>
-                    <span className="px-2.5 py-0.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-[10px] font-bold uppercase rounded-full">
+                    <span className="px-2.5 py-0.5 bg-transparent border border-[#4A943E] text-[#4A943E] font-mono text-[10px] font-bold uppercase rounded-full">
                       Completed & Commissioned
                     </span>
                   </div>
@@ -631,7 +631,7 @@ export default function CompletedOrdersPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
                 {/* Customer Info */}
                 <div className="bg-[var(--bg-main)] p-4 rounded-xl border border-[var(--border-color)] space-y-2">
-                  <h4 className="font-bold text-emerald-400 uppercase font-mono text-[10px]">Customer & Site Info</h4>
+                  <h4 className="font-bold text-[#4A943E] uppercase font-mono text-[10px]">Customer & Site Info</h4>
                   <div className="text-[var(--text-primary)] font-semibold text-sm">{selectedOrder.lead.customerName}</div>
                   <div className="text-[var(--text-secondary)]">Phone: {selectedOrder.lead.mobile}</div>
                   <div className="text-[var(--text-secondary)] leading-relaxed">
@@ -643,7 +643,7 @@ export default function CompletedOrdersPage() {
 
                 {/* System Info */}
                 <div className="bg-[var(--bg-main)] p-4 rounded-xl border border-[var(--border-color)] space-y-2">
-                  <h4 className="font-bold text-emerald-400 uppercase font-mono text-[10px]">Solar System Specification</h4>
+                  <h4 className="font-bold text-[#4A943E] uppercase font-mono text-[10px]">Solar System Specification</h4>
                   <div className="text-[var(--text-primary)] font-semibold text-sm">{selectedOrder.systemSizeKw} kW Solar Plant</div>
                   <div className="text-[var(--text-secondary)]">Type: {selectedOrder.clientType.replace('_', ' ').toUpperCase()}</div>
                   <div className="text-[var(--text-secondary)]">Connection #: {selectedOrder.connectionNumber}</div>
@@ -652,7 +652,7 @@ export default function CompletedOrdersPage() {
 
                 {/* Stakeholders */}
                 <div className="bg-[var(--bg-main)] p-4 rounded-xl border border-[var(--border-color)] space-y-2">
-                  <h4 className="font-bold text-emerald-400 uppercase font-mono text-[10px]">Department Handlers</h4>
+                  <h4 className="font-bold text-[#4A943E] uppercase font-mono text-[10px]">Department Handlers</h4>
                   <div className="text-[var(--text-primary)]"><span className="text-[var(--text-muted)]">Sales Member:</span> {selectedOrder.submittedBy?.name || '-'}</div>
                   <div className="text-[var(--text-primary)]"><span className="text-[var(--text-muted)]">Finance Member:</span> {selectedOrder.assignedFinance?.name || selectedOrder.financeProcessedBy?.name || '-'}</div>
                   <div className="text-[var(--text-primary)]"><span className="text-[var(--text-muted)]">Operations Member:</span> {selectedOrder.assignedOps?.name || '-'}</div>
@@ -663,12 +663,12 @@ export default function CompletedOrdersPage() {
               <div className="bg-[var(--bg-main)] p-5 rounded-xl border border-[var(--border-color)] space-y-4">
                 <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
                   <h4 className="font-bold text-[var(--text-primary)] text-sm flex items-center gap-2">
-                    <CreditCard className="w-4 h-4 text-emerald-400" />
+                    <CreditCard className="w-4 h-4 text-[#4A943E]" />
                     Financial Ledger & Payment History
                   </h4>
                   <div className="text-xs font-mono">
                     <span className="text-[var(--text-secondary)]">Total Value: </span>
-                    <span className="text-emerald-400 font-bold">₹{selectedOrder.totalValue.toLocaleString()}</span>
+                    <span className="text-[#4A943E] font-bold">₹{selectedOrder.totalValue.toLocaleString()}</span>
                   </div>
                 </div>
 
@@ -702,23 +702,23 @@ export default function CompletedOrdersPage() {
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center text-xs">
                   <div className="p-3 bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)]">
                     <span className="text-[10px] text-[var(--text-secondary)] block font-mono">1. Delivery</span>
-                    <span className="font-bold text-emerald-400 block mt-1">Delivered</span>
+                    <span className="font-bold text-[#4A943E] block mt-1">Delivered</span>
                   </div>
                   <div className="p-3 bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)]">
                     <span className="text-[10px] text-[var(--text-secondary)] block font-mono">2. Installation</span>
-                    <span className="font-bold text-emerald-400 block mt-1">Installed</span>
+                    <span className="font-bold text-[#4A943E] block mt-1">Installed</span>
                   </div>
                   <div className="p-3 bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)]">
                     <span className="text-[10px] text-[var(--text-secondary)] block font-mono">3. Metering</span>
-                    <span className="font-bold text-emerald-400 block mt-1">Metered</span>
+                    <span className="font-bold text-[#4A943E] block mt-1">Metered</span>
                   </div>
                   <div className="p-3 bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)]">
                     <span className="text-[10px] text-[var(--text-secondary)] block font-mono">4. Commissioning</span>
-                    <span className="font-bold text-emerald-400 block mt-1">Commissioned</span>
+                    <span className="font-bold text-[#4A943E] block mt-1">Commissioned</span>
                   </div>
                   <div className="p-3 bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)]">
                     <span className="text-[10px] text-[var(--text-secondary)] block font-mono">5. Subsidy</span>
-                    <span className="font-bold text-emerald-400 block mt-1">{selectedOrder.isSubsidyApplied ? 'Applied' : 'Complete'}</span>
+                    <span className="font-bold text-[#4A943E] block mt-1">{selectedOrder.isSubsidyApplied ? 'Applied' : 'Complete'}</span>
                   </div>
                 </div>
               </div>

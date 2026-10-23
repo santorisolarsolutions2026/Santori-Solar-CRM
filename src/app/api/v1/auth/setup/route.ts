@@ -12,11 +12,20 @@ export async function GET() {
       isSetupRequired: userCount === 0,
     });
   } catch (error: any) {
-    console.error('Check setup error:', error);
-    return NextResponse.json(
-      { success: false, message: 'Internal server error', errors: { details: error.message } },
-      { status: 500 }
-    );
+    console.warn('Initial setup check attempt encountered delay, retrying query...', error.message);
+    try {
+      const userCount = await prisma.user.count();
+      return NextResponse.json({
+        success: true,
+        isSetupRequired: userCount === 0,
+      });
+    } catch (retryError: any) {
+      console.error('Check setup error:', retryError);
+      return NextResponse.json(
+        { success: false, message: 'Internal server error', errors: { details: retryError.message } },
+        { status: 500 }
+      );
+    }
   }
 }
 

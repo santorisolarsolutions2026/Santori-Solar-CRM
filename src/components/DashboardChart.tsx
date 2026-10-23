@@ -5,6 +5,7 @@ import {
   ComposedChart,
   Bar,
   Line,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -58,22 +59,22 @@ const CustomTooltip = ({ active, payload, label, type }: any) => {
       </p>
       <div className="space-y-1.5 text-xs">
         <div className="flex items-center justify-between gap-3">
-          <span className="flex items-center gap-1.5 text-blue-400 font-medium">
-            <span className="w-2 h-2 rounded-full bg-blue-500" />
+          <span className="flex items-center gap-1.5 text-pink-400 font-medium">
+            <span className="w-2 h-2 rounded-full bg-pink-400" />
             {leftLabel}:
           </span>
           <span className="font-extrabold text-white font-mono">{leftVal}</span>
         </div>
         <div className="flex items-center justify-between gap-3">
-          <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+          <span className="flex items-center gap-1.5 text-purple-400 font-medium">
+            <span className="w-2 h-2 rounded-full bg-purple-500" />
             {rightLabel}:
           </span>
           <span className="font-extrabold text-white font-mono">{rightVal}</span>
         </div>
         <div className="flex items-center justify-between gap-3 pt-1 border-t border-[var(--border-color)]/60 text-[11px]">
           <span className="text-[var(--text-secondary)] font-semibold">{rateLabel}:</span>
-          <span className="font-extrabold text-emerald-400 font-mono bg-emerald-500/10 px-1.5 py-0.5 rounded">
+          <span className="font-extrabold text-purple-400 font-mono bg-purple-500/10 px-1.5 py-0.5 rounded">
             {rate}%
           </span>
         </div>
@@ -102,6 +103,15 @@ export default function DashboardChart({ trend, type = 'sales' }: DashboardChart
   return (
     <ResponsiveContainer width="100%" height="100%">
       <ComposedChart data={trend} margin={{ top: 12, right: 10, left: -15, bottom: 0 }}>
+        {/* Soft Glowing Purple Gradient for Area Spline Wave */}
+        <defs>
+          <linearGradient id="salesTrendGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.32} />
+            <stop offset="65%" stopColor="#8B5CF6" stopOpacity={0.06} />
+            <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0.0} />
+          </linearGradient>
+        </defs>
+
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} opacity={0.4} />
         
         {/* X Axis */}
@@ -113,21 +123,21 @@ export default function DashboardChart({ trend, type = 'sales' }: DashboardChart
           axisLine={{ stroke: 'var(--border-color)' }}
         />
 
-        {/* Left Y Axis (Volume: Leads / Orders) */}
+        {/* Left Y Axis (Volume: Leads / Orders in Soft Pink) */}
         <YAxis
           yAxisId="left"
-          stroke="#60A5FA"
+          stroke="#F472B6"
           fontSize={10}
           tickLine={false}
           axisLine={false}
           allowDecimals={false}
         />
 
-        {/* Right Y Axis (Closures / Milestones) */}
+        {/* Right Y Axis (Closures / Milestones in Purple) */}
         <YAxis
           yAxisId="right"
           orientation="right"
-          stroke="#34D399"
+          stroke="#A78BFA"
           fontSize={10}
           tickLine={false}
           axisLine={false}
@@ -136,27 +146,33 @@ export default function DashboardChart({ trend, type = 'sales' }: DashboardChart
 
         <Tooltip content={<CustomTooltip type={type} />} cursor={{ fill: 'var(--bg-main)', opacity: 0.4 }} />
 
-        {/* Bar for Leads / Orders Volume */}
+        {/* Bar for Leads / Orders Volume in Light Pink */}
         <Bar
           yAxisId="left"
           dataKey={leftKey}
           name={leftName}
-          fill="#3B82F6"
-          opacity={0.65}
+          fill="#F472B6"
+          opacity={0.80}
           radius={[4, 4, 0, 0]}
           maxBarSize={24}
         />
 
-        {/* Vibrant Line for Closed Sales / Verified / Commissioned */}
-        <Line
+        {/* Smooth Area Wave with Purple Gradient Fill */}
+        <Area
           yAxisId="right"
           type="monotone"
           name={rightName}
           dataKey={rightKey}
-          stroke="#10B981"
-          strokeWidth={3}
-          dot={{ fill: '#10B981', r: 3.5, stroke: '#064e3b', strokeWidth: 1.5 }}
-          activeDot={{ r: 6, fill: '#34d399', stroke: '#ffffff', strokeWidth: 2 }}
+          stroke="#8B5CF6"
+          strokeWidth={2.5}
+          fill="url(#salesTrendGradient)"
+          dot={false}
+          activeDot={{
+            r: 5,
+            fill: '#8B5CF6',
+            stroke: '#ffffff',
+            strokeWidth: 2,
+          }}
         />
       </ComposedChart>
     </ResponsiveContainer>
