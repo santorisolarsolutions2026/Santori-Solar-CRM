@@ -207,6 +207,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       if (typeof window !== 'undefined') {
         document.cookie = 'token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+        try {
+          localStorage.removeItem('solar-crm-theme');
+          document.documentElement.classList.remove('light');
+          document.documentElement.classList.add('dark');
+        } catch {}
         window.location.href = '/login?logout=1';
       }
     }

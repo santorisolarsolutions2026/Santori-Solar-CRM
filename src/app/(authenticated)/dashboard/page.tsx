@@ -1057,7 +1057,7 @@ export default function DashboardPage() {
                           <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-4 space-y-2 hover:border-[var(--border-color)] transition-all">
                             <div className="flex justify-between items-start gap-3">
                               <div className="flex items-center gap-2">
-                                <span className="text-sm font-bold text-white">Territory Assignment</span>
+                                <span className="text-sm font-bold text-slate-900 dark:text-white">Territory Assignment</span>
                                 <span className="text-[10px] px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded font-mono font-bold uppercase">
                                   Map Assign
                                 </span>
@@ -1105,13 +1105,13 @@ export default function DashboardPage() {
                                 <Link
                                   href={`/leads/${log.lead.id}`}
                                   onClick={() => setActivityModalOpen(false)}
-                                  className="text-sm font-bold text-white hover:text-[#4F7D32] hover:underline flex items-center gap-2"
+                                  className="text-sm font-bold text-slate-900 dark:text-white hover:text-[#4F7D32] hover:underline flex items-center gap-2"
                                 >
                                   <span>{log.lead.customerName}</span>
                                   <span className="text-xs text-[var(--text-secondary)] font-mono font-semibold">({log.lead.leadCode})</span>
                                 </Link>
                               ) : (
-                                <span className="text-sm font-bold text-white">System Activity</span>
+                                <span className="text-sm font-bold text-slate-900 dark:text-white">System Activity</span>
                               )}
                             </div>
                             <span className="text-xs text-[var(--text-secondary)] font-mono">

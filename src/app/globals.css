@@ -279,11 +279,30 @@ body {
   color: var(--text-primary) !important;
 }
 
+/* Protect white text inside dark cards, gradient banners, and dark surfaces */
+.light [class*="bg-[#0B1528]"] .text-white,
+.light [class*="bg-[#0B1528]"] [class*="text-white"],
+.light [style*="gradient"] .text-white,
+.light [style*="gradient"] [class*="text-white"],
+.light [class*="bg-slate-900"] .text-white {
+  color: #FFFFFF !important;
+}
+
 /* Slate text hierarchy */
 .light .text-slate-100,
 .light .text-slate-200,
 .light .text-slate-300 {
   color: var(--text-primary) !important;
+}
+
+/* Protect slate text inside dark cards */
+.light [class*="bg-[#0B1528]"] .text-slate-100,
+.light [class*="bg-[#0B1528]"] .text-slate-200 {
+  color: #E2E8F0 !important;
+}
+
+.light [class*="bg-[#0B1528]"] .text-slate-300 {
+  color: #CBD5E1 !important;
 }
 
 .light .text-slate-400 {

@@ -54,7 +54,7 @@ export default function FadeIn({
   return (
     <div
       ref={domRef}
-      className={`transition-all duration-700 ease-out will-change-[transform,opacity] ${translateClass} ${className}`}
+      className={`transition-all duration-700 ease-out ${translateClass} ${className}`}
       style={{
         transitionDelay: delay ? `${delay}ms` : undefined,
       }}
