@@ -88,18 +88,20 @@ export async function GET(req: Request) {
       let halfDays = 0;
       let absentDays = 0;
       let holidayDays = 0;
+      let sandwichDays = 0;
+      let lateDays = 0;
 
       for (let day = 1; day <= daysInMonth; day++) {
         const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const dateObj = new Date(year, month - 1, day);
-        const dayOfWeek = dateObj.getDay(); // 0 = Sunday
+        const dayOfWeek = dateObj.getDay(); // 1 = Monday (Santori Weekly Off)
 
-        const isSunday = dayOfWeek === 0;
+        const isMonday = dayOfWeek === 1;
         const isHoliday = holidayDatesSet.has(dateStr);
         const rec = attendanceMap.get(`${emp.id}_${dateStr}`);
 
-        if (isSunday) {
-          dayStatuses[day] = 'SUN';
+        if (isMonday) {
+          dayStatuses[day] = 'MON';
           holidayDays++;
         } else if (isHoliday) {
           dayStatuses[day] = 'H';
@@ -107,8 +109,13 @@ export async function GET(req: Request) {
         } else {
           totalWorkingDays++;
           if (rec) {
+            const isLateMark = rec.status === 'late' || (rec.notes && rec.notes.includes('between 10:06 AM - 10:15 AM'));
+            if (isLateMark) {
+              lateDays++;
+            }
+
             if (rec.status === 'present' || rec.status === 'completed') {
-              dayStatuses[day] = 'P';
+              dayStatuses[day] = isLateMark ? 'P(L)' : 'P';
               presentDays++;
             } else if (rec.status === 'half_day') {
               dayStatuses[day] = 'HD';
@@ -117,7 +124,7 @@ export async function GET(req: Request) {
               dayStatuses[day] = 'L';
               absentDays++;
             } else if (rec.status === 'late' || rec.status === 'checked_in') {
-              dayStatuses[day] = 'P';
+              dayStatuses[day] = isLateMark ? 'P(L)' : 'P';
               presentDays++;
             } else {
               dayStatuses[day] = 'A';
@@ -135,7 +142,41 @@ export async function GET(req: Request) {
         }
       }
 
-      const totalEffectivePresent = presentDays + halfDays * 0.5;
+      // Apply HR Sandwich Policy:
+      // If a Monday or Holiday block has Absent/Leave on the preceding working day AND succeeding working day,
+      // the enclosed holiday/Monday days convert into Sandwich Absent (penalty).
+      let d = 1;
+      while (d <= daysInMonth) {
+        if (dayStatuses[d] === 'MON' || dayStatuses[d] === 'H') {
+          const spanStart = d;
+          while (d <= daysInMonth && (dayStatuses[d] === 'MON' || dayStatuses[d] === 'H')) {
+            d++;
+          }
+          const spanEnd = d - 1;
+
+          // Check working day before and after the holiday span
+          const prevStatus = spanStart > 1 ? dayStatuses[spanStart - 1] : null;
+          const nextStatus = spanEnd < daysInMonth ? dayStatuses[spanEnd + 1] : null;
+
+          const isPrevAbsent = prevStatus === 'A' || prevStatus === 'L' || prevStatus === 'A(S)';
+          const isNextAbsent = nextStatus === 'A' || nextStatus === 'L';
+
+          if (isPrevAbsent && isNextAbsent) {
+            for (let s = spanStart; s <= spanEnd; s++) {
+              dayStatuses[s] = 'A(S)';
+              absentDays++;
+              holidayDays--;
+              sandwichDays++;
+            }
+          }
+        } else {
+          d++;
+        }
+      }
+
+      // Apply 3 Late Marks = 1 Half Day (-0.5) deduction
+      const lateDeduction = Math.floor(lateDays / 3) * 0.5;
+      const totalEffectivePresent = Math.max(0, parseFloat((presentDays + halfDays * 0.5 - lateDeduction).toFixed(2)));
 
       return {
         userId: emp.id,
@@ -148,48 +189,57 @@ export async function GET(req: Request) {
         totalWorkingDays,
         presentDays,
         halfDays,
+        lateDays,
+        lateDeduction,
         absentDays,
         holidayDays,
+        sandwichDays,
         totalEffectivePresent,
       };
     });
 
     if (format === 'csv') {
-      // Build CSV output formatted like an Attendance Register Matrix
       const monthName = new Date(year, month - 1, 1).toLocaleString('en-US', { month: 'long' });
       let csv = `Santori Solar Solutions - Monthly Attendance Register (${monthName} ${year})\n\n`;
 
-      // Header row
-      const headers = ['Employee ID', 'Full Name', 'Designation', 'Working Location'];
-      for (let day = 1; day <= daysInMonth; day++) {
-        headers.push(`Day ${day}`);
-      }
-      headers.push('Total Working Days', 'Present Days', 'Half Days', 'Absent / Leaves', 'Effective Present');
+      // --- SECTION 1: VERTICAL ATTENDANCE COUNTING (EMPLOYEE-WISE) ---
+      csv += `"=== SECTION 1: EMPLOYEE-WISE ATTENDANCE COUNTING (SUMMARY) ==="\n`;
+      const summaryHeader = ['Metric / Field', ...registerRows.map((r) => `${r.name} (${r.employeeId})`)];
+      csv += summaryHeader.map((h) => `"${h.replace(/"/g, '""')}"`).join(',') + '\n';
 
-      csv += headers.map((h) => `"${h.replace(/"/g, '""')}"`).join(',') + '\n';
+      const empIdRow = ['Employee ID', ...registerRows.map((r) => r.employeeId)];
+      const desigRow = ['Designation', ...registerRows.map((r) => r.designation)];
+      const locRow = ['Working Location', ...registerRows.map((r) => r.workingLocation)];
+      const totalWorkRow = ['Total Working Days', ...registerRows.map((r) => String(r.totalWorkingDays))];
+      const presentRow = ['Present Days (Full Days)', ...registerRows.map((r) => String(r.presentDays))];
+      const halfDaysRow = ['Half Days', ...registerRows.map((r) => String(r.halfDays))];
+      const lateMarksRow = ['Late Marks (10:06-10:15)', ...registerRows.map((r) => String(r.lateDays || 0))];
+      const lateDeductRow = ['Late Penalty Deduction', ...registerRows.map((r) => `-${r.lateDeduction || 0} days`)];
+      const absentRow = ['Absent / Leaves', ...registerRows.map((r) => String(r.absentDays))];
+      const sandwichRow = ['Sandwich Leaves (Monday Penalty)', ...registerRows.map((r) => String(r.sandwichDays || 0))];
+      const effectiveRow = ['FINAL EFFECTIVE ATTENDANCE', ...registerRows.map((r) => String(r.totalEffectivePresent))];
 
-      registerRows.forEach((row) => {
-        const line = [
-          row.employeeId,
-          row.name,
-          row.designation,
-          row.workingLocation,
-        ];
-
-        for (let day = 1; day <= daysInMonth; day++) {
-          line.push(row.dayStatuses[day] || '-');
-        }
-
-        line.push(
-          String(row.totalWorkingDays),
-          String(row.presentDays),
-          String(row.halfDays),
-          String(row.absentDays),
-          String(row.totalEffectivePresent)
-        );
-
-        csv += line.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',') + '\n';
+      [empIdRow, desigRow, locRow, totalWorkRow, presentRow, halfDaysRow, lateMarksRow, lateDeductRow, absentRow, sandwichRow, effectiveRow].forEach((rowArr) => {
+        csv += rowArr.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',') + '\n';
       });
+
+      // --- SECTION 2: VERTICAL DAILY ATTENDANCE (DAY 1 TO DAY N) ---
+      csv += `\n"=== SECTION 2: DAILY ATTENDANCE REGISTER (DAY 1 TO DAY ${daysInMonth}) ==="\n`;
+      const dailyHeaders = ['Date', 'Day of Week', ...registerRows.map((r) => `${r.name} (${r.employeeId})`)];
+      csv += dailyHeaders.map((h) => `"${h.replace(/"/g, '""')}"`).join(',') + '\n';
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateObj = new Date(year, month - 1, day);
+        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const weekdayStr = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+        const dayRow = [`Day ${day} (${dateStr})`, weekdayStr];
+
+        registerRows.forEach((r) => {
+          dayRow.push(r.dayStatuses[day] || '-');
+        });
+
+        csv += dayRow.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',') + '\n';
+      }
 
       return new Response(csv, {
         headers: {

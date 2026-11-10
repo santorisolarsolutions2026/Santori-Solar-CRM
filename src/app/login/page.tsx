@@ -136,12 +136,21 @@ export default function LoginPage() {
   const preloadedLocationRef = React.useRef<string>('');
 
   React.useEffect(() => {
-    // Silently pre-fetch location in background while user fills the login form
-    getBrowserLocation(3000).then((loc) => {
+    // Check cached location from device storage first for instant 0ms availability
+    try {
+      const cached = sessionStorage.getItem('last_user_location') || localStorage.getItem('last_user_location');
+      if (cached && !cached.includes('Web Browser Login') && !cached.includes('Admin Setup')) {
+        preloadedLocationRef.current = cached;
+      }
+    } catch {}
+
+    // Silently pre-fetch fresh GPS location in background while user fills the login form
+    getBrowserLocation(3500).then((loc) => {
       if (loc && !loc.startsWith('error_') && loc !== 'HTML5 Geolocation not supported') {
         preloadedLocationRef.current = loc;
         try {
           sessionStorage.setItem('last_user_location', loc);
+          localStorage.setItem('last_user_location', loc);
         } catch {}
       }
     }).catch(() => {});
@@ -254,20 +263,21 @@ export default function LoginPage() {
     setSubmitting(true);
     setError('');
 
-    let locationStr = preloadedLocationRef.current || 'Web Browser Login';
+    let locationStr = preloadedLocationRef.current || '';
     
-    // If not preloaded yet (e.g. quick password autofill), do a fast race (max 800ms)
-    if (!preloadedLocationRef.current) {
+    // If not preloaded yet (e.g. instant autofill), do a quick 400ms check or proceed immediately to Cloudflare
+    if (!locationStr) {
       try {
         const quickLoc = await Promise.race([
-          getBrowserLocation(800),
-          new Promise<string>((resolve) => setTimeout(() => resolve(''), 800))
+          getBrowserLocation(400),
+          new Promise<string>((resolve) => setTimeout(() => resolve(''), 400))
         ]);
         if (quickLoc && !quickLoc.startsWith('error_') && quickLoc !== 'HTML5 Geolocation not supported') {
           locationStr = quickLoc;
           preloadedLocationRef.current = quickLoc;
           try {
             sessionStorage.setItem('last_user_location', quickLoc);
+            localStorage.setItem('last_user_location', quickLoc);
           } catch {}
         }
       } catch {}
@@ -349,7 +359,20 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="light login-page-container min-h-screen flex flex-col lg:flex-row selection:bg-emerald-600 selection:text-white bg-[#FBFDFD]">
+    <div className="light login-page-container min-h-screen relative flex items-center justify-center selection:bg-emerald-600 selection:text-white bg-[#0D1117] overflow-x-hidden p-4 sm:p-6 lg:p-8">
+      {/* Full Page Background Image - Clean & sharp as uploaded */}
+      <div className="fixed inset-0 z-0">
+        <Image
+          src="/solar_login_bg.jpg"
+          alt="Santori Solar Panels Sunset Background"
+          fill
+          priority
+          className="object-cover object-center"
+          sizes="100vw"
+        />
+        {/* Subtle dark tint only for text contrast, no blur */}
+        <div className="absolute inset-0 bg-black/25 pointer-events-none" />
+      </div>
       <style>{`
         .login-page-container input:not([type="checkbox"]):not([type="submit"]):not([type="button"]),
         .login-page-container .login-input,
@@ -393,33 +416,36 @@ export default function LoginPage() {
           opacity: 1 !important;
         }
       `}</style>
-      {/* Left 60% Container: centers the form card within the left 60% of the viewport */}
-      <div className="w-full lg:w-[60%] min-h-screen flex items-center justify-center p-6 pt-20 sm:p-10 sm:pt-24 lg:p-12 relative">
-        {/* Top Left Logo & Brand Name */}
-        <div className="absolute top-6 left-6 sm:top-8 sm:left-10 lg:top-10 lg:left-12 flex items-center gap-3 z-20">
-          <Link
-            href="/"
-            title="Back to Landing Page"
-            className="text-slate-700 hover:text-black transition-colors cursor-pointer flex items-center justify-center"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-xl overflow-hidden flex items-center justify-center bg-white border border-slate-200/90 shadow-xs p-1">
-            <Image
-              src="/logo.png"
-              alt="Santori Solar CRM Logo"
-              width={36}
-              height={36}
-              className="w-full h-full object-contain"
-              priority
-            />
-          </div>
-          <span className="text-base sm:text-lg font-bold tracking-tight text-black select-none">
-            Santori Solar CRM
-          </span>
+      {/* Top Left Logo & Brand Name */}
+      <div className="fixed top-5 left-5 sm:top-7 sm:left-8 flex items-center gap-3 z-30">
+        <Link
+          href="/"
+          title="Back to Landing Page"
+          className="p-1.5 text-white hover:text-white/80 hover:scale-105 transition-all cursor-pointer flex items-center justify-center"
+        >
+          <ArrowLeft className="w-6 h-6 text-white stroke-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)]" />
+        </Link>
+        <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-xl overflow-hidden flex items-center justify-center bg-white/95 border border-white/30 shadow-md p-1">
+          <Image
+            src="/logo.png"
+            alt="Santori Solar CRM Logo"
+            width={36}
+            height={36}
+            className="w-full h-full object-contain"
+            priority
+          />
         </div>
+        <span
+          style={{ color: '#ffffff', textShadow: '0 2px 10px rgba(0,0,0,0.9)' }}
+          className="text-base sm:text-lg font-bold tracking-tight text-white text-white-force select-none"
+        >
+          Santori Solar Solutions
+        </span>
+      </div>
 
-        <div className="w-full max-w-[420px]">
+      {/* Centered Glassmorphic Form Card */}
+      <div className="relative z-10 w-full max-w-[440px] my-auto pt-16 sm:pt-12">
+        <div className="w-full bg-white/95 dark:bg-white/95 rounded-2xl p-6 sm:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/60 backdrop-blur-xl">
           <div className="mb-8 text-center">
             <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
               {isSetupRequired ? 'Initial Admin Setup' : 'Welcome Back!'}
@@ -603,7 +629,7 @@ export default function LoginPage() {
                   onClick={() => setError('Please contact the Admin to reset your password.')}
                   className="text-slate-800 hover:text-black font-medium text-sm transition-colors"
                 >
-                  Forget password?
+                  Forgot password?
                 </button>
               </div>
 
@@ -632,33 +658,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right 40% Container: Full height solar panel sunset image with centered quote */}
-      <div className="hidden lg:block lg:w-[40%] relative self-stretch min-h-screen overflow-hidden">
-        <Image
-          src="/solar_login_bg.jpg"
-          alt="Santori Solar Panels"
-          fill
-          priority
-          className="object-cover object-center"
-          sizes="40vw"
-        />
-        {/* Subtle dark gradient scrim for contrast & depth */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/15 to-black/25 pointer-events-none" />
 
-        {/* Big centered quote on scene */}
-        <div className="absolute inset-0 flex items-center justify-center p-6 lg:p-10 z-10 pointer-events-none select-none">
-          <div className="w-full max-w-[360px] xl:max-w-[420px] 2xl:max-w-[460px] drop-shadow-[0_8px_28px_rgba(0,0,0,0.65)]">
-            <Image
-              src="/login_quote.png"
-              alt="Innovate Today. Empower Tomorrow."
-              width={986}
-              height={656}
-              priority
-              className="w-full h-auto object-contain"
-            />
-          </div>
-        </div>
-      </div>
     <Script
         src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
         strategy="afterInteractive"

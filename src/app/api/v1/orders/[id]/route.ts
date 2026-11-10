@@ -184,9 +184,13 @@ export async function PATCH(
     } = body;
 
     // Check what is being updated
+    // Note: subsidyApplicable is a sales field during order draft, but can legitimately be enabled/updated during Operations subsidy stage
+    const isSubsidyUpdate = isSubsidyApplied !== undefined || actualSubsidyAppliedAt !== undefined;
+
     const isPunchingUpdate = [
       connectionNumber, systemSizeKw, totalValue, downPayment, paymentMethod,
-      transactionRef, remainingMethod, financeProvider, clientType, subsidyApplicable
+      transactionRef, remainingMethod, financeProvider, clientType,
+      (isSubsidyUpdate ? undefined : subsidyApplicable)
     ].some(v => v !== undefined);
 
     const isStatusUpdate = status !== undefined || opsStage !== undefined || deliveryDate !== undefined || deliveryTime !== undefined || isDelivered !== undefined || installationDate !== undefined || installationTime !== undefined || isInstalled !== undefined || actualDeliveryAt !== undefined || actualInstallationAt !== undefined || isMeterInstalled !== undefined || actualMeterInstalledAt !== undefined || isCommissioned !== undefined || actualCommissionedAt !== undefined || isSubsidyApplied !== undefined || actualSubsidyAppliedAt !== undefined;

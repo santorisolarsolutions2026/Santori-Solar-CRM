@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { queryObj, page = 1, limit = 25, sortBy = 'updatedAt', sortOrder = 'desc', ids_only = false, search = '' } = body;
+    const { queryObj, page = 1, limit = 25, sortBy = 'updatedAt', sortOrder = 'desc', ids_only = false, search = '', prospect_pool = false } = body;
 
     const skip = (page - 1) * limit;
 
@@ -52,10 +52,16 @@ export async function POST(req: Request) {
       });
     }
 
-    // Default to active leads only, unless query specifically targets isActive
+    // Default to active leads only, unless query specifically targets isActive or prospect_pool is active
     const queryStr = queryObj ? JSON.stringify(queryObj) : '';
-    if (!queryStr.includes('"field":"isActive"')) {
+    if (!queryStr.includes('"field":"isActive"') && !prospect_pool) {
       andConditions.push({ isActive: true });
+    }
+
+    if (prospect_pool) {
+      andConditions.push({
+        status: { in: [2, 3, 4, 5, 7, 10, 11, 14] },
+      });
     }
 
     // Role-based visibility enforcement

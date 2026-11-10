@@ -41,6 +41,7 @@ export async function GET(req: Request) {
     const sortBy = searchParams.get('sort_by') || 'updatedAt';
     const sortOrder = searchParams.get('sort_order') || 'desc';
     const unassignedParam = searchParams.get('unassigned') === 'true';
+    const prospectPoolParam = searchParams.get('prospect_pool') === 'true';
 
     const skip = (page - 1) * limit;
 
@@ -53,7 +54,7 @@ export async function GET(req: Request) {
       .map((s) => parseInt(s, 10))
       .filter((n) => !isNaN(n));
 
-    if (otherNumericStatuses.some(s => [4, 6, 12].includes(s))) {
+    if (otherNumericStatuses.some(s => [4, 6, 12].includes(s)) || prospectPoolParam) {
       hasInactiveStatusFilter = true;
     }
 
@@ -291,6 +292,12 @@ export async function GET(req: Request) {
       } else if (managerIds.length > 0) {
         andConditions.push({ assignedManagerId: { in: managerIds } });
       }
+    }
+
+    if (prospectPoolParam) {
+      andConditions.push({
+        status: { in: [2, 3, 4, 5, 7, 10, 11, 14] },
+      });
     }
 
     if (unassignedParam) {

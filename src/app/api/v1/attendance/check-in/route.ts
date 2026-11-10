@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/auth';
+import { resolveServerLocation } from '@/lib/location';
 
 function getAttendanceModel() {
   const model = (prisma as any).attendance;
@@ -41,14 +42,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const dbUser = await prisma.user.findUnique({
-      where: { id: userPayload.id },
-      select: { loginLocation: true },
-    });
-
-    const resolvedLocation = (location && !location.includes('Web Portal'))
-      ? location
-      : (dbUser?.loginLocation || location || 'Unknown Location');
+    // Resolve location for this specific check-in device (Device GPS or this request's Cloudflare edge)
+    const resolvedLocation = resolveServerLocation(req, location);
 
     // IST Timezone calculations
     const istFormatted = new Intl.DateTimeFormat('en-US', {
@@ -70,10 +65,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // 2. After 02:00 PM (840 mins) Cut-off
-    if (totalMinutesOfDay >= 840) {
+    // 2. After 12:00 PM (720 mins) Cut-off
+    if (totalMinutesOfDay >= 720) {
       return NextResponse.json(
-        { success: false, message: 'Check-in window closed at 02:00 PM. Please contact Admin for attendance regularization.' },
+        { success: false, message: 'Check-in window closed at 12:00 PM. Marked as Absent. Please contact Admin for attendance regularization.' },
         { status: 400 }
       );
     }
@@ -82,17 +77,17 @@ export async function POST(req: Request) {
     let initialStatus = 'checked_in';
     let autoNote: string | undefined = undefined;
 
-    if (totalMinutesOfDay <= 615) {
-      // 09:30 AM - 10:15 AM: On-Time
+    if (totalMinutesOfDay <= 605) {
+      // 09:30 AM - 10:05 AM: On-Time
       initialStatus = 'checked_in';
-    } else if (totalMinutesOfDay <= 645) {
-      // 10:16 AM - 10:45 AM: Late Mark
+    } else if (totalMinutesOfDay <= 615) {
+      // 10:06 AM - 10:15 AM: Late Mark
       initialStatus = 'late';
-      autoNote = 'Late check-in (between 10:16 AM - 10:45 AM). Late Mark recorded.';
+      autoNote = 'Late check-in (between 10:06 AM - 10:15 AM). Late Mark recorded.';
     } else {
-      // 10:46 AM - 02:00 PM: Half Day
+      // After 10:15 AM - 12:00 PM: Half Day
       initialStatus = 'half_day';
-      autoNote = 'Late check-in (after 10:45 AM). Automatically marked as Half Day.';
+      autoNote = 'Late check-in (after 10:15 AM). Automatically marked as Half Day.';
     }
 
     const attendance = await attendanceModel.create({

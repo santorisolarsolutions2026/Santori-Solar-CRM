@@ -280,6 +280,12 @@ export async function POST(req: Request) {
         andConditions.push({ division: { equals: filters.division, mode: 'insensitive' } });
       }
 
+      if (filters.prospect_pool) {
+        andConditions.push({
+          status: { in: [2, 3, 4, 5, 7, 10, 11, 14] },
+        });
+      }
+
       if (filters.unassigned) {
         andConditions.push({
           assignedConsultantId: null,

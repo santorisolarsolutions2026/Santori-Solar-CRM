@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/auth';
+import { resolveServerLocation } from '@/lib/location';
 
 function getAttendanceModel() {
   const model = (prisma as any).attendance;
@@ -67,7 +68,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Calculate checkIn IST minutes of the day to determine if check-in occurred in Half Day window (after 10:45 AM)
+    // Calculate checkIn IST minutes of the day to determine if check-in occurred in Half Day window (after 10:15 AM)
     const checkInIstFormatted = new Intl.DateTimeFormat('en-US', {
       timeZone: 'Asia/Kolkata',
       hour: 'numeric',
@@ -76,7 +77,7 @@ export async function POST(req: Request) {
     }).format(new Date(existing.checkIn));
     const [ciHoursStr, ciMinsStr] = checkInIstFormatted.split(':');
     const checkInMinutesOfDay = parseInt(ciHoursStr, 10) * 60 + parseInt(ciMinsStr, 10);
-    const isLateHalfDayArrival = checkInMinutesOfDay > 645 || existing.status === 'half_day';
+    const isLateHalfDayArrival = checkInMinutesOfDay > 615 || existing.status === 'half_day';
 
     // Effective work duration capped strictly between 10:00 AM and 07:30 PM IST
     const dateStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(now);
@@ -96,24 +97,24 @@ export async function POST(req: Request) {
     let autoNotes = '';
 
     if (isLateHalfDayArrival) {
-      // Arrived after 10:45 AM: Capped at Half Day regardless of hours worked
+      // Arrived after 10:15 AM: Capped at Half Day regardless of hours worked
       if (workDurationMin >= 270) {
         finalStatus = 'half_day';
-        autoNotes = 'Late check-in (after 10:45 AM). Maintained as Half Day.';
+        autoNotes = 'Late check-in (after 10:15 AM). Maintained as Half Day.';
       } else {
         finalStatus = 'absent';
         autoNotes = 'Worked less than 4h 30m. Marked as Absent.';
       }
     } else {
-      // Arrived on time (09:30-10:15) or with late mark (10:16-10:45)
-      if (workDurationMin >= 510) {
-        // 8 Hours 30 Mins or more
+      // Arrived on time (<= 10:05 AM) or with late mark (10:06 AM - 10:15 AM)
+      if (workDurationMin >= 540) {
+        // 9 Hours or more
         finalStatus = 'completed';
-        autoNotes = 'Completed full workday (≥ 8h 30m)';
+        autoNotes = 'Completed full workday (≥ 9h 00m)';
       } else if (workDurationMin >= 270) {
-        // 4 Hours 30 Mins to 8 Hours 29 Mins
+        // 4 Hours 30 Mins to 8 Hours 59 Mins
         finalStatus = 'half_day';
-        autoNotes = 'Worked between 4h 30m and 8h 29m. Marked as Half Day.';
+        autoNotes = 'Worked between 4h 30m and 8h 59m. Marked as Half Day.';
       } else {
         // Less than 4 Hours 30 Mins
         finalStatus = 'absent';
@@ -129,7 +130,7 @@ export async function POST(req: Request) {
       where: { id: existing.id },
       data: {
         checkOut: now,
-        checkOutLocation: location || 'Office / Web Portal',
+        checkOutLocation: resolveServerLocation(req, location),
         workDurationMin,
         status: finalStatus,
         notes: newNotes,

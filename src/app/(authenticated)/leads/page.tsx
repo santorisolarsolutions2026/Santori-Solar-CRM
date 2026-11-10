@@ -322,6 +322,7 @@ export default function LeadsPage() {
   const [dateFromFilter, setDateFromFilter] = useState('');
   const [dateToFilter, setDateToFilter] = useState('');
   const [unassignedFilter, setUnassignedFilter] = useState(false);
+  const [prospectPoolFilter, setProspectPoolFilter] = useState(false);
   const [localitiesFilter, setLocalitiesFilter] = useState('');
   const [isAdvancedFilterActive, setIsAdvancedFilterActive] = useState(false);
   const [advancedQueryObj, setAdvancedQueryObj] = useState<Group | null>(null);
@@ -446,6 +447,7 @@ export default function LeadsPage() {
           city: cityFilter,
           division: divisionFilter,
           unassigned: unassignedFilter,
+          prospect_pool: prospectPoolFilter,
           connectionType: connectionFilter,
           leadSource: sourceFilter,
           consultantId: consultantFilter,
@@ -872,6 +874,7 @@ export default function LeadsPage() {
     if (dateFromFilter) count++;
     if (dateToFilter) count++;
     if (unassignedFilter) count++;
+    if (prospectPoolFilter) count++;
     if (localitiesFilter) count++;
     return count;
   };
@@ -903,7 +906,8 @@ export default function LeadsPage() {
             queryObj: advancedQueryObj,
             search: debouncedSearch.trim(),
             page,
-            limit
+            limit,
+            prospect_pool: prospectPoolFilter
           }),
           signal: controller.signal
         });
@@ -937,6 +941,7 @@ export default function LeadsPage() {
           date_from: dateFromFilter,
           date_to: dateToFilter,
           unassigned: unassignedFilter ? 'true' : 'false',
+          prospect_pool: prospectPoolFilter ? 'true' : 'false',
         });
 
         if (localitiesFilter.trim()) {
@@ -1013,6 +1018,7 @@ export default function LeadsPage() {
       const savedDateFrom = localStorage.getItem(`leads_filter_${userId}_dateFrom`);
       const savedDateTo = localStorage.getItem(`leads_filter_${userId}_dateTo`);
       const savedUnassigned = localStorage.getItem(`leads_filter_${userId}_unassigned`);
+      const savedProspectPool = localStorage.getItem(`leads_filter_${userId}_prospectPool`);
       const savedPage = localStorage.getItem(`leads_filter_${userId}_page`);
       const savedAdvancedActive = localStorage.getItem(`leads_filter_${userId}_isAdvancedActive`);
       const savedAdvancedQuery = localStorage.getItem(`leads_filter_${userId}_advancedQueryObj`);
@@ -1039,6 +1045,7 @@ export default function LeadsPage() {
         if (savedDateFrom !== null) setDateFromFilter(savedDateFrom);
         if (savedDateTo !== null) setDateToFilter(savedDateTo);
         if (savedUnassigned !== null) setUnassignedFilter(savedUnassigned === 'true');
+        if (savedProspectPool !== null) setProspectPoolFilter(savedProspectPool === 'true');
         if (savedPage !== null) setPage(Number(savedPage));
         if (isAdvancedNav) {
           setIsAdvancedFilterActive(true);
@@ -1077,18 +1084,19 @@ export default function LeadsPage() {
       localStorage.setItem(`leads_filter_${userId}_dateFrom`, dateFromFilter);
       localStorage.setItem(`leads_filter_${userId}_dateTo`, dateToFilter);
       localStorage.setItem(`leads_filter_${userId}_unassigned`, unassignedFilter ? 'true' : 'false');
+      localStorage.setItem(`leads_filter_${userId}_prospectPool`, prospectPoolFilter ? 'true' : 'false');
       localStorage.setItem(`leads_filter_${userId}_page`, page.toString());
       localStorage.setItem(`leads_filter_${userId}_isAdvancedActive`, isAdvancedFilterActive ? 'true' : 'false');
       localStorage.setItem(`leads_filter_${userId}_advancedQueryObj`, advancedQueryObj ? JSON.stringify(advancedQueryObj) : '');
     }
-  }, [search, statusFilter, consultantFilter, tlFilter, managerFilter, connectionFilter, sourceFilter, cityFilter, localitiesFilter, divisionFilter, stateFilter, dateFromFilter, dateToFilter, unassignedFilter, page, filtersLoaded, user, isAdvancedFilterActive, advancedQueryObj]);
+  }, [search, statusFilter, consultantFilter, tlFilter, managerFilter, connectionFilter, sourceFilter, cityFilter, localitiesFilter, divisionFilter, stateFilter, dateFromFilter, dateToFilter, unassignedFilter, prospectPoolFilter, page, filtersLoaded, user, isAdvancedFilterActive, advancedQueryObj]);
 
   // Refetch leads when filters change
   useEffect(() => {
     if (user && filtersLoaded) {
       fetchLeads();
     }
-  }, [page, limit, statusFilter, consultantFilter, tlFilter, managerFilter, connectionFilter, sourceFilter, cityFilter, localitiesFilter, divisionFilter, stateFilter, dateFromFilter, dateToFilter, unassignedFilter, user, filtersLoaded, debouncedSearch, isAdvancedFilterActive, advancedQueryObj]);
+  }, [page, limit, statusFilter, consultantFilter, tlFilter, managerFilter, connectionFilter, sourceFilter, cityFilter, localitiesFilter, divisionFilter, stateFilter, dateFromFilter, dateToFilter, unassignedFilter, prospectPoolFilter, user, filtersLoaded, debouncedSearch, isAdvancedFilterActive, advancedQueryObj]);
 
   // Handle Search Input (with manual or debounce enter)
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -1116,6 +1124,7 @@ export default function LeadsPage() {
     setDateFromFilter('');
     setDateToFilter('');
     setUnassignedFilter(false);
+    setProspectPoolFilter(false);
     setIsAdvancedFilterActive(false);
     setAdvancedQueryObj(null);
     setPage(1);
@@ -1683,6 +1692,33 @@ export default function LeadsPage() {
               <span>Unassigned Only</span>
             </button>
 
+            {/* Quick Prospect Pool Toggle Button */}
+            <button
+              type="button"
+              onClick={() => {
+                const nextVal = !prospectPoolFilter;
+                setProspectPoolFilter(nextVal);
+                setPage(1);
+                if (nextVal) {
+                  setStatusFilter('');
+                }
+              }}
+              style={{
+                backgroundColor: prospectPoolFilter ? '#2563EB' : 'var(--bg-card)',
+                color: prospectPoolFilter ? '#FFFFFF' : 'var(--text-primary)',
+                borderColor: prospectPoolFilter ? '#1D4ED8' : 'var(--border-color)',
+              }}
+              className={`py-2.5 px-3.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all border shadow-md hover:brightness-95 ${
+                prospectPoolFilter
+                  ? 'ring-2 ring-blue-500 ring-offset-1 cursor-pointer'
+                  : 'cursor-pointer'
+              }`}
+              title="Prospect Pool: Worked / Contacted leads (Stage 2, 3, 4, 5, 7, 10, 11, 14) ready for assignment"
+            >
+              <Zap className={`w-4 h-4 ${prospectPoolFilter ? 'text-white' : 'text-blue-500'}`} />
+              <span>Prospect Pool</span>
+            </button>
+
             {/* Amazon / Flipkart Detailed Filter Trigger Button */}
             <button
               type="button"
@@ -1778,6 +1814,12 @@ export default function LeadsPage() {
                     setPage(1);
                   }} 
                 />
+              </span>
+            )}
+            {prospectPoolFilter && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 text-blue-900 dark:bg-blue-950/70 dark:text-blue-300 text-[11px] font-bold">
+                Prospect Pool Active
+                <X className="w-3 h-3 cursor-pointer opacity-70 hover:opacity-100 ml-0.5" onClick={() => setProspectPoolFilter(false)} />
               </span>
             )}
             {unassignedFilter && (
@@ -2548,7 +2590,10 @@ export default function LeadsPage() {
           <div className="w-full max-w-lg bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
             <div className="p-6 border-b border-[var(--border-color)] bg-[var(--bg-card)]/20 flex justify-between items-center">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                <div 
+                  style={{ backgroundColor: 'rgba(111, 175, 79, 0.1)', borderColor: 'rgba(111, 175, 79, 0.25)', color: '#6FAF4F' }}
+                  className="w-8 h-8 rounded-xl border flex items-center justify-center"
+                >
                   <UserCheck className="w-4 h-4" />
                 </div>
                 <div>
@@ -2596,7 +2641,7 @@ export default function LeadsPage() {
                       placeholder="-- Select Single Team Member --"
                     />
                     <p className="text-[10px] text-[var(--text-secondary)] mt-2.5 leading-relaxed bg-[var(--bg-card)]/60 border border-[var(--border-color)]/80 p-2.5 rounded-lg">
-                      <span className="font-bold text-emerald-400">Hierarchy Note:</span> Selecting a team member automatically links their supervisors up the reporting chain. The lead will be visible to the assignee and everyone above them.
+                      <span className="font-bold text-[#6FAF4F]">Hierarchy Note:</span> Selecting a team member automatically links their supervisors up the reporting chain. The lead will be visible to the assignee and everyone above them.
                     </p>
                   </div>
                 );
@@ -2613,7 +2658,8 @@ export default function LeadsPage() {
                 <button
                   type="submit"
                   disabled={bulkAssigning}
-                  className="py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  style={{ backgroundColor: '#6FAF4F', color: '#FFFFFF' }}
+                  className="py-2 px-5 hover:brightness-95 text-white rounded-xl font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
                   {bulkAssigning ? (
                     <>

@@ -134,6 +134,13 @@ interface Lead {
     additionalNotes: string | null;
     status: string;
     rejectionReason: string | null;
+    deliveryDate?: string | null;
+    isDelivered?: boolean;
+    installationDate?: string | null;
+    isInstalled?: boolean;
+    isMeterInstalled?: boolean;
+    isCommissioned?: boolean;
+    isSubsidyApplied?: boolean;
     documents: {
       id: number;
       docType: string;
@@ -145,7 +152,7 @@ interface Lead {
   } | null;
 }
 
-const STAGE_BADGES: Record<number, { name: string; class: string }> = {
+const STAGE_BADGES: Record<string | number, { name: string; class: string }> = {
   0: { name: 'Uninitiated', class: 'bg-slate-800/60 text-slate-350' },
   1: { name: 'Fresh Lead', class: 'bg-[#4F7D32]/10 text-[#4F7D32]' },
   2: { name: 'DNP (No Answer)', class: 'bg-blue-500/10 text-blue-450' },
@@ -160,7 +167,62 @@ const STAGE_BADGES: Record<number, { name: string; class: string }> = {
   11: { name: 'Switch Off', class: 'bg-slate-800/80 text-slate-400' },
   12: { name: 'Can\'t Fit Solar', class: 'bg-stone-900/80 text-stone-400' },
   13: { name: 'Sale Done', class: 'bg-[#4F7D32]/10 text-[#4F7D32] font-bold' },
+  14: { name: 'Meeting Cancelled', class: 'bg-red-500/10 text-red-400' },
+  'order_punched': { name: 'Order Punched', class: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/70 dark:text-emerald-300 font-extrabold' },
+  'awaiting_verification': { name: 'Awaiting Verification', class: 'bg-amber-100 text-amber-900 dark:bg-amber-950/70 dark:text-amber-300 font-extrabold' },
+  'finance_verified': { name: 'Finance Verified', class: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/70 dark:text-emerald-300 font-extrabold' },
+  'delivery_scheduled': { name: 'Delivery Scheduled', class: 'bg-blue-100 text-blue-900 dark:bg-blue-950/70 dark:text-blue-300 font-extrabold' },
+  'delivered': { name: 'Materials Delivered', class: 'bg-indigo-100 text-indigo-900 dark:bg-indigo-950/70 dark:text-indigo-300 font-extrabold' },
+  'installation_scheduled': { name: 'Installation Scheduled', class: 'bg-cyan-100 text-cyan-900 dark:bg-cyan-950/70 dark:text-cyan-300 font-extrabold' },
+  'installed': { name: 'Solar Installed', class: 'bg-teal-100 text-teal-900 dark:bg-teal-950/70 dark:text-teal-300 font-extrabold' },
+  'meter_installed': { name: 'Net Meter Installed', class: 'bg-yellow-100 text-yellow-900 dark:bg-yellow-950/70 dark:text-yellow-300 font-extrabold' },
+  'commissioned': { name: 'Plant Commissioned', class: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/70 dark:text-emerald-300 font-extrabold' },
+  'subsidy_applied': { name: 'Subsidy Applied', class: 'bg-purple-100 text-purple-900 dark:bg-purple-950/70 dark:text-purple-300 font-extrabold' },
+  'completed': { name: 'Order Completed', class: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/70 dark:text-emerald-300 font-extrabold' },
 };
+
+function getLeadEffectiveStage(lead: Lead): { key: string; name: string; class: string } {
+  if (lead.status === 13 && lead.order) {
+    if (lead.order.status === 'draft' && lead.order.rejectionReason) {
+      return { key: 'rejected', name: 'Order Rejected ⚠️', class: 'bg-rose-500/10 text-rose-450 font-extrabold' };
+    }
+    if (lead.order.status === 'completed' || lead.order.isSubsidyApplied) {
+      return { 
+        key: lead.order.isSubsidyApplied ? 'subsidy_applied' : 'completed', 
+        name: lead.order.isSubsidyApplied ? 'Subsidy Applied' : 'Order Completed', 
+        class: lead.order.isSubsidyApplied 
+          ? (STAGE_BADGES['subsidy_applied']?.class || 'bg-purple-100 text-purple-900 dark:bg-purple-950/70 dark:text-purple-300 font-extrabold')
+          : (STAGE_BADGES['completed']?.class || 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/70 dark:text-emerald-300 font-extrabold')
+      };
+    }
+    if (lead.order.isCommissioned) {
+      return { key: 'commissioned', name: 'Plant Commissioned', class: STAGE_BADGES['commissioned']?.class || 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/70 dark:text-emerald-300 font-extrabold' };
+    }
+    if (lead.order.isMeterInstalled) {
+      return { key: 'meter_installed', name: 'Net Meter Installed', class: STAGE_BADGES['meter_installed']?.class || 'bg-yellow-100 text-yellow-900 dark:bg-yellow-950/70 dark:text-yellow-300 font-extrabold' };
+    }
+    if (lead.order.isInstalled) {
+      return { key: 'installed', name: 'Solar Installed', class: STAGE_BADGES['installed']?.class || 'bg-teal-100 text-teal-900 dark:bg-teal-950/70 dark:text-teal-300 font-extrabold' };
+    }
+    if (lead.order.installationDate && !lead.order.isInstalled) {
+      return { key: 'installation_scheduled', name: 'Installation Scheduled', class: STAGE_BADGES['installation_scheduled']?.class || 'bg-cyan-100 text-cyan-900 dark:bg-cyan-950/70 dark:text-cyan-300 font-extrabold' };
+    }
+    if (lead.order.isDelivered) {
+      return { key: 'delivered', name: 'Materials Delivered', class: STAGE_BADGES['delivered']?.class || 'bg-indigo-100 text-indigo-900 dark:bg-indigo-950/70 dark:text-indigo-300 font-extrabold' };
+    }
+    if (lead.order.deliveryDate && !lead.order.isDelivered) {
+      return { key: 'delivery_scheduled', name: 'Delivery Scheduled', class: STAGE_BADGES['delivery_scheduled']?.class || 'bg-blue-100 text-blue-900 dark:bg-blue-950/70 dark:text-blue-300 font-extrabold' };
+    }
+    if (lead.order.status === 'finance_verified') {
+      return { key: 'finance_verified', name: 'Finance Verified', class: STAGE_BADGES['finance_verified']?.class || 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/70 dark:text-emerald-300 font-extrabold' };
+    }
+    if (lead.order.status === 'submitted') {
+      return { key: 'awaiting_verification', name: 'Awaiting Verification', class: STAGE_BADGES['awaiting_verification']?.class || 'bg-amber-100 text-amber-900 dark:bg-amber-950/70 dark:text-amber-300 font-extrabold' };
+    }
+    return { key: 'order_punched', name: 'Order Punched', class: STAGE_BADGES['order_punched']?.class || 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/70 dark:text-emerald-300 font-extrabold' };
+  }
+  return STAGE_BADGES[lead.status] ? { key: String(lead.status), ...STAGE_BADGES[lead.status] } : { key: String(lead.status), name: `Stage ${lead.status}`, class: 'bg-slate-500 font-extrabold' };
+}
 
 // Transition matrix for select dropdown option filters
 const ALLOWED_TRANSITIONS: Record<number, number[]> = {
@@ -2029,7 +2091,7 @@ export default function LeadDetailPage({
     );
   }
 
-  const stageBadge = STAGE_BADGES[lead.status] || { name: `Stage ${lead.status}`, class: 'bg-slate-500' };
+  const stageBadge = getLeadEffectiveStage(lead);
 
   // Helper variables to govern order form disable state
   const isOrderFormLocked = lead.order?.status !== 'draft';
@@ -2168,9 +2230,9 @@ export default function LeadDetailPage({
       if (!lead.order || lead.order.status === 'draft') return 1; // Sales (Order Punching in progress)
       if (lead.order.status === 'submitted') return 2; // Finance
       if (['finance_verified', 'ops_assigned'].includes(lead.order.status)) return 3; // Operations
-      if (lead.order.status === 'completed') return 4; // Completed / Handover
+      if (lead.order.status === 'completed') return 5; // Completed / Handover (All 5 steps complete)
     }
-    if (lead.status === 6 || lead.status === 12) return 4;
+    if (lead.status === 6 || lead.status === 12) return 5;
     return 0;
   })();
 
@@ -2257,19 +2319,9 @@ export default function LeadDetailPage({
             </div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold text-white tracking-wide">{lead.customerName}</h1>
-              {lead.status === 13 && lead.order?.status === 'draft' && lead.order?.rejectionReason ? (
-                <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-450">
-                  Order Rejected
-                </span>
-              ) : lead.status === 13 && lead.order && lead.order.status !== 'draft' ? (
-                <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-[#4F7D32]/10 text-[#4F7D32] font-bold">
-                  Order Punched
-                </span>
-              ) : (
-                <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg ${stageBadge.class}`}>
-                  {stageBadge.name}
-                </span>
-              )}
+              <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg ${stageBadge.class}`}>
+                {stageBadge.name}
+              </span>
               {lead.isUnreachable && lead.status !== 13 && lead.status !== 6 && (
                 <span className="text-[10px] bg-red-500/10 text-red-400 rounded-lg px-2.5 py-1 font-extrabold">
                   Unreachable

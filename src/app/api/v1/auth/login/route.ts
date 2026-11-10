@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import crypto from 'node:crypto';
 import { prisma } from '@/lib/db';
 import { signToken, resolveUserPermissions, parseUserAgent, markSessionKilled } from '@/lib/auth';
+import { resolveServerLocation } from '@/lib/location';
 
 export async function POST(req: Request) {
   try {
@@ -170,13 +171,15 @@ export async function POST(req: Request) {
       },
     });
 
-    // Update last seen presence & login tracking
+    // Update last seen presence & login tracking with smart hybrid location (GPS or Cloudflare)
+    const resolvedLoginLocation = resolveServerLocation(req, location);
+
     await prisma.user.update({
       where: { id: user.id },
       data: {
         lastSeenAt: new Date(),
         lastLoginAt: new Date(),
-        loginLocation: location || null,
+        loginLocation: resolvedLoginLocation,
       },
     });
 
@@ -209,7 +212,7 @@ export async function POST(req: Request) {
           userId: user.id,
           sessionToken,
           deviceInfo,
-          location: location || null,
+          location: resolvedLoginLocation,
           ipAddress,
         },
       });

@@ -439,7 +439,26 @@ export default function AttendancePage() {
   const avgWorkMin = completedDays.length > 0 ? Math.round(totalWorkMin / completedDays.length) : 0;
   const avgWorkHoursStr = `${Math.floor(avgWorkMin / 60)}h ${avgWorkMin % 60}m`;
 
-  const lateCheckinsCount = monthlyRecords.filter(r => r.status === 'late' || r.notes?.includes('Late check-in')).length;
+  const lateMarksCount = monthlyRecords.filter(r => r.status === 'late' || (r.notes && (r.notes.includes('between 10:06 AM - 10:15 AM') || r.notes.includes('Late check-in')))).length;
+  const lateCheckinsCount = lateMarksCount;
+
+  const halfDaysCount = monthlyRecords.filter(r => r.status === 'half_day' || (r.notes && (r.notes.includes('Half Day') || r.notes.includes('Auto-closed')))).length;
+  const fullDaysCount = monthlyRecords.filter(r => (r.status === 'completed' || r.status === 'present') && (!r.notes || !r.notes.includes('Half Day'))).length;
+
+  const lateDeduction = Math.floor(lateMarksCount / 3) * 0.5;
+  const effectiveAttendance = Math.max(0, parseFloat((fullDaysCount + (halfDaysCount * 0.5) - lateDeduction).toFixed(1)));
+
+  const todayDateStr = new Date().toISOString().split('T')[0];
+  const pastWorkingDays = monthlyDays.filter(dayDate => {
+    const dayStr = dayDate.toISOString().split('T')[0];
+    const isMon = dayDate.getUTCDay() === 1;
+    const isHol = holidays.some(h => h.date.split('T')[0] === dayStr);
+    return !isMon && !isHol && dayStr <= todayDateStr;
+  });
+  const recordsMap = new Set(monthlyRecords.map(r => r.date.split('T')[0]));
+  const unrecordedPastDays = pastWorkingDays.filter(d => !recordsMap.has(d.toISOString().split('T')[0])).length;
+  const explicitAbsentDays = monthlyRecords.filter(r => r.status === 'absent').length;
+  const totalAbsentDays = unrecordedPastDays + explicitAbsentDays;
 
   const renderStatusBadge = (record: any, isFuture: boolean, isWeekend: boolean, dayStr: string) => {
     const isHoliday = holidays.some(h => h.date.split('T')[0] === dayStr);
@@ -447,10 +466,11 @@ export default function AttendancePage() {
 
     if (record) {
       if (record.notes?.includes('Auto-closed') || record.notes?.includes('Missed') || record.status === 'auto_checkout') {
+        const isWarning = record.notes?.includes('Warning');
         return (
           <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-md bg-orange-500/15 text-orange-700 dark:text-orange-400 border border-orange-500/30 whitespace-nowrap inline-flex items-center gap-1">
             <AlertCircle className="w-2.5 h-2.5 shrink-0" />
-            <span>Auto Checkout (Half Day)</span>
+            <span>{isWarning ? 'Auto Checkout (Warning)' : 'Auto Checkout (Half Day)'}</span>
           </span>
         );
       } else if (record.status === 'half_day') {
@@ -550,7 +570,7 @@ export default function AttendancePage() {
               <span className={`text-xs font-bold font-mono ${
                 !todayAttendance
                   ? 'text-[var(--text-secondary)]'
-                  : todayAttendance.notes?.includes('Auto-closed') || todayAttendance.notes?.includes('Missed 07:30 PM')
+                  : todayAttendance.notes?.includes('Auto-closed') || todayAttendance.notes?.includes('Missed')
                   ? 'text-amber-400'
                   : todayAttendance.status === 'half_day'
                   ? 'text-amber-400'
@@ -564,8 +584,8 @@ export default function AttendancePage() {
               }`}>
                 {!todayAttendance
                   ? 'Not Checked In'
-                  : todayAttendance.notes?.includes('Auto-closed') || todayAttendance.notes?.includes('Missed 07:30 PM')
-                  ? 'Auto Checkout (Half Day)'
+                  : todayAttendance.notes?.includes('Auto-closed') || todayAttendance.notes?.includes('Missed')
+                  ? (todayAttendance.notes?.includes('Warning') ? 'Auto Checkout (Warning)' : 'Auto Checkout (Half Day)')
                   : todayAttendance.status === 'half_day' && todayAttendance.checkOut
                   ? 'Half Day Completed'
                   : todayAttendance.status === 'half_day'
@@ -893,9 +913,9 @@ export default function AttendancePage() {
                           <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 flex items-center gap-1.5 w-fit" title="Not Checked In Yet">
                             <AlertCircle className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" /> Pending
                           </span>
-                        ) : (attendance.notes?.includes('Auto-closed') || attendance.notes?.includes('Missed 07:30 PM') || attendance.status === 'auto_checkout') ? (
+                        ) : (attendance.notes?.includes('Auto-closed') || attendance.notes?.includes('Missed') || attendance.status === 'auto_checkout') ? (
                           <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-orange-500/15 text-orange-700 dark:text-orange-400 border border-orange-500/30 flex items-center gap-1.5 w-fit" title={attendance.notes || "Auto Checkout"}>
-                            <AlertCircle className="w-3.5 h-3.5 text-orange-700 dark:text-orange-400" /> Auto Checkout (Half Day)
+                            <AlertCircle className="w-3.5 h-3.5 text-orange-700 dark:text-orange-400" /> {attendance.notes?.includes('Warning') && !attendance.notes?.includes('Half Day penalty') ? 'Auto Checkout (Warning)' : 'Auto Checkout (Half Day)'}
                           </span>
                         ) : attendance.status === 'half_day' ? (
                           <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-400 flex items-center gap-1.5 w-fit" title={attendance.notes || "Half Day"}>
@@ -922,12 +942,21 @@ export default function AttendancePage() {
                         )}
                       </td>
 
-                      <td className="py-3.5 px-4 text-[var(--text-primary)] text-xs truncate max-w-xs font-medium" title={member.loginLocation || attendance?.checkInLocation || '-'}>
-                        {(member.loginLocation && !member.loginLocation.includes('Web Portal'))
-                          ? member.loginLocation
-                          : (attendance?.checkInLocation && !attendance.checkInLocation.includes('Web Portal')
-                              ? attendance.checkInLocation
-                              : member.loginLocation || attendance?.checkInLocation || '-')}
+                      <td
+                        className="py-3.5 px-4 text-[var(--text-primary)] text-xs truncate max-w-xs font-medium"
+                        title={
+                          (attendance?.checkInLocation && !attendance.checkInLocation.includes('Web Portal') && !attendance.checkInLocation.includes('Web Browser Login'))
+                            ? attendance.checkInLocation
+                            : (member.loginLocation && !member.loginLocation.includes('Web Portal') && !member.loginLocation.includes('Web Browser Login'))
+                              ? member.loginLocation
+                              : '-'
+                        }
+                      >
+                        {(attendance?.checkInLocation && !attendance.checkInLocation.includes('Web Portal') && !attendance.checkInLocation.includes('Web Browser Login'))
+                          ? attendance.checkInLocation
+                          : (member.loginLocation && !member.loginLocation.includes('Web Portal') && !member.loginLocation.includes('Web Browser Login'))
+                            ? member.loginLocation
+                            : '-'}
                       </td>
                     </tr>
                   ))
@@ -980,47 +1009,90 @@ export default function AttendancePage() {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Monthly Stats Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-5 bg-[var(--bg-card)]/20 border-b border-[var(--border-color)]">
-              <div className="p-4 bg-[var(--bg-card)]/60 border border-[var(--border-color)] rounded-xl flex items-center justify-between">
+            {/* Monthly Stats Summary Cards - 6 Separate Clear Metric Blocks */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3.5 p-5 bg-[var(--bg-card)]/20 border-b border-[var(--border-color)]">
+              {/* 1. Effective Attendance */}
+              <div className="p-3.5 bg-[var(--bg-card)]/60 border border-[#4F7D32]/35 dark:border-[#4F7D32]/45 rounded-xl flex items-center justify-between shadow-xs">
                 <div>
-                  <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block">Days Present</span>
-                  <span className="text-lg font-extrabold text-[#4F7D32] mt-1 block font-mono">
-                    {presentDaysCount} <span className="text-xs text-[var(--text-muted)] font-sans font-normal">/ {totalWorkingDays} working days</span>
+                  <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block">Effective Attendance</span>
+                  <span className="text-lg font-extrabold text-[#4F7D32] mt-0.5 block font-mono">
+                    {effectiveAttendance} <span className="text-xs text-[var(--text-muted)] font-sans font-normal">/ {totalWorkingDays} days</span>
                   </span>
                 </div>
-                <div className="w-9 h-9 flex items-center justify-center text-[#4F7D32]">
+                <div className="flex items-center justify-center text-[#4F7D32] shrink-0">
+                  <CheckCircle2 className="w-5 h-5" />
+                </div>
+              </div>
+
+              {/* 2. Full Days */}
+              <div className="p-3.5 bg-[var(--bg-card)]/60 border border-[#4F7D32]/35 dark:border-[#4F7D32]/45 rounded-xl flex items-center justify-between shadow-xs">
+                <div>
+                  <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block">Full Days</span>
+                  <span className="text-lg font-extrabold text-emerald-400 mt-0.5 block font-mono">
+                    {fullDaysCount} <span className="text-xs text-[var(--text-muted)] font-sans font-normal">days</span>
+                  </span>
+                  <span className="text-[10px] text-[var(--text-muted)] block mt-0.5 font-medium">Completed (≥ 9h)</span>
+                </div>
+                <div className="flex items-center justify-center text-emerald-400 shrink-0">
                   <UserCheck className="w-5 h-5" />
                 </div>
               </div>
 
-              <div className="p-4 bg-[var(--bg-card)]/60 border border-[var(--border-color)] rounded-xl flex items-center justify-between">
+              {/* 3. Half Days */}
+              <div className="p-3.5 bg-[var(--bg-card)]/60 border border-[#4F7D32]/35 dark:border-[#4F7D32]/45 rounded-xl flex items-center justify-between shadow-xs">
                 <div>
-                  <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block">Total Work Hours</span>
-                  <span className="text-lg font-extrabold text-[#4F7D32] mt-1 block font-mono">{totalWorkHoursStr}</span>
+                  <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block">Half Days</span>
+                  <span className="text-lg font-extrabold text-amber-400 mt-0.5 block font-mono">
+                    {halfDaysCount} <span className="text-xs text-[var(--text-muted)] font-sans font-normal">days</span>
+                  </span>
+                  <span className="text-[10px] text-[var(--text-muted)] block mt-0.5 font-medium">= {(halfDaysCount * 0.5).toFixed(1)} days count</span>
                 </div>
-                <div className="w-9 h-9 flex items-center justify-center text-[#4F7D32]">
+                <div className="flex items-center justify-center text-amber-400 shrink-0">
                   <Clock className="w-5 h-5" />
                 </div>
               </div>
 
-              <div className="p-4 bg-[var(--bg-card)]/60 border border-[var(--border-color)] rounded-xl flex items-center justify-between">
+              {/* 4. Late Marks */}
+              <div className="p-3.5 bg-[var(--bg-card)]/60 border border-[#4F7D32]/35 dark:border-[#4F7D32]/45 rounded-xl flex items-center justify-between shadow-xs">
                 <div>
-                  <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block">Avg. Shift Length</span>
-                  <span className="text-lg font-extrabold text-sky-400 mt-1 block font-mono">{avgWorkHoursStr}</span>
+                  <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block">Late Marks</span>
+                  <span className="text-lg font-extrabold text-yellow-400 mt-0.5 block font-mono">
+                    {lateMarksCount} <span className="text-xs text-[var(--text-muted)] font-sans font-normal">times</span>
+                  </span>
+                  <span className="text-[10px] text-[var(--text-muted)] block mt-0.5 font-medium">
+                    {lateDeduction > 0 ? `-${lateDeduction} day cut (3 late rule)` : `${lateMarksCount % 3}/3 towards cut`}
+                  </span>
                 </div>
-                <div className="w-9 h-9 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
-                  <Clock className="w-5 h-5" />
-                </div>
-              </div>
-
-              <div className="p-4 bg-[var(--bg-card)]/60 border border-[var(--border-color)] rounded-xl flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block">Late Check-Ins</span>
-                  <span className="text-lg font-extrabold text-rose-400 mt-1 block font-mono">{lateCheckinsCount} <span className="text-xs text-[var(--text-muted)] font-sans font-normal">days</span></span>
-                </div>
-                <div className="w-9 h-9 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
+                <div className="flex items-center justify-center text-yellow-400 shrink-0">
                   <AlertCircle className="w-5 h-5" />
+                </div>
+              </div>
+
+              {/* 5. Absent Days */}
+              <div className="p-3.5 bg-[var(--bg-card)]/60 border border-[#4F7D32]/35 dark:border-[#4F7D32]/45 rounded-xl flex items-center justify-between shadow-xs">
+                <div>
+                  <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block">Absent Days</span>
+                  <span className="text-lg font-extrabold text-rose-400 mt-0.5 block font-mono">
+                    {totalAbsentDays} <span className="text-xs text-[var(--text-muted)] font-sans font-normal">days</span>
+                  </span>
+                  <span className="text-[10px] text-[var(--text-muted)] block mt-0.5 font-medium">Unattended days</span>
+                </div>
+                <div className="flex items-center justify-center text-rose-400 shrink-0">
+                  <AlertCircle className="w-5 h-5" />
+                </div>
+              </div>
+
+              {/* 6. Total Work Hours */}
+              <div className="p-3.5 bg-[var(--bg-card)]/60 border border-[#4F7D32]/35 dark:border-[#4F7D32]/45 rounded-xl flex items-center justify-between shadow-xs">
+                <div>
+                  <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-semibold block">Total Hours</span>
+                  <span className="text-lg font-extrabold text-sky-400 mt-0.5 block font-mono">
+                    {totalWorkHoursStr}
+                  </span>
+                  <span className="text-[10px] text-[var(--text-muted)] block mt-0.5 font-medium">Avg: {avgWorkHoursStr} / shift</span>
+                </div>
+                <div className="flex items-center justify-center text-sky-400 shrink-0">
+                  <Clock className="w-5 h-5" />
                 </div>
               </div>
             </div>
@@ -1098,7 +1170,7 @@ export default function AttendancePage() {
                           </td>
                           <td className="py-3 px-4 font-mono font-bold">
                             {record && record.workDurationMin ? (
-                              <span className={record.workDurationMin >= 510 ? "text-[#4F7D32]" : "text-amber-700 dark:text-amber-400"}>
+                              <span className={record.workDurationMin >= 540 ? "text-[#4F7D32]" : "text-amber-700 dark:text-amber-400"}>
                                 {Math.floor(record.workDurationMin / 60)}h {record.workDurationMin % 60}m
                               </span>
                             ) : isToday && record && !record.checkOut ? (
@@ -1110,17 +1182,17 @@ export default function AttendancePage() {
                               <span className="text-slate-400 dark:text-slate-500 font-normal">-</span>
                             )}
                           </td>
-                          <td className="py-3 px-4 text-[var(--text-secondary)] text-xs font-sans max-w-sm truncate" title={record?.checkInLocation || ''}>
+                          <td className="py-3 px-4 text-[var(--text-secondary)] text-xs font-sans min-w-[280px] max-w-lg break-words whitespace-normal" title={record?.checkInLocation || ''}>
                             {record ? (
-                              <div className="flex flex-col gap-0.5">
+                              <div className="flex flex-col gap-1">
                                 {record.checkInLocation && (
-                                  <span className="text-[var(--text-primary)] truncate font-medium">
+                                  <span className="text-[var(--text-primary)] font-medium break-words">
                                     <span className="text-slate-500 dark:text-slate-400 font-bold text-[9px] uppercase tracking-wide mr-1">In Loc:</span>
                                     {record.checkInLocation.includes('@') ? record.checkInLocation.split('@')[0] : record.checkInLocation.replace('Web Portal check-in at ', '')}
                                   </span>
                                 )}
                                 {record.notes && (
-                                  <span className={record.notes.includes('Auto-closed') || record.notes.includes('Missed') ? "text-amber-700 dark:text-amber-300 italic text-[11px] font-medium" : "text-[#4F7D32] dark:text-[#7bb05c] italic text-[11px] font-medium"}>
+                                  <span className={record.notes.includes('Auto-closed') || record.notes.includes('Missed') ? "text-amber-700 dark:text-amber-300 italic text-[11px] font-medium break-words leading-relaxed" : "text-[#4F7D32] dark:text-[#7bb05c] italic text-[11px] font-medium break-words leading-relaxed"}>
                                     &ldquo;{record.notes}&rdquo;
                                   </span>
                                 )}

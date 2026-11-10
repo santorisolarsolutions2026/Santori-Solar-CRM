@@ -58,3 +58,39 @@ export function normalizeLocation(
     pinCode: normalizedPin,
   };
 }
+
+export function resolveServerLocation(req: Request, clientLocation?: string | null): string {
+  // 1. If valid GPS / reverse-geocoded location provided from client
+  if (
+    clientLocation &&
+    typeof clientLocation === 'string' &&
+    clientLocation.trim() !== '' &&
+    !clientLocation.toLowerCase().includes('web browser login') &&
+    !clientLocation.toLowerCase().includes('web portal') &&
+    !clientLocation.toLowerCase().includes('error_') &&
+    !clientLocation.toLowerCase().includes('html5 geolocation not supported') &&
+    !clientLocation.toLowerCase().includes('unknown')
+  ) {
+    return clientLocation.trim();
+  }
+
+  // 2. Cloudflare Edge Geolocation Headers (0ms latency, automatic from edge proxy)
+  const cfCity = req.headers.get('cf-ipcity');
+  const cfRegion = req.headers.get('cf-region');
+  const cfCountry = req.headers.get('cf-ipcountry');
+  if (cfCity) {
+    let decodedCity = cfCity;
+    let decodedRegion = cfRegion || '';
+    try {
+      decodedCity = decodeURIComponent(cfCity);
+      if (cfRegion) decodedRegion = decodeURIComponent(cfRegion);
+    } catch {}
+    const parts = [decodedCity, decodedRegion, cfCountry || 'India'].filter(Boolean);
+    if (parts.length > 0) {
+      return parts.join(', ');
+    }
+  }
+
+  // 3. Fallback default for Localhost / Development environments
+  return 'Varanasi, Uttar Pradesh, India';
+}
