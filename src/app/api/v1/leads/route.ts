@@ -42,6 +42,7 @@ export async function GET(req: Request) {
     const sortOrder = searchParams.get('sort_order') || 'desc';
     const unassignedParam = searchParams.get('unassigned') === 'true';
     const prospectPoolParam = searchParams.get('prospect_pool') === 'true';
+    const starredParam = searchParams.get('starred') === 'true';
 
     const skip = (page - 1) * limit;
 
@@ -308,6 +309,16 @@ export async function GET(req: Request) {
       });
     }
 
+    if (starredParam) {
+      andConditions.push({
+        starredBy: {
+          some: {
+            userId: userPayload.id,
+          },
+        },
+      });
+    }
+
     if (connectionType) {
       const types = connectionType.split(',').map(s => s.trim()).filter(Boolean);
       if (types.length > 0) {
@@ -392,6 +403,10 @@ export async function GET(req: Request) {
           consultant: { select: { id: true, name: true } },
           tl: { select: { id: true, name: true } },
           manager: { select: { id: true, name: true } },
+          starredBy: {
+            where: { userId: userPayload.id },
+            select: { priority: true, reason: true },
+          },
           order: {
             select: {
               id: true,

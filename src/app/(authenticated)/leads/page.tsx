@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -27,6 +27,8 @@ import {
   Sparkles,
   Tag,
   Zap,
+  Star,
+  ExternalLink,
   Truck,
   RotateCcw,
   Lock,
@@ -46,6 +48,7 @@ interface Lead {
   id: number;
   leadCode: string;
   customerName: string;
+  starredBy?: { priority: 'high' | 'medium' | 'low'; reason?: string | null }[];
   mobile: string;
   mobileAlt: string | null;
   connectionType: string;
@@ -323,6 +326,75 @@ export default function LeadsPage() {
   const [dateToFilter, setDateToFilter] = useState('');
   const [unassignedFilter, setUnassignedFilter] = useState(false);
   const [prospectPoolFilter, setProspectPoolFilter] = useState(false);
+  const [starredFilter, setStarredFilter] = useState(false);
+  const [starModalLead, setStarModalLead] = useState<any | null>(null);
+  const [starPriority, setStarPriority] = useState<'high' | 'medium' | 'low'>('medium');
+  const [starReason, setStarReason] = useState('');
+  const [starSaving, setStarSaving] = useState(false);
+  const [showStarredDrawer, setShowStarredDrawer] = useState(false);
+  const [starredDrawerLeads, setStarredDrawerLeads] = useState<any[]>([]);
+  const [starredDrawerLoading, setStarredDrawerLoading] = useState(false);
+  const [starredDrawerSearch, setStarredDrawerSearch] = useState('');
+  const [starredDrawerPriority, setStarredDrawerPriority] = useState<'all' | 'high' | 'medium' | 'low'>('all');
+  const [starredDrawerCity, setStarredDrawerCity] = useState('all');
+  const [starredCityDropdownOpen, setStarredCityDropdownOpen] = useState(false);
+  const starredCityRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (starredCityRef.current && !starredCityRef.current.contains(event.target as Node)) {
+        setStarredCityDropdownOpen(false);
+      }
+    }
+    if (starredCityDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [starredCityDropdownOpen]);
+
+  const starredDrawerCities = useMemo(() => {
+    const set = new Set<string>();
+    starredDrawerLeads.forEach((lead) => {
+      if (lead.city && lead.city.trim()) {
+        set.add(lead.city.trim());
+      }
+    });
+    return Array.from(set).sort();
+  }, [starredDrawerLeads]);
+
+  const filteredStarredDrawerLeads = useMemo(() => {
+    return starredDrawerLeads.filter((item) => {
+      // 1. Priority filter
+      const userStar = item.starredBy && item.starredBy.length > 0 ? item.starredBy[0] : null;
+      const priority = userStar?.priority || 'medium';
+      if (starredDrawerPriority !== 'all' && priority !== starredDrawerPriority) {
+        return false;
+      }
+
+      // 2. City filter
+      if (starredDrawerCity !== 'all') {
+        const itemCity = (item.city || '').trim().toLowerCase();
+        if (itemCity !== starredDrawerCity.toLowerCase()) {
+          return false;
+        }
+      }
+
+      // 3. Search: name, SL no (leadCode), phone number (mobile / mobileAlt)
+      if (starredDrawerSearch.trim()) {
+        const q = starredDrawerSearch.trim().toLowerCase();
+        const matchesName = (item.customerName || '').toLowerCase().includes(q);
+        const matchesCode = (item.leadCode || '').toLowerCase().includes(q);
+        const matchesMobile = (item.mobile || '').includes(q) || (item.mobileAlt || '').includes(q);
+        if (!matchesName && !matchesCode && !matchesMobile) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [starredDrawerLeads, starredDrawerPriority, starredDrawerCity, starredDrawerSearch]);
   const [localitiesFilter, setLocalitiesFilter] = useState('');
   const [isAdvancedFilterActive, setIsAdvancedFilterActive] = useState(false);
   const [advancedQueryObj, setAdvancedQueryObj] = useState<Group | null>(null);
@@ -367,6 +439,125 @@ export default function LeadsPage() {
   // Track Lead Modal State
   const [trackingLead, setTrackingLead] = useState<any | null>(null);
   const [trackingLoading, setTrackingLoading] = useState(false);
+
+  const fetchStarredDrawerLeads = async (silent = false) => {
+    if (!silent && starredDrawerLeads.length === 0) {
+      setStarredDrawerLoading(true);
+    }
+    try {
+      const res = await fetch('/api/v1/leads/starred');
+      const contentType = res.headers.get('content-type');
+      if (res.ok && contentType && contentType.includes('application/json')) {
+        const data = await res.json();
+        if (data.success && data.data && data.data.leads) {
+          setStarredDrawerLeads(data.data.leads);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching starred drawer leads:', err);
+    } finally {
+      setStarredDrawerLoading(false);
+    }
+  };
+
+  // Prefetch starred leads on initial page load for instant 0ms drawer opening
+  useEffect(() => {
+    fetchStarredDrawerLeads(true);
+  }, []);
+
+  useEffect(() => {
+    if (showStarredDrawer) {
+      fetchStarredDrawerLeads(starredDrawerLeads.length > 0);
+    }
+  }, [showStarredDrawer]);
+
+  const handleOpenStarModal = (lead: any, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const userStar = lead.starredBy && lead.starredBy.length > 0 ? lead.starredBy[0] : null;
+    setStarModalLead(lead);
+    setStarPriority(userStar?.priority || 'medium');
+    setStarReason(userStar?.reason || '');
+  };
+
+  const handleSaveStar = async () => {
+    if (!starModalLead) return;
+    setStarSaving(true);
+    try {
+      const res = await fetch(`/api/v1/leads/${starModalLead.id}/star`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priority: starPriority, reason: starReason }),
+      });
+      const contentType = res.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await res.json();
+        if (data.success) {
+          setLeads((prev) =>
+            prev.map((l) =>
+              l.id === starModalLead.id
+                ? { ...l, starredBy: [{ priority: starPriority, reason: starReason }] }
+                : l
+            )
+          );
+          setStarredDrawerLeads((prev) => {
+            const exists = prev.some((l) => l.id === starModalLead.id);
+            if (exists) {
+              return prev.map((l) =>
+                l.id === starModalLead.id
+                  ? { ...l, starredBy: [{ priority: starPriority, reason: starReason }] }
+                  : l
+              );
+            }
+            return [{ ...starModalLead, starredBy: [{ priority: starPriority, reason: starReason }] }, ...prev];
+          });
+          setStarModalLead(null);
+        } else {
+          alert(data.message || 'Failed to update star');
+        }
+      } else {
+        alert(res.status === 404 ? 'Dev server routes are stale. Please restart "npm run dev" in terminal.' : 'Server returned invalid response');
+      }
+    } catch (err) {
+      console.error('Error saving star:', err);
+      alert('Failed to star lead. Please restart dev server.');
+    } finally {
+      setStarSaving(false);
+    }
+  };
+
+  const handleRemoveStar = async () => {
+    if (!starModalLead) return;
+    setStarSaving(true);
+    try {
+      const res = await fetch(`/api/v1/leads/${starModalLead.id}/star`, {
+        method: 'DELETE',
+      });
+      const contentType = res.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await res.json();
+        if (data.success) {
+          setLeads((prev) =>
+            prev.map((l) =>
+              l.id === starModalLead.id
+                ? { ...l, starredBy: [] }
+                : l
+            )
+          );
+          setStarredDrawerLeads((prev) => prev.filter((l) => l.id !== starModalLead.id));
+          setStarModalLead(null);
+        } else {
+          alert(data.message || 'Failed to remove star');
+        }
+      } else {
+        alert(res.status === 404 ? 'Dev server routes are stale. Please restart "npm run dev" in terminal.' : 'Server returned invalid response');
+      }
+    } catch (err) {
+      console.error('Error removing star:', err);
+      alert('Failed to remove star');
+    } finally {
+      setStarSaving(false);
+    }
+  };
 
   const handleOpenTracker = async (lead: any) => {
     const isUnassigned = !lead.consultant?.id && !lead.tl?.id && !lead.manager?.id && !lead.consultant && !lead.tl && !lead.manager;
@@ -539,6 +730,101 @@ export default function LeadsPage() {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
+  };
+
+  // Drag-select & Row Navigation handlers
+  const [dragStartIndex, setDragStartIndex] = useState<number | null>(null);
+  const [isDragSelecting, setIsDragSelecting] = useState(false);
+  const baseSelectedIdsRef = useRef<number[]>([]);
+
+  useEffect(() => {
+    const handleMouseUp = () => {
+      if (isDragSelecting) {
+        setIsDragSelecting(false);
+        setDragStartIndex(null);
+      }
+    };
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragSelecting]);
+
+  const handleRowMouseDown = (index: number, leadId: number, e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('a') || target.closest('button') || target.closest('input')) {
+      return;
+    }
+
+    // On double click hold (e.detail >= 2), initiate dynamic range drag selection
+    if (e.detail >= 2) {
+      e.preventDefault();
+      setDragStartIndex(index);
+      setIsDragSelecting(true);
+
+      const alreadySelected = selectedIds.includes(leadId);
+      const base = alreadySelected 
+        ? selectedIds.filter((id) => id !== leadId)
+        : selectedIds;
+
+      baseSelectedIdsRef.current = base;
+      setSelectedIds([...base, leadId]);
+    }
+  };
+
+  const handleRowDoubleClick = (index: number, leadId: number, e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('a') || target.closest('button') || target.closest('input')) {
+      return;
+    }
+    e.preventDefault();
+    setSelectedIds((prev) =>
+      prev.includes(leadId) ? prev.filter((id) => id !== leadId) : [...prev, leadId]
+    );
+  };
+
+  const handleRowMouseEnter = (index: number) => {
+    if (isDragSelecting && dragStartIndex !== null) {
+      const start = Math.min(dragStartIndex, index);
+      const end = Math.max(dragStartIndex, index);
+      const activeRangeIds = leads.slice(start, end + 1).map((l) => l.id);
+      
+      // Dynamic range: moving mouse backwards shrinks the range and unselects rows!
+      setSelectedIds(Array.from(new Set([...baseSelectedIdsRef.current, ...activeRangeIds])));
+    }
+  };
+
+  const handleNavigateToLead = (leadId: number, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const userBaseRole = user?.role ? (user.role.includes(':') ? user.role.split(':')[0] : user.role) : '';
+    const canViewLeadDetails = 
+      hasPermission('sales:lead_edit') || 
+      hasPermission('leads:edit') || 
+      hasPermission('sales:lead_add') || 
+      hasPermission('leads:create') || 
+      hasPermission('sales:stage_change') || 
+      hasPermission('leads:change_status') || 
+      hasPermission('sales:meeting_done') || 
+      hasPermission('leads:meeting_done') || 
+      hasPermission('sales:order_punch') || 
+      hasPermission('orders:create') || 
+      hasPermission('sales:lead_track') || 
+      hasPermission('leads:track') || 
+      hasPermission('sales:lead_assign') || 
+      hasPermission('leads:assign') || 
+      hasPermission('sales:lead_delete') || 
+      hasPermission('leads:delete') || 
+      hasPermission('sales:lead_view_all') || 
+      hasPermission('leads:view_all') || 
+      hasPermission('leads:view') ||
+      ['admin', 'director'].includes(userBaseRole) || 
+      user?.department?.name === 'IT';
+
+    if (!canViewLeadDetails) {
+      alert('Access Restricted: You do not have permission to view detailed lead information.');
+      return;
+    }
+    router.push(`/leads/${leadId}`);
   };
 
   const handleSelectAllToggle = async () => {
@@ -875,6 +1161,7 @@ export default function LeadsPage() {
     if (dateToFilter) count++;
     if (unassignedFilter) count++;
     if (prospectPoolFilter) count++;
+    if (starredFilter) count++;
     if (localitiesFilter) count++;
     return count;
   };
@@ -907,7 +1194,8 @@ export default function LeadsPage() {
             search: debouncedSearch.trim(),
             page,
             limit,
-            prospect_pool: prospectPoolFilter
+            prospect_pool: prospectPoolFilter,
+            starred: starredFilter
           }),
           signal: controller.signal
         });
@@ -942,6 +1230,7 @@ export default function LeadsPage() {
           date_to: dateToFilter,
           unassigned: unassignedFilter ? 'true' : 'false',
           prospect_pool: prospectPoolFilter ? 'true' : 'false',
+          starred: starredFilter ? 'true' : 'false',
         });
 
         if (localitiesFilter.trim()) {
@@ -1019,6 +1308,7 @@ export default function LeadsPage() {
       const savedDateTo = localStorage.getItem(`leads_filter_${userId}_dateTo`);
       const savedUnassigned = localStorage.getItem(`leads_filter_${userId}_unassigned`);
       const savedProspectPool = localStorage.getItem(`leads_filter_${userId}_prospectPool`);
+      const savedStarred = localStorage.getItem(`leads_filter_${userId}_starred`);
       const savedPage = localStorage.getItem(`leads_filter_${userId}_page`);
       const savedAdvancedActive = localStorage.getItem(`leads_filter_${userId}_isAdvancedActive`);
       const savedAdvancedQuery = localStorage.getItem(`leads_filter_${userId}_advancedQueryObj`);
@@ -1046,6 +1336,7 @@ export default function LeadsPage() {
         if (savedDateTo !== null) setDateToFilter(savedDateTo);
         if (savedUnassigned !== null) setUnassignedFilter(savedUnassigned === 'true');
         if (savedProspectPool !== null) setProspectPoolFilter(savedProspectPool === 'true');
+        if (savedStarred !== null) setStarredFilter(savedStarred === 'true');
         if (savedPage !== null) setPage(Number(savedPage));
         if (isAdvancedNav) {
           setIsAdvancedFilterActive(true);
@@ -1085,18 +1376,19 @@ export default function LeadsPage() {
       localStorage.setItem(`leads_filter_${userId}_dateTo`, dateToFilter);
       localStorage.setItem(`leads_filter_${userId}_unassigned`, unassignedFilter ? 'true' : 'false');
       localStorage.setItem(`leads_filter_${userId}_prospectPool`, prospectPoolFilter ? 'true' : 'false');
+      localStorage.setItem(`leads_filter_${userId}_starred`, starredFilter ? 'true' : 'false');
       localStorage.setItem(`leads_filter_${userId}_page`, page.toString());
       localStorage.setItem(`leads_filter_${userId}_isAdvancedActive`, isAdvancedFilterActive ? 'true' : 'false');
       localStorage.setItem(`leads_filter_${userId}_advancedQueryObj`, advancedQueryObj ? JSON.stringify(advancedQueryObj) : '');
     }
-  }, [search, statusFilter, consultantFilter, tlFilter, managerFilter, connectionFilter, sourceFilter, cityFilter, localitiesFilter, divisionFilter, stateFilter, dateFromFilter, dateToFilter, unassignedFilter, prospectPoolFilter, page, filtersLoaded, user, isAdvancedFilterActive, advancedQueryObj]);
+  }, [search, statusFilter, consultantFilter, tlFilter, managerFilter, connectionFilter, sourceFilter, cityFilter, localitiesFilter, divisionFilter, stateFilter, dateFromFilter, dateToFilter, unassignedFilter, prospectPoolFilter, starredFilter, page, filtersLoaded, user, isAdvancedFilterActive, advancedQueryObj]);
 
   // Refetch leads when filters change
   useEffect(() => {
     if (user && filtersLoaded) {
       fetchLeads();
     }
-  }, [page, limit, statusFilter, consultantFilter, tlFilter, managerFilter, connectionFilter, sourceFilter, cityFilter, localitiesFilter, divisionFilter, stateFilter, dateFromFilter, dateToFilter, unassignedFilter, prospectPoolFilter, user, filtersLoaded, debouncedSearch, isAdvancedFilterActive, advancedQueryObj]);
+  }, [page, limit, statusFilter, consultantFilter, tlFilter, managerFilter, connectionFilter, sourceFilter, cityFilter, localitiesFilter, divisionFilter, stateFilter, dateFromFilter, dateToFilter, unassignedFilter, prospectPoolFilter, starredFilter, user, filtersLoaded, debouncedSearch, isAdvancedFilterActive, advancedQueryObj]);
 
   // Handle Search Input (with manual or debounce enter)
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -1125,6 +1417,7 @@ export default function LeadsPage() {
     setDateToFilter('');
     setUnassignedFilter(false);
     setProspectPoolFilter(false);
+    setStarredFilter(false);
     setIsAdvancedFilterActive(false);
     setAdvancedQueryObj(null);
     setPage(1);
@@ -1534,6 +1827,22 @@ export default function LeadsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          {/* Quick Starred (Personal Priority Bucket) Button - Opens Right Slide Drawer */}
+          <button
+            type="button"
+            onClick={() => setShowStarredDrawer(true)}
+            style={{
+              backgroundColor: starredFilter ? '#C654C3' : 'var(--bg-card)',
+              color: starredFilter ? '#FFFFFF' : 'var(--text-primary)',
+              borderColor: '#C654C3',
+            }}
+            className="py-2.5 px-3.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all border shadow-md hover:brightness-95 cursor-pointer ring-1 ring-[#C654C3]/40 hover:ring-[#C654C3]"
+            title="Open Personal Priority Bucket Drawer"
+          >
+            <Star className="w-4 h-4 fill-[#C654C3] text-[#C654C3]" />
+            <span>Starred Bucket</span>
+          </button>
+
           {/* Export PDF Dropdown (Admin Only) */}
           {isAdmin && (
             <div className="relative" ref={pdfDropdownRef}>
@@ -1822,6 +2131,13 @@ export default function LeadsPage() {
                 <X className="w-3 h-3 cursor-pointer opacity-70 hover:opacity-100 ml-0.5" onClick={() => setProspectPoolFilter(false)} />
               </span>
             )}
+            {starredFilter && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#C654C3]/15 text-[#C654C3] dark:text-[#E88BE5] text-[11px] font-bold border border-[#C654C3]/30">
+                <Star className="w-3 h-3 fill-[#C654C3] text-[#C654C3]" />
+                Starred Bucket
+                <X className="w-3 h-3 cursor-pointer opacity-70 hover:opacity-100 ml-0.5" onClick={() => setStarredFilter(false)} />
+              </span>
+            )}
             {unassignedFilter && (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-900 dark:bg-amber-950/70 dark:text-amber-300 text-[11px] font-bold">
                 Unassigned Leads Only
@@ -2069,7 +2385,7 @@ export default function LeadsPage() {
                 <th className="py-4 px-4 w-32">Connection</th>
                 <th className="py-4 px-4 w-44">Pipeline Stage</th>
                 <th className="py-4 px-4 w-40">Assigned to</th>
-                <th className="py-4 px-4 w-32 text-center">Actions</th>
+                <th className="py-4 px-4 w-36 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-sm">
@@ -2086,57 +2402,21 @@ export default function LeadsPage() {
                   </td>
                 </tr>
               ) : (
-                leads.map((lead) => {
+                leads.map((lead, index) => {
                   const stage = getLeadEffectiveStage(lead);
                   const connectionClass = CONNECTION_BADGES[lead.connectionType] || 'bg-slate-200 text-slate-800 dark:bg-slate-900/80 dark:text-slate-300 font-extrabold';
                   
                   return (
                     <tr
                       key={lead.id}
-                      onClick={(e) => {
-                        const target = e.target as HTMLElement;
-                        if (
-                          target.closest('a') ||
-                          target.closest('button') ||
-                          target.closest('input')
-                        ) {
-                          return;
-                        }
-                        const userBaseRole = user?.role ? (user.role.includes(':') ? user.role.split(':')[0] : user.role) : '';
-                        const canViewLeadDetails = 
-                          hasPermission('sales:lead_edit') || 
-                          hasPermission('leads:edit') || 
-                          hasPermission('sales:lead_add') || 
-                          hasPermission('leads:create') || 
-                          hasPermission('sales:stage_change') || 
-                          hasPermission('leads:change_status') || 
-                          hasPermission('sales:meeting_done') || 
-                          hasPermission('leads:meeting_done') || 
-                          hasPermission('sales:order_punch') || 
-                          hasPermission('orders:create') || 
-                          hasPermission('sales:lead_track') || 
-                          hasPermission('leads:track') || 
-                          hasPermission('sales:lead_assign') || 
-                          hasPermission('leads:assign') || 
-                          hasPermission('sales:lead_delete') || 
-                          hasPermission('leads:delete') || 
-                          hasPermission('sales:lead_view_all') || 
-                          hasPermission('leads:view_all') || 
-                          hasPermission('leads:view') ||
-                          ['admin', 'director'].includes(userBaseRole) || 
-                          user?.department?.name === 'IT';
-
-                        if (!canViewLeadDetails) {
-                          alert('Access Restricted: You do not have permission to view detailed lead information.');
-                          return;
-                        }
-                        router.push(`/leads/${lead.id}`);
-                      }}
-                      className={`hover:bg-[var(--bg-card)]/30 transition-all cursor-pointer ${
+                      onMouseDown={(e) => handleRowMouseDown(index, lead.id, e)}
+                      onDoubleClick={(e) => handleRowDoubleClick(index, lead.id, e)}
+                      onMouseEnter={() => handleRowMouseEnter(index)}
+                      className={`group/row hover:bg-[var(--bg-card)]/30 transition-all ${isDragSelecting ? 'select-none' : ''} ${
                         lead.isUnreachable ? 'bg-red-500/[0.01] border-l-2 border-l-red-500' : ''
                       } ${
                         !lead.isActive ? 'opacity-70 border-l-2 border-l-slate-650 bg-[var(--bg-card)]/[0.08]' : ''
-                      } ${selectedIds.includes(lead.id) ? 'bg-emerald-600/[0.02]' : ''}`}
+                      } ${selectedIds.includes(lead.id) ? 'bg-emerald-600/[0.04]' : ''}`}
                     >
                       <td className="py-3.5 px-4 text-center w-12">
                         <input
@@ -2146,12 +2426,25 @@ export default function LeadsPage() {
                           className="w-4 h-4 rounded border-[var(--border-color)] bg-[var(--bg-main)] text-emerald-600 dark:text-emerald-400 focus:ring-0 focus:ring-offset-0 cursor-pointer"
                         />
                       </td>
-                      <td className="py-3.5 px-4 font-mono font-bold text-xs text-[var(--text-primary)] w-28">
-                        {lead.leadCode}
+                      <td className="py-3.5 px-4 font-mono font-bold text-xs w-28">
+                        <button
+                          type="button"
+                          onClick={(e) => handleNavigateToLead(lead.id, e)}
+                          className="font-mono font-bold text-xs text-[var(--text-primary)] hover:text-emerald-500 dark:hover:text-emerald-400 hover:underline cursor-pointer text-left transition-colors"
+                          title="Open Lead Details"
+                        >
+                          {lead.leadCode}
+                        </button>
                       </td>
-                      <td className="py-3.5 px-4 font-bold text-white w-48">
+                      <td 
+                        onClick={(e) => handleNavigateToLead(lead.id, e)}
+                        className="py-3.5 px-4 font-bold text-white w-48 cursor-pointer group/name hover:bg-white/5 transition-colors"
+                        title="Click to open lead"
+                      >
                         <div className="flex flex-wrap items-center gap-1.5">
-                          <span>{lead.customerName}</span>
+                          <span className="font-bold text-white group-hover/name:text-emerald-500 dark:group-hover/name:text-emerald-400 group-hover/name:underline transition-colors">
+                            {lead.customerName}
+                          </span>
                           {(() => {
                             try {
                               if (lead.otherData) {
@@ -2222,8 +2515,31 @@ export default function LeadsPage() {
                           );
                         })()}
                       </td>
-                      <td className="py-3.5 px-4 text-center w-32">
-                        <div className="flex items-center justify-center gap-2">
+                      <td className="py-3.5 px-4 text-center w-36">
+                        <div className="flex items-center justify-center gap-1.5">
+                          {/* Priority Bucket Star Action */}
+                          {(() => {
+                            const leadStar = lead.starredBy && lead.starredBy.length > 0 ? lead.starredBy[0] : null;
+                            return (
+                              <button
+                                type="button"
+                                onClick={(e) => handleOpenStarModal(lead, e)}
+                                title={leadStar ? `Starred (${leadStar.priority.toUpperCase()})${leadStar.reason ? ': ' + leadStar.reason : ''}` : "Add to Priority Bucket"}
+                                className={`p-1.5 rounded-lg transition-all cursor-pointer flex items-center justify-center shrink-0 ${
+                                  leadStar
+                                    ? 'bg-[#C654C3]/15 text-[#C654C3] border border-[#C654C3]/30 opacity-100 shadow-sm'
+                                    : 'text-slate-400 hover:text-[#C654C3] hover:bg-[var(--bg-card)] opacity-0 group-hover/row:opacity-100 focus:opacity-100'
+                                }`}
+                              >
+                                <Star className={`w-4 h-4 transition-all ${
+                                  leadStar
+                                    ? 'fill-[#C654C3] text-[#C654C3]'
+                                    : 'stroke-[2]'
+                                }`} />
+                              </button>
+                            );
+                          })()}
+
                           {(() => {
                             const isUnassigned = !lead.consultant?.id && !lead.tl?.id && !lead.manager?.id && !lead.consultant && !lead.tl && !lead.manager;
                             if (isUnassigned) {
@@ -2840,6 +3156,476 @@ export default function LeadsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Right Slide-over Priority Bucket Drawer */}
+      {mounted && showStarredDrawer && createPortal(
+        <div className="fixed inset-0 z-50 overflow-hidden">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity cursor-pointer"
+            onClick={() => setShowStarredDrawer(false)}
+          />
+
+          {/* Drawer Container */}
+          <div className="fixed inset-y-0 right-0 max-w-full flex pl-10 pointer-events-none">
+            <div className="priority-bucket-drawer pointer-events-auto w-screen max-w-md bg-[var(--bg-card)] border-l border-[var(--border-color)] shadow-2xl flex flex-col animate-drawer-in">
+              {/* Drawer Header */}
+              <div className="p-5 border-b border-[var(--border-color)] bg-[var(--bg-card)]/50 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-3">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#C654C3"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="w-6 h-6 shrink-0"
+                  >
+                    <path d="M6 8a6 6 0 0 1 12 0" />
+                    <path d="M3 8h18" />
+                    <path d="M4.5 8l1.8 11.2a2.5 2.5 0 0 0 2.5 2.1h6.4a2.5 2.5 0 0 0 2.5 -2.1L19.5 8" />
+                  </svg>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-bold text-white uppercase tracking-wider">Priority Bucket</h3>
+                      <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#C654C3]/20 text-[#C654C3] border border-[#C654C3]/30">
+                        {starredDrawerSearch || starredDrawerPriority !== 'all' || starredDrawerCity !== 'all'
+                          ? `${filteredStarredDrawerLeads.length} of ${starredDrawerLeads.length} Leads`
+                          : `${starredDrawerLeads.length} Leads`}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-[var(--text-secondary)] mt-0.5">Your personal priority leads & urgent tasks</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowStarredDrawer(false)}
+                  className="text-[var(--text-secondary)] hover:text-white p-1.5 rounded-lg hover:bg-[var(--bg-main)] transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Drawer Filters Bar: Search, Priority & City */}
+              {starredDrawerLeads.length > 0 && (
+                <div className="p-3.5 border-b border-[var(--border-color)] bg-[var(--bg-main)]/60 space-y-2.5 shrink-0">
+                  {/* Search by Name, SL No, Phone */}
+                  <div className="relative">
+                    <Search className="w-3.5 h-3.5 text-[var(--text-secondary)] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      type="text"
+                      value={starredDrawerSearch}
+                      onChange={(e) => setStarredDrawerSearch(e.target.value)}
+                      placeholder="Search name, SL no, phone..."
+                      className="w-full pl-8 pr-7 py-2 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[#C654C3]"
+                    />
+                    {starredDrawerSearch && (
+                      <button
+                        type="button"
+                        onClick={() => setStarredDrawerSearch('')}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] hover:text-white p-0.5 cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Priority Filter + City Filter Row */}
+                  <div className="flex items-center gap-2 justify-between">
+                    {/* Priority Badges */}
+                    <div className="flex items-center gap-1">
+                      {[
+                        { id: 'all', label: 'All' },
+                        { id: 'high', label: 'High' },
+                        { id: 'medium', label: 'Med' },
+                        { id: 'low', label: 'Low' },
+                      ].map((p) => {
+                        const isSelected = starredDrawerPriority === p.id;
+                        return (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onClick={() => setStarredDrawerPriority(p.id as any)}
+                            className={`py-1 px-2.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer border ${
+                              isSelected
+                                ? 'bg-[#C654C3] text-white border-[#C654C3] shadow-xs'
+                                : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-white border-[var(--border-color)]'
+                            }`}
+                          >
+                            {p.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* City Filter Dropdown (Custom to avoid OS blue hover) */}
+                    <div className="relative shrink-0" ref={starredCityRef}>
+                      <button
+                        type="button"
+                        onClick={() => setStarredCityDropdownOpen(!starredCityDropdownOpen)}
+                        className="py-1 px-2.5 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[#C654C3] rounded-lg text-[11px] font-semibold text-[var(--text-primary)] flex items-center justify-between gap-1.5 cursor-pointer min-w-[95px] max-w-[130px] transition-colors"
+                      >
+                        <span className="truncate">{starredDrawerCity === 'all' ? 'All Cities' : starredDrawerCity}</span>
+                        <ChevronDown className={`w-3 h-3 text-[var(--text-secondary)] transition-transform duration-150 shrink-0 ${starredCityDropdownOpen ? 'rotate-180' : ''}`} />
+                      </button>
+
+                      {starredCityDropdownOpen && (
+                        <div className="absolute right-0 top-full mt-1.5 w-36 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-2xl overflow-hidden py-1 z-50 animate-fade-in max-h-56 overflow-y-auto">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setStarredDrawerCity('all');
+                              setStarredCityDropdownOpen(false);
+                            }}
+                            className={`w-full px-3 py-1.5 text-left text-xs transition-colors cursor-pointer flex items-center justify-between hover:bg-[#FFC0DE] hover:text-slate-950 ${
+                              starredDrawerCity === 'all'
+                                ? 'bg-[#FFC0DE] text-slate-950 font-bold'
+                                : 'text-[var(--text-primary)]'
+                            }`}
+                          >
+                            <span>All Cities</span>
+                            {starredDrawerCity === 'all' && <Check className="w-3.5 h-3.5 text-[#831843]" />}
+                          </button>
+                          {starredDrawerCities.map((c) => {
+                            const isSelected = starredDrawerCity.toLowerCase() === c.toLowerCase();
+                            return (
+                              <button
+                                key={c}
+                                type="button"
+                                onClick={() => {
+                                  setStarredDrawerCity(c);
+                                  setStarredCityDropdownOpen(false);
+                                }}
+                                className={`w-full px-3 py-1.5 text-left text-xs transition-colors cursor-pointer flex items-center justify-between hover:bg-[#FFC0DE] hover:text-slate-950 ${
+                                  isSelected
+                                    ? 'bg-[#FFC0DE] text-slate-950 font-bold'
+                                    : 'text-[var(--text-primary)]'
+                                }`}
+                              >
+                                <span className="truncate">{c}</span>
+                                {isSelected && <Check className="w-3.5 h-3.5 text-[#831843]" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Drawer Body (Scrollable List) */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-slate-100/60 dark:bg-[#0D1117]">
+                {starredDrawerLoading ? (
+                  <div className="py-20 text-center text-xs text-[var(--text-muted)] flex flex-col items-center gap-2">
+                    <Loader2 className="w-6 h-6 animate-spin text-[#C654C3]" />
+                    <span>Loading your priority bucket...</span>
+                  </div>
+                ) : starredDrawerLeads.length === 0 ? (
+                  <div className="py-20 text-center text-[var(--text-muted)] text-xs flex flex-col items-center gap-3 px-6">
+                    <div className="w-12 h-12 rounded-2xl bg-[#C654C3]/10 border border-[#C654C3]/25 flex items-center justify-center text-[#C654C3]">
+                      <Star className="w-6 h-6 stroke-[1.5]" />
+                    </div>
+                    <p className="font-semibold text-[var(--text-primary)]">Your Priority Bucket is Empty</p>
+                    <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
+                      Click the star icon next to any customer in the table to add them here with priority and notes for quick 1-click access.
+                    </p>
+                  </div>
+                ) : filteredStarredDrawerLeads.length === 0 ? (
+                  <div className="py-16 text-center text-[var(--text-muted)] text-xs flex flex-col items-center gap-2 px-6">
+                    <Filter className="w-6 h-6 text-[var(--text-secondary)] opacity-60 mb-1" />
+                    <p className="font-semibold text-[var(--text-primary)]">No leads match your filter</p>
+                    <p className="text-[11px] text-[var(--text-secondary)]">Try searching a different name, SL no, or changing priority/city.</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStarredDrawerSearch('');
+                        setStarredDrawerPriority('all');
+                        setStarredDrawerCity('all');
+                      }}
+                      className="mt-2 text-xs font-bold text-[#C654C3] hover:underline cursor-pointer"
+                    >
+                      Clear Filters
+                    </button>
+                  </div>
+                ) : (
+                  filteredStarredDrawerLeads.map((item) => {
+                    const userStar = item.starredBy && item.starredBy.length > 0 ? item.starredBy[0] : null;
+                    const priority = userStar?.priority || 'medium';
+                    const reason = userStar?.reason;
+
+                    const priorityBadge = 
+                      priority === 'high' ? { label: 'High', color: 'bg-rose-500 text-white border-rose-600', leftBorder: 'border-l-rose-500' } :
+                      priority === 'low' ? { label: 'Low', color: 'bg-emerald-600 text-white border-emerald-700', leftBorder: 'border-l-emerald-500' } :
+                      { label: 'Medium', color: 'bg-amber-400 text-slate-950 border-amber-500', leftBorder: 'border-l-amber-500' };
+
+                    return (
+                      <div
+                        key={item.id}
+                        className={`group p-4 bg-white dark:bg-[#161B22] rounded-2xl border-2 border-[#F4A7CD] border-l-[6px] ${priorityBadge.leftBorder} hover:border-[#C654C3] transition-all shadow-md hover:shadow-lg dark:shadow-[0_4px_16px_rgba(0,0,0,0.4)] relative`}
+                      >
+                        {/* Card Top: Lead Code, Priority Badge, Quick Edit */}
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-xs text-[#C654C3]">
+                              {item.leadCode}
+                            </span>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shadow-xs ${priorityBadge.color}`}>
+                              {priorityBadge.label} Priority
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              title="Edit Priority / Note or Unstar"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenStarModal(item);
+                              }}
+                              className="p-1 rounded text-slate-400 hover:text-[#C654C3] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                            >
+                              <Star className="w-4 h-4 fill-[#C654C3] text-[#C654C3]" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Customer Name & Redirect Icon (Only these are clickable to navigate) */}
+                        <div
+                          onClick={() => {
+                            setShowStarredDrawer(false);
+                            router.push(`/leads/${item.id}`);
+                          }}
+                          className="group/name flex items-center justify-between cursor-pointer py-0.5 rounded-lg transition-colors"
+                          title="Open Lead Details"
+                        >
+                          <h4 className="text-sm font-bold text-slate-900 dark:text-white group-hover/name:text-[#C654C3] group-hover/name:underline transition-colors">
+                            {item.customerName}
+                          </h4>
+                          <ExternalLink className="w-4 h-4 text-slate-400 group-hover/name:text-[#C654C3] transition-colors shrink-0 ml-2" />
+                        </div>
+
+                        {/* Star Reason / Note (if any) */}
+                        {reason && (
+                          <div className="mt-2.5 p-2 rounded-xl bg-slate-50 dark:bg-[var(--bg-card)] border border-[#F4A7CD]/60 text-[11px] text-slate-800 dark:text-slate-200 flex items-start gap-1.5 shadow-xs">
+                            <Tag className="w-3.5 h-3.5 text-[#C654C3] shrink-0 mt-0.5" />
+                            <span className="italic font-medium">{reason}</span>
+                          </div>
+                        )}
+
+                        {/* Meta info: Mobile, Location, Pipeline Stage */}
+                        <div className="mt-3 pt-2.5 border-t border-[#F4A7CD]/40 flex items-center justify-between text-[11px] text-slate-500 dark:text-[var(--text-secondary)]">
+                          <div className="flex items-center gap-2 font-mono">
+                            <span>{item.mobile}</span>
+                            {item.city && <span>• {item.city}</span>}
+                          </div>
+                          <span className="font-bold text-xs text-slate-900 dark:text-white">
+                            Stage {item.status}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Drawer Footer */}
+              <div className="p-4 border-t border-[var(--border-color)] bg-[var(--bg-card)]/50 flex items-center justify-between shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStarredFilter(!starredFilter);
+                    setShowStarredDrawer(false);
+                    setPage(1);
+                  }}
+                  className="text-xs font-bold text-[#C654C3] hover:underline cursor-pointer flex items-center gap-1.5"
+                >
+                  <Filter className="w-3.5 h-3.5" />
+                  <span>{starredFilter ? 'Show All Leads in Table' : 'Filter Main Table to Starred'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowStarredDrawer(false)}
+                  className="py-2 px-4 bg-[var(--bg-main)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-white rounded-xl font-bold text-xs transition-all cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Star / Priority Bucket Modal */}
+      {mounted && starModalLead && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-[var(--border-color)] bg-[var(--bg-card)]/40 flex justify-between items-center">
+              <div className="flex items-center gap-2.5">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#C654C3"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="w-5 h-5 shrink-0"
+                >
+                  <path d="M6 8a6 6 0 0 1 12 0" />
+                  <path d="M3 8h18" />
+                  <path d="M4.5 8l1.8 11.2a2.5 2.5 0 0 0 2.5 2.1h6.4a2.5 2.5 0 0 0 2.5 -2.1L19.5 8" />
+                </svg>
+                <div>
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                    {starModalLead.starredBy && starModalLead.starredBy.length > 0 ? 'Edit Priority Bucket' : 'Add to Priority Bucket'}
+                  </h3>
+                  <p className="text-[11px] text-[var(--text-secondary)]">
+                    {starModalLead.customerName} ({starModalLead.leadCode})
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStarModalLead(null)}
+                className="text-[var(--text-secondary)] hover:text-white p-1 rounded-lg hover:bg-[var(--bg-main)] transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 space-y-4 text-xs">
+              {/* Priority Selection */}
+              <div>
+                <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-2 uppercase tracking-wider">
+                  Priority Level
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    {
+                      id: 'high',
+                      label: 'High',
+                      bg: 'bg-red-500 border-red-600',
+                      activeRing: 'ring-2 ring-black dark:ring-white ring-offset-1',
+                    },
+                    {
+                      id: 'medium',
+                      label: 'Medium',
+                      bg: 'bg-yellow-400 border-yellow-500',
+                      activeRing: 'ring-2 ring-black dark:ring-white ring-offset-1',
+                    },
+                    {
+                      id: 'low',
+                      label: 'Low',
+                      bg: 'bg-emerald-500 border-emerald-600',
+                      activeRing: 'ring-2 ring-black dark:ring-white ring-offset-1',
+                    },
+                  ].map((p) => {
+                    const isSelected = starPriority === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setStarPriority(p.id as any)}
+                        className={`py-2.5 px-3 rounded-xl border text-center font-extrabold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 text-black dark:text-white ${p.bg} ${
+                          isSelected
+                            ? `${p.activeRing} scale-[1.02] shadow-md opacity-100`
+                            : 'opacity-50 hover:opacity-85'
+                        }`}
+                      >
+                        <Star className={`w-3.5 h-3.5 ${isSelected ? 'fill-current' : 'fill-none'}`} />
+                        <span>{p.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Reason / Quick Presets */}
+              <div>
+                <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-2 uppercase tracking-wider">
+                  Reason / Note
+                </label>
+                <div className="flex flex-wrap gap-1.5 mb-2.5">
+                  {[
+                    'Token/Payment Call',
+                    'Site Survey Ready',
+                    'Doc Pending',
+                    'Follow-up Call',
+                    'VIP Customer',
+                  ].map((chip) => (
+                    <button
+                      key={chip}
+                      type="button"
+                      onClick={() => setStarReason(chip)}
+                      className="py-1 px-2.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-main)] hover:bg-[var(--bg-card)] text-[10px] text-[var(--text-secondary)] hover:text-white transition-all cursor-pointer"
+                    >
+                      {chip}
+                    </button>
+                  ))}
+                </div>
+                <input
+                  type="text"
+                  value={starReason}
+                  onChange={(e) => setStarReason(e.target.value)}
+                  placeholder="e.g. Call at 4 PM for payment confirmation..."
+                  maxLength={100}
+                  className="w-full px-3 py-2.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-[var(--text-primary)] text-xs placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[#4F7D32]"
+                />
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-[var(--border-color)] bg-[var(--bg-card)]/40 flex items-center justify-between">
+              {starModalLead.starredBy && starModalLead.starredBy.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={handleRemoveStar}
+                  disabled={starSaving}
+                  className="py-2 px-3.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/30 rounded-xl font-bold text-xs transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {starSaving ? 'Removing...' : 'Remove from Bucket'}
+                </button>
+              ) : (
+                <div />
+              )}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setStarModalLead(null)}
+                  disabled={starSaving}
+                  className="py-2 px-3.5 bg-[var(--bg-card)] hover:bg-slate-800/40 border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-white rounded-xl font-bold text-xs transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveStar}
+                  disabled={starSaving}
+                  style={{ backgroundColor: '#4F7D32' }}
+                  className="py-2 px-4 hover:brightness-95 text-white rounded-xl font-bold text-xs shadow-md flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {starSaving ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Save to Bucket</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </div>,
         document.body

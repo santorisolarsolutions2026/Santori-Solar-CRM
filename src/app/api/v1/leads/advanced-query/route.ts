@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { queryObj, page = 1, limit = 25, sortBy = 'updatedAt', sortOrder = 'desc', ids_only = false, search = '', prospect_pool = false } = body;
+    const { queryObj, page = 1, limit = 25, sortBy = 'updatedAt', sortOrder = 'desc', ids_only = false, search = '', prospect_pool = false, starred = false } = body;
 
     const skip = (page - 1) * limit;
 
@@ -61,6 +61,16 @@ export async function POST(req: Request) {
     if (prospect_pool) {
       andConditions.push({
         status: { in: [2, 3, 4, 5, 7, 10, 11, 14] },
+      });
+    }
+
+    if (starred) {
+      andConditions.push({
+        starredBy: {
+          some: {
+            userId: userPayload.id,
+          },
+        },
       });
     }
 
@@ -110,6 +120,10 @@ export async function POST(req: Request) {
           tl: { select: { id: true, name: true } },
           manager: { select: { id: true, name: true } },
           creator: { select: { id: true, name: true } },
+          starredBy: {
+            where: { userId: userPayload.id },
+            select: { priority: true, reason: true },
+          },
           order: {
             select: {
               id: true,
