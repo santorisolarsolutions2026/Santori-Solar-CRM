@@ -171,8 +171,8 @@ export async function GET(req: Request) {
       }).catch(() => {});
     }
 
-    // 2. If past 07:30 PM (1170 mins), auto-close all unclosed records for today
-    if (totalMinutesOfDay > 1170) {
+    // 2. If past 08:30 PM (1230 mins), auto-close all unclosed records for today
+    if (totalMinutesOfDay > 1230) {
       const unclosedToday = await attendanceModel.findMany({
         where: {
           date: todayDate,
@@ -184,6 +184,10 @@ export async function GET(req: Request) {
       const windowEnd = new Date(`${istDateParts}T19:30:00+05:30`).getTime();
       const autoCheckOutTime = new Date(`${istDateParts}T19:30:00+05:30`);
 
+      const istYear = parseInt(istDateParts.split('-')[0], 10);
+      const istMonth = parseInt(istDateParts.split('-')[1], 10);
+      const startOfMonth = new Date(`${istYear}-${String(istMonth).padStart(2, '0')}-01T00:00:00.000Z`);
+
       for (const rec of unclosedToday) {
         const checkInTime = new Date(rec.checkIn).getTime();
         const effectiveStart = Math.max(checkInTime, windowStart);
@@ -192,16 +196,57 @@ export async function GET(req: Request) {
           ? Math.round((effectiveEnd - effectiveStart) / (1000 * 60))
           : 1;
 
-        const status = durationMin >= 270 ? 'half_day' : 'absent';
-        const note = 'Auto-closed: Missed 07:30 PM check-out deadline.';
+        // Arrival > 10:15 AM check
+        const checkInIstFormatted = new Intl.DateTimeFormat('en-US', {
+          timeZone: 'Asia/Kolkata',
+          hour: 'numeric',
+          minute: 'numeric',
+          hour12: false,
+        }).format(new Date(rec.checkIn));
+        const [ciHoursStr, ciMinsStr] = checkInIstFormatted.split(':');
+        const checkInMinutesOfDay = parseInt(ciHoursStr, 10) * 60 + parseInt(ciMinsStr, 10);
+        const isLateHalfDayArrival = checkInMinutesOfDay > 615 || rec.status === 'half_day';
+
+        const prevMissedCount = await attendanceModel.count({
+          where: {
+            userId: rec.userId,
+            date: { gte: startOfMonth, lt: todayDate },
+            notes: { contains: 'Auto-closed' },
+          },
+        }).catch(() => 0);
+
+        let finalAutoStatus = 'absent';
+        let autoNote = '';
+
+        if (prevMissedCount < 3) {
+          // Warning 1, 2, or 3
+          const warnNum = prevMissedCount + 1;
+          if (isLateHalfDayArrival) {
+            finalAutoStatus = durationMin >= 270 ? 'half_day' : 'absent';
+          } else {
+            if (durationMin >= 540) {
+              finalAutoStatus = 'completed';
+            } else if (durationMin >= 270) {
+              finalAutoStatus = 'half_day';
+            } else {
+              finalAutoStatus = 'absent';
+            }
+          }
+          autoNote = `Auto-closed: Missed 08:30 PM check-out deadline (Warning ${warnNum}/3).`;
+        } else {
+          // 4th time and above: Half Day penalty
+          finalAutoStatus = durationMin >= 270 ? 'half_day' : 'absent';
+          autoNote = 'Auto-closed: Missed 08:30 PM check-out deadline (4th+ time: Half Day penalty applied).';
+        }
+
         await attendanceModel.update({
           where: { id: rec.id },
           data: {
             checkOut: autoCheckOutTime,
             checkOutLocation: rec.checkInLocation || 'Office / Web Portal',
             workDurationMin: durationMin,
-            status,
-            notes: rec.notes ? `${rec.notes} | ${note}` : note,
+            status: finalAutoStatus,
+            notes: rec.notes ? `${rec.notes} | ${autoNote}` : autoNote,
           },
         }).catch(() => {});
       }

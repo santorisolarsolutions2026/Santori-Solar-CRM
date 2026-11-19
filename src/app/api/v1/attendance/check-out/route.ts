@@ -60,10 +60,10 @@ export async function POST(req: Request) {
     const minutes = parseInt(minutesStr, 10);
     const totalMinutesOfDay = hours * 60 + minutes;
 
-    // Strict 07:30 PM (1170 mins) Lock
-    if (totalMinutesOfDay > 1170) {
+    // Strict 08:30 PM (1230 mins) Lock
+    if (totalMinutesOfDay > 1230) {
       return NextResponse.json(
-        { success: false, message: 'Check-out deadline was 07:30 PM. Manual check-out is now closed. Please contact Admin.' },
+        { success: false, message: 'Check-out deadline was 08:30 PM. Manual check-out is now closed. Please contact Admin.' },
         { status: 400 }
       );
     }
