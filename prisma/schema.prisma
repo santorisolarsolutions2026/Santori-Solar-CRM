@@ -224,6 +224,8 @@ model Order {
   actualCommissionedAt DateTime?
   isSubsidyApplied     Boolean             @default(false)
   actualSubsidyAppliedAt DateTime?
+  latitude             Float?
+  longitude            Float?
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
 

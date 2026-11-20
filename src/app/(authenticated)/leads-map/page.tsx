@@ -40,6 +40,8 @@ import {
   ExternalLink,
   Eye,
   Phone,
+  Camera,
+  Sun,
 } from 'lucide-react';
 
 interface DivisionSummary {
@@ -89,6 +91,36 @@ interface GeoDataResponse {
   };
   states: StateSummary[];
   cities: CitySummary[];
+}
+
+interface PlantLocation {
+  id: number;
+  orderCode: string;
+  connectionNumber: string;
+  systemSizeKw: number;
+  clientType: string;
+  status: string;
+  isInstalled: boolean;
+  actualInstallationAt: string | null;
+  isCommissioned: boolean;
+  actualCommissionedAt: string | null;
+  latitude: number;
+  longitude: number;
+  installationImages?: {
+    id: number;
+    status: string;
+    filePath: string;
+    fileName: string;
+  }[];
+  lead: {
+    id: number;
+    customerName: string;
+    mobile: string;
+    address: string;
+    city: string;
+    division?: string | null;
+    state: string;
+  };
 }
 
 // Exact Real-World GPS Coordinates (Latitude, Longitude) for Single Discrete Localities (OSM Centroids)
@@ -368,8 +400,34 @@ export default function LeadsMapPage() {
   const tileLayersGroupRef = useRef<any>(null);
   const markersGroupRef = useRef<any>(null);
   const targetGroupRef = useRef<any>(null);
+  const plantsGroupRef = useRef<any>(null);
   const inspectCoordRef = useRef<any>(null);
   const appliedStyleRef = useRef<string>('');
+
+  // Installed Plant Locations States
+  const [plants, setPlants] = useState<PlantLocation[]>([]);
+  const [mapMode, setMapMode] = useState<'leads' | 'plants'>('leads');
+  const [plantsLoading, setPlantsLoading] = useState(false);
+  const [selectedPlant, setSelectedPlant] = useState<PlantLocation | null>(null);
+  const [galleryIndex, setGalleryIndex] = useState<number | null>(null);
+
+  // Sort plant photos prioritizing Commissioned > Installation Done > Meter Sealing > Delivered Items
+  const sortedPlantImages = useMemo(() => {
+    if (!selectedPlant?.installationImages || selectedPlant.installationImages.length === 0) return [];
+    const priority: Record<string, number> = {
+      plant_commissioned: 1,
+      installation_done: 2,
+      meter_sealing_paper: 3,
+      delivered_items: 4,
+      in_progress: 5,
+    };
+    return [...selectedPlant.installationImages].sort((a, b) => {
+      const pA = priority[a.status] || 99;
+      const pB = priority[b.status] || 99;
+      if (pA !== pB) return pA - pB;
+      return b.id - a.id;
+    });
+  }, [selectedPlant]);
 
   const canAccessMap =
     user?.role === 'admin' ||
@@ -538,9 +596,9 @@ export default function LeadsMapPage() {
   const [previewTargetCity, setPreviewTargetCity] = useState<string>('');
   const previewCacheRef = useRef<Map<string, any>>(new Map());
 
-  // Lock background scrolling when Quick Assign Modal, Preview Modal, or Fullscreen Map is active
+  // Lock background scrolling when Quick Assign Modal or Preview Modal is active
   useEffect(() => {
-    if (showQuickAssignModal || showPreviewModal || isFullscreenMap) {
+    if (showQuickAssignModal || showPreviewModal) {
       document.body.style.overflow = 'hidden';
       const mainEl = document.querySelector('main');
       if (mainEl) mainEl.style.overflow = 'hidden';
@@ -554,30 +612,51 @@ export default function LeadsMapPage() {
       const mainEl = document.querySelector('main');
       if (mainEl) mainEl.style.overflow = '';
     };
-  }, [showQuickAssignModal, showPreviewModal, isFullscreenMap]);
+  }, [showQuickAssignModal, showPreviewModal]);
 
-  // Fullscreen Map resize and Escape key handlers
+  // Fullscreen map mode body class for true full-screen overlay & backdrop blur
+  useEffect(() => {
+    if (isFullscreenMap) {
+      document.body.classList.add('map-fullscreen-active');
+    } else {
+      document.body.classList.remove('map-fullscreen-active');
+    }
+    return () => {
+      document.body.classList.remove('map-fullscreen-active');
+    };
+  }, [isFullscreenMap]);
+
+  // Fullscreen Map resize, Gallery and Escape key handlers
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isFullscreenMap) {
-        setIsFullscreenMap(false);
+      if (e.key === 'Escape') {
+        if (galleryIndex !== null) {
+          setGalleryIndex(null);
+        } else if (selectedPlant) {
+          setSelectedPlant(null);
+        } else if (isFullscreenMap) {
+          setIsFullscreenMap(false);
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isFullscreenMap]);
+  }, [isFullscreenMap, galleryIndex, selectedPlant]);
 
   useEffect(() => {
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.invalidateSize();
+    }
     const timer1 = setTimeout(() => {
       if (mapInstanceRef.current) {
         mapInstanceRef.current.invalidateSize();
       }
-    }, 100);
+    }, 80);
     const timer2 = setTimeout(() => {
       if (mapInstanceRef.current) {
         mapInstanceRef.current.invalidateSize();
       }
-    }, 300);
+    }, 250);
     return () => {
       clearTimeout(timer1);
       clearTimeout(timer2);
@@ -972,6 +1051,10 @@ export default function LeadsMapPage() {
         const targetGroup = L.layerGroup().addTo(map);
         targetGroupRef.current = targetGroup;
 
+        // Installed Plants layer group
+        const plantsGroup = L.layerGroup().addTo(map);
+        plantsGroupRef.current = plantsGroup;
+
         mapInstanceRef.current = map;
         setMapReady(true);
 
@@ -1021,9 +1104,112 @@ export default function LeadsMapPage() {
     applyTiles();
   }, [mapStyle]);
 
+  // Fetch installed solar plant coordinates
+  useEffect(() => {
+    let active = true;
+    async function fetchPlantLocations() {
+      try {
+        setPlantsLoading(true);
+        const res = await fetch('/api/v1/orders/plant-locations');
+        const json = await res.json();
+        if (active && json.success && Array.isArray(json.data)) {
+          setPlants(json.data);
+        }
+      } catch (err) {
+        console.error('Error fetching plant locations for map:', err);
+      } finally {
+        if (active) setPlantsLoading(false);
+      }
+    }
+    fetchPlantLocations();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Render Solar Plant Markers
+  useEffect(() => {
+    if (!mapReady || !mapInstanceRef.current || !plantsGroupRef.current) return;
+
+    async function renderPlantPins() {
+      const L = (await import('leaflet')).default;
+      const plantsGroup = plantsGroupRef.current;
+      plantsGroup.clearLayers();
+
+      if (mapMode !== 'plants' || plants.length === 0) return;
+
+      const validCoords: [number, number][] = [];
+
+      plants.forEach((plant) => {
+        if (typeof plant.latitude !== 'number' || typeof plant.longitude !== 'number') return;
+        validCoords.push([plant.latitude, plant.longitude]);
+
+        const isComm = plant.isCommissioned;
+        const isSelected = selectedPlant?.id === plant.id;
+        const statusText = isComm ? 'Commissioned' : plant.isInstalled ? 'Installed' : 'In Progress';
+        const badgeBg = isComm ? 'rgba(37, 99, 235, 0.25)' : 'rgba(59, 130, 246, 0.2)';
+        const badgeBorder = isComm ? '#2563EB' : '#3b82f6';
+        const badgeColor = isComm ? '#93c5fd' : '#bfdbfe';
+
+        // Custom Leaflet DivIcon with Electric / Royal Blue solar plant pin styling + Active Highlight
+        const plantIcon = L.divIcon({
+          className: 'custom-solar-plant-marker',
+          html: `
+            <div style="position: relative; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: ${isSelected ? 1000 : 1};">
+              <div style="position: absolute; width: ${isSelected ? '40px' : '34px'}; height: ${isSelected ? '40px' : '34px'}; border-radius: 50%; background: ${isSelected ? 'rgba(37, 99, 235, 0.45)' : 'rgba(37, 99, 235, 0.22)'}; border: ${isSelected ? '2.5px solid #60A5FA' : '1.5px solid #2563EB'}; box-shadow: ${isSelected ? '0 0 16px rgba(59, 130, 246, 0.95), 0 0 0 3px rgba(96, 165, 250, 0.4)' : 'none'}; transition: all 0.2s ease;"></div>
+              <div style="position: relative; width: ${isSelected ? '24px' : '22px'}; height: ${isSelected ? '24px' : '22px'}; border-radius: 50%; background: ${isSelected ? '#1D4ED8' : '#2563EB'}; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 8px rgba(0,0,0,0.5); color: white;">
+                <svg width="${isSelected ? '13' : '12'}" height="${isSelected ? '13' : '12'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+              </div>
+              <span style="position: absolute; bottom: ${isSelected ? '-18px' : '-16px'}; background: ${isSelected ? '#1e3a8a' : 'rgba(15, 23, 42, 0.94)'}; color: ${isSelected ? '#ffffff' : '#93c5fd'}; border: 1px solid ${isSelected ? '#60A5FA' : 'rgba(37, 99, 235, 0.5)'}; font-size: ${isSelected ? '10px' : '9px'}; font-weight: 700; padding: 1px 5px; border-radius: 4px; white-space: nowrap; pointer-events: none; box-shadow: 0 2px 5px rgba(0,0,0,0.5);">
+                ${plant.systemSizeKw}kW
+              </span>
+            </div>
+          `,
+          iconSize: [34, 34],
+          iconAnchor: [17, 17],
+          popupAnchor: [0, -17],
+        });
+
+        const marker = L.marker([plant.latitude, plant.longitude], {
+          icon: plantIcon,
+          title: `${plant.lead.customerName} (${plant.systemSizeKw}kW)`,
+        });
+
+        marker.on('click', () => {
+          setSelectedPlant(plant);
+          if (mapInstanceRef.current) {
+            mapInstanceRef.current.setView([plant.latitude, plant.longitude], Math.max(mapInstanceRef.current.getZoom(), 14));
+          }
+        });
+
+        marker.addTo(plantsGroup);
+      });
+
+      // Fit map bounds to show both Varanasi and Prayagraj plants together (initial load only)
+      if (validCoords.length > 0 && mapInstanceRef.current && !selectedPlant) {
+        if (validCoords.length === 1) {
+          mapInstanceRef.current.setView(validCoords[0], 13);
+        } else {
+          const bounds = L.latLngBounds(validCoords);
+          mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+        }
+      }
+    }
+
+    renderPlantPins();
+  }, [mapReady, mapMode, plants, selectedPlant?.id]);
+
   // Update Leaflet Markers whenever selectedCity, selectedLocality or selectedLocalities change
   useEffect(() => {
     if (!mapReady || !mapInstanceRef.current || !markersGroupRef.current) return;
+
+    // When in plants mode, hide leads completely
+    if (mapMode === 'plants') {
+      markersGroupRef.current.clearLayers();
+      return;
+    }
 
     const currentCity = selectedCity || (data?.cities && data.cities.length > 0 ? data.cities[0] : null);
     if (!currentCity) return;
@@ -1239,7 +1425,7 @@ export default function LeadsMapPage() {
     }
 
     renderPins();
-  }, [selectedCity, selectedLocality, selectedLocalities, data, mapReady]);
+  }, [selectedCity, selectedLocality, selectedLocalities, data, mapReady, mapMode]);
 
   const toggleState = (stateName: string) => {
     setExpandedStates((prev) => ({ ...prev, [stateName]: !prev[stateName] }));
@@ -1368,6 +1554,11 @@ export default function LeadsMapPage() {
       .filter((d: DivisionSummary) => getLocalityGPS(d.name) === null)
       .reduce((sum: number, d: DivisionSummary) => sum + d.total, 0) || 0;
 
+  // Total Solar Plants & Total Energy Capacity calculations
+  const totalSolarPlants = plants.length;
+  const totalCommissionedCount = plants.filter((p) => p.isCommissioned).length;
+  const totalEnergyKw = plants.reduce((sum, p) => sum + (p.systemSizeKw || 0), 0);
+
   return (
     <div 
       className="-m-4 sm:-m-6 p-4 sm:p-6 min-h-[calc(100vh-4rem)] space-y-6 pb-16 transition-all"
@@ -1471,7 +1662,7 @@ export default function LeadsMapPage() {
       </div>
 
       {/* 2. Top Summary KPI Cards (Overlapping Floating Cards - Light/Dark Adaptive) */}
-      <div className="-mt-9 sm:-mt-11 relative z-20 px-2 sm:px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <div className="-mt-9 sm:-mt-11 relative z-20 px-2 sm:px-4 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2.5 sm:gap-3">
         {/* Card 1: Total Leads Pool */}
         <div className="relative rounded-2xl group cursor-pointer select-none active:scale-[0.98] active:translate-y-1 transition-all duration-300">
           <div className="absolute -inset-1 rounded-2xl overflow-hidden blur-xl opacity-0 group-hover:opacity-65 dark:group-hover:opacity-75 transition-opacity duration-300 pointer-events-none">
@@ -1481,26 +1672,26 @@ export default function LeadsMapPage() {
             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none overflow-hidden">
               <div className="rainbow-conic-glow" />
             </div>
-            <div className="relative z-10 w-full h-full bg-[var(--bg-card)] dark:bg-[#0B1015]/95 group-hover:bg-white/85 dark:group-hover:bg-[#0B1015]/75 backdrop-blur-xl rounded-[14.5px] p-4 sm:p-5 flex flex-col justify-between transition-colors duration-300">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-[var(--text-secondary)] dark:text-slate-400 uppercase tracking-wider">
+            <div className="relative z-10 w-full h-full bg-[var(--bg-card)] dark:bg-[#0B1015]/95 group-hover:bg-white/85 dark:group-hover:bg-[#0B1015]/75 backdrop-blur-xl rounded-[14.5px] p-3 sm:p-3.5 xl:p-3.5 2xl:p-4 flex flex-col justify-between transition-colors duration-300 min-w-0">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[10px] sm:text-[11px] font-semibold text-[var(--text-secondary)] dark:text-slate-400 uppercase tracking-normal sm:tracking-wider truncate">
                   Total Leads Pool
                 </span>
-                <Globe2 className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+                <Globe2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-600 dark:text-cyan-400 shrink-0" />
               </div>
               
-              <div className="my-2">
-                <div className="text-2xl sm:text-3xl font-black font-mono text-[var(--text-primary)] dark:text-white tracking-tight">
+              <div className="my-1.5 sm:my-2">
+                <div className="text-xl sm:text-2xl font-black font-mono text-[var(--text-primary)] dark:text-white tracking-tight truncate">
                   {(summary.totalLeads || 0).toLocaleString()}
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-2 border-t border-slate-400 dark:border-white/15">
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-200 dark:bg-cyan-500/15 dark:text-cyan-300 dark:border-cyan-500/20">
+              <div className="flex items-center justify-between gap-1 pt-2 border-t border-slate-400/50 dark:border-white/15 min-w-0">
+                <span className="text-[9.5px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-200 dark:bg-cyan-500/15 dark:text-cyan-300 dark:border-cyan-500/20 shrink-0">
                   Live Pool
                 </span>
-                <span className="text-[11px] text-[var(--text-secondary)] dark:text-slate-400 truncate">
-                  Across {summary.totalCities || 0} operational districts
+                <span className="text-[10px] sm:text-[11px] text-[var(--text-secondary)] dark:text-slate-400 truncate" title={`Across ${summary.totalCities || 0} operational districts`}>
+                  {summary.totalCities || 0} Districts
                 </span>
               </div>
             </div>
@@ -1516,26 +1707,26 @@ export default function LeadsMapPage() {
             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none overflow-hidden">
               <div className="rainbow-conic-glow" />
             </div>
-            <div className="relative z-10 w-full h-full bg-[var(--bg-card)] dark:bg-[#0B1015]/95 group-hover:bg-white/85 dark:group-hover:bg-[#0B1015]/75 backdrop-blur-xl rounded-[14.5px] p-4 sm:p-5 flex flex-col justify-between transition-colors duration-300">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+            <div className="relative z-10 w-full h-full bg-[var(--bg-card)] dark:bg-[#0B1015]/95 group-hover:bg-white/85 dark:group-hover:bg-[#0B1015]/75 backdrop-blur-xl rounded-[14.5px] p-3 sm:p-3.5 xl:p-3.5 2xl:p-4 flex flex-col justify-between transition-colors duration-300 min-w-0">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[10px] sm:text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-normal sm:tracking-wider truncate">
                   Active Pipeline
                 </span>
-                <div className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]"></div>
+                <div className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)] shrink-0"></div>
               </div>
 
-              <div className="my-2">
-                <div className="text-2xl sm:text-3xl font-black font-mono text-emerald-700 dark:text-emerald-400 tracking-tight">
+              <div className="my-1.5 sm:my-2">
+                <div className="text-xl sm:text-2xl font-black font-mono text-emerald-700 dark:text-emerald-400 tracking-tight truncate">
                   {(summary.totalActive || summary.totalAssigned || 0).toLocaleString()}
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-2 border-t border-slate-400 dark:border-white/15">
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/20">
-                  ↗ {summary.activePercentage != null ? summary.activePercentage : (summary.totalLeads > 0 ? ((summary.totalActive / summary.totalLeads) * 100).toFixed(2) : '0')}%
+              <div className="flex items-center justify-between gap-1 pt-2 border-t border-slate-400/50 dark:border-white/15 min-w-0">
+                <span className="text-[9.5px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/20 shrink-0">
+                  ↗ {summary.activePercentage != null ? summary.activePercentage : (summary.totalLeads > 0 ? ((summary.totalActive / summary.totalLeads) * 100).toFixed(1) : '0')}%
                 </span>
-                <span className="text-[11px] text-[var(--text-secondary)] dark:text-slate-400 truncate">
-                  in active process
+                <span className="text-[10px] sm:text-[11px] text-[var(--text-secondary)] dark:text-slate-400 truncate" title="In active process">
+                  In Pipeline
                 </span>
               </div>
             </div>
@@ -1551,26 +1742,26 @@ export default function LeadsMapPage() {
             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none overflow-hidden">
               <div className="rainbow-conic-glow" />
             </div>
-            <div className="relative z-10 w-full h-full bg-[var(--bg-card)] dark:bg-[#0B1015]/95 group-hover:bg-white/85 dark:group-hover:bg-[#0B1015]/75 backdrop-blur-xl rounded-[14.5px] p-4 sm:p-5 flex flex-col justify-between transition-colors duration-300">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-amber-700 dark:text-yellow-400 uppercase tracking-wider">
+            <div className="relative z-10 w-full h-full bg-[var(--bg-card)] dark:bg-[#0B1015]/95 group-hover:bg-white/85 dark:group-hover:bg-[#0B1015]/75 backdrop-blur-xl rounded-[14.5px] p-3 sm:p-3.5 xl:p-3.5 2xl:p-4 flex flex-col justify-between transition-colors duration-300 min-w-0">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[10px] sm:text-[11px] font-semibold text-amber-700 dark:text-yellow-400 uppercase tracking-normal sm:tracking-wider truncate">
                   Free (Unassigned)
                 </span>
-                <div className="w-2 h-2 rounded-full bg-amber-500 dark:bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.8)]"></div>
+                <div className="w-2 h-2 rounded-full bg-amber-500 dark:bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.8)] shrink-0"></div>
               </div>
 
-              <div className="my-2">
-                <div className="text-2xl sm:text-3xl font-black font-mono text-amber-700 dark:text-yellow-400 tracking-tight">
+              <div className="my-1.5 sm:my-2">
+                <div className="text-xl sm:text-2xl font-black font-mono text-amber-700 dark:text-yellow-400 tracking-tight truncate">
                   {(summary.totalUnassigned || 0).toLocaleString()}
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-2 border-t border-slate-400 dark:border-white/15">
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 dark:bg-yellow-500/15 dark:text-yellow-300 dark:border-yellow-500/20">
-                  ⚡ {summary.unassignedPercentage != null ? summary.unassignedPercentage : (summary.totalLeads > 0 ? ((summary.totalUnassigned / summary.totalLeads) * 100).toFixed(2) : '0')}%
+              <div className="flex items-center justify-between gap-1 pt-2 border-t border-slate-400/50 dark:border-white/15 min-w-0">
+                <span className="text-[9.5px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 dark:bg-yellow-500/15 dark:text-yellow-300 dark:border-yellow-500/20 shrink-0">
+                  ⚡ {summary.unassignedPercentage != null ? summary.unassignedPercentage : (summary.totalLeads > 0 ? ((summary.totalUnassigned / summary.totalLeads) * 100).toFixed(1) : '0')}%
                 </span>
-                <span className="text-[11px] text-[var(--text-secondary)] dark:text-slate-400 truncate">
-                  ready for allocation
+                <span className="text-[10px] sm:text-[11px] text-[var(--text-secondary)] dark:text-slate-400 truncate" title="Ready for allocation">
+                  Unassigned
                 </span>
               </div>
             </div>
@@ -1586,26 +1777,102 @@ export default function LeadsMapPage() {
             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none overflow-hidden">
               <div className="rainbow-conic-glow" />
             </div>
-            <div className="relative z-10 w-full h-full bg-[var(--bg-card)] dark:bg-[#0B1015]/95 group-hover:bg-white/85 dark:group-hover:bg-[#0B1015]/75 backdrop-blur-xl rounded-[14.5px] p-4 sm:p-5 flex flex-col justify-between transition-colors duration-300">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-rose-700 dark:text-red-400 uppercase tracking-wider">
+            <div className="relative z-10 w-full h-full bg-[var(--bg-card)] dark:bg-[#0B1015]/95 group-hover:bg-white/85 dark:group-hover:bg-[#0B1015]/75 backdrop-blur-xl rounded-[14.5px] p-3 sm:p-3.5 xl:p-3.5 2xl:p-4 flex flex-col justify-between transition-colors duration-300 min-w-0">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[10px] sm:text-[11px] font-semibold text-rose-700 dark:text-red-400 uppercase tracking-normal sm:tracking-wider truncate">
                   Inactive / Closed
                 </span>
-                <div className="w-2 h-2 rounded-full bg-rose-500 dark:bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]"></div>
+                <div className="w-2 h-2 rounded-full bg-rose-500 dark:bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] shrink-0"></div>
               </div>
 
-              <div className="my-2">
-                <div className="text-2xl sm:text-3xl font-black font-mono text-rose-700 dark:text-red-400 tracking-tight">
+              <div className="my-1.5 sm:my-2">
+                <div className="text-xl sm:text-2xl font-black font-mono text-rose-700 dark:text-red-400 tracking-tight truncate">
                   {(summary.totalInactive || 0).toLocaleString()}
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-2 border-t border-slate-400 dark:border-white/15">
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 dark:bg-red-500/15 dark:text-red-300 dark:border-red-500/20">
-                  ↘ {summary.inactivePercentage != null ? summary.inactivePercentage : (summary.totalLeads > 0 ? ((summary.totalInactive / summary.totalLeads) * 100).toFixed(2) : '0')}%
+              <div className="flex items-center justify-between gap-1 pt-2 border-t border-slate-400/50 dark:border-white/15 min-w-0">
+                <span className="text-[9.5px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 dark:bg-red-500/15 dark:text-red-300 dark:border-red-500/20 shrink-0">
+                  ↘ {summary.inactivePercentage != null ? summary.inactivePercentage : (summary.totalLeads > 0 ? ((summary.totalInactive / summary.totalLeads) * 100).toFixed(1) : '0')}%
                 </span>
-                <span className="text-[11px] text-[var(--text-secondary)] dark:text-slate-400 truncate">
-                  not interested / disqualified
+                <span className="text-[10px] sm:text-[11px] text-[var(--text-secondary)] dark:text-slate-400 truncate" title="Not interested / disqualified">
+                  Disqualified
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 5: Total Solar Plants */}
+        <div 
+          onClick={() => setMapMode('plants')}
+          className="relative rounded-2xl group cursor-pointer select-none active:scale-[0.98] active:translate-y-1 transition-all duration-300"
+        >
+          <div className="absolute -inset-1 rounded-2xl overflow-hidden blur-xl opacity-0 group-hover:opacity-65 dark:group-hover:opacity-75 transition-opacity duration-300 pointer-events-none">
+            <div className="rainbow-conic-glow" />
+          </div>
+          <div className="relative z-10 w-full h-full rounded-2xl overflow-hidden border-2 border-black dark:border-white/10 group-hover:border-transparent p-[1.5px] transition-colors duration-300 shadow-[0_16px_32px_-6px_rgba(0,0,0,0.28),0_8px_16px_-4px_rgba(0,0,0,0.18)] dark:shadow-[0_20px_40px_-8px_rgba(0,0,0,0.85),0_8px_16px_-4px_rgba(0,0,0,0.65)]">
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none overflow-hidden">
+              <div className="rainbow-conic-glow" />
+            </div>
+            <div className="relative z-10 w-full h-full bg-[var(--bg-card)] dark:bg-[#0B1015]/95 group-hover:bg-white/85 dark:group-hover:bg-[#0B1015]/75 backdrop-blur-xl rounded-[14.5px] p-3 sm:p-3.5 xl:p-3.5 2xl:p-4 flex flex-col justify-between transition-colors duration-300 min-w-0">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[10px] sm:text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-normal sm:tracking-wider truncate">
+                  Solar Plants
+                </span>
+                <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              </div>
+
+              <div className="my-1.5 sm:my-2">
+                <div className="text-xl sm:text-2xl font-black font-mono text-[var(--text-primary)] dark:text-white tracking-tight truncate">
+                  {totalSolarPlants.toLocaleString()}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-1 pt-2 border-t border-slate-400/50 dark:border-white/15 min-w-0">
+                <span className="text-[9.5px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/20 shrink-0">
+                  {totalCommissionedCount} Active
+                </span>
+                <span className="text-[10px] sm:text-[11px] text-[var(--text-secondary)] dark:text-slate-400 truncate" title="Commissioned & installed sites">
+                  Installed
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 6: Total Energy (Capacity) */}
+        <div 
+          onClick={() => setMapMode('plants')}
+          className="relative rounded-2xl group cursor-pointer select-none active:scale-[0.98] active:translate-y-1 transition-all duration-300"
+        >
+          <div className="absolute -inset-1 rounded-2xl overflow-hidden blur-xl opacity-0 group-hover:opacity-65 dark:group-hover:opacity-75 transition-opacity duration-300 pointer-events-none">
+            <div className="rainbow-conic-glow" />
+          </div>
+          <div className="relative z-10 w-full h-full rounded-2xl overflow-hidden border-2 border-black dark:border-white/10 group-hover:border-transparent p-[1.5px] transition-colors duration-300 shadow-[0_16px_32px_-6px_rgba(0,0,0,0.28),0_8px_16px_-4px_rgba(0,0,0,0.18)] dark:shadow-[0_20px_40px_-8px_rgba(0,0,0,0.85),0_8px_16px_-4px_rgba(0,0,0,0.65)]">
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none overflow-hidden">
+              <div className="rainbow-conic-glow" />
+            </div>
+            <div className="relative z-10 w-full h-full bg-[var(--bg-card)] dark:bg-[#0B1015]/95 group-hover:bg-white/85 dark:group-hover:bg-[#0B1015]/75 backdrop-blur-xl rounded-[14.5px] p-3 sm:p-3.5 xl:p-3.5 2xl:p-4 flex flex-col justify-between transition-colors duration-300 min-w-0">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[10px] sm:text-[11px] font-semibold text-cyan-700 dark:text-cyan-400 uppercase tracking-normal sm:tracking-wider truncate">
+                  Total Energy
+                </span>
+                <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-600 dark:text-cyan-400 shrink-0" />
+              </div>
+
+              <div className="my-1.5 sm:my-2">
+                <div className="text-xl sm:text-2xl font-black font-mono text-cyan-700 dark:text-cyan-400 tracking-tight truncate">
+                  {totalEnergyKw} <span className="text-sm sm:text-base font-bold">kW</span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-1 pt-2 border-t border-slate-400/50 dark:border-white/15 min-w-0">
+                <span className="text-[9.5px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-200 dark:bg-cyan-500/15 dark:text-cyan-300 dark:border-cyan-500/20 shrink-0">
+                  ⚡ Capacity
+                </span>
+                <span className="text-[10px] sm:text-[11px] text-[var(--text-secondary)] dark:text-slate-400 truncate" title="Total grid-connected solar capacity">
+                  On-Grid
                 </span>
               </div>
             </div>
@@ -1615,141 +1882,199 @@ export default function LeadsMapPage() {
 
 
 
+      {/* Backdrop when in fullscreen map view */}
+      {isFullscreenMap && (
+        <div
+          onClick={() => setIsFullscreenMap(false)}
+          className="fixed inset-0 z-[9985] bg-black/80 backdrop-blur-md transition-opacity"
+        />
+      )}
+
       {/* 3. Main Workspace: Real 2D Interactive Map (8 Cols) + Hierarchy Tree Explorer (4 Cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left: 2D Real Interactive Map Surface (Expanded / Fullscreen) */}
         <div
           className={`transition-all ${
             isFullscreenMap
-              ? 'fixed inset-0 z-[9990] bg-[var(--bg-main)] dark:bg-[#0B1015] p-3 sm:p-4 flex flex-col h-[100dvh] w-full max-h-[100dvh] max-w-[100vw] overflow-hidden box-border'
+              ? 'fixed inset-2 sm:inset-4 md:inset-6 z-[9990] bg-[var(--bg-card)] dark:bg-[#0B1015] rounded-2xl border-2 border-black/40 dark:border-white/20 shadow-[0_25px_70px_rgba(0,0,0,0.85)] flex flex-col overflow-hidden box-border'
               : 'lg:col-span-8 bg-[var(--bg-card)] dark:bg-[#0B1015]/95 border-2 border-black dark:border-white/10 rounded-2xl p-4 sm:p-5 shadow-[0_22px_48px_-10px_rgba(0,0,0,0.35),0_10px_20px_-6px_rgba(0,0,0,0.2),inset_0_1.5px_0_rgba(255,255,255,0.45),inset_0_-2px_4px_rgba(0,0,0,0.18)] dark:shadow-[0_28px_60px_-12px_rgba(0,0,0,0.9),0_14px_26px_-6px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.2),inset_0_-2px_4px_rgba(0,0,0,0.7)] flex flex-col min-h-[600px]'
           }`}
         >
           {/* Top Control Bar with City Quick Switcher & Zoom */}
-          <div className={`flex flex-wrap items-center justify-between gap-2.5 border-b border-black/30 dark:border-white/10 shrink-0 ${
-            isFullscreenMap ? 'pb-2.5 mb-2.5' : 'pb-3 mb-3'
+          <div className={`flex flex-col gap-2.5 shrink-0 ${
+            isFullscreenMap 
+              ? 'px-3 sm:px-4 py-2.5 bg-white/95 dark:bg-[#0B1015]/95 backdrop-blur-md border-b border-slate-300 dark:border-white/10 shadow-xs z-30' 
+              : 'pb-3 mb-3 border-b border-black/30 dark:border-white/10'
           }`}>
-            {/* City Selector Pills */}
-            <div className="flex items-center gap-2 overflow-x-auto scrollbar-thin">
-              <span className="text-[10px] uppercase font-bold text-[var(--text-secondary)] dark:text-slate-400 shrink-0 flex items-center gap-1">
-                <MapPin className="w-3 h-3 text-teal-600 dark:text-cyan-400" /> City Hub:
-              </span>
-              {(data?.cities || []).slice(0, 8).map((ct) => {
-                const isActive = selectedCity?.name.toLowerCase() === ct.name.toLowerCase();
-                return (
+            {/* Top row: Map View Mode Switcher, Layer Mode, Zoom & Reset Controls */}
+            <div className="flex flex-wrap items-center justify-between gap-2.5 w-full">
+              {/* Map View Mode Switcher: Leads Distribution vs Installed Solar Plants */}
+              <div className="flex items-center bg-slate-100 dark:bg-black/50 p-1 rounded-xl border border-slate-300 dark:border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setMapMode('leads')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
+                    mapMode === 'leads'
+                      ? 'bg-white dark:bg-white/15 text-slate-900 dark:text-white font-bold shadow-xs border border-slate-300/80 dark:border-white/15'
+                      : 'text-slate-700 dark:text-slate-400 hover:text-black dark:hover:text-slate-200'
+                  }`}
+                  title="Show Leads Distribution on Map"
+                >
+                  <MapPin className={`w-3.5 h-3.5 ${mapMode === 'leads' ? 'text-teal-600 dark:text-cyan-400' : 'text-slate-600 dark:text-slate-400'}`} />
+                  <span>Leads</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMapMode('plants')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
+                    mapMode === 'plants'
+                      ? 'bg-white dark:bg-white/15 text-slate-900 dark:text-white font-bold shadow-xs border border-slate-300/80 dark:border-white/15'
+                      : 'text-slate-700 dark:text-slate-400 hover:text-black dark:hover:text-slate-200'
+                  }`}
+                  title="Show Installed Solar Plants on Map"
+                >
+                  <Zap className={`w-3.5 h-3.5 ${mapMode === 'plants' ? 'text-teal-600 dark:text-cyan-400' : 'text-slate-600 dark:text-slate-400'}`} />
+                  <span>Solar Plants {plants.length > 0 ? `(${plants.length})` : ''}</span>
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                {/* Map Layer Mode Selector */}
+                <div className="flex items-center bg-slate-100 dark:bg-black/50 p-1 rounded-xl border border-slate-300 dark:border-white/10">
                   <button
-                    key={ct.name}
-                    onClick={() => handleCitySelect(ct)}
-                    className={`px-3 py-1.5 rounded-xl text-xs whitespace-nowrap transition-all font-medium flex items-center gap-1.5 cursor-pointer ${
-                      isActive
-                        ? 'bg-black hover:bg-slate-800 text-white font-bold shadow-sm border border-black dark:border-white/40'
-                        : 'bg-[var(--bg-main)] text-[var(--text-secondary)] border border-black hover:bg-slate-200/60 hover:text-[var(--text-primary)] dark:bg-black/50 dark:text-slate-300 dark:border-white/10 dark:hover:bg-white/10 dark:hover:text-white'
+                    onClick={() => setMapStyle('satellite')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
+                      mapStyle === 'satellite'
+                        ? 'bg-white dark:bg-white/15 text-slate-900 dark:text-white font-bold shadow-xs border border-slate-300/80 dark:border-white/15'
+                        : 'text-slate-700 dark:text-slate-400 hover:text-black dark:hover:text-slate-200'
                     }`}
+                    title="Google Maps Satellite Hybrid View"
                   >
-                    <span>{ct.name}</span>
-                    <span className={`font-mono text-[10px] ${isActive ? 'text-white/80 font-bold' : 'text-[var(--text-muted)] dark:text-slate-400'}`}>
-                      ({ct.total.toLocaleString()})
-                    </span>
+                    <Globe2 className={`w-3.5 h-3.5 ${mapStyle === 'satellite' ? 'text-teal-600 dark:text-cyan-400' : 'text-slate-600 dark:text-slate-400'}`} />
+                    <span>Satellite</span>
                   </button>
-                );
-              })}
-            </div>
+                  <button
+                    onClick={() => setMapStyle('street')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
+                      mapStyle === 'street'
+                        ? 'bg-white dark:bg-white/15 text-slate-900 dark:text-white font-bold shadow-xs border border-slate-300/80 dark:border-white/15'
+                        : 'text-slate-700 dark:text-slate-400 hover:text-black dark:hover:text-slate-200'
+                    }`}
+                    title="Google Maps Street View"
+                  >
+                    <Layers className={`w-3.5 h-3.5 ${mapStyle === 'street' ? 'text-teal-600 dark:text-cyan-400' : 'text-slate-600 dark:text-slate-400'}`} />
+                    <span>Google Street</span>
+                  </button>
+                </div>
 
-            <div className="flex items-center gap-2 shrink-0">
-              {/* Map Layer Mode Selector */}
-              <div className="flex items-center bg-[var(--bg-main)] dark:bg-black/50 p-1 rounded-xl border border-black dark:border-white/10">
-                <button
-                  onClick={() => setMapStyle('satellite')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
-                    mapStyle === 'satellite'
-                      ? 'bg-[var(--bg-card)] dark:bg-white/15 text-[var(--text-primary)] dark:text-white font-semibold shadow-xs border border-black/40 dark:border-white/15'
-                      : 'text-[var(--text-secondary)] dark:text-slate-400 hover:text-[var(--text-primary)] dark:hover:text-slate-200'
-                  }`}
-                  title="Google Maps Satellite Hybrid View"
-                >
-                  <Globe2 className={`w-3.5 h-3.5 ${mapStyle === 'satellite' ? 'text-teal-600 dark:text-cyan-400' : 'text-[var(--text-secondary)] dark:text-slate-400'}`} />
-                  <span>Satellite</span>
-                </button>
-                <button
-                  onClick={() => setMapStyle('street')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
-                    mapStyle === 'street'
-                      ? 'bg-[var(--bg-card)] dark:bg-white/15 text-[var(--text-primary)] dark:text-white font-semibold shadow-xs border border-black/40 dark:border-white/15'
-                      : 'text-[var(--text-secondary)] dark:text-slate-400 hover:text-[var(--text-primary)] dark:hover:text-slate-200'
-                  }`}
-                  title="Google Maps Street View"
-                >
-                  <Layers className={`w-3.5 h-3.5 ${mapStyle === 'street' ? 'text-teal-600 dark:text-cyan-400' : 'text-[var(--text-secondary)] dark:text-slate-400'}`} />
-                  <span>Google Street</span>
-                </button>
-              </div>
-
-              {/* Map Zoom & Reset Controls */}
-              <div className="flex items-center gap-1 bg-[var(--bg-main)] dark:bg-black/50 p-1 rounded-xl border border-black dark:border-white/10">
-                <button
-                  type="button"
-                  onClick={zoomOut}
-                  aria-label="Zoom out"
-                  className="p-1 hover:bg-[var(--bg-card)] dark:hover:bg-white/10 text-[var(--text-secondary)] dark:text-slate-300 hover:text-[var(--text-primary)] dark:hover:text-white rounded-lg transition-all cursor-pointer"
-                  title="Zoom Out"
-                >
-                  <ZoomOut className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={zoomIn}
-                  aria-label="Zoom in"
-                  className="p-1 hover:bg-[var(--bg-card)] dark:hover:bg-white/10 text-[var(--text-secondary)] dark:text-slate-300 hover:text-[var(--text-primary)] dark:hover:text-white rounded-lg transition-all cursor-pointer"
-                  title="Zoom In"
-                >
-                  <ZoomIn className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={resetView}
-                  aria-label="Reset map view"
-                  className="text-[10px] px-2 py-0.5 text-teal-600 dark:text-cyan-400 hover:text-teal-700 dark:hover:text-cyan-300 font-semibold cursor-pointer"
-                  title="Reset View"
-                >
-                  Reset
-                </button>
-                <div className="w-px h-3 bg-[var(--border-color)] dark:bg-white/20 mx-0.5" />
-                <button
-                  type="button"
-                  onClick={() => setIsFullscreenMap((prev) => !prev)}
-                  aria-label={isFullscreenMap ? 'Exit Full Screen' : 'View Full Screen'}
-                  className={`p-1 rounded-lg transition-all cursor-pointer ${
-                    isFullscreenMap
-                      ? 'bg-teal-500/15 text-teal-700 dark:bg-cyan-500/20 dark:text-cyan-300 hover:bg-teal-500/25 dark:hover:bg-cyan-500/30'
-                      : 'hover:bg-[var(--bg-card)] dark:hover:bg-white/10 text-[var(--text-secondary)] dark:text-slate-300 hover:text-[var(--text-primary)] dark:hover:text-white'
-                  }`}
-                  title={isFullscreenMap ? 'Exit Full Screen (Esc)' : 'View Full Screen'}
-                >
-                  {isFullscreenMap ? (
-                    <Minimize2 className="w-3.5 h-3.5" />
-                  ) : (
-                    <Maximize2 className="w-3.5 h-3.5" />
-                  )}
-                </button>
+                {/* Map Zoom & Reset Controls */}
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-black/50 p-1 rounded-xl border border-slate-300 dark:border-white/10">
+                  <button
+                    type="button"
+                    onClick={zoomOut}
+                    aria-label="Zoom out"
+                    className="p-1 hover:bg-white dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 hover:text-black dark:hover:text-white rounded-lg transition-all cursor-pointer"
+                    title="Zoom Out"
+                  >
+                    <ZoomOut className="w-3.5 h-3.5 text-slate-700 dark:text-slate-300" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={zoomIn}
+                    aria-label="Zoom in"
+                    className="p-1 hover:bg-white dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 hover:text-black dark:hover:text-white rounded-lg transition-all cursor-pointer"
+                    title="Zoom In"
+                  >
+                    <ZoomIn className="w-3.5 h-3.5 text-slate-700 dark:text-slate-300" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={resetView}
+                    aria-label="Reset map view"
+                    className="text-[10px] px-2 py-0.5 text-teal-600 dark:text-cyan-400 hover:text-teal-700 dark:hover:text-cyan-300 font-semibold cursor-pointer"
+                    title="Reset View"
+                  >
+                    Reset
+                  </button>
+                  <div className="w-px h-3 bg-slate-300 dark:bg-white/20 mx-0.5" />
+                  <button
+                    type="button"
+                    onClick={() => setIsFullscreenMap((prev) => !prev)}
+                    aria-label={isFullscreenMap ? 'Exit Full Screen' : 'View Full Screen'}
+                    className={`rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                      isFullscreenMap
+                        ? 'px-2.5 py-1 text-xs font-bold bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 dark:bg-rose-500/20 dark:text-rose-300 dark:border-rose-500/30'
+                        : 'p-1 hover:bg-white dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 hover:text-black dark:hover:text-white'
+                    }`}
+                    title={isFullscreenMap ? 'Exit Full Screen (Esc)' : 'View Full Screen'}
+                  >
+                    {isFullscreenMap ? (
+                      <>
+                        <Minimize2 className="w-3.5 h-3.5 text-rose-700 dark:text-rose-300" />
+                        <span className="text-[11px] font-semibold text-rose-700 dark:text-rose-300">Exit</span>
+                      </>
+                    ) : (
+                      <Maximize2 className="w-3.5 h-3.5 text-slate-700 dark:text-slate-300" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
+
+            {/* Bottom row: City Selector Pills (Hidden in Solar Plants Mode) */}
+            {mapMode === 'leads' && (
+              <div className="flex items-center gap-2 overflow-x-auto scrollbar-thin w-full">
+                <span className="text-[10px] uppercase font-bold text-slate-700 dark:text-slate-400 shrink-0 flex items-center gap-1">
+                  <MapPin className="w-3 h-3 text-teal-600 dark:text-cyan-400" /> City Hub:
+                </span>
+                {(data?.cities || []).slice(0, 8).map((ct) => {
+                  const isActive = selectedCity?.name.toLowerCase() === ct.name.toLowerCase();
+                  return (
+                    <button
+                      key={ct.name}
+                      onClick={() => handleCitySelect(ct)}
+                      className={`px-3 py-1.5 rounded-xl text-xs whitespace-nowrap transition-all font-medium flex items-center gap-1.5 cursor-pointer ${
+                        isActive
+                          ? 'bg-black hover:bg-slate-800 text-white font-bold shadow-sm border border-black dark:border-white/40'
+                          : 'bg-white hover:bg-slate-50 border border-slate-300 dark:bg-black/50 dark:border-white/10 dark:hover:bg-white/10 shadow-2xs'
+                      }`}
+                    >
+                      <span
+                        className={isActive ? 'text-white-force !text-white font-bold' : 'text-slate-900 dark:text-slate-200 font-semibold'}
+                        style={isActive ? { color: '#FFFFFF' } : undefined}
+                      >
+                        {ct.name}
+                      </span>
+                      <span
+                        className={`font-mono text-[10px] ${isActive ? 'text-white-force !text-white/80 font-bold' : 'text-slate-600 dark:text-slate-400 font-medium'}`}
+                        style={isActive ? { color: 'rgba(255, 255, 255, 0.85)' } : undefined}
+                      >
+                        ({ct.total.toLocaleString()})
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Real Leaflet 2D Map Container */}
-          <div className={`relative rounded-2xl border border-black dark:border-white/10 overflow-hidden shadow-md dark:shadow-2xl bg-slate-100 dark:bg-slate-950 ${
-            isFullscreenMap ? 'flex-1 min-h-0 w-full' : 'flex-1 min-h-[460px] w-full'
+          <div className={`relative overflow-hidden bg-slate-100 dark:bg-slate-950 ${
+            isFullscreenMap 
+              ? 'flex-1 min-h-[380px] w-full border-b border-slate-300 dark:border-white/10' 
+              : 'rounded-2xl border border-black dark:border-white/10 shadow-md dark:shadow-2xl flex-1 min-h-[460px] w-full'
           }`}>
             {/* Map Canvas */}
             <div ref={mapContainerRef} className="w-full h-full min-h-0 z-10 bg-slate-100 dark:bg-slate-950" />
 
             {/* Real GPS Info Overlay */}
             <div className="absolute top-3 left-3 z-20 pointer-events-none bg-white/95 dark:bg-black/80 border border-black dark:border-white/15 text-[var(--text-primary)] dark:text-white px-3 py-1.5 rounded-xl text-[11px] shadow-lg dark:shadow-2xl backdrop-blur-md flex items-center gap-2 font-mono">
-              <span className="w-2.5 h-2.5 rounded-full bg-teal-500 dark:bg-cyan-400 animate-pulse shadow-[0_0_8px_rgba(20,184,166,0.8)] dark:shadow-[0_0_8px_rgba(34,211,238,0.8)]"></span>
+              <span className={`w-2.5 h-2.5 rounded-full ${mapMode === 'plants' ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]' : 'bg-teal-500 dark:bg-cyan-400 animate-pulse shadow-[0_0_8px_rgba(20,184,166,0.8)] dark:shadow-[0_0_8px_rgba(34,211,238,0.8)]'}`}></span>
               <span className="font-semibold text-slate-800 dark:text-slate-100">
                 {mapStyle === 'satellite'
                   ? 'Google Satellite'
                   : 'Google Street'}
-                : {selectedCity ? selectedCity.name : 'Varanasi'}
+                : {mapMode === 'plants' ? 'Solar Plants' : (selectedCity ? selectedCity.name : 'Varanasi')}
               </span>
             </div>
 
@@ -1786,10 +2111,11 @@ export default function LeadsMapPage() {
                 <button
                   type="submit"
                   aria-label="Locate exact coordinates"
-                  className="px-3 py-1 bg-gradient-to-r from-teal-600 to-cyan-600 hover:brightness-110 text-white text-xs font-bold rounded-lg shadow-sm transition-all flex items-center gap-1 cursor-pointer shrink-0 ml-1"
+                  className="px-3 py-1 bg-teal-600 hover:bg-teal-500 text-white-force !text-white text-xs font-bold rounded-lg shadow-sm transition-all flex items-center gap-1 cursor-pointer shrink-0 ml-1"
+                  style={{ backgroundColor: '#0D9488', color: '#FFFFFF' }}
                   title="Locate Exact Coordinates"
                 >
-                  <span>Locate</span>
+                  <span className="text-white-force !text-white font-bold" style={{ color: '#FFFFFF' }}>Locate</span>
                 </button>
               </form>
               {coordError && (
@@ -1860,87 +2186,248 @@ export default function LeadsMapPage() {
           </div>
 
           {/* Selected Locality Detail Panel & Unmapped Info */}
-          {selectedCity && (
+          {/* Bottom Inspector: Solar Plants Mode vs Leads Locality Mode */}
+          {mapMode === 'plants' ? (
             <div className={`shrink-0 bg-[var(--bg-main)] dark:bg-black/50 border border-black dark:border-white/10 rounded-2xl p-3.5 space-y-2.5 backdrop-blur-md ${
-              isFullscreenMap ? 'mt-2 p-2.5 space-y-2' : 'mt-4'
+              isFullscreenMap ? 'm-3 p-3 space-y-2 max-h-[40vh] overflow-y-auto shadow-lg' : 'mt-4'
             }`}>
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                 <div>
                   <h4 className="text-xs font-bold text-[var(--text-primary)] dark:text-white flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-teal-600 dark:text-cyan-400" />
-                    <span>{selectedCity.name} Mapped Localities</span>
+                    <Zap className="w-3.5 h-3.5 text-blue-500" />
+                    <span>Installed Solar Plants</span>
                     <span className="text-[11px] text-[var(--text-secondary)] dark:text-slate-400 font-normal">
-                      • {selectedCity.divisions.filter((d: DivisionSummary) => getLocalityGPS(d.name) !== null).length} Discrete Pins
+                      • {plants.length} Mapped Across Varanasi & Prayagraj
                     </span>
                   </h4>
                 </div>
-
-                <div className="flex items-center gap-2 text-xs font-mono">
-                  <span className="px-2.5 py-1 bg-[var(--bg-card)] dark:bg-black/70 text-teal-700 dark:text-cyan-300 border border-teal-500/30 dark:border-cyan-500/30 rounded-lg font-medium shadow-xs">
-                    Geolocated: {cityMappedCount.toLocaleString()}
-                  </span>
-                  {cityUnmappedCount > 0 && (
-                    <span className="px-2.5 py-1 bg-[var(--bg-card)] dark:bg-black/70 text-[var(--text-secondary)] dark:text-slate-400 border border-black dark:border-white/10 rounded-lg shadow-xs" title="General Address Leads without specific locality">
-                      General Pool: {cityUnmappedCount.toLocaleString()}
-                    </span>
-                  )}
-                </div>
               </div>
 
-              {/* Active Selected Locality Pill Card */}
-              {selectedLocality && getLocalityGPS(selectedLocality.name) ? (
+              {/* Active Selected Plant Details Card with Geotag & Site Photos */}
+              {selectedPlant ? (
                 <div
-                  style={{ backgroundColor: '#97DDE9' }}
-                  className={`border border-black rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 shadow-md text-black ${
-                    isFullscreenMap ? 'p-2' : 'p-3'
+                  className={`border border-black dark:border-white/15 bg-[var(--bg-card)] dark:bg-[#0c121e] rounded-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-3.5 shadow-md ${
+                    isFullscreenMap ? 'p-2.5' : 'p-3 sm:p-3.5'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-2 bg-black/10 border border-black/15 rounded-lg text-black shrink-0">
-                      <Crosshair className="w-4 h-4" />
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="p-2.5 bg-blue-500/10 border border-blue-500/25 rounded-xl text-blue-400 shrink-0 shadow-xs">
+                      <Zap className="w-4 h-4 fill-blue-500/20" />
                     </div>
-                    <div>
-                      <div className="text-xs font-bold text-black flex items-center gap-2">
-                        <span>{selectedLocality.name}</span>
-                        {getLocalityGPS(selectedLocality.name)?.sector && (
-                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-black/10 text-black border border-black/15">
-                            {getLocalityGPS(selectedLocality.name)?.sector}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-xs sm:text-sm font-bold text-white tracking-tight truncate">
+                          {selectedPlant.lead.customerName}
+                        </span>
+                        <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md bg-blue-500/15 text-blue-300 border border-blue-500/30">
+                          {selectedPlant.systemSizeKw} kW ({selectedPlant.clientType.toUpperCase().replace('_', ' ')})
+                        </span>
+                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1.5 shadow-xs text-white ${
+                          selectedPlant.isCommissioned
+                            ? 'bg-emerald-600'
+                            : selectedPlant.isInstalled
+                            ? 'bg-blue-600'
+                            : 'bg-amber-600'
+                        }`}>
+                          <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                          <span>{selectedPlant.isCommissioned ? 'Commissioned' : selectedPlant.isInstalled ? 'Installed' : 'In Progress'}</span>
+                        </span>
+                        {selectedPlant.orderCode && (
+                          <span className="text-[10px] font-mono text-slate-400 px-1.5 py-0.5 rounded bg-black/40 border border-white/10">
+                            #{selectedPlant.orderCode}
                           </span>
                         )}
                       </div>
-                      <div className="text-[11px] text-black/75 font-medium mt-0.5">
-                        {selectedLocality.total.toLocaleString()} Total Leads on Street Map
+                      <div className="text-[11px] text-slate-300 mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <span className="flex items-center gap-1 text-slate-300">
+                          <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                          <span>{selectedPlant.lead.address ? `${selectedPlant.lead.address}, ` : ''}{selectedPlant.lead.city || ''}</span>
+                        </span>
+                        {selectedPlant.lead.mobile && (
+                          <span className="font-mono text-slate-400 shrink-0 flex items-center gap-1">
+                            <Phone className="w-3 h-3 text-slate-400 shrink-0" />
+                            <span>{selectedPlant.lead.mobile}</span>
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 font-mono text-xs">
-                    <div className="flex items-center gap-1.5 text-emerald-950 font-bold bg-white/80 px-2.5 py-1 rounded-lg border border-emerald-300/60 shadow-xs">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
-                      <span>{selectedLocality.assigned.toLocaleString()} Assigned</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-amber-950 font-bold bg-white/80 px-2.5 py-1 rounded-lg border border-amber-300/60 shadow-xs">
-                      <Zap className="w-3 h-3 text-amber-600" />
-                      <span>{selectedLocality.unassigned.toLocaleString()} Free</span>
-                    </div>
+                  {/* Right: Site Photo Preview & Actions Toolbar */}
+                  <div className="flex items-center gap-2.5 shrink-0 self-end md:self-center">
+                    {sortedPlantImages.length > 0 ? (
+                      (() => {
+                        const hero = sortedPlantImages[0];
+                        const imageUrl = `/api/v1/orders/${selectedPlant.id}/installation-images/${hero.id}`;
+                        const isVideo = Boolean(hero.fileName?.match(/\.(mp4|webm|mov)$/i));
+
+                        return (
+                          <button
+                            type="button"
+                            onClick={() => setGalleryIndex(0)}
+                            className="relative group cursor-pointer w-20 h-11 rounded-lg overflow-hidden border border-white/20 bg-slate-900 shrink-0 transition-all hover:border-blue-400 hover:ring-2 hover:ring-blue-500/30 shadow-sm"
+                            title={`Click to view ${sortedPlantImages.length} site photos`}
+                          >
+                            {isVideo ? (
+                              <div className="w-full h-full flex items-center justify-center bg-slate-900 text-blue-400">
+                                <Camera className="w-4 h-4" />
+                              </div>
+                            ) : (
+                              <img
+                                src={imageUrl}
+                                alt="Plant Site"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                                loading="lazy"
+                              />
+                            )}
+
+                            {/* Clean Frosted Badge showing photo count */}
+                            <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur-md text-[9px] font-mono font-bold text-white flex items-center gap-1 border border-white/20 shadow-xs">
+                              <Camera className="w-2.5 h-2.5 text-blue-300" />
+                              <span>{sortedPlantImages.length}</span>
+                            </div>
+
+                            {/* Hover overlay with Eye icon */}
+                            <div className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                              <Eye className="w-4 h-4 text-white drop-shadow" />
+                            </div>
+                          </button>
+                        );
+                      })()
+                    ) : (
+                      <div className="px-2.5 py-1.5 bg-black/30 border border-dashed border-white/10 rounded-lg text-[10px] text-slate-400 flex items-center gap-1.5">
+                        <Camera className="w-3.5 h-3.5 text-slate-500" />
+                        <span>No photos</span>
+                      </div>
+                    )}
+
+                    <a
+                      href={`https://www.google.com/maps?q=${selectedPlant.latitude},${selectedPlant.longitude}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
+                      title="Open in Google Maps"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>Maps</span>
+                    </a>
+
                     <button
                       type="button"
-                      onClick={() => handleOpenPreviewModal('unassigned', [getLocKey(selectedCity.name, selectedLocality.name)], selectedCity.name)}
-                      className="px-3.5 py-1.5 bg-black hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer font-sans shadow-sm"
-                      title="Preview leads for this area"
+                      onClick={() => {
+                        setSelectedPlant(null);
+                        setGalleryIndex(null);
+                      }}
+                      className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+                      title="Close Inspector"
                     >
-                      <Eye className="w-3.5 h-3.5" />
-                      <span>Preview Leads</span>
+                      <X className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
-              ) : null}
+              ) : (
+                <div className="border border-dashed border-black/30 dark:border-white/15 bg-black/20 rounded-xl p-3 flex items-center justify-between gap-3 text-xs text-[var(--text-secondary)]">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-500 shrink-0">
+                      <Zap className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-[var(--text-primary)] dark:text-white">
+                        Click on any plant marker on the map
+                      </div>
+                      <div className="text-[11px] text-[var(--text-muted)] mt-0.5">
+                        Select a blue plant pin to view site specifications, customer information, and geotagged site photos right here.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
+          ) : (
+            /* Selected Locality Detail Panel & Unmapped Info (Leads Mode) */
+            selectedCity && (
+              <div className={`shrink-0 bg-[var(--bg-main)] dark:bg-black/50 border border-black dark:border-white/10 rounded-2xl p-3.5 space-y-2.5 backdrop-blur-md ${
+                isFullscreenMap ? 'm-3 p-3 space-y-2 max-h-[40vh] overflow-y-auto shadow-lg' : 'mt-4'
+              }`}>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                  <div>
+                    <h4 className="text-xs font-bold text-[var(--text-primary)] dark:text-white flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-teal-600 dark:text-cyan-400" />
+                      <span>{selectedCity.name} Mapped Localities</span>
+                      <span className="text-[11px] text-[var(--text-secondary)] dark:text-slate-400 font-normal">
+                        • {selectedCity.divisions.filter((d: DivisionSummary) => getLocalityGPS(d.name) !== null).length} Discrete Pins
+                      </span>
+                    </h4>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-xs font-mono">
+                    <span className="px-2.5 py-1 bg-[var(--bg-card)] dark:bg-black/70 text-teal-700 dark:text-cyan-300 border border-teal-500/30 dark:border-cyan-500/30 rounded-lg font-medium shadow-xs">
+                      Geolocated: {cityMappedCount.toLocaleString()}
+                    </span>
+                    {cityUnmappedCount > 0 && (
+                      <span className="px-2.5 py-1 bg-[var(--bg-card)] dark:bg-black/70 text-[var(--text-secondary)] dark:text-slate-400 border border-black dark:border-white/10 rounded-lg shadow-xs" title="General Address Leads without specific locality">
+                        General Pool: {cityUnmappedCount.toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Active Selected Locality Pill Card */}
+                {selectedLocality && getLocalityGPS(selectedLocality.name) ? (
+                  <div
+                    style={{ backgroundColor: '#97DDE9' }}
+                    className={`border border-black rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 shadow-md text-black ${
+                      isFullscreenMap ? 'p-2' : 'p-3'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-2 bg-black/10 border border-black/15 rounded-lg text-black shrink-0">
+                        <Crosshair className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-black flex items-center gap-2">
+                          <span>{selectedLocality.name}</span>
+                          {getLocalityGPS(selectedLocality.name)?.sector && (
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-black/10 text-black border border-black/15">
+                              {getLocalityGPS(selectedLocality.name)?.sector}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[11px] text-black/75 font-medium mt-0.5">
+                          {selectedLocality.total.toLocaleString()} Total Leads on Street Map
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 font-mono text-xs">
+                      <div className="flex items-center gap-1.5 text-emerald-950 font-bold bg-white/80 px-2.5 py-1 rounded-lg border border-emerald-300/60 shadow-xs">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                        <span>{selectedLocality.assigned.toLocaleString()} Assigned</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-amber-950 font-bold bg-white/80 px-2.5 py-1 rounded-lg border border-amber-300/60 shadow-xs">
+                        <Zap className="w-3 h-3 text-amber-600" />
+                        <span>{selectedLocality.unassigned.toLocaleString()} Free</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenPreviewModal('unassigned', [getLocKey(selectedCity.name, selectedLocality.name)], selectedCity.name)}
+                        className="px-3.5 py-1.5 bg-black hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer font-sans shadow-sm"
+                        title="Preview leads for this area"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Preview Leads</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            )
           )}
         </div>
 
         {/* Right: Collapsible Hierarchy Tree Explorer (4 Cols Shrunk) */}
-        <div className="lg:col-span-4 bg-[var(--bg-card)] dark:bg-[#0B1015]/95 backdrop-blur-xl border-2 border-black dark:border-white/10 rounded-2xl p-4 sm:p-5 shadow-[0_22px_48px_-10px_rgba(0,0,0,0.35),0_10px_20px_-6px_rgba(0,0,0,0.2),inset_0_1.5px_0_rgba(255,255,255,0.45),inset_0_-2px_4px_rgba(0,0,0,0.18)] dark:shadow-[0_28px_60px_-12px_rgba(0,0,0,0.9),0_14px_26px_-6px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.2),inset_0_-2px_4px_rgba(0,0,0,0.7)] flex flex-col min-h-[600px]">
+        {!isFullscreenMap && (
+          <div className="lg:col-span-4 bg-[var(--bg-card)] dark:bg-[#0B1015]/95 backdrop-blur-xl border-2 border-black dark:border-white/10 rounded-2xl p-4 sm:p-5 shadow-[0_22px_48px_-10px_rgba(0,0,0,0.35),0_10px_20px_-6px_rgba(0,0,0,0.2),inset_0_1.5px_0_rgba(255,255,255,0.45),inset_0_-2px_4px_rgba(0,0,0,0.18)] dark:shadow-[0_28px_60px_-12px_rgba(0,0,0,0.9),0_14px_26px_-6px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.2),inset_0_-2px_4px_rgba(0,0,0,0.7)] flex flex-col min-h-[600px]">
           <div className="space-y-3 border-b border-black/30 dark:border-white/10 pb-4 mb-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -2150,10 +2637,11 @@ export default function LeadsMapPage() {
             )}
           </div>
         </div>
+        )}
       </div>
 
       {/* Floating Smart Allocation Dock */}
-      {selectedLocalities.length > 0 && (
+      {selectedLocalities.length > 0 && !isFullscreenMap && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 border border-emerald-500/50 border-t-emerald-300/60 border-b-black/80 rounded-2xl p-3 px-5 shadow-[0_25px_60px_-10px_rgba(0,0,0,0.85),0_12px_24px_-5px_rgba(0,0,0,0.6),inset_0_1.5px_0_rgba(255,255,255,0.3),inset_0_-2px_4px_rgba(0,0,0,0.6)] backdrop-blur-xl flex flex-wrap items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-200 max-w-[95vw]">
           <div className="flex items-center gap-2 font-mono text-xs text-white-force" style={{ color: '#ffffff' }}>
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -2415,6 +2903,154 @@ export default function LeadsMapPage() {
               </form>
             </div>
           </div>,
+          document.body
+        )}
+
+      {/* Plant Photo Lightbox Gallery Modal with Next/Prev and Thumbnails */}
+      {galleryIndex !== null &&
+        selectedPlant &&
+        sortedPlantImages[galleryIndex] &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          (() => {
+            const currentImg = sortedPlantImages[galleryIndex];
+            const currentUrl = `/api/v1/orders/${selectedPlant.id}/installation-images/${currentImg.id}`;
+            const isVideo = Boolean(currentImg.fileName?.match(/\.(mp4|webm|mov)$/i));
+            const hasMultiple = sortedPlantImages.length > 1;
+
+            const handlePrev = (e: React.MouseEvent) => {
+              e.stopPropagation();
+              setGalleryIndex((prev) => (prev! > 0 ? prev! - 1 : sortedPlantImages.length - 1));
+            };
+
+            const handleNext = (e: React.MouseEvent) => {
+              e.stopPropagation();
+              setGalleryIndex((prev) => (prev! < sortedPlantImages.length - 1 ? prev! + 1 : 0));
+            };
+
+            return (
+              <div
+                className="fixed inset-0 z-[999999] flex items-center justify-center p-3 sm:p-4 bg-black/92 backdrop-blur-md animate-in fade-in duration-150"
+                onClick={() => setGalleryIndex(null)}
+              >
+                <div
+                  className="relative max-w-4xl w-full max-h-[92vh] bg-slate-950 border border-white/20 rounded-2xl overflow-hidden shadow-2xl flex flex-col"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Modal Header */}
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-black/60 shrink-0">
+                    <div className="flex items-center gap-2 text-white text-xs font-bold min-w-0">
+                      <Camera className="w-4 h-4 text-blue-400 shrink-0" />
+                      <span className="truncate">Plant Site Photos</span>
+                      {hasMultiple && (
+                        <span className="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[10px] font-mono">
+                          {galleryIndex + 1} of {sortedPlantImages.length}
+                        </span>
+                      )}
+                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full capitalize ${
+                        currentImg.status === 'plant_commissioned'
+                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                          : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                      }`}>
+                        {currentImg.status.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <a
+                        href={currentUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
+                        title="Open original file in new tab"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => setGalleryIndex(null)}
+                        className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+                        title="Close (Esc)"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Main Preview Area with Next/Prev Arrows */}
+                  <div className="relative flex-1 p-2 sm:p-4 flex items-center justify-center bg-black/70 overflow-hidden min-h-[300px] sm:min-h-[420px]">
+                    {hasMultiple && (
+                      <button
+                        type="button"
+                        onClick={handlePrev}
+                        className="absolute left-3 z-30 p-2 sm:p-2.5 rounded-full bg-black/60 hover:bg-blue-600/80 text-white border border-white/20 hover:border-blue-400 transition-all cursor-pointer backdrop-blur-sm shadow-lg"
+                        title="Previous Photo"
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </button>
+                    )}
+
+                    <div className="flex items-center justify-center w-full h-full max-h-[65vh]">
+                      {isVideo ? (
+                        <video
+                          src={currentUrl}
+                          controls
+                          autoPlay
+                          className="max-h-[65vh] w-auto rounded-lg shadow-lg"
+                        />
+                      ) : (
+                        <img
+                          src={currentUrl}
+                          alt={currentImg.fileName || 'Site Plant'}
+                          className="max-h-[65vh] w-auto object-contain rounded-lg shadow-lg select-none"
+                        />
+                      )}
+                    </div>
+
+                    {hasMultiple && (
+                      <button
+                        type="button"
+                        onClick={handleNext}
+                        className="absolute right-3 z-30 p-2 sm:p-2.5 rounded-full bg-black/60 hover:bg-blue-600/80 text-white border border-white/20 hover:border-blue-400 transition-all cursor-pointer backdrop-blur-sm shadow-lg"
+                        title="Next Photo"
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Bottom Gallery Thumbnail Strip (When > 1 Photo) */}
+                  {hasMultiple && (
+                    <div className="px-4 py-2.5 border-t border-white/10 bg-black/80 flex items-center gap-2 overflow-x-auto scrollbar-thin shrink-0">
+                      {sortedPlantImages.map((img, idx) => {
+                        const isCurrent = idx === galleryIndex;
+                        const thumbUrl = `/api/v1/orders/${selectedPlant.id}/installation-images/${img.id}`;
+                        return (
+                          <button
+                            key={img.id || idx}
+                            type="button"
+                            onClick={() => setGalleryIndex(idx)}
+                            className={`relative shrink-0 w-11 h-11 rounded-lg overflow-hidden border transition-all cursor-pointer ${
+                              isCurrent
+                                ? 'border-blue-400 ring-2 ring-blue-500 scale-105 shadow-md'
+                                : 'border-white/20 opacity-60 hover:opacity-100 hover:border-white/40'
+                            }`}
+                            title={`Jump to photo ${idx + 1} (${img.status.replace(/_/g, ' ')})`}
+                          >
+                            <img src={thumbUrl} alt="Thumbnail" className="w-full h-full object-cover" />
+                            {img.status === 'plant_commissioned' && (
+                              <span className="absolute bottom-0 inset-x-0 bg-emerald-600/90 text-[6px] font-bold text-white text-center">
+                                Done
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })(),
           document.body
         )}
 
@@ -2713,6 +3349,48 @@ export default function LeadsMapPage() {
           </div>,
           document.body
         )}
+
+      <style jsx global>{`
+        body.map-fullscreen-active {
+          overflow: hidden !important;
+        }
+        body.map-fullscreen-active header {
+          filter: blur(8px) !important;
+          opacity: 0.3 !important;
+          pointer-events: none !important;
+          transition: filter 0.25s ease, opacity 0.25s ease;
+        }
+        body.map-fullscreen-active aside {
+          filter: blur(8px) !important;
+          opacity: 0.3 !important;
+          pointer-events: none !important;
+          transition: filter 0.25s ease, opacity 0.25s ease;
+        }
+        body.map-fullscreen-active main {
+          z-index: 9990 !important;
+          overflow: visible !important;
+        }
+        body.map-fullscreen-active main > div {
+          transform: none !important;
+          animation: none !important;
+        }
+
+        .solar-plant-leaflet-popup .leaflet-popup-content-wrapper {
+          background: #0f172a !important;
+          border: 1px solid rgba(37, 99, 235, 0.45) !important;
+          border-radius: 12px !important;
+          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6) !important;
+          padding: 4px !important;
+        }
+        .solar-plant-leaflet-popup .leaflet-popup-tip {
+          background: #0f172a !important;
+          border: 1px solid rgba(37, 99, 235, 0.45) !important;
+        }
+        .solar-plant-leaflet-popup .leaflet-popup-close-button {
+          color: #94a3b8 !important;
+          padding: 4px 6px !important;
+        }
+      `}</style>
     </div>
   );
 }

@@ -17,7 +17,17 @@ export async function GET(
     }
 
     const userPermissions = await getUserPermissions(userPayload.id);
-    if (!userPermissions.includes('orders:view') && !userPermissions.includes('orders:operations')) {
+    const hasOrderAccess =
+      userPermissions.includes('orders:view') ||
+      userPermissions.includes('orders:operations') ||
+      userPermissions.includes('admin:access') ||
+      userPermissions.includes('admin:analytics_view') ||
+      userPermissions.includes('reports:view') ||
+      userPermissions.includes('sales:lead_assign') ||
+      userPayload.role === 'admin' ||
+      userPayload.role === 'director';
+
+    if (!hasOrderAccess) {
       return NextResponse.json({ success: false, message: 'Forbidden. You do not have permission to view orders.' }, { status: 403 });
     }
 

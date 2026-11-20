@@ -181,6 +181,8 @@ export async function PATCH(
       actualCommissionedAt,
       isSubsidyApplied,
       actualSubsidyAppliedAt,
+      latitude,
+      longitude,
     } = body;
 
     // Check what is being updated
@@ -193,7 +195,7 @@ export async function PATCH(
       (isSubsidyUpdate ? undefined : subsidyApplicable)
     ].some(v => v !== undefined);
 
-    const isStatusUpdate = status !== undefined || opsStage !== undefined || deliveryDate !== undefined || deliveryTime !== undefined || isDelivered !== undefined || installationDate !== undefined || installationTime !== undefined || isInstalled !== undefined || actualDeliveryAt !== undefined || actualInstallationAt !== undefined || isMeterInstalled !== undefined || actualMeterInstalledAt !== undefined || isCommissioned !== undefined || actualCommissionedAt !== undefined || isSubsidyApplied !== undefined || actualSubsidyAppliedAt !== undefined;
+    const isStatusUpdate = status !== undefined || opsStage !== undefined || deliveryDate !== undefined || deliveryTime !== undefined || isDelivered !== undefined || installationDate !== undefined || installationTime !== undefined || isInstalled !== undefined || actualDeliveryAt !== undefined || actualInstallationAt !== undefined || isMeterInstalled !== undefined || actualMeterInstalledAt !== undefined || isCommissioned !== undefined || actualCommissionedAt !== undefined || isSubsidyApplied !== undefined || actualSubsidyAppliedAt !== undefined || latitude !== undefined || longitude !== undefined;
 
     // 1. Check permissions for updating punching fields
     if (isPunchingUpdate && !canCreateOrders) {
@@ -306,6 +308,13 @@ export async function PATCH(
       }
     } else if (actualSubsidyAppliedAt !== undefined) {
       updateData.actualSubsidyAppliedAt = actualSubsidyAppliedAt ? new Date(actualSubsidyAppliedAt) : null;
+    }
+
+    if (latitude !== undefined) {
+      updateData.latitude = latitude === null || latitude === '' ? null : parseFloat(latitude);
+    }
+    if (longitude !== undefined) {
+      updateData.longitude = longitude === null || longitude === '' ? null : parseFloat(longitude);
     }
 
     const updatedOrder = await prisma.order.update({

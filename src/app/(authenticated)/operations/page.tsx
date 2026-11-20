@@ -35,6 +35,7 @@ import {
   Users,
   ChevronDown,
   Check,
+  ExternalLink,
 } from 'lucide-react';
 
 interface Order {
@@ -67,6 +68,8 @@ interface Order {
   actualSubsidyAppliedAt: string | null;
   subsidyApplicable: boolean;
   subsidyAmount: number | null;
+  latitude?: number | null;
+  longitude?: number | null;
   createdAt: string;
   assignedOpsId?: number | null;
   assignedOps?: { id?: number; name: string; role?: string; designation?: { name: string } | null } | null;
@@ -341,6 +344,15 @@ export default function OperationsPage() {
   const [subsidyLoading, setSubsidyLoading] = useState(false);
   const [newSubsidyAmount, setNewSubsidyAmount] = useState('');
 
+  // Plant GPS Coordinates State
+  const [orderLat, setOrderLat] = useState('');
+  const [orderLng, setOrderLng] = useState('');
+  const [mapLinkInput, setMapLinkInput] = useState('');
+  const [extractedSuccess, setExtractedSuccess] = useState(false);
+  const [savingLocation, setSavingLocation] = useState(false);
+  const [locatingDevice, setLocatingDevice] = useState(false);
+  const [showLocationForm, setShowLocationForm] = useState(false);
+
   // Custom right-click Calendar / Time Picker State
   const [customPicker, setCustomPicker] = useState<{
     isOpen: boolean;
@@ -611,6 +623,11 @@ export default function OperationsPage() {
       setActualCommissionTime(localTime);
       setActualSubsidyDate(localDate);
       setActualSubsidyTime(localTime);
+
+      // Pre-fill GPS coordinates
+      setOrderLat(selectedOrder.latitude !== null && selectedOrder.latitude !== undefined ? String(selectedOrder.latitude) : '');
+      setOrderLng(selectedOrder.longitude !== null && selectedOrder.longitude !== undefined ? String(selectedOrder.longitude) : '');
+      setShowLocationForm(false);
     } else {
       setAllMedia([]);
     }
@@ -1029,6 +1046,116 @@ export default function OperationsPage() {
       showAlert('Error updating subsidy status.', 'error');
     } finally {
       setSubsidyLoading(false);
+    }
+  };
+
+  const extractLatLngFromText = (text: string): { lat: string; lng: string } | null => {
+    if (!text) return null;
+    try {
+      const decoded = decodeURIComponent(text.trim());
+
+      // Pattern 1: @lat,lng e.g. /@25.319987,82.967901
+      const atMatch = decoded.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+      if (atMatch) {
+        return { lat: atMatch[1], lng: atMatch[2] };
+      }
+
+      // Pattern 2: ?q=lat,lng or &query=lat,lng or ?ll=lat,lng or ?daddr=lat,lng
+      const queryMatch = decoded.match(/[?&](?:q|query|ll|daddr)=(-?\d+\.\d+),(-?\d+\.\d+)/);
+      if (queryMatch) {
+        return { lat: queryMatch[1], lng: queryMatch[2] };
+      }
+
+      // Pattern 3: !3dlat!4dlng (Google Maps internal coordinates in URL)
+      const protoMatch = decoded.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+      if (protoMatch) {
+        return { lat: protoMatch[1], lng: protoMatch[2] };
+      }
+
+      // Pattern 4: Raw coordinates "25.319987, 82.967901" or "25.319987 82.967901"
+      const rawMatch = decoded.match(/(-?\d{1,2}\.\d+)[,\s]+(-?\d{1,3}\.\d+)/);
+      if (rawMatch) {
+        return { lat: rawMatch[1], lng: rawMatch[2] };
+      }
+    } catch (e) {
+      console.error('Error parsing coordinates from link:', e);
+    }
+    return null;
+  };
+
+  const handleMapLinkInput = (value: string) => {
+    setMapLinkInput(value);
+    const extracted = extractLatLngFromText(value);
+    if (extracted) {
+      setOrderLat(extracted.lat);
+      setOrderLng(extracted.lng);
+      setExtractedSuccess(true);
+      setTimeout(() => setExtractedSuccess(false), 3500);
+    }
+  };
+
+  const handleGetDeviceLocation = () => {
+    if (typeof window === 'undefined' || !navigator.geolocation) {
+      alert('Geolocation is not supported by your browser.');
+      return;
+    }
+    setLocatingDevice(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setOrderLat(pos.coords.latitude.toFixed(6));
+        setOrderLng(pos.coords.longitude.toFixed(6));
+        setLocatingDevice(false);
+      },
+      (err) => {
+        console.error('Geolocation error:', err);
+        alert(`Could not fetch device location: ${err.message || 'Permission denied or GPS unavailable'}`);
+        setLocatingDevice(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+
+  const handleSavePlantLocation = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!selectedOrder) return;
+    try {
+      setSavingLocation(true);
+      const parsedLat = orderLat.trim() ? parseFloat(orderLat.trim()) : null;
+      const parsedLng = orderLng.trim() ? parseFloat(orderLng.trim()) : null;
+
+      if (parsedLat !== null && (isNaN(parsedLat) || parsedLat < -90 || parsedLat > 90)) {
+        alert('Please enter a valid Latitude between -90 and 90.');
+        setSavingLocation(false);
+        return;
+      }
+      if (parsedLng !== null && (isNaN(parsedLng) || parsedLng < -180 || parsedLng > 180)) {
+        alert('Please enter a valid Longitude between -180 and 180.');
+        setSavingLocation(false);
+        return;
+      }
+
+      const res = await fetch(`/api/v1/orders/${selectedOrder.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          latitude: parsedLat,
+          longitude: parsedLng,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSelectedOrder((prev: any) => prev ? { ...prev, latitude: parsedLat, longitude: parsedLng } : null);
+        setOrders((prev) => prev.map((o) => o.id === selectedOrder.id ? { ...o, latitude: parsedLat, longitude: parsedLng } : o));
+        setShowLocationForm(false);
+        showAlert('Plant GPS location saved successfully!', 'success');
+      } else {
+        showAlert(data.message || 'Failed to save location.', 'error');
+      }
+    } catch (err) {
+      console.error('Error saving plant location:', err);
+      showAlert('Error saving plant location.', 'error');
+    } finally {
+      setSavingLocation(false);
     }
   };
 
@@ -2731,6 +2858,162 @@ export default function OperationsPage() {
                           </span>
                         </div>
                       </div>
+                    </div>
+
+                    {/* Plant GPS Location Section */}
+                    <div className="space-y-3 pt-4 border-t border-[var(--border-color)]/60">
+                      <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-1.5">
+                        <h4 className="text-xs font-bold text-[var(--text-primary)] dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                          <MapPin className="w-4 h-4 text-[#4F7D32]" />
+                          <span>Plant GPS Location</span>
+                        </h4>
+                        {!showLocationForm && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowLocationForm(true);
+                              setMapLinkInput('');
+                              setExtractedSuccess(false);
+                            }}
+                            className="text-[10px] text-[#4F7D32] hover:text-[#436A2B] font-bold cursor-pointer transition-colors"
+                          >
+                            {selectedOrder.latitude && selectedOrder.longitude ? 'Edit Location' : '+ Add Location'}
+                          </button>
+                        )}
+                      </div>
+
+                      {/* View Coordinates Mode */}
+                      {!showLocationForm && (
+                        <div>
+                          {selectedOrder.latitude && selectedOrder.longitude ? (
+                            <div className="space-y-2">
+                              <div className="p-2.5 bg-slate-955 border border-[var(--border-color)] rounded-lg text-xs space-y-1">
+                                <div className="flex justify-between items-center text-[11px]">
+                                  <span className="text-[var(--text-muted)]">Latitude:</span>
+                                  <span className="font-mono text-[var(--text-primary)] dark:text-white font-bold">{selectedOrder.latitude}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-[11px]">
+                                  <span className="text-[var(--text-muted)]">Longitude:</span>
+                                  <span className="font-mono text-[var(--text-primary)] dark:text-white font-bold">{selectedOrder.longitude}</span>
+                                </div>
+                              </div>
+                              <a
+                                href={`https://www.google.com/maps?q=${selectedOrder.latitude},${selectedOrder.longitude}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="w-full py-2 px-3 bg-slate-955 hover:bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] dark:text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-xs"
+                              >
+                                <ExternalLink className="w-3.5 h-3.5 text-[#4F7D32]" />
+                                <span>Open in Google Maps</span>
+                              </a>
+                            </div>
+                          ) : (
+                            <div className="p-3 bg-slate-955 border border-dashed border-[var(--border-color)] rounded-lg text-center">
+                              <p className="text-[11px] text-[var(--text-muted)]">No GPS coordinates added yet.</p>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setShowLocationForm(true);
+                                  setMapLinkInput('');
+                                  setExtractedSuccess(false);
+                                }}
+                                className="mt-2 py-1 px-3 bg-[#4F7D32]/10 hover:bg-[#4F7D32]/20 border border-[#4F7D32]/30 text-[#4F7D32] rounded-lg text-[10px] font-bold cursor-pointer inline-flex items-center gap-1 transition-all"
+                              >
+                                <MapPin className="w-3 h-3" />
+                                <span>Set Coordinates</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Edit / Input Coordinates Mode */}
+                      {showLocationForm && (
+                        <form onSubmit={handleSavePlantLocation} className="p-3 bg-slate-955 border border-[var(--border-color)] rounded-lg space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-[var(--text-primary)] dark:text-white uppercase tracking-wider">Set Coordinates</span>
+                            <button
+                              type="button"
+                              onClick={handleGetDeviceLocation}
+                              disabled={locatingDevice}
+                              className="text-[10px] font-bold text-[#4F7D32] hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                              title="Fetch coordinates from device GPS"
+                            >
+                              {locatingDevice ? <Loader2 className="w-3 h-3 animate-spin" /> : <MapPin className="w-3 h-3" />}
+                              <span>{locatingDevice ? 'Detecting...' : 'Use My GPS'}</span>
+                            </button>
+                          </div>
+
+                          {/* Quick Paste Google Maps Link Option */}
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <label className="text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider flex items-center gap-1">
+                                <ExternalLink className="w-2.5 h-2.5 text-[#4F7D32]" />
+                                <span>Paste Google Maps Link / Location</span>
+                              </label>
+                              {extractedSuccess && (
+                                <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
+                                  ✓ Auto-Filled Lat & Lng!
+                                </span>
+                              )}
+                            </div>
+                            <input
+                              type="text"
+                              placeholder="Paste Google Maps URL or Lat, Lng here..."
+                              value={mapLinkInput}
+                              onChange={(e) => handleMapLinkInput(e.target.value)}
+                              className="w-full px-2.5 py-1.5 bg-[var(--bg-card)] border border-[var(--border-color)] rounded text-xs text-[var(--text-primary)] dark:text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-[#4F7D32]"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Latitude</label>
+                              <input
+                                type="text"
+                                placeholder="e.g. 25.3176"
+                                value={orderLat}
+                                onChange={(e) => setOrderLat(e.target.value)}
+                                className="w-full px-2.5 py-1.5 bg-[var(--bg-card)] border border-[var(--border-color)] rounded text-xs text-[var(--text-primary)] dark:text-white focus:outline-none focus:border-[#4F7D32] font-mono"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">Longitude</label>
+                              <input
+                                type="text"
+                                placeholder="e.g. 82.9739"
+                                value={orderLng}
+                                onChange={(e) => setOrderLng(e.target.value)}
+                                className="w-full px-2.5 py-1.5 bg-[var(--bg-card)] border border-[var(--border-color)] rounded text-xs text-[var(--text-primary)] dark:text-white focus:outline-none focus:border-[#4F7D32] font-mono"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="flex justify-end gap-2 pt-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setOrderLat(selectedOrder.latitude ? String(selectedOrder.latitude) : '');
+                                setOrderLng(selectedOrder.longitude ? String(selectedOrder.longitude) : '');
+                                setMapLinkInput('');
+                                setExtractedSuccess(false);
+                                setShowLocationForm(false);
+                              }}
+                              className="px-2.5 py-1 bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded text-[11px] cursor-pointer"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="submit"
+                              disabled={savingLocation}
+                              className="px-3 py-1 bg-[#4A943E] hover:bg-[#3E7D34] text-white rounded font-bold text-[11px] inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                            >
+                              {savingLocation ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                              <span>Save Location</span>
+                            </button>
+                          </div>
+                        </form>
+                      )}
                     </div>
 
                     {/* Project Details Section */}
