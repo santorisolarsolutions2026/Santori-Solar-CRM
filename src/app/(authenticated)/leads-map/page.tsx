@@ -408,6 +408,7 @@ export default function LeadsMapPage() {
   const [plants, setPlants] = useState<PlantLocation[]>([]);
   const [mapMode, setMapMode] = useState<'leads' | 'plants'>('leads');
   const [plantsLoading, setPlantsLoading] = useState(false);
+  const [selectedPlantGroup, setSelectedPlantGroup] = useState<PlantLocation[] | null>(null);
   const [selectedPlant, setSelectedPlant] = useState<PlantLocation | null>(null);
   const [galleryIndex, setGalleryIndex] = useState<number | null>(null);
 
@@ -632,7 +633,8 @@ export default function LeadsMapPage() {
       if (e.key === 'Escape') {
         if (galleryIndex !== null) {
           setGalleryIndex(null);
-        } else if (selectedPlant) {
+        } else if (selectedPlantGroup || selectedPlant) {
+          setSelectedPlantGroup(null);
           setSelectedPlant(null);
         } else if (isFullscreenMap) {
           setIsFullscreenMap(false);
@@ -641,7 +643,7 @@ export default function LeadsMapPage() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isFullscreenMap, galleryIndex, selectedPlant]);
+  }, [isFullscreenMap, galleryIndex, selectedPlantGroup, selectedPlant]);
 
   useEffect(() => {
     if (mapInstanceRef.current) {
@@ -1138,32 +1140,53 @@ export default function LeadsMapPage() {
 
       if (mapMode !== 'plants' || plants.length === 0) return;
 
-      const validCoords: [number, number][] = [];
-
+      // Group plants by coordinate (5 decimal places ~1m precision)
+      const plantGroupsMap = new Map<string, PlantLocation[]>();
       plants.forEach((plant) => {
         if (typeof plant.latitude !== 'number' || typeof plant.longitude !== 'number') return;
-        validCoords.push([plant.latitude, plant.longitude]);
+        const key = `${plant.latitude.toFixed(5)},${plant.longitude.toFixed(5)}`;
+        if (!plantGroupsMap.has(key)) {
+          plantGroupsMap.set(key, []);
+        }
+        plantGroupsMap.get(key)!.push(plant);
+      });
 
-        const isComm = plant.isCommissioned;
-        const isSelected = selectedPlant?.id === plant.id;
-        const statusText = isComm ? 'Commissioned' : plant.isInstalled ? 'Installed' : 'In Progress';
-        const badgeBg = isComm ? 'rgba(37, 99, 235, 0.25)' : 'rgba(59, 130, 246, 0.2)';
-        const badgeBorder = isComm ? '#2563EB' : '#3b82f6';
-        const badgeColor = isComm ? '#93c5fd' : '#bfdbfe';
+      const validCoords: [number, number][] = [];
 
-        // Custom Leaflet DivIcon with Electric / Royal Blue solar plant pin styling + Active Highlight
+      plantGroupsMap.forEach((groupPlants) => {
+        const primaryPlant = groupPlants[0];
+        validCoords.push([primaryPlant.latitude, primaryPlant.longitude]);
+
+        const count = groupPlants.length;
+        const isMulti = count > 1;
+        const totalKw = groupPlants.reduce((sum, p) => sum + (p.systemSizeKw || 0), 0);
+        const isSelected = selectedPlantGroup
+          ? selectedPlantGroup.some((p) => groupPlants.some((gp) => gp.id === p.id))
+          : (selectedPlant ? groupPlants.some((gp) => gp.id === selectedPlant.id) : false);
+
+        const badgeText = isMulti ? `${count} Plants` : `${primaryPlant.systemSizeKw}kW`;
+        const tooltipTitle = isMulti
+          ? `${count} Solar Plants (${totalKw}kW total):\n${groupPlants.map((p) => `• ${p.lead.customerName} (${p.systemSizeKw}kW)`).join('\n')}`
+          : `${primaryPlant.lead.customerName} (${primaryPlant.systemSizeKw}kW)`;
+
+        // Custom Leaflet DivIcon with Electric / Royal Blue solar plant pin styling + Multi-lead Badge & Active Highlight
         const plantIcon = L.divIcon({
           className: 'custom-solar-plant-marker',
           html: `
             <div style="position: relative; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: ${isSelected ? 1000 : 1};">
-              <div style="position: absolute; width: ${isSelected ? '40px' : '34px'}; height: ${isSelected ? '40px' : '34px'}; border-radius: 50%; background: ${isSelected ? 'rgba(37, 99, 235, 0.45)' : 'rgba(37, 99, 235, 0.22)'}; border: ${isSelected ? '2.5px solid #60A5FA' : '1.5px solid #2563EB'}; box-shadow: ${isSelected ? '0 0 16px rgba(59, 130, 246, 0.95), 0 0 0 3px rgba(96, 165, 250, 0.4)' : 'none'}; transition: all 0.2s ease;"></div>
-              <div style="position: relative; width: ${isSelected ? '24px' : '22px'}; height: ${isSelected ? '24px' : '22px'}; border-radius: 50%; background: ${isSelected ? '#1D4ED8' : '#2563EB'}; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 8px rgba(0,0,0,0.5); color: white;">
-                <svg width="${isSelected ? '13' : '12'}" height="${isSelected ? '13' : '12'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <div style="position: absolute; width: ${isSelected ? '42px' : '34px'}; height: ${isSelected ? '42px' : '34px'}; border-radius: 50%; background: ${isSelected ? 'rgba(37, 99, 235, 0.45)' : 'rgba(37, 99, 235, 0.22)'}; border: ${isSelected ? '2.5px solid #60A5FA' : '1.5px solid #2563EB'}; box-shadow: ${isSelected ? '0 0 16px rgba(59, 130, 246, 0.95), 0 0 0 3px rgba(96, 165, 250, 0.4)' : 'none'}; transition: all 0.2s ease;"></div>
+              <div style="position: relative; width: ${isSelected ? '26px' : '22px'}; height: ${isSelected ? '26px' : '22px'}; border-radius: 50%; background: ${isSelected ? '#1D4ED8' : '#2563EB'}; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 8px rgba(0,0,0,0.5); color: white;">
+                <svg width="${isSelected ? '14' : '12'}" height="${isSelected ? '14' : '12'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                 </svg>
               </div>
+              ${isMulti ? `
+                <span style="position: absolute; top: -6px; right: -6px; background: #EF4444; color: white; font-size: 10px; font-weight: 800; border-radius: 9999px; width: 19px; height: 19px; display: flex; align-items: center; justify-content: center; border: 1.5px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.5); font-family: monospace;">
+                  ${count}
+                </span>
+              ` : ''}
               <span style="position: absolute; bottom: ${isSelected ? '-18px' : '-16px'}; background: ${isSelected ? '#1e3a8a' : 'rgba(15, 23, 42, 0.94)'}; color: ${isSelected ? '#ffffff' : '#93c5fd'}; border: 1px solid ${isSelected ? '#60A5FA' : 'rgba(37, 99, 235, 0.5)'}; font-size: ${isSelected ? '10px' : '9px'}; font-weight: 700; padding: 1px 5px; border-radius: 4px; white-space: nowrap; pointer-events: none; box-shadow: 0 2px 5px rgba(0,0,0,0.5);">
-                ${plant.systemSizeKw}kW
+                ${badgeText}
               </span>
             </div>
           `,
@@ -1172,15 +1195,16 @@ export default function LeadsMapPage() {
           popupAnchor: [0, -17],
         });
 
-        const marker = L.marker([plant.latitude, plant.longitude], {
+        const marker = L.marker([primaryPlant.latitude, primaryPlant.longitude], {
           icon: plantIcon,
-          title: `${plant.lead.customerName} (${plant.systemSizeKw}kW)`,
+          title: tooltipTitle,
         });
 
         marker.on('click', () => {
-          setSelectedPlant(plant);
+          setSelectedPlantGroup(groupPlants);
+          setSelectedPlant(groupPlants[0]);
           if (mapInstanceRef.current) {
-            mapInstanceRef.current.setView([plant.latitude, plant.longitude], Math.max(mapInstanceRef.current.getZoom(), 14));
+            mapInstanceRef.current.setView([primaryPlant.latitude, primaryPlant.longitude], Math.max(mapInstanceRef.current.getZoom(), 14));
           }
         });
 
@@ -1188,7 +1212,7 @@ export default function LeadsMapPage() {
       });
 
       // Fit map bounds to show both Varanasi and Prayagraj plants together (initial load only)
-      if (validCoords.length > 0 && mapInstanceRef.current && !selectedPlant) {
+      if (validCoords.length > 0 && mapInstanceRef.current && !selectedPlantGroup && !selectedPlant) {
         if (validCoords.length === 1) {
           mapInstanceRef.current.setView(validCoords[0], 13);
         } else {
@@ -1199,7 +1223,7 @@ export default function LeadsMapPage() {
     }
 
     renderPlantPins();
-  }, [mapReady, mapMode, plants, selectedPlant?.id]);
+  }, [mapReady, mapMode, plants, selectedPlantGroup, selectedPlant?.id]);
 
   // Update Leaflet Markers whenever selectedCity, selectedLocality or selectedLocalities change
   useEffect(() => {
@@ -2203,126 +2227,179 @@ export default function LeadsMapPage() {
                 </div>
               </div>
 
-              {/* Active Selected Plant Details Card with Geotag & Site Photos */}
-              {selectedPlant ? (
-                <div
-                  className={`border border-black dark:border-white/15 bg-[var(--bg-card)] dark:bg-[#0c121e] rounded-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-3.5 shadow-md ${
-                    isFullscreenMap ? 'p-2.5' : 'p-3 sm:p-3.5'
-                  }`}
-                >
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="p-2.5 bg-blue-500/10 border border-blue-500/25 rounded-xl text-blue-400 shrink-0 shadow-xs">
-                      <Zap className="w-4 h-4 fill-blue-500/20" />
-                    </div>
-                    <div className="min-w-0 flex-1">
+              {/* Active Selected Plant Details Card(s) with Geotag & Site Photos (List Format) */}
+              {selectedPlantGroup && selectedPlantGroup.length > 0 ? (
+                <div className="flex flex-col gap-2.5">
+                  {/* List Header with Group Count & Close button */}
+                  <div className="flex items-center justify-between px-1">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 bg-blue-500/10 border border-blue-500/25 rounded-lg text-blue-500 dark:text-blue-400 shrink-0">
+                        <Zap className="w-4 h-4 fill-blue-500/20" />
+                      </div>
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs sm:text-sm font-bold text-white tracking-tight truncate">
-                          {selectedPlant.lead.customerName}
+                        <span className="text-xs sm:text-sm font-bold text-[var(--text-primary)] dark:text-white">
+                          {selectedPlantGroup.length > 1
+                            ? `${selectedPlantGroup.length} Solar Plants at this Location`
+                            : 'Installed Solar Plant Details'}
                         </span>
-                        <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md bg-blue-500/15 text-blue-300 border border-blue-500/30">
-                          {selectedPlant.systemSizeKw} kW ({selectedPlant.clientType.toUpperCase().replace('_', ' ')})
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
+                          ({selectedPlantGroup[0].latitude.toFixed(5)}, {selectedPlantGroup[0].longitude.toFixed(5)})
                         </span>
-                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1.5 shadow-xs text-white ${
-                          selectedPlant.isCommissioned
-                            ? 'bg-emerald-600'
-                            : selectedPlant.isInstalled
-                            ? 'bg-blue-600'
-                            : 'bg-amber-600'
-                        }`}>
-                          <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                          <span>{selectedPlant.isCommissioned ? 'Commissioned' : selectedPlant.isInstalled ? 'Installed' : 'In Progress'}</span>
-                        </span>
-                        {selectedPlant.orderCode && (
-                          <span className="text-[10px] font-mono text-slate-400 px-1.5 py-0.5 rounded bg-black/40 border border-white/10">
-                            #{selectedPlant.orderCode}
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-[11px] text-slate-300 mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-                        <span className="flex items-center gap-1 text-slate-300">
-                          <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
-                          <span>{selectedPlant.lead.address ? `${selectedPlant.lead.address}, ` : ''}{selectedPlant.lead.city || ''}</span>
-                        </span>
-                        {selectedPlant.lead.mobile && (
-                          <span className="font-mono text-slate-400 shrink-0 flex items-center gap-1">
-                            <Phone className="w-3 h-3 text-slate-400 shrink-0" />
-                            <span>{selectedPlant.lead.mobile}</span>
-                          </span>
-                        )}
                       </div>
                     </div>
-                  </div>
-
-                  {/* Right: Site Photo Preview & Actions Toolbar */}
-                  <div className="flex items-center gap-2.5 shrink-0 self-end md:self-center">
-                    {sortedPlantImages.length > 0 ? (
-                      (() => {
-                        const hero = sortedPlantImages[0];
-                        const imageUrl = `/api/v1/orders/${selectedPlant.id}/installation-images/${hero.id}`;
-                        const isVideo = Boolean(hero.fileName?.match(/\.(mp4|webm|mov)$/i));
-
-                        return (
-                          <button
-                            type="button"
-                            onClick={() => setGalleryIndex(0)}
-                            className="relative group cursor-pointer w-20 h-11 rounded-lg overflow-hidden border border-white/20 bg-slate-900 shrink-0 transition-all hover:border-blue-400 hover:ring-2 hover:ring-blue-500/30 shadow-sm"
-                            title={`Click to view ${sortedPlantImages.length} site photos`}
-                          >
-                            {isVideo ? (
-                              <div className="w-full h-full flex items-center justify-center bg-slate-900 text-blue-400">
-                                <Camera className="w-4 h-4" />
-                              </div>
-                            ) : (
-                              <img
-                                src={imageUrl}
-                                alt="Plant Site"
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                                loading="lazy"
-                              />
-                            )}
-
-                            {/* Clean Frosted Badge showing photo count */}
-                            <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur-md text-[9px] font-mono font-bold text-white flex items-center gap-1 border border-white/20 shadow-xs">
-                              <Camera className="w-2.5 h-2.5 text-blue-300" />
-                              <span>{sortedPlantImages.length}</span>
-                            </div>
-
-                            {/* Hover overlay with Eye icon */}
-                            <div className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                              <Eye className="w-4 h-4 text-white drop-shadow" />
-                            </div>
-                          </button>
-                        );
-                      })()
-                    ) : (
-                      <div className="px-2.5 py-1.5 bg-black/30 border border-dashed border-white/10 rounded-lg text-[10px] text-slate-400 flex items-center gap-1.5">
-                        <Camera className="w-3.5 h-3.5 text-slate-500" />
-                        <span>No photos</span>
-                      </div>
-                    )}
-
-                    <a
-                      href={`https://www.google.com/maps?q=${selectedPlant.latitude},${selectedPlant.longitude}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
-                      title="Open in Google Maps"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      <span>Maps</span>
-                    </a>
 
                     <button
                       type="button"
                       onClick={() => {
+                        setSelectedPlantGroup(null);
                         setSelectedPlant(null);
                         setGalleryIndex(null);
                       }}
-                      className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+                      className="p-1 text-slate-500 hover:text-black dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-200 dark:hover:bg-white/10 transition-colors cursor-pointer flex items-center gap-1 text-xs"
                       title="Close Inspector"
                     >
                       <X className="w-4 h-4" />
+                      <span className="text-[11px] font-semibold hidden sm:inline">Close</span>
                     </button>
+                  </div>
+
+                  {/* Scrollable list of plant cards */}
+                  <div className="flex flex-col gap-2.5 max-h-[360px] overflow-y-auto pr-1">
+                    {selectedPlantGroup.map((plant, idx) => {
+                      // Sort images for this specific plant
+                      const plantImages = [...(plant.installationImages || [])].sort((a, b) => {
+                        const priority: Record<string, number> = {
+                          plant_commissioned: 1,
+                          installation_done: 2,
+                          meter_sealing_paper: 3,
+                          delivered_items: 4,
+                          in_progress: 5,
+                        };
+                        const pA = priority[a.status] || 99;
+                        const pB = priority[b.status] || 99;
+                        if (pA !== pB) return pA - pB;
+                        return b.id - a.id;
+                      });
+
+                      return (
+                        <div
+                          key={plant.id}
+                          className={`border border-black/30 dark:border-white/15 bg-white/70 dark:bg-[#0c121e] rounded-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-3 shadow-xs transition-all ${
+                            isFullscreenMap ? 'p-2.5' : 'p-3 sm:p-3.5'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            {selectedPlantGroup.length > 1 && (
+                              <div className="w-6 h-6 rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-bold font-mono shrink-0 border border-blue-500/30">
+                                {idx + 1}
+                              </div>
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-xs sm:text-sm font-bold text-[var(--text-primary)] dark:text-white tracking-tight truncate">
+                                  {plant.lead.customerName}
+                                </span>
+                                <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/30">
+                                  {plant.systemSizeKw} kW ({plant.clientType.toUpperCase().replace('_', ' ')})
+                                </span>
+                                <span
+                                  className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1.5 shadow-xs text-white ${
+                                    plant.isCommissioned
+                                      ? 'bg-emerald-600'
+                                      : plant.isInstalled
+                                      ? 'bg-blue-600'
+                                      : 'bg-amber-600'
+                                  }`}
+                                >
+                                  <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                                  <span>{plant.isCommissioned ? 'Commissioned' : plant.isInstalled ? 'Installed' : 'In Progress'}</span>
+                                </span>
+                                {plant.orderCode && (
+                                  <span className="text-[10px] font-mono text-slate-700 dark:text-slate-400 px-1.5 py-0.5 rounded bg-slate-200 dark:bg-black/40 border border-black/10 dark:border-white/10">
+                                    #{plant.orderCode}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[11px] text-slate-700 dark:text-slate-300 mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                                <span className="flex items-center gap-1">
+                                  <MapPin className="w-3 h-3 text-slate-500 dark:text-slate-400 shrink-0" />
+                                  <span>{plant.lead.address ? `${plant.lead.address}, ` : ''}{plant.lead.city || ''}</span>
+                                </span>
+                                {plant.lead.mobile && (
+                                  <span className="font-mono text-slate-600 dark:text-slate-400 shrink-0 flex items-center gap-1">
+                                    <Phone className="w-3 h-3 text-slate-500 dark:text-slate-400 shrink-0" />
+                                    <span>{plant.lead.mobile}</span>
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Right: Site Photo Preview & Actions Toolbar */}
+                          <div className="flex items-center gap-2.5 shrink-0 self-end md:self-center">
+                            {plantImages.length > 0 ? (
+                              (() => {
+                                const hero = plantImages[0];
+                                const imageUrl = `/api/v1/orders/${plant.id}/installation-images/${hero.id}`;
+                                const isVideo = Boolean(hero.fileName?.match(/\.(mp4|webm|mov)$/i));
+
+                                return (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedPlant(plant);
+                                      setGalleryIndex(0);
+                                    }}
+                                    className="relative group cursor-pointer w-20 h-11 rounded-lg overflow-hidden border border-black/20 dark:border-white/20 bg-slate-900 shrink-0 transition-all hover:border-blue-400 hover:ring-2 hover:ring-blue-500/30 shadow-xs"
+                                    title={`Click to view ${plantImages.length} site photos`}
+                                  >
+                                    {isVideo ? (
+                                      <div className="w-full h-full flex items-center justify-center bg-slate-900 text-blue-400">
+                                        <Camera className="w-4 h-4" />
+                                      </div>
+                                    ) : (
+                                      <img
+                                        src={imageUrl}
+                                        alt="Plant Site"
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                                        loading="lazy"
+                                      />
+                                    )}
+
+                                    {/* Clean Frosted Badge showing photo count */}
+                                    <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur-md text-[9px] font-mono font-bold text-white flex items-center gap-1 border border-white/20 shadow-xs">
+                                      <Camera className="w-2.5 h-2.5 text-blue-300" />
+                                      <span>{plantImages.length}</span>
+                                    </div>
+
+                                    {/* Hover overlay with Eye icon */}
+                                    <div className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                      <Eye className="w-4 h-4 text-white drop-shadow" />
+                                    </div>
+                                  </button>
+                                );
+                              })()
+                            ) : (
+                              <div className="px-2.5 py-1.5 bg-slate-100 dark:bg-black/30 border border-dashed border-slate-300 dark:border-white/10 rounded-lg text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                                <Camera className="w-3.5 h-3.5 text-slate-400" />
+                                <span>No photos</span>
+                              </div>
+                            )}
+
+                            <a
+                              href={`https://www.google.com/maps?q=${plant.latitude},${plant.longitude}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
+                              title="Open in Google Maps"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                              <span>Maps</span>
+                            </a>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               ) : (
