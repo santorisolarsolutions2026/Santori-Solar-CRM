@@ -85,6 +85,7 @@ const STAGE_NAMES: Record<number, string> = {
   12: 'Can\'t Fit Solar',
   13: 'Sale Done',
   14: 'Meeting Cancelled',
+  16: 'Prospect',
 };
 
 const STAGE_BADGES: Record<number, { name: string; class: string }> = {
@@ -103,6 +104,7 @@ const STAGE_BADGES: Record<number, { name: string; class: string }> = {
   12: { name: 'Can\'t Fit Solar', class: 'bg-stone-900 text-stone-400 border-stone-800/40' },
   13: { name: 'Sale Done', class: 'bg-[#4F7D32]/10 text-[#4F7D32] border-[#4F7D32]/20 font-bold' },
   14: { name: 'Meeting Cancelled', class: 'bg-red-500/10 text-red-400 border-red-500/20 font-bold' },
+  16: { name: 'Prospect', class: 'bg-sky-500/10 text-sky-400 border-sky-500/20 font-bold' },
 };
 
 export function LeadTrackingTimeline({ lead }: LeadTrackingProps) {

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
+import { resolveTransferStage } from '@/lib/prospectTransfer';
 
 export async function GET(
   req: Request,
@@ -132,6 +133,20 @@ export async function POST(
       legacyUpdate.assignedConsultantId = empId;
     }
 
+    const transferRes = resolveTransferStage({
+      currentStatus: lead.status,
+      oldConsultantId: lead.assignedConsultantId,
+      newConsultantId: legacyUpdate.assignedConsultantId ?? null,
+      hasAnyNewAssignee: true,
+    });
+
+    if (transferRes.nextStatus !== lead.status) {
+      legacyUpdate.status = transferRes.nextStatus;
+    }
+    if (transferRes.reactivated) {
+      legacyUpdate.isActive = true;
+    }
+
     await prisma.lead.update({
       where: { id: leadId },
       data: legacyUpdate,
@@ -155,8 +170,11 @@ export async function POST(
       data: {
         leadId,
         userId: userPayload.id,
-        toStatus: lead.status,
-        remark: `[EMPLOYEE ASSIGNMENT] Lead assigned to ${employee.name} (Priority: ${priority || 'medium'}, Due: ${dueDate || 'none'}).`,
+        fromStatus: transferRes.movedToProspect ? lead.status : null,
+        toStatus: transferRes.nextStatus,
+        remark: `[EMPLOYEE ASSIGNMENT] Lead assigned to ${employee.name} (Priority: ${priority || 'medium'}, Due: ${dueDate || 'none'}).${
+          transferRes.movedToProspect ? ` Moved from Stage ${lead.status} to Prospect on reassignment.` : ''
+        }`,
       },
     });
 

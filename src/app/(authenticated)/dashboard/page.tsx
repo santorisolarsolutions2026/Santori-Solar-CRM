@@ -171,6 +171,7 @@ const STAGE_NAMES: Record<number, { name: string; short: string; color: string }
   12: { name: 'Can\'t Fit Solar', short: 'No Fit', color: '#475569' },
   13: { name: 'Sale Done', short: 'Sale Done', color: '#10B981' },
   14: { name: 'Meeting Cancelled', short: 'Cancelled', color: '#EF4444' },
+  16: { name: 'Prospect', short: 'Prospect', color: '#0284C7' },
 };
 
 const REMINDER_HEX_COLORS: Record<string, string> = {

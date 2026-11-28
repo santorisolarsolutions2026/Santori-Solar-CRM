@@ -23,6 +23,7 @@ const STAGE_NAMES: Record<number | string, string> = {
   12: "Can't Fit Solar",
   13: 'Sale Done',
   14: 'Meeting Cancelled',
+  16: 'Prospect',
   order_punched: 'Order Punched',
   awaiting_verification: 'Awaiting Verification',
   finance_verified: 'Finance Verified',

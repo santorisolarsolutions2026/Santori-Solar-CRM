@@ -18,11 +18,12 @@ const TRANSITIONS: Record<number, { to: number[]; roles: string[] }> = {
   12: { to: [], roles: [] }, // terminal
   13: { to: [13], roles: ['operations', 'manager', 'admin', 'director', 'sales_head'] }, // terminal but allows installation status self-transition
   14: { to: [3, 4, 6, 12], roles: ['consultant', 'tl', 'manager'] },
+  16: { to: [2, 3, 4, 5, 6, 7, 8, 10, 11, 12], roles: ['consultant', 'psa', 'tl', 'manager'] },
 };
 
 // Helper to generate order code
 function getLeadDepartment(statusNum: number, orderStatus: string | null): string {
-  if ([1, 2, 3, 5, 7, 10, 11].includes(statusNum)) return 'PSA';
+  if ([1, 2, 3, 5, 7, 10, 11, 16].includes(statusNum)) return 'PSA';
   if ([8, 9, 14].includes(statusNum)) return 'Sales';
   if (statusNum === 13) {
     if (orderStatus === 'submitted') return 'Finance';

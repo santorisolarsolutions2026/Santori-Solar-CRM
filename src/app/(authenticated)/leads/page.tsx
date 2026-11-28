@@ -99,6 +99,7 @@ const STAGE_BADGES: Record<string | number, { name: string; class: string }> = {
   12: { name: 'Can\'t Fit Solar', class: 'bg-stone-200 text-stone-800 dark:bg-stone-900/80 dark:text-stone-300 font-extrabold' },
   13: { name: 'Sale Done', class: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/70 dark:text-emerald-300 font-extrabold' },
   14: { name: 'Meeting Cancelled', class: 'bg-red-100 text-red-900 dark:bg-red-950/70 dark:text-red-300 font-extrabold' },
+  16: { name: 'Prospect', class: 'bg-sky-100 text-sky-900 dark:bg-sky-950/70 dark:text-sky-300 font-extrabold' },
   'order_punched': { name: 'Order Punched', class: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/70 dark:text-emerald-300 font-extrabold' },
   'awaiting_verification': { name: 'Awaiting Verification', class: 'bg-amber-100 text-amber-900 dark:bg-amber-950/70 dark:text-amber-300 font-extrabold' },
   'finance_verified': { name: 'Finance Verified', class: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/70 dark:text-emerald-300 font-extrabold' },

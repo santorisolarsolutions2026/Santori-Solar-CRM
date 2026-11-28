@@ -168,6 +168,7 @@ const STAGE_BADGES: Record<string | number, { name: string; class: string }> = {
   12: { name: 'Can\'t Fit Solar', class: 'bg-stone-900/80 text-stone-400' },
   13: { name: 'Sale Done', class: 'bg-[#4F7D32]/10 text-[#4F7D32] font-bold' },
   14: { name: 'Meeting Cancelled', class: 'bg-red-500/10 text-red-400' },
+  16: { name: 'Prospect', class: 'bg-sky-500/10 text-sky-500 dark:text-sky-400 font-bold' },
   'order_punched': { name: 'Order Punched', class: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/70 dark:text-emerald-300 font-extrabold' },
   'awaiting_verification': { name: 'Awaiting Verification', class: 'bg-amber-100 text-amber-900 dark:bg-amber-950/70 dark:text-amber-300 font-extrabold' },
   'finance_verified': { name: 'Finance Verified', class: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/70 dark:text-emerald-300 font-extrabold' },
@@ -259,6 +260,7 @@ const getStageConfig = (statusNum: number) => {
     12: { name: "Can't Fit Solar", desc: 'Site is infeasible', icon: 'XCircle', bg: 'bg-stone-900/10', text: 'text-stone-400' },
     13: { name: 'Sale Done', desc: 'Convert to order / Form D', icon: 'CheckCircle2', bg: 'bg-[#4F7D32]/5', text: 'text-[#4F7D32]' },
     14: { name: 'Meeting Cancelled', desc: 'Site visit cancelled', icon: 'XCircle', bg: 'bg-red-900/10', text: 'text-red-500' },
+    16: { name: 'Prospect', desc: 'Reassigned / second-attempt prospect', icon: 'Sparkles', bg: 'bg-sky-500/5', text: 'text-sky-600 dark:text-sky-400' },
   };
 
   return configs[statusNum] || { name: `Stage ${statusNum}`, desc: 'Pipeline Status', icon: 'Layers', bg: 'bg-[var(--bg-card)]', text: 'text-[var(--text-secondary)]' };

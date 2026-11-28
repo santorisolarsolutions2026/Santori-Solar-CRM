@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser, getUserPermissions } from '@/lib/auth';
+import { resolveTransferStage, PROSPECT_STAGE_ID } from '@/lib/prospectTransfer';
 
 export async function POST(req: Request) {
   try {
@@ -144,22 +145,47 @@ export async function POST(req: Request) {
       }
 
       const autoPromoteLeadIds: number[] = [];
+      const prospectLeadIds: number[] = [];
+      const prospectReactivateIds: number[] = [];
       const standardLeadIds: number[] = [];
+      const hasExplicitStatus = status !== undefined && status !== null && status !== 'UNCHANGED';
+      const hasAnyNewAssignee =
+        updateData.assignedManagerId !== undefined ||
+        updateData.assignedTlId !== undefined ||
+        updateData.assignedConsultantId !== undefined;
 
       for (const lead of leads) {
-        const finalManagerId = assignedManagerId !== undefined ? (assignedManagerId === null || assignedManagerId === '' ? null : Number(assignedManagerId)) : lead.assignedManagerId;
-        const finalTlId = assignedTlId !== undefined ? (assignedTlId === null || assignedTlId === '' ? null : Number(assignedTlId)) : lead.assignedTlId;
-        const finalConsId = assignedConsultantId !== undefined ? (assignedConsultantId === null || assignedConsultantId === '' ? null : Number(assignedConsultantId)) : lead.assignedConsultantId;
+        const finalManagerId = updateData.assignedManagerId !== undefined ? updateData.assignedManagerId : lead.assignedManagerId;
+        const finalTlId = updateData.assignedTlId !== undefined ? updateData.assignedTlId : lead.assignedTlId;
+        const finalConsId = updateData.assignedConsultantId !== undefined ? updateData.assignedConsultantId : lead.assignedConsultantId;
 
-        const willAutoPromote = lead.status === 0 && (finalManagerId !== null || finalTlId !== null || finalConsId !== null) && (status === undefined || status === null || status === 'UNCHANGED');
+        let newStatus = hasExplicitStatus ? Number(status) : lead.status;
+        let movedToProspect = false;
 
-        if (willAutoPromote) {
-          autoPromoteLeadIds.push(lead.id);
+        if (!hasExplicitStatus) {
+          const transferRes = resolveTransferStage({
+            currentStatus: lead.status,
+            oldConsultantId: lead.assignedConsultantId,
+            newConsultantId: updateData.assignedConsultantId !== undefined ? finalConsId : null,
+            hasAnyNewAssignee: hasAnyNewAssignee && (finalManagerId !== null || finalTlId !== null || finalConsId !== null),
+          });
+          newStatus = transferRes.nextStatus;
+          movedToProspect = transferRes.movedToProspect;
+
+          if (newStatus === 1 && lead.status === 0) {
+            autoPromoteLeadIds.push(lead.id);
+          } else if (newStatus === PROSPECT_STAGE_ID && movedToProspect) {
+            if (transferRes.reactivated) {
+              prospectReactivateIds.push(lead.id);
+            } else {
+              prospectLeadIds.push(lead.id);
+            }
+          } else {
+            standardLeadIds.push(lead.id);
+          }
         } else {
           standardLeadIds.push(lead.id);
         }
-
-        const newStatus = willAutoPromote ? 1 : (status !== undefined && status !== null && status !== 'UNCHANGED' ? Number(status) : lead.status);
 
         if (Number(status) === 1) {
           logEntries.push({
@@ -175,9 +201,15 @@ export async function POST(req: Request) {
             userId: userPayload.id,
             fromStatus: lead.status,
             toStatus: newStatus,
-            remark: (status !== undefined && status !== null && status !== 'UNCHANGED'
+            remark: hasExplicitStatus
               ? `Bulk updated pipeline status to Stage ${status} (${userPayload.name}).`
-              : `Bulk updated team assignments. Updated fields: ${Object.keys(updateData).join(', ')}.${newStatus === 1 && lead.status === 0 ? ' Status auto-promoted to Fresh Lead.' : ''}`),
+              : `Bulk updated team assignments. Updated fields: ${Object.keys(updateData).join(', ')}.${
+                  newStatus === 1 && lead.status === 0
+                    ? ' Status auto-promoted to Fresh Lead.'
+                    : movedToProspect
+                    ? ` Moved from Stage ${lead.status} to Prospect on reassignment.`
+                    : ''
+                }`,
           });
         }
       }
@@ -186,6 +218,20 @@ export async function POST(req: Request) {
         await tx.lead.updateMany({
           where: { id: { in: autoPromoteLeadIds } },
           data: { ...updateData, status: 1 },
+        });
+      }
+
+      if (prospectLeadIds.length > 0) {
+        await tx.lead.updateMany({
+          where: { id: { in: prospectLeadIds } },
+          data: { ...updateData, status: PROSPECT_STAGE_ID },
+        });
+      }
+
+      if (prospectReactivateIds.length > 0) {
+        await tx.lead.updateMany({
+          where: { id: { in: prospectReactivateIds } },
+          data: { ...updateData, status: PROSPECT_STAGE_ID, isActive: true },
         });
       }
 

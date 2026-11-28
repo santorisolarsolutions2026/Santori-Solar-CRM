@@ -410,6 +410,7 @@ const STAGE_BADGES: Record<number, { name: string; class: string }> = {
   12: { name: 'Can\'t Fit Solar', class: 'bg-stone-900 text-stone-400 border-stone-800/40' },
   13: { name: 'Sale Done', class: 'bg-[#4F7D32]/10 text-[#4F7D32] dark:text-[#7bb05c] border-[#4F7D32]/20 font-bold' },
   14: { name: 'Meeting Cancelled', class: 'bg-red-950/20 text-red-500 border-red-900/20 font-bold' },
+  16: { name: 'Prospect', class: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20 font-bold' },
 };
 
 function calculateYearsInCompany(joiningDateStr: string | null): string {

@@ -256,6 +256,7 @@ const STAGE_SHORT_MAP: Record<string, string> = {
   "Can't Fit Solar": 'No Fit',
   'Sale Done': 'Sale Done',
   'Meeting Cancelled': 'Cancelled',
+  'Prospect': 'Prospect',
 };
 
 interface PipelineBarChartProps {

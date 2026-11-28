@@ -76,6 +76,7 @@ const STAGE_OPTIONS = [
   { value: '12', label: "Can't Fit Solar" },
   { value: '13', label: 'Sale Done' },
   { value: '14', label: 'Meeting Cancelled' },
+  { value: '16', label: 'Prospect' },
   { value: 'order_punched', label: 'Order Punched' },
   { value: 'awaiting_verification', label: 'Awaiting Verification' },
   { value: 'finance_verified', label: 'Finance Verified' },
